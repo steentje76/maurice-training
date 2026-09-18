@@ -1,95 +1,585 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "2.0",
   "baseline_sha": "b7c77e4a2e5d8b995931a32b1c64ad559294c26b",
-  "note": "Seed only; canonical source remains GitHub documents until registry coverage is audited.",
+  "statuses": [
+    "ACTIVE",
+    "OPEN",
+    "PO_REVIEW_REQUIRED",
+    "DEPRECATED"
+  ],
+  "levels": [
+    "HARD",
+    "SOFT",
+    "OPEN"
+  ],
   "rules": [
     {
       "id": "UX-GOV-001",
       "domain": "governance",
       "level": "HARD",
-      "statement": "UX change flow is DESIGN → PO REVIEW → REVISE → PO APPROVAL → IMPLEMENT → TEST → VISUAL VALIDATION → CLOSED.",
-      "source": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md#22"
+      "status": "ACTIVE",
+      "statement": "UX change flow requires design, PO review/approval, implementation, test and visual validation before closure.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "22"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "manual+contract"
     },
     {
       "id": "UX-PRES-001",
       "domain": "preservation",
       "level": "HARD",
+      "status": "ACTIVE",
       "statement": "Mockup omission is not functionality removal.",
-      "source": "docs/ux/baseline/v1/README.md"
+      "source": {
+        "path": "docs/ux/baseline/v1/README.md"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "capability-diff"
     },
     {
       "id": "UX-NAV-001",
       "domain": "navigation",
       "level": "HARD",
-      "statement": "Canonical bottom navigation is Vandaag | Trainen | Inzicht | Coach | Samen; Profiel is opened via avatar.",
-      "source": "docs/ux/baseline/v1/README.md"
+      "status": "ACTIVE",
+      "statement": "Canonical bottom navigation is Vandaag | Trainen | Inzicht | Coach | Samen; Profiel is not a sixth tab and opens via avatar.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "13"
+      },
+      "applies_to": [
+        "primary"
+      ],
+      "verification": "nav-model"
     },
     {
       "id": "ROUTE-R001",
       "domain": "navigation",
       "level": "HARD",
-      "statement": "Normal user-visible screen transitions use go() or an explicitly approved equivalent.",
-      "source": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md#R-001"
+      "status": "ACTIVE",
+      "statement": "Normal user-visible transitions use go() or explicitly approved equivalent.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-001"
+      },
+      "applies_to": [
+        "flows"
+      ],
+      "verification": "route-graph"
     },
     {
       "id": "ROUTE-R002",
       "domain": "navigation",
       "level": "HARD",
+      "status": "ACTIVE",
       "statement": "Visible Back and Android Back return to the same logical parent/context unless explicitly documented.",
-      "source": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md#R-002"
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-002"
+      },
+      "applies_to": [
+        "flows"
+      ],
+      "verification": "route-graph"
+    },
+    {
+      "id": "ROUTE-R003",
+      "domain": "navigation",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Every modal/overlay has open, close, cancel and Android Back lifecycle.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-003"
+      },
+      "applies_to": [
+        "modal",
+        "overlay"
+      ],
+      "verification": "state-model"
+    },
+    {
+      "id": "ROUTE-R004",
+      "domain": "navigation",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Do not hardcode a parent for a detail surface reachable from multiple sources; use source-aware return where appropriate.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-004"
+      },
+      "applies_to": [
+        "flows"
+      ],
+      "verification": "route-graph"
+    },
+    {
+      "id": "ROUTE-R005",
+      "domain": "navigation",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Primary-tab ownership remains logical during secondary flows.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-005"
+      },
+      "applies_to": [
+        "flows"
+      ],
+      "verification": "route-graph"
     },
     {
       "id": "ROUTE-R006",
       "domain": "training",
       "level": "HARD",
+      "status": "ACTIVE",
       "statement": "Active Training execution state may never be lost by navigation.",
-      "source": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md#R-006"
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-006"
+      },
+      "applies_to": [
+        "training",
+        "coach"
+      ],
+      "verification": "state-invariant"
     },
     {
-      "id": "DATA-UNKNOWN-001",
+      "id": "ROUTE-R007",
+      "domain": "navigation",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "A dead/unreachable screen cannot be a required forward destination of an active journey.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-007"
+      },
+      "applies_to": [
+        "flows"
+      ],
+      "verification": "route-graph"
+    },
+    {
+      "id": "ROUTE-R008",
       "domain": "data",
       "level": "HARD",
-      "statement": "UNKNOWN must never be represented as zero or GREEN.",
-      "source": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md#15"
+      "status": "ACTIVE",
+      "statement": "UNKNOWN may never be registered or represented as GREEN.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-008"
+      },
+      "applies_to": [
+        "insight",
+        "recovery"
+      ],
+      "verification": "state-data"
+    },
+    {
+      "id": "ROUTE-R009",
+      "domain": "navigation",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Direct .scr manipulation for user-visible navigation is prohibited unless explicitly justified and tested.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-009"
+      },
+      "applies_to": [
+        "implementation"
+      ],
+      "verification": "source-test"
+    },
+    {
+      "id": "ROUTE-R010",
+      "domain": "navigation",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "An active modal-bg must have a closable canonical contract.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-010"
+      },
+      "applies_to": [
+        "modal"
+      ],
+      "verification": "state-model"
+    },
+    {
+      "id": "ROUTE-R011",
+      "domain": "navigation",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "New confirm/destructive flows must support Android Back correctly.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-011"
+      },
+      "applies_to": [
+        "confirm",
+        "destructive"
+      ],
+      "verification": "state-model"
+    },
+    {
+      "id": "ROUTE-R012",
+      "domain": "navigation",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "One canonical home per management function.",
+      "source": {
+        "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+        "section": "R-012"
+      },
+      "applies_to": [
+        "management"
+      ],
+      "verification": "route-graph"
     },
     {
       "id": "DATA-CALC-001",
       "domain": "data",
       "level": "HARD",
-      "statement": "UI never calculates metrics itself; it consumes canonical Calculation → Context → Decision → Evidence/Data Quality/Confidence output.",
-      "source": "docs/ux/baseline/v1/README.md"
+      "status": "ACTIVE",
+      "statement": "UI never calculates metrics itself; it consumes canonical Calculation → Context → Decision → Evidence output.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "15"
+      },
+      "applies_to": [
+        "insight",
+        "today",
+        "coach"
+      ],
+      "verification": "data-contract"
+    },
+    {
+      "id": "DATA-UNKNOWN-001",
+      "domain": "data",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Missing/unknown data is not zero and must not imply certainty.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "15"
+      },
+      "applies_to": [
+        "all-data"
+      ],
+      "verification": "state-data"
     },
     {
       "id": "UX-CTA-001",
       "domain": "component",
       "level": "HARD",
-      "statement": "At most one clear primary CTA per local context.",
-      "source": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md#2"
+      "status": "ACTIVE",
+      "statement": "At most one clear PRIMARY CTA per local context.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "12"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "component-count"
+    },
+    {
+      "id": "UX-CTA-002",
+      "domain": "component",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Canonical PRIMARY action uses teal #00B894; marine is not the standard primary CTA color.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "2,12"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "token-check"
+    },
+    {
+      "id": "UX-CARD-001",
+      "domain": "component",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Standard/large content cards use canonical 16px radius.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "5"
+      },
+      "applies_to": [
+        "cards"
+      ],
+      "verification": "token-check"
+    },
+    {
+      "id": "UX-ICON-001",
+      "domain": "component",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Structural navigation/function icons use one consistent outline/line family; no emoji for structural icons.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "13"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "component-audit"
     },
     {
       "id": "UX-AI-001",
       "domain": "ai",
       "level": "HARD",
+      "status": "ACTIVE",
       "statement": "AI Coach uses abstract sparkle/star identity, explicit AI label, no robot mascot and no human avatar.",
-      "source": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md#20"
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "20"
+      },
+      "applies_to": [
+        "coach"
+      ],
+      "verification": "visual-contract"
+    },
+    {
+      "id": "UX-PRIV-001",
+      "domain": "privacy",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Membership, coach relation, payment or social connection never imply health-data authorization.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "21"
+      },
+      "applies_to": [
+        "coach",
+        "samen",
+        "profile"
+      ],
+      "verification": "permission-contract"
     },
     {
       "id": "UX-STATE-001",
       "domain": "states",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Designs must account for loading, empty, partial, error, offline, syncing, stale, permission denied and connection-required where applicable.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "19"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "state-coverage"
+    },
+    {
+      "id": "UX-RESP-001",
+      "domain": "responsive",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "No horizontal overflow at 320/360/375/390/412/430px.",
+      "source": {
+        "path": "docs/ux/SCREEN_MIGRATION_CHECKLIST_v1.md",
+        "section": "STEP 8"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "viewport-test"
+    },
+    {
+      "id": "UX-A11Y-001",
+      "domain": "accessibility",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Icon-only controls need accessible labels; interactive surfaces must be keyboard/semantic; no color-only meaning.",
+      "source": {
+        "path": "docs/ux/SCREEN_IMPLEMENTATION_STANDARD_v1.md",
+        "section": "O"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "a11y-audit"
+    },
+    {
+      "id": "SCREEN-PREBUILD-001",
+      "domain": "governance",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Before runtime change: canonical visual read, preservation matrix, component inventory/reuse map and data-source mapping must be complete.",
+      "source": {
+        "path": "docs/ux/SCREEN_MIGRATION_CHECKLIST_v1.md",
+        "section": "HARD RULE"
+      },
+      "applies_to": [
+        "screen-migration"
+      ],
+      "verification": "contract-gate"
+    },
+    {
+      "id": "SCREEN-TEST-001",
+      "domain": "validation",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Main-screen migration requires static, browser-runtime, responsive, visual-delta, preview, PO mobile review and final regression gates.",
+      "source": {
+        "path": "docs/ux/SCREEN_MIGRATION_CHECKLIST_v1.md",
+        "section": "STEP 6-16"
+      },
+      "applies_to": [
+        "screen-migration"
+      ],
+      "verification": "gate-check"
+    },
+    {
+      "id": "DOMAIN-TODAY-001",
+      "domain": "today",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Vandaag orchestrates and does not calculate; keep it calm despite context and avoid competing Level-1 cards.",
+      "source": {
+        "path": "docs/UX_BASELINE_PRESERVATION_MATRIX.md",
+        "section": "VANDAAG"
+      },
+      "applies_to": [
+        "today"
+      ],
+      "verification": "screen-contract"
+    },
+    {
+      "id": "DOMAIN-TRAIN-001",
+      "domain": "training",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Trainen is task-oriented; analytics/charts belong in Inzicht.",
+      "source": {
+        "path": "docs/UX_BASELINE_PRESERVATION_MATRIX.md",
+        "section": "TRAINEN"
+      },
+      "applies_to": [
+        "training"
+      ],
+      "verification": "screen-contract"
+    },
+    {
+      "id": "DOMAIN-INSIGHT-001",
+      "domain": "insight",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Inzicht may be data-dense but must expose/respect evidence and confidence and never suggest unsupported certainty.",
+      "source": {
+        "path": "docs/UX_BASELINE_PRESERVATION_MATRIX.md",
+        "section": "INZICHT"
+      },
+      "applies_to": [
+        "insight"
+      ],
+      "verification": "screen-contract"
+    },
+    {
+      "id": "DOMAIN-COACH-001",
+      "domain": "coach",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "AI and human coach identities/content must remain visibly distinct.",
+      "source": {
+        "path": "docs/UX_BASELINE_PRESERVATION_MATRIX.md",
+        "section": "COACH"
+      },
+      "applies_to": [
+        "coach"
+      ],
+      "verification": "screen-contract"
+    },
+    {
+      "id": "DOMAIN-SOCIAL-001",
+      "domain": "samen",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Sensitive health/recovery data is never automatically shared socially.",
+      "source": {
+        "path": "docs/UX_BASELINE_PRESERVATION_MATRIX.md",
+        "section": "SAMEN"
+      },
+      "applies_to": [
+        "samen"
+      ],
+      "verification": "privacy-contract"
+    },
+    {
+      "id": "DOMAIN-PROFILE-001",
+      "domain": "profile",
+      "level": "HARD",
+      "status": "ACTIVE",
+      "statement": "Profiel is avatar-only navigation and must not become a sixth bottom tab.",
+      "source": {
+        "path": "docs/UX_BASELINE_PRESERVATION_MATRIX.md",
+        "section": "PROFIEL"
+      },
+      "applies_to": [
+        "profile"
+      ],
+      "verification": "nav-model"
+    },
+    {
+      "id": "OPEN-A11Y-001",
+      "domain": "accessibility",
       "level": "OPEN",
-      "statement": "Central contracts required for loading, empty, partial, error, offline, syncing, stale, permission denied and connection required.",
-      "source": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md#19"
+      "status": "OPEN",
+      "statement": "Systematic accessibility coverage remains an implementation gap and requires dedicated audit.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "17"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "PO/audit"
+    },
+    {
+      "id": "OPEN-STATE-001",
+      "domain": "states",
+      "level": "OPEN",
+      "status": "OPEN",
+      "statement": "Exact centralized visual contracts for non-happy states remain to be finalized.",
+      "source": {
+        "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+        "section": "19"
+      },
+      "applies_to": [
+        "all"
+      ],
+      "verification": "PO/design"
     },
     {
       "id": "CONFLICT-CTA-001",
       "domain": "conflict",
       "level": "HARD",
       "status": "PO_REVIEW_REQUIRED",
-      "statement": "Primary button color conflicts: approved Design System v1 says teal; Handbook H7 says navy in light mode.",
-      "source": [
-        "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md#12",
-        "docs/Handbook/Trainingskompas_Development_Handbook_H7_Component_Library.md#1.1"
-      ]
+      "statement": "Handbook H7 light-mode primary button navy conflicts with later PO-approved Design System V1 primary CTA teal.",
+      "sources": [
+        {
+          "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+          "section": "2,12",
+          "authority": "PO_APPROVED"
+        },
+        {
+          "path": "docs/Handbook/Trainingskompas_Development_Handbook_H7_Component_Library.md",
+          "section": "1.1",
+          "authority": "HANDBOOK"
+        }
+      ],
+      "resolution_policy": "Do not silently choose. Design Lab flags conflict; approved Design System is the candidate canonical resolution pending explicit conflict closure.",
+      "verification": "conflict-engine"
     }
   ]
 }

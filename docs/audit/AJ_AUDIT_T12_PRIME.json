@@ -1,0 +1,871 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T12_PRIME",
+ "tracks": [
+  "T12"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "772f25e67c1880cfa058306f489eb533710db8da",
+ "complete": true,
+ "record_count": 50,
+ "capability_count": 5,
+ "na_record_count": 10,
+ "scored_record_count": 40,
+ "na_distribution": {
+  "D": 5,
+  "G": 5
+ },
+ "confidence_distribution": {
+  "HIGH": 36,
+  "MEDIUM": 14
+ },
+ "f_distribution": {
+  "F3": 4,
+  "F2": 1
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T12-trackscore.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, require van een core-module als BEHAVIORAL_UNIT, en bron- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief. Script-load is nergens als runtime-integratie geteld: een module die wel geladen maar niet aangeroepen wordt, blijft op criterium C begrensd op anker 1. Confidence volgt de canonieke semantiek waarin HIGH direct capability-specifiek bewijs vereist en is per record afzonderlijk toegekend met een eigen confidence_basis; het aggregaat is pas na de laatste toekenning geteld en stuurt geen enkele score.",
+ "track_notes": "LongitudinalTrendCore is MODULE_DORMANT: script-geladen met nul productie-callers, terwijl PlateauDetectionCore een en RelationshipCore twee bewezen callers hebben in dezelfde bundel. De V1-verantwoordelijkheid voor langetermijntrend is niet aantoonbaar elders vervuld. Vastgelegd als GAP-P3-035. Geen van deze bevindingen is als SHADOW_ACTIVE geclassificeerd: er is geen actieve parallelle implementatie aangetroffen.",
+ "track_results": {
+  "T12": {
+   "score": "2.823",
+   "percentage": "56.46",
+   "capability_count": 5,
+   "sum_of_stored_scores": "14.117",
+   "arithmetic": "som van de OPGESLAGEN driedecimale capabilityscores gedeeld door het aantal capabilities, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "ADHERENCE-INTELLIGENCE-001",
+   "primary_track": "T12",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 260,
+   "unrounded_quotient": "3.058823529411764705882352941",
+   "weighted_score": "3.059",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record met afgesloten sprint plus registry-rij",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als geaggregeerde adherence boven de schemalaag, met v1_scope-onderbouwing en een next_action die MS-F7-03 als afgesloten noemt.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#ADHERENCE-INTELLIGENCE-001",
+      "docs/CAPABILITY_REGISTRY.md#ADHERENCE-INTELLIGENCE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "module aanwijsbaar en script-geladen; beheersing niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/adherenceIntelligence.js is de aanwijsbare hoofdimplementatie en via script-tag geladen, bovenop de canonieke ScheduleAdherenceCore. Parallelle paden geinventariseerd; geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/adherenceIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete file plus twee directe aanroepen inclusief argumentketen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: AdherenceIntelligenceCore wordt 2 keer aangeroepen in index.html, waaronder aggregate met ScheduleAdherenceCore als argument in het inzichtscherm. Geen volledige payload-chain, dus geen 4.",
+     "evidence_refs": [
+      "index.html#AdherenceIntelligenceCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: geen eigen migratietabel en geen persistentie-aanroep",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De adherencelaag is bewijsbaar stateless: zij aggregeert per aanroep over reeds gepersisteerde program_blocks en kent geen eigen migratietabel of persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "consumptie van de canonieke schemalaag afgeleid uit de aanroep",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "Deel van de keten is aangetoond: de adherencelaag consumeert de canonieke ScheduleAdherenceCore en levert aan de inzichtweergave. De volledige keten zonder bypass is niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "index.html#ScheduleAdherenceCore"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module en voert gedrag uit; uitvoeringsvorm geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/fAdherenceIntelligence.test.js requiret de module en voert het aggregatiegedrag uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fAdherenceIntelligence.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul auth- of autorisatiebeslissingen in de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Adherence-aggregatie rekent over de eigen planningsdata van de sporter zonder trust boundary, tweede partij of autorisatiebeslissing; afscherming zit op de onderliggende program_blocks.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "bereikbare weergave aanwijsbaar; volledigheid niet geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: het adherencepercentage verschijnt als eigen cel op het bereikbare inzichtscherm. Terugkoppeling niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-inzicht"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "expliciete statuscontrole en UNKNOWN-weergave in het aanroeppad geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes benoemd en afgevangen: de aggregatie levert een status en het scherm toont een streepje in plaats van 0 wanneer de status niet valid is of de bron faalde. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "index.html#agg.status"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "gaprelatie direct uit het register met status en blocker",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P3-023 raakt deze capability met v1_scope true en status OPEN, met blocker die niet op true is bewezen en daarmee nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-023"
+     ],
+     "gap_refs": [
+      "GAP-P3-023"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "ATHLETE-DASHBOARD-2-001",
+   "primary_track": "T12",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 245,
+   "unrounded_quotient": "2.882352941176470588235294118",
+   "weighted_score": "2.882",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record met afgesloten sprint plus registry-rij",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als het vernieuwde atleetdashboard, met v1_scope-onderbouwing en een next_action die MS-F7-05 als afgesloten noemt.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#ATHLETE-DASHBOARD-2-001",
+      "docs/CAPABILITY_REGISTRY.md#ATHLETE-DASHBOARD-2-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "renderfuncties aanwijsbaar; geen eigenaarsmodule die het afdwingt",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Het dashboard is belegd in de Home- en inzichtrenderfuncties van index.html, die uitsluitend reeds berekende waarden uit de cores consumeren. Er is geen module die het als eigenaar afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "index.html#refreshHome",
+      "index.html#renderInzicht"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete renderketen in index.html aanwijsbaar",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: refreshHome roept achtereenvolgens de dashboardsecties aan en renderInzicht bouwt het inzichtscherm uit vier canonieke bronnen. Geen volledige payload-chain per sectie, dus geen 4.",
+     "evidence_refs": [
+      "index.html#refreshHome",
+      "index.html#inzichtRenderDevelopment"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: geen eigen migratietabel en geen persistentie-aanroep",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het dashboard is bewijsbaar stateless: het leest per render uit reeds gepersisteerde bronnen en kent geen eigen migratietabel of persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "consumptie van de cores aanwijsbaar; niet per sectie edge-voor-edge bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "Deel van de keten is aangetoond: het dashboard consumeert uitkomsten van CalcCore, DecisionCore en CoachingCore en rekent zelf niets. De volledige keten zonder bypass is per sectie niet bewezen, dus geen 4.",
+     "evidence_refs": [
+      "index.html#CalcCore.calculateVolume",
+      "index.html#DecisionCore.readinessDay"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "gericht gezocht; nul capability-specifieke suites aangetroffen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "DOCUMENTATION_ONLY: gericht gezocht op fAthleteDashboard*; er bestaat geen suite die de dashboardlaag uitvoert. De aangetroffen T12-suites testen andere capabilities en zijn afgewezen als cross-capability evidence. Anker 2.",
+     "evidence_refs": [
+      "index.html#refreshHome"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul autorisatiebeslissingen in de renderlaag",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het dashboard toont uitsluitend de eigen reeds afgeschermde data van de sporter en neemt geen autorisatiebeslissing; er is geen trust boundary of tweede partij. Positief vastgesteld: nul auth-beslissingen in de renderfuncties.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "twee bereikbare schermen met aanwijsbare doorklikstructuur",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: Home en het inzichtscherm zijn bereikbaar en tonen samenhangende secties met doorklikmogelijkheden naar de onderliggende domeinen. Geen device-bewijs, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-home",
+      "index.html#s-inzicht"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "expliciete null-versus-leeg-afhandeling en trenddrempel in de renderlaag geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes benoemd en afgevangen: elke sectie toont een streepje bij ontbrekende of mislukte data, de wrapper onderscheidt expliciet een lege uitkomst van een fout, en een trend wordt niet getoond bij minder dan twee geldige punten. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "index.html#inzichtGetOrNull",
+      "index.html#UNKNOWN"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "gaprelatie direct uit het register met status en blocker",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P2-022 raakt deze capability met v1_scope true en status OPEN, met blocker die niet op true is bewezen en daarmee nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-022"
+     ],
+     "gap_refs": [
+      "GAP-P2-022"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "LONGITUDINAL-TREND-001",
+   "primary_track": "T12",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 205,
+   "unrounded_quotient": "2.411764705882352941176470588",
+   "weighted_score": "2.412",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record met benoemde drager plus registry-rij",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als langetermijntrendnormalisatie, met v1_scope-onderbouwing en een next_action die MS-F7-01 als afgesloten noemt met LongitudinalTrendCore als drager.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#LONGITUDINAL-TREND-001",
+      "docs/CAPABILITY_REGISTRY.md#LONGITUDINAL-TREND-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "de door de index aangewezen drager, concreet bestand met benoemde export",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/longitudinalTrend.js is de door de index aangewezen drager en exporteert LongitudinalTrendCore. De module is dormant en als zodanig geclassificeerd, wat anker 3 toelaat maar anker 4 uitsluit.",
+     "evidence_refs": [
+      "core/longitudinalTrend.js",
+      "docs/ROADMAP_INDEX.json#LONGITUDINAL-TREND-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe negatieve telling naast bewezen positieve tellingen van de drie zustermodules in dezelfde bundel",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.176",
+     "rationale": "Module bestaat en is via script-tag geladen, maar heeft nul productie-callers: LongitudinalTrendCore wordt nul keer aangeroepen in index.html, tegenover 1 voor PlateauDetectionCore en 2 voor AdherenceIntelligenceCore en RelationshipCore in dezelfde bundel. Script-load is geen runtime-integratie; Model v1.2 begrenst dit op anker 1.",
+     "evidence_refs": [
+      "core/longitudinalTrend.js",
+      "index.html#nul-LongitudinalTrendCore-aanroepen"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: geen eigen migratietabel en geen persistentie-aanroep",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De trendlaag is bewijsbaar stateless: zij normaliseert per aanroep over reeds gepersisteerde sessies en kent geen eigen migratietabel of persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "de losse koppeling volgt uit de dormancy; geen directe observatie van een keten",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "Losse koppeling: de trendlaag zou de canonieke trendfuncties normaliseren, maar zonder productie-caller is de keten niet aangetoond. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "core/longitudinalTrend.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module en voert gedrag uit; uitvoeringsvorm geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/fLongitudinalTrendCore.test.js requiret de module en voert het normalisatiegedrag uit. Geen vm-runtime, dus geen 4. Dat een dormante module wel getest is, verhoogt C niet.",
+     "evidence_refs": [
+      "core/fLongitudinalTrendCore.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul auth- of credentialreferenties in de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Trendnormalisatie rekent over de eigen prestatiedata van de sporter zonder trust boundary, tweede partij of autorisatiebeslissing. Positief vastgesteld: nul auth- of credentialreferenties in de module.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy; de UI-consequentie is niet per scherm geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "Er is trendweergave binnen het bereikbare statsscherm, maar die loopt via de generieke progressielaag en niet via de aangeroepen trendcapability; de keten van ontdekken naar gebruiken is voor deze capability niet als bruikbaar bewezen. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#s-stats"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy; geen capability-specifiek onbekend-gedrag geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.118",
+     "rationale": "Generieke afhandeling: zonder productie-caller is er geen capability-specifiek bewijs van gedrag bij onvoldoende historie. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/longitudinalTrend.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe gaprelatie: nieuw geregistreerde gap met primary LONGITUDINAL-TREND-001, blocker false",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "De in deze golf geregistreerde capability-scoped gap noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker false, wat onder Model v1.2 nonblocking is. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-035"
+     ],
+     "gap_refs": [
+      "GAP-P3-035"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "PLATEAU-DETECTION-001",
+   "primary_track": "T12",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 245,
+   "unrounded_quotient": "2.882352941176470588235294118",
+   "weighted_score": "2.882",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record met afgesloten sprint plus registry-rij",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als oefeningspecifieke plateau- en stagnatieclassificatie, met v1_scope-onderbouwing en een next_action die MS-F7-02 als afgesloten noemt.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#PLATEAU-DETECTION-001",
+      "docs/CAPABILITY_REGISTRY.md#PLATEAU-DETECTION-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "module aanwijsbaar en script-geladen; beheersing niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/plateauDetection.js is de aanwijsbare hoofdimplementatie en via script-tag geladen, met PlateauDetectionCore als export. Parallelle paden geinventariseerd; geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/plateauDetection.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "exact een directe aanroep geteld; de keten erachter is niet geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "PlateauDetectionCore wordt eenmaal aangeroepen in index.html: de productie-caller is daarmee bewezen aanwezig, maar een enkele aanroep zonder aangetoonde consument aan de andere kant is caller-aanwezigheid zonder bewezen keten. Model v1.2 begrenst dat op anker 2.",
+     "evidence_refs": [
+      "index.html#PlateauDetectionCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: geen eigen migratietabel en geen persistentie-aanroep",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De plateaulaag is bewijsbaar stateless: zij classificeert per aanroep over reeds gepersisteerde sessies en kent geen eigen migratietabel of persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "consumptie afgeleid uit de aanroep; niet edge-voor-edge bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "Deel van de keten is aangetoond: de plateauclassificatie consumeert de progressiegegevens en levert aan de verbeterweergave. De volledige keten zonder bypass is niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "core/plateauDetection.js",
+      "index.html#PlateauDetectionCore"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module en voert gedrag uit; uitvoeringsvorm geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/fPlateauDetection.test.js requiret de module en voert de classificatie uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fPlateauDetection.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul auth- of credentialreferenties in de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Plateauclassificatie rekent over de eigen prestatiedata van de sporter zonder trust boundary, tweede partij of autorisatiebeslissing. Positief vastgesteld: nul auth- of credentialreferenties in de module.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de enkele aanroep; de UI-consequentie is niet per scherm geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "Er is verbeter- en stagnatieweergave binnen het bereikbare statsscherm, maar met een enkele aanroep is de keten van ontdekken naar gebruiken voor deze capability niet als bruikbaar bewezen. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#s-stats"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "onvoldoende-data-gedrag in suite en aanroeppad geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes benoemd en afgevangen: bij onvoldoende vergelijkbare historie wordt geen plateau gefabriceerd maar een onbepaalde status gevoerd, aansluitend op de sufficiency-conventie van de progressielaag. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "core/fPlateauDetection.test.js",
+      "index.html#sufficiency"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over het register: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Geen enkele gap noemt deze capability met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over het canonieke register. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "RELATIONSHIP-DISCOVERY-001",
+   "primary_track": "T12",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 245,
+   "unrounded_quotient": "2.882352941176470588235294118",
+   "weighted_score": "2.882",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record met afgesloten sprint plus registry-rij",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als verbandontdekking met datatoereikendheid en causaliteitswaarschuwingen, met v1_scope-onderbouwing en een next_action die MS-F7-04 als afgesloten noemt.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#RELATIONSHIP-DISCOVERY-001",
+      "docs/CAPABILITY_REGISTRY.md#RELATIONSHIP-DISCOVERY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "module aanwijsbaar en script-geladen; beheersing niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/relationship.js is de aanwijsbare hoofdimplementatie en via script-tag geladen, met RelationshipCore als export. Parallelle paden geinventariseerd; geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/relationship.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "twee directe aanroepen geteld; de keten erachter is niet geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "RelationshipCore wordt tweemaal aangeroepen in index.html: productie-callers zijn daarmee bewezen aanwezig, maar de keten van entrypoint tot consument is niet bewezen. Caller-aanwezigheid zonder bewezen keten is anker 2.",
+     "evidence_refs": [
+      "index.html#RelationshipCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: geen eigen migratietabel en geen persistentie-aanroep",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De verbandenlaag is bewijsbaar stateless: zij correleert per aanroep over reeds gepersisteerde reeksen en kent geen eigen migratietabel of persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "consumptie afgeleid uit de aanroepen en de schermkoppeling",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "Deel van de keten is aangetoond: de verbandenlaag consumeert reeds berekende reeksen uit de gezondheids- en prestatiedomeinen en levert aan het verbandenscherm. De volledige keten zonder bypass is niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "core/relationship.js",
+      "index.html#s-lich-verbanden"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "twee suites requiren de module en voeren gedrag uit; uitvoeringsvorm geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/fRelationship.test.js en core/fRelationshipIntelligenceMSF704.test.js requiren de module en voeren het correlatiegedrag uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fRelationship.test.js",
+      "core/fRelationshipIntelligenceMSF704.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul auth- of credentialreferenties in de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Verbandontdekking correleert over de eigen data van de sporter zonder trust boundary, tweede partij of autorisatiebeslissing. Positief vastgesteld: nul auth- of credentialreferenties in de module.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "domein bereikbaar; weergaveketen niet per stap geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.235",
+     "rationale": "Het verbandenscherm is als domein bereikbaar vanuit het inzichtscherm, maar met twee aanroepen en zonder aangetoonde volledige weergaveketen is ontdekken naar gebruiken voor deze capability niet als bruikbaar bewezen. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#s-lich-verbanden"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "causaliteitswaarschuwing als expliciet onderdeel van de canonieke verantwoordelijkheid plus suite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes benoemd en afgevangen: de capabilityverantwoordelijkheid omvat expliciet datatoereikendheid en causaliteitswaarschuwingen, zodat een correlatie nooit als oorzakelijk verband wordt gepresenteerd en bij onvoldoende data geen verband wordt gefabriceerd. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#RELATIONSHIP-DISCOVERY-001",
+      "core/fRelationshipIntelligenceMSF704.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over het register: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Geen enkele gap noemt deze capability met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over het canonieke register. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  }
+ ]
+}

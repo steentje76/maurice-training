@@ -571,6 +571,150 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── Combined F/G: T9 en T12 Model-v1.2 auditartefacten ──
+    (function fgPrimeGuard() {
+      const halfUp = function (x, dp) {
+        const f = Math.pow(10, dp);
+        return (Math.round(parseFloat((x * f).toPrecision(12))) / f).toFixed(dp);
+      };
+      const FROZEN = { 'NUTR-FOUNDATION-001': '3.313', 'NUTR-INGEST-001': '3.111', 'NUTR-INTEL-001': '2.467',
+        'NUTR-PRODUCT-001': '3.111', 'NUTR-TARGETS-001': '3.111', 'NUTR-UX-001': '3.000', 'RECOV-HRV-PROV-001': '3.150',
+        'ADHERENCE-INTELLIGENCE-001': '3.059', 'ATHLETE-DASHBOARD-2-001': '2.882', 'LONGITUDINAL-TREND-001': '2.412',
+        'PLATEAU-DETECTION-001': '2.882', 'RELATIONSHIP-DISCOVERY-001': '2.882' };
+      const TRACKS = { T9: ['21.263', '3.038', '60.76', 7], T12: ['14.117', '2.823', '56.46', 5] };
+      const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
+      const NA_OK = ['D','E','G','H'];
+      const CONF = ['HIGH','MEDIUM','LOW'];
+      const m12 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_2.json'), 'utf8'));
+      const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'ROADMAP_INDEX.json'), 'utf8'));
+      const known = {}; idx.forEach(function (x) { if (x.type === 'capability') known[x.id] = x; });
+      const reg = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      const gapIds = {}; (reg.gaps || []).forEach(function (g) { gapIds[g.gap_id] = g; });
+      let totalRecs = 0, totalCaps = 0;
+      const allNa = {}, allConf = {}, allF = {};
+      Object.keys(TRACKS).forEach(function (tk) {
+        const tp = path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_' + tk + '_PRIME.json');
+        if (!fs.existsSync(tp)) { problems.push('canoniek ' + tk + '-artefact ontbreekt'); return; }
+        const t = JSON.parse(fs.readFileSync(tp, 'utf8'));
+        if (t.audit_model_id !== m12.audit_model_id) problems.push(tk + ' model_id wijkt af');
+        if (t.audit_model_version !== '1.2') problems.push(tk + ' audit_model_version is niet 1.2');
+        if (t.audit_model_fingerprint !== m12.model_fingerprint) problems.push(tk + ' fingerprint wijkt af');
+        const caps = t.capabilities || [];
+        if (caps.length !== TRACKS[tk][3]) problems.push(tk + ' heeft ' + caps.length + ' capabilities, verwacht ' + TRACKS[tk][3]);
+        const fromIndex = Object.keys(known).filter(function (k) {
+          return known[k].primary_track === tk && known[k].v1_scope === true;
+        }).sort();
+        if (fromIndex.join(',') !== caps.map(function (c) { return c.stable_id; }).sort().join(',')) {
+          problems.push(tk + ' capability-set wijkt af van de canonieke index');
+        }
+        const stored = [];
+        caps.forEach(function (c) {
+          totalCaps++;
+          const id = c.stable_id;
+          if (!FROZEN[id]) { problems.push(tk + ' onverwachte capability ' + id); return; }
+          const seen = {};
+          if (Object.keys(c.criteria || {}).sort().join('') !== CRIT.join('')) problems.push(tk + ' ' + id + ' heeft niet exact A-J');
+          let aw = 0, num = 0;
+          CRIT.forEach(function (k) {
+            const r = (c.criteria || {})[k]; if (!r) { problems.push(tk + ' ' + id + ' mist criterium ' + k); return; }
+            if (seen[k]) problems.push(tk + ' ' + id + ' dubbel criterium ' + k);
+            seen[k] = true; totalRecs++;
+            if (CONF.indexOf(r.confidence) < 0) problems.push(tk + ' ' + id + '/' + k + ' ongeldige confidence');
+            allConf[r.confidence] = (allConf[r.confidence] || 0) + 1;
+            if (!r.confidence_basis) problems.push(tk + ' ' + id + '/' + k + ' zonder confidence_basis');
+            if (r.applicable === false) {
+              allNa[k] = (allNa[k] || 0) + 1;
+              if (NA_OK.indexOf(k) < 0) problems.push(tk + ' N/A niet toegestaan op ' + id + '/' + k);
+              if (!r.na_rationale) problems.push(tk + ' N/A zonder rationale: ' + id + '/' + k);
+              return;
+            }
+            if (!Number.isInteger(r.score) || r.score < 0 || r.score > 5) problems.push(tk + ' ' + id + '/' + k + ' score niet integer 0-5');
+            if (k === 'F') {
+              allF['F' + r.score] = (allF['F' + r.score] || 0) + 1;
+              if (r.score >= 4) problems.push(tk + ' ' + id + ' draagt een F' + r.score + '; deze golf kent er geen');
+            }
+            if (!r.rationale) problems.push(tk + ' ' + id + '/' + k + ' zonder rationale');
+            if (!(r.evidence_refs || []).length) problems.push(tk + ' ' + id + '/' + k + ' zonder evidence_refs');
+            (r.gap_refs || []).forEach(function (g) {
+              if (!gapIds[g]) problems.push(tk + ' ' + id + '/' + k + ' verwijst naar onbekende gap ' + g);
+            });
+            (r.evidence_refs || []).forEach(function (e) {
+              if (typeof e !== 'string') return;
+              const p0 = e.split('#')[0].split(':')[0];
+              if (!p0 || p0.indexOf('*') >= 0) return;
+              if (p0.indexOf('/') < 0 && !/\.(sql|js|md|json|html)$/.test(p0)) return;
+              if (!fs.existsSync(path.join(ROOT, p0))) {
+                problems.push(tk + ' ' + id + '/' + k + ' verwijst naar een niet-bestaand repository-pad: ' + p0);
+              }
+            });
+            aw += r.weight; num += r.weight * r.score;
+          });
+          const sc = halfUp(num / aw, 3);
+          if (sc !== c.weighted_score) problems.push(tk + ' ' + id + ' opgeslagen score ' + c.weighted_score + ', herberekend ' + sc);
+          if (c.weighted_score !== FROZEN[id]) problems.push(tk + ' ' + id + ' wijkt af van de gecanonicaliseerde score ' + FROZEN[id]);
+          if (c.applicable_weight !== aw) problems.push(tk + ' ' + id + ' applicable_weight klopt niet');
+          if (c.weighted_numerator !== num) problems.push(tk + ' ' + id + ' weighted_numerator klopt niet');
+          stored.push(parseFloat(c.weighted_score));
+        });
+        const sum = stored.reduce(function (a, b) { return a + b; }, 0);
+        const tr = (t.track_results || {})[tk] || {};
+        if (sum.toFixed(3) !== TRACKS[tk][0]) problems.push(tk + ' som van opgeslagen scores is ' + sum.toFixed(3) + ', verwacht ' + TRACKS[tk][0]);
+        if (tr.sum_of_stored_scores !== TRACKS[tk][0]) problems.push(tk + ' sum_of_stored_scores klopt niet');
+        const tscore = halfUp(sum / stored.length, 3);
+        if (tscore !== TRACKS[tk][1] || tr.score !== TRACKS[tk][1]) problems.push(tk + ' trackscore ' + tr.score + ', verwacht ' + TRACKS[tk][1]);
+        const pct = halfUp(parseFloat(TRACKS[tk][1]) / 5 * 100, 2);
+        if (tr.percentage !== pct || pct !== TRACKS[tk][2]) problems.push(tk + ' percentage ' + tr.percentage + ', verwacht ' + TRACKS[tk][2]);
+      });
+      if (totalCaps !== 12) problems.push('F/G telt ' + totalCaps + ' capabilities, verwacht 12');
+      if (totalRecs !== 120) problems.push('F/G telt ' + totalRecs + ' criterion records, verwacht 120');
+      const NAEXP = { D: 7, E: 6, G: 7, H: 1 };
+      Object.keys(NAEXP).forEach(function (k) {
+        if ((allNa[k] || 0) !== NAEXP[k]) problems.push('F/G N/A op ' + k + ' is ' + (allNa[k] || 0) + ', verwacht ' + NAEXP[k]);
+      });
+      const CEXP = { HIGH: 89, MEDIUM: 31 };
+      Object.keys(CEXP).forEach(function (k) {
+        if ((allConf[k] || 0) !== CEXP[k]) problems.push('F/G confidence ' + k + ' is ' + (allConf[k] || 0) + ', verwacht ' + CEXP[k]);
+      });
+      if ((allConf.LOW || 0) !== 0) problems.push('F/G kent geen LOW-confidence');
+      const FEXP = { F2: 5, F3: 7 };
+      Object.keys(FEXP).forEach(function (k) {
+        if ((allF[k] || 0) !== FEXP[k]) problems.push('F/G F-aggregaat ' + k + ' is ' + (allF[k] || 0) + ', verwacht ' + FEXP[k]);
+      });
+      if ((allF.F4 || 0) !== 0 || (allF.F5 || 0) !== 0) problems.push('F/G mag geen F4 of F5 bevatten');
+      [['GAP-P3-035', 'LONGITUDINAL-TREND-001'], ['GAP-P3-036', 'NUTR-INTEL-001']].forEach(function (pair) {
+        const g = gapIds[pair[0]];
+        if (!g) { problems.push(pair[0] + ' ontbreekt in het gapregister'); return; }
+        if (g.primary_capability_id !== pair[1]) problems.push(pair[0] + ' primary capability klopt niet');
+        if ((g.affected_capability_ids || []).length !== 0) problems.push(pair[0] + ' mag geen affected capabilities dragen');
+        if ((g.criteria_impact || []).indexOf('C') < 0) problems.push(pair[0] + ' mist criterium C');
+        if (g.blocker !== false) problems.push(pair[0] + ' blocker moet false zijn');
+        if (g.v1_scope !== true) problems.push(pair[0] + ' v1_scope moet true zijn');
+        if (g.status !== 'OPEN') problems.push(pair[0] + ' status moet OPEN zijn');
+        if (g.severity !== 'P3') problems.push(pair[0] + ' severity moet P3 zijn');
+        if (g.traceability_status !== 'COMPLETE' || g.traceability_scope !== 'CAPABILITY_SCOPED') {
+          problems.push(pair[0] + ' traceability moet COMPLETE/CAPABILITY_SCOPED zijn');
+        }
+      });
+      const t12 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T12_PRIME.json'), 'utf8'));
+      const lt = (t12.capabilities || []).filter(function (c) { return c.stable_id === 'LONGITUDINAL-TREND-001'; })[0];
+      if (lt && lt.criteria.J.score !== 3) problems.push('LONGITUDINAL-TREND-001 J moet 3 zijn na GAP-P3-035');
+      const t9 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T9_PRIME.json'), 'utf8'));
+      const ni = (t9.capabilities || []).filter(function (c) { return c.stable_id === 'NUTR-INTEL-001'; })[0];
+      if (ni && ni.criteria.J.score !== 3) problems.push('NUTR-INTEL-001 J moet 3 zijn na GAP-P3-036');
+      const g210 = gapIds['GAP-P2-010'];
+      if (!g210 || g210.traceability_scope !== 'UNSCOPED' || g210.primary_capability_id || (g210.affected_capability_ids || []).length) {
+        problems.push('GAP-P2-010-semantiek is veranderd');
+      }
+      if ((reg.gaps || []).length !== 63) problems.push('gap register telt ' + (reg.gaps || []).length + ' records, verwacht 63');
+      const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
+      if (bl.indexOf('met criterium-specifieke evidence | **63 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 63/86');
+      if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
+      const t3 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T3_PRIME.json'), 'utf8'));
+      if (t3.track_results.T3.score !== '3.122') problems.push('T3-trackscore is veranderd');
+      const t7 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T7_PRIME.json'), 'utf8'));
+      if (t7.track_results.T7.score !== '3.051') problems.push('T7-trackscore is veranderd');
+    })();
+
     // ── Combined E/J: T7, T10 en T13 Model-v1.2 auditartefacten ──
     (function ejPrimeGuard() {
       const halfUp = function (x, dp) {
@@ -712,9 +856,9 @@ try {
       if (!g210 || g210.traceability_scope !== 'UNSCOPED' || g210.primary_capability_id || (g210.affected_capability_ids || []).length) {
         problems.push('GAP-P2-010-semantiek is veranderd');
       }
-      if ((reg.gaps || []).length !== 61) problems.push('gap register telt ' + (reg.gaps || []).length + ' records, verwacht 61');
+      // gapregister groeit met bewezen nieuwe gaps; centraal gecontroleerd in de F/G-guard (63).
       const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
-      if (bl.indexOf('met criterium-specifieke evidence | **51 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 51/86');
+      // model_v1_verified loopt op per gecanonicaliseerde track; centraal gecontroleerd in de F/G-guard (63/86).
       if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
       // eerdere canonieke artefacten blijven geldig
       const t3 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T3_PRIME.json'), 'utf8'));

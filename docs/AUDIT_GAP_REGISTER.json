@@ -3,8 +3,8 @@
  "baseline": "BASELINE-1.0",
  "generated_against_main": "3415744992008607181e7a078483de372d989efd",
  "counts": {
-  "entries": 61,
-  "open": 43,
+  "entries": 63,
+  "open": 45,
   "closed_proven": 18,
   "deferred_accepted": 0,
   "superseded": 2
@@ -1610,6 +1610,56 @@
    "next_action": "Productbeslissing: het zichtbaarheidscontract alsnog bedraden in de social-renderfuncties, of de module expliciet als niet-gebruikt classificeren en uit de productiebundel halen.",
    "v1_evidence": "V1_SCOPE_MATRIX: Social identity/privacy = V1 MUST Ja",
    "traceability_evidence": "Capability-scoped: core/socialPrivacy.js is de door de registry en de modulekop aangewezen drager van het client-side zichtbaarheidscontract van SOCIAL-IDENTITY-PRIVACY-001. De dormancy is vastgesteld op de canonicalisatie-baseline langs twintig zoekroutes met nul productie-callers. Geen enkele andere capability is direct geraakt bewezen, daarom is affected_capability_ids leeg."
+  },
+  {
+   "gap_id": "GAP-P3-035",
+   "title": "### GAP-P3-035 — LongitudinalTrendCore is aanwezig en script-geladen, maar heeft geen bewezen productie-caller",
+   "primary_track": "T12",
+   "severity": "P3",
+   "status": "OPEN",
+   "v1_scope": true,
+   "blocker": false,
+   "evidence": "core/longitudinalTrend.js is via script-tag geladen en exporteert LongitudinalTrendCore, de door de canonieke index aangewezen drager (MS-F7-01). Op de canonicalisatie-baseline is vastgesteld dat LongitudinalTrendCore nul keer wordt aangeroepen in index.html, tegenover een aanroep voor PlateauDetectionCore en twee voor AdherenceIntelligenceCore en RelationshipCore in dezelfde bundel. Script-load is geen runtime-integratie. Er is geen equivalent actief canoniek runtime-pad aangetroffen dat de V1-verantwoordelijkheid voor langetermijntrend vervult.",
+   "capability_id": "LONGITUDINAL-TREND-001",
+   "secondary_tracks": [],
+   "track_evidence": "Gap-track T12 volgt uit primary_capability_id LONGITUDINAL-TREND-001 (T12). Er zijn geen affected_capability_ids: geen andere capability is direct geraakt bewezen.",
+   "primary_capability_id": "LONGITUDINAL-TREND-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "criteria_impact": [
+    "C"
+   ],
+   "impact": "De langetermijntrendnormalisatie draagt niet bij aan de weergave waarvoor zij is gebouwd; trendweergave op het statsscherm loopt via de generieke progressielaag. Dit is uitdrukkelijk GEEN dataverlies, GEEN securitydefect, GEEN AI-fabricage en GEEN SHADOW_ACTIVE: er is geen actieve parallelle implementatie van deze normalisatie aangetroffen.",
+   "discovered_in": "COMBINED F/G — Model v1.2 re-audit T9/T12",
+   "next_action": "Productbeslissing: de trendnormalisatie alsnog bedraden in de progressie- en statsweergave, of de module expliciet als niet-gebruikt classificeren.",
+   "v1_evidence": "V1_SCOPE_MATRIX: Longitudinal trend = V1 MUST Ja",
+   "traceability_evidence": "Capability-scoped: de module is de door de canonieke index en registry aangewezen drager van deze capability. De dormancy is vastgesteld op de canonicalisatie-baseline met een directe negatieve telling naast bewezen positieve tellingen van zustermodules in dezelfde bundel. Geen enkele andere capability is direct geraakt bewezen, daarom is affected_capability_ids leeg."
+  },
+  {
+   "gap_id": "GAP-P3-036",
+   "title": "### GAP-P3-036 — NutritionIntelligence is aanwezig en script-geladen, maar heeft geen bewezen productie-caller",
+   "primary_track": "T9",
+   "severity": "P3",
+   "status": "OPEN",
+   "v1_scope": true,
+   "blocker": false,
+   "evidence": "core/nutritionIntelligence.js is via script-tag geladen en is de door de canonieke registry aangewezen drager van NUTR-INTEL-001. Op de canonicalisatie-baseline is vastgesteld dat NutritionIntelligence nul keer wordt aangeroepen in index.html, tegenover vijftien aanroepen voor NutritionFoundation2Core, acht voor NutritionMealService en zes voor NutritionTargetService in dezelfde bundel. Script-load is geen runtime-integratie.",
+   "capability_id": "NUTR-INTEL-001",
+   "secondary_tracks": [],
+   "track_evidence": "Gap-track T9 volgt uit primary_capability_id NUTR-INTEL-001 (T9). Er zijn geen affected_capability_ids: geen andere capability is direct geraakt bewezen.",
+   "primary_capability_id": "NUTR-INTEL-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "criteria_impact": [
+    "C"
+   ],
+   "impact": "De voedingsintelligentielaag draagt niet bij aan de voedings-UI. Dit is uitdrukkelijk GEEN dataverlies, GEEN securitydefect, GEEN AI-fabricage en GEEN SHADOW_ACTIVE. De bevinding is smal: zij betreft uitsluitend NUTR-INTEL-001 en niet het voedingsfundament, de doelen, het productbeheer, de ingest of de degraded-state-classifier.",
+   "discovered_in": "COMBINED F/G — Model v1.2 re-audit T9/T12",
+   "next_action": "Productbeslissing: de intelligentielaag alsnog bedraden in de voedings-UI, of de module expliciet als niet-gebruikt classificeren.",
+   "v1_evidence": "V1_SCOPE_MATRIX: Nutrition intelligence = V1 MUST Ja",
+   "traceability_evidence": "Capability-scoped: de module is de door de canonieke index en registry aangewezen drager van deze capability. De dormancy is vastgesteld op de canonicalisatie-baseline met een directe negatieve telling naast bewezen positieve tellingen van zustermodules in dezelfde bundel. Geen enkele andere capability is direct geraakt bewezen, daarom is affected_capability_ids leeg."
   }
  ],
  "_corrections": {

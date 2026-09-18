@@ -315,6 +315,29 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-EXERCISE-HISTORY-FILTER-001 | Exercise library | Library can filter exercises previously performed | RP Hypertrophy official release notes | HIGH | Useful as MoveKit library scales | CANDIDATE |
 | PAT-HYPERTROPHY-TEMPLATE-LIBRARY-001 | Programs | Template is adaptive starting structure, not immutable plan | RP Hypertrophy official docs | HIGH | Future program library pattern | CANDIDATE |
 
+| PAT-PERSONAL-BASELINE-001 | Recovery | Physiological deviation interpreted against personal baseline | Oura 7.24.0 | HIGH | TK HRV baseline aligned | ALREADY_PRESENT |
+| PAT-MULTIHORIZON-BASELINE-001 | Recovery | Daily/recent/long-term windows remain separate | Oura 7.24.0 | HIGH | Generic Context/Calculation candidate | CANDIDATE |
+| PAT-RHR-DEVIATION-001 | Recovery | Nightly RHR deviation from personal baseline | Oura 7.24.0 | HIGH | TK recovery architecture aligned | ALREADY_PRESENT |
+| PAT-TEMP-DEVIATION-001 | Recovery | Temperature treated as deviation/context signal | Oura 7.24.0 | HIGH | Provider/method provenance required | CANDIDATE |
+| PAT-RESPIRATORY-DEVIATION-001 | Recovery | Respiratory-rate deviation contributes to strain context | Oura official docs | HIGH | Non-diagnostic external metric | CANDIDATE |
+| PAT-PHYSIO-DEVIATION-RADAR-001 | Recovery | Multi-signal deviation radar uses conservative strain framing | Oura 7.24.0 | HIGH | No illness diagnosis | CANDIDATE |
+| PAT-RECOVERY-MODE-001 | Recovery | Explicit reversible rest/recovery state changes goals/context | Oura 7.24.0 | MEDIUM | Illness/recovery/travel candidate | CANDIDATE |
+| PAT-STRESS-RECOVERY-BALANCE-001 | Recovery | Daytime stress and restorative time stay separate signals | Oura 7.24.0 | HIGH | Evidence review required | CANDIDATE |
+| PAT-RESILIENCE-LONGITUDINAL-001 | Recovery | Weeks-long stress/recovery state distinct from daily readiness | Oura official docs | HIGH | Longitudinal Inzicht candidate | CANDIDATE |
+| PAT-DOMAIN-SCORE-SEPARATION-001 | Health | Sleep/activity/readiness summaries remain distinct domains | Oura 7.24.0 | HIGH | Avoid universal wellness score | DESIGN_DIRECTION |
+| PAT-BACKGROUND-HEALTH-SYNC-001 | Platform | Wearable health processing can run without foreground app | Oura official docs | HIGH | Native durable-work requirement | CANDIDATE |
+| PAT-ACTIVITY-BALANCE-001 | Activity | Both underload and overload represented relative to history | Oura official docs | HIGH | No universal injury-safe zone | DESIGN_DIRECTION |
+| PAT-CARDIOVASCULAR-AGE-001 | Health | CV age is calibrated estimate with trend emphasis | Oura official docs | HIGH | Requires independent evidence | EVIDENCE_REVIEW_REQUIRED |
+| PAT-SLOW-METRIC-TREND-001 | Analytics | Slowly moving estimate emphasizes trend over daily noise | Oura official docs | HIGH | Generic UX rule | DESIGN_DIRECTION |
+| PAT-FIELD-TEST-UX-001 | Fitness | Standardized field-test UX gathers inputs for estimate | Oura 7.24.0 | MEDIUM | Evidence-backed protocol only | CANDIDATE |
+| PAT-HC-DATA-SCOPE-001 | Health Connect | User controls granular Health Connect sharing scopes | Oura official docs | HIGH | Native privacy requirement | DESIGN_DIRECTION |
+| PAT-CONTEXT-TAG-TAXONOMY-001 | Context | Canonical contextual tag taxonomy complements free text | Oura 7.24.0 | HIGH | Sensitive-tag privacy required | CANDIDATE |
+| PAT-TAG-METADATA-001 | Context | Context tags can carry separate metadata/configuration | Oura 7.24.0 | MEDIUM | Population vs personal evidence separated | CANDIDATE |
+| PAT-DEVICE-ONBOARDING-001 | Devices | Hardware connection has guided setup/charging/pairing UX | Oura 7.24.0 | HIGH | Direct-device future reference | CANDIDATE |
+| PAT-DEVICE-RETRY-STATE-001 | Devices | Bounded retry ends in explicit degraded state | Oura 7.24.0 | HIGH | Concept2/device integration pattern | CANDIDATE |
+| PAT-HRV-METHOD-PROVENANCE-001 | Provenance | HRV metric stores method/semantic provenance beyond provider | Oura/TK comparison | HIGH | Current TK nuance already identified | DESIGN_DIRECTION |
+| PAT-PROVIDER-COMPOSITE-ISOLATION-001 | Providers | Proprietary provider composite remains isolated from canonical calculation | Oura 7.24.0 | HIGH | Oura Readiness/Sleep/Activity boundary | DESIGN_DIRECTION |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

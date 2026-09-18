@@ -3,8 +3,8 @@
  "baseline": "BASELINE-1.0",
  "generated_against_main": "3415744992008607181e7a078483de372d989efd",
  "counts": {
-  "entries": 60,
-  "open": 42,
+  "entries": 61,
+  "open": 43,
   "closed_proven": 18,
   "deferred_accepted": 0,
   "superseded": 2
@@ -1585,6 +1585,31 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "Capability-relatie direct bewezen op main 739fcecb: CALC-EVIDENCE-SPEC-001 is eigenaar van de evidence-specificatie waarvan `EvidenceCore` de registratie- en resolutielaag is; EVIDENCE-CLAIM-AUDIT-001 is geraakt omdat claim-audit zonder resolutielaag geen bron kan aanwijzen; WEATHER-CONTEXT-001 is geraakt omdat `core/fWeatherEvidence.test.js` de enige executable consumer is en die koppeling uitsluitend in test bestaat. Alle drie de IDs bestaan in de canonieke capability-index.",
    "traceability_scope": "CAPABILITY_SCOPED"
+  },
+  {
+   "gap_id": "GAP-P3-034",
+   "title": "### GAP-P3-034 — SocialPrivacyCore is aanwezig en script-geladen, maar het canonieke client-side privacy- en zichtbaarheidscontract heeft geen bewezen productie-caller",
+   "primary_track": "T13",
+   "severity": "P3",
+   "status": "OPEN",
+   "v1_scope": true,
+   "blocker": false,
+   "evidence": "core/socialPrivacy.js is via script-tag geladen en exporteert VISIBILITY_STATES, isBlocked, isConnection, canViewSocialProfile en canViewSharedActivity. De modulekop noemt het het enige canonieke autorisatiecontract voor Social, bedoeld voor consistente UI-logica. Op de canonicalisatie-baseline is langs twintig zoekroutes vastgesteld dat er nul productie-callers zijn: nul SocialPrivacyCore-aanroepen, nul destructuring, nul alias, nul window-toegang, nul dynamische property-toegang, nul Netlify-gebruik en nul aanroepen van elk van de vier geexporteerde functienamen. De enige vermelding in index.html staat op regel 14739 en is een commentaarregel die juist stelt dat de module wordt hergebruikt. Script-load is geen runtime-integratie.",
+   "capability_id": "SOCIAL-IDENTITY-PRIVACY-001",
+   "secondary_tracks": [],
+   "track_evidence": "Gap-track T13 volgt uit primary_capability_id SOCIAL-IDENTITY-PRIVACY-001 (T13). Er zijn geen affected_capability_ids: geen andere capability is direct geraakt bewezen.",
+   "primary_capability_id": "SOCIAL-IDENTITY-PRIVACY-001",
+   "affected_capability_ids": [],
+   "traceability_status": "COMPLETE",
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "criteria_impact": [
+    "C"
+   ],
+   "impact": "Het client-side zichtbaarheidscontract draagt niet bij aan de UI-consistentie waarvoor het is gebouwd. Dit is uitdrukkelijk GEEN datalek, geen RLS-falen, geen autorisatie-bypass en geen privacyschending: de database-RLS is aantoonbaar actief met auth.uid()-policies en row level security op de social_*-tabellen in migratie_v503.sql en migratie_v557.sql, en blijft de bron van waarheid. Er is ook geen actieve parallelle implementatie aangetroffen, dus geen SHADOW_ACTIVE.",
+   "discovered_in": "COMBINED E/J — Model v1.2 re-audit T7/T10/T13",
+   "next_action": "Productbeslissing: het zichtbaarheidscontract alsnog bedraden in de social-renderfuncties, of de module expliciet als niet-gebruikt classificeren en uit de productiebundel halen.",
+   "v1_evidence": "V1_SCOPE_MATRIX: Social identity/privacy = V1 MUST Ja",
+   "traceability_evidence": "Capability-scoped: core/socialPrivacy.js is de door de registry en de modulekop aangewezen drager van het client-side zichtbaarheidscontract van SOCIAL-IDENTITY-PRIVACY-001. De dormancy is vastgesteld op de canonicalisatie-baseline langs twintig zoekroutes met nul productie-callers. Geen enkele andere capability is direct geraakt bewezen, daarom is affected_capability_ids leeg."
   }
  ],
  "_corrections": {

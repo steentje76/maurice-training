@@ -1,0 +1,556 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T7_PRIME",
+ "tracks": [
+  "T7"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "9c61561b2c7c8a19a2b8708a9cfc84536c0d2782",
+ "complete": true,
+ "record_count": 30,
+ "capability_count": 3,
+ "na_record_count": 6,
+ "scored_record_count": 24,
+ "na_distribution": {
+  "D": 2,
+  "G": 2,
+  "H": 2
+ },
+ "confidence_distribution": {
+  "HIGH": 20,
+  "MEDIUM": 10
+ },
+ "f_distribution": {
+  "F3": 2,
+  "F4": 1
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T7-trackscore.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, new Function of require van een core-module als BEHAVIORAL_UNIT, en regex- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief. Confidence volgt de canonieke semantiek waarin HIGH direct capability-specifiek bewijs vereist en is per record afzonderlijk toegekend met een eigen confidence_basis; het aggregaat is pas na de laatste toekenning geteld en stuurt geen enkele score.",
+ "track_notes": "EVID-SCI-001 blijft DORMANT_ALTERNATIVE en geen SHADOW_ACTIVE: er is geen actieve parallelle wetenschappelijke evidence-laag aangetroffen. GAP-P2-032 heeft primary CALC-EVIDENCE-SPEC-001 en is hier niet als relatie gebruikt; de canonieke relatie voor EVID-SCI-001 is GAP-P4-002. Voor HRV-LOG-ATOMICITY-001 is de werkelijke tabelnaam public.hrv_log_archive_v500 gebruikt, niet een aangenomen hrv_logs.",
+ "track_results": {
+  "T7": {
+   "score": "3.051",
+   "percentage": "61.02",
+   "capability_count": 3,
+   "sum_of_stored_scores": "9.153",
+   "arithmetic": "som van de drie OPGESLAGEN driedecimale capabilityscores gedeeld door 3, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "EVID-SCI-001",
+   "primary_track": "T7",
+   "v1_scope": true,
+   "applicable_weight": 75,
+   "weighted_numerator": 185,
+   "unrounded_quotient": "2.466666666666666666666666667",
+   "weighted_score": "2.467",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry-rij met schema evidence_store.v1: directe canonieke bron",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.267",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als wetenschappelijke evidence-laag met schema evidence_store.v1, met v1_scope-onderbouwing in de index en een registry-rij die core/scientificEvidence.js als drager aanwijst.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#EVID-SCI-001",
+      "docs/CAPABILITY_REGISTRY.md#EVID-SCI-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "de door de registry aangewezen drager: concrete file met benoemde exportstructuur",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.600",
+     "rationale": "core/scientificEvidence.js is de door de registry aangewezen hoofdimplementatie met een benoemde exportstructuur. De module is dormant en als zodanig geclassificeerd, wat anker 3 toelaat maar anker 4 uitsluit omdat er geen bewezen beheersing van alternatieven is.",
+     "evidence_refs": [
+      "core/scientificEvidence.js",
+      "docs/CAPABILITY_REGISTRY.md#EVID-SCI-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "dormancy direct en uitputtend bewezen over symbool, script-tag, Netlify en equivalente gedragsroutes",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.200",
+     "rationale": "Module bestaat maar heeft nul productie-callers. Direct en uitputtend vastgesteld: nul EvidenceCore-vermeldingen in index.html, nul script-tag, nul Netlify-gebruik, en nul treffers op evidence_source en EVIDENCE_REGISTRY in productiecode. Model v1.2 begrenst dit op anker 1. Dit is een dormante alternatieve laag, geen actieve parallelle implementatie.",
+     "evidence_refs": [
+      "core/scientificEvidence.js",
+      "index.html#nul-EvidenceCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul migratietabel en nul persistentie-aanroep; de N/A rust op aangetoonde afwezigheid van eigen opslag",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De wetenschappelijke evidence-laag is bewijsbaar stateless: core/scientificEvidence.js kent geen persistentie-aanroep en er bestaat nul migratietabel voor evidence_source. Het schema evidence_store.v1 is een in-memory contractnaam, geen databaseobject.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "de losse koppeling volgt uit de dormancy zelf; geen directe observatie van een gedeeltelijke keten",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.267",
+     "rationale": "Losse koppeling: de module zou wetenschappelijke onderbouwing aan beslissingen leveren, maar zonder productie-caller is de keten niet aangetoond. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "core/scientificEvidence.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "de suite requiret de module en voert gedrag uit, maar is primair op weather-evidence gericht",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.600",
+     "rationale": "BEHAVIORAL_UNIT: core/fWeatherEvidence.test.js requiret scientificEvidence.js naast weather.js en voert het evidence-gedrag uit. De suite is primair op weer-evidence gericht, waardoor de capability-specifieke dekking indirect is; geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fWeatherEvidence.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul auth-, persoonsgegeven- of credentialreferenties in de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De wetenschappelijke evidence-laag verwerkt literatuurreferenties en onderbouwingsteksten zonder trust boundary, persoonsgegeven, authenticatie, autorisatie of misbruikroute. Positief vastgesteld: nul credential- of gebruikersdatareferenties in de module.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: een dormante evidence-laag heeft nul route, nul invoer en nul terugkoppeling",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er bestaat geen gebruikerscontract: de laag heeft nul productie-caller en daarmee nul route, invoer of terugkoppeling voor de sporter. De N/A rust op de aangetoonde afwezigheid van elke UI-koppeling, niet op het niet vinden ervan.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy; geen capability-specifiek bewijs van onbekend-gedrag geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.133",
+     "rationale": "Generieke afhandeling: zonder productie-caller is er geen capability-specifiek bewijs van gedrag bij ontbrekende of tegenstrijdige wetenschappelijke onderbouwing. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/scientificEvidence.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "GAP-P4-002 direct uit het register met primary EVID-SCI-001; GAP-P2-032 heeft een andere primary en is niet gebruikt",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.400",
+     "rationale": "GAP-P4-002 noemt deze capability als primary_capability_id met v1_scope true, status REVIEW_REQUIRED en blocker REVIEW_REQUIRED, wat onder Model v1.2 nonblocking is. Anker J=3. GAP-P2-032 heeft primary CALC-EVIDENCE-SPEC-001 en is hier expliciet niet als relatie gebruikt.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P4-002"
+     ],
+     "gap_refs": [
+      "GAP-P4-002"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "HRV-LOG-ATOMICITY-001",
+   "primary_track": "T7",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 300,
+   "unrounded_quotient": "3.333333333333333333333333333",
+   "weighted_score": "3.333",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry benoemen atomiciteit van HRV-logging als eigen verantwoordelijkheid",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als atomiciteit van HRV-logging en archivering, met v1_scope-onderbouwing in de index en een registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#HRV-LOG-ATOMICITY-001",
+      "docs/CAPABILITY_REGISTRY.md#HRV-LOG-ATOMICITY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "de atomiciteit leeft in migraties en vijftien core-modules raken HRV; geen module dwingt het af",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "De atomiciteitsgarantie is belegd in de migratielaag, met migratie_v510.sql als drager van het atomiciteitswerk; vijftien core-modules raken HRV. Er is geen module die de garantie als eigenaar afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v510.sql",
+      "migratie_v*.sql#hrv_log_archive_v500"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "306 referenties is een aggregaat; de schrijfketen is niet edge-voor-edge bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Productie-callers bewezen: HRV-functionaliteit draagt 306 referenties in index.html en vijftien core-modules verwerken HRV-data. De schrijfketen is niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "index.html#hrv",
+      "core/deviceIntegration.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs: 3 migratiebestanden met auth.uid() in vier migraties en RLS in drie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie bewezen: public.hrv_log_archive_v500 komt voor in drie migratiebestanden, met auth.uid()-policies in migratie_v495, v500, v505 en v507 en row level security in v495, v505 en v507. Versionering en historiebehoud zijn niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#hrv_log_archive_v500",
+      "migratie_v505.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "voeding van de herstelberekening is afgeleid, niet als keten bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Deel van de keten is aangetoond: HRV-metingen voeden de herstelberekening. De volledige keten zonder bypass is voor deze capability niet bewezen, dus geen 4.",
+     "evidence_refs": [
+      "core/calculation.js",
+      "core/deviceIntegration.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "drie suites met uitvoering, per suite direct geinspecteerd op uitvoeringsvorm",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: core/fHrvBaselineCanonicalization.test.js requiret calculation.js, core/fHrvConcurrencyClosure.test.js requiret deviceIntegration.js en core/fHrvUpsertMerge.test.js voert merge-gedrag uit. core/fHrvArchiveLockdown.test.js is DOCUMENTATION_ONLY. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fHrvBaselineCanonicalization.test.js",
+      "core/fHrvConcurrencyClosure.test.js",
+      "core/fHrvUpsertMerge.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratie/policy-bewijs: auth.uid() en RLS op de HRV-archieftabel in meerdere migraties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement aangetoond op de datalaag: auth.uid()-policies en row level security op de HRV-archieftabel in meerdere migraties. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v505.sql#auth.uid()",
+      "migratie_v507.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: een schrijfpadgarantie kent geen eigen route, invoer of terugkoppeling",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Atomiciteit is een schrijfpadgarantie zonder eigen gebruikerscontract: de sporter ziet nergens een atomiciteitsstatus. De HRV-invoer en -weergave behoren aantoonbaar tot de herstelcapabilities, niet tot deze garantie.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "twee suites met testnaam en uitslag die deterministisch gedrag bij gelijktijdige en samengevoegde schrijfacties tonen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Unknown blijft unknown, deterministisch bewezen: core/fHrvConcurrencyClosure.test.js toont gedrag bij gelijktijdige schrijfacties en core/fHrvUpsertMerge.test.js toont deterministische samenvoeging in plaats van gefabriceerde waarden. Anker 5 vereist een fail-closed sabotagetest over de hele keten; die ontbreekt.",
+     "evidence_refs": [
+      "core/fHrvConcurrencyClosure.test.js",
+      "core/fHrvUpsertMerge.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "beide historische gaps direct uit het register: CLOSED_PROVEN met blocker false",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "GAP-HIST-006 en GAP-HIST-007 noemen deze capability in affected_capability_ids maar zijn beide CLOSED_PROVEN met blocker false; er is geen open V1-relatie. Anker J=4; 5 vereist closure-evidence per gesloten gap, die niet per record is geinspecteerd.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-HIST-006",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-HIST-007"
+     ],
+     "gap_refs": [
+      "GAP-HIST-006",
+      "GAP-HIST-007"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "PROVENANCE-EXPLAINABILITY-001",
+   "primary_track": "T7",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 285,
+   "unrounded_quotient": "3.352941176470588235294117647",
+   "weighted_score": "3.353",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry benoemen provenance en explainability als eigen verantwoordelijkheid",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als herkomst en uitlegbaarheid van berekende waarden, met v1_scope-onderbouwing in de index en een registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#PROVENANCE-EXPLAINABILITY-001",
+      "docs/CAPABILITY_REGISTRY.md#PROVENANCE-EXPLAINABILITY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "provenance leeft in veertien core-modules; geen module dwingt het als eigenaar af",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Provenance is belegd in veertien core-modules met buildDecisionEvidence in core/decision.js als aanwijsbaar kernpunt; parallelle paden geinventariseerd. Er is geen module die het als enige eigenaar afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "core/decision.js#buildDecisionEvidence"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "57 referenties en 3 aanroepen; de volledige keten is niet edge-voor-edge bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Productie-callers bewezen: buildDecisionEvidence wordt driemaal aangeroepen in index.html en provenance draagt 57 referenties. De volledige keten van entrypoint tot consument is niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "index.html#buildDecisionEvidence",
+      "core/decision.js#buildDecisionEvidence"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul eigen migratietabel en nul persistentie-aanroep in de dragende modules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Provenance wordt per aanroep afgeleid uit de reeds gepersisteerde berekeningsinvoer: nul eigen migratietabel en nul persistentie-aanroep in de dragende modules. De N/A rust op aangetoonde afwezigheid van eigen opslag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "vm.runInContext over de echte keten met progression.js: directe observatie van de keten",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "De volledige relevante keten is bewezen zonder bypass: core/fWattProvenanceGapP2013.test.js draait vm.runInContext over de echte keten met progression.js en toont dat herkomstinformatie meeloopt met de berekende waarde. Anker 5 vereist afdwinging van de keten, die ontbreekt.",
+     "evidence_refs": [
+      "core/fWattProvenanceGapP2013.test.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitvoeringsvorm direct geinspecteerd: de enige INTEGRATION_RUNTIME in T7, plus een behavioral suite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.706",
+     "rationale": "INTEGRATION_RUNTIME: core/fWattProvenanceGapP2013.test.js draait vm.runInContext over de echte provenance-keten en is de enige integratietest in T7. Aangevuld met BEHAVIORAL_UNIT via core/fProvenanceClosure.test.js dat _wearableSyncLib.js en decision.js requiret. Anker 5 vereist bovendien adversarial- of device-bewijs; dat ontbreekt.",
+     "evidence_refs": [
+      "core/fWattProvenanceGapP2013.test.js",
+      "core/fProvenanceClosure.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: eigen berekeningen van de sporter zonder trust boundary of tweede partij",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Provenance toont de herkomst van de eigen berekeningen van de sporter binnen diens eigen sessie: geen trust boundary, geen tweede partij, geen autorisatiebeslissing en geen misbruikroute. De afscherming van de onderliggende data hoort bij de dragende datacapabilities.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "athlete-facing blijkens de provenance-referenties, maar de gebruikersketen is niet per scherm geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: herkomstinformatie is athlete-facing zichtbaar blijkens de 57 provenance-referenties in index.html. Terugkoppeling en vervolgactie niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#provenance"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid; geen capability-specifieke assertie op onbekend-herkomst geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes benoemd en afgevangen: bij ontbrekende herkomst wordt geen bron gefabriceerd maar een onbepaalde status gevoerd. Deterministisch bewijs over de hele capability ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "core/fProvenanceClosure.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "GAP-P2-013 direct uit het register: OPEN, v1_scope true, blocker REVIEW_REQUIRED, met deze capability in affected",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P2-013 noemt deze capability in affected_capability_ids met v1_scope true, status OPEN en blocker REVIEW_REQUIRED, wat onder Model v1.2 nonblocking is. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-013"
+     ],
+     "gap_refs": [
+      "GAP-P2-013"
+     ]
+    }
+   }
+  }
+ ]
+}

@@ -165,6 +165,35 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-MULTIDEVICE-SOURCE-001 | Data provenance | Preferred/source device remains explicit with multiple suppliers | Garmin preferred tracker/last device | HIGH | Health Data Gateway requirement | CANDIDATE |
 | PAT-DOMAIN-ERROR-001 | Resilience | Sync/fetch failure identifies affected metric/domain | Garmin metric-specific errors | HIGH | Observability/UX refinement | CANDIDATE |
 
+| PAT-ERG-TYPE-001 | Connected equipment | RowErg/BikeErg/SkiErg identity is canonical metadata | ErgData 2.2.29 | HIGH | TK typed semantics already present | ALREADY_PRESENT |
+| PAT-PM-CAPABILITY-001 | Devices | PM generation/machine/firmware gates supported behavior | ErgData 2.2.29 | HIGH | Refine generic capability registry | CANDIDATE |
+| PAT-HR-SOURCE-001 | Sensors | HR source identity remains separate from erg identity | ErgData HRM/PM evidence | HIGH | TK Concept2 provenance aligned | ALREADY_PRESENT |
+| PAT-ERG-WORKOUT-ASSET-001 | Training | Erg workout configuration is reusable/syncable separately from result | ErgData custom/favorite/WOD | HIGH | TK My Training architecture aligned | ALREADY_PRESENT |
+| PAT-ERG-INTERVAL-001 | Execution | Erg interval definition and interval result are distinct | ErgData variable interval schema | HIGH | TK IntervalEngine aligned | ALREADY_PRESENT |
+| PAT-ERG-TARGET-001 | Execution | Erg target dimension typed as stroke/HR/pace/watts/calories | ErgData variable interval targets | HIGH | Candidate richer structured targets | CANDIDATE |
+| PAT-PACER-001 | Execution | Pacer visualizes prescribed target without becoming calculation source | ErgData pacer | HIGH | Candidate erg execution UX | CANDIDATE |
+| PAT-FORCE-CURVE-001 | Erg intelligence | Force visualization is machine-capability gated | ErgData Row/Ski force curve, not Bike | HIGH | Current TK advanced PM5 gap | VERIFIED_GAP |
+| PAT-ERG-STROKE-METRICS-001 | Erg intelligence | Stroke/drive/force detail retained outside generic cardio summary | ErgData split/interval schema | HIGH | Current TK contract lacks full force/drive set | VERIFIED_GAP |
+| PAT-ERG-RESULT-001 | Data model | Durable result combines summary/targets/device provenance; detail in children | ErgData workout_results | HIGH | Strong TK canonical activity pattern | DESIGN_DIRECTION |
+| PAT-SPLIT-DETAIL-001 | Data model | Split detail is child collection under stable workout identity | ErgData split_data | HIGH | TK structured history aligned | ALREADY_PRESENT |
+| PAT-STROKE-STREAM-001 | Data model | High-frequency stroke stream stored separately from summary | ErgData workout_stroke_data | HIGH | Optional advanced rowing candidate | CANDIDATE |
+| PAT-ERG-OFFLINE-001 | Resilience | Completed erg result locally durable before cloud sync | ErgData isOffline/sync schema | HIGH | TK offline queue aligned | ALREADY_PRESENT |
+| PAT-ERG-CLOUD-LINK-001 | Sync | Local PM workout and Logbook result are separate lifecycle states | ErgData Logbook sync | HIGH | TK Logbook dedup aligned | ALREADY_PRESENT |
+| PAT-RESULT-VERIFICATION-001 | Integrity | Verification/ranking metadata separate from performance | ErgData verified/ranked | HIGH | Future competition-only candidate | CANDIDATE |
+| PAT-WORKOUT-PRIVACY-001 | Privacy | Result visibility metadata does not alter performance truth | ErgData privacySetting | HIGH | TK social privacy aligned | ALREADY_PRESENT |
+| PAT-WORKOUT-SHARE-ASSET-001 | Social | Share workout definition separately from completed workout | ErgData shared workout config | HIGH | Candidate My Training sharing | CANDIDATE |
+| PAT-WOD-001 | Content | Curated daily workout can become reusable personal workout | ErgData WOD/favorites | HIGH | Optional content layer | CANDIDATE |
+| PAT-SYNCABLE-TEMPLATE-001 | Sync | Reusable templates have independent sync state | ErgData favorites sync | HIGH | TK My Training sync comparator | CANDIDATE |
+| PAT-HR-TARGET-ERG-001 | Erg intelligence | HR zone is typed erg target alongside pace/power/stroke | ErgData targets | HIGH | Pending TK HR-zone evidence semantics | CANDIDATE |
+| PAT-DRAG-FACTOR-001 | Erg intelligence | Drag factor is device metric/context, not resistance equivalence | ErgData result/split schema | HIGH | TK already records conservatively | ALREADY_PRESENT |
+| PAT-DEVICE-PROVENANCE-001 | Devices | PM/firmware/serial/model provenance retained with result | ErgData workout_results | HIGH | Candidate TK provenance enrichment | CANDIDATE |
+| PAT-SAVED-DEVICE-SCOPE-001 | Devices | Remembered-device policy explicit and bounded | ErgData one PM5 per erg type | HIGH | Product-rule candidate, not copy requirement | CANDIDATE |
+| PAT-BLE-SIGNAL-UX-001 | Devices | Pairing UI exposes signal quality | ErgData signal assets | MEDIUM | Candidate PM5 pairing UX | CANDIDATE |
+| PAT-ERG-LIVE-SCREEN-001 | Execution | Configurable machine-specific live screens consume one canonical state | ErgData workout screen config | HIGH | Candidate UI refinement | CANDIDATE |
+| PAT-TARGET-ACHIEVEMENT-001 | Execution | Actual-vs-prescribed comparison renders target achievement | ErgData target achieved UI | MEDIUM | TK planned-vs-actual foundation exists | CANDIDATE |
+| PAT-ERG-GAMIFIED-001 | Engagement | Gamified erg visualization consumes telemetry without changing truth | ErgData Loop assets | MEDIUM | Low-priority UX candidate | CANDIDATE |
+| PAT-DUAL-LOCAL-STORE-001 | Persistence | Device app may isolate local stores by purpose | ErgData Room + LiteCoreJNI | MEDIUM | No second TK store without demonstrated need | REFERENCE_ONLY |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

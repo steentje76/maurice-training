@@ -19,6 +19,14 @@ Bij conflict wint actuele runtime voor bestaand gedrag; een bewuste targetwijzig
 ## Verplichte flow
 REQUIREMENT → IMPACT DISCOVERY → REUSE/EXTEND/NEW → UX BUILD PACKAGE → UX PRE-CODE GATE → IMPLEMENTATION → AUTOMATED DRIFT GATES → RENDER/DEVICE PROOF → UX ACCEPTANCE → REGISTRY SYNC.
 
+## Current / Target / Gap / Proven
+The engine never treats existing runtime as automatic design truth. Every screen/component/pattern is reconciled as CURRENT, TARGET, GAP and eventually PROVEN. Generator eligibility is explicitly classified; known weak/legacy surfaces are not copied merely because they exist.
+
+## Scenario Lab — mandatory before ambiguous flow implementation
+For material functionality with two or more plausible flows, create a `TK-SCN-<DOMAIN>-NNN` comparison before code. Compare exact click steps, behaviour, back/cancel/resume, states, taps, decision points, transitions, interruptions, reuse/new patterns and risks. Where visual differences matter, create per-scenario mock-ups before code.
+
+The engine does not auto-rank or choose the pleasant flow. It presents alternatives side by side. Explicit Product Owner selection is required before the selected scenario can enter an `UX_SPEC_READY` build package.
+
 ## UX Build Package
 Voor ieder substantieel athlete-facing scherm:
 - uniek `TK-UX-<DOMAIN>-NNN` screen-contract;

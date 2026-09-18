@@ -109,6 +109,32 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-HEALTH-FLAGS-001 | Delivery | Remote content/feature flags separated from health truth | Clue Braze feature/content sync | HIGH | Never alter Calculation/Decision semantics silently | DESIGN_DIRECTION |
 | PAT-SENSITIVE-LOCALISE-001 | UX | Sensitive terminology receives domain-specific localization | Clue 24 languages + localized life-stage assets | HIGH | Candidate Women's Performance localization gate | CANDIDATE |
 
+| PAT-COMPOSITE-COMPONENTS-001 | Recovery | Composite output retains factors/components and calibration state | WHOOP Recovery details/factors/calibration | HIGH | TK recovery should remain registry-backed and explainable | DESIGN_DIRECTION |
+| PAT-LOAD-TARGET-LIVE-001 | Training load | Precomputed load target feeds live execution/haptics | WHOOP Strain Coach | HIGH | Target must originate in TK Calculation/Decision | CANDIDATE |
+| PAT-LOAD-RECOVERY-PAIR-001 | Insights | Load and recovery shown together but remain separate metrics | WHOOP Strain + Recovery | HIGH | Fits TK corroboration architecture | DESIGN_DIRECTION |
+| PAT-SLEEP-NEED-BREAKDOWN-001 | Sleep | Need/debt/schedule/achievement are separate sleep concepts | WHOOP Sleep Need/Coach | HIGH | Formula must be TK evidence-registered | CANDIDATE |
+| PAT-WEARABLE-ACTION-STATE-001 | Devices | Phone state and wearable action state explicitly reconciled | WHOOP Smart Alarm | HIGH | Future device-control pattern | CANDIDATE |
+| PAT-STRESS-CONTEXT-001 | Recovery | Stress is its own time-varying context, not renamed recovery | WHOOP Stress Monitor | HIGH | No diagnostic interpretation | CANDIDATE |
+| PAT-BEHAVIOR-OUTCOME-001 | Longitudinal | User behaviors linked to later outcome statistics after minimum data | WHOOP Journal/Behavior Impact | HIGH | Strong nutrition/supplement/recovery candidate | CANDIDATE |
+| PAT-ASSOCIATION-LABEL-001 | Evidence UX | Observational behavior/outcome relationships use non-causal language | WHOOP Behavior Impact audit boundary | HIGH | Explicit TK differentiation guardrail | DESIGN_DIRECTION |
+| PAT-LONGEVITY-COMPOSITE-001 | Health | Longevity composite should expose components/population scope | WHOOP Age/Pace of Aging | HIGH | No TK score without evidence registry | REFERENCE_ONLY |
+| PAT-HEALTH-SUMMARY-001 | Health UX | Bounded summary organizes canonical health measurements | WHOOP Health Monitor | HIGH | Candidate Lichaam surface, no diagnosis | CANDIDATE |
+| PAT-CLINICIAN-HANDOFF-001 | Health | Clinical escalation is a distinct human workflow | WHOOP clinician-in-the-loop | HIGH | Future reference; AI must not diagnose | REFERENCE_ONLY |
+| PAT-AI-DATA-PRIVACY-001 | AI/privacy | AI personalization has explicit data-use explanation/consent | WHOOP Coach privacy education | HIGH | Strong TK AI Coach comparator | CANDIDATE |
+| PAT-AI-MEMORY-SCOPE-001 | AI/privacy | Persistent coach memory is explicit and scoped | WHOOP Coach Memory | HIGH | Separate memory from canonical athlete truth | CANDIDATE |
+| PAT-STRENGTH-WEARABLE-001 | Strength/devices | Structured strength log can be enriched by wearable sensing | WHOOP Strength Trainer | HIGH | Exercise/set log remains canonical | CANDIDATE |
+| PAT-ACTIVITY-WORKOUT-LINK-001 | Data model | Physiological activity and structured workout can be linked after the fact | WHOOP Muscular Load linking | HIGH | Strong TK Raw Data ↔ Training truth pattern | DESIGN_DIRECTION |
+| PAT-EXERCISE-EQUIVALENCE-001 | Exercise library | Custom exercise equivalence for calculations is explicit/reversible | WHOOP custom exercise mapping | HIGH | Useful for MoveKit/user exercises | CANDIDATE |
+| PAT-WEEKLY-GOAL-PLAN-001 | Planning | Weekly wellness goals orchestrate features without becoming workout definition | WHOOP Weekly Plan | HIGH | Keep separate from canonical training program | CANDIDATE |
+| PAT-PROVIDER-ADAPTER-001 | Integrations | Provider-specific API/models isolated behind adapter | WHOOP Strava module | HIGH | TK already aligned | ALREADY_PRESENT |
+| PAT-DEVICE-PIPELINE-001 | Devices | Transport/protocol/firmware is separate upstream adapter layer | WHOOP BLE/connectivity/packet stack | HIGH | Direct fit TK Raw Data Adapter | DESIGN_DIRECTION |
+| PAT-FIRMWARE-GATE-001 | Devices | Device firmware compatibility modeled separately from app version | WHOOP firmware update stack | HIGH | Relevant to directly managed devices | CANDIDATE |
+| PAT-DEVICE-BACKFILL-001 | Sync | Wearable-resident history supports backfill/reconciliation | WHOOP strap-history-sync | HIGH | Require dedupe/idempotency/provenance | CANDIDATE |
+| PAT-LIVE-ACTIVITY-001 | Execution | Live sensor stream later materializes into durable activity history | WHOOP realtime activity/GPS | HIGH | Live UI never sole persistence path | DESIGN_DIRECTION |
+| PAT-ACCOUNT-EXPORT-001 | Privacy/platform | Data export is async request/status/error workflow | WHOOP member-data-export | HIGH | Current TK generic account export gap | VERIFIED_GAP |
+| PAT-MULTISOURCE-SYNC-001 | Sync | Phone, wearable and server state remain distinct reconciliation sources | WHOOP sync architecture | HIGH | Strong Health Data Gateway pattern | DESIGN_DIRECTION |
+| PAT-DEVICE-DEGRADED-001 | Resilience | Device UX distinguishes disconnected/out-of-sync/incompatible/low-battery states | WHOOP BLE/firmware/error evidence | HIGH | Candidate TK Concept2/wearable taxonomy | CANDIDATE |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

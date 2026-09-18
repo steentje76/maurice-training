@@ -1,0 +1,56 @@
+{
+  "schema_version": "2.0",
+  "baseline_sha": "b7c77e4a2e5d8b995931a32b1c64ad559294c26b",
+  "conflicts": [
+    {
+      "id": "CONFLICT-CTA-001",
+      "status": "RESOLVED_BY_PRECEDENCE",
+      "severity": "HARD",
+      "topic": "primary CTA color",
+      "claims": [
+        {
+          "source": "SRC-DS1",
+          "value": "#00B894 teal",
+          "authority": "PO_APPROVED",
+          "note": "Explicitly says marine is not standard primary CTA."
+        },
+        {
+          "source": "SRC-H7",
+          "value": "navy in light mode",
+          "authority": "HANDBOOK",
+          "note": "Older component-library rule."
+        }
+      ],
+      "candidate_resolution": "Supersede H7 primary-button color with PO-approved DS1 teal, but record explicit PO closure before marking RESOLVED.",
+      "blocks": [],
+      "does_not_block": [
+        "scenario-exploration"
+      ],
+      "resolution": {
+        "canonical_source": "SRC-DS1",
+        "canonical_value": "#00B894 teal",
+        "basis": "Explicit source precedence: PO_APPROVED Design System outranks HANDBOOK for component rules.",
+        "superseded_claim": {
+          "source": "SRC-H7",
+          "scope": "primary-button-color-only"
+        },
+        "po_action_required": false
+      }
+    }
+  ],
+  "policy": {
+    "detect": [
+      "same semantic key + incompatible values",
+      "same route + incompatible ownership",
+      "same state + incompatible meaning",
+      "newer canonical rule vs stale handbook"
+    ],
+    "automatic_resolution": "Only when precedence is explicit and no genuine semantic ambiguity remains; otherwise PO_REVIEW_REQUIRED.",
+    "hard_conflict_gate": "zero unresolved HARD conflicts before Design Freeze",
+    "resolved_statuses": [
+      "RESOLVED",
+      "RESOLVED_BY_PRECEDENCE",
+      "DEPRECATED"
+    ]
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "schema_version": "2.0",
+  "baseline_sha": "b7c77e4a2e5d8b995931a32b1c64ad559294c26b",
+  "precedence": [
+    {
+      "scope": "visual-composition",
+      "order": [
+        "canonical visual baseline PNG",
+        "PO-approved Design System",
+        "approved runtime implementation value",
+        "runtime"
+      ]
+    },
+    {
+      "scope": "navigation",
+      "order": [
+        "Route Rules/Route Map",
+        "PO-approved baseline",
+        "runtime"
+      ]
+    },
+    {
+      "scope": "data-behaviour",
+      "order": [
+        "Product/Calculation/Context/Decision/Evidence architecture",
+        "canonical domain specs",
+        "UX baseline",
+        "runtime"
+      ]
+    },
+    {
+      "scope": "component",
+      "order": [
+        "PO-approved Design System",
+        "Screen Implementation Standard",
+        "Component Library handbook",
+        "runtime"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "SRC-DS1",
+      "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+      "sha": "c4993ff01589eeaeae57517ea243846509748d1d",
+      "role": "design-system",
+      "authority": "PO_APPROVED"
+    },
+    {
+      "id": "SRC-ROUTES",
+      "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+      "sha": "aad7174c24e3e674ef6b134238a4bab3a0395f04",
+      "role": "navigation",
+      "authority": "CANONICAL"
+    },
+    {
+      "id": "SRC-BASELINE",
+      "path": "docs/ux/baseline/v1/README.md",
+      "sha": "439732b0855aee26226be8fb06e0f4bbeccb6b7a",
+      "role": "visual-baseline",
+      "authority": "PO_APPROVED"
+    },
+    {
+      "id": "SRC-SCREEN",
+      "path": "docs/ux/SCREEN_IMPLEMENTATION_STANDARD_v1.md",
+      "sha": "0f16f867647b4d72796ba0086ad25e7fda8e041d",
+      "role": "implementation-standard",
+      "authority": "CANONICAL"
+    },
+    {
+      "id": "SRC-MIGRATION",
+      "path": "docs/ux/SCREEN_MIGRATION_CHECKLIST_v1.md",
+      "sha": "0d06cceff14f756d415ba27ae5551745bd5a4091",
+      "role": "migration-gates",
+      "authority": "HARD"
+    },
+    {
+      "id": "SRC-PRES",
+      "path": "docs/UX_BASELINE_PRESERVATION_MATRIX.md",
+      "sha": "fe4b162c39d13c1adfc119beca184f88075a6f16",
+      "role": "screen-preservation",
+      "authority": "PO_APPROVED"
+    },
+    {
+      "id": "SRC-GAP",
+      "path": "docs/UX_CURRENT_TARGET_GAP_MATRIX.md",
+      "sha": "b56c9df229df997ff5ab9a33df1a743cd6a0c620",
+      "role": "gap-matrix",
+      "authority": "AUDIT"
+    },
+    {
+      "id": "SRC-H7",
+      "path": "docs/Handbook/Trainingskompas_Development_Handbook_H7_Component_Library.md",
+      "sha": "80cd7d7469323028d5d21ea5b581b38da8452251",
+      "role": "component-handbook",
+      "authority": "HANDBOOK"
+    }
+  ],
+  "sync_policy": {
+    "pin_main_sha": true,
+    "source_sha_required": true,
+    "on_change": "invalidate dependent rules/scenarios; never auto-accept changed semantics"
+  }
+}

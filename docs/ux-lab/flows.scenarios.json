@@ -1,0 +1,329 @@
+{
+  "schema_version": "2.1",
+  "baseline_sha": "b7c77e4a2e5d8b995931a32b1c64ad559294c26b",
+  "flows": [
+    {
+      "id": "FLOW-TRAIN-001",
+      "name": "Trainen → Preview → Execution",
+      "domain": "training",
+      "primary_tab": "Trainen",
+      "start": "train-hub",
+      "goal": "active-execution",
+      "invariants": [
+        "ROUTE-R001",
+        "ROUTE-R002",
+        "ROUTE-R005",
+        "ROUTE-R006",
+        "UX-PRES-001"
+      ],
+      "nodes": [
+        {
+          "id": "train-hub",
+          "label": "Trainen",
+          "capabilities": [
+            "programmas",
+            "mijn-trainingen",
+            "training-maken",
+            "vrije-training",
+            "oefeningen",
+            "sport-specifiek",
+            "events"
+          ]
+        },
+        {
+          "id": "training-preview",
+          "label": "Training Preview",
+          "capabilities": [
+            "training-context",
+            "oefeningen-overzicht",
+            "start-training"
+          ]
+        },
+        {
+          "id": "active-execution",
+          "label": "Execution",
+          "capabilities": [
+            "set-logging",
+            "rest",
+            "next-exercise",
+            "pause",
+            "note",
+            "coach-return",
+            "finish"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "train-hub",
+          "to": "training-preview",
+          "action": "open planned/saved training"
+        },
+        {
+          "from": "training-preview",
+          "to": "active-execution",
+          "action": "Start training"
+        },
+        {
+          "from": "active-execution",
+          "to": "training-preview",
+          "action": "back/overview",
+          "protected_state": "active-training"
+        }
+      ],
+      "scenarios": [
+        {
+          "id": "A",
+          "name": "Minimal change",
+          "intent": "Preserve current information architecture; optimize hierarchy only.",
+          "tap_estimate": 3,
+          "deviations": [],
+          "rule_status": "PASS",
+          "removed_capabilities": [],
+          "required_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "designed_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "data_bindings": [
+            {
+              "id": "training-context",
+              "source": "canonical training/decision output",
+              "ui_calculates": false,
+              "unknown_as_zero": false,
+              "unknown_as_green": false
+            }
+          ],
+          "components": [
+            {
+              "id": "primary-action",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 1
+            },
+            {
+              "id": "training-card",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 0
+            }
+          ],
+          "accessibility": {
+            "semantic_controls": true,
+            "icon_labels": true,
+            "keyboard": true,
+            "no_color_only": true
+          },
+          "capability_coverage": [
+            "programmas",
+            "mijn-trainingen",
+            "training-maken",
+            "vrije-training",
+            "oefeningen",
+            "sport-specifiek",
+            "events",
+            "training-context",
+            "oefeningen-overzicht",
+            "start-training",
+            "set-logging",
+            "rest",
+            "next-exercise",
+            "pause",
+            "note",
+            "coach-return",
+            "finish"
+          ]
+        },
+        {
+          "id": "B",
+          "name": "Task-first",
+          "intent": "Prioritize next training and fastest path to execution.",
+          "tap_estimate": 2,
+          "deviations": [
+            "Moves secondary destinations below primary task"
+          ],
+          "rule_status": "PASS",
+          "removed_capabilities": [],
+          "required_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "designed_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "data_bindings": [
+            {
+              "id": "training-context",
+              "source": "canonical training/decision output",
+              "ui_calculates": false,
+              "unknown_as_zero": false,
+              "unknown_as_green": false
+            }
+          ],
+          "components": [
+            {
+              "id": "primary-action",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 1
+            },
+            {
+              "id": "training-card",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 0
+            }
+          ],
+          "accessibility": {
+            "semantic_controls": true,
+            "icon_labels": true,
+            "keyboard": true,
+            "no_color_only": true
+          },
+          "capability_coverage": [
+            "programmas",
+            "mijn-trainingen",
+            "training-maken",
+            "vrije-training",
+            "oefeningen",
+            "sport-specifiek",
+            "events",
+            "training-context",
+            "oefeningen-overzicht",
+            "start-training",
+            "set-logging",
+            "rest",
+            "next-exercise",
+            "pause",
+            "note",
+            "coach-return",
+            "finish"
+          ]
+        },
+        {
+          "id": "C",
+          "name": "Coach-context",
+          "intent": "Add decision/context explanation before execution without changing calculation truth.",
+          "tap_estimate": 3,
+          "deviations": [
+            "Adds optional context disclosure"
+          ],
+          "rule_status": "PASS_WITH_OPEN_DESIGN",
+          "removed_capabilities": [],
+          "required_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "designed_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "data_bindings": [
+            {
+              "id": "training-context",
+              "source": "canonical training/decision output",
+              "ui_calculates": false,
+              "unknown_as_zero": false,
+              "unknown_as_green": false
+            }
+          ],
+          "components": [
+            {
+              "id": "primary-action",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 1
+            },
+            {
+              "id": "training-card",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 0
+            }
+          ],
+          "accessibility": {
+            "semantic_controls": true,
+            "icon_labels": true,
+            "keyboard": true,
+            "no_color_only": true
+          },
+          "capability_coverage": [
+            "programmas",
+            "mijn-trainingen",
+            "training-maken",
+            "vrije-training",
+            "oefeningen",
+            "sport-specifiek",
+            "events",
+            "training-context",
+            "oefeningen-overzicht",
+            "start-training",
+            "set-logging",
+            "rest",
+            "next-exercise",
+            "pause",
+            "note",
+            "coach-return",
+            "finish"
+          ]
+        }
+      ]
+    }
+  ],
+  "comparison_metrics": [
+    "tap_estimate",
+    "navigation_depth",
+    "capabilities_preserved",
+    "canonical_component_reuse",
+    "hard_rule_violations",
+    "open_decisions",
+    "unresolved_conflicts"
+  ],
+  "selection_policy": "No automatic winner or opaque UX score. PO selects scenario after evidence review."
+}

@@ -288,6 +288,33 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-RECOVERY-LOAD-SEPARATION-001 | Recovery/Load | Health/recovery signals stay separate from training-load state | TrainingPeaks 12.114.0 | HIGH | TK architecture aligned | ALREADY_PRESENT |
 | PAT-NATIVE-PERSISTENCE-001 | Persistence | Native client uses structured local DB/preferences | TrainingPeaks 12.114.0 | MEDIUM | Offline semantics not proven | REFERENCE_ONLY |
 
+| PAT-PWA-NATIVE-SHELL-001 | Architecture | Thin native WebView shell hosts remotely delivered training domain | RP Hypertrophy 1.2.0 | HIGH | Reference for web/native boundary | REFERENCE_ONLY |
+| PAT-REMOTE-DOMAIN-DELIVERY-001 | Architecture | Web domain updates independently of native shell | RP Hypertrophy 1.2.0 | HIGH | Canonical calc/rule versions must remain traceable | DESIGN_DIRECTION |
+| PAT-WEB-NATIVE-AUTH-BRIDGE-001 | Platform | Native OAuth result bridged into web event model | RP Hypertrophy 1.2.0 | HIGH | Native-shell pattern | REFERENCE_ONLY |
+| PAT-WEB-NATIVE-DEEPLINK-001 | Platform | Native deep links normalized into web custom events | RP Hypertrophy 1.2.0 | HIGH | Future workout/program share links | CANDIDATE |
+| PAT-NATIVE-BILLING-BRIDGE-001 | Commercial | Native Play Billing bridges entitlement UX to web product | RP Hypertrophy 1.2.0 | HIGH | Server entitlement remains authority | REFERENCE_ONLY |
+| PAT-PWA-PUSH-BRIDGE-001 | Platform | Native push can deep-link remote web training product | RP Hypertrophy 1.2.0 | HIGH | Reminder/coach notification reference | CANDIDATE |
+| PAT-HYPERTROPHY-MESO-001 | Hypertrophy | Hypertrophy plan organized as finite mesocycle with deload | RP Hypertrophy official docs | HIGH | Existing TK periodisation foundations; athlete UX check | CANDIDATE |
+| PAT-HYPERTROPHY-EMPHASIS-001 | Hypertrophy | Muscle priority is explicit plan-building context | RP Hypertrophy official docs | HIGH | Corroborates Alpha muscle-focus pattern | CANDIDATE |
+| PAT-HYPERTROPHY-FEEDBACK-LOOP-001 | Hypertrophy | Subjective muscle/session feedback influences next prescription | RP Hypertrophy official docs | HIGH | Evidence-governed Context/Decision candidate | CANDIDATE |
+| PAT-PUMP-SIGNAL-001 | Hypertrophy | Pump captured as local subjective context signal | RP Hypertrophy official docs | HIGH | Scientific interpretation requires review | EVIDENCE_REVIEW_REQUIRED |
+| PAT-SORENESS-SIGNAL-001 | Hypertrophy | Muscle-specific soreness tracked as context | RP Hypertrophy official docs | HIGH | Never standalone recovery/injury truth | EVIDENCE_REVIEW_REQUIRED |
+| PAT-VOLUME-TOLERANCE-SIGNAL-001 | Hypertrophy | Perceived volume tolerance separated from RIR effort | RP Hypertrophy official docs | HIGH | Candidate Context signal | EVIDENCE_REVIEW_REQUIRED |
+| PAT-HYPERTROPHY-MULTISIGNAL-001 | Hypertrophy | Pump+soreness+volume tolerance jointly inform adaptation | RP Hypertrophy official docs | HIGH | Exact proprietary rules not copied | DESIGN_DIRECTION |
+| PAT-HYPERTROPHY-ADAPT-DIMENSIONS-001 | Hypertrophy | Load/reps/set-count are separate adaptation dimensions | RP Hypertrophy official docs | HIGH | Fits versioned Decision Engine | DESIGN_DIRECTION |
+| PAT-ADAPTIVE-OVERRIDE-001 | Programming | Adaptive prescription remains user-editable | RP Hypertrophy official docs | HIGH | User control over recommendation | DESIGN_DIRECTION |
+| PAT-RIR-MESO-PROGRESSION-001 | Hypertrophy | RIR target progresses across mesocycle | RP Hypertrophy official docs | HIGH | Corroborates Alpha; evidence/rule review | CANDIDATE |
+| PAT-CYCLE-END-DELOAD-001 | Programming | Deload is structural cycle state | RP Hypertrophy official docs | HIGH | Timing not transferable as universal rule | CANDIDATE |
+| PAT-DELOAD-MULTIDIMENSION-001 | Programming | Deload can modify volume and intensity separately | RP Hypertrophy official docs | HIGH | Useful prescription schema | DESIGN_DIRECTION |
+| PAT-JOINT-DISCOMFORT-SIGNAL-001 | Safety context | Exercise feedback retains user-reported joint discomfort | RP Hypertrophy official release notes | HIGH | Non-diagnostic context/safety candidate | CANDIDATE |
+| PAT-FEEDBACK-HISTORY-001 | Explainability | Prior adaptive input remains visible on revisit | RP Hypertrophy official release notes | HIGH | Explain recommendation provenance | DESIGN_DIRECTION |
+| PAT-MUSCLE-SET-DISTRIBUTION-001 | Hypertrophy | Muscle-level set change preserves prior exercise allocation | RP Hypertrophy official release notes | HIGH | High-value deterministic allocation candidate | CANDIDATE |
+| PAT-WORKOUT-OUTCOME-STATE-001 | Adherence | Skipped and completed sessions are distinct states | RP Hypertrophy official release notes | HIGH | TK adherence core exists | ALREADY_PRESENT |
+| PAT-EXERCISE-NOTE-HISTORY-001 | Exercise history | Exercise notes remain available longitudinally | RP Hypertrophy 1.2.0 release notes | HIGH | Setup/technique context candidate | CANDIDATE |
+| PAT-MESO-DAY-REORDER-001 | Programming | Program days can be rearranged without rebuilding cycle | RP Hypertrophy official release notes | HIGH | Builder/scheduling UX check | TK_CHECK_REQUIRED |
+| PAT-EXERCISE-HISTORY-FILTER-001 | Exercise library | Library can filter exercises previously performed | RP Hypertrophy official release notes | HIGH | Useful as MoveKit library scales | CANDIDATE |
+| PAT-HYPERTROPHY-TEMPLATE-LIBRARY-001 | Programs | Template is adaptive starting structure, not immutable plan | RP Hypertrophy official docs | HIGH | Future program library pattern | CANDIDATE |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

@@ -1,0 +1,51 @@
+{
+  "schema_version": "2.3",
+  "status": "ACTIVE",
+  "freeze_gate": {
+    "requires": [
+      "validation.freeze_ready == true",
+      "zero unresolved HARD conflicts",
+      "source snapshot current",
+      "PO selection recorded",
+      "approval timestamp recorded"
+    ],
+    "immutable_fields": [
+      "flow_id",
+      "scenario_id",
+      "baseline_main_sha",
+      "source_snapshot",
+      "rule_ids",
+      "route_invariants",
+      "capability_coverage",
+      "required_states",
+      "data_bindings",
+      "components",
+      "accessibility"
+    ],
+    "on_source_change": "INVALIDATE_FREEZE"
+  },
+  "contract": {
+    "authority": "machine-readable contract is authoritative over generated prose prompt",
+    "claude_policy": "No autonomous UX decisions; ambiguity or drift => HARD STOP",
+    "exports": [
+      "design-freeze JSON",
+      "implementation-contract JSON",
+      "Claude implementation prompt"
+    ],
+    "acceptance": [
+      "capability preservation",
+      "route invariants",
+      "state coverage",
+      "evidence/data guards",
+      "component reuse",
+      "accessibility",
+      "responsive viewports",
+      "visual/runtime comparison",
+      "source freshness"
+    ]
+  },
+  "integrity": {
+    "algorithm": "FNV-1a 32-bit over canonical sorted JSON",
+    "purpose": "drift/tamper detection, not cryptographic signing"
+  }
+}

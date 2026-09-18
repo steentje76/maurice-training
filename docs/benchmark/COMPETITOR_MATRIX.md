@@ -1,21 +1,21 @@
 # Competitor Benchmark Matrix
 
-This is an evidence index, not a marketing scorecard. Empty cells mean not yet audited, not absent.
+This is an evidence index, not a marketing scorecard. Empty cells mean not yet audited, not absent. External A–J assessment uses the TK Measurement Model v1.2 discipline; no aggregate is emitted when required evidence is unavailable.
 
-| App | Version | Strength/workout | Devices/health | Recovery | Social | AI/coaching | Technical solution mining | Audit status |
-|---|---|---|---|---|---|---|---|---|
-| Hevy | 3.1.9 | Evidence captured | Health Connect evidence captured | Not established | Evidence captured | Client indicators captured; backend logic not established | Initial patterns captured | STATIC v1 |
-| Fitbod | — | — | — | — | — | — | — | QUEUED |
-| Strong | — | — | — | — | — | — | — | QUEUED |
-| Boostcamp | — | — | — | — | — | — | — | QUEUED |
-| TrainHeroic | — | — | — | — | — | — | — | QUEUED |
-| Concept2 ErgData | — | — | — | — | — | — | — | QUEUED |
-| Garmin Connect | — | — | — | — | — | — | — | QUEUED |
-| WHOOP | — | — | — | — | — | — | — | QUEUED |
-| Clue | — | — | — | — | — | — | — | QUEUED |
-| Natural Cycles | — | — | — | — | — | — | — | QUEUED |
-| Alpha Progression | — | — | — | — | — | — | — | QUEUED |
-| Dr. Muscle | — | — | — | — | — | — | — | QUEUED |
-| TrainingPeaks | — | — | — | — | — | — | — | DESIRED |
-| Runna | — | — | — | — | — | — | — | DESIRED |
-| Strava | — | — | — | — | — | — | — | DESIRED |
+| App | Version | Strength/workout | Devices/health | Social | AI/coaching | Solution mining | Audit status |
+|---|---|---|---|---|---|---|---|
+| Hevy | 3.1.9 | Deep static evidence | Health Connect + Wear OS/HR evidence | Deep static evidence | Client indicators; server logic unknown | 10 patterns catalogued; 1 TK verified gap | STATIC CLOSED / DYNAMIC OPEN |
+| Fitbod | — | — | — | — | — | — | QUEUED |
+| Strong | — | — | — | — | — | — | QUEUED |
+| Boostcamp | — | — | — | — | — | — | QUEUED |
+| TrainHeroic | — | — | — | — | — | — | QUEUED |
+| Concept2 ErgData | — | — | — | — | — | — | QUEUED |
+| Garmin Connect | — | — | — | — | — | — | QUEUED |
+| WHOOP | — | — | — | — | — | — | QUEUED |
+| Clue | — | — | — | — | — | — | QUEUED |
+| Natural Cycles | — | — | — | — | — | — | QUEUED |
+| Alpha Progression | — | — | — | — | — | — | QUEUED |
+| Dr. Muscle | — | — | — | — | — | — | QUEUED |
+| TrainingPeaks | — | — | — | — | — | — | DESIRED |
+| Runna | — | — | — | — | — | — | DESIRED |
+| Strava | — | — | — | — | — | — | DESIRED |

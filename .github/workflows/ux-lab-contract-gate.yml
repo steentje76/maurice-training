@@ -42,3 +42,5 @@ jobs:
         run: node docs/ux-lab/capability-status-ui.test.js
       - name: Canonical source blob pin gate
         run: node docs/ux-lab/source-pin-ci.test.js
+      - name: Source health semantics UI gate
+        run: node docs/ux-lab/source-health-semantics-ui.test.js

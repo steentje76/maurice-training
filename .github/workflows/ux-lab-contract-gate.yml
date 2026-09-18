@@ -26,3 +26,5 @@ jobs:
         run: node docs/ux-lab/workbench-ui.test.js
       - name: Evidence explorer UI gate
         run: node docs/ux-lab/evidence-explorer-ui.test.js
+      - name: Source health and state explorer UI gate
+        run: node docs/ux-lab/source-health-state-ui.test.js

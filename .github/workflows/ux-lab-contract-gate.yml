@@ -46,3 +46,5 @@ jobs:
         run: node docs/ux-lab/source-health-semantics-ui.test.js
       - name: Capability maturity registry gate
         run: node docs/ux-lab/capability-maturity-registry.test.js
+      - name: Integrated design intelligence gate
+        run: node docs/ux-lab/integrated-design-intelligence.test.js

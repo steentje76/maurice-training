@@ -1,0 +1,553 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T13_PRIME",
+ "tracks": [
+  "T13"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "9c61561b2c7c8a19a2b8708a9cfc84536c0d2782",
+ "complete": true,
+ "record_count": 30,
+ "capability_count": 3,
+ "na_record_count": 3,
+ "scored_record_count": 27,
+ "na_distribution": {
+  "E": 3
+ },
+ "confidence_distribution": {
+  "HIGH": 18,
+  "MEDIUM": 12
+ },
+ "f_distribution": {
+  "F3": 3
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T13-trackscore.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, new Function of require van een core-module als BEHAVIORAL_UNIT, en regex- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief. Confidence volgt de canonieke semantiek waarin HIGH direct capability-specifiek bewijs vereist en is per record afzonderlijk toegekend met een eigen confidence_basis; het aggregaat is pas na de laatste toekenning geteld en stuurt geen enkele score.",
+ "track_notes": "SocialPrivacyCore is DORMANT en geen SHADOW_ACTIVE: er is geen actieve parallelle implementatie van de zichtbaarheidscontracten aangetroffen. De databaselaag blijft de bron van waarheid en is aantoonbaar actief. De T13 tegenover T15 grens is bewaard: gym-team.js, organisatie-RBAC en teamanalytics zijn niet aan T13 toegewezen.",
+ "track_results": {
+  "T13": {
+   "score": "2.982",
+   "percentage": "59.64",
+   "capability_count": 3,
+   "sum_of_stored_scores": "8.945",
+   "arithmetic": "som van de drie OPGESLAGEN driedecimale capabilityscores gedeeld door 3, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "SOCIAL-GROUPS-CHALLENGES-001",
+   "primary_track": "T13",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 290,
+   "unrounded_quotient": "3.222222222222222222222222222",
+   "weighted_score": "3.222",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry benoemen groepen en challenges als eigen verantwoordelijkheid",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als sociale groepen en challenges, met v1_scope-onderbouwing in de index en een registry-rij die afbakent tegen deel- en notificatiefunctionaliteit.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#SOCIAL-GROUPS-CHALLENGES-001",
+      "docs/CAPABILITY_REGISTRY.md#SOCIAL-GROUPS-CHALLENGES-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "beide modules aanwijsbaar en script-geladen; beheersing van alternatieven niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "core/socialGroup.js en core/socialChallenge.js zijn de aanwijsbare hoofdimplementatie en beide via script-tag geladen; parallelle paden geinventariseerd. Geen guard tegen een tweede pad, dus geen 4.",
+     "evidence_refs": [
+      "core/socialGroup.js",
+      "core/socialChallenge.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete aanroepen: 6 en 4 in index.html, inclusief canJoinChallenge",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: SocialGroupCore wordt zesmaal en SocialChallengeCore viermaal aangeroepen in index.html, waaronder SocialChallengeCore.canJoinChallenge binnen de challengeweergave. Geen volledige payload-chain, dus geen 4.",
+     "evidence_refs": [
+      "index.html#SocialGroupCore",
+      "index.html#SocialChallengeCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op de vier relevante social_*-tabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie: social_groups, social_group_memberships, social_challenges en social_challenge_participants behoren tot de twaalf social_*-tabellen, met auth.uid()-policies in migratie_v503.sql. Geen versionering of historiebehoud, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v503.sql#social_groups",
+      "migratie_v503.sql#social_challenges"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties in beide dragende modules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Sociale groepen en challenges nemen architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Positief vastgesteld: nul referenties naar CalcCore, DecisionCore of ContextEngineCore in socialGroup.js en socialChallenge.js.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "uitvoeringsvorm geclassificeerd, maar niet elke assertie is capability-specifiek nagelopen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: de bepalende suites requiren de social-modules en voeren groeps- en challengegedrag uit. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/socialGroup.js",
+      "core/socialChallenge.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratie/policy-bewijs: auth.uid()-policies op de social_*-tabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement aangetoond op de datalaag: migratie_v503.sql draagt auth.uid()-policies en row level security op de social_*-tabellen. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v503.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "scherm bereikbaar; groeps- en challengeketen niet volledig geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: het scherm s-social is bereikbaar en toont groepen en challenges. Terugkoppeling en vervolgactie niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-social"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "happy-path-bewijs; gedrag bij verwijderde groep of ongeldige challengestaat niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.111",
+     "rationale": "Generieke afhandeling: er is geen capability-specifiek bewijs van gedrag bij een verwijderde groep of een ongeldige challengestaat. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "index.html#s-social"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over 60 gaps: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "SOCIAL-IDENTITY-PRIVACY-001",
+   "primary_track": "T13",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 240,
+   "unrounded_quotient": "2.666666666666666666666666667",
+   "weighted_score": "2.667",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry benoemen het privacy- en zichtbaarheidscontract expliciet",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als sociale identiteit en privacy, met v1_scope-onderbouwing in de index en een registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#SOCIAL-IDENTITY-PRIVACY-001",
+      "docs/CAPABILITY_REGISTRY.md#SOCIAL-IDENTITY-PRIVACY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "modulekop plus vier geexporteerde zichtbaarheidsfuncties: concrete file plus functies",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "core/socialPrivacy.js is de aanwijsbare hoofdimplementatie: de modulekop noemt het het enige canonieke autorisatiecontract voor Social en het exporteert VISIBILITY_STATES, isBlocked, isConnection, canViewSocialProfile en canViewSharedActivity. Parallelle paden geinventariseerd; geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/socialPrivacy.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "dormancy uitputtend bewezen langs twintig zoekroutes, inclusief de vier geexporteerde functienamen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.167",
+     "rationale": "Module bestaat en is via script-tag geladen, maar heeft nul productie-callers. Uitputtend vastgesteld langs twintig zoekroutes: nul SocialPrivacyCore-aanroepen, nul destructuring, nul alias, nul window-toegang, nul dynamische toegang, nul Netlify-gebruik en nul aanroepen van elk van de vier geexporteerde functienamen; de enige vermelding in index.html staat op regel 14739 en is een commentaarregel. Model v1.2 begrenst dit expliciet op anker 1.",
+     "evidence_refs": [
+      "core/socialPrivacy.js",
+      "index.html:14739#uitsluitend-commentaar"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op de drie identiteits- en blokkeertabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie: social_profiles, social_connections en social_blocks dragen auth.uid()-policies in migratie_v503.sql, aangevuld in migratie_v557.sql. Geen versionering, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v503.sql#social_profiles",
+      "migratie_v503.sql#social_blocks"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties; de modulekop bevestigt de pure INPUT-naar-OUTPUT-aard",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het zichtbaarheidscontract neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Positief vastgesteld: de modulekop beschrijft de module als puur, deterministisch en offline-capable zonder DOM, Supabase of fetch, en er zijn nul referenties naar CalcCore, DecisionCore of ContextEngineCore.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "een test requiret de module, maar de dekking van de vier zichtbaarheidsfuncties is niet per functie nagelopen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: er bestaat een test die socialPrivacy.js requiret en het zichtbaarheidsgedrag uitvoert. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/socialPrivacy.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratie/policy-bewijs: 16 auth.uid(), 4 RLS-activeringen en 9 policies in v503, plus 5 en 1 in v557",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement aangetoond op de datalaag: migratie_v503.sql draagt zestien auth.uid()-verwijzingen, vier row level security-activeringen en negen policies; migratie_v557.sql voegt vijf auth.uid()-verwijzingen en een policy toe. De module zelf stelt dat de database-RLS de bron van waarheid blijft. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v503.sql#auth.uid()",
+      "migratie_v557.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid: zonder aangeroepen zichtbaarheidscontract is de gebruikersketen onvolledig, maar de UI-consequentie is niet per scherm geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.222",
+     "rationale": "Er is sociale profiel- en zichtbaarheidsfunctionaliteit binnen het bereikbare scherm s-social, maar zonder aangeroepen zichtbaarheidscontract is de keten van ontdekken naar gebruiken niet als bruikbaar bewezen. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#s-social",
+      "core/socialPrivacy.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "happy-path-bewijs; gedrag bij geblokkeerde gebruiker is niet capability-specifiek aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.111",
+     "rationale": "Generieke afhandeling: er is geen capability-specifiek bewijs van gedrag bij een geblokkeerde gebruiker in de client-laag. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/socialPrivacy.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe gaprelatie: de nieuw geregistreerde gap met primary SOCIAL-IDENTITY-PRIVACY-001, OPEN, v1_scope true, blocker false",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "De in deze golf geregistreerde capability-scoped gap noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker false, wat onder Model v1.2 nonblocking is. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-034"
+     ],
+     "gap_refs": [
+      "GAP-P3-034"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "SOCIAL-SHARING-NOTIFICATIONS-001",
+   "primary_track": "T13",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 275,
+   "unrounded_quotient": "3.055555555555555555555555556",
+   "weighted_score": "3.056",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry benoemen delen en notificaties als eigen verantwoordelijkheid",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als delen van activiteiten en notificaties, met v1_scope-onderbouwing in de index en een registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#SOCIAL-SHARING-NOTIFICATIONS-001",
+      "docs/CAPABILITY_REGISTRY.md#SOCIAL-SHARING-NOTIFICATIONS-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "beide modules aanwijsbaar en script-geladen; beheersing van alternatieven niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "core/socialSharing.js en core/messaging.js zijn de aanwijsbare hoofdimplementatie en beide via script-tag geladen; parallelle paden geinventariseerd. Geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/socialSharing.js",
+      "core/messaging.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "aanroepen bekend (1 en 6), maar de deelketen zelf is niet edge-voor-edge bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.333",
+     "rationale": "SocialSharingCore wordt eenmaal en MessagingCore zesmaal aangeroepen in index.html, en socialOpenShareDialog is de gebruikersingang. De deelketen van entrypoint tot consument is niet edge-voor-edge bewezen, dus anker 2.",
+     "evidence_refs": [
+      "index.html#SocialSharingCore",
+      "index.html#MessagingCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op de vier deel- en notificatietabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie: social_shared_activities, social_notifications, social_comments en social_reactions behoren tot de twaalf social_*-tabellen met auth.uid()-policies in migratie_v503.sql. Geen versionering, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v503.sql#social_shared_activities",
+      "migratie_v503.sql#social_notifications"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties in beide dragende modules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Delen en notificeren nemen architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Positief vastgesteld: nul referenties naar CalcCore, DecisionCore of ContextEngineCore in socialSharing.js en messaging.js.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "uitvoeringsvorm geclassificeerd, maar niet elke assertie is capability-specifiek nagelopen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: de bepalende suites requiren de modules en voeren deel- en notificatiegedrag uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/socialSharing.js",
+      "core/messaging.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratie/policy-bewijs op de deel- en notificatietabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement aangetoond op de datalaag: auth.uid()-policies op social_shared_activities en social_notifications in migratie_v503.sql. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v503.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "deelfunctie bereikbaar via socialOpenShareDialog op index.html:14746; terugkoppeling niet volledig geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: socialOpenShareDialog op index.html:14746 is de expliciete gebruikersingang en delen gebeurt nooit automatisch. Terugkoppeling niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html:14746#socialOpenShareDialog"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "happy-path-bewijs; gedrag bij mislukte notificatie of deelactie niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.111",
+     "rationale": "Generieke afhandeling: er is geen capability-specifiek bewijs van gedrag bij een mislukte notificatie of deelactie. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "index.html#socialOpenShareDialog"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over 60 gaps: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,559 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T10_PRIME",
+ "tracks": [
+  "T10"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "9c61561b2c7c8a19a2b8708a9cfc84536c0d2782",
+ "complete": true,
+ "record_count": 30,
+ "capability_count": 3,
+ "na_record_count": 1,
+ "scored_record_count": 29,
+ "na_distribution": {
+  "E": 1
+ },
+ "confidence_distribution": {
+  "HIGH": 17,
+  "MEDIUM": 9,
+  "LOW": 4
+ },
+ "f_distribution": {
+  "F2": 1,
+  "F3": 2
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T10-trackscore.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, new Function of require van een core-module als BEHAVIORAL_UNIT, en regex- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief. Confidence volgt de canonieke semantiek waarin HIGH direct capability-specifiek bewijs vereist en is per record afzonderlijk toegekend met een eigen confidence_basis; het aggregaat is pas na de laatste toekenning geteld en stuurt geen enkele score.",
+ "track_notes": "T10 is hervalideerd tegen de canonieke main en volledig ongewijzigd hergebruikt uit de read-only ronde. Cyclus- en symptoomdata bereiken de AI aantoonbaar niet: buildCtx draagt nul treffers op cycle, symptom en menstr, en netlify/functions/coach.js eveneens nul. Consentlogica zit wel in buildCtx en stuurt wat mag worden gebruikt.",
+ "track_results": {
+  "T10": {
+   "score": "2.850",
+   "percentage": "57.00",
+   "capability_count": 3,
+   "sum_of_stored_scores": "8.550",
+   "arithmetic": "som van de drie OPGESLAGEN driedecimale capabilityscores gedeeld door 3, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "CTX-CYCLE-001",
+   "primary_track": "T10",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 290,
+   "unrounded_quotient": "2.9",
+   "weighted_score": "2.900",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record met v1_scope en evidence plus registry-rij: directe canonieke bron voor de scope-uitspraak",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als cyclus-context met v1_scope-onderbouwing in de index en een registry-rij die de afbakening tegen de beslislaag benoemt. Acceptance expectations zijn niet als versioneerbaar contract vastgelegd, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#CTX-CYCLE-001",
+      "docs/CAPABILITY_REGISTRY.md#CTX-CYCLE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "beide modules aanwijsbaar en script-geladen, maar \"parallelle paden geclassificeerd\" is een afgeleide uitspraak zonder guard",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "core/cycle.js en core/cycleTraining.js zijn de aanwijsbare hoofdimplementatie en beide via script-tag geladen; parallelle paden zijn geinventariseerd en geclassificeerd. Er is geen guard die een tweede cycluspad uitsluit, dus geen 4.",
+     "evidence_refs": [
+      "core/cycle.js",
+      "core/cycleTraining.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "126 referenties is een aggregaat; zonder detecteerbare export rust de C2-uitspraak op afgeleid bewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.300",
+     "rationale": "Cyclusfunctionaliteit draagt 126 referenties in index.html en het scherm s-lich-cyclus is via go() bereikbaar, maar geen van beide modules exporteert een detecteerbare globale naam waarop een productie-aanroep te bewijzen valt. Caller-aanwezigheid zonder bewezen keten is per Model v1.2 maximaal 2.",
+     "evidence_refs": [
+      "index.html#cyclus",
+      "index.html#s-lich-cyclus"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs: 2 migratiebestanden, beide met auth.uid() en beide met expliciete RLS",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie aanwezig met owner-binding op rijniveau: public.cycle_symptom_logs komt voor in twee migratiebestanden, beide met auth.uid()-policies en beide met expliciete row level security. Geen eigen lifecycle- of versioneringsmechanisme, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#cycle_symptom_logs",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "deelname aan de contextketen is afgeleid uit de datastroom, niet edge-voor-edge bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten is aangetoond: cyclusdata voedt de contextlaag die WOMENS-PERF-DECISIONS-001 consumeert. De volledige keten zonder bypass is voor deze capability niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "core/cycle.js",
+      "core/womensPerformanceContext.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "beide suites requiren de modules en voeren gedrag uit; uitvoeringsvorm direct geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: core/fCycle.test.js en core/fCycleTraining.test.js requiren de modules en voeren het cyclusgedrag uit. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fCycle.test.js",
+      "core/fCycleTraining.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratie/policy-bewijs: auth.uid() op cycle_symptom_logs in beide migraties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Cyclus- en symptoomgegevens zijn bijzondere persoonsgegevens; enforcement is aangetoond op de datalaag via auth.uid()-policies en row level security op cycle_symptom_logs. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#cycle_symptom_logs",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "scherm routeerbaar, maar terugkoppeling en vervolgactie niet inhoudelijk geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: het scherm s-lich-cyclus is via go() bereikbaar en draagt de cyclusinvoer. Terugkoppeling en vervolgactie zijn niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-lich-cyclus"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgevangen ontbrekende cyclusdata volgt uit de testopzet, niet uit een expliciete onbekend-assertie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: bij ontbrekende cyclusdata levert de contextlaag geen gefabriceerde fase. Deterministisch bewijs dat unknown over de hele capability unknown blijft ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "core/fCycle.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "GAP-P3-024 direct uit het register: OPEN, v1_scope true, blocker REVIEW_REQUIRED, primary CTX-CYCLE-001",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "GAP-P3-024 noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker REVIEW_REQUIRED, wat onder Model v1.2 nonblocking is zolang de blocker niet bewezen is. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-024"
+     ],
+     "gap_refs": [
+      "GAP-P3-024"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "WOMENS-PERF-DECISIONS-001",
+   "primary_track": "T10",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 315,
+   "unrounded_quotient": "3.15",
+   "weighted_score": "3.150",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry-rij benoemen de beslislaag expliciet",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als prestatiebeslissingen op basis van cyclus-context, met v1_scope-onderbouwing in de index en afbakening tegen de contextlaag in de registry.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#WOMENS-PERF-DECISIONS-001",
+      "docs/CAPABILITY_REGISTRY.md#WOMENS-PERF-DECISIONS-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "module aanwijsbaar en script-geladen; beheersing van alternatieven niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "core/womensPerformanceContext.js is de aanwijsbare hoofdimplementatie en via script-tag geladen; parallelle paden geinventariseerd. Geen guard tegen een tweede beslispad, dus geen 4.",
+     "evidence_refs": [
+      "core/womensPerformanceContext.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete file plus twee directe aanroepen in index.html",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: WomensPerformanceContextCore wordt tweemaal direct aangeroepen in index.html. Geen volledige payload-chain van entrypoint tot consument, dus geen 4.",
+     "evidence_refs": [
+      "index.html#WomensPerformanceContextCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op de gelezen cyclustabel",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie met owner-binding: de beslislaag leest cycle_symptom_logs, dat in twee migratiebestanden auth.uid()-policies draagt. Geen eigen lifecycle voor beslissingen, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#cycle_symptom_logs",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "deelname aan Context/Decision afgeleid uit de contextmodule, niet als volledige keten bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten is aangetoond: de contextmodule levert cyclusfase-informatie aan de trainingsbeslissing. De volledige keten zonder bypass is niet bewezen, dus geen 4.",
+     "evidence_refs": [
+      "core/womensPerformanceContext.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "beide suites requiren de modules en voeren gedrag uit",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: core/fWomensPerformanceContext.test.js en core/fWomensPerformanceDecisions.test.js requiren cycle.js en womensPerformanceContext.js en voeren het beslisgedrag uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fWomensPerformanceContext.test.js",
+      "core/fWomensPerformanceDecisions.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratie/policy-bewijs op de onderliggende cyclustabel",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "De beslislaag verwerkt bijzondere persoonsgegevens; enforcement is aangetoond op de datalaag via auth.uid() op de onderliggende cyclustabel. Geen capability-specifiek dekkend auditbewijs, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "bereikbaar via het cyclusscherm; volledigheid van de gebruikersketen niet geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen via het cyclusscherm waar de aanbeveling verschijnt. Volledigheid van terugkoppeling niet aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-lich-cyclus"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "gedrag bij ontbrekende cyclusdata volgt uit de testopzet; geen expliciete fabricage-uitsluiting geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes benoemd en afgevangen: zonder cyclusdata wordt geen aanbeveling gefabriceerd. Deterministisch bewijs over de hele capability ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "core/fWomensPerformanceDecisions.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over 60 gaps: geen relevante open V1-relatie voor deze capability",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "WOMENS-PRIVACY-CONSENT-001",
+   "primary_track": "T10",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 225,
+   "unrounded_quotient": "2.5",
+   "weighted_score": "2.500",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry benoemen consent als eigen verantwoordelijkheid",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als consent- en privacybeheer rond cyclusdata, met v1_scope-onderbouwing in de index en een registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#WOMENS-PRIVACY-CONSENT-001",
+      "docs/CAPABILITY_REGISTRY.md#WOMENS-PRIVACY-CONSENT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "LOW",
+     "confidence_basis": "geen eigen module aanwijsbaar; gericht gezocht en slechts zwak capability-specifiek bewijs gevonden",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.333",
+     "rationale": "Er is geen eigen module voor consentbeheer; de logica leeft verspreid en consent komt 35 keer voor in index.html. Er is een werkend fundament zonder aanwijsbare enkele eigenaar, dus anker 2.",
+     "evidence_refs": [
+      "index.html#consent",
+      "migratie_v*.sql#research_consents"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "LOW",
+     "confidence_basis": "geen bewezen keten en geen eigen drager; caller-bewijs ontbreekt",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.333",
+     "rationale": "Consentcontrole is aanwezig in de contextopbouw, maar er is geen bewezen keten van entrypoint naar consument voor deze capability en geen aanwijsbare drager. Caller-aanwezigheid zonder bewezen chain is maximaal 2.",
+     "evidence_refs": [
+      "index.html#consent"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs: 3 migratiebestanden met auth.uid(); tevens vastgesteld dat dit de enige consent-tabel is",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Persistentie met owner-binding: public.research_consents komt voor in drie migratiebestanden, alle met auth.uid()-policies. Een gerichte zoektocht stelde vast dat dit de enige consent-tabel is. Geen eigen lifecycle of versionering, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#research_consents",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties; de N/A rust op aangetoonde afwezigheid van engine-koppeling, niet op niet-vinden",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Consentbeheer neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Positief vastgesteld: nul referenties naar CalcCore, DecisionCore of ContextEngineCore in de consentmigraties en in de consentlogica; consent stuurt wat mag worden gebruikt en rekent zelf niets.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "beide suites direct geinspecteerd: nul uitvoeringsconstructies, dus DOCUMENTATION_ONLY",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.333",
+     "rationale": "DOCUMENTATION_ONLY: core/fWomensPrivacyConsent.test.js en core/fResearchConsentWithdrawal.test.js dragen beide nul uitvoeringsconstructies, geen vm.runInContext, geen new Function en geen require van een core-module. Zij inspecteren bron en structuur als tekst. Dat is anker 2.",
+     "evidence_refs": [
+      "core/fWomensPrivacyConsent.test.js",
+      "core/fResearchConsentWithdrawal.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratie/policy-bewijs: auth.uid() op research_consents in 3 migraties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement aangetoond op de datalaag: auth.uid()-policies op research_consents in drie migratiebestanden. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#research_consents",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "LOW",
+     "confidence_basis": "gericht gezocht; geen eigen bereikbaar consentscherm met bewezen keten gevonden",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.222",
+     "rationale": "Consentinstellingen zijn binnen de app aanwezig, maar er is geen eigen bereikbaar consentscherm met een bewezen keten van ontdekken naar gebruiken. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#consent"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "LOW",
+     "confidence_basis": "gericht gezocht; geen capability-specifiek bewijs van gedrag bij ontbrekende of ingetrokken consent",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.111",
+     "rationale": "Generieke afhandeling: er is geen capability-specifiek bewijs dat ontbrekende of ingetrokken consent deterministisch tot een expliciete onbekend- of weigerstatus leidt. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/fResearchConsentWithdrawal.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over 60 gaps: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  }
+ ]
+}

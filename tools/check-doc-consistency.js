@@ -571,6 +571,156 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── Combined E/J: T7, T10 en T13 Model-v1.2 auditartefacten ──
+    (function ejPrimeGuard() {
+      const halfUp = function (x, dp) {
+        const f = Math.pow(10, dp);
+        const sc = parseFloat((x * f).toPrecision(12));
+        return (Math.round(sc) / f).toFixed(dp);
+      };
+      const FROZEN = {
+        'CTX-CYCLE-001': '2.900', 'WOMENS-PERF-DECISIONS-001': '3.150', 'WOMENS-PRIVACY-CONSENT-001': '2.500',
+        'SOCIAL-GROUPS-CHALLENGES-001': '3.222', 'SOCIAL-IDENTITY-PRIVACY-001': '2.667',
+        'SOCIAL-SHARING-NOTIFICATIONS-001': '3.056',
+        'EVID-SCI-001': '2.467', 'HRV-LOG-ATOMICITY-001': '3.333', 'PROVENANCE-EXPLAINABILITY-001': '3.353' };
+      const TRACKS = { T7: ['9.153', '3.051', '61.02'], T10: ['8.550', '2.850', '57.00'], T13: ['8.945', '2.982', '59.64'] };
+      const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
+      const NA_OK = ['D','E','G','H'];
+      const CONF = ['HIGH','MEDIUM','LOW'];
+      const m12 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_2.json'), 'utf8'));
+      const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'ROADMAP_INDEX.json'), 'utf8'));
+      const known = {}; idx.forEach(function (x) { if (x.type === 'capability') known[x.id] = x; });
+      const reg = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      const gapIds = {}; (reg.gaps || []).forEach(function (g) { gapIds[g.gap_id] = g; });
+      let totalRecs = 0, totalCaps = 0;
+      const allNa = {}, allConf = {}, allF = {};
+      Object.keys(TRACKS).forEach(function (tk) {
+        const tp = path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_' + tk + '_PRIME.json');
+        if (!fs.existsSync(tp)) { problems.push('canoniek ' + tk + '-artefact ontbreekt'); return; }
+        const t = JSON.parse(fs.readFileSync(tp, 'utf8'));
+        if (t.audit_model_id !== m12.audit_model_id) problems.push(tk + ' model_id wijkt af');
+        if (t.audit_model_version !== '1.2') problems.push(tk + ' audit_model_version is niet 1.2');
+        if (t.audit_model_fingerprint !== m12.model_fingerprint) problems.push(tk + ' fingerprint wijkt af');
+        const caps = t.capabilities || [];
+        if (caps.length !== 3) problems.push(tk + ' heeft ' + caps.length + ' capabilities, verwacht 3');
+        const fromIndex = Object.keys(known).filter(function (k) {
+          return known[k].primary_track === tk && known[k].v1_scope === true;
+        }).sort();
+        if (fromIndex.join(',') !== caps.map(function (c) { return c.stable_id; }).sort().join(',')) {
+          problems.push(tk + ' capability-set wijkt af van de canonieke index');
+        }
+        const stored = [];
+        caps.forEach(function (c) {
+          totalCaps++;
+          const id = c.stable_id;
+          if (!FROZEN[id]) { problems.push(tk + ' onverwachte capability ' + id); return; }
+          const seen = {};
+          if (Object.keys(c.criteria || {}).sort().join('') !== CRIT.join('')) problems.push(tk + ' ' + id + ' heeft niet exact A-J');
+          let aw = 0, num = 0;
+          CRIT.forEach(function (k) {
+            const r = (c.criteria || {})[k]; if (!r) { problems.push(tk + ' ' + id + ' mist criterium ' + k); return; }
+            if (seen[k]) problems.push(tk + ' ' + id + ' dubbel criterium ' + k);
+            seen[k] = true; totalRecs++;
+            if (CONF.indexOf(r.confidence) < 0) problems.push(tk + ' ' + id + '/' + k + ' ongeldige confidence');
+            allConf[r.confidence] = (allConf[r.confidence] || 0) + 1;
+            if (!r.confidence_basis) problems.push(tk + ' ' + id + '/' + k + ' zonder confidence_basis');
+            if (r.applicable === false) {
+              allNa[k] = (allNa[k] || 0) + 1;
+              if (NA_OK.indexOf(k) < 0) problems.push(tk + ' N/A niet toegestaan op ' + id + '/' + k);
+              if (!r.na_rationale) problems.push(tk + ' N/A zonder rationale: ' + id + '/' + k);
+              return;
+            }
+            if (!Number.isInteger(r.score) || r.score < 0 || r.score > 5) problems.push(tk + ' ' + id + '/' + k + ' score niet integer 0-5');
+            if (k === 'F') {
+              allF['F' + r.score] = (allF['F' + r.score] || 0) + 1;
+              if (r.score === 5) problems.push(tk + ' ' + id + ' draagt een F5; deze golf kent er geen');
+            }
+            if (!r.rationale) problems.push(tk + ' ' + id + '/' + k + ' zonder rationale');
+            if (!(r.evidence_refs || []).length) problems.push(tk + ' ' + id + '/' + k + ' zonder evidence_refs');
+            (r.gap_refs || []).forEach(function (g) {
+              if (!gapIds[g]) problems.push(tk + ' ' + id + '/' + k + ' verwijst naar onbekende gap ' + g);
+            });
+            (r.evidence_refs || []).forEach(function (e) {
+              if (typeof e !== 'string') return;
+              const p0 = e.split('#')[0].split(':')[0];
+              if (!p0 || p0.indexOf('*') >= 0) return;
+              if (p0.indexOf('/') < 0 && !/\.(sql|js|md|json|html)$/.test(p0)) return;
+              if (!fs.existsSync(path.join(ROOT, p0))) {
+                problems.push(tk + ' ' + id + '/' + k + ' verwijst naar een niet-bestaand repository-pad: ' + p0);
+              }
+            });
+            aw += r.weight; num += r.weight * r.score;
+          });
+          const sc = halfUp(num / aw, 3);
+          if (sc !== c.weighted_score) problems.push(tk + ' ' + id + ' opgeslagen score ' + c.weighted_score + ', herberekend ' + sc);
+          if (c.weighted_score !== FROZEN[id]) problems.push(tk + ' ' + id + ' wijkt af van de gecanonicaliseerde score ' + FROZEN[id]);
+          if (c.applicable_weight !== aw) problems.push(tk + ' ' + id + ' applicable_weight klopt niet');
+          if (c.weighted_numerator !== num) problems.push(tk + ' ' + id + ' weighted_numerator klopt niet');
+          stored.push(parseFloat(c.weighted_score));
+        });
+        const sum = stored.reduce(function (a, b) { return a + b; }, 0);
+        const tr = (t.track_results || {})[tk] || {};
+        if (sum.toFixed(3) !== TRACKS[tk][0]) problems.push(tk + ' som van opgeslagen scores is ' + sum.toFixed(3) + ', verwacht ' + TRACKS[tk][0]);
+        if (tr.sum_of_stored_scores !== TRACKS[tk][0]) problems.push(tk + ' sum_of_stored_scores klopt niet');
+        const tscore = halfUp(sum / stored.length, 3);
+        if (tscore !== TRACKS[tk][1] || tr.score !== TRACKS[tk][1]) problems.push(tk + ' trackscore ' + tr.score + ', verwacht ' + TRACKS[tk][1]);
+        const pct = halfUp(parseFloat(TRACKS[tk][1]) / 5 * 100, 2);
+        if (tr.percentage !== pct || pct !== TRACKS[tk][2]) problems.push(tk + ' percentage ' + tr.percentage + ', verwacht ' + TRACKS[tk][2]);
+      });
+      if (totalCaps !== 9) problems.push('E/J telt ' + totalCaps + ' capabilities, verwacht 9');
+      if (totalRecs !== 90) problems.push('E/J telt ' + totalRecs + ' criterion records, verwacht 90');
+      const NAEXP = { D: 2, E: 4, G: 2, H: 2 };
+      Object.keys(NAEXP).forEach(function (k) {
+        if ((allNa[k] || 0) !== NAEXP[k]) problems.push('E/J N/A op ' + k + ' is ' + (allNa[k] || 0) + ', verwacht ' + NAEXP[k]);
+      });
+      const CEXP = { HIGH: 55, MEDIUM: 31, LOW: 4 };
+      Object.keys(CEXP).forEach(function (k) {
+        if ((allConf[k] || 0) !== CEXP[k]) problems.push('E/J confidence ' + k + ' is ' + (allConf[k] || 0) + ', verwacht ' + CEXP[k]);
+      });
+      const FEXP = { F2: 1, F3: 7, F4: 1 };
+      Object.keys(FEXP).forEach(function (k) {
+        if ((allF[k] || 0) !== FEXP[k]) problems.push('E/J F-aggregaat ' + k + ' is ' + (allF[k] || 0) + ', verwacht ' + FEXP[k]);
+      });
+      // EVID-SCI moet de canonieke gaprelatie GAP-P4-002 dragen, niet GAP-P2-032
+      const t7 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T7_PRIME.json'), 'utf8'));
+      const evid = (t7.capabilities || []).filter(function (c) { return c.stable_id === 'EVID-SCI-001'; })[0];
+      if (evid) {
+        const jr = evid.criteria.J.gap_refs || [];
+        if (jr.indexOf('GAP-P4-002') < 0) problems.push('EVID-SCI-001 J mist de canonieke relatie GAP-P4-002');
+        if (jr.indexOf('GAP-P2-032') >= 0) problems.push('EVID-SCI-001 J gebruikt GAP-P2-032, dat een andere primary capability heeft');
+      }
+      // de nieuwe SocialPrivacy-gap
+      const sp = gapIds['GAP-P3-034'];
+      if (!sp) problems.push('GAP-P3-034 ontbreekt in het gapregister');
+      else {
+        if (sp.primary_capability_id !== 'SOCIAL-IDENTITY-PRIVACY-001') problems.push('GAP-P3-034 primary capability klopt niet');
+        if ((sp.affected_capability_ids || []).length !== 0) problems.push('GAP-P3-034 mag geen affected capabilities dragen');
+        if ((sp.criteria_impact || []).indexOf('C') < 0) problems.push('GAP-P3-034 mist criterium C');
+        if (sp.blocker !== false) problems.push('GAP-P3-034 blocker moet false zijn');
+        if (sp.v1_scope !== true) problems.push('GAP-P3-034 v1_scope moet true zijn');
+        if (sp.status !== 'OPEN') problems.push('GAP-P3-034 status moet OPEN zijn');
+        if (sp.severity !== 'P3') problems.push('GAP-P3-034 severity moet P3 zijn');
+        if (sp.traceability_status !== 'COMPLETE' || sp.traceability_scope !== 'CAPABILITY_SCOPED') {
+          problems.push('GAP-P3-034 traceability moet COMPLETE/CAPABILITY_SCOPED zijn');
+        }
+      }
+      const t13 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T13_PRIME.json'), 'utf8'));
+      const sip = (t13.capabilities || []).filter(function (c) { return c.stable_id === 'SOCIAL-IDENTITY-PRIVACY-001'; })[0];
+      if (sip && sip.criteria.J.score !== 3) problems.push('SOCIAL-IDENTITY-PRIVACY-001 J moet 3 zijn na GAP-P3-034');
+      // GAP-P2-010 blijft UNSCOPED en blokkeert niets
+      const g210 = gapIds['GAP-P2-010'];
+      if (!g210 || g210.traceability_scope !== 'UNSCOPED' || g210.primary_capability_id || (g210.affected_capability_ids || []).length) {
+        problems.push('GAP-P2-010-semantiek is veranderd');
+      }
+      if ((reg.gaps || []).length !== 61) problems.push('gap register telt ' + (reg.gaps || []).length + ' records, verwacht 61');
+      const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
+      if (bl.indexOf('met criterium-specifieke evidence | **51 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 51/86');
+      if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
+      // eerdere canonieke artefacten blijven geldig
+      const t3 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T3_PRIME.json'), 'utf8'));
+      if (t3.track_results.T3.score !== '3.122') problems.push('T3-trackscore is veranderd');
+    })();
+
     // ── T3: Model-v1.2 auditartefact ──
     (function t3PrimeGuard() {
       const halfUp = function (x, dp) {
@@ -680,9 +830,9 @@ try {
         problems.push('canonieke vergelijking klopt niet: T6 moet hoger zijn dan T3');
       }
       const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
-      if (bl.indexOf('met criterium-specifieke evidence | **42 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 42/86');
+      // model_v1_verified loopt op per gecanonicaliseerde track; centraal gecontroleerd in de E/J-guard (51/86).
       if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
-      if ((reg.gaps || []).length !== 60) problems.push('gap register telt niet langer 60 records');
+      // het gapregister groeit met bewezen nieuwe gaps; centraal gecontroleerd in de E/J-guard (61).
     })();
 
     // ── T17: Model-v1.2 auditartefact ──
@@ -814,7 +964,7 @@ try {
       if (ap.capabilities.length !== 9 || bp.capabilities.length !== 13) problems.push('A-prime of B-prime is van omvang veranderd');
       if (ap.track_results.T1.score !== '3.056' || bp.track_results.T4.score !== '2.943') problems.push('A-prime of B-prime trackscore is veranderd');
       // gapregister ongewijzigd in omvang en GAP-P2-010-semantiek
-      if ((reg.gaps || []).length !== 60) problems.push('gap register telt niet langer 60 records');
+      // het gapregister groeit met bewezen nieuwe gaps; centraal gecontroleerd in de E/J-guard (61).
       const g210 = gapIds['GAP-P2-010'];
       if (!g210 || g210.traceability_scope !== 'UNSCOPED' || g210.primary_capability_id || (g210.affected_capability_ids || []).length) {
         problems.push('GAP-P2-010-semantiek is veranderd');

@@ -264,7 +264,7 @@ register-debt niet mag verbergen.
 | Telling | Betekenis | Stand |
 |---|---|---|
 | `historical_audited` | beoordeeld onder een pre-v1.0 model; scores behouden, niet v1-verifieerbaar | **22 / 86** |
-| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **42 / 86** |
+| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **51 / 86** |
 
 ### Canonieke Model-v1.2 trackresultaten
 
@@ -291,6 +291,30 @@ Batch A-artefact en worden niet overschreven. `docs/audit/AJ_AUDIT_BATCH_A.json`
 De historische waarden **T4 3,564**, **T5 3,225** en **T6 3,623** blijven geldig voor
 het historische Batch B-artefact en worden niet overschreven.
 `docs/audit/AJ_AUDIT_BATCH_B.json` behoudt `HISTORICAL_PRE_V1_MODEL` en is ongewijzigd.
+
+### Canonieke Model-v1.2 trackresultaten — T7, T10 en T13 (Combined E/J)
+
+**Canonieke artefacten:** `docs/audit/AJ_AUDIT_T7_PRIME.json`,
+`docs/audit/AJ_AUDIT_T10_PRIME.json` en `docs/audit/AJ_AUDIT_T13_PRIME.json` —
+samen 9 capabilities en 90 criterion records, `audit_model_version: 1.2`.
+
+| Track | Model v1.2 | Historisch pre-v1 |
+|---|---|---|
+| **T7** (Evidence / Provenance) | **3,051 / 5 = 61,02%** | NOT_COMPARABLE |
+| **T10** (Women's Performance) | **2,850 / 5 = 57,00%** | NOT_COMPARABLE |
+| **T13** (Social) | **2,982 / 5 = 59,64%** | NOT_COMPARABLE |
+
+N/A over de 90 records: D 2 · E 4 · G 2 · H 2 = 10. Confidence, per record
+toegekend onder de canonieke semantiek die voor HIGH direct capability-specifiek
+bewijs eist: **55 HIGH / 31 MEDIUM / 4 LOW**. F-verdeling: F2 ×1 · F3 ×7 ·
+F4 ×1 · **geen F5**.
+
+**SocialPrivacyCore.** `core/socialPrivacy.js` is script-geladen maar heeft nul
+productie-callers, langs twintig zoekroutes vastgesteld. Dat is vastgelegd als
+`GAP-P3-034` met primary `SOCIAL-IDENTITY-PRIVACY-001`, criterium C, blocker
+false. Het betreft uitdrukkelijk geen datalek en geen RLS-falen: de
+database-RLS is actief en blijft de bron van waarheid. `SOCIAL-IDENTITY-PRIVACY-001`
+komt daarmee op J=3.
 
 ### Canonieke Model-v1.2 trackresultaten — T3 (Endurance)
 
@@ -342,6 +366,9 @@ repository-`source_ref`. Er zijn nul databasemutaties uitgevoerd en nul rijen ge
 | T4 | 2,943 / 58,86% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T5 | 2,471 / 49,42% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T3 | 3,122 / 62,44% | `AJ_AUDIT_T3_PRIME.json` |
+| T7 | 3,051 / 61,02% | `AJ_AUDIT_T7_PRIME.json` |
+| T10 | 2,850 / 57,00% | `AJ_AUDIT_T10_PRIME.json` |
+| T13 | 2,982 / 59,64% | `AJ_AUDIT_T13_PRIME.json` |
 | T6 | 3,395 / 67,90% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T17 | 2,873 / 57,46% | `AJ_AUDIT_T17_PRIME.json` |
 

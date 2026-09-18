@@ -17,5 +17,5 @@ This is an evidence index, not a marketing scorecard. Empty cells mean not yet a
 | Alpha Progression | — | — | — | — | — | — | QUEUED |
 | Dr. Muscle | — | — | — | — | — | — | QUEUED |
 | TrainingPeaks | — | — | — | — | — | — | DESIRED |
-| Runna | — | — | — | — | — | — | DESIRED |
+| Runna | 8.52.1 | Deep running-plan/pace/recording evidence | Health Connect + HR/BLE + Garmin/COROS/Strava | Community/achievements present | Adaptive plan/pace proposal UX; server algorithm unknown | 14 new patterns + HC/BG corroboration | STATIC CLOSED / DYNAMIC OPEN |
 | Strava | — | — | — | — | — | — | DESIRED |

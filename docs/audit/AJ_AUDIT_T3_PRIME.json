@@ -1,0 +1,1709 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T3_PRIME",
+ "tracks": [
+  "T3"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "4434c814fbba8ade070707c600ab1c9294e6664d",
+ "complete": true,
+ "record_count": 100,
+ "capability_count": 10,
+ "na_record_count": 10,
+ "scored_record_count": 90,
+ "na_distribution": {
+  "D": 4,
+  "G": 5,
+  "H": 1
+ },
+ "confidence_distribution": {
+  "HIGH": 52,
+  "MEDIUM": 43,
+  "LOW": 5
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T3-trackscore; Batch A en B dekten T1, T2, T4, T5 en T6.",
+ "track_comparison_note": "Canonieke vergelijking op deze baseline: T6 = 3.395 en T3 = 3.114, dus T6 > T3. Een eerdere prozauitspraak dat T3 de hoogste v1.2-trackscore zou zijn was onjuist en is niet in dit artefact overgenomen.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, new Function of require van een core-module als BEHAVIORAL_UNIT, en regex- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief: 4 vereist 3 en 5 vereist 4, zodat adversarial geformuleerde documentatietests niet verder reiken dan 2. Bestandsnamen, grep-tellingen en assertion-aantallen zijn uitsluitend als zoekroute gebruikt en gelden nergens als zelfstandig bewijs. Er is geen enkele F5 toegekend.",
+ "adjudications": {
+  "D_C3": {
+   "status": "RESOLVED_NO_DEFECT",
+   "detail": "De eerdere bevinding dat END-HYROX-001 en END-INTERVAL-001 geen implementatie zouden hebben, berustte op de geraden bestandsnamen hyrox.js en intervalCore.js. Gerichte domeinzoektocht bewijst het tegendeel: HYROX leeft in core/cardio.js, core/sportDefinition.js en core/onboarding.js met 359 referenties in index.html, drie migraties en vier toegewijde tests; intervallen leven in core/intervalEngine.js met drie INTEGRATION_RUNTIME-suites. Beide CANONICAL_ACTIVE."
+  },
+  "D_C4": {
+   "status": "RESOLVED_SCORE_IMPACT",
+   "detail": "De paren RUNNING-INTELLIGENCE-001 / END-RUNINTEL-001 en CYCLING-INTELLIGENCE-001 / END-CYCINTEL-001 zijn DISTINCT_AND_PROVEN: de -INTELLIGENCE-capabilities bezitten de wetenschappelijke modellaag (CardioCore.criticalSpeed respectievelijk criticalPower), de END-*INTEL-capabilities de athlete-facing trendweergave uit B9-03 en B9-05. Geen duplicaat en geen shadow; B en C blijven voor beide paren op 3 omdat geen van beide een volledige keten bewijst."
+  },
+  "s_hyrox_perf": {
+   "status": "REACHABLE_PROVEN",
+   "detail": "Uitputtende routezoektocht op huidige main: het scherm wordt aangeroepen vanuit een gegenereerde knop op index.html:34278 met onclick go(s-hyrox-perf), waarbij de aanhalingstekens in de HTML-string zijn geescaped; daarnaast index.html:12515 met renderHyroxPerformanceOverzicht en index.html:12558 met de navigatiemapping naar het inzicht-tabblad. De eerdere nul-treffer kwam doordat de zoekterm de escaping niet meenam. Geen nieuwe gap; het gap register blijft op 60 records."
+  },
+  "implementation_absence_candidate": {
+   "status": "NOT_PROVEN",
+   "detail": "Alle vijf eerder verdachte capabilities blijken geimplementeerd; de bevinding rustte op geraden bestandsnamen."
+  }
+ },
+ "shadow_calculation_finding": "Geen SHADOW_ACTIVE. index.html bevat nul eigen definities van criticalPower, criticalSpeed, sessionLoadSRPE of rollingLoadSum en nul eigen pace- of snelheidsberekeningen; alle aanroepen lopen via CardioCore of TrainingLoadCore. Classificatie CANONICAL.",
+ "cross_capability_evidence_rejections": [
+  {
+   "evidence": "core/fEnduranceCoachContext.test.js#ProgressionCore.trendBy",
+   "primary_capability": "generieke progressielaag",
+   "rejected_for": "END-RUNINTEL-001 en END-CYCINTEL-001",
+   "reason": "generieke trendfunctie; bewijst de sportspecifieke trendlaag niet"
+  },
+  {
+   "evidence": "core/fRunningIntelligence.test.js",
+   "primary_capability": "RUNNING-INTELLIGENCE-001",
+   "rejected_for": "END-RUNINTEL-001",
+   "reason": "test de Critical Speed-modellaag, niet de trendweergave"
+  },
+  {
+   "evidence": "core/fCyclingIntelligence.test.js",
+   "primary_capability": "CYCLING-INTELLIGENCE-001",
+   "rejected_for": "END-CYCINTEL-001",
+   "reason": "test de Critical Power-modellaag, niet de trendweergave"
+  },
+  {
+   "evidence": "core/fEnduranceCoachContext.test.js",
+   "primary_capability": "CYCLING-INTELLIGENCE-001 en RUNNING-INTELLIGENCE-001",
+   "rejected_for": "SWIMMING-FEASIBILITY-001",
+   "reason": "laadt swimmingIntelligence.js maar roept er geen enkele functie uit aan"
+  }
+ ],
+ "gap_traceability_note": "J is mechanisch herrekend uit het canonieke register van 60 gaps met de relatieverzameling primary_capability_id UNION affected_capability_ids voor COMPLETE en CAPABILITY_SCOPED records. Zes gaps raken T3: GAP-P2-021, GAP-P2-022, GAP-P2-026, GAP-P2-027, GAP-P2-028 en GAP-P2-029, alle OPEN, P2, v1_scope true en met blocker REVIEW_REQUIRED, dus nonblocking. Acht capabilities komen daarmee op J=3 en twee op J=4. GAP-P2-010 is UNSCOPED en blokkeert exact 0 van de 10 capabilities. Er is geen nieuwe gap aangemaakt.",
+ "track_results": {
+  "T3": {
+   "score": "3.122",
+   "percentage": "62.44",
+   "capability_count": 10,
+   "sum_of_stored_scores": "31.220",
+   "arithmetic": "som van de tien OPGESLAGEN driedecimale capabilityscores gedeeld door 10, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE: T3 is nooit eerder als track gescoord."
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "CYCLING-INTELLIGENCE-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 285,
+   "unrounded_quotient": "3.352941176470588235294117647",
+   "weighted_score": "3.353",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "De index draagt v1_scope met evidence-verwijzing en een next_action die de verantwoordelijkheid afbakent tot CardioCore.criticalPower() volgens Monod en Scherrer 1965, expliciet onderscheiden van de trendlaag END-CYCINTEL-001. Acceptance expectations zijn niet als versioneerbaar contract vastgelegd, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#CYCLING-INTELLIGENCE-001",
+      "docs/CAPABILITY_REGISTRY.md#CYCLING-INTELLIGENCE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/cardio.js en core/cyclingIntelligence.js zijn de aanwijsbare hoofdimplementatie; beide zijn via script-tag geladen. Parallelle paden zijn geinventariseerd en geclassificeerd, maar de index meldt zelf \"niet gewired op trainingsgeschiedenis\", dus beheersing tot anker 4 is niet aangetoond.",
+     "evidence_refs": [
+      "core/cardio.js",
+      "core/cyclingIntelligence.js",
+      "docs/ROADMAP_INDEX.json#CYCLING-INTELLIGENCE-001.next_action"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: CardioCore heeft 123 referenties in index.html en CyclingIntelligence 7. Geen volledige payload-chain van entrypoint tot consument voor deze capability, dus geen 4.",
+     "evidence_refs": [
+      "index.html#CardioCore",
+      "index.html#CyclingIntelligence",
+      "core/cyclingIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De krachtmodellaag is bewijsbaar stateless: core/cyclingIntelligence.js kent geen persistentie-aanroep en er bestaat geen migratietabel voor berekende Critical Power-uitkomsten. De onderliggende activiteiten worden gepersisteerd door END-DATAFOUNDATION-001.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "De volledige relevante keten is bewezen zonder bypass: core/fEnduranceCoachContext.test.js voert met vm.runInContext de echte contextketen uit (tkEnduranceCtxSports, tkEnduranceCtxProject, tkEnduranceCoachContextAdapter en buildCtx uit index.html) en roept daarin CardioCore.criticalPower tweemaal aan. index.html bevat nul eigen definities van criticalPower. Anker 5 vereist afdwinging van de keten zelf, die ontbreekt.",
+     "evidence_refs": [
+      "core/fEnduranceCoachContext.test.js#vm.runInContext",
+      "index.html#CardioCore.criticalPower"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.706",
+     "rationale": "INTEGRATION_RUNTIME: core/fEnduranceCoachContext.test.js draait CardioCore.criticalPower binnen de echte, uit index.html geextraheerde contextketen onder vm.runInContext. Daarnaast BEHAVIORAL_UNIT via core/fCyclingIntelligence.test.js (require cardio.js) en core/fCyclingIntelligenceCore.test.js (require cyclingIntelligence.js). Geen adversarial suite en geen device-bewijs voor exact deze flow, dus geen 5.",
+     "evidence_refs": [
+      "core/fEnduranceCoachContext.test.js#vm.runInContext",
+      "core/fCyclingIntelligence.test.js#require(cardio.js)",
+      "core/fCyclingIntelligenceCore.test.js#require(cyclingIntelligence.js)"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Critical Power wordt berekend uit de eigen prestatiedata van de sporter binnen diens eigen sessie; er is geen trust boundary, geen tweede partij, geen autorisatiebeslissing en geen misbruikroute binnen deze rekenlaag. Enforcement op de onderliggende activiteiten hoort bij END-DATAFOUNDATION-001.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: het scherm s-cycling-insights bestaat en is via go() bereikbaar. Volledigheid van terugkoppeling en vervolgactie is niet apart aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-cycling-insights"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: bij onvoldoende inspanningsdata levert de Critical Power-berekening geen gefabriceerde waarde. Deterministisch bewijs dat unknown over de hele capability unknown blijft ontbreekt.",
+     "evidence_refs": [
+      "core/cardio.js#criticalPower",
+      "core/fCyclingIntelligence.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P2-021 en GAP-P2-026 noemen deze capability in affected_capability_ids, beide v1_scope true, status OPEN en blocker REVIEW_REQUIRED, wat onder Model v1.2 nonblocking is zolang de blocker niet bewezen is. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-021",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-026"
+     ],
+     "gap_refs": [
+      "GAP-P2-021",
+      "GAP-P2-026"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "END-CYCINTEL-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 270,
+   "unrounded_quotient": "3.176470588235294117647058824",
+   "weighted_score": "3.176",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "De index draagt v1_scope met evidence en een next_action die B9-05 als afgesloten sprint noemt met snelheids- en vermogenstrend, consistency en opt-in max-effort-markering. Dat bakent de capability expliciet af tegen de modellaag CYCLING-INTELLIGENCE-001. Geen versioneerbare acceptance expectations, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#END-CYCINTEL-001",
+      "docs/CAPABILITY_REGISTRY.md#END-CYCINTEL-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "De trendlaag is aanwijsbaar belegd in core/cyclingIntelligence.js met hergebruik van bestaande generieke bouwstenen; parallelle paden geinventariseerd. Geen bewezen beheersing tot anker 4.",
+     "evidence_refs": [
+      "core/cyclingIntelligence.js",
+      "docs/ROADMAP_INDEX.json#END-CYCINTEL-001.next_action"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Productie-callers bewezen: CyclingIntelligence heeft 7 referenties in index.html en het scherm s-cycling-insights is via go() bereikbaar. Geen volledige payload-chain aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#CyclingIntelligence",
+      "index.html#s-cycling-insights"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De trendlaag is bewijsbaar stateless: zij leidt per aanroep af uit reeds gepersisteerde activiteiten en kent geen eigen migratietabel of persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "Deel van de keten is aangetoond: de trendberekening consumeert de endurance-datalaag en levert aan de insights-weergave. De volledige keten zonder bypass is voor deze capability niet bewezen; het generieke ProgressionCore.trendBy in de contexttest bewijst deze capability niet en is afgewezen als cross-capability evidence.",
+     "evidence_refs": [
+      "core/cyclingIntelligence.js",
+      "index.html#s-cycling-insights"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "BEHAVIORAL_UNIT: core/fCyclingIntelligenceCore.test.js requiret cyclingIntelligence.js en voert het trendgedrag uit; core/fCyclingIntelligence.test.js requiret cardio.js. core/fB9_05CyclingIntelligence.test.js bevat nul uitvoeringsconstructies en is DOCUMENTATION_ONLY. Geen vm-runtime die exact deze trendketen uitvoert, dus geen 4.",
+     "evidence_refs": [
+      "core/fCyclingIntelligenceCore.test.js#require(cyclingIntelligence.js)",
+      "core/fB9_05CyclingIntelligence.test.js#geen-uitvoering"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Trendweergave van de eigen prestatiedata van de sporter kent geen trust boundary, tweede partij of autorisatiebeslissing; de afscherming zit op de onderliggende activiteitentabellen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen via het bereikbare scherm s-cycling-insights. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#s-cycling-insights"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: bij onvoldoende historie wordt de trend niet gefabriceerd maar als onbepaald behandeld. Deterministisch bewijs over de hele capability ontbreekt.",
+     "evidence_refs": [
+      "core/cyclingIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4; 5 vereist closure-evidence van een gesloten gap, die hier niet bestaat.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "END-CYCLINGCORE-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 320,
+   "unrounded_quotient": "3.2",
+   "weighted_score": "3.200",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "De index draagt v1_scope met evidence en een next_action die B9-04 als afgesloten noemt: volledige Cycling Core via de gegeneraliseerde EnduranceExecutionCore, expliciet zonder tweede state machine. Dat is een heldere afbakening tegen END-RUNNINGCORE-001.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#END-CYCLINGCORE-001",
+      "docs/CAPABILITY_REGISTRY.md#END-CYCLINGCORE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "core/enduranceExecution.js met EnduranceExecutionCore is de enige eigenaar van de uitvoeringsstate; de index legt expliciet vast dat er geen tweede state machine is en dat er nul regressie optrad. Alternatieven geinventariseerd, geen onbeheerst shadow-pad. Geen guard die een tweede pad structureel onmogelijk maakt, dus geen 5.",
+     "evidence_refs": [
+      "core/enduranceExecution.js#EnduranceExecutionCore",
+      "docs/ROADMAP_INDEX.json#END-CYCLINGCORE-001.next_action"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: EnduranceExecutionCore heeft 28 referenties in index.html en het scherm s-cycling is via go() bereikbaar. Geen volledige payload-chain van entrypoint tot consument aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#EnduranceExecutionCore",
+      "index.html#s-cycling"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie aanwezig met owner-binding: de uitvoering schrijft naar de endurance-datalaag activities en activity_laps, die auth.uid()-policies dragen in respectievelijk 9 en 2 migratiebestanden. Geen eigen versionering of historiebehoud, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#activities",
+      "migratie_v*.sql#activity_laps"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten is aangetoond: de uitvoeringsstate levert belasting aan TrainingLoadCore en daarmee aan de coach-context. De volledige keten zonder bypass is voor deze capability niet bewezen.",
+     "evidence_refs": [
+      "core/enduranceExecution.js",
+      "core/trainingLoad.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: core/fB9_04CyclingCore.test.js requiret enduranceExecution.js en voert de uitvoeringsstate uit, met drie adversarial-markers. Geen vm-runtime over de echte call-chain voor deze capability, dus geen 4; en omdat anker 5 cumulatief op 4 rust, blijft adversarial bewijs zonder runtime op 3.",
+     "evidence_refs": [
+      "core/fB9_04CyclingCore.test.js#require(enduranceExecution.js)"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "De capability schrijft sessiegebonden persoonsdata weg; enforcement is aangetoond op de datalaag via auth.uid()-policies op activities en activity_laps. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()",
+      "migratie_v*.sql#activities"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: het scherm s-cycling is via go() bereikbaar en draagt de live uitvoering. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#s-cycling"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: de gedeelde uitvoeringskern kent onderbreking en hervatting, en de testsuite draagt drie adversarial-markers op afwijkende toestanden. Geen sabotagetest die fail-closed over de hele capability afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "core/fB9_04CyclingCore.test.js",
+      "core/enduranceExecution.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "GAP-P2-029 noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-029"
+     ],
+     "gap_refs": [
+      "GAP-P2-029"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "END-DATAFOUNDATION-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 290,
+   "unrounded_quotient": "3.222222222222222222222222222",
+   "weighted_score": "3.222",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "De index draagt v1_scope met evidence en een next_action die B9-01 als afgesloten noemt met de canonieke endurance-datalaag activities, activity_laps en athlete_endurance_profile plus adversarial RLS-bewijs. Heldere afbakening tegen de sportspecifieke capabilities.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#END-DATAFOUNDATION-001",
+      "docs/CAPABILITY_REGISTRY.md#END-DATAFOUNDATION-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "De datalaag is aanwijsbaar belegd in migraties met drie benoemde tabellen; parallelle paden geinventariseerd. Er is geen module die de laag als enige eigenaar afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#activities",
+      "migratie_v*.sql#activity_laps",
+      "migratie_v*.sql#athlete_endurance_profile"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: activities heeft 78 referenties in index.html, activity_laps 8 en athlete_endurance_profile 6. Geen volledige payload-chain van entrypoint tot consument aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#activities",
+      "index.html#activity_laps",
+      "index.html#athlete_endurance_profile"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie aangetoond: activities in 11 migratiebestanden waarvan 9 met auth.uid() en 5 met expliciete row level security, activity_laps in 3 waarvan 2 met auth.uid(), athlete_endurance_profile in 2 met auth.uid(). Versionering of historiebehoud is niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#activities",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Deel van de keten is aangetoond: de datalaag voedt de sportspecifieke intelligence en de coach-context. De volledige keten zonder bypass is voor deze laag niet bewezen.",
+     "evidence_refs": [
+      "index.html#activities",
+      "core/cardio.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: core/fEnduranceContextProfileThresholds.test.js requiret cardio.js en voert profielgedrag op de datalaag uit. core/fB9EnduranceFoundation.test.js en core/fEnduranceArchitectureContract.test.js bevatten nul uitvoeringsconstructies en zijn DOCUMENTATION_ONLY. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fEnduranceContextProfileThresholds.test.js#require(cardio.js)",
+      "core/fB9EnduranceFoundation.test.js#geen-uitvoering"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Enforcement aangetoond op de datalaag met dekkend bewijs: alle drie de tabellen dragen auth.uid()-policies en de index meldt expliciet adversarial RLS-validatie bij B9-01. Anker 5 vereist twee-account-bewijs met echte accounts, dat in de repository niet bestaat.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()",
+      "docs/ROADMAP_INDEX.json#END-DATAFOUNDATION-001.next_action"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De endurance-datalaag is een persistentiecontract zonder eigen gebruikerscontract: er is geen route, invoer of terugkoppeling voor de sporter. De sportschermen s-running, s-cycling, s-swimming en s-hyrox behoren aantoonbaar tot de sportspecifieke capabilities, niet tot deze laag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: ontbrekende laps of profielwaarden leiden tot een expliciet onbepaalde toestand in plaats van een gefabriceerde waarde. Deterministisch bewijs over de hele laag ontbreekt.",
+     "evidence_refs": [
+      "core/fEnduranceContextProfileThresholds.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "GAP-P2-027 noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-027"
+     ],
+     "gap_refs": [
+      "GAP-P2-027"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "END-HYROX-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 335,
+   "unrounded_quotient": "3.35",
+   "weighted_score": "3.350",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "De index draagt v1_scope met evidence en een next_action die MS-F6-04 als afgesloten noemt, met een rulebook-revalidatie van 29 augustus 2026 waarin formaat en divisies bevestigd actueel zijn en geen verouderde hardcoding is aangetroffen.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#END-HYROX-001",
+      "docs/CAPABILITY_REGISTRY.md#END-HYROX-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "De HYROX-implementatie is aanwijsbaar verdeeld over core/cardio.js, core/sportDefinition.js en core/onboarding.js, met 359 referenties in index.html. Parallelle paden zijn geinventariseerd, maar er is geen enkele module die het domein als eigenaar afdwingt, dus geen 4. De eerder veronderstelde afwezigheid berustte op een geraden bestandsnaam en is weerlegd.",
+     "evidence_refs": [
+      "core/cardio.js",
+      "core/sportDefinition.js",
+      "core/onboarding.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "Volledige call-chain inclusief payload bewezen: het scherm s-hyrox is via go() bereikbaar, index.html:12515 koppelt de weergave via renderHyroxPerformanceOverzicht, index.html:12558 mapt de route op het inzicht-tabblad, en verwijdering is meegenomen in netlify/functions/delete-account.js. Convergentie van alle relevante entrypoints niet aangetoond, dus geen 5.",
+     "evidence_refs": [
+      "index.html#s-hyrox",
+      "index.html#renderHyroxPerformanceOverzicht",
+      "netlify/functions/delete-account.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie aanwezig met owner-binding: HYROX-gegevens komen voor in drie migratiebestanden (v476, v490, v491) binnen de auth.uid()-afgeschermde datalaag. Geen eigen lifecycle- of versioneringsmechanisme, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v476.sql",
+      "migratie_v490.sql",
+      "migratie_v491.sql"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten is aangetoond: HYROX-prestaties voeden de prestatieweergave en de belastingberekening. De volledige keten zonder bypass is niet bewezen.",
+     "evidence_refs": [
+      "core/cardio.js",
+      "index.html#renderHyroxPerformanceOverzicht"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "INTEGRATION_RUNTIME: core/fTrainingExecutionHyroxAndRaceMatrix.test.js draait vm.runInContext over de echte uitvoerings- en race-matrixketen. Daarnaast BEHAVIORAL_UNIT via core/fHyroxTriathlon.test.js (require athlete.js, calculation.js, cardio.js) met acht adversarial-markers. core/fHyroxRulebookRevalidation.test.js is DOCUMENTATION_ONLY. Geen device-bewijs voor exact deze flow en geen als adversarial aangemerkte suite bovenop de runtime, dus geen 5.",
+     "evidence_refs": [
+      "core/fTrainingExecutionHyroxAndRaceMatrix.test.js#vm.runInContext",
+      "core/fHyroxTriathlon.test.js#require(cardio.js)",
+      "core/fHyroxRulebookRevalidation.test.js#documentation-only"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "De capability verwerkt sessiegebonden persoonsdata binnen de auth.uid()-afgeschermde datalaag, en accountverwijdering neemt HYROX-data expliciet mee. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/delete-account.js",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: s-hyrox is via twee go()-routes bereikbaar en s-hyrox-perf wordt aangeroepen vanuit een gegenereerde knop op index.html:34278 met onclick go(s-hyrox-perf), met renderkoppeling op 12515 en navigatiemapping op 12558. Feedback en vervolgactie niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-hyrox",
+      "index.html:34278#go(s-hyrox-perf)",
+      "index.html:12515#renderHyroxPerformanceOverzicht"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: core/fHyroxTriathlon.test.js draagt acht adversarial-markers op afwijkende race- en stationtoestanden, en de rulebook-revalidatie stelt vast dat geen verouderde waarden hardcoded zijn. Geen sabotagetest die fail-closed over de hele capability afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "core/fHyroxTriathlon.test.js",
+      "core/fHyroxRulebookRevalidation.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "GAP-P2-022 noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-022"
+     ],
+     "gap_refs": [
+      "GAP-P2-022"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "END-INTERVAL-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 320,
+   "unrounded_quotient": "3.2",
+   "weighted_score": "3.200",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "De index draagt v1_scope met evidence en een next_action die MS-F6-02 als afgesloten noemt: CardioCore.criticalPower() gebouwd en getest volgens Monod en Scherrer 1965 en Moritani 1981, met de expliciete kanttekening dat het niet op trainingsgeschiedenis is geintegreerd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#END-INTERVAL-001",
+      "docs/CAPABILITY_REGISTRY.md#END-INTERVAL-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "core/intervalEngine.js is de aanwijsbare hoofdimplementatie, aangevuld met cardio.js en enduranceExecution.js voor de uitvoering. Parallelle paden geinventariseerd; geen bewezen beheersing tot anker 4. De eerder veronderstelde afwezigheid berustte op een geraden bestandsnaam en is weerlegd.",
+     "evidence_refs": [
+      "core/intervalEngine.js",
+      "core/enduranceExecution.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: interval-functionaliteit heeft 114 referenties in index.html en drie Netlify-functies raken het domein. Geen volledige payload-chain van entrypoint tot consument aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#interval",
+      "core/intervalEngine.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie aanwezig met owner-binding: gestructureerde intervallen worden vastgelegd in de auth.uid()-afgeschermde endurance-datalaag, met activity_laps als drager van de lap-structuur. Geen eigen versionering, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#activity_laps",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "De volledige relevante keten is bewezen zonder bypass: core/fStructuredIntervalsB2.test.js, core/fStructuredIntervalsB3Erg.test.js en core/fStructuredIntervalsCanonical.test.js draaien met vm.runInContext de echte keten en laden daarbij cardio.js, decision.js, intervalEngine.js, enduranceExecution.js en ergProtocolIdentity.js. Anker 5 vereist afdwinging van de keten, die ontbreekt.",
+     "evidence_refs": [
+      "core/fStructuredIntervalsCanonical.test.js#vm.runInContext",
+      "core/fStructuredIntervalsB3Erg.test.js#require(intervalEngine.js)"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "INTEGRATION_RUNTIME: drie fStructuredIntervals-suites draaien vm.runInContext over de echte intervalketen met intervalEngine.js, cardio.js, decision.js, enduranceExecution.js en ergProtocolIdentity.js. Anker 5 vereist bovenop die runtime een als adversarial aangemerkte suite of device-bewijs voor exact deze flow; dat ontbreekt.",
+     "evidence_refs": [
+      "core/fStructuredIntervalsB2.test.js#vm.runInContext",
+      "core/fStructuredIntervalsB3Erg.test.js#vm.runInContext",
+      "core/fStructuredIntervalsCanonical.test.js#vm.runInContext"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Intervaldata is sessiegebonden persoonsdata binnen de auth.uid()-afgeschermde datalaag. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "Er bestaat gebruikersgerichte intervalfunctionaliteit binnen de trainingsuitvoering, maar er is geen eigen bereikbaar scherm voor deze capability: een gerichte zoektocht op s-interval levert nul DOM-nodes en nul routes. De keten ontdekken naar gebruiken is daarmee niet als bruikbaar bewezen, dus anker 2.",
+     "evidence_refs": [
+      "index.html#geen-s-interval-scherm",
+      "index.html#interval"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: core/fStructuredIntervalsB2.test.js draagt een adversarial-marker op afwijkende intervalstructuur en de canonieke suite bewaakt protocolidentiteit. Geen fail-closed sabotagebewijs over de hele capability, dus geen 4.",
+     "evidence_refs": [
+      "core/fStructuredIntervalsB2.test.js",
+      "core/fStructuredIntervalsCanonical.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "GAP-P2-028 en GAP-P2-029 noemen deze capability in affected_capability_ids, beide v1_scope true, status OPEN en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-028",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-029"
+     ],
+     "gap_refs": [
+      "GAP-P2-028",
+      "GAP-P2-029"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "END-RUNINTEL-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 255,
+   "unrounded_quotient": "3",
+   "weighted_score": "3.000",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "De index draagt v1_scope met evidence en een next_action die B9-03 als afgesloten noemt met weekvolume, pace-trend, consistency en Critical Speed met opt-in max-effort-markering. Dat bakent de capability af tegen de modellaag RUNNING-INTELLIGENCE-001.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#END-RUNINTEL-001",
+      "docs/CAPABILITY_REGISTRY.md#END-RUNINTEL-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "De trendlaag is aanwijsbaar belegd in core/runningIntelligence.js, via script-tag geladen; parallelle paden geinventariseerd. Geen bewezen beheersing tot anker 4.",
+     "evidence_refs": [
+      "core/runningIntelligence.js",
+      "docs/ROADMAP_INDEX.json#END-RUNINTEL-001.next_action"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: RunningIntelligence heeft 27 referenties in index.html en het scherm s-running-insights is via go() bereikbaar. Geen volledige payload-chain aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#RunningIntelligence",
+      "index.html#s-running-insights"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De trendlaag is bewijsbaar stateless: zij leidt per aanroep af uit reeds gepersisteerde activiteiten en kent geen eigen migratietabel of persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "Deel van de keten is aangetoond: de trendberekening consumeert de endurance-datalaag en levert aan de insights-weergave. Het generieke ProgressionCore.trendBy in de contexttest bewijst deze capability niet en is afgewezen als cross-capability evidence, dus geen 4.",
+     "evidence_refs": [
+      "core/runningIntelligence.js",
+      "index.html#s-running-insights"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.353",
+     "rationale": "DOCUMENTATION_ONLY: core/fB9_03RunningIntelligence.test.js bevat nul uitvoeringsconstructies (geen vm.runInContext, geen new Function, geen require van een core-module) en inspecteert bron en structuur, ondanks negen adversarial-markers in de tekst. Een adversarial geformuleerde documentatietest blijft anker 2. De behavioral suites fRunningIntelligence en fRunningIntelligenceCore bewijzen de modellaag RUNNING-INTELLIGENCE-001, niet deze trendlaag, en zijn afgewezen als cross-capability evidence.",
+     "evidence_refs": [
+      "core/fB9_03RunningIntelligence.test.js#geen-uitvoering"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Trendweergave van de eigen prestatiedata van de sporter kent geen trust boundary, tweede partij of autorisatiebeslissing; afscherming zit op de onderliggende activiteitentabellen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen via het bereikbare scherm s-running-insights. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#s-running-insights"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: de opt-in max-effort-markering voorkomt dat ongemarkeerde inspanningen als maximaal worden geinterpreteerd, en bij onvoldoende historie wordt geen trend gefabriceerd.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#END-RUNINTEL-001.next_action",
+      "core/runningIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 60 canonieke gaps. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "END-RUNNINGCORE-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 305,
+   "unrounded_quotient": "3.05",
+   "weighted_score": "3.050",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "De index draagt v1_scope en een next_action die B9-02, B9-02B en B9-02C als afgesloten noemt: Training-IA, volledige live execution, laps, gestructureerde intervallen, profielintegratie en Run Detail. Heldere afbakening tegen de trendlaag.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#END-RUNNINGCORE-001",
+      "docs/CAPABILITY_REGISTRY.md#END-RUNNINGCORE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "core/runningExecution.js en core/enduranceExecution.js delen EnduranceExecutionCore als enige uitvoeringskern; de index legt expliciet vast dat er geen tweede state machine bestaat. Alternatieven geinventariseerd, geen onbeheerst shadow-pad. Geen guard tegen een tweede pad, dus geen 5.",
+     "evidence_refs": [
+      "core/runningExecution.js",
+      "core/enduranceExecution.js#EnduranceExecutionCore"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: EnduranceExecutionCore heeft 28 referenties in index.html en het scherm s-running is via twee go()-routes bereikbaar. Geen volledige payload-chain aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#EnduranceExecutionCore",
+      "index.html#s-running"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie aanwezig met owner-binding: de uitvoering schrijft naar activities en activity_laps, beide met auth.uid()-policies. Geen eigen versionering of historiebehoud, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#activities",
+      "migratie_v*.sql#activity_laps"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten is aangetoond: de uitvoering levert belasting aan TrainingLoadCore en profielwaarden aan de endurance-datalaag. De volledige keten zonder bypass is niet bewezen.",
+     "evidence_refs": [
+      "core/runningExecution.js",
+      "core/trainingLoad.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.300",
+     "rationale": "DOCUMENTATION_ONLY: core/fB9_02RunningCore.test.js en core/fB9_02BRunningClosure.test.js bevatten beide nul uitvoeringsconstructies en inspecteren bron en structuur, ondanks respectievelijk twee en vijf adversarial-markers. Er is geen test die runningExecution.js of de uitvoeringskern voor deze capability daadwerkelijk uitvoert, dus anker 2.",
+     "evidence_refs": [
+      "core/fB9_02RunningCore.test.js#geen-uitvoering",
+      "core/fB9_02BRunningClosure.test.js#geen-uitvoering"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "De capability schrijft sessiegebonden persoonsdata weg binnen de auth.uid()-afgeschermde datalaag. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#auth.uid()",
+      "migratie_v*.sql#activities"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: s-running is via twee go()-routes bereikbaar en draagt de live uitvoering, laps en Run Detail. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#s-running"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: de gedeelde uitvoeringskern kent onderbreking, hervatting en afwijkende lap-toestanden. Deterministisch bewijs dat unknown unknown blijft ontbreekt voor deze capability.",
+     "evidence_refs": [
+      "core/enduranceExecution.js",
+      "core/runningExecution.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "GAP-P2-028 noemt deze capability als primary_capability_id en GAP-P2-029 als affected; beide v1_scope true, status OPEN en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-028",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-029"
+     ],
+     "gap_refs": [
+      "GAP-P2-028",
+      "GAP-P2-029"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "RUNNING-INTELLIGENCE-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 85,
+   "weighted_numerator": 285,
+   "unrounded_quotient": "3.352941176470588235294117647",
+   "weighted_score": "3.353",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.235",
+     "rationale": "De index draagt v1_scope met evidence en een next_action die MS-F6-01 als afgesloten noemt: CardioCore.criticalSpeed() gebouwd en getest volgens Monod en Scherrer 1965, met de expliciete kanttekening dat het niet in UI of trainingsgeschiedenis is geintegreerd. Dat bakent de modellaag af tegen END-RUNINTEL-001.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#RUNNING-INTELLIGENCE-001",
+      "docs/CAPABILITY_REGISTRY.md#RUNNING-INTELLIGENCE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "core/cardio.js en core/runningIntelligence.js zijn de aanwijsbare hoofdimplementatie, beide via script-tag geladen. De index meldt zelf dat integratie ontbreekt, dus beheersing tot anker 4 is niet aangetoond.",
+     "evidence_refs": [
+      "core/cardio.js",
+      "core/runningIntelligence.js",
+      "docs/ROADMAP_INDEX.json#RUNNING-INTELLIGENCE-001.next_action"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.529",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: CardioCore heeft 123 referenties in index.html en RunningIntelligence 27. Geen volledige payload-chain voor deze capability, dus geen 4.",
+     "evidence_refs": [
+      "index.html#CardioCore",
+      "index.html#RunningIntelligence"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De snelheidsmodellaag is bewijsbaar stateless: core/runningIntelligence.js kent geen persistentie-aanroep en er bestaat geen migratietabel voor berekende Critical Speed-uitkomsten.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.471",
+     "rationale": "De volledige relevante keten is bewezen zonder bypass: core/fEnduranceCoachContext.test.js voert met vm.runInContext de echte contextketen uit en roept daarin CardioCore.criticalSpeed tweemaal aan; index.html bevat nul eigen definities van criticalSpeed en roept uitsluitend via CardioCore aan. Anker 5 vereist afdwinging van de keten, die ontbreekt.",
+     "evidence_refs": [
+      "core/fEnduranceCoachContext.test.js#vm.runInContext",
+      "index.html#CardioCore.criticalSpeed"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.706",
+     "rationale": "INTEGRATION_RUNTIME: core/fEnduranceCoachContext.test.js draait CardioCore.criticalSpeed binnen de echte, uit index.html geextraheerde contextketen onder vm.runInContext. Daarnaast BEHAVIORAL_UNIT via core/fRunningIntelligence.test.js (require cardio.js, progression.js) en core/fRunningIntelligenceCore.test.js (require runningIntelligence.js). Geen adversarial suite bovenop de runtime en geen device-bewijs, dus geen 5.",
+     "evidence_refs": [
+      "core/fEnduranceCoachContext.test.js#vm.runInContext",
+      "core/fRunningIntelligence.test.js#require(cardio.js)",
+      "core/fRunningIntelligenceCore.test.js#require(runningIntelligence.js)"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Critical Speed wordt berekend uit de eigen prestatiedata van de sporter; er is geen trust boundary, tweede partij, autorisatiebeslissing of misbruikroute binnen deze rekenlaag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen via het bereikbare scherm s-running-insights. Feedback en vervolgactie niet volledig aangetoond.",
+     "evidence_refs": [
+      "index.html#s-running-insights"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.176",
+     "rationale": "Relevante failure modes zijn benoemd en afgevangen: bij onvoldoende inspanningsdata levert de Critical Speed-berekening geen gefabriceerde waarde. Deterministisch bewijs over de hele capability ontbreekt.",
+     "evidence_refs": [
+      "core/cardio.js#criticalSpeed",
+      "core/fRunningIntelligence.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.353",
+     "rationale": "GAP-P2-021 en GAP-P2-026 noemen deze capability als primary_capability_id, beide v1_scope true, status OPEN en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-021",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-026"
+     ],
+     "gap_refs": [
+      "GAP-P2-021",
+      "GAP-P2-026"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "SWIMMING-FEASIBILITY-001",
+   "primary_track": "T3",
+   "v1_scope": true,
+   "applicable_weight": 95,
+   "weighted_numerator": 220,
+   "unrounded_quotient": "2.315789473684210526315789474",
+   "weighted_score": "2.316",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.211",
+     "rationale": "De index draagt v1_scope met evidence en een next_action die MS-F6-06 als afgesloten noemt met een expliciete feasibility decision: PARTIAL, met open providerafhankelijkheden. Dat is een duidelijke scope-afbakening inclusief erkende beperking.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#SWIMMING-FEASIBILITY-001",
+      "docs/CAPABILITY_REGISTRY.md#SWIMMING-FEASIBILITY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "LOW",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.316",
+     "rationale": "core/swimmingIntelligence.js bestaat en is via script-tag geladen, maar draagt slechts 3 referenties in index.html en de index erkent zelf dat de ondersteuning generiek is met open providerafhankelijkheden. Er is een fundament zonder aangetoonde beheersing van parallelle paden, dus anker 2.",
+     "evidence_refs": [
+      "core/swimmingIntelligence.js",
+      "docs/ROADMAP_INDEX.json#SWIMMING-FEASIBILITY-001.next_action"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "LOW",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.316",
+     "rationale": "SwimmingIntelligence heeft 3 referenties in index.html en het scherm s-swimming is bereikbaar, maar er is geen bewezen keten van entrypoint naar consument voor deze capability. Caller-aanwezigheid zonder bewezen chain is per Model v1.2 maximaal 2.",
+     "evidence_refs": [
+      "index.html#SwimmingIntelligence",
+      "index.html#s-swimming"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "Schema bestaat en owner-binding op rijniveau is bewezen. migratie_v554.sql voegt de kolom public.activities.swim_context toe met CHECK-constraint op pool of open_water, en documenteert in de kolomcommentaar dat NULL de UNKNOWN-semantiek draagt en nooit een geraden waarde is. Het schrijfpad staat op index.html:16334 en het leespad op index.html:16384. De rijen vallen onder de auth.uid()-policies op public.activities, aanwezig in negen migratiebestanden. Geen 4: de capability draagt geen eigen lifecycle of migratiehistorie, want public.activities wordt aangemaakt in migratie_v506.sql en migratie_v533.sql en behoort tot END-DATAFOUNDATION-001. De eerdere N/A met de rationale bewijsbaar stateless is weerlegd door aanwezig bewijs van persistentie, niet door afwezigheid ervan. Grensclassificatie SHARED_INFRASTRUCTURE_WITH_CAPABILITY_FIELD.",
+     "evidence_refs": [
+      "migratie_v554.sql#swim_context",
+      "index.html:16334#schrijfpad",
+      "index.html:16384#leespad",
+      "migratie_v*.sql#auth.uid()"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "LOW",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.211",
+     "rationale": "Losse koppeling: de zwemlaag wordt in de coach-contexttest geladen maar er wordt geen enkele SwimmingIntelligence-functie in de keten aangeroepen. De keten is daarmee niet aangetoond; fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "core/fEnduranceCoachContext.test.js#geen-swimming-aanroep",
+      "core/swimmingIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.316",
+     "rationale": "DOCUMENTATION_ONLY: core/fSwimmingFoundation.test.js en core/fSwimmingFeasibility.test.js bevatten beide nul uitvoeringsconstructies en inspecteren bron en structuur. Er is geen test die swimmingIntelligence.js uitvoert, dus anker 2.",
+     "evidence_refs": [
+      "core/fSwimmingFoundation.test.js#geen-uitvoering",
+      "core/fSwimmingFeasibility.test.js#geen-uitvoering"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De zwemlaag rekent op de eigen activiteitendata van de sporter zonder trust boundary, tweede partij of autorisatiebeslissing; afscherming zit op de generieke endurance-datalaag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "LOW",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.211",
+     "rationale": "Het scherm s-swimming bestaat en is via go() bereikbaar en s-swimming-insights eveneens, maar met slechts 3 referenties naar de onderliggende laag is de keten ontdekken naar gebruiken niet als bruikbaar bewezen. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#s-swimming",
+      "index.html#s-swimming-insights"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "LOW",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.105",
+     "rationale": "Generieke foutafhandeling; gericht gezocht en geen capability-specifiek bewijs gevonden dat ontbrekende zwemdata of open providerafhankelijkheden deterministisch tot een expliciete onbekend-status leiden. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/swimmingIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "GAP-P2-029 noemt deze capability in affected_capability_ids met v1_scope true, status OPEN en blocker REVIEW_REQUIRED, dus nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-029"
+     ],
+     "gap_refs": [
+      "GAP-P2-029"
+     ]
+    }
+   }
+  }
+ ]
+}

@@ -264,7 +264,7 @@ register-debt niet mag verbergen.
 | Telling | Betekenis | Stand |
 |---|---|---|
 | `historical_audited` | beoordeeld onder een pre-v1.0 model; scores behouden, niet v1-verifieerbaar | **22 / 86** |
-| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **32 / 86** |
+| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **42 / 86** |
 
 ### Canonieke Model-v1.2 trackresultaten
 
@@ -291,6 +291,27 @@ Batch A-artefact en worden niet overschreven. `docs/audit/AJ_AUDIT_BATCH_A.json`
 De historische waarden **T4 3,564**, **T5 3,225** en **T6 3,623** blijven geldig voor
 het historische Batch B-artefact en worden niet overschreven.
 `docs/audit/AJ_AUDIT_BATCH_B.json` behoudt `HISTORICAL_PRE_V1_MODEL` en is ongewijzigd.
+
+### Canonieke Model-v1.2 trackresultaten — T3 (Endurance)
+
+**Canoniek artefact:** `docs/audit/AJ_AUDIT_T3_PRIME.json` — 10 capabilities,
+100 criterion records (10 N/A, 90 gescoord), `audit_model_version: 1.2`.
+
+| Track | Model v1.2 | Historisch pre-v1 |
+|---|---|---|
+| **T3** | **3,122 / 5 = 62,44%** | NOT_COMPARABLE |
+
+T3 is nooit eerder als track gescoord. Ter vergelijking op deze baseline:
+T6 = 3,395 ligt hoger dan T3 = 3,122.
+
+**Correctie t.o.v. de read-only ronde.** `SWIMMING-FEASIBILITY-001` criterium D
+stond bevroren op N/A met de rationale "bewijsbaar stateless". Dat is weerlegd
+door aanwezig bewijs: `migratie_v554.sql` voegt `public.activities.swim_context`
+toe met CHECK-constraint, met schrijfpad op `index.html:16334` en leespad op
+`index.html:16384`. D is daarmee 3 (schema plus bewezen owner-binding op
+rijniveau via de `auth.uid()`-policies op `public.activities`), de
+capabilityscore gaat van 2,235 naar 2,316 en T3 van 3,114 naar 3,122. Geen
+nieuwe gap: SCORE_CORRECTION_ONLY.
 
 ### Canonieke Model-v1.2 trackresultaten — T17 (Platform / Security)
 
@@ -320,6 +341,7 @@ repository-`source_ref`. Er zijn nul databasemutaties uitgevoerd en nul rijen ge
 | T2 | 3,208 / 64,16% | `AJ_AUDIT_BATCH_A_PRIME.json` |
 | T4 | 2,943 / 58,86% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T5 | 2,471 / 49,42% | `AJ_AUDIT_BATCH_B_PRIME.json` |
+| T3 | 3,122 / 62,44% | `AJ_AUDIT_T3_PRIME.json` |
 | T6 | 3,395 / 67,90% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T17 | 2,873 / 57,46% | `AJ_AUDIT_T17_PRIME.json` |
 

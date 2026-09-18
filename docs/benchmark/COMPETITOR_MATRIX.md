@@ -8,7 +8,7 @@ This is an evidence index, not a marketing scorecard. Empty cells mean not yet a
 | Fitbod | 8.31.0-4 | Deep static evidence; local Optim + remote generation | Native Health Connect + Strava | Limited sharing/link evidence | Adaptive generation architecture deeply evidenced; remote algorithm unknown | 14 new patterns + HC/link corroboration | STATIC CLOSED / DYNAMIC OPEN |
 | Strong | — | — | — | — | — | — | QUEUED |
 | Boostcamp | — | — | — | — | — | — | QUEUED |
-| TrainHeroic | — | — | — | — | — | — | QUEUED |
+| TrainHeroic | 8.36.0 | Deep workout/program/RPE/load evidence | Apple Health references; generic Bluetooth | Team feed + scoped leaderboards | Coach-led programming; no opaque AI generator established | 19 new patterns + OTA corroboration | STATIC CLOSED / DYNAMIC OPEN |
 | Concept2 ErgData | — | — | — | — | — | — | QUEUED |
 | Garmin Connect | — | — | — | — | — | — | QUEUED |
 | WHOOP | — | — | — | — | — | — | QUEUED |

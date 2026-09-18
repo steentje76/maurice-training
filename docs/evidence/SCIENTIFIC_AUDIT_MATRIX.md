@@ -1,6 +1,6 @@
 # SCIENTIFIC_AUDIT_MATRIX.md
 
-**Status:** Waves 1–2 COMPLETE; Wave 3 pending (Training load / sRPE / TRIMP / ACWR / longitudinal load).
+**Status:** ALL 9 SCIENTIFIC DOMAIN WAVES COMPLETE — remediation/closure gate pending.
 
 | TK ID | Domain | Calculation | Interpretation | Decision | Athlete/AI claim | Initial verdict | Priority | Evidence IDs | Next scientific action |
 |---|---|---|---|---|---|---|---|---|---|
@@ -31,3 +31,19 @@
 3. **DEC-RECADJ-001 / DEC-READY-001:** numerical precision may exceed scientific support unless the underlying dayfactor and recovery model justify it.
 4. **DEC-REST-001:** RPE-scaled rest factors should not be presented as scientifically optimal until goal-specific rest evidence is mapped.
 5. **Muscle recovery percentages:** require dedicated audit of construct validity. A percentage-looking output can create false precision even when individual inputs are useful.
+
+
+## Waves 3–9 closure summary
+
+| Wave | Domain | Scientific verdict | Highest V1 issue |
+|---|---|---|---|
+| 3 | Load / sRPE / ACWR | Descriptive load useful; ACWR prediction prohibited | SCI-GAP-V1-014 HIGH |
+| 4 | Endurance / CS / CP / zones | Models useful with protocol/provenance limits | SCI-GAP-V1-018 HIGH |
+| 5 | Nutrition / hydration / energy | Current conservative context model appropriate | SCI-GAP-V1-024/025 HIGH |
+| 6 | Supplements | Claim-level evidence only; no autonomous prescribing | SCI-GAP-V1-029/030 HIGH |
+| 7 | Wearables | Metric×device×method validity required | SCI-GAP-V1-034 CRITICAL |
+| 8 | Female physiology / cycle | Context/symptoms yes; automatic phase multiplier no | SCI-GAP-V1-040 CRITICAL |
+| 9 | Cross-domain Decision + AI | Architecture strong; upstream validity must gate AI | SCI-GAP-V1-045 CRITICAL |
+
+**Total registered scientific V1 gaps after Waves 1–9: 50.**
+See `docs/evidence/SCIENTIFIC_V1_GAP_REPORT.md` for remediation order.

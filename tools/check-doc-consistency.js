@@ -571,6 +571,120 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── T3: Model-v1.2 auditartefact ──
+    (function t3PrimeGuard() {
+      const halfUp = function (x, dp) {
+        const f = Math.pow(10, dp);
+        const sc = parseFloat((x * f).toPrecision(12));
+        return (Math.round(sc) / f).toFixed(dp);
+      };
+      const tp = path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T3_PRIME.json');
+      if (!fs.existsSync(tp)) { problems.push('canoniek T3-artefact ontbreekt'); return; }
+      const t = JSON.parse(fs.readFileSync(tp, 'utf8'));
+      const m12 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_2.json'), 'utf8'));
+      if (t.audit_model_id !== m12.audit_model_id) problems.push('T3 model_id wijkt af');
+      if (t.audit_model_version !== '1.2') problems.push('T3 audit_model_version is niet 1.2');
+      if (t.audit_model_fingerprint !== m12.model_fingerprint) problems.push('T3 fingerprint wijkt af');
+      const FROZEN = { 'CYCLING-INTELLIGENCE-001': '3.353', 'END-CYCINTEL-001': '3.176',
+        'END-CYCLINGCORE-001': '3.200', 'END-DATAFOUNDATION-001': '3.222', 'END-HYROX-001': '3.350',
+        'END-INTERVAL-001': '3.200', 'END-RUNINTEL-001': '3.000', 'END-RUNNINGCORE-001': '3.050',
+        'RUNNING-INTELLIGENCE-001': '3.353', 'SWIMMING-FEASIBILITY-001': '2.316' };
+      const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
+      const NA_OK = ['D','E','G','H'];
+      const CONF = ['HIGH','MEDIUM','LOW'];
+      const caps = t.capabilities || [];
+      if (caps.length !== 10) problems.push('T3 heeft ' + caps.length + ' capabilities, verwacht 10');
+      const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'ROADMAP_INDEX.json'), 'utf8'));
+      const known = {}; idx.forEach(function (x) { if (x.type === 'capability') known[x.id] = x; });
+      const reg = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      const gapIds = {}; (reg.gaps || []).forEach(function (g) { gapIds[g.gap_id] = g; });
+      const fromIndex = Object.keys(known).filter(function (k) {
+        return known[k].primary_track === 'T3' && known[k].v1_scope === true;
+      }).sort();
+      if (fromIndex.join(',') !== caps.map(function (c) { return c.stable_id; }).sort().join(',')) {
+        problems.push('T3 capability-set wijkt af van de canonieke index');
+      }
+      let recs = 0, na = 0;
+      const naByCrit = {}, confCount = {};
+      const stored = [];
+      caps.forEach(function (c) {
+        const id = c.stable_id;
+        if (!FROZEN[id]) { problems.push('T3 onverwachte capability ' + id); return; }
+        const seen = {};
+        const ks = Object.keys(c.criteria || {}).sort();
+        if (ks.join('') !== CRIT.join('')) problems.push('T3 ' + id + ' heeft niet exact A-J');
+        let aw = 0, num = 0;
+        CRIT.forEach(function (k) {
+          const r = (c.criteria || {})[k]; if (!r) return;
+          if (seen[k]) problems.push('T3 ' + id + ' dubbel criterium ' + k);
+          seen[k] = true; recs++;
+          if (CONF.indexOf(r.confidence) < 0) problems.push('T3 ' + id + '/' + k + ' ongeldige confidence');
+          confCount[r.confidence] = (confCount[r.confidence] || 0) + 1;
+          if (r.applicable === false) {
+            na++; naByCrit[k] = (naByCrit[k] || 0) + 1;
+            if (NA_OK.indexOf(k) < 0) problems.push('T3 N/A niet toegestaan op ' + id + '/' + k);
+            if (!r.na_rationale) problems.push('T3 N/A zonder rationale: ' + id + '/' + k);
+            return;
+          }
+          if (!Number.isInteger(r.score) || r.score < 0 || r.score > 5) problems.push('T3 ' + id + '/' + k + ' score niet integer 0-5');
+          if (k === 'F' && r.score === 5) problems.push('T3 ' + id + ' draagt een F5; T3 kent er geen');
+          if (!r.rationale) problems.push('T3 ' + id + '/' + k + ' zonder rationale');
+          if (!(r.evidence_refs || []).length) problems.push('T3 ' + id + '/' + k + ' zonder evidence_refs');
+          (r.gap_refs || []).forEach(function (g) {
+            if (!gapIds[g]) problems.push('T3 ' + id + '/' + k + ' verwijst naar onbekende gap ' + g);
+          });
+          (r.evidence_refs || []).forEach(function (e) {
+            if (typeof e !== 'string') return;
+            const p0 = e.split('#')[0].split(':')[0];
+            if (!p0 || p0.indexOf('*') >= 0) return;
+            if (p0.indexOf('/') < 0 && !/\.(sql|js|md|json|html)$/.test(p0)) return;
+            if (!fs.existsSync(path.join(ROOT, p0))) {
+              problems.push('T3 ' + id + '/' + k + ' verwijst naar een niet-bestaand repository-pad: ' + p0);
+            }
+          });
+          aw += r.weight; num += r.weight * r.score;
+        });
+        const sc = halfUp(num / aw, 3);
+        if (sc !== c.weighted_score) problems.push('T3 ' + id + ' opgeslagen score ' + c.weighted_score + ', herberekend ' + sc);
+        if (c.weighted_score !== FROZEN[id]) problems.push('T3 ' + id + ' wijkt af van de gecanonicaliseerde score ' + FROZEN[id]);
+        if (c.applicable_weight !== aw) problems.push('T3 ' + id + ' applicable_weight klopt niet');
+        if (c.weighted_numerator !== num) problems.push('T3 ' + id + ' weighted_numerator klopt niet');
+        stored.push(parseFloat(c.weighted_score));
+      });
+      if (recs !== 100) problems.push('T3 heeft ' + recs + ' criterion records, verwacht 100');
+      if (na !== 10) problems.push('T3 heeft ' + na + ' N/A-records, verwacht 10');
+      const NAEXP = { D: 4, G: 5, H: 1 };
+      Object.keys(NAEXP).forEach(function (k) {
+        if ((naByCrit[k] || 0) !== NAEXP[k]) problems.push('T3 N/A op ' + k + ' is ' + (naByCrit[k] || 0) + ', verwacht ' + NAEXP[k]);
+      });
+      if ((naByCrit.E || 0) !== 0) problems.push('T3 kent geen N/A op E');
+      const CEXP = { HIGH: 52, MEDIUM: 43, LOW: 5 };
+      Object.keys(CEXP).forEach(function (k) {
+        if ((confCount[k] || 0) !== CEXP[k]) problems.push('T3 confidence ' + k + ' is ' + (confCount[k] || 0) + ', verwacht ' + CEXP[k]);
+      });
+      const sum = stored.reduce(function (a, b) { return a + b; }, 0);
+      if (sum.toFixed(3) !== '31.220') problems.push('T3 som van opgeslagen scores is ' + sum.toFixed(3) + ', verwacht 31.220');
+      const tscore = halfUp(sum / stored.length, 3);
+      const tr = (t.track_results || {}).T3 || {};
+      if (tscore !== '3.122') problems.push('T3 herberekend ' + tscore + ', verwacht 3.122');
+      if (tr.score !== '3.122') problems.push('T3 opgeslagen ' + tr.score + ', verwacht 3.122');
+      if (tr.sum_of_stored_scores !== '31.220') problems.push('T3 sum_of_stored_scores klopt niet');
+      const pct = halfUp(parseFloat('3.122') / 5 * 100, 2);
+      if (tr.percentage !== pct || pct !== '62.44') problems.push('T3 percentage ' + tr.percentage + ', verwacht 62.44');
+      // s-hyrox-perf: de bereikbaarheidscorrectie mag niet terugvallen op een onterechte gap
+      const adj = (t.adjudications || {}).s_hyrox_perf || {};
+      if (adj.status !== 'REACHABLE_PROVEN') problems.push('T3 s-hyrox-perf-adjudicatie is niet REACHABLE_PROVEN');
+      // geen canonieke vergelijking die T3 boven T6 plaatst
+      const bp = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_BATCH_B_PRIME.json'), 'utf8'));
+      if (!(parseFloat(bp.track_results.T6.score) > parseFloat(tr.score))) {
+        problems.push('canonieke vergelijking klopt niet: T6 moet hoger zijn dan T3');
+      }
+      const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
+      if (bl.indexOf('met criterium-specifieke evidence | **42 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 42/86');
+      if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
+      if ((reg.gaps || []).length !== 60) problems.push('gap register telt niet langer 60 records');
+    })();
+
     // ── T17: Model-v1.2 auditartefact ──
     (function t17PrimeGuard() {
       const halfUp = function (x, dp) {
@@ -690,7 +804,9 @@ try {
       if (!ev.performed_queries || !ev.performed_queries.length) problems.push('T17 external_verification zonder uitgevoerde queries');
       // baseline
       const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
-      if (bl.indexOf('met criterium-specifieke evidence | **32 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 32/86');
+      // model_v1_verified loopt op per gecanonicaliseerde track; de actuele teller wordt
+      // centraal in de T3-guard gecontroleerd (42/86 na T3-canonicalisatie).
+      if (caps.length !== 10) problems.push('T17 draagt niet 10 capabilities aan model_v1_verified bij');
       if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
       // A-prime en B-prime blijven bestaan en ongewijzigd van omvang
       const ap = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_BATCH_A_PRIME.json'), 'utf8'));

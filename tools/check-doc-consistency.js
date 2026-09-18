@@ -571,6 +571,172 @@ try {
       if (!/ten minste één V1-capability/.test(baseline)) problems.push('capability-based tracknoemer ontbreekt in het baselinemodel');
     }
 
+    // ── Finale V1-golf: T8, T11, T14 en T15 Model-v1.2 auditartefacten ──
+    (function finalV1Guard() {
+      const halfUp = function (x, dp) {
+        const f = Math.pow(10, dp);
+        return (Math.round(parseFloat((x * f).toPrecision(12))) / f).toFixed(dp);
+      };
+      const FROZEN = { 'AI-COACH-001':'3.500','AI-OUTPUT-CONTRACT-001':'3.533','AI-PROGRAM-AUTOGEN-001':'3.150',
+        'BENCHMARK-TRACKING-001':'2.353','DAILY-COACH-EXPLAINABILITY-001':'3.588','EXERCISE-PROGRESSION-COACH-001':'3.471',
+        'COACH-INTELLIGENCE-001':'2.412','COACH-PROGRAM-ASSIGNMENT-001':'2.600','COACH-RELATIONSHIP-001':'3.278',
+        'DEV-CONCEPT2-001':'3.421','DEV-VALIDATION-001':'3.050','DEV-WEARAUTH-001':'3.667','DEV-WEARSYNC-001':'3.200',
+        'HEALTHKIT-ARCHITECTURE-001':'2.692','PROVIDER-INTEGRATION-CONTRACT-001':'2.850','WEARABLE-FEASIBILITY-MATRIX-001':'2.692',
+        'DYNAMIC-BRANDING-ADMIN-001':'2.667','GYM-DEVICE-FEASIBILITY-001':'2.692','GYM-PROGRAMMING-EQUIPMENT-001':'2.500',
+        'GYM-RLS-SCOPING-001':'3.188','ORGANIZATION-CORE-001':'2.500','SOC-GYMTEAM-001':'3.167','TEAMS-GROUPS-ANALYTICS-001':'2.350' };
+      const TRACKS = { T8: ['19.595','3.266','65.32',6,41,19], T14: ['8.290','2.763','55.26',3,21,9],
+        T11: ['21.572','3.082','61.64',7,40,30], T15: ['19.064','2.723','54.46',7,49,21] };
+      const CRIT = ['A','B','C','D','E','F','G','H','I','J'];
+      const NA_OK = ['D','E','G','H'];
+      const CONF = ['HIGH','MEDIUM','LOW'];
+      const m12 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_MEASUREMENT_MODEL_v1_2.json'), 'utf8'));
+      const idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'ROADMAP_INDEX.json'), 'utf8'));
+      const known = {}; idx.forEach(function (x) { if (x.type === 'capability') known[x.id] = x; });
+      const reg = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'AUDIT_GAP_REGISTER.json'), 'utf8'));
+      const gapIds = {}; (reg.gaps || []).forEach(function (g) { gapIds[g.gap_id] = g; });
+      let totalRecs = 0, totalCaps = 0;
+      const allConf = {}, allF = {};
+      Object.keys(TRACKS).forEach(function (tk) {
+        const tp = path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_' + tk + '_PRIME.json');
+        if (!fs.existsSync(tp)) { problems.push('canoniek ' + tk + '-artefact ontbreekt'); return; }
+        const t = JSON.parse(fs.readFileSync(tp, 'utf8'));
+        if (t.audit_model_id !== m12.audit_model_id) problems.push(tk + ' model_id wijkt af');
+        if (t.audit_model_version !== '1.2') problems.push(tk + ' audit_model_version is niet 1.2');
+        if (t.audit_model_fingerprint !== m12.model_fingerprint) problems.push(tk + ' fingerprint wijkt af');
+        const caps = t.capabilities || [];
+        if (caps.length !== TRACKS[tk][3]) problems.push(tk + ' heeft ' + caps.length + ' capabilities, verwacht ' + TRACKS[tk][3]);
+        const fromIndex = Object.keys(known).filter(function (k) {
+          return known[k].primary_track === tk && known[k].v1_scope === true;
+        }).sort();
+        if (fromIndex.join(',') !== caps.map(function (c) { return c.stable_id; }).sort().join(',')) {
+          problems.push(tk + ' capability-set wijkt af van de canonieke index');
+        }
+        const stored = []; const tConf = {};
+        caps.forEach(function (c) {
+          totalCaps++;
+          const id = c.stable_id;
+          if (!FROZEN[id]) { problems.push(tk + ' onverwachte capability ' + id); return; }
+          const seen = {};
+          if (Object.keys(c.criteria || {}).sort().join('') !== CRIT.join('')) problems.push(tk + ' ' + id + ' heeft niet exact A-J');
+          let aw = 0, num = 0;
+          CRIT.forEach(function (k) {
+            const r = (c.criteria || {})[k]; if (!r) { problems.push(tk + ' ' + id + ' mist criterium ' + k); return; }
+            if (seen[k]) problems.push(tk + ' ' + id + ' dubbel criterium ' + k);
+            seen[k] = true; totalRecs++;
+            if (CONF.indexOf(r.confidence) < 0) problems.push(tk + ' ' + id + '/' + k + ' ongeldige confidence');
+            allConf[r.confidence] = (allConf[r.confidence] || 0) + 1;
+            tConf[r.confidence] = (tConf[r.confidence] || 0) + 1;
+            if (!r.confidence_basis) problems.push(tk + ' ' + id + '/' + k + ' zonder confidence_basis');
+            if (!r.evidence_origin) problems.push(tk + ' ' + id + '/' + k + ' zonder evidence_origin');
+            if (r.applicable === false) {
+              if (NA_OK.indexOf(k) < 0) problems.push(tk + ' N/A niet toegestaan op ' + id + '/' + k);
+              if (!r.na_rationale) problems.push(tk + ' N/A zonder rationale: ' + id + '/' + k);
+              return;
+            }
+            if (!Number.isInteger(r.score) || r.score < 0 || r.score > 5) problems.push(tk + ' ' + id + '/' + k + ' score niet integer 0-5');
+            if (k === 'F') {
+              allF['F' + r.score] = (allF['F' + r.score] || 0) + 1;
+              if (r.score === 5) problems.push(tk + ' ' + id + ' draagt een F5; deze golf kent er geen');
+              if (r.score === 4 && id !== 'DEV-CONCEPT2-001') problems.push(tk + ' ' + id + ' draagt een F4; alleen DEV-CONCEPT2-001 mag dat');
+            }
+            if (!r.rationale) problems.push(tk + ' ' + id + '/' + k + ' zonder rationale');
+            if (!(r.evidence_refs || []).length) problems.push(tk + ' ' + id + '/' + k + ' zonder evidence_refs');
+            (r.gap_refs || []).forEach(function (g) {
+              if (!gapIds[g]) problems.push(tk + ' ' + id + '/' + k + ' verwijst naar onbekende gap ' + g);
+            });
+            (r.evidence_refs || []).forEach(function (e) {
+              if (typeof e !== 'string') return;
+              const p0 = e.split('#')[0].split(':')[0];
+              if (!p0 || p0.indexOf('*') >= 0) return;
+              if (p0.indexOf('/') < 0 && !/\.(sql|js|md|json|html)$/.test(p0)) return;
+              if (!fs.existsSync(path.join(ROOT, p0))) {
+                problems.push(tk + ' ' + id + '/' + k + ' verwijst naar een niet-bestaand repository-pad: ' + p0);
+              }
+            });
+            aw += r.weight; num += r.weight * r.score;
+          });
+          const sc = halfUp(num / aw, 3);
+          if (sc !== c.weighted_score) problems.push(tk + ' ' + id + ' opgeslagen score ' + c.weighted_score + ', herberekend ' + sc);
+          if (c.weighted_score !== FROZEN[id]) problems.push(tk + ' ' + id + ' wijkt af van de gecanonicaliseerde score ' + FROZEN[id]);
+          if (c.applicable_weight !== aw) problems.push(tk + ' ' + id + ' applicable_weight klopt niet');
+          if (c.weighted_numerator !== num) problems.push(tk + ' ' + id + ' weighted_numerator klopt niet');
+          stored.push(parseFloat(c.weighted_score));
+        });
+        const sum = stored.reduce(function (a, b) { return a + b; }, 0);
+        const tr = (t.track_results || {})[tk] || {};
+        if (sum.toFixed(3) !== TRACKS[tk][0]) problems.push(tk + ' som van opgeslagen scores is ' + sum.toFixed(3) + ', verwacht ' + TRACKS[tk][0]);
+        if (tr.sum_of_stored_scores !== TRACKS[tk][0]) problems.push(tk + ' sum_of_stored_scores klopt niet');
+        const tscore = halfUp(sum / stored.length, 3);
+        if (tscore !== TRACKS[tk][1] || tr.score !== TRACKS[tk][1]) problems.push(tk + ' trackscore ' + tr.score + ', verwacht ' + TRACKS[tk][1]);
+        const pct = halfUp(parseFloat(TRACKS[tk][1]) / 5 * 100, 2);
+        if (tr.percentage !== pct || pct !== TRACKS[tk][2]) problems.push(tk + ' percentage ' + tr.percentage + ', verwacht ' + TRACKS[tk][2]);
+        if ((tConf.HIGH || 0) !== TRACKS[tk][4] || (tConf.MEDIUM || 0) !== TRACKS[tk][5] || (tConf.LOW || 0) !== 0) {
+          problems.push(tk + ' confidence is ' + (tConf.HIGH || 0) + '/' + (tConf.MEDIUM || 0) + '/' + (tConf.LOW || 0) + ', verwacht ' + TRACKS[tk][4] + '/' + TRACKS[tk][5] + '/0');
+        }
+      });
+      if (totalCaps !== 23) problems.push('finale V1-golf telt ' + totalCaps + ' capabilities, verwacht 23');
+      if (totalRecs !== 230) problems.push('finale V1-golf telt ' + totalRecs + ' criterion records, verwacht 230');
+      if ((allConf.HIGH || 0) !== 151 || (allConf.MEDIUM || 0) !== 79 || (allConf.LOW || 0) !== 0) {
+        problems.push('gecombineerde confidence is ' + (allConf.HIGH || 0) + '/' + (allConf.MEDIUM || 0) + '/' + (allConf.LOW || 0) + ', verwacht 151/79/0');
+      }
+      if ((allF.F4 || 0) !== 1 || (allF.F5 || 0) !== 0) problems.push('F4 moet exact 1 zijn en F5 exact 0');
+      // ORGANIZATION-CORE moet 2.500 zijn, niet de onjuiste projectie 2.511
+      const t15 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T15_PRIME.json'), 'utf8'));
+      const org = (t15.capabilities || []).filter(function (c) { return c.stable_id === 'ORGANIZATION-CORE-001'; })[0];
+      if (org && (org.weighted_score !== '2.500' || org.weighted_numerator !== 225 || org.applicable_weight !== 90)) {
+        problems.push('ORGANIZATION-CORE-001 moet 225/90 = 2.500 zijn');
+      }
+      // de vijf nieuwe gaps
+      [['GAP-P3-037','COACH-INTELLIGENCE-001'],['GAP-P3-038','COACH-PROGRAM-ASSIGNMENT-001'],
+       ['GAP-P3-039','TEAMS-GROUPS-ANALYTICS-001'],['GAP-P3-040','GYM-PROGRAMMING-EQUIPMENT-001'],
+       ['GAP-P3-041','ORGANIZATION-CORE-001']].forEach(function (pair) {
+        const g = gapIds[pair[0]];
+        if (!g) { problems.push(pair[0] + ' ontbreekt in het gapregister'); return; }
+        if (g.primary_capability_id !== pair[1]) problems.push(pair[0] + ' primary capability klopt niet');
+        if (g.capability_id !== g.primary_capability_id) problems.push(pair[0] + ' alias capability_id wijkt af van primary');
+        if ((g.affected_capability_ids || []).length !== 0) problems.push(pair[0] + ' mag geen affected capabilities dragen');
+        if ((g.criteria_impact || []).join(',') !== 'C') problems.push(pair[0] + ' criterium moet exact C zijn');
+        if (g.blocker !== false) problems.push(pair[0] + ' blocker moet false zijn');
+        if (g.v1_scope !== true) problems.push(pair[0] + ' v1_scope moet true zijn');
+        if (g.status !== 'OPEN') problems.push(pair[0] + ' status moet OPEN zijn');
+        if (g.severity !== 'P3') problems.push(pair[0] + ' severity moet P3 zijn');
+        if (g.traceability_status !== 'COMPLETE' || g.traceability_scope !== 'CAPABILITY_SCOPED') {
+          problems.push(pair[0] + ' traceability moet COMPLETE/CAPABILITY_SCOPED zijn');
+        }
+      });
+      // J moet reproduceren uit de gapscope
+      const JEXP = { 'COACH-INTELLIGENCE-001': 3, 'COACH-PROGRAM-ASSIGNMENT-001': 3, 'TEAMS-GROUPS-ANALYTICS-001': 3,
+        'GYM-PROGRAMMING-EQUIPMENT-001': 3, 'ORGANIZATION-CORE-001': 3, 'COACH-RELATIONSHIP-001': 4,
+        'DEV-WEARSYNC-001': 2, 'PROVIDER-INTEGRATION-CONTRACT-001': 2, 'AI-OUTPUT-CONTRACT-001': 3 };
+      ['T8','T14','T11','T15'].forEach(function (tk) {
+        const t = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_' + tk + '_PRIME.json'), 'utf8'));
+        (t.capabilities || []).forEach(function (c) {
+          const want = JEXP[c.stable_id];
+          if (want !== undefined && c.criteria.J.score !== want) {
+            problems.push(c.stable_id + ' J is ' + c.criteria.J.score + ', verwacht ' + want + ' volgens de gapscope');
+          }
+          if (c.criteria.J.applicable === false) problems.push(c.stable_id + ' J mag nooit N/A zijn');
+        });
+      });
+      const g218 = gapIds['GAP-P2-018'];
+      if (!g218 || g218.blocker !== true) problems.push('GAP-P2-018 moet blocker true houden');
+      const g210 = gapIds['GAP-P2-010'];
+      if (!g210 || g210.traceability_scope !== 'UNSCOPED' || g210.primary_capability_id || (g210.affected_capability_ids || []).length) {
+        problems.push('GAP-P2-010-semantiek is veranderd');
+      }
+      if ((reg.gaps || []).length !== 68) problems.push('gap register telt ' + (reg.gaps || []).length + ' records, verwacht 68');
+      const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
+      if (bl.indexOf('met criterium-specifieke evidence | **86 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 86/86');
+      if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
+      // eerdere canonieke artefacten blijven geldig
+      [['AJ_AUDIT_T3_PRIME','T3','3.122'],['AJ_AUDIT_T7_PRIME','T7','3.051'],['AJ_AUDIT_T9_PRIME','T9','3.038'],
+       ['AJ_AUDIT_T10_PRIME','T10','2.850'],['AJ_AUDIT_T12_PRIME','T12','2.823'],['AJ_AUDIT_T13_PRIME','T13','2.982'],
+       ['AJ_AUDIT_T17_PRIME','T17','2.873']].forEach(function (x) {
+        const a = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', x[0] + '.json'), 'utf8'));
+        if (a.track_results[x[1]].score !== x[2]) problems.push(x[1] + '-trackscore is veranderd');
+      });
+    })();
+
     // ── Combined F/G: T9 en T12 Model-v1.2 auditartefacten ──
     (function fgPrimeGuard() {
       const halfUp = function (x, dp) {
@@ -705,9 +871,9 @@ try {
       if (!g210 || g210.traceability_scope !== 'UNSCOPED' || g210.primary_capability_id || (g210.affected_capability_ids || []).length) {
         problems.push('GAP-P2-010-semantiek is veranderd');
       }
-      if ((reg.gaps || []).length !== 63) problems.push('gap register telt ' + (reg.gaps || []).length + ' records, verwacht 63');
+      // gapregister groeit met bewezen nieuwe gaps; centraal gecontroleerd in de finale V1-guard (68).
       const bl = fs.readFileSync(path.join(ROOT, 'docs', '00_Project_Management', 'AUDIT_MEASUREMENT_BASELINE.md'), 'utf8');
-      if (bl.indexOf('met criterium-specifieke evidence | **63 / 86**') < 0) problems.push('baseline meldt model_v1_verified niet als 63/86');
+      // model_v1_verified loopt op per gecanonicaliseerde track; centraal gecontroleerd in de finale V1-guard (86/86).
       if (bl.indexOf('**22 / 86**') < 0) problems.push('baseline meldt historical_audited niet als 22/86');
       const t3 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'audit', 'AJ_AUDIT_T3_PRIME.json'), 'utf8'));
       if (t3.track_results.T3.score !== '3.122') problems.push('T3-trackscore is veranderd');

@@ -1,0 +1,1214 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T15_PRIME",
+ "tracks": [
+  "T15"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "da3c6a42b910a9ee3b8007f212df57285fe82ccc",
+ "complete": true,
+ "record_count": 70,
+ "capability_count": 7,
+ "na_record_count": 9,
+ "scored_record_count": 61,
+ "na_distribution": {
+  "E": 5,
+  "D": 1,
+  "G": 1,
+  "H": 2
+ },
+ "confidence_distribution": {
+  "HIGH": 49,
+  "MEDIUM": 21
+ },
+ "f_distribution": {
+  "F3": 3,
+  "F2": 4
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T15-trackscore.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, require van een core-module of serverfunctie als BEHAVIORAL_UNIT, en bron- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief. Script-load, import en test-import zijn nergens als runtime-integratie geteld: een module die wel geladen maar niet aangeroepen wordt, blijft op criterium C begrensd op anker 1. Confidence volgt de canonieke semantiek waarin HIGH direct capability-specifiek bewijs vereist, is per record afzonderlijk toegekend met een eigen confidence_basis, en is pas na het laatste record geaggregeerd; confidence stuurt geen enkele score.",
+ "track_notes": "equipmentCore, teamAnalyticsCore, teamPerformance en platformRoles zijn TEST_ONLY; organizationCore en brandingCore zijn DORMANT_ALTERNATIVE met script-tag maar nul productie-callers. Script-load is nergens tot runtime gepromoveerd. Gym- en teamtoegang is wel actief via de serverfuncties gym-team.js en gym-team-set-pin.js, en de datalaag draagt RLS. GYM-RLS-SCOPING-001 is uitsluitend op repository-bewijs gescoord; er is geen live Supabase-verificatie uitgevoerd of geclaimd. Drie onvervulde V1-verantwoordelijkheden zijn vastgelegd als GAP-P3-039, GAP-P3-040 en GAP-P3-041; branding krijgt geen gap.",
+ "track_results": {
+  "T15": {
+   "score": "2.723",
+   "percentage": "54.46",
+   "capability_count": 7,
+   "sum_of_stored_scores": "19.064",
+   "arithmetic": "som van de OPGESLAGEN driedecimale capabilityscores gedeeld door het aantal capabilities, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "DYNAMIC-BRANDING-ADMIN-001",
+   "primary_track": "T15",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 240,
+   "unrounded_quotient": "2.666666666666666666666666667",
+   "weighted_score": "2.667",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als per-organisatie branding. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#DYNAMIC-BRANDING-ADMIN-001",
+      "docs/CAPABILITY_REGISTRY.md#DYNAMIC-BRANDING-ADMIN-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "registry-aangewezen drager met export",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "De door de registry aangewezen drager bestaat met export BrandingCore en is via script-tag geladen; geclassificeerd als DORMANT_ALTERNATIVE. Geen beheersing van alternatieven, dus geen 4.",
+     "evidence_refs": [
+      "core/brandingCore.js",
+      "docs/CAPABILITY_REGISTRY.md#DYNAMIC-BRANDING-ADMIN-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend direct negatief bewijs over browser en server",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.167",
+     "rationale": "Module bestaat en is script-geladen, maar heeft nul productie-callers: nul treffers op BrandingCore in index.html en nul in netlify. Script-load is geen runtime-integratie; anker 1.",
+     "evidence_refs": [
+      "core/brandingCore.js",
+      "index.html#nul-BrandingCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs over vier bestanden",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Persistentie met owner-binding: brandinggegevens zijn in vier migratiebestanden vastgelegd met organisatiebinding. Geen eigen lifecycle, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#branding"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Branding is presentatie en neemt niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision. Nul engine-referentie in brandingCore.js.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret brandingCore.js en voert het brandinggedrag uit. Geen vm-runtime, dus geen 4. Dat een dormante module getest is, verhoogt C niet.",
+     "evidence_refs": [
+      "core/fBrandingCore.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "RLS-suite plus migratiebewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement op de datalaag: brandingtabellen dragen RLS-policies met een eigen RLS-suite. Geen adversarial bewijs, dus geen 4.",
+     "evidence_refs": [
+      "core/fBrandingRls.test.js",
+      "migratie_v*.sql#branding"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.222",
+     "rationale": "Zonder aangeroepen brandinglaag is de keten van ontdekken naar gebruiken niet bruikbaar bewezen. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "core/brandingCore.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.111",
+     "rationale": "Generieke afhandeling: geen capability-specifiek bewijs van gedrag bij ontbrekende branding. Maximaal 2.",
+     "evidence_refs": [
+      "core/brandingCore.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole plus expliciete kandidaat-afweging",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen relevante open V1-gaprelatie. Geen nieuwe gap geregistreerd: de runtimezwakte is al uitgedrukt in C gelijk 1 en er is geen aanvullende onvervulde V1-verantwoordelijkheid bewezen.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "GYM-DEVICE-FEASIBILITY-001",
+   "primary_track": "T15",
+   "v1_scope": true,
+   "applicable_weight": 65,
+   "weighted_numerator": 175,
+   "unrounded_quotient": "2.692307692307692307692307692",
+   "weighted_score": "2.692",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.308",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als haalbaarheid van gym-apparatuurkoppeling. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#GYM-DEVICE-FEASIBILITY-001",
+      "docs/CAPABILITY_REGISTRY.md#GYM-DEVICE-FEASIBILITY-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "contracttoets aanwijsbaar zonder implementatiemodule",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.692",
+     "rationale": "De haalbaarheidsafspraak is als contractdocument belegd en getoetst; alternatieven geinventariseerd. Documentatie alleen kan geen 4 dragen.",
+     "evidence_refs": [
+      "core/fGymDeviceProviderContract.test.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "verankering zonder runtime-caller",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "Geen runtime, passend bij een haalbaarheidscapability; wel verankerd in de canonieke laag, wat boven anker 1 uitkomt. Zonder productiepad geen 3.",
+     "evidence_refs": [
+      "core/fGymDeviceProviderContract.test.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Een haalbaarheidsstudie kent geen eigen opslag; nul migratietabel en nul persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De studie levert geen meetwaarde en neemt niet deel aan de berekeningsketen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitvoeringsvorm per suite direct geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "DOCUMENTATION_ONLY: beide suites dragen nul uitvoeringsconstructies en toetsen contract en hardening als tekst. Anker 2.",
+     "evidence_refs": [
+      "core/fGymDeviceProviderContract.test.js",
+      "core/fB9_H6ConnectedEquipmentHardening.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De studie bevat geen persoonsgegeven, authenticatie of trust boundary; de latere apparaatgrens zou onder T11 vallen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er is geen gebruikerscontract; de studie stuurt productbeslissingen, niet een sporter- of gymscherm.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "geen uitvoerbaar gedrag om te toetsen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.154",
+     "rationale": "Generieke afhandeling: zonder uitvoerbaar gedrag is er geen aantoonbare degraded state. Maximaal 2.",
+     "evidence_refs": [
+      "core/fGymDeviceProviderContract.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.615",
+     "rationale": "Geen relevante open V1-gaprelatie.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "GYM-PROGRAMMING-EQUIPMENT-001",
+   "primary_track": "T15",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 250,
+   "unrounded_quotient": "2.5",
+   "weighted_score": "2.500",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als apparatuurbewuste programmering. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#GYM-PROGRAMMING-EQUIPMENT-001",
+      "docs/CAPABILITY_REGISTRY.md#GYM-PROGRAMMING-EQUIPMENT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "registry-aangewezen drager met export",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "De door de registry aangewezen drager bestaat met export EquipmentCore en is als TEST_ONLY geclassificeerd. Geen beheersing van alternatieven, dus geen 4.",
+     "evidence_refs": [
+      "core/equipmentCore.js",
+      "docs/CAPABILITY_REGISTRY.md#GYM-PROGRAMMING-EQUIPMENT-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend direct negatief bewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.150",
+     "rationale": "Nul script-tag, nul aanroepen in index.html en nul in netlify. Dat de equipment-persistentie wel bestaat verandert dit niet: schema is geen runtime-integratie. Anker 1.",
+     "evidence_refs": [
+      "core/equipmentCore.js",
+      "index.html#nul-EquipmentCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs over acht bestanden",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie met owner-binding: apparatuurgegevens komen voor in acht migratiebestanden met gymbinding. Geen eigen lifecycle, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#equipment"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "volgt uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "Losse koppeling: apparatuurbewuste programmering zou de oefeningselectie beperken, maar zonder caller is de keten niet aangetoond. Anker 2.",
+     "evidence_refs": [
+      "core/equipmentCore.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret equipmentCore.js en organizationCore.js en voert het apparatuurgedrag uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fEquipmentCore.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "RLS-suite plus migratiebewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Enforcement op de datalaag: apparatuurtabellen dragen RLS-policies met een eigen RLS-suite. Geen adversarial bewijs, dus geen 4.",
+     "evidence_refs": [
+      "core/fEquipmentRls.test.js",
+      "migratie_v*.sql#equipment"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "Zonder aangeroepen apparatuurlaag is de keten van ontdekken naar gebruiken niet bruikbaar bewezen. Anker 2.",
+     "evidence_refs": [
+      "core/equipmentCore.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.100",
+     "rationale": "Generieke afhandeling: geen capability-specifiek bewijs van gedrag bij ontbrekende of onbeschikbare apparatuur. Maximaal 2.",
+     "evidence_refs": [
+      "core/equipmentCore.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe gaprelatie met vastgelegde semantiek",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Volledig A-J geauditeerd met een bewezen, nonduplicate open V1-gap zonder blocker: GAP-P3-040 met primary GYM-PROGRAMMING-EQUIPMENT-001, v1_scope true, status OPEN en blocker false. Anker 3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-040"
+     ],
+     "gap_refs": [
+      "GAP-P3-040"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "GYM-RLS-SCOPING-001",
+   "primary_track": "T15",
+   "v1_scope": true,
+   "applicable_weight": 80,
+   "weighted_numerator": 255,
+   "unrounded_quotient": "3.1875",
+   "weighted_score": "3.188",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.250",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als multi-tenant afscherming per gym. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#GYM-RLS-SCOPING-001",
+      "docs/CAPABILITY_REGISTRY.md#GYM-RLS-SCOPING-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "migratielaag plus suite zonder afdwingende eigenaar",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "De afscherming is belegd in de migratielaag met een eigen toetsingsset; parallelle paden geinventariseerd. Geen module die het afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#gyms",
+      "core/fGymRlsMultiTenant.test.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "migratiebreedte plus serverfunctie; keten niet per tabel geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "Productie-integratie bewezen: gyms komt voor in twaalf migratiebestanden met policies en de serverfunctie draait erbovenop. Geen volledige payload-chain per tabel, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#gyms",
+      "netlify/functions/gym-team.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "brede migratiehistorie over beide tabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.500",
+     "rationale": "Volledige lifecycle en migratiehistorie: gyms in twaalf en organizations in dertien migratiebestanden, met policies die meegroeien. Geen versionering, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#gyms",
+      "migratie_v*.sql#organizations"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Afscherming bepaalt wie wat ziet en neemt niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitvoeringsvorm per suite direct geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.375",
+     "rationale": "DOCUMENTATION_ONLY: alle vier suites dragen nul uitvoeringsconstructies en toetsen migratie- en policytekst. Het aantal suites verhoogt F niet. Anker 2.",
+     "evidence_refs": [
+      "core/fGymRlsMultiTenant.test.js",
+      "core/fGymsRlsSecurity.test.js",
+      "core/fAdminAuthGymRlsHardening.test.js",
+      "core/fGymsColumnLeakFix.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "vier dekkende securitysuites plus migratiebewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.250",
+     "rationale": "Auditbewijs dat de securitygrens dekt: vier afzonderlijke securitysuites over multi-tenant scoping, kolomlek en adminhardening, bovenop de policies in twaalf migratiebestanden. Dit is repository-bewijs; er is geen live Supabase-verificatie uitgevoerd en die wordt niet geclaimd. Zonder adversarial tweerekeningbewijs geen 5.",
+     "evidence_refs": [
+      "core/fGymRlsMultiTenant.test.js",
+      "core/fGymsRlsSecurity.test.js",
+      "core/fAdminAuthGymRlsHardening.test.js",
+      "migratie_v*.sql#gyms"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Afscherming is een datalaaggarantie zonder eigen gebruikerscontract; de sporter of gymbeheerder ziet nergens een scoping-scherm.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "een benoemde faalklasse; niet capability-breed deterministisch",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "Relevante failure modes afgevangen: een kolomlek is expliciet geadresseerd en getoetst, zodat een verkeerde scope geen data prijsgeeft. Geen fail-closed sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "core/fGymsColumnLeakFix.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.500",
+     "rationale": "Geen relevante open V1-gaprelatie.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "ORGANIZATION-CORE-001",
+   "primary_track": "T15",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 225,
+   "unrounded_quotient": "2.5",
+   "weighted_score": "2.500",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als organisatiekern met eigendom en lidmaatschap. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#ORGANIZATION-CORE-001",
+      "docs/CAPABILITY_REGISTRY.md#ORGANIZATION-CORE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "registry-aangewezen drager met export",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "De door de registry aangewezen drager bestaat met export OrganizationCore en is via script-tag geladen; geclassificeerd als DORMANT_ALTERNATIVE. Geen beheersing van alternatieven, dus geen 4.",
+     "evidence_refs": [
+      "core/organizationCore.js",
+      "docs/CAPABILITY_REGISTRY.md#ORGANIZATION-CORE-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend direct negatief bewijs over browser en server",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.167",
+     "rationale": "Module bestaat en is script-geladen, maar heeft nul productie-callers: nul treffers in index.html en nul in netlify. Script-tag is geen caller; anker 1.",
+     "evidence_refs": [
+      "core/organizationCore.js",
+      "index.html#nul-OrganizationCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs over dertien bestanden plus expliciet negatief bewijs op twee ontbrekende tabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie: organizations komt voor in dertien migratiebestanden. Geen versionering, dus geen 5. Aantekening: organization_members en platform_roles bestaan niet als tabel, wat de dormancy onderstreept maar D niet verlaagt omdat de kerntabel wel volledig is.",
+     "evidence_refs": [
+      "migratie_v*.sql#organizations"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Organisatie-eigendom bepaalt wie wat bezit en neemt niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision. Nul engine-referentie in de module.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitvoeringsvorm per suite direct geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.333",
+     "rationale": "DOCUMENTATION_ONLY: beide suites dragen nul uitvoeringsconstructies en toetsen architectuur en consolidatie als tekst. Anker 2.",
+     "evidence_refs": [
+      "core/fB9_H2AOrganizationArchitecture.test.js",
+      "core/fB9_H2BOrganizationConsolidation.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de gedeelde RLS-conventie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement op de datalaag: de organisatietabellen vallen onder de RLS-conventie die door de gym-securitysuites wordt getoetst. Geen capability-specifiek dekkend auditbewijs, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#organizations"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.222",
+     "rationale": "Zonder aangeroepen organisatielaag is de keten van ontdekken naar gebruiken niet bruikbaar bewezen. Anker 2.",
+     "evidence_refs": [
+      "core/organizationCore.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit dormancy en ontbrekend schema",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.111",
+     "rationale": "Generieke afhandeling: geen capability-specifiek bewijs van gedrag bij ontbrekend lidmaatschap of rolmismatch, mede doordat de rollentabel ontbreekt. Maximaal 2.",
+     "evidence_refs": [
+      "core/organizationCore.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe gaprelatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Volledig geauditeerd met bewezen nonduplicate open V1-gap zonder blocker: GAP-P3-041 met primary ORGANIZATION-CORE-001, v1_scope true, status OPEN en blocker false. Anker 3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-041"
+     ],
+     "gap_refs": [
+      "GAP-P3-041"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "SOC-GYMTEAM-001",
+   "primary_track": "T15",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 285,
+   "unrounded_quotient": "3.166666666666666666666666667",
+   "weighted_score": "3.167",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry met expliciete T13-afbakening",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als gym- en teamtoegang met RBAC, expliciet afgebakend tegen de social-functionaliteit van T13. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#SOC-GYMTEAM-001",
+      "docs/CAPABILITY_REGISTRY.md#SOC-GYMTEAM-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "twee serverfuncties zonder afgedwongen exclusiviteit",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Hoofdimplementatie aanwijsbaar als twee server-side functies; parallelle paden geinventariseerd. Geen guard, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/gym-team.js",
+      "netlify/functions/gym-team-set-pin.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "serverfunctie plus suite die haar uitvoert",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Productie-integratie bewezen: gym-team.js is een actieve serverfunctie, bevestigd doordat de securitysuite haar direct requiret en uitvoert. Geen volledige payload-chain naar de gebruikersweergave, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/gym-team.js",
+      "core/fGymTeamSecurity.test.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs over acht bestanden",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Persistentie met owner-binding: teamgegevens komen voor in acht migratiebestanden. Geen eigen lifecycle, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#teams"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Gym- en teamtoegang bepaalt rechten en neemt niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret beide serverfuncties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret gym-team.js en gym-team-set-pin.js en voert het toegangsgedrag uit. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fGymTeamSecurity.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "securitysuite plus migratiebewijs",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Enforcement op de datalaag plus serverzijde: de PIN-stroom en de teamtabellen zijn beide getoetst. Geen adversarial tweerekeningbewijs, dus geen 4.",
+     "evidence_refs": [
+      "core/fGymTeamSecurity.test.js",
+      "migratie_v*.sql#teams"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "ingang aanwijsbaar; keten niet per stap geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Ontdekken naar gebruiken bruikbaar bewezen: de teamtoegang via PIN is een bereikbare gebruikersingang met resultaat. Terugkoppeling niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/gym-team-set-pin.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de securitysuite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Relevante failure modes afgevangen: een onjuiste PIN of ontbrekend lidmaatschap levert geen toegang in plaats van een stille doorlaat. Geen fail-closed sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "core/fGymTeamSecurity.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen relevante open V1-gaprelatie.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "TEAMS-GROUPS-ANALYTICS-001",
+   "primary_track": "T15",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 235,
+   "unrounded_quotient": "2.35",
+   "weighted_score": "2.350",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als team- en groepsanalytics. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#TEAMS-GROUPS-ANALYTICS-001",
+      "docs/CAPABILITY_REGISTRY.md#TEAMS-GROUPS-ANALYTICS-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "twee registry-aangewezen dragers met export",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Twee door de registry aangewezen dragers bestaan met exports TeamAnalyticsCore en TeamPerformanceCore, beide TEST_ONLY. Geen beheersing van alternatieven, dus geen 4.",
+     "evidence_refs": [
+      "core/teamAnalyticsCore.js",
+      "core/teamPerformance.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend direct negatief bewijs op twee modules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.150",
+     "rationale": "Beide modules: nul script-tag, nul aanroepen in index.html, nul in netlify. Geen actief alternatief pad vervult de analyticsverantwoordelijkheid. Anker 1.",
+     "evidence_refs": [
+      "core/teamAnalyticsCore.js",
+      "core/teamPerformance.js",
+      "index.html#nul-TeamAnalyticsCore"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op de brontabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie met owner-binding: de teamtabellen waarover geanalyseerd zou worden bestaan in acht migratiebestanden. Geen eigen analyticsopslag, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#teams"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "volgt uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "Losse koppeling: analytics zou over reeds berekende prestatiewaarden aggregeren, maar zonder caller is de keten niet aangetoond. Anker 2.",
+     "evidence_refs": [
+      "core/teamAnalyticsCore.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitvoeringsvorm direct geinspecteerd, geen module-require",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.300",
+     "rationale": "DOCUMENTATION_ONLY: de suite draagt nul uitvoeringsconstructies en toetst de teamoperaties als tekst; zij requiret geen van beide analyticsmodules. Anker 2.",
+     "evidence_refs": [
+      "core/fB9_H2CTeamOperations.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de gedeelde RLS-conventie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Enforcement op de datalaag: de teamtabellen vallen onder dezelfde RLS-conventie die de gym-securitysuites toetsen. Geen capability-specifiek auditbewijs, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#teams"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "Zonder aangeroepen analyticslaag is de keten van ontdekken naar gebruiken niet bruikbaar bewezen. Anker 2.",
+     "evidence_refs": [
+      "core/teamAnalyticsCore.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.100",
+     "rationale": "Generieke afhandeling: geen capability-specifiek bewijs van gedrag bij een leeg team of ontbrekende analysedata. Maximaal 2.",
+     "evidence_refs": [
+      "core/teamAnalyticsCore.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe gaprelatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Volledig geauditeerd met bewezen nonduplicate open V1-gap zonder blocker: GAP-P3-039 met primary TEAMS-GROUPS-ANALYTICS-001, v1_scope true, status OPEN en blocker false. Anker 3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-039"
+     ],
+     "gap_refs": [
+      "GAP-P3-039"
+     ]
+    }
+   }
+  }
+ ]
+}

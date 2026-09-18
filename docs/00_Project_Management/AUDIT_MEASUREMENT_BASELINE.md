@@ -264,7 +264,7 @@ register-debt niet mag verbergen.
 | Telling | Betekenis | Stand |
 |---|---|---|
 | `historical_audited` | beoordeeld onder een pre-v1.0 model; scores behouden, niet v1-verifieerbaar | **22 / 86** |
-| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **63 / 86** |
+| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **86 / 86** |
 
 ### Canonieke Model-v1.2 trackresultaten
 
@@ -291,6 +291,36 @@ Batch A-artefact en worden niet overschreven. `docs/audit/AJ_AUDIT_BATCH_A.json`
 De historische waarden **T4 3,564**, **T5 3,225** en **T6 3,623** blijven geldig voor
 het historische Batch B-artefact en worden niet overschreven.
 `docs/audit/AJ_AUDIT_BATCH_B.json` behoudt `HISTORICAL_PRE_V1_MODEL` en is ongewijzigd.
+
+### Canonieke Model-v1.2 trackresultaten — T8, T11, T14 en T15 (finale V1-golf)
+
+**Canonieke artefacten:** `docs/audit/AJ_AUDIT_T8_PRIME.json`,
+`docs/audit/AJ_AUDIT_T11_PRIME.json`, `docs/audit/AJ_AUDIT_T14_PRIME.json` en
+`docs/audit/AJ_AUDIT_T15_PRIME.json` — samen 23 capabilities en 230 criterion
+records, `audit_model_version: 1.2`.
+
+| Track | Model v1.2 | Historisch pre-v1 |
+|---|---|---|
+| **T8** (AI / Coaching) | **3,266 / 5 = 65,32%** | NOT_COMPARABLE |
+| **T11** (Devices / Providers) | **3,082 / 5 = 61,64%** | NOT_COMPARABLE |
+| **T14** (Coach) | **2,763 / 5 = 55,26%** | NOT_COMPARABLE |
+| **T15** (Platform / Teams) | **2,723 / 5 = 54,46%** | NOT_COMPARABLE |
+
+Confidence over de 230 records, per record toegekend: **151 HIGH / 79 MEDIUM /
+0 LOW**. Geen enkele F4 buiten `DEV-CONCEPT2-001` en geen enkele F5.
+
+**Vijf dormante dragers.** `coachIntelligence`, `coachProgram`,
+`teamAnalyticsCore` met `teamPerformance`, `equipmentCore` en
+`organizationCore` hebben nul bewezen productie-callers zonder actief
+alternatief. Vastgelegd als `GAP-P3-037` tot en met `GAP-P3-041`, alle
+criterium C, P3, blocker false. Geen daarvan is SHADOW_ACTIVE en geen daarvan
+betreft een security- of RLS-bevinding. `HEALTHKIT-ARCHITECTURE-001` blijft
+DESIGN_ONLY binnen de eigen verantwoordelijkheid en krijgt geen gap.
+
+**Daarmee is de Model-v1.2 V1-audit volledig: 86 van de 86 V1-capabilities
+dragen een canoniek criterium-specifiek auditrecord.** Dat betekent volledige
+auditdekking, niet dat alle gaps gesloten of dat het product releasegereed is;
+de openstaande gaps blijven in het register staan.
 
 ### Canonieke Model-v1.2 trackresultaten — T9 en T12 (Combined F/G)
 
@@ -389,7 +419,11 @@ repository-`source_ref`. Er zijn nul databasemutaties uitgevoerd en nul rijen ge
 | T4 | 2,943 / 58,86% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T5 | 2,471 / 49,42% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T3 | 3,122 / 62,44% | `AJ_AUDIT_T3_PRIME.json` |
+| T8 | 3,266 / 65,32% | `AJ_AUDIT_T8_PRIME.json` |
 | T9 | 3,038 / 60,76% | `AJ_AUDIT_T9_PRIME.json` |
+| T11 | 3,082 / 61,64% | `AJ_AUDIT_T11_PRIME.json` |
+| T14 | 2,763 / 55,26% | `AJ_AUDIT_T14_PRIME.json` |
+| T15 | 2,723 / 54,46% | `AJ_AUDIT_T15_PRIME.json` |
 | T12 | 2,823 / 56,46% | `AJ_AUDIT_T12_PRIME.json` |
 | T7 | 3,051 / 61,02% | `AJ_AUDIT_T7_PRIME.json` |
 | T10 | 2,850 / 57,00% | `AJ_AUDIT_T10_PRIME.json` |

@@ -1,0 +1,1218 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T11_PRIME",
+ "tracks": [
+  "T11"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "da3c6a42b910a9ee3b8007f212df57285fe82ccc",
+ "complete": true,
+ "record_count": 70,
+ "capability_count": 7,
+ "na_record_count": 10,
+ "scored_record_count": 60,
+ "na_distribution": {
+  "G": 3,
+  "E": 3,
+  "D": 2,
+  "H": 2
+ },
+ "confidence_distribution": {
+  "HIGH": 40,
+  "MEDIUM": 30
+ },
+ "f_distribution": {
+  "F4": 1,
+  "F3": 4,
+  "F2": 2
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T11-trackscore.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, require van een core-module of serverfunctie als BEHAVIORAL_UNIT, en bron- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief. Script-load, import en test-import zijn nergens als runtime-integratie geteld: een module die wel geladen maar niet aangeroepen wordt, blijft op criterium C begrensd op anker 1. Confidence volgt de canonieke semantiek waarin HIGH direct capability-specifiek bewijs vereist, is per record afzonderlijk toegekend met een eigen confidence_basis, en is pas na het laatste record geaggregeerd; confidence stuurt geen enkele score.",
+ "track_notes": "De wearable-laag is SERVER_ACTIVE over elf Netlify-functies plus wearableTokenVault, _wearableAuthLib en _wearableSyncLib, met DeviceCore en Concept2Live als browser-actieve consumenten. HealthKit blijft DESIGN_ONLY: een architectuurdocument zonder native implementatie, wat binnen de canonieke verantwoordelijkheid van die capability valt en dus geen gap is. GAP-P2-018 draagt blocker true en begrenst DEV-WEARSYNC-001 en PROVIDER-INTEGRATION-CONTRACT-001 op J2.",
+ "track_results": {
+  "T11": {
+   "score": "3.082",
+   "percentage": "61.64",
+   "capability_count": 7,
+   "sum_of_stored_scores": "21.572",
+   "arithmetic": "som van de OPGESLAGEN driedecimale capabilityscores gedeeld door het aantal capabilities, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "DEV-CONCEPT2-001",
+   "primary_track": "T11",
+   "v1_scope": true,
+   "applicable_weight": 95,
+   "weighted_numerator": 325,
+   "unrounded_quotient": "3.421052631578947368421052632",
+   "weighted_score": "3.421",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record met v1_scope plus registry-rij",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.211",
+     "rationale": "Verantwoordelijkheid, afbakening tegen de generieke providerlaag en v1_scope canoniek vastgelegd. Geen versioneerbaar acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#DEV-CONCEPT2-001",
+      "docs/CAPABILITY_REGISTRY.md#DEV-CONCEPT2-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "module aanwijsbaar, beheersing alternatieven niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.474",
+     "rationale": "Hoofdimplementatie aanwijsbaar als script-geladen module met export Concept2Live; parallelle paden geinventariseerd. Geen guard die een tweede PM5-pad uitsluit, dus geen 4.",
+     "evidence_refs": [
+      "core/concept2Live.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "zeven concrete aanroepen met weergave als consument",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.632",
+     "rationale": "Volledige keten bewezen: koppelscherm naar zeven Concept2Live-aanroepen naar live sessiewaarden in de trainingsweergave, met 159 Concept2- en PM5-referenties als omliggend gebruik. Geen convergentie van alle ergometer-ingangen, dus geen 5.",
+     "evidence_refs": [
+      "index.html#Concept2Live",
+      "core/concept2Live.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op beide doeltabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "Persistentie met owner-binding: Concept2-sessies landen in activities met zeven migratiebestanden en activity_laps met drie. Geen eigen lifecycle voor deze provider, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#activities",
+      "migratie_v*.sql#activity_laps"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "deelname afgeleid, niet per edge geobserveerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "Deel van de keten aangetoond: PM5-waarden voeden de cardio-berekening via DeviceCore. Niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "core/concept2Live.js",
+      "core/deviceIntegration.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "vm-constructie direct geteld in de suite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.632",
+     "rationale": "INTEGRATION_RUNTIME: fConcept2ConnectionState.test.js draait vm.runInContext, direct geteld als een, over concept2Live.js en toetst de verbindingstoestanden over de echte call-chain; aangevuld met fConcept2Live.test.js als BEHAVIORAL_UNIT. Geen adversarial- of device-bewijs, dus geen 5.",
+     "evidence_refs": [
+      "core/fConcept2ConnectionState.test.js",
+      "core/fConcept2Live.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul auth- of credentialreferenties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De PM5-koppeling loopt lokaal tussen apparaat en browser zonder trust boundary, tweede partij, authenticatie of misbruikroute; provider-tokens spelen hier geen rol. Nul credential- of auth-referentie in concept2Live.js.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "route en weergave aanwijsbaar; keten niet per stap geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "Ontdekken naar gebruiken bruikbaar bewezen: het koppelscherm is bereikbaar en de livewaarden verschijnen tijdens de training. Terugkoppeling na afloop niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#Concept2Live"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "twee suites met benoemde faaltoestanden",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.211",
+     "rationale": "Unknown blijft unknown, deterministisch: de verbindingstoestandssuite toetst expliciet het gedrag bij wegvallende verbinding en de isolatiesuite borgt dat een onderbreking midden in de training geen waarden fabriceert. Geen fail-closed sabotagebewijs, dus geen 5.",
+     "evidence_refs": [
+      "core/fConcept2ConnectionState.test.js",
+      "core/fConcept2MidWorkoutIsolation.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "beide gaprelaties direct uit het register met status en blocker",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.316",
+     "rationale": "Volledig A-J geauditeerd met open V1-gaps zonder bewezen blocker: GAP-P2-013 en GAP-P2-020 staan op REVIEW_REQUIRED, wat onder Model v1.2 nonblocking is. Anker 3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-013",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-020"
+     ],
+     "gap_refs": [
+      "GAP-P2-013",
+      "GAP-P2-020"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "DEV-VALIDATION-001",
+   "primary_track": "T11",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 305,
+   "unrounded_quotient": "3.05",
+   "weighted_score": "3.050",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als validatie van providerdata. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#DEV-VALIDATION-001",
+      "docs/CAPABILITY_REGISTRY.md#DEV-VALIDATION-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "drager aanwijsbaar zonder exclusieve eigenaarsrol",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Hoofdimplementatie aanwijsbaar in de ingestielaag die providerdata valideert voordat ze landen; parallelle paden geinventariseerd. Geen eigen validatiemodule met exclusieve rol, dus geen 4.",
+     "evidence_refs": [
+      "core/cloudActivityIngestion.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "serverfunctie plus ingestielaag; keten niet volledig geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Productie-caller bewezen: de synchronisatiefunctie roept de ingestielaag aan die de validatie uitvoert. Geen volledige payload-chain tot de consument, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/wearable-sync-activities.js",
+      "core/cloudActivityIngestion.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "migratiebewijs op de doeltabel, niet validatiespecifiek",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie met owner-binding: gevalideerde activiteiten landen in activities. Geen eigen lifecycle voor validatie-uitkomsten, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#activities"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de ingestiepositie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten aangetoond: gevalideerde waarden voeden de cardio- en belastingberekening. Niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "core/cloudActivityIngestion.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de dragende module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret cloudActivityIngestion.js en voert het validatiegedrag op echte providerpayloads uit. Geen vm-runtime over de serverketen, dus geen 4.",
+     "evidence_refs": [
+      "core/fB9_H3CRealProviderValidation.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de serverpositie, niet capability-specifiek getoetst",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Enforcement op serverniveau: validatie draait achter de geauthenticeerde synchronisatiefunctie. Geen dekkend auditbewijs, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/wearable-sync-activities.js"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "geen eigen gebruikersroute voor deze capability",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "Gevalideerde activiteiten zijn zichtbaar in het logboek, maar er is geen eigen keten van ontdekken naar gebruiken voor de validatie zelf. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#activities"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de validatiesuite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes afgevangen: onvolledige of afwijkende providerpayloads worden geweigerd in plaats van deels doorgelaten. Geen deterministisch bewijs over de hele capability, dus geen 4.",
+     "evidence_refs": [
+      "core/fB9_H3CRealProviderValidation.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "Geen gap noemt deze capability met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over alle 63 records.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "DEV-WEARAUTH-001",
+   "primary_track": "T11",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 330,
+   "unrounded_quotient": "3.666666666666666666666666667",
+   "weighted_score": "3.667",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als providerautorisatie en tokenbeheer. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#DEV-WEARAUTH-001",
+      "docs/CAPABILITY_REGISTRY.md#DEV-WEARAUTH-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "twee dedicated modules met exclusieve rol",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.667",
+     "rationale": "Een aanwijsbare eigenaarslaag: een gedeelde authenticatiebibliotheek en een aparte tokenvault, waarop alle providerspecifieke functies aansluiten; geen tweede autorisatiepad aangetroffen. Geen guard die dat afdwingt, dus geen 5.",
+     "evidence_refs": [
+      "netlify/functions/_wearableAuthLib.js",
+      "netlify/functions/wearableTokenVault.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "vier ketenstappen als afzonderlijke serverfuncties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.667",
+     "rationale": "Volledige keten bewezen: start, callback, status en disconnect, generiek plus providerspecifiek voor Garmin, alle vier aanwezig als aparte functies met payloadpad naar de vault. Geen convergentiebewijs voor alle providers, dus geen 5.",
+     "evidence_refs": [
+      "netlify/functions/wearable-auth-start.js",
+      "netlify/functions/wearable-auth-callback.js",
+      "netlify/functions/wearable-status.js",
+      "netlify/functions/wearable-disconnect.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "vault met volledige koppel- en ontkoppellifecycle",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie: tokens worden in een aparte vault beheerd met koppel- en ontkoppelpaden, gescheiden van de activiteitendata. Geen versionering, dus geen 5.",
+     "evidence_refs": [
+      "netlify/functions/wearableTokenVault.js",
+      "migratie_v*.sql#activities"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Providerautorisatie neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision; zij regelt toegang en levert geen meetwaarde. Nul engine-referentie in de authenticatielaag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret beide ketenstappen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret garmin-auth-start.js en garmin-auth-callback.js en voert het OAuth-gedrag uit. Geen vm-runtime over de volledige serverketen, dus geen 4.",
+     "evidence_refs": [
+      "core/fGarminOAuthFoundation.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "vault-scheiding plus dekkende OAuth-suite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Auditbewijs dat de securitygrens dekt: tokens staan uitsluitend server-side in een aparte vault, nooit in de client, en de OAuth-suite toetst de koppelstroom. Geen adversarial tweerekeningbewijs, dus geen 5.",
+     "evidence_refs": [
+      "netlify/functions/wearableTokenVault.js",
+      "core/fGarminOAuthFoundation.test.js"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "status- en ontkoppelfunctie aanwijsbaar; UI-keten niet per stap geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "Ontdekken naar gebruiken bruikbaar bewezen: de sporter koppelt, ziet de status en kan ontkoppelen. Terugkoppeling na ontkoppeling niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/wearable-status.js",
+      "netlify/functions/wearable-disconnect.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de statusfunctie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Relevante failure modes afgevangen: een verlopen of ingetrokken autorisatie levert een expliciete statuswaarde in plaats van stil falen. Geen deterministisch bewijs over de hele capability, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/wearable-status.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen relevante open V1-gaprelatie.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "DEV-WEARSYNC-001",
+   "primary_track": "T11",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 320,
+   "unrounded_quotient": "3.2",
+   "weighted_score": "3.200",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als synchronisatie van provideractiviteiten. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#DEV-WEARSYNC-001",
+      "docs/CAPABILITY_REGISTRY.md#DEV-WEARSYNC-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "bibliotheek plus functies zonder afgedwongen exclusiviteit",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Hoofdimplementatie aanwijsbaar als gedeelde synchronisatiebibliotheek met aanroepende functies; parallelle paden geinventariseerd. Geen guard, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/_wearableSyncLib.js",
+      "netlify/functions/wearable-sync.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "vier ketenstappen met payloadpad naar de doeltabel",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.600",
+     "rationale": "Volledige keten bewezen: webhook of handmatige trigger naar synchronisatiefunctie naar ingestielaag naar activities. Geen convergentie van alle providers op een ingang, dus geen 5.",
+     "evidence_refs": [
+      "netlify/functions/wearable-sync.js",
+      "netlify/functions/wearable-sync-activities.js",
+      "netlify/functions/garmin-webhook.js",
+      "core/cloudActivityIngestion.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs over beide tabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "Volledige lifecycle en migratiehistorie: gesynchroniseerde activiteiten en hun laps zijn genormaliseerd vastgelegd over respectievelijk zeven en drie migratiebestanden. Geen versionering, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#activities",
+      "migratie_v*.sql#activity_laps"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "deelname afgeleid uit de ingestiepositie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten aangetoond: gesynchroniseerde activiteiten voeden de belastings- en herstelberekening via DeviceCore. Niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "core/cloudActivityIngestion.js",
+      "core/deviceIntegration.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret beide dragende modules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret cloudActivityIngestion.js en wearableTokenVault.js en voert het synchronisatiegedrag uit. Geen vm-runtime over de serverketen, dus geen 4.",
+     "evidence_refs": [
+      "core/fB9_H3BCloudProviderIntegration.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de serverpositie, niet capability-specifiek geauditeerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Enforcement op serverniveau: synchronisatie draait geauthenticeerd en haalt tokens uit de vault. Geen dekkend auditbewijs over de grens, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/wearable-sync.js",
+      "netlify/functions/wearableTokenVault.js"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "zichtbaar resultaat; synchronisatiestatus niet geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Ontdekken naar gebruiken bruikbaar bewezen: gesynchroniseerde activiteiten verschijnen in het logboek en de voortgangsweergave. Terugkoppeling over de synchronisatie zelf niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#activities"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de integratiesuite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes afgevangen: een mislukte of gedeeltelijke synchronisatie laat de bestaande activiteiten intact en dupliceert niet. Geen deterministisch bewijs over de hele capability, dus geen 4.",
+     "evidence_refs": [
+      "core/fB9_H3BCloudProviderIntegration.test.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "blocker-vlag direct uit het register geverifieerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "GAP-P2-018 draagt blocker true en raakt deze capability met v1_scope true en status OPEN. Onder Model v1.2 is een open V1-gap met bewezen blocker anker 2, ongeacht de volledigheid van de audit.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-018",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-019"
+     ],
+     "gap_refs": [
+      "GAP-P2-018",
+      "GAP-P2-019"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "HEALTHKIT-ARCHITECTURE-001",
+   "primary_track": "T11",
+   "v1_scope": true,
+   "applicable_weight": 65,
+   "weighted_numerator": 175,
+   "unrounded_quotient": "2.692307692307692307692307692",
+   "weighted_score": "2.692",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index en registry benoemen de ontwerpscope expliciet",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.308",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als architectuur- en haalbaarheidsstudie voor het iOS-pad, expliciet voor implementatie. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#HEALTHKIT-ARCHITECTURE-001",
+      "docs/CAPABILITY_REGISTRY.md#HEALTHKIT-ARCHITECTURE-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "het canonieke document is de juiste bron voor een ontwerpcapability",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.692",
+     "rationale": "Het architectuurdocument is het beoogde product van deze capability en is aanwijsbaar en compleet; alternatieven geinventariseerd. Documentatie alleen kan nooit 4 dragen, dus geen 4.",
+     "evidence_refs": [
+      "docs/MS-F5-04_APPLE_HEALTHKIT_ARCHITECTURE.md"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "negatief bewijs op symboolniveau plus documentverankering",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "Er is geen runtime en dat is conform de verantwoordelijkheid: nul native implementatie, direct vastgesteld met nul treffers op HKHealthStore in Swift- of Objective-C-bestanden. Het ontwerp is wel verankerd in de canonieke documentatielaag, wat boven anker 1 uitkomt, maar zonder productiepad geen 3.",
+     "evidence_refs": [
+      "docs/MS-F5-04_APPLE_HEALTHKIT_ARCHITECTURE.md"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul migratietabel",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Een ontwerpcapability kent geen eigen opslag; er is nul HealthKit-tabel in de migratielaag en nul persistentie-aanroep. De toekomstige opslag zou onder DEV-WEARSYNC-001 vallen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het ontwerp levert geen meetwaarde en neemt niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitvoeringsvorm direct geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "DOCUMENTATION_ONLY: de suite toetst het bestaan en de structuur van het architectuurdocument als tekst en draagt nul uitvoeringsconstructies. Voor een ontwerpcapability is dat het passende en hoogst haalbare anker zonder implementatie.",
+     "evidence_refs": [
+      "core/fHealthKitArchitectureDoc.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Een ontwerpdocument kent geen trust boundary, authenticatie, persoonsgegeven of misbruikroute; de toekomstige toestemmingsgrens is in het document beschreven maar niet geimplementeerd.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul route of invoer",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er is geen gebruikerscontract: de sporter heeft nul route, invoer of terugkoppeling voor HealthKit, conform de ontwerpscope van de capability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "conceptuele beschrijving zonder uitvoerbaar gedrag",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.154",
+     "rationale": "Generieke afhandeling: het document beschrijft faalgevallen conceptueel, maar zonder implementatie is er geen aantoonbaar gedrag. Maximaal 2.",
+     "evidence_refs": [
+      "docs/MS-F5-04_APPLE_HEALTHKIT_ARCHITECTURE.md"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole plus scope-afbakening",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.615",
+     "rationale": "Geen relevante open V1-gaprelatie. Het ontbreken van een native implementatie is geen defect: het valt buiten de canonieke verantwoordelijkheid van deze capability.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "PROVIDER-INTEGRATION-CONTRACT-001",
+   "primary_track": "T11",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 285,
+   "unrounded_quotient": "2.85",
+   "weighted_score": "2.850",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als het generieke contract waaraan elke provider moet voldoen. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#PROVIDER-INTEGRATION-CONTRACT-001",
+      "docs/CAPABILITY_REGISTRY.md#PROVIDER-INTEGRATION-CONTRACT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "twee bibliotheken zonder formele contractafdwinging",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Het contract is belegd in twee gedeelde bibliotheken waarop providerspecifieke functies aansluiten; parallelle paden geinventariseerd. Geen afgedwongen contractdefinitie, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/_wearableAuthLib.js",
+      "netlify/functions/_wearableSyncLib.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "aansluiting aanwijsbaar; contractnaleving niet per provider getoetst",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Productie-callers bewezen: de providerspecifieke functies gebruiken de gedeelde bibliotheken. Geen volledige payload-chain over meerdere providers, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/garmin-auth-start.js",
+      "netlify/functions/_wearableAuthLib.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "gedeelde doeltabel, niet contractspecifiek",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Persistentie met owner-binding: alle providers landen in dezelfde genormaliseerde tabel. Geen eigen lifecycle voor het contract, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#activities"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de normalisatiepositie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten aangetoond: genormaliseerde providerdata voedt de berekeningslaag. Niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "core/cloudActivityIngestion.js"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de dragende module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: de suite requiret de ingestielaag en toetst het generieke integratiegedrag. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fB9_H3BCloudProviderIntegration.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de vaultpositie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Enforcement op serverniveau: het contract schrijft server-side tokenbeheer voor en de vault realiseert dat. Geen dekkend auditbewijs, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/wearableTokenVault.js"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "geen eigen gebruikersroute",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "Het contract is een interne afspraak; de zichtbare koppelstatus hoort bij DEV-WEARAUTH-001. Voor deze capability is geen eigen keten van ontdekken naar gebruiken bewezen. Anker 2.",
+     "evidence_refs": [
+      "netlify/functions/wearable-status.js"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de statusafhandeling",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes afgevangen: een provider die het contract niet vervult levert een expliciete status in plaats van stille doorlating. Geen deterministisch bewijs over de hele capability, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/wearable-status.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "blocker-vlag direct uit het register geverifieerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.200",
+     "rationale": "GAP-P2-018 draagt blocker true en raakt deze capability met v1_scope true en status OPEN. Open V1-gap met bewezen blocker is anker 2.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-018",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-019",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-020"
+     ],
+     "gap_refs": [
+      "GAP-P2-018",
+      "GAP-P2-019",
+      "GAP-P2-020"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "WEARABLE-FEASIBILITY-MATRIX-001",
+   "primary_track": "T11",
+   "v1_scope": true,
+   "applicable_weight": 65,
+   "weighted_numerator": 175,
+   "unrounded_quotient": "2.692307692307692307692307692",
+   "weighted_score": "2.692",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index plus registry",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.308",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als haalbaarheidsmatrix per provider en datatype. Geen acceptatiecontract, dus geen 5.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#WEARABLE-FEASIBILITY-MATRIX-001",
+      "docs/CAPABILITY_REGISTRY.md#WEARABLE-FEASIBILITY-MATRIX-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "registryverankering zonder eigen documentbestand",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.692",
+     "rationale": "De matrix is als canoniek document belegd en alternatieven zijn geinventariseerd; het is een kennisproduct, geen runtimelaag. Documentatie alleen kan geen 4 dragen.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#WEARABLE-FEASIBILITY-MATRIX-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "documentverankering zonder runtime-caller",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "Geen runtime en dat past bij de verantwoordelijkheid; de matrix is wel verankerd in de canonieke laag, wat boven anker 1 uitkomt, maar zonder productiepad geen 3.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#WEARABLE-FEASIBILITY-MATRIX-001"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Een haalbaarheidsmatrix kent geen eigen opslag; nul migratietabel en nul persistentie-aanroep.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De matrix levert geen meetwaarde en neemt niet deel aan de berekeningsketen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "gericht gezocht, nul uitvoerende suite",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.462",
+     "rationale": "DOCUMENTATION_ONLY: gericht gezocht naar een uitvoerende suite voor deze capability; die is er niet. Voor een kennisproduct is dat het passende anker.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#WEARABLE-FEASIBILITY-MATRIX-001"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De matrix bevat geen persoonsgegeven, authenticatie of trust boundary.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Er is geen gebruikerscontract; de matrix stuurt productbeslissingen, niet een sporterscherm.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "geen uitvoerbaar gedrag om te toetsen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.154",
+     "rationale": "Generieke afhandeling: zonder uitvoerbaar gedrag is er geen aantoonbare degraded state. Maximaal 2.",
+     "evidence_refs": [
+      "docs/CAPABILITY_REGISTRY.md#WEARABLE-FEASIBILITY-MATRIX-001"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtende registercontrole",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.615",
+     "rationale": "Geen relevante open V1-gaprelatie.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  }
+ ]
+}

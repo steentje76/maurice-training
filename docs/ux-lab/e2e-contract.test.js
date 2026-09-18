@@ -1,0 +1,11 @@
+const assert=require("assert"),V=require("./validation-engine.js"),C=require("./contract-exporter.js");
+const rules=require("./rules.seed.json"),flows=require("./flows.scenarios.json"),conflicts=require("./conflicts.registry.json"),sources=require("./sources.registry.json"),snapshot=require("./source-verification.snapshot.json");
+const flow=flows.flows[0],scenario=flow.scenarios.find(s=>s.id==="B");
+const validation=V.validateScenario({rules,flow,scenario,conflicts,sources,currentMainSha:snapshot.verified_against_main,actualSourceShas:snapshot.sources});
+assert.equal(validation.hard_issue_count,0,"validation hard issues");assert.equal(validation.hard_conflict_count,0,"unresolved conflicts");assert.equal(validation.freeze_ready,true,"freeze should be ready");
+const freeze=C.createFreeze({flow,scenario,validation,sources,sourceSnapshot:snapshot,selectedBy:"Product Owner",approvedAt:"2026-09-18T21:09:00+02:00"});
+assert.equal(C.verifyFreeze(freeze,snapshot).valid,true);
+const contract=C.createContract({freeze,flow,scenario,repository:"steentje76/maurice-training"});assert(contract.acceptance_tests.length>=9);assert(C.claudePrompt(contract).includes("HARD STOP"));
+const changed=JSON.parse(JSON.stringify(snapshot));changed.sources["SRC-DS1"]="changed";const invalid=V.validateScenario({rules,flow,scenario,conflicts,sources,currentMainSha:changed.verified_against_main,actualSourceShas:changed.sources});
+assert.equal(invalid.freeze_ready,false,"source drift must block freeze");assert.equal(C.verifyFreeze(freeze,changed).valid,false,"source drift must invalidate existing freeze");assert(invalid.source_invalidation.invalid_rule_ids.length>0,"drift must map to rules");
+console.log("V2.3 E2E PASS: scenario -> validation -> freeze -> contract -> source drift -> invalidated");

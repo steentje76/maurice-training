@@ -48,3 +48,5 @@ jobs:
         run: node docs/ux-lab/capability-maturity-registry.test.js
       - name: Integrated design intelligence gate
         run: node docs/ux-lab/integrated-design-intelligence.test.js
+      - name: Nested recovery flow gate
+        run: node docs/ux-lab/recovery-flow-ui.test.js

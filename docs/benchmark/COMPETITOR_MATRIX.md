@@ -19,3 +19,4 @@ This is an evidence index, not a marketing scorecard. Empty cells mean not yet a
 | TrainingPeaks | — | — | — | — | — | — | DESIRED |
 | Runna | 8.52.1 | Deep running-plan/pace/recording evidence | Health Connect + HR/BLE + Garmin/COROS/Strava | Community/achievements present | Adaptive plan/pace proposal UX; server algorithm unknown | 14 new patterns + HC/BG corroboration | STATIC CLOSED / DYNAMIC OPEN |
 | Strava | — | — | — | — | — | — | DESIRED |
+| RP Hypertrophy | 1.2.0 | Native shell + official-doc benchmark of mesocycles/RIR/feedback/deload | PWA/WebView shell; no wearable evidence | N/A from artefact | Adaptive hypertrophy feedback loop | 26 patterns; remote engine requires dynamic audit | SHELL STATIC CLOSED / DOC BENCHMARK CLOSED / DYNAMIC OPEN |

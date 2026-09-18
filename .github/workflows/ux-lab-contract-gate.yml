@@ -20,3 +20,5 @@ jobs:
         run: node docs/ux-lab/contract-exporter.test.js
       - name: End-to-end freeze contract drift gate
         run: node docs/ux-lab/e2e-contract.test.js
+      - name: Mobile governance UI gate
+        run: node docs/ux-lab/mobile-governance-ui.test.js

@@ -44,6 +44,26 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-PROPOSE-CHANGE-001 | Explainability | Adaptive change is a visible proposal with reason/acceptance | Runna adaptivity/pace-change messaging | HIGH | Strong fit with versioned TK Decision outputs | DESIGN_DIRECTION |
 | PAT-ENDURANCE-BG-001 | Mobile lifecycle | Native background/foreground infrastructure supports long-running run/audio execution | Runna Notifee/WorkManager/media foreground service | HIGH | Native Android lifecycle audit still needed | TK_CHECK_REQUIRED |
 
+| PAT-COACH-MOBILE-001 | Coach platform | Athlete and coach/team workflows reuse one training client/core | TrainHeroic 8.36.0 athlete/coach/team routes | HIGH | Matches TK one-engine sequencing | DESIGN_DIRECTION |
+| PAT-COACH-ASSIGN-001 | Coach programming | Programming → assignment → calendar → athlete execution chain | TrainHeroic coach/program/calendar evidence | HIGH | TK F10 core mature; UI integration remains incomplete | VERIFIED_GAP |
+| PAT-PROGRAM-CATALOG-001 | Programs | Reusable/acquirable program definition materialises to scheduled instances | TrainHeroic marketplace/program/calendar flows | HIGH | Matches TK reusable workout/program architecture | DESIGN_DIRECTION |
+| PAT-CALENDAR-PROGRAM-001 | Scheduling | Calendar is schedule projection, not workout definition | TrainHeroic personal calendar/program workout routes | HIGH | Matches TK scheduling architecture | ALREADY_PRESENT |
+| PAT-WORKING-MAX-001 | Strength programming | Athlete working max drives percentage prescriptions | TrainHeroic working_maxes + percentage-based copy | HIGH | TK e1RM/%1RM exists; UX comparator | CANDIDATE |
+| PAT-PR-HISTORY-001 | Analytics | PR/rep-max history is a dedicated progression surface | TrainHeroic PR/actual rep max/maxes-per-day evidence | HIGH | TK progression foundation exists | ALREADY_PRESENT |
+| PAT-RPE-LOAD-001 | Load | RPE and volume are exposed together as training-load context | TrainHeroic explicit Training Load copy | HIGH | TK registry-backed RPE/sRPE/load already exists | ALREADY_PRESENT |
+| PAT-READINESS-TREND-001 | Recovery | Daily readiness is shown against a personal longitudinal baseline | TrainHeroic readiness + last-10-score Balance copy | HIGH | TK has stronger evidence/confidence governance; UX comparator only | CANDIDATE |
+| PAT-INSESSION-MODIFY-001 | Execution | In-session substitution surfaces data-integrity consequences | TrainHeroic swap warning after values logged | HIGH | TK should preserve history or require explicit migration | CANDIDATE |
+| PAT-MULTITIMER-001 | Execution | Rest/AMRAP/EMOM/Tabata/countdown modes share session model | TrainHeroic timer evidence | HIGH | Compare with TK interval/execution engine | CANDIDATE |
+| PAT-COACH-LEADERBOARD-001 | Social/team | Leaderboards are scoped to coach/team/program context | TrainHeroic leaderboard/block/team evidence | HIGH | TK benchmark already prefers scoped ranking | DESIGN_DIRECTION |
+| PAT-TEAM-FEED-001 | Social/team | Completed workout becomes scoped social object | TrainHeroic feed/comments/fistbumps/sharing | HIGH | TK social foundation exists | CANDIDATE |
+| PAT-COACH-FEEDBACK-001 | Coach | Feedback is attached to athlete/session/program context | TrainHeroic coach/session/comment evidence | HIGH | TK current benchmark docs identify coach notes/feedback as missing | VERIFIED_GAP |
+| PAT-COACH-NUTRITION-001 | Nutrition | Nutrition is a distinct coach-athlete domain | TrainHeroic daily/coach-athlete nutrition evidence | HIGH | TK Nutrition Intelligence exists; coach workflow comparator | CANDIDATE |
+| PAT-COACH-PROGRESS-001 | Analytics | Coach sees multiple interpretable athlete progression surfaces | TrainHeroic load/PR/max/bodyweight/streak evidence | HIGH | TK analytics foundation exists | CANDIDATE |
+| PAT-MIN-DATA-UX-001 | Evidence UX | Minimum observations are stated before trends are shown | TrainHeroic “at least two weigh-ins” trend copy | HIGH | Direct fit with TK minimum-data/confidence governance | DESIGN_DIRECTION |
+| PAT-EXPERIMENT-001 | Delivery | Experiment assignment is separate from observability | TrainHeroic Eppo + Crashlytics evidence | HIGH | Never experiment on unversioned training truth | CANDIDATE |
+| PAT-ROLE-ENTITLEMENT-001 | Commercial | Explicit license/entitlement state gates product capabilities | TrainHeroic license/Pro/IAP evidence | HIGH | TK entitlement architecture exists; native billing validation open | CANDIDATE |
+| PAT-OFFLINE-BOUNDARY-001 | Resilience | Explicitly declare unavailable offline capabilities | TrainHeroic offline/unavailable-state copy | HIGH | TK offline queue stronger; UX comparator | CANDIDATE |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

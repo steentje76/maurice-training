@@ -78,7 +78,49 @@
           "intent": "Preserve current information architecture; optimize hierarchy only.",
           "tap_estimate": 3,
           "deviations": [],
-          "rule_status": "PASS"
+          "rule_status": "PASS",
+          "removed_capabilities": [],
+          "required_states": [
+            "loading",
+            "empty",
+            "error",
+            "offline"
+          ],
+          "designed_states": [
+            "loading",
+            "empty",
+            "error",
+            "offline"
+          ],
+          "data_bindings": [
+            {
+              "id": "training-context",
+              "source": "canonical training/decision output",
+              "ui_calculates": false,
+              "unknown_as_zero": false,
+              "unknown_as_green": false
+            }
+          ],
+          "components": [
+            {
+              "id": "primary-action",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 1
+            },
+            {
+              "id": "training-card",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 0
+            }
+          ],
+          "accessibility": {
+            "semantic_controls": true,
+            "icon_labels": true,
+            "keyboard": true,
+            "no_color_only": true
+          }
         },
         {
           "id": "B",
@@ -88,7 +130,49 @@
           "deviations": [
             "Moves secondary destinations below primary task"
           ],
-          "rule_status": "PASS"
+          "rule_status": "PASS",
+          "removed_capabilities": [],
+          "required_states": [
+            "loading",
+            "empty",
+            "error",
+            "offline"
+          ],
+          "designed_states": [
+            "loading",
+            "empty",
+            "error",
+            "offline"
+          ],
+          "data_bindings": [
+            {
+              "id": "training-context",
+              "source": "canonical training/decision output",
+              "ui_calculates": false,
+              "unknown_as_zero": false,
+              "unknown_as_green": false
+            }
+          ],
+          "components": [
+            {
+              "id": "primary-action",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 1
+            },
+            {
+              "id": "training-card",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 0
+            }
+          ],
+          "accessibility": {
+            "semantic_controls": true,
+            "icon_labels": true,
+            "keyboard": true,
+            "no_color_only": true
+          }
         },
         {
           "id": "C",
@@ -98,7 +182,49 @@
           "deviations": [
             "Adds optional context disclosure"
           ],
-          "rule_status": "PASS_WITH_OPEN_DESIGN"
+          "rule_status": "PASS_WITH_OPEN_DESIGN",
+          "removed_capabilities": [],
+          "required_states": [
+            "loading",
+            "empty",
+            "error",
+            "offline"
+          ],
+          "designed_states": [
+            "loading",
+            "empty",
+            "error",
+            "offline"
+          ],
+          "data_bindings": [
+            {
+              "id": "training-context",
+              "source": "canonical training/decision output",
+              "ui_calculates": false,
+              "unknown_as_zero": false,
+              "unknown_as_green": false
+            }
+          ],
+          "components": [
+            {
+              "id": "primary-action",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 1
+            },
+            {
+              "id": "training-card",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 0
+            }
+          ],
+          "accessibility": {
+            "semantic_controls": true,
+            "icon_labels": true,
+            "keyboard": true,
+            "no_color_only": true
+          }
         }
       ]
     }

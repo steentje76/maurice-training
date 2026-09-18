@@ -24,3 +24,5 @@ jobs:
         run: node docs/ux-lab/mobile-governance-ui.test.js
       - name: UX Lab workbench UI gate
         run: node docs/ux-lab/workbench-ui.test.js
+      - name: Evidence explorer UI gate
+        run: node docs/ux-lab/evidence-explorer-ui.test.js

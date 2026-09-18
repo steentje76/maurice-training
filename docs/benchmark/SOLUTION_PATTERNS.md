@@ -15,6 +15,20 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-WIDGET-001 | Android UX | Home-screen widgets expose high-frequency workout actions/status | Hevy routine/workout/rest/streak/calendar/stats widgets | HIGH | No TK widget capability established in this audit | CANDIDATE |
 | PAT-MEDIA-CREATE-001 | Social media | Rich shareable media generated in isolated native media pipeline | Hevy VisionCamera/IMG.LY + shareable media indicators | MEDIUM | TK social can reuse canonical workout data; native media pipeline not established here | CANDIDATE |
 
+| PAT-NATIVE-001 | Client architecture | Typed domain/use-case/repository architecture in large native fitness client | Fitbod 8.31.0-4 Hilt/Room/repositories/use-cases/sync managers | HIGH | Architectural comparator only; TK technology need not match | CANDIDATE |
+| PAT-SYNC-001 | Offline/sync | Durable local domain model + coordinated domain sync managers | Fitbod Room DAOs + domain push/pull/sync managers + OfflineTask | HIGH | TK generic offline queue already mature; compare domain ownership/conflict policy | ALREADY_PRESENT |
+| PAT-ADAPT-001 | Adaptive programming | Remote workout generation backed by deterministic/local optimisation fallback | Fitbod RemoteWorkoutGenerator + explicit fallback to Optim + ranking/scheme/volume/rest modules | HIGH | Strong fit with TK Calculation → Context → Decision → AI; auto-programming gap needs separate current-main capability check | CANDIDATE |
+| PAT-CONTEXT-001 | Context | Persistent athlete/gym config plus explicit per-workout overrides | Fitbod WorkoutConfig + WorkoutConfigOverrides | HIGH | Matches TK Context Engine direction; verify temporary override model | CANDIDATE |
+| PAT-PLAN-001 | Programming | Decompose frequency/split/focus recommendations into separate use-cases | Fitbod RecommendedDaysPerWeek, SplitRecommendation, FocusExerciseRecommendation | HIGH | Candidate design pattern for versioned TK Decision Rules | CANDIDATE |
+| PAT-REC-MUSCLE-001 | Recovery | Per-muscle recovery estimate plus explicit manual athlete correction | Fitbod recovery %, minsToRecovery, recovery edit/manual adjustment | HIGH | Compare with TK muscle-load/recovery model; preserve evidence/confidence | CANDIDATE |
+| PAT-EFFORT-001 | RPE/RIR | Subjective effort is a first-class adaptive input | Fitbod RpeHelper/RiR models/prompts + 1RM/max-effort paths | HIGH | TK already registry-backed for RPE/RIR | ALREADY_PRESENT |
+| PAT-STRENGTH-SCORE-001 | Analytics | Composite strength summaries explicitly model insufficient/loading/offline states | Fitbod local/remote strength-score sources and result states | HIGH | Presentation benchmark only unless TK defines registry-backed composite | CANDIDATE |
+| PAT-EXERCISE-FEEDBACK-001 | Exercise selection | Structured suitability/rating/exclusion feedback feeds recommendation context | Fitbod exercise ratings/feedback/exclude/replace modules | HIGH | Candidate Context/Decision input for TK auto-programming | CANDIDATE |
+| PAT-INJURY-CONTEXT-001 | Athlete context | Self-reported limitation context constrains exercise selection | Fitbod injury DAO/sync/active injuries/exclusions | HIGH | Use only as non-diagnostic context through versioned rules | CANDIDATE |
+| PAT-PROVIDER-001 | Integrations | Provider repository owns connection, OAuth, refresh and sync settings | Fitbod Strava repository/OAuth/activity refresh | HIGH | Align with TK provider-adapter architecture | CANDIDATE |
+| PAT-FLAGS-001 | Delivery | Remote feature flags decouple deployment from rollout | Fitbod LaunchDarkly client evidence | HIGH | Never allow flags to silently mutate calculation/evidence truth | CANDIDATE |
+| PAT-DEGRADE-001 | Resilience | Domain-specific deterministic degraded recommendation path | Fitbod remote workout failure → Optim fallback | HIGH | Strong fit: AI/network unavailable must not remove deterministic training truth | DESIGN_DIRECTION |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

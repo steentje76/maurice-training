@@ -64,6 +64,27 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-ROLE-ENTITLEMENT-001 | Commercial | Explicit license/entitlement state gates product capabilities | TrainHeroic license/Pro/IAP evidence | HIGH | TK entitlement architecture exists; native billing validation open | CANDIDATE |
 | PAT-OFFLINE-BOUNDARY-001 | Resilience | Explicitly declare unavailable offline capabilities | TrainHeroic offline/unavailable-state copy | HIGH | TK offline queue stronger; UX comparator | CANDIDATE |
 
+| PAT-SEED-FIRST-001 | Catalogue/offline | Versioned local exercise/program seed plus delta sync | Boostcamp 264 84MB Watermelon seed + dated program assets | HIGH | Strong MoveKit metadata scaling candidate; keep media remote | CANDIDATE |
+| PAT-DOMAIN-LOCAL-001 | Offline/sync | Durable local domain records carry sync metadata | Boostcamp Watermelon _status/_changed across domains | HIGH | Compare with TK IndexedDB queue/read models | CANDIDATE |
+| PAT-PROGRAM-RICHMETA-001 | Programs | Structured goal/equipment/difficulty/duration/audience metadata drives discovery | Boostcamp coach_program schema | HIGH | Candidate typed TK program metadata | CANDIDATE |
+| PAT-PROGRAM-INSTANCE-001 | Programs | Definition → athlete program instance → workout execution are separate | Boostcamp user_program/program_log/program_workout_log | HIGH | Directly corroborates TK canonical design | ALREADY_PRESENT |
+| PAT-PROGRAM-OVERRIDE-001 | Context | Athlete schedule/exercise/variation overrides do not mutate base program | Boostcamp program_log override fields | HIGH | Fitbod independently corroborates override pattern | DESIGN_DIRECTION |
+| PAT-AI-PROGRAM-STREAM-001 | AI UX | Program generation streams/progressively surfaces result | Boostcamp generateAiProgramStream route | HIGH | TK AI-PROGRAM-AUTOGEN closed; UX/resilience comparator | CANDIDATE |
+| PAT-RECOMMEND-FUNNEL-001 | Onboarding | Explicit context survey → recommendation → preview → start | Boostcamp recommendation analytics/routes | HIGH | Context must remain inspectable, not analytics-driven truth | CANDIDATE |
+| PAT-1RM-DUAL-001 | Strength | Measured 1RM distinct from formula-estimated 1RM | Boostcamp actual_1RM/estimated_1RM + Brzycki label | HIGH | Direct fit with TK calculation provenance | DESIGN_DIRECTION |
+| PAT-MOVEMENT-SCORE-001 | Analytics | Composite strength score retains movement components/source maxes | Boostcamp strength score tables/copy | HIGH | No opaque TK composite without evidence/population scope | CANDIDATE |
+| PAT-MILESTONE-001 | Progression | Milestones derive from and link to metric history | Boostcamp PR/milestone/statistics evidence | HIGH | TK progression exists; UX comparator | CANDIDATE |
+| PAT-WARMUP-TEMPLATE-001 | Execution | Reusable warm-up set templates attached to exercise execution | Boostcamp warmup editor/insertion evidence | HIGH | Automatic percentages must remain deterministic | CANDIDATE |
+| PAT-REST-PRESET-001 | Execution | Planned rest target persists separately from elapsed timer | Boostcamp rest timer/default settings | HIGH | Compare TK execution timer | CANDIDATE |
+| PAT-MUSCLE-ENGAGE-001 | Analytics | Workout/program muscle distribution is visualized | Boostcamp muscle engagement events | HIGH | TK heatmap direction exists; formula remains TK-owned | CANDIDATE |
+| PAT-EXERCISE-KNOWLEDGE-001 | Exercise library | Instruction/progression/risk metadata separate from performance history | Boostcamp master_exercise schema | HIGH | Strong MoveKit metadata candidate | CANDIDATE |
+| PAT-EXERCISE-OVERRIDE-002 | Exercise library | User/custom alternatives retain origin identity beside master catalogue | Boostcamp user_exercise + alternative config | HIGH | Protect canonical MoveKit catalogue | DESIGN_DIRECTION |
+| PAT-PROGRAM-OUTCOME-REVIEW-001 | Programs | Structured completion/context/outcome review beyond star rating | Boostcamp program_review schema | HIGH | Observational feedback, never scientific evidence | CANDIDATE |
+| PAT-SOCIAL-PROJECTION-001 | Social | Training achievement projected into social object, canonical log separate | Boostcamp feed/comments/sharing evidence | HIGH | Aligns TK Social sprint | DESIGN_DIRECTION |
+| PAT-WEEKLY-REPORT-001 | Insights | Periodic calculated summary is a shareable insight object | Boostcamp weekly report events | HIGH | AI may narrate, not calculate values | CANDIDATE |
+| PAT-HEALTH-MINPERM-001 | Health | Request only Health Connect record types required by product | Boostcamp READ_WEIGHT/WRITE_WEIGHT/WRITE_EXERCISE | HIGH | Apply if TK native Health Connect is implemented | DESIGN_DIRECTION |
+| PAT-SYNC-DIRECTION-001 | Observability | Sync errors identify domain and push/pull direction | Boostcamp weight push/pull failure paths | HIGH | Candidate TK error taxonomy refinement | CANDIDATE |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

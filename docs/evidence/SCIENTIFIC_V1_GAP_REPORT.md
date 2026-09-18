@@ -28,6 +28,10 @@ TK has a strong evidence-governance architecture, but **scientific V1 closure is
 Items concerning richer hypertrophy set models, decoupling, TID optimization, supplement evidence refresh, additional population scopes and AI effectiveness studies can remain post-V1 provided current claims stay conservative and no unsupported automation depends on them.
 
 ## Remediation order
+**P0 / R1 Scientific Safety — mandatory first block of the audit-remediation series:** 006,034,040,045.
+
+These four findings are **not separate emergency PRs before audit finalization**. They are frozen as the first mandatory remediation block after this discovery baseline is merged. They block Scientific V1 release closure, not the merge of this documentation-only audit baseline.
+
 **R1 Scientific safety:** 006,034,040,045.  
 **R2 Claim/evidence correctness:** 001,007,008,009,011,014,024,025,029,030,035,037,038,048.  
 **R3 Data quality/provenance:** 010,015,016,018,019,020,026,032,039,041,046.  

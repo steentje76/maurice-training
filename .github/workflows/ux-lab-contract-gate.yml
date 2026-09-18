@@ -38,3 +38,5 @@ jobs:
         run: node docs/ux-lab/insight-drilldown-ui.test.js
       - name: Profiel canonical drill-down UI gate
         run: node docs/ux-lab/profile-drilldown-ui.test.js
+      - name: Capability maturity status UI gate
+        run: node docs/ux-lab/capability-status-ui.test.js

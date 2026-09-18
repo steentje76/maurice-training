@@ -135,6 +135,36 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-MULTISOURCE-SYNC-001 | Sync | Phone, wearable and server state remain distinct reconciliation sources | WHOOP sync architecture | HIGH | Strong Health Data Gateway pattern | DESIGN_DIRECTION |
 | PAT-DEVICE-DEGRADED-001 | Resilience | Device UX distinguishes disconnected/out-of-sync/incompatible/low-battery states | WHOOP BLE/firmware/error evidence | HIGH | Candidate TK Concept2/wearable taxonomy | CANDIDATE |
 
+| PAT-MULTISPORT-DOMAIN-001 | Architecture | Shared platform with sport/device-specific domain models | Garmin Connect 5.28 | HIGH | Matches TK sport-neutral execution + sport adapters | DESIGN_DIRECTION |
+| PAT-READINESS-FACTORS-001 | Recovery | Readiness is downstream interpretation, not raw sensor truth | Garmin Training Readiness | HIGH | TK already aligned | ALREADY_PRESENT |
+| PAT-TRAINING-STATUS-LONG-001 | Longitudinal | Daily readiness separated from longer-horizon training status | Garmin Training Status | HIGH | Candidate TK longitudinal UX refinement | CANDIDATE |
+| PAT-LOAD-HORIZON-001 | Load | Acute and chronic load shown separately with descriptive status | Garmin acute/chronic load | HIGH | ACWR never injury predictor/safe zone | DESIGN_DIRECTION |
+| PAT-ENERGY-COMPOSITE-001 | Recovery | Consumer energy composite retains component context | Garmin Body Battery | HIGH | No TK clone without evidence | REFERENCE_ONLY |
+| PAT-SLEEP-PROVIDER-RAW-001 | Sleep | Raw/provider sleep data separate from proprietary sleep score | Garmin Sleep Score | HIGH | Preserve source provenance | DESIGN_DIRECTION |
+| PAT-PROVIDER-FITNESS-METRIC-001 | Endurance | Provider-estimated fitness metric remains provider-labelled | Garmin VO2max | HIGH | Do not overwrite TK estimate | DESIGN_DIRECTION |
+| PAT-THRESHOLD-PROVENANCE-001 | Endurance | Measured/device-estimated/user thresholds are distinct sources | Garmin FTP/lactate threshold | HIGH | Direct fit TK Calculation Registry | DESIGN_DIRECTION |
+| PAT-PREDICT-PERFORMANCE-001 | Endurance | Prediction retains model/source/date vs measured performance | Garmin Race Predictor | HIGH | Future only with evidence/confidence | CANDIDATE |
+| PAT-ENV-ACCLIMATION-001 | Context | Heat/altitude adaptation is longitudinal exposure context | Garmin acclimation | HIGH | Candidate TK Context Engine | CANDIDATE |
+| PAT-INTRA-ACTIVITY-CONDITION-001 | Endurance | Within-session condition separate from daily readiness/status | Garmin Performance Condition | MEDIUM | Candidate, no opaque composite | CANDIDATE |
+| PAT-WORKOUT-EFFECT-001 | Analytics | Training effect is downstream interpretation of actual workout | Garmin Training Effect | HIGH | Evidence-backed only | CANDIDATE |
+| PAT-ADAPT-DEVICE-DELIVERY-001 | Devices | Adaptive decision and device workout delivery are separate stages | Garmin Adaptive Coach | HIGH | Delivery adapter cannot alter Decision output | DESIGN_DIRECTION |
+| PAT-WORKOUT-PORTABILITY-001 | Execution | Structured workout definition portable across endpoints | Garmin workouts/device delivery | HIGH | Strong phone/watch/device candidate | CANDIDATE |
+| PAT-PACING-PLAN-001 | Running | Planned race pacing separate from live actual pace | Garmin PacePro | HIGH | Calculation → execution comparison | CANDIDATE |
+| PAT-POWER-PACING-001 | Cycling | Route/event-specific planned power target layer | Garmin Power Guide | HIGH | After canonical FTP/power UX | CANDIDATE |
+| PAT-ZONE-EDUCATION-001 | Education | Zone setup paired with athlete-facing training explanation | Garmin HR-zone tutorials | HIGH | Candidate after evidence/source semantics | CANDIDATE |
+| PAT-ROUTE-ASSET-001 | Endurance | Reusable course/route separate from completed activity | Garmin Courses | HIGH | Future endurance planning | CANDIDATE |
+| PAT-LIVE-SHARE-001 | Social/safety | Live location/activity share is temporary consented projection | Garmin LiveTrack | HIGH | Privacy/expiry required | REFERENCE_ONLY |
+| PAT-GEAR-LIFECYCLE-001 | Equipment | Equipment linked to activities accumulates usage history | Garmin Gear | HIGH | Candidate shoes/bikes/equipment | CANDIDATE |
+| PAT-HC-GUARD-001 | Health Connect | Health-platform sync fails closed on unsupported/no-permission state | Garmin Health Connect | HIGH | Future TK gateway requirement | DESIGN_DIRECTION |
+| PAT-HYDRATION-GOAL-001 | Nutrition | Hydration goal/log is independent interoperable behavior domain | Garmin Hydration | HIGH | TK foundation exists | ALREADY_PRESENT |
+| PAT-NUTRITION-PROVIDER-001 | Nutrition | Specialist nutrition provider can supply source-labelled logs | Garmin MyFitnessPal | HIGH | Candidate integration | CANDIDATE |
+| PAT-ECOSYSTEM-DEVICE-BRIDGE-001 | Devices | Hardware sub-ecosystem shares account/training platform via adapter | Garmin Tacx | HIGH | Concept2 architectural analogue | DESIGN_DIRECTION |
+| PAT-DEVICE-APP-EXTENSION-001 | Devices | Device extension consumes platform data without becoming truth source | Garmin Connect IQ | HIGH | Future companion/watch reference | CANDIDATE |
+| PAT-AUDIO-GUIDANCE-001 | Execution | Hands-free audio guidance consumes canonical execution state | Garmin audio prompts | HIGH | Strong running/cycling/erg candidate | CANDIDATE |
+| PAT-DEVICE-CAPABILITY-GATE-001 | Devices | Feature availability driven by explicit capability metadata | Garmin device capability handlers | HIGH | Strong Concept2/wearable pattern | CANDIDATE |
+| PAT-MULTIDEVICE-SOURCE-001 | Data provenance | Preferred/source device remains explicit with multiple suppliers | Garmin preferred tracker/last device | HIGH | Health Data Gateway requirement | CANDIDATE |
+| PAT-DOMAIN-ERROR-001 | Resilience | Sync/fetch failure identifies affected metric/domain | Garmin metric-specific errors | HIGH | Observability/UX refinement | CANDIDATE |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

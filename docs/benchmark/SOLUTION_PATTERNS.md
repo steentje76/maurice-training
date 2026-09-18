@@ -214,6 +214,44 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-WORKOUT-FOLDER-001 | Training library | Reusable routines can be organized independently of history | Strong FolderRealm | HIGH | Candidate at My Training scale | CANDIDATE |
 | PAT-PORTABILITY-ROUNDTRIP-001 | Portability | Import/export designed toward migration/roundtrip rather than display dump | Strong CSV import + export | HIGH | Strong athlete-ownership direction | DESIGN_DIRECTION |
 
+| PAT-HYBRID-DOMAIN-001 | Architecture | Hybrid training domain uses native adapters without moving truth into bridge | Alpha Progression 7.5 | HIGH | Directly relevant to TK native/web boundary | DESIGN_DIRECTION |
+| PAT-STRENGTH-GENERATOR-CONTEXT-001 | Programming | Strength generator consumes explicit equipment/experience/goal/focus/frequency/duration/split context | Alpha Progression 7.5 | HIGH | Compare with TK Context Engine/autogen | DESIGN_DIRECTION |
+| PAT-GENERATE-THEN-EDIT-001 | Programming | Generated plan remains editable/duplicable before execution | Alpha Progression 7.5 | HIGH | TK Builder/snapshot architecture aligned | ALREADY_PRESENT |
+| PAT-MUSCLE-FOCUS-001 | Programming | Muscle focus can affect frequency, order and set volume separately | Alpha Progression 7.5 | HIGH | Candidate explicit Decision dimensions | CANDIDATE |
+| PAT-GENERATOR-FEASIBILITY-001 | Programming | Generator fails/degrades when equipment/exercise coverage is insufficient | Alpha Progression 7.5 | HIGH | Strong MoveKit/program-autogen gate | CANDIDATE |
+| PAT-EXPERIENCE-PRESCRIPTION-001 | Context | Experience influences exercise selection, sets/reps and scheduling | Alpha Progression 7.5 | HIGH | TK Context Engine aligned | ALREADY_PRESENT |
+| PAT-RIR-ENTRY-001 | Strength | RIR is structured actual/target data | Alpha Progression 7.5 | HIGH | TK canonical RIR aligned | ALREADY_PRESENT |
+| PAT-RIR-PERIODISATION-001 | Programming | Planned RIR changes across cycle/week | Alpha Progression 7.5 | HIGH | Versioned Decision-rule candidate | CANDIDATE |
+| PAT-SET-PERIODISATION-001 | Programming | Set count changes across cycle/week as separate prescription dimension | Alpha Progression 7.5 | HIGH | Versioned Decision-rule candidate | CANDIDATE |
+| PAT-PLANNED-DELOAD-001 | Programming | Deload is explicit program/workout state with modified prescription | Alpha Progression 7.5 | HIGH | Strong TK Decision UX pattern | CANDIDATE |
+| PAT-DELOAD-SNAPSHOT-001 | Execution | Deload state materialises into scheduled/executed workout | Alpha Progression 7.5 | HIGH | Fits TK snapshot architecture | DESIGN_DIRECTION |
+| PAT-PROGRESSION-INPUTS-001 | Progression | Recommendation combines history, target range and achievable load | Alpha Progression 7.5 | HIGH | TK progression exists; equipment feasibility check | TK_CHECK_REQUIRED |
+| PAT-LOAD-FEASIBILITY-001 | Progression | Recommendation projected onto physically available load increments | Alpha Progression 7.5 | HIGH | Check end-to-end TK progression path | TK_CHECK_REQUIRED |
+| PAT-REFERENCE-WORKOUT-001 | Progression | Explicit prior workout retained as comparator | Alpha Progression 7.5 | MEDIUM | Explainability/provenance candidate | CANDIDATE |
+| PAT-E1RM-ENSEMBLE-001 | Calculation | Multiple e1RM formulas combined into estimate | Alpha Progression 7.5 | HIGH | TK registry already permits this | ALREADY_PRESENT |
+| PAT-10RM-METRIC-001 | Calculation | Rep-max estimate available at 10 reps | Alpha Progression 7.5 | HIGH | Evidence review required before TK registry | CANDIDATE |
+| PAT-PERFORMANCE-METRIC-VIEW-001 | Analytics | User selects 1RM/10RM/volume view by context | Alpha Progression 7.5 | HIGH | Candidate Inzicht UX | CANDIDATE |
+| PAT-METRIC-LIMITATION-UX-001 | Evidence UX | Analytics explicitly states metric limitations | Alpha Progression 7.5 | HIGH | Strong fit TK forbidden interpretations | DESIGN_DIRECTION |
+| PAT-WARMUP-CONTEXT-001 | Strength | Warmup uses work target + exercise type + experience + equipment context | Alpha Progression 7.5 | HIGH | Extend only after evidence review | CANDIDATE |
+| PAT-WARMUP-FEASIBILITY-001 | Strength | Impossible warmup loads are omitted/explained | Alpha Progression 7.5 | HIGH | Candidate plate/warmup integration | CANDIDATE |
+| PAT-GYM-LOAD-MODEL-001 | Equipment | Available weight increments belong to gym/equipment context | Alpha Progression 7.5 | HIGH | Candidate richer gym context | CANDIDATE |
+| PAT-DROPSET-PRESCRIPTION-001 | Strength | Dropset is typed prescription with configurable reduction | Alpha Progression 7.5 | HIGH | Candidate typed set mode | CANDIDATE |
+| PAT-TIMER-DEGRADED-001 | Execution | Timer handles OS-delayed alarm/background behavior explicitly | Alpha Progression 7.5 | MEDIUM | Android execution hardening candidate | CANDIDATE |
+| PAT-EXERCISE-MODULE-001 | Exercise library | Large exercise library split into independently loadable metadata/content modules | Alpha Progression 7.5 | HIGH | Useful with MoveKit expansion | DESIGN_DIRECTION |
+| PAT-EXERCISE-EVALUATION-001 | Exercise library | Exercise suitability/evaluation separated from identity | Alpha Progression 7.5 | MEDIUM | Only with transparent TK criteria/evidence | CANDIDATE |
+| PAT-EXERCISE-METRIC-TYPE-001 | Exercise library | Exercise definition declares logging metric schema | Alpha Progression 7.5 | HIGH | Strong scalable library pattern | DESIGN_DIRECTION |
+| PAT-BODYWEIGHT-LOAD-001 | Calculation | Body mass contribution treated separately in bodyweight performance estimate | Alpha Progression 7.5 | MEDIUM | Requires movement-specific evidence | CANDIDATE |
+| PAT-STRENGTH-ANALYTICS-SCOPE-001 | Analytics | Exercise/muscle/training/measurement views share one analytics surface | Alpha Progression 7.5 | HIGH | TK Inzicht broadly aligned | ALREADY_PRESENT |
+| PAT-TREND-PERIOD-UX-001 | Analytics | Trend window is visible/selectable | Alpha Progression 7.5 | HIGH | Candidate with sufficiency/confidence | CANDIDATE |
+| PAT-MUSCLE-LOAD-VIEW-001 | Analytics | Muscle view combines reps/RIR/sets/volume | Alpha Progression 7.5 | HIGH | Evidence-governed candidate | CANDIDATE |
+| PAT-POUCH-LOCAL-001 | Persistence | Hybrid app uses local document DB for durable workout state | Alpha Progression 7.5 | HIGH | TK equivalent goal already present | ALREADY_PRESENT |
+| PAT-DOC-SYNC-001 | Persistence | Local document store replicates to per-user remote store | Alpha Progression 7.5 | HIGH | TK relational model remains preferred | REFERENCE_ONLY |
+| PAT-LOCAL-DB-RECOVERY-001 | Resilience | Missing/corrupt local DB has explicit recovery/recreate paths | Alpha Progression 7.5 | HIGH | Candidate TK IndexedDB chaos test | CANDIDATE |
+| PAT-DATA-EXPORT-SCHEMA-001 | Portability | Athlete export is explicit formatted product surface | Alpha Progression 7.5 | HIGH | TK export exists | ALREADY_PRESENT |
+| PAT-PLAN-SHARE-PRIVACY-001 | Social | Prescription can be shared while past execution stays private | Alpha Progression 7.5 | HIGH | Strong My Training/social pattern | CANDIDATE |
+| PAT-FEATURE-CONFIG-001 | Platform | Remote config may control non-truth UX/features | Alpha Progression 7.5 | HIGH | Never silently alter calc/rule semantics | DESIGN_DIRECTION |
+| PAT-EXEC-KEEP-AWAKE-001 | Execution | Active workout may request screen-awake as presentation capability | Alpha Progression 7.5 | HIGH | Candidate live execution polish | CANDIDATE |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

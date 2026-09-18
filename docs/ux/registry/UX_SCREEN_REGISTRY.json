@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "generated_from": "UX Design Engine v1",
+  "screens": [
+    {
+      "id": "TK-UX-REC-001",
+      "name": "Spiergroep Herstelstatus — Quadriceps",
+      "domain": "REC",
+      "status": "PO_REVIEW_REQUIRED",
+      "change_mode": "EXTEND",
+      "route": {
+        "screen_id": "s-lich-spieren-detail",
+        "parent": "s-lich-spieren",
+        "back": "canonical source-aware back; exact runtime binding to be verified before implementation"
+      },
+      "mockup_id": "TK-MU-REC-001",
+      "interactions": [],
+      "states": [
+        "normal"
+      ],
+      "components": [],
+      "data_sources": [
+        "training load",
+        "RPE",
+        "sets/reps",
+        "heart rate",
+        "sleep"
+      ],
+      "calculation_refs": [],
+      "decision_refs": [],
+      "evidence_refs": [
+        "SCI-GAP-V1-006"
+      ],
+      "do_not_change": [
+        "TK look & feel",
+        "canonical bottom navigation",
+        "do not reintroduce physiological-looking muscle recovery percentage"
+      ],
+      "acceptance": [
+        "Categorical recovery status replaces authoritative recovery percentage",
+        "Exact runtime actions/components are inventoried before status may become UX_SPEC_READY"
+      ]
+    },
+    {
+      "id": "TK-UX-REC-002A",
+      "name": "Herstel & Belasting — Overzicht",
+      "domain": "REC",
+      "status": "PO_REVIEW_REQUIRED",
+      "change_mode": "EXTEND",
+      "route": {
+        "screen_id": "s-lich-recovery-overview",
+        "parent": "s-lichaam",
+        "back": "verify against runtime before implementation"
+      },
+      "mockup_id": "TK-MU-REC-002A",
+      "interactions": [],
+      "states": [
+        "normal"
+      ],
+      "components": [],
+      "data_sources": [],
+      "calculation_refs": [],
+      "decision_refs": [],
+      "evidence_refs": [
+        "SCI-GAP-V1-006"
+      ],
+      "do_not_change": [
+        "TK look & feel"
+      ],
+      "acceptance": [
+        "Overview uses same categorical recovery language as muscle detail",
+        "Runtime route/actions must be proven before UX_SPEC_READY"
+      ]
+    },
+    {
+      "id": "TK-UX-REC-002B",
+      "name": "Herstel & Belasting — Trends & Inzichten",
+      "domain": "REC",
+      "status": "PO_REVIEW_REQUIRED",
+      "change_mode": "EXTEND",
+      "route": {
+        "screen_id": "s-lich-recovery-trends",
+        "parent": "s-lich-recovery-overview",
+        "back": "verify against runtime before implementation"
+      },
+      "mockup_id": "TK-MU-REC-002B",
+      "interactions": [],
+      "states": [
+        "normal"
+      ],
+      "components": [],
+      "data_sources": [],
+      "calculation_refs": [],
+      "decision_refs": [],
+      "evidence_refs": [
+        "SCI-GAP-V1-006"
+      ],
+      "do_not_change": [
+        "TK look & feel"
+      ],
+      "acceptance": [
+        "Trend presentation does not imply physiological recovery precision",
+        "Runtime route/actions must be proven before UX_SPEC_READY"
+      ]
+    }
+  ]
+}

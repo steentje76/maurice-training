@@ -27,8 +27,8 @@ render();
 (async function(){
  try{
   const load=async p=>(await fetch(p,{cache:'no-store'})).json();
-  const [rules,flows,conflicts,sources]=await Promise.all([load('./rules.seed.json'),load('./flows.scenarios.json'),load('./conflicts.registry.json'),load('./sources.registry.json')]);
-  const flow=flows.flows[0], results=TKValidation.validateAll({rules,flow,conflicts,sources,currentMainSha:sources.baseline_sha});
+  const [rules,flows,conflicts,sources,snapshot]=await Promise.all([load('./rules.seed.json'),load('./flows.scenarios.json'),load('./conflicts.registry.json'),load('./sources.registry.json'),load('./source-verification.snapshot.json')]);
+  const flow=flows.flows[0], results=TKValidation.validateAll({rules,flow,conflicts,sources,currentMainSha:snapshot.verified_against_main,actualSourceShas:snapshot.sources});
   window.tkValidationResults=results;
   const oldRender=render; render=function(){oldRender();const r=results.find(x=>x.scenario_id===scenario);if(!r)return;const k=document.querySelector('.inspect .kpi');if(k)k.innerHTML='<div><b class="'+(r.route_pass?'pass':'bad')+'">'+(r.route_pass?'PASS':'FAIL')+'</b><br><span class="small">route invariants</span></div><div><b class="'+(r.capabilities.lost.length?'bad':'pass')+'">'+r.capabilities.lost.length+'</b><br><span class="small">capabilities lost</span></div><div><b>'+cfg[scenario].taps+'</b><br><span class="small">est. taps</span></div><div><b class="'+(r.hard_conflict_count?'warn':'pass')+'">'+r.hard_conflict_count+'</b><br><span class="small">hard conflicts</span></div>';const gate=document.querySelector('.inspect .bad');if(gate)gate.textContent=(r.freeze_ready?'READY':'BLOCKED')+' · '+r.hard_issue_count+' validation issues · '+r.hard_conflict_count+' unresolved HARD conflicts';};render();
  }catch(e){console.error('V2.2 validation load failed',e);}

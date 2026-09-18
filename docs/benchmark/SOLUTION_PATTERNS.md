@@ -85,6 +85,30 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-HEALTH-MINPERM-001 | Health | Request only Health Connect record types required by product | Boostcamp READ_WEIGHT/WRITE_WEIGHT/WRITE_EXERCISE | HIGH | Apply if TK native Health Connect is implemented | DESIGN_DIRECTION |
 | PAT-SYNC-DIRECTION-001 | Observability | Sync errors identify domain and push/pull direction | Boostcamp weight push/pull failure paths | HIGH | Candidate TK error taxonomy refinement | CANDIDATE |
 
+| PAT-HEALTH-DOMAIN-MODULE-001 | Women's health | Sensitive life-stage/health capabilities are explicit domains | Clue 267.0 cycle/predictions/pregnancy/perimenopause/consent modules | HIGH | Matches TK typed Context domains | DESIGN_DIRECTION |
+| PAT-CYCLE-RAW-001 | Women's health | Observed cycle events remain separate from predicted future events | Clue cycle/prediction models | HIGH | Strengthen TK provenance UX | CANDIDATE |
+| PAT-PREDICTION-PROVENANCE-001 | Evidence | Prediction type/source/context is retained | Clue LocalAvailablePredictions/manual/predicted states | HIGH | Direct fit with TK confidence/data-quality architecture | DESIGN_DIRECTION |
+| PAT-SYMPTOM-OBS-PRED-001 | Women's health | Recorded symptom and predicted symptom are separate | Clue symptom prediction routes/models | HIGH | TK symptom logging exists; prediction provenance candidate | CANDIDATE |
+| PAT-LIFESTAGE-MODE-001 | Context | Explicit life-stage mode without automatic training prescription | Clue perimenopause domain | HIGH | TK perimenopause UI absent; hard rules remain DEFER | CANDIDATE |
+| PAT-PREGNANCY-MODE-001 | Context | Pregnancy is explicit state, never inferred from irregular cycle | Clue pregnancy domain/onboarding | HIGH | TK pregnancy training remains DEFER | REFERENCE_ONLY |
+| PAT-NONBLEEDING-CONTEXT-001 | Context | Explicit non-bleeding/contraception context | Clue non-bleeding + contraception evidence | HIGH | TK contraception UI/storage gap already documented | VERIFIED_GAP |
+| PAT-TEMP-SOURCE-001 | Wearables | Skin/basal/body/delta temperature retain measurement semantics | Clue measurement + Health Connect models | HIGH | Candidate Raw Data provenance rule | DESIGN_DIRECTION |
+| PAT-CYCLE-BIOMETRIC-VIEW-001 | Insights | Biometrics shown descriptively across cycle context without proving causality | Clue HRV/RHR cycle analysis DTOs | HIGH | Strong fit with TK scientific guardrails | DESIGN_DIRECTION |
+| PAT-HC-RESYNC-001 | Health Connect | Explicit permissions/settings/resync UX | Clue HC workers/settings/resync events | HIGH | TK native HC remains gap | CANDIDATE |
+| PAT-HEALTH-SYNC-MODES-001 | Health Connect | Scheduled/background and user-triggered health sync are separate | Clue background + one-time HC workers | HIGH | Candidate Health Data Gateway behaviour | CANDIDATE |
+| PAT-HEALTH-REPORT-001 | Privacy/export | Purpose-limited sensitive health report/export | Clue DoctorReport domain | HIGH | Athlete-controlled export candidate | CANDIDATE |
+| PAT-CONSENT-VERSION-001 | Privacy | Consent is typed and versioned, not one boolean | Clue mandatory/optional/health/parental consent models | HIGH | Candidate TK sensitive-context consent enhancement | CANDIDATE |
+| PAT-AGE-CONSENT-001 | Privacy | Age/parental consent are explicit workflow states | Clue Under13/Under16 routes | HIGH | Only if TK age scope changes | REFERENCE_ONLY |
+| PAT-TLS-PIN-001 | Security | First-party TLS pinning for sensitive-health client | Clue network_security_config SHA-256 pins | HIGH | Threat-model before adoption; operational rotation cost | CANDIDATE |
+| PAT-SENSITIVE-OFFLINE-001 | Resilience | Health UX exposes offline/sync freshness state | Clue offline/full-sync/last-sync evidence | HIGH | AI must not treat stale health context as current | DESIGN_DIRECTION |
+| PAT-HEALTH-ANALYSIS-SEPARATION-001 | Architecture | Measurement → analysis/statistics → presentation are separate | Clue temperature/heart-rate analysis domains | HIGH | Direct fit TK Raw→Calculation→Context | DESIGN_DIRECTION |
+| PAT-AI-HEALTH-CONSENT-001 | AI/privacy | Explicit consent before conversational use of sensitive health data | Clue ChatWithYourData ChatConsent | HIGH | Strong comparator for TK AI Coach scope | CANDIDATE |
+| PAT-HEALTH-EDU-001 | Education | Educational content is separate from personal prediction/decision | Clue content layer | HIGH | Candidate evidence-linked TK education | CANDIDATE |
+| PAT-HEALTH-WIDGET-001 | Mobile UX | Bounded daily tracking/status via home-screen widget | Clue cycle/tracking widgets | HIGH | Default to low-sensitivity output | CANDIDATE |
+| PAT-ANALYTICS-CONSENT-001 | Telemetry | Analytics/engagement respects consent state | Clue consent-aware analytics identifiers | MEDIUM | Health/training payload prohibition remains absolute in TK | CANDIDATE |
+| PAT-HEALTH-FLAGS-001 | Delivery | Remote content/feature flags separated from health truth | Clue Braze feature/content sync | HIGH | Never alter Calculation/Decision semantics silently | DESIGN_DIRECTION |
+| PAT-SENSITIVE-LOCALISE-001 | UX | Sensitive terminology receives domain-specific localization | Clue 24 languages + localized life-stage assets | HIGH | Candidate Women's Performance localization gate | CANDIDATE |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

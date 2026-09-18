@@ -29,6 +29,21 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-FLAGS-001 | Delivery | Remote feature flags decouple deployment from rollout | Fitbod LaunchDarkly client evidence | HIGH | Never allow flags to silently mutate calculation/evidence truth | CANDIDATE |
 | PAT-DEGRADE-001 | Resilience | Domain-specific deterministic degraded recommendation path | Fitbod remote workout failure → Optim fallback | HIGH | Strong fit: AI/network unavailable must not remove deterministic training truth | DESIGN_DIRECTION |
 
+| PAT-OTA-001 | Delivery | Controlled OTA product-code channel separate from store binary | Runna 8.52.1 Expo Updates prod channel | HIGH | Governance pattern only; calculation/evidence semantics must remain versioned | CANDIDATE |
+| PAT-RUN-PLAN-001 | Running plans | Living plan with explicit schedule/context changes | Runna plan edit/recommendations/training mode/missed/vacation flows | HIGH | TK has running intelligence + scheduling foundations | CANDIDATE |
+| PAT-PACE-ADAPT-001 | Running decisions | Prescribed vs observed pace produces athlete-visible proposed target adjustment | Runna pace adjustment/insights/adaptivity UX | HIGH | TK has typed pace/CS/trends; proposal Decision Rule not established | CANDIDATE |
+| PAT-RACE-GOAL-001 | Context | Race date/distance/goal is typed plan context | Runna race-event/goal-distance/longest-run flows | HIGH | TK race contexts exist in parts; dedicated running-plan orchestration needs gate | CANDIDATE |
+| PAT-SCHEDULE-ADAPT-001 | Scheduling | Missed sessions/vacation alter future schedule without rewriting history | Runna missed-runs/vacation/plan-adjustment flows | HIGH | Strong fit with TK Mijn trainingen scheduling architecture | CANDIDATE |
+| PAT-TERRAIN-001 | Running context | Elevation/hilliness influences prescription context | Runna hilliness/elevation recommendation UX | HIGH | TK weather exists; terrain-prescription equivalent not established | CANDIDATE |
+| PAT-RUN-REPLAY-001 | Analytics | Raw execution telemetry becomes post-workout replay | Runna record/replay/pace/cadence/map evidence | HIGH | TK running execution/intelligence exists; rich replay not established | CANDIDATE |
+| PAT-AUDIO-COACH-001 | Execution | Hands-free cues deliver already-decided workout targets | Runna audio cue + media foreground-service evidence | HIGH | No equivalent established in TK audit | CANDIDATE |
+| PAT-SENSOR-SESSION-001 | Devices | External HR sensor identity/state is session-bound provenance | Runna Bluetooth/HeartRateDevice flows | HIGH | Fits TK Raw Data Adapter/provenance design | DESIGN_DIRECTION |
+| PAT-ENDURANCE-PROVIDER-001 | Integrations | Common connected-app UX over provider-specific endurance adapters | Runna Garmin/COROS/Strava/Health Connect surfaces | HIGH | TK Garmin/COROS/Strava currently not implemented/access-dependent | VERIFIED_GAP |
+| PAT-CALENDAR-001 | Scheduling | Canonical workout maps idempotently to external calendar event | Runna Google/Outlook calendar sync | HIGH | TK scheduling exists; external calendar sync not established | CANDIDATE |
+| PAT-CROSS-TRAIN-001 | Programming | Strength/mobility sessions live inside endurance plan | Runna StrengthStore + mobility/Pilates/yoga flows | HIGH | TK structurally supports strength + endurance already | DESIGN_DIRECTION |
+| PAT-PROPOSE-CHANGE-001 | Explainability | Adaptive change is a visible proposal with reason/acceptance | Runna adaptivity/pace-change messaging | HIGH | Strong fit with versioned TK Decision outputs | DESIGN_DIRECTION |
+| PAT-ENDURANCE-BG-001 | Mobile lifecycle | Native background/foreground infrastructure supports long-running run/audio execution | Runna Notifee/WorkManager/media foreground service | HIGH | Native Android lifecycle audit still needed | TK_CHECK_REQUIRED |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

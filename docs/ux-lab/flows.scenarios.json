@@ -83,14 +83,24 @@
           "required_states": [
             "loading",
             "empty",
+            "partial",
             "error",
-            "offline"
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
           ],
           "designed_states": [
             "loading",
             "empty",
+            "partial",
             "error",
-            "offline"
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
           ],
           "data_bindings": [
             {
@@ -120,7 +130,26 @@
             "icon_labels": true,
             "keyboard": true,
             "no_color_only": true
-          }
+          },
+          "capability_coverage": [
+            "programmas",
+            "mijn-trainingen",
+            "training-maken",
+            "vrije-training",
+            "oefeningen",
+            "sport-specifiek",
+            "events",
+            "training-context",
+            "oefeningen-overzicht",
+            "start-training",
+            "set-logging",
+            "rest",
+            "next-exercise",
+            "pause",
+            "note",
+            "coach-return",
+            "finish"
+          ]
         },
         {
           "id": "B",
@@ -135,14 +164,24 @@
           "required_states": [
             "loading",
             "empty",
+            "partial",
             "error",
-            "offline"
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
           ],
           "designed_states": [
             "loading",
             "empty",
+            "partial",
             "error",
-            "offline"
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
           ],
           "data_bindings": [
             {
@@ -172,7 +211,26 @@
             "icon_labels": true,
             "keyboard": true,
             "no_color_only": true
-          }
+          },
+          "capability_coverage": [
+            "programmas",
+            "mijn-trainingen",
+            "training-maken",
+            "vrije-training",
+            "oefeningen",
+            "sport-specifiek",
+            "events",
+            "training-context",
+            "oefeningen-overzicht",
+            "start-training",
+            "set-logging",
+            "rest",
+            "next-exercise",
+            "pause",
+            "note",
+            "coach-return",
+            "finish"
+          ]
         },
         {
           "id": "C",
@@ -187,14 +245,24 @@
           "required_states": [
             "loading",
             "empty",
+            "partial",
             "error",
-            "offline"
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
           ],
           "designed_states": [
             "loading",
             "empty",
+            "partial",
             "error",
-            "offline"
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
           ],
           "data_bindings": [
             {
@@ -224,7 +292,26 @@
             "icon_labels": true,
             "keyboard": true,
             "no_color_only": true
-          }
+          },
+          "capability_coverage": [
+            "programmas",
+            "mijn-trainingen",
+            "training-maken",
+            "vrije-training",
+            "oefeningen",
+            "sport-specifiek",
+            "events",
+            "training-context",
+            "oefeningen-overzicht",
+            "start-training",
+            "set-logging",
+            "rest",
+            "next-exercise",
+            "pause",
+            "note",
+            "coach-return",
+            "finish"
+          ]
         }
       ]
     }

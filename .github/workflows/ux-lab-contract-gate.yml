@@ -44,3 +44,5 @@ jobs:
         run: node docs/ux-lab/source-pin-ci.test.js
       - name: Source health semantics UI gate
         run: node docs/ux-lab/source-health-semantics-ui.test.js
+      - name: Capability maturity registry gate
+        run: node docs/ux-lab/capability-maturity-registry.test.js

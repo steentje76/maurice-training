@@ -1,0 +1,106 @@
+{
+  "schema_version": "2.16",
+  "statuses": {
+    "EXISTS": "User-facing capability exists.",
+    "PRESERVED": "Existing capability must be preserved.",
+    "BACKEND_ONLY": "Canonical backend/foundation exists; user-facing screen/flow is not ready.",
+    "TARGET": "PO-approved target structure; not proof of implemented user-facing capability.",
+    "NOT_YET_DESIGNED": "Required product/UI/backend work is not sufficiently designed to present as existing."
+  },
+  "domains": {
+    "coach": {
+      "AI Coach": {
+        "status": "EXISTS",
+        "evidence": [
+          "s-coach",
+          "netlify/functions/coach.js"
+        ],
+        "note": "AI Coach bestaat; blijft expliciet gescheiden van Human Coach."
+      },
+      "Mijn coach / coaches": {
+        "status": "BACKEND_ONLY",
+        "evidence": [
+          "COACH-RELATIONSHIP-001",
+          "F10"
+        ],
+        "note": "Relationship/consent/scopes/roster zijn bewezen; UI-integratie ontbreekt."
+      },
+      "Programma's & opdrachten": {
+        "status": "BACKEND_ONLY",
+        "evidence": [
+          "COACH-PROGRAM-ASSIGNMENT-001",
+          "F10"
+        ],
+        "note": "Programming/assignment/materialisatie/adherence getest; UI ontbreekt."
+      },
+      "Feedback": {
+        "status": "NOT_YET_DESIGNED",
+        "evidence": [
+          "B9G-COACH-002"
+        ],
+        "note": "Coach-notes/feedback backend ontbreekt; geen UX als bestaand presenteren."
+      },
+      "Berichten": {
+        "status": "TARGET",
+        "evidence": [
+          "Coach v0.2 baseline"
+        ],
+        "note": "Approved structural target; AI/Human afzenderidentiteit moet ondubbelzinnig blijven."
+      }
+    },
+    "social": {
+      "Berichten": {
+        "status": "EXISTS",
+        "evidence": [
+          "s-social",
+          "bestaande social-laag"
+        ],
+        "note": "Bestaande social entry; detailcontract later expliciet inventariseren."
+      },
+      "Feed": {
+        "status": "TARGET",
+        "evidence": [
+          "Samen v0.1 baseline"
+        ],
+        "note": "Approved structural target; mock feed-content is illustratief."
+      },
+      "Connections": {
+        "status": "TARGET",
+        "evidence": [
+          "Samen v0.1 baseline"
+        ],
+        "note": "Approved structural target."
+      },
+      "Groepen": {
+        "status": "TARGET",
+        "evidence": [
+          "Samen v0.1 baseline"
+        ],
+        "note": "Approved structural target."
+      },
+      "Challenges": {
+        "status": "TARGET",
+        "evidence": [
+          "Samen v0.1 baseline"
+        ],
+        "note": "Approved structural target."
+      },
+      "Teams": {
+        "status": "BACKEND_ONLY",
+        "evidence": [
+          "TEAMS-GROUPS-ANALYTICS-001",
+          "B9-H2C"
+        ],
+        "note": "Team backend/functionele foundation bestaat; geen scherm gebouwd."
+      },
+      "Gym / club": {
+        "status": "BACKEND_ONLY",
+        "evidence": [
+          "ORGANIZATION-CORE-001",
+          "Track B"
+        ],
+        "note": "Canonical organizations/memberships backend; Gym/Club-context nog te ontwerpen."
+      }
+    }
+  }
+}

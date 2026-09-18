@@ -194,6 +194,26 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-ERG-GAMIFIED-001 | Engagement | Gamified erg visualization consumes telemetry without changing truth | ErgData Loop assets | MEDIUM | Low-priority UX candidate | CANDIDATE |
 | PAT-DUAL-LOCAL-STORE-001 | Persistence | Device app may isolate local stores by purpose | ErgData Room + LiteCoreJNI | MEDIUM | No second TK store without demonstrated need | REFERENCE_ONLY |
 
+| PAT-FAST-LOG-DATA-001 | Strength logging | Compact structured set rows support repeated low-friction entry | Strong 6.3-beta.19 | HIGH | TK execution data model aligned; dynamic UX benchmark needed | DESIGN_DIRECTION |
+| PAT-RPE-ENTRY-001 | Strength logging | RPE is constrained typed field with dedicated fast-entry UI | Strong 6.3-beta.19 | HIGH | TK RPE canonical; UX comparator | ALREADY_PRESENT |
+| PAT-BEST-SET-DIMENSION-001 | Progress | Best/PR object typed by 1RM/weight/reps/distance/duration/pace | Strong 6.3-beta.19 | HIGH | Candidate richer PR taxonomy | CANDIDATE |
+| PAT-SET-PREFILL-001 | Strength logging | Planned/prior values provide editable set prefill | Strong expected/predicted fields | HIGH | Preserve planned-vs-actual provenance | CANDIDATE |
+| PAT-WARMUP-FORMULA-001 | Strength | Warmup formula is persistent/configurable domain | Strong WarmUpFormulaRealm | HIGH | TK calc exists; configurable UX candidate | CANDIDATE |
+| PAT-GROUPED-SET-001 | Strength | Superset group has stable index/order and group rest behavior | Strong superset model | HIGH | TK supersets already present | ALREADY_PRESENT |
+| PAT-SET-TYPE-001 | Strength | Special set type is structured metadata with type-specific behavior | Strong dropset/warmup evidence | HIGH | Candidate typed set taxonomy | CANDIDATE |
+| PAT-REST-SCOPE-001 | Execution | Rest policy scoped to normal/warmup/superset/dropset | Strong rest timer fields | HIGH | Recheck current TK before gap promotion | CANDIDATE |
+| PAT-NOTE-SCOPE-001 | Logging | Workout and exercise notes are distinct scopes | Strong CSV schema | HIGH | Verify TK UI persistence | CANDIDATE |
+| PAT-WORKOUT-CSV-IMPORT-001 | Portability | Athlete workout history has structured CSV import workflow | Strong ImportCsvUseCase | HIGH | No equivalent TK athlete import surfaced | VERIFIED_GAP |
+| PAT-WORKOUT-CSV-EXPORT-001 | Portability | Training history exports stable human-readable set schema | Strong ExportCSV | HIGH | TK export exists | ALREADY_PRESENT |
+| PAT-WORKOUT-BACKUP-001 | Resilience | Workout backup/recovery distinct from sync | Strong WorkoutBackupUseCase | HIGH | Product-driven candidate | CANDIDATE |
+| PAT-STRENGTH-LOCAL-MODEL-001 | Persistence | Rich local workout/set/exercise model minimizes network dependence | Strong Realm models | HIGH | TK offline architecture equivalent | ALREADY_PRESENT |
+| PAT-HC-RECONCILE-001 | Health Connect | Local-change and HC-sync timestamps tracked separately | Strong lastChangedOnHealthConnect | HIGH | Future TK HC gateway pattern | DESIGN_DIRECTION |
+| PAT-HC-RETRY-001 | Health Connect | HC writes/deletes run as retryable sync jobs | Strong HC attempt/sync strings | HIGH | Future native HC requirement | DESIGN_DIRECTION |
+| PAT-MEASUREMENT-LOCAL-001 | Body data | Body measurements are first-class records separate from workouts | Strong MeasurementRealm | HIGH | TK body-data domain exists | ALREADY_PRESENT |
+| PAT-WIDGET-STATE-001 | Widgets | Widget config/state is projection/cache, not training truth | Strong WidgetRealm | HIGH | Future widget architecture | DESIGN_DIRECTION |
+| PAT-WORKOUT-FOLDER-001 | Training library | Reusable routines can be organized independently of history | Strong FolderRealm | HIGH | Candidate at My Training scale | CANDIDATE |
+| PAT-PORTABILITY-ROUNDTRIP-001 | Portability | Import/export designed toward migration/roundtrip rather than display dump | Strong CSV import + export | HIGH | Strong athlete-ownership direction | DESIGN_DIRECTION |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

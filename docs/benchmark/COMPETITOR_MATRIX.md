@@ -11,7 +11,7 @@ This is an evidence index, not a marketing scorecard. Empty cells mean not yet a
 | TrainHeroic | 8.36.0 | Deep workout/program/RPE/load evidence | Apple Health references; generic Bluetooth | Team feed + scoped leaderboards | Coach-led programming; no opaque AI generator established | 19 new patterns + OTA corroboration | STATIC CLOSED / DYNAMIC OPEN |
 | Concept2 ErgData | — | — | — | — | — | — | QUEUED |
 | Garmin Connect | — | — | — | — | — | — | QUEUED |
-| WHOOP | — | — | — | — | — | — | QUEUED |
+| WHOOP | 5.466.0 | Deep recovery/strain/sleep/journal/strength/device evidence | Proprietary BLE strap + Health Connect + Strava | Community/challenges/chat | WHOOP Coach + AI Insights; decision authority/server model unknown | 25 new patterns + multiple corroborations | STATIC CLOSED / DYNAMIC OPEN |
 | Clue | 267.0 | Deep cycle/prediction/life-stage/consent evidence | Native Health Connect + temperature/HRV/RHR/cycle models | Not a social benchmark | Predictions present; server algorithm/clinical validity unknown | 23 new patterns + fifth HC corroboration | STATIC CLOSED / DYNAMIC OPEN |
 | Natural Cycles | — | — | — | — | — | — | QUEUED |
 | Alpha Progression | — | — | — | — | — | — | QUEUED |

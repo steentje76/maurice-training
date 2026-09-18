@@ -252,6 +252,42 @@ Living catalogue. A pattern is not a recommendation until checked against curren
 | PAT-FEATURE-CONFIG-001 | Platform | Remote config may control non-truth UX/features | Alpha Progression 7.5 | HIGH | Never silently alter calc/rule semantics | DESIGN_DIRECTION |
 | PAT-EXEC-KEEP-AWAKE-001 | Execution | Active workout may request screen-awake as presentation capability | Alpha Progression 7.5 | HIGH | Candidate live execution polish | CANDIDATE |
 
+| PAT-COACH-RELATIONSHIP-001 | Coach | Coach linkage is durable relationship, not one-off share | TrainingPeaks 12.114.0 | HIGH | TK relationship core exists | ALREADY_PRESENT |
+| PAT-COACH-WORKOUT-COMMENT-001 | Coach | Coach feedback attaches to executed workout | TrainingPeaks 12.114.0 | HIGH | TK coach notes/feedback incomplete | VERIFIED_GAP |
+| PAT-PLAN-ACTUAL-PAIR-001 | Execution | Planned prescription and completed actual coexist | TrainingPeaks 12.114.0 | HIGH | TK snapshot architecture aligned | DESIGN_DIRECTION |
+| PAT-COMPLIANCE-STATE-001 | Adherence | Planned/success/warning/caution/missed/unplanned are typed states | TrainingPeaks 12.114.0 | HIGH | TK adherence core exists; UX comparator | ALREADY_PRESENT |
+| PAT-COMPLIANCE-HORIZON-001 | Adherence | Workout compliance aggregates to weekly horizon | TrainingPeaks 12.114.0 | HIGH | Candidate calendar/Inzicht UX | CANDIDATE |
+| PAT-LOAD-LONGITUDINAL-VIEW-001 | Load | Long-horizon training state has dedicated analytical view | TrainingPeaks 12.114.0 | HIGH | Separate from daily readiness | CANDIDATE |
+| PAT-LOAD-COMPONENTS-001 | Load | Long/short load constructs shown separately before form/status | TrainingPeaks 12.114.0 | MEDIUM | Evidence review required | CANDIDATE |
+| PAT-LAST-PLANNED-REFERENCE-001 | Planning | Last planned workout is explicit reference object | TrainingPeaks 12.114.0 | HIGH | Useful explainability/comparison pattern | CANDIDATE |
+| PAT-STRUCTURED-WORKOUT-ASSET-001 | Workout | Structured prescription is portable asset | TrainingPeaks 12.114.0 | HIGH | TK Builder architecture aligned | ALREADY_PRESENT |
+| PAT-WORKOUT-FILE-001 | Portability | Structured/raw workout files are user-facing assets | TrainingPeaks 12.114.0 | HIGH | Future FIT/TCX/GPX/provider adapters | CANDIDATE |
+| PAT-WORKOUT-DEEP-DIVE-001 | Analytics | Summary→graphs/maps→laps→peaks→zones hierarchy | TrainingPeaks 12.114.0 | HIGH | Endurance Inzicht benchmark | CANDIDATE |
+| PAT-ZONE-DISTRIBUTION-001 | Endurance | Time-in-zone distribution is first-class analysis | TrainingPeaks 12.114.0 | HIGH | Canonical zone provenance required | CANDIDATE |
+| PAT-ENDURANCE-METRIC-PARALLEL-001 | Endurance | HR/pace/power remain parallel typed domains | TrainingPeaks 12.114.0 | HIGH | TK sport-specific architecture aligned | DESIGN_DIRECTION |
+| PAT-THRESHOLD-COACH-VISIBILITY-001 | Coach | Threshold changes can become coach-visible events | TrainingPeaks 12.114.0 | MEDIUM | Consent/provenance required | CANDIDATE |
+| PAT-ZONE-CONFIG-001 | Endurance | Zones are configurable domain objects | TrainingPeaks 12.114.0 | HIGH | TK direction aligned | ALREADY_PRESENT |
+| PAT-EVENT-GOAL-001 | Events | Race/event links date/type/goals/results | TrainingPeaks 12.114.0 | HIGH | TK race context aligned | ALREADY_PRESENT |
+| PAT-EVENT-LEG-001 | Events | Multisport event consists of typed legs | TrainingPeaks 12.114.0 | HIGH | Triathlon/complex-race candidate | CANDIDATE |
+| PAT-EVENT-GOAL-ACTUAL-001 | Events | Event goal and actual result remain separate | TrainingPeaks 12.114.0 | HIGH | TK provenance pattern | DESIGN_DIRECTION |
+| PAT-CALENDAR-NOTE-001 | Planning | Calendar context note exists independently of workout | TrainingPeaks 12.114.0 | HIGH | Illness/travel/context candidate | CANDIDATE |
+| PAT-CALENDAR-CONTEXT-ASSET-001 | Planning | Calendar notes may carry attachments | TrainingPeaks 12.114.0 | MEDIUM | Lower-priority context feature | CANDIDATE |
+| PAT-COACH-NOTIFICATION-001 | Coach | Coach relationship has dedicated notification policy | TrainingPeaks 12.114.0 | HIGH | TK coach-event notification incomplete | VERIFIED_GAP |
+| PAT-COACH-LIFECYCLE-001 | Coach | Connect/active/notify/disconnect lifecycle explicit | TrainingPeaks 12.114.0 | HIGH | Privacy/access boundary | DESIGN_DIRECTION |
+| PAT-WORKOUT-LIBRARY-SEARCH-001 | Training library | Planned/reusable workouts searchable apart from history | TrainingPeaks 12.114.0 | HIGH | My Training scale candidate | CANDIDATE |
+| PAT-ENDURANCE-STRENGTH-CONVERGENCE-001 | Multisport | Strength uses same calendar/coach/planned-completed framework | TrainingPeaks 12.114.0 | HIGH | TK already one canonical chain | ALREADY_PRESENT |
+| PAT-NUTRITION-TRAINING-CONTEXT-001 | Nutrition | Nutrition lives adjacent to training/calendar | TrainingPeaks 12.114.0 | HIGH | TK nutrition timing context aligned | ALREADY_PRESENT |
+| PAT-HEALTH-METRIC-SOURCE-001 | Health | Health metric UI exposes source rather than silent merge | TrainingPeaks 12.114.0 | HIGH | Core TK provenance requirement | DESIGN_DIRECTION |
+| PAT-HRV-SOURCE-SELECT-001 | Recovery | Multiple HRV sources have explicit selected source | TrainingPeaks 12.114.0 | HIGH | Future Connected Athlete requirement | CANDIDATE |
+| PAT-SLEEP-DIMENSIONS-001 | Recovery | Sleep includes duration/quality/stages | TrainingPeaks 12.114.0 | HIGH | TK external model supports stages | ALREADY_PRESENT |
+| PAT-CONNECTION-HUB-001 | Providers | Apps/devices managed from one discoverable surface | TrainingPeaks 12.114.0 | HIGH | Candidate as provider count grows | CANDIDATE |
+| PAT-TRAININGPEAKS-CONNECTOR-001 | Providers | TrainingPeaks connector maps plans/actuals/events through provider contract | TrainingPeaks 12.114.0 | HIGH | Provider currently not implemented | VERIFIED_GAP |
+| PAT-NOTE-VISIBILITY-001 | Privacy | Workout notes carry explicit visibility scope | TrainingPeaks 12.114.0 | HIGH | Critical coach/social convergence rule | DESIGN_DIRECTION |
+| PAT-FEEDBACK-SCOPE-001 | Social/Coach | Coach feedback and general comments are separate scopes | TrainingPeaks 12.114.0 | HIGH | Future social architecture | DESIGN_DIRECTION |
+| PAT-ATHLETE-SPORT-PROFILE-001 | Context | Primary athlete sport does not restrict workout types | TrainingPeaks 12.114.0 | HIGH | TK Context Engine aligned | ALREADY_PRESENT |
+| PAT-RECOVERY-LOAD-SEPARATION-001 | Recovery/Load | Health/recovery signals stay separate from training-load state | TrainingPeaks 12.114.0 | HIGH | TK architecture aligned | ALREADY_PRESENT |
+| PAT-NATIVE-PERSISTENCE-001 | Persistence | Native client uses structured local DB/preferences | TrainingPeaks 12.114.0 | MEDIUM | Offline semantics not proven | REFERENCE_ONLY |
+
 ## Pattern maturity
 CANDIDATE = observed externally, not yet verified as a TK gap.  
 TK_CHECK_REQUIRED = current-main check still required.  

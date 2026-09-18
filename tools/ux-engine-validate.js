@@ -23,7 +23,15 @@ for(const s of reg.screens||[]){
  }
  if(s.mockup_id && !/^TK-MU-[A-Z]+-\d{3}[A-Z]?$/.test(s.mockup_id)) errors.push('UXE-012 '+s.id+' invalid mockup id');
 }
-for(const p of ['docs/ux/engine/UX_ENGINE_CONTRACT.md','docs/ux/engine/UX_ACCEPTANCE_CONTRACT.md','docs/ux/registry/UX_COMPONENT_REGISTRY.json','docs/ux/registry/UX_FLOW_REGISTRY.json','docs/ux/registry/UX_PATTERN_REGISTRY.json']) if(!fs.existsSync(path.join(root,p))) errors.push('UXE-013 missing '+p);
+const scenarios=read('docs/ux/registry/UX_SCENARIO_REGISTRY.json');
+for(const sc of scenarios.scenarios||[]){
+ if(!/^TK-SCN-[A-Z]+-\d{3}$/.test(sc.id||'')) errors.push('UXE-014 invalid scenario id '+sc.id);
+ if(!Array.isArray(sc.scenarios)||sc.scenarios.length<2) errors.push('UXE-015 '+sc.id+' requires >=2 alternatives');
+ if(sc.status==='DECIDED' && (!sc.decision||!sc.decision.po_approved||!sc.decision.selected_scenario)) errors.push('UXE-016 '+sc.id+' decided without explicit PO selection');
+}
+const sources=read('docs/ux/registry/UX_SOURCE_REGISTRY.json');
+if(!Array.isArray(sources.sources)||sources.sources.length<10) errors.push('UXE-017 UX source reconciliation inventory incomplete');
+for(const p of ['docs/ux/engine/UX_ENGINE_CONTRACT.md','docs/ux/engine/UX_ACCEPTANCE_CONTRACT.md','docs/ux/engine/UX_SOURCE_RECONCILIATION.md','docs/ux/engine/UX_SCENARIO_LAB.md','docs/ux/engine/UX_SCENARIO_SCHEMA.json','docs/ux/registry/UX_SOURCE_REGISTRY.json','docs/ux/registry/UX_SCENARIO_REGISTRY.json','docs/ux/registry/UX_CURRENT_TARGET_GAP_REGISTRY.json','docs/ux/registry/UX_COMPONENT_REGISTRY.json','docs/ux/registry/UX_FLOW_REGISTRY.json','docs/ux/registry/UX_PATTERN_REGISTRY.json']) if(!fs.existsSync(path.join(root,p))) errors.push('UXE-013 missing '+p);
 if(warnings.length) console.warn(warnings.join('\n'));
 if(errors.length){console.error(errors.join('\n'));process.exit(1)}
 console.log('UX Design Engine registry validation: PASS ('+(reg.screens||[]).length+' screen records)');

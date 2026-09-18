@@ -1,0 +1,1216 @@
+{
+ "_schema": "trainingskompas-aj-audit-batch/1.2",
+ "batch": "T9_PRIME",
+ "tracks": [
+  "T9"
+ ],
+ "audit_model_id": "trainingskompas-aj/v1.2",
+ "audit_model_version": "1.2",
+ "audit_model_fingerprint": "sha256:82891683aad13cccf779a13783d90bb77279cbab5dfd035989607226fa0a9264",
+ "canonicalization_baseline_sha": "772f25e67c1880cfa058306f489eb533710db8da",
+ "complete": true,
+ "record_count": 70,
+ "capability_count": 7,
+ "na_record_count": 11,
+ "scored_record_count": 59,
+ "na_distribution": {
+  "E": 6,
+  "H": 1,
+  "D": 2,
+  "G": 2
+ },
+ "confidence_distribution": {
+  "HIGH": 53,
+  "MEDIUM": 17
+ },
+ "f_distribution": {
+  "F3": 3,
+  "F2": 4
+ },
+ "weights": {
+  "A": 5,
+  "B": 15,
+  "C": 15,
+  "D": 10,
+  "E": 10,
+  "F": 15,
+  "G": 5,
+  "H": 10,
+  "I": 5,
+  "J": 10
+ },
+ "anchors_frozen": true,
+ "supersedes_historical": false,
+ "historical_comparison": "NOT_COMPARABLE: er bestaat geen historische T9-trackscore.",
+ "evidence_methodology": "Iedere criterium-score rust op criterium-specifieke evidence die reproduceerbaar is op de canonicalisatie-baseline. Voor criterium F is de evidence-class bepaald uit de uitvoeringsvorm van de test: vm.runInContext geldt als INTEGRATION_RUNTIME, require van een core-module als BEHAVIORAL_UNIT, en bron- of stringinspectie als DOCUMENTATION_ONLY. De F-ladder is cumulatief. Script-load is nergens als runtime-integratie geteld: een module die wel geladen maar niet aangeroepen wordt, blijft op criterium C begrensd op anker 1. Confidence volgt de canonieke semantiek waarin HIGH direct capability-specifiek bewijs vereist en is per record afzonderlijk toegekend met een eigen confidence_basis; het aggregaat is pas na de laatste toekenning geteld en stuurt geen enkele score.",
+ "track_notes": "nutritionDegradedStateClassifier is TEST_ONLY: nul script-tags en nul aanroepen in index.html, uitsluitend een test raakt de module. NutritionIntelligence is script-geladen maar heeft nul bewezen productie-callers, vastgelegd als GAP-P3-036. De overige T9-eigenaars zijn wel bedraad, met NutritionFoundation2Core als sterkst verankerde module (15 aanroepen). De ownership-kaart uit de voorbereidende adjudicatie is gevolgd: elke module is aan exact een capability toegewezen en gedeelde infrastructuur is niet als direct bewijs voor een consument gebruikt.",
+ "track_results": {
+  "T9": {
+   "score": "3.038",
+   "percentage": "60.76",
+   "capability_count": 7,
+   "sum_of_stored_scores": "21.263",
+   "arithmetic": "som van de OPGESLAGEN driedecimale capabilityscores gedeeld door het aantal capabilities, ROUND_HALF_UP op 3 decimalen; percentage uit de opgeslagen trackscore gedeeld door 5 maal 100, ROUND_HALF_UP op 2 decimalen",
+   "historical_pre_v1_score": null,
+   "historical_note": "NOT_COMPARABLE"
+  }
+ },
+ "capabilities": [
+  {
+   "stable_id": "NUTR-FOUNDATION-001",
+   "primary_track": "T9",
+   "v1_scope": true,
+   "applicable_weight": 80,
+   "weighted_numerator": 265,
+   "unrounded_quotient": "3.3125",
+   "weighted_score": "3.313",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record met v1_scope en evidence plus registry-rij: directe canonieke bron",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.250",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als voedingsfundament met v1_scope-onderbouwing in de index en een registry-rij die afbakent tegen ingest, producten en doelen.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#NUTR-FOUNDATION-001",
+      "docs/CAPABILITY_REGISTRY.md#NUTR-FOUNDATION-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "modules aanwijsbaar en script-geladen; beheersing van alternatieven niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "core/nutritionFoundation.js en core/nutritionFoundation2.js zijn de aanwijsbare hoofdimplementatie, beide via script-tag geladen, aangevuld met nutritionCrossDomainContract.js. Parallelle paden geinventariseerd; geen guard tegen een tweede fundament, dus geen 4.",
+     "evidence_refs": [
+      "core/nutritionFoundation.js",
+      "core/nutritionFoundation2.js",
+      "core/nutritionCrossDomainContract.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete file plus 15 directe aanroepen in index.html",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: NutritionFoundation2Core wordt 15 keer aangeroepen in index.html, waaronder portionToNutrients en availableQuantityUnits in de portie-flow. Geen volledige payload-chain van entrypoint tot consument, dus geen 4.",
+     "evidence_refs": [
+      "index.html#NutritionFoundation2Core"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op de fundamenttabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.500",
+     "rationale": "Volledige lifecycle en migratiehistorie: de canonieke nutrition_*-tabellen tellen elf definities in de migratielaag, met nutrition_products, nutrition_nutrient_values en nutrition_product_identifiers als fundament. Geen versionering of historiebehoud, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#nutrition_products",
+      "migratie_v*.sql#nutrition_nutrient_values"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties in de fundamentmodules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het voedingsfundament neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Positief vastgesteld: nul referenties naar CalcCore, DecisionCore of ContextEngineCore in de fundamentmodules; de portie-engine rekent uitsluitend binnen het voedingsdomein.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module en voert gedrag uit; uitvoeringsvorm direct geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.563",
+     "rationale": "BEHAVIORAL_UNIT: core/fNutritionFoundationCore.test.js requiret de fundamentmodule en voert het conversiegedrag uit. Geen vm-runtime over de echte call-chain, dus geen 4.",
+     "evidence_refs": [
+      "core/fNutritionFoundationCore.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de RLS-conventie op de nutrition-tabellen, niet per policy geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "De fundamenttabellen dragen gebruikersgebonden productdata; enforcement loopt via de RLS-conventie op de nutrition_*-tabellen. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#nutrition_products"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: geen eigen route of invoer; de UI hoort bij andere capabilities",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Het fundament is een reken- en contractlaag zonder eigen gebruikerscontract: de sporter ziet portie-uitkomsten binnen de schermen van NUTR-UX-001 en NUTR-PRODUCT-001, niet een fundamentscherm. Positief vastgesteld: geen eigen route of invoer voor deze capability.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "expliciete UNKNOWN-semantiek in module en aanroeppad geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.188",
+     "rationale": "Relevante failure modes benoemd en afgevangen: portionToNutrients levert status UNKNOWN_CONVERSION in plaats van een gefabriceerd getal, en ontbrekende nutrientwaarden blijven null en worden nooit 0. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "core/nutritionFoundation2.js",
+      "index.html#UNKNOWN_CONVERSION"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over het register: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.500",
+     "rationale": "Geen enkele gap noemt deze capability in primary_capability_id of affected_capability_ids met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over het canonieke register. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "NUTR-INGEST-001",
+   "primary_track": "T9",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 280,
+   "unrounded_quotient": "3.111111111111111111111111111",
+   "weighted_score": "3.111",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry-rij benoemen de ingestlaag expliciet",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als productingest via barcode, etiket en externe provider, met v1_scope-onderbouwing en registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#NUTR-INGEST-001",
+      "docs/CAPABILITY_REGISTRY.md#NUTR-INGEST-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "modules aanwijsbaar en script-geladen; beheersing niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "core/nutritionIngestService.js is de aanwijsbare hoofdimplementatie, aangevuld met nutritionLabelParser.js, nutritionOcrRuntime.js en nutritionBarcodeRuntime.js. Parallelle paden geinventariseerd; geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/nutritionIngestService.js",
+      "core/nutritionBarcodeRuntime.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete file plus vijf directe aanroepen, inclusief server-side lookupfunctie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Productie-callers bewezen: NutritionIngestService wordt 5 keer aangeroepen in index.html, waaronder resolveIngestDecision en buildNutrientSnapshot in het barcode- en OFF-pad, met een server-side lookup via netlify/functions/nutrition-off-lookup.js. Geen volledige payload-chain, dus geen 4.",
+     "evidence_refs": [
+      "index.html#NutritionIngestService",
+      "netlify/functions/nutrition-off-lookup.js"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op de drie ingest-doeltabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie: ingest schrijft additief naar nutrition_products, nutrition_product_identifiers en nutrition_nutrient_values, nooit UPDATE-in-place. Geen versionering als apart mechanisme, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#nutrition_product_identifiers",
+      "migratie_v*.sql#nutrition_nutrient_values"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties in de ingestmodules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Productingest neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Positief vastgesteld: nul engine-referenties in de ingestmodules; de laag canonicaliseert externe productdata en rekent niets voor de sporter.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "gericht gezocht; geen uitvoerende capability-specifieke suite aangetroffen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.333",
+     "rationale": "DOCUMENTATION_ONLY: er is geen suite die nutritionIngestService.js uitvoert. Gericht gezocht op fNutritionIngest*; de aangetroffen nutrition-suites testen andere modules en zijn afgewezen als cross-capability evidence. Anker 2.",
+     "evidence_refs": [
+      "core/nutritionIngestService.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de serverfunctie en de RLS-conventie, niet per policy geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Ingest verwerkt externe data naar gebruikersgebonden producten; de server-side lookup draait achter authenticatie en de doeltabellen vallen onder de RLS-conventie. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/nutrition-off-lookup.js",
+      "migratie_v*.sql#nutrition_products"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "gebruikersingang aanwijsbaar; volledigheid van de keten niet per stap geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: de barcodescanner en handmatige barcode-invoer zijn bereikbare gebruikersingangen die uitmonden in een productkaart. Terugkoppeling bij een miss is aanwezig maar niet volledig geinspecteerd, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-voeding-scanner"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "expliciete statusafhandeling en retry-idempotentie in het aanroeppad geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Relevante failure modes benoemd en afgevangen: de OFF-lookup retourneert statussen als NETWORK_ERROR en MALFORMED_RESPONSE in plaats van te falen, een miss leidt naar een expliciete keuze in plaats van een dead end, en een retry hergebruikt dezelfde client-id zodat er nooit een dubbele rij ontstaat. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "netlify/functions/nutrition-off-lookup.js",
+      "index.html#voedingOpenBarcodeMiss"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over het register: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen enkele gap noemt deze capability met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over het canonieke register. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "NUTR-INTEL-001",
+   "primary_track": "T9",
+   "v1_scope": true,
+   "applicable_weight": 75,
+   "weighted_numerator": 185,
+   "unrounded_quotient": "2.466666666666666666666666667",
+   "weighted_score": "2.467",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry-rij benoemen de intelligentielaag expliciet",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.267",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als voedingsintelligentie en kennisontsluiting, met v1_scope-onderbouwing en registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#NUTR-INTEL-001",
+      "docs/CAPABILITY_REGISTRY.md#NUTR-INTEL-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "de door de registry aangewezen drager, concreet bestand met script-tag",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.600",
+     "rationale": "core/nutritionIntelligence.js is de door de registry aangewezen drager en is via script-tag geladen. De module is dormant en als zodanig geclassificeerd, wat anker 3 toelaat maar anker 4 uitsluit omdat er geen bewezen beheersing van alternatieven is.",
+     "evidence_refs": [
+      "core/nutritionIntelligence.js",
+      "docs/CAPABILITY_REGISTRY.md#NUTR-INTEL-001"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe negatieve telling naast bewezen positieve tellingen van zustermodules in dezelfde bundel",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 1,
+     "weighted_contribution": "0.200",
+     "rationale": "Module bestaat en is via script-tag geladen, maar heeft nul productie-callers: NutritionIntelligence wordt nul keer aangeroepen in index.html, tegenover 15 voor NutritionFoundation2Core en 8 voor NutritionMealService in dezelfde bundel. Script-load is geen runtime-integratie; Model v1.2 begrenst dit op anker 1.",
+     "evidence_refs": [
+      "core/nutritionIntelligence.js",
+      "index.html#nul-NutritionIntelligence-aanroepen"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: geen eigen migratietabel en geen persistentie-aanroep",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De intelligentielaag is bewijsbaar stateless: zij leidt per aanroep af uit reeds gepersisteerde maaltijd- en productdata en kent geen eigen migratietabel of persistentie-aanroep. Positief vastgesteld: geen nutrition_intel-achtige tabel in de migratielaag.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties in de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Voedingsintelligentie neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete: nul engine-referenties in de module. De dormancy maakt de vraag bovendien feitelijk niet van toepassing, maar de afbakening rust op de aangetoonde afwezigheid van engine-koppeling.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "suite requiret de module en voert gedrag uit; uitvoeringsvorm direct geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.600",
+     "rationale": "BEHAVIORAL_UNIT: core/fNutritionIntelligenceCore.test.js requiret nutritionIntelligence.js en voert het gedrag uit. Geen vm-runtime over de echte call-chain, dus geen 4. Dat een dormante module wel getest is, verhoogt C niet.",
+     "evidence_refs": [
+      "core/fNutritionIntelligenceCore.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul auth- of credentialreferenties in de module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De intelligentielaag leidt inzichten af uit de eigen voedingsdata van de sporter zonder trust boundary, tweede partij, autorisatiebeslissing of misbruikroute. Positief vastgesteld: nul auth-, credential- of policyreferenties in de module; afscherming zit op de onderliggende nutrition-tabellen.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy; de UI-consequentie is niet per scherm geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.267",
+     "rationale": "Er is voedingsgerichte UI binnen het bereikbare scherm s-voeding, maar zonder aangeroepen intelligentielaag is de keten van ontdekken naar gebruiken voor deze capability niet als bruikbaar bewezen. Fundament aanwezig, dus anker 2.",
+     "evidence_refs": [
+      "index.html#s-voeding"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "afgeleid uit de dormancy; geen capability-specifiek onbekend-gedrag geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.133",
+     "rationale": "Generieke afhandeling: zonder productie-caller is er geen capability-specifiek bewijs van gedrag bij onvoldoende voedingsdata. Happy-path-only evidence, dus maximaal 2.",
+     "evidence_refs": [
+      "core/nutritionIntelligence.js"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "directe gaprelatie: nieuw geregistreerde gap met primary NUTR-INTEL-001, blocker false",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.400",
+     "rationale": "De in deze golf geregistreerde capability-scoped gap noemt deze capability als primary_capability_id met v1_scope true, status OPEN en blocker false, wat onder Model v1.2 nonblocking is. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-036"
+     ],
+     "gap_refs": [
+      "GAP-P3-036"
+     ]
+    }
+   }
+  },
+  {
+   "stable_id": "NUTR-PRODUCT-001",
+   "primary_track": "T9",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 280,
+   "unrounded_quotient": "3.111111111111111111111111111",
+   "weighted_score": "3.111",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry-rij benoemen het productbeheer expliciet",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als productbeheer, eigen producten en supplementen, met v1_scope-onderbouwing en registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#NUTR-PRODUCT-001",
+      "docs/CAPABILITY_REGISTRY.md#NUTR-PRODUCT-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "modules aanwijsbaar en script-geladen; beheersing niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "core/nutritionCustomProductService.js en core/nutritionProviderOpenFoodFacts.js zijn de aanwijsbare hoofdimplementatie, aangevuld met de supplementmodules. Parallelle paden geinventariseerd; geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/nutritionCustomProductService.js",
+      "core/nutritionProviderOpenFoodFacts.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete file plus vijf directe aanroepen in het eigen-product-pad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Productie-callers bewezen: NutritionCustomProductService wordt 5 keer aangeroepen in index.html, waaronder detectDuplicateCandidates en validateCustomProduct in het eigen-product-pad; NutritionSupplementService 2 keer. Geen volledige payload-chain, dus geen 4.",
+     "evidence_refs": [
+      "index.html#NutritionCustomProductService"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs op de product- en supplementtabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie: producten, identifiers, nutrientwaarden en supplementdefinities en -logs zijn in de migratielaag vastgelegd, met additieve revisies in plaats van UPDATE-in-place. Geen versionering als apart mechanisme, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#nutrition_products",
+      "migratie_v*.sql#nutrition_supplement_definitions"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties in de productmodules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Productbeheer neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Positief vastgesteld: nul engine-referenties in de productmodules.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "gericht gezocht; geen uitvoerende capability-specifieke suite aangetroffen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.333",
+     "rationale": "DOCUMENTATION_ONLY: er is geen suite die nutritionCustomProductService.js uitvoert. Gericht gezocht op fNutritionCustomProduct*; de aangetroffen nutrition-suites testen andere modules en zijn afgewezen als cross-capability evidence. Anker 2.",
+     "evidence_refs": [
+      "core/nutritionCustomProductService.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "gebruikersafbakening in het aanroeppad plus RLS-conventie; niet per policy geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Eigen producten en supplementlogs zijn gebruikersgebonden; duplicaatdetectie werkt expliciet binnen created_by van dezelfde gebruiker en de tabellen vallen onder de RLS-conventie. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "index.html#created_by",
+      "migratie_v*.sql#nutrition_products"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "twee bereikbare schermen aanwijsbaar; volledigheid niet geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: het eigen-product-formulier en het supplementscherm zijn bereikbaar en monden uit in de portie-flow. Terugkoppeling niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-voeding-custom",
+      "index.html#s-voeding-supplement"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "expliciete statusafhandeling en beschermingsregel in het aanroeppad geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Relevante failure modes benoemd en afgevangen: duplicaatdetectie onderscheidt EXISTING_FOUND, POSSIBLE_DUPLICATE en CHECK_FAILED, een ongeldige barcode wordt geweigerd op controlegetal, en een geverifieerd product wordt beschermd tegen overschrijven. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "index.html#detectDuplicateCandidates",
+      "index.html#VERIFIED_PROTECTED"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over het register: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen enkele gap noemt deze capability met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over het canonieke register. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "NUTR-TARGETS-001",
+   "primary_track": "T9",
+   "v1_scope": true,
+   "applicable_weight": 90,
+   "weighted_numerator": 280,
+   "unrounded_quotient": "3.111111111111111111111111111",
+   "weighted_score": "3.111",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry-rij benoemen de doelenlaag expliciet",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.222",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als voedingsdoelen en hydratatiedoelen, met v1_scope-onderbouwing en registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#NUTR-TARGETS-001",
+      "docs/CAPABILITY_REGISTRY.md#NUTR-TARGETS-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "modules aanwijsbaar en script-geladen; beheersing niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "core/nutritionTargetService.js en core/nutritionHydrationService.js zijn de aanwijsbare hoofdimplementatie, beide via script-tag geladen. Parallelle paden geinventariseerd; geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/nutritionTargetService.js",
+      "core/nutritionHydrationService.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete file plus zes respectievelijk drie directe aanroepen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.500",
+     "rationale": "Productie-callers bewezen: NutritionTargetService wordt 6 keer aangeroepen in index.html, waaronder resolveEffectiveTarget, validateTarget, toCanonicalRow en computeDailyProgress; NutritionHydrationService 3 keer. Geen volledige payload-chain, dus geen 4.",
+     "evidence_refs": [
+      "index.html#NutritionTargetService",
+      "index.html#NutritionHydrationService"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs plus expliciete historie-conventie in het schrijfpad",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Volledige lifecycle en migratiehistorie: nutrition_targets en nutrition_hydration_entries zijn in de migratielaag vastgelegd, en doelen worden altijd als nieuwe rij weggeschreven in plaats van UPDATE-in-place, zodat de historie behouden blijft. Versionering als apart mechanisme ontbreekt, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#nutrition_targets",
+      "index.html#altijd-NIEUWE-rij"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties in de doelenmodules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Voedingsdoelen nemen architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete: de doelenlaag vergelijkt gelogde inname met een door de gebruiker gesteld doel en voedt geen trainingsbeslissing. Positief vastgesteld: nul engine-referenties in de doelenmodules.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "gericht gezocht; geen uitvoerende capability-specifieke suite aangetroffen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.333",
+     "rationale": "DOCUMENTATION_ONLY: er is geen suite die nutritionTargetService.js uitvoert. Gericht gezocht op fNutritionTarget*; de aangetroffen nutrition-suites testen andere modules en zijn afgewezen als cross-capability evidence. Anker 2.",
+     "evidence_refs": [
+      "core/nutritionTargetService.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "gebruikersbinding in het schrijfpad plus RLS-conventie; niet per policy geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Doelen en hydratatie-invoer zijn gebruikersgebonden en worden met user_id weggeschreven binnen de RLS-conventie op de nutrition-tabellen. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#nutrition_targets",
+      "index.html#user_id"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "invoer- en weergavepad aanwijsbaar; volledigheid niet per stap geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.333",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: het doelenscherm is bereikbaar, doelen worden gevalideerd met een expliciete controlestap bij afwijkende waarden, en de voortgang verschijnt op het voedingsoverzicht. Terugkoppeling niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#voedingRenderDoelen",
+      "index.html#voedingProgressRow"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "expliciete UNKNOWN-statussen en bevestigingsregel in het aanroeppad geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.167",
+     "rationale": "Relevante failure modes benoemd en afgevangen: NO_TARGET, UNKNOWN_CONSUMED en PARTIAL zijn expliciete statussen, een onbekende inname toont een streepje in plaats van 0, en buitengewone doelwaarden vragen een bevestiging. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "index.html#UNKNOWN_CONSUMED",
+      "index.html#needsConfirmation"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over het register: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.444",
+     "rationale": "Geen enkele gap noemt deze capability met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over het canonieke register. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "NUTR-UX-001",
+   "primary_track": "T9",
+   "v1_scope": true,
+   "applicable_weight": 75,
+   "weighted_numerator": 225,
+   "unrounded_quotient": "3",
+   "weighted_score": "3.000",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry-rij benoemen de UX-laag expliciet",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.267",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als voedings-UX met camera, ontdekking en beeldkwaliteit, met v1_scope-onderbouwing en registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#NUTR-UX-001",
+      "docs/CAPABILITY_REGISTRY.md#NUTR-UX-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "modules aanwijsbaar en script-geladen; beheersing niet aangetoond",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.600",
+     "rationale": "core/nutritionCameraCapture.js, core/nutritionDiscoveryService.js en core/nutritionImageQualityGate.js zijn de aanwijsbare hoofdimplementatie, alle via script-tag geladen. Parallelle paden geinventariseerd; geen guard, dus geen 4.",
+     "evidence_refs": [
+      "core/nutritionCameraCapture.js",
+      "core/nutritionDiscoveryService.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete file plus vier directe aanroepen per module",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.600",
+     "rationale": "Productie-callers bewezen: NutritionCameraCapture wordt 4 keer aangeroepen in index.html, waaronder resolveBarcodeDetectionResult en resolveCameraAccessResult, en NutritionDiscoveryService 4 keer met buildSearchFilter en rankRecentFoods. Geen volledige payload-chain, dus geen 4.",
+     "evidence_refs": [
+      "index.html#NutritionCameraCapture",
+      "index.html#NutritionDiscoveryService"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: geen eigen migratietabel en geen persistentie-aanroep",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De UX-laag is bewijsbaar stateless: camera-, zoek- en beeldkwaliteitsmodules kennen geen persistentie-aanroep en er bestaat geen eigen migratietabel; de resultaten monden uit in de tabellen van NUTR-INGEST-001 en NUTR-PRODUCT-001.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul engine-referenties in de UX-modules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "Voedings-UX neemt architectonisch niet deel aan de keten RAW DATA naar Calculation naar Context naar Decision naar athlete. Positief vastgesteld: nul engine-referenties in de UX-modules.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "gericht gezocht; geen uitvoerende capability-specifieke suite aangetroffen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 2,
+     "weighted_contribution": "0.400",
+     "rationale": "DOCUMENTATION_ONLY: er is geen suite die nutritionCameraCapture.js of nutritionDiscoveryService.js uitvoert. Gericht gezocht op fNutritionCamera*; de aangetroffen nutrition-suites testen andere modules en zijn afgewezen als cross-capability evidence. Anker 2.",
+     "evidence_refs": [
+      "core/nutritionCameraCapture.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": false,
+     "confidence": "HIGH",
+     "confidence_basis": "positief afgebakend: nul auth- of autorisatiebeslissingen in de UX-modules",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": null,
+     "weighted_contribution": "0.000",
+     "na_rationale": "De UX-laag verwerkt camerabeeld en zoektekst binnen de eigen sessie van de sporter zonder trust boundary, tweede partij of autorisatiebeslissing; cameratoegang zelf wordt door de browser of het besturingssysteem beheerd. Positief vastgesteld: nul auth- of autorisatiebeslissingen in de modules.",
+     "evidence_refs": [],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "twee bereikbare schermen met aanwijsbare invoer- en resultaatstappen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.400",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: het scannerscherm toont live preview met kader en status, het zoekscherm kent een expliciete begintoestand met recente producten, en beide monden uit in de portie-flow. Geen device-bewijs voor exact deze flow, dus geen 4.",
+     "evidence_refs": [
+      "index.html#s-voeding-scanner",
+      "index.html#s-voeding-zoeken"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "expliciete camerastatussen en hervattingspad in het aanroeppad geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.200",
+     "rationale": "Relevante failure modes benoemd en afgevangen: PERMISSION_DENIED, NO_CAMERA en UNSUPPORTED leiden tot een expliciete melding, een niet-gevonden barcode biedt een hervatknop in plaats van een dead end, en verouderde zoekresultaten worden op volgnummer genegeerd. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "index.html#PERMISSION_DENIED",
+      "index.html#voedingScannerRetry"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitputtend over het register: geen relevante open V1-relatie",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.533",
+     "rationale": "Geen enkele gap noemt deze capability met v1_scope true en status OPEN of REVIEW_REQUIRED; geverifieerd over het canonieke register. Anker J=4.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#geen-relatie"
+     ],
+     "gap_refs": []
+    }
+   }
+  },
+  {
+   "stable_id": "RECOV-HRV-PROV-001",
+   "primary_track": "T9",
+   "v1_scope": true,
+   "applicable_weight": 100,
+   "weighted_numerator": 315,
+   "unrounded_quotient": "3.15",
+   "weighted_score": "3.150",
+   "model_v1_2_verified": true,
+   "criteria": {
+    "A": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "index-record plus registry-rij benoemen de HRV-provenance expliciet",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.200",
+     "rationale": "Verantwoordelijkheid canoniek vastgelegd als herkomst en provenance van HRV- en herstelsignalen, met v1_scope-onderbouwing en registry-rij.",
+     "evidence_refs": [
+      "docs/ROADMAP_INDEX.json#RECOV-HRV-PROV-001",
+      "docs/CAPABILITY_REGISTRY.md#RECOV-HRV-PROV-001"
+     ],
+     "gap_refs": []
+    },
+    "B": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "dragers aanwijsbaar, maar geen enkele eigenaar die de herkomst afdwingt",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "De provenance-laag is belegd in de hrv_log-keten en de bijbehorende core-modules; vijftien core-modules raken HRV. Er is geen module die de herkomst als enige eigenaar afdwingt, dus geen 4.",
+     "evidence_refs": [
+      "core/calculation.js",
+      "core/deviceIntegration.js"
+     ],
+     "gap_refs": []
+    },
+    "C": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "concrete leespaden en canonieke CalcCore-aanroepen in index.html",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "Productie-callers bewezen met bestandsverwijzing: de hrv_log-keten wordt vanuit index.html gelezen voor dagfactor, readiness en het herstelscherm, en hrvDagFactorPersonal en rhrBaselineDelta lopen via CalcCore. Geen volledige payload-chain, dus geen 4.",
+     "evidence_refs": [
+      "index.html#hrv_log",
+      "index.html#hrvDagFactorPersonal"
+     ],
+     "gap_refs": []
+    },
+    "D": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratiebewijs over tien bestanden met owner-binding",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 4,
+     "weighted_contribution": "0.400",
+     "rationale": "Volledige lifecycle en migratiehistorie: hrv_log komt voor in tien migratiebestanden, met auth.uid()-policies en een archieftabel voor historie. Versionering als apart mechanisme ontbreekt, dus geen 5.",
+     "evidence_refs": [
+      "migratie_v*.sql#hrv_log"
+     ],
+     "gap_refs": []
+    },
+    "E": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "voeding van dagfactor en readiness afgeleid, niet edge-voor-edge bewezen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "Deel van de keten is aangetoond: HRV- en RHR-signalen voeden de dagfactor en daarmee de readiness-beslissing van DecisionCore. De volledige keten zonder bypass is voor de provenance-laag niet edge-voor-edge bewezen, dus geen 4.",
+     "evidence_refs": [
+      "index.html#dagfactor",
+      "index.html#DecisionCore.readinessDay"
+     ],
+     "gap_refs": []
+    },
+    "F": {
+     "weight": 15,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "uitvoeringsvorm per suite direct geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.450",
+     "rationale": "BEHAVIORAL_UNIT: core/fHrvBaselineCanonicalization.test.js requiret calculation.js en voert het baselinegedrag uit. core/fHrvArchiveLockdown.test.js bevat nul uitvoeringsconstructies en is DOCUMENTATION_ONLY. Geen vm-runtime, dus geen 4.",
+     "evidence_refs": [
+      "core/fHrvBaselineCanonicalization.test.js",
+      "core/fHrvArchiveLockdown.test.js"
+     ],
+     "gap_refs": []
+    },
+    "G": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "migratie/policy-bewijs op de HRV-tabellen",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "HRV- en RHR-metingen zijn gezondheidsgerelateerde persoonsgegevens; enforcement is aangetoond op de datalaag via auth.uid()-policies op de hrv_log-keten. Capability-specifiek dekkend auditbewijs ontbreekt, dus geen 4.",
+     "evidence_refs": [
+      "migratie_v*.sql#hrv_log"
+     ],
+     "gap_refs": []
+    },
+    "H": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "MEDIUM",
+     "confidence_basis": "bereikbaar herstelscherm met expliciete bronvermelding per signaal",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "De keten ontdekken naar gebruiken is bruikbaar bewezen: het herstelscherm toont per signaal expliciet de bron en de status, inclusief de vermelding dat spierherstel een vuistregel is en geen gemeten waarde. Terugkoppeling niet volledig aangetoond, dus geen 4.",
+     "evidence_refs": [
+      "index.html#openRecoveryDetail"
+     ],
+     "gap_refs": []
+    },
+    "I": {
+     "weight": 5,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "expliciete referentiefase en null-bij-onvoldoende-data in het aanroeppad geinspecteerd",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.150",
+     "rationale": "Relevante failure modes benoemd en afgevangen: bij onvoldoende metingen blijft de baseline in referentiefase en wordt dat expliciet gemeld, rhrBaselineDelta geeft null bij minder dan twee metingen, en de UI meldt nooit een gemeten waarde waar er geen is. Geen sabotagetest, dus geen 4.",
+     "evidence_refs": [
+      "index.html#referentiefase",
+      "index.html#rhrBaselineDelta"
+     ],
+     "gap_refs": []
+    },
+    "J": {
+     "weight": 10,
+     "applicable": true,
+     "confidence": "HIGH",
+     "confidence_basis": "beide gaprelaties direct uit het register met status en blocker",
+     "evidence_origin": "REPOSITORY",
+     "verification_status": "VERIFIED_ON_CANONICAL_MAIN",
+     "score": 3,
+     "weighted_contribution": "0.300",
+     "rationale": "GAP-P2-011 en GAP-P3-024 raken deze capability met v1_scope true en status OPEN, beide met blocker die niet op true is bewezen en daarmee onder Model v1.2 nonblocking. Anker J=3.",
+     "evidence_refs": [
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P2-011",
+      "docs/AUDIT_GAP_REGISTER.json#GAP-P3-024"
+     ],
+     "gap_refs": [
+      "GAP-P2-011",
+      "GAP-P3-024"
+     ]
+    }
+   }
+  }
+ ]
+}

@@ -264,7 +264,7 @@ register-debt niet mag verbergen.
 | Telling | Betekenis | Stand |
 |---|---|---|
 | `historical_audited` | beoordeeld onder een pre-v1.0 model; scores behouden, niet v1-verifieerbaar | **22 / 86** |
-| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **51 / 86** |
+| **`model_v1_verified`** | beoordeeld onder `audit_model_version 1.2` met criterium-specifieke evidence | **63 / 86** |
 
 ### Canonieke Model-v1.2 trackresultaten
 
@@ -291,6 +291,29 @@ Batch A-artefact en worden niet overschreven. `docs/audit/AJ_AUDIT_BATCH_A.json`
 De historische waarden **T4 3,564**, **T5 3,225** en **T6 3,623** blijven geldig voor
 het historische Batch B-artefact en worden niet overschreven.
 `docs/audit/AJ_AUDIT_BATCH_B.json` behoudt `HISTORICAL_PRE_V1_MODEL` en is ongewijzigd.
+
+### Canonieke Model-v1.2 trackresultaten — T9 en T12 (Combined F/G)
+
+**Canonieke artefacten:** `docs/audit/AJ_AUDIT_T9_PRIME.json` en
+`docs/audit/AJ_AUDIT_T12_PRIME.json` — samen 12 capabilities en 120 criterion
+records, `audit_model_version: 1.2`.
+
+| Track | Model v1.2 | Historisch pre-v1 |
+|---|---|---|
+| **T9** (Voeding / HRV-provenance) | **3,038 / 5 = 60,76%** | NOT_COMPARABLE |
+| **T12** (Longitudinale intelligentie) | **2,823 / 5 = 56,46%** | NOT_COMPARABLE |
+
+N/A over de 120 records: D 7 · E 6 · G 7 · H 1 = 21. Confidence, per record
+toegekend: **89 HIGH / 31 MEDIUM / 0 LOW**. F-verdeling: F2 ×5 · F3 ×7 · **geen
+F4, geen F5**.
+
+**Twee dormante dragers.** `core/longitudinalTrend.js` en
+`core/nutritionIntelligence.js` zijn script-geladen maar hebben nul bewezen
+productie-callers, vastgesteld met een directe negatieve telling naast bewezen
+positieve tellingen van zustermodules in dezelfde bundel. Vastgelegd als
+`GAP-P3-035` en `GAP-P3-036`, beide criterium C, P3, blocker false. Geen van
+beide is SHADOW_ACTIVE: er is geen actieve parallelle implementatie.
+`nutritionDegradedStateClassifier` blijft TEST_ONLY.
 
 ### Canonieke Model-v1.2 trackresultaten — T7, T10 en T13 (Combined E/J)
 
@@ -366,6 +389,8 @@ repository-`source_ref`. Er zijn nul databasemutaties uitgevoerd en nul rijen ge
 | T4 | 2,943 / 58,86% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T5 | 2,471 / 49,42% | `AJ_AUDIT_BATCH_B_PRIME.json` |
 | T3 | 3,122 / 62,44% | `AJ_AUDIT_T3_PRIME.json` |
+| T9 | 3,038 / 60,76% | `AJ_AUDIT_T9_PRIME.json` |
+| T12 | 2,823 / 56,46% | `AJ_AUDIT_T12_PRIME.json` |
 | T7 | 3,051 / 61,02% | `AJ_AUDIT_T7_PRIME.json` |
 | T10 | 2,850 / 57,00% | `AJ_AUDIT_T10_PRIME.json` |
 | T13 | 2,982 / 59,64% | `AJ_AUDIT_T13_PRIME.json` |

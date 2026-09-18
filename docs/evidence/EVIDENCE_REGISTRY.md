@@ -1,6 +1,6 @@
 # EVIDENCE_REGISTRY.md — Trainingskompas Scientific Evidence Registry
 
-**Registry version:** 0.2-strength-hypertrophy-wave  
+**Registry version:** 0.3-recovery-readiness-wave  
 **Baseline:** `0dcb7cd542d97bcba13209f3ef9662384edc72f8`
 
 This registry stores evidence at source level. A source can support multiple calculations/rules, but every use must state applicability and limitations in the Scientific Audit Matrix.
@@ -27,6 +27,19 @@ This registry stores evidence at source level. A source can support multiple cal
 | EVID-STR-014 | Split/Frequency | Ramos-Campo DJ et al. 2024. *Split Versus Full-Body Resistance Training*. PMID 38595233. | Systematic review/meta-analysis | Resistance-trained/untrained study samples | Split vs full-body similar for strength/hypertrophy when volume equated | VERIFIED |
 | EVID-STR-015 | ROM | Schoenfeld/colleagues 2021. *Effects of range of motion on resistance training adaptations*. PMID 34170576. | Systematic review/meta-analysis | Resistance-training studies | Full ROM generally favored strength/lower-limb hypertrophy over partial ROM; context matters | VERIFIED |
 | EVID-STR-016 | RIR measurement | 2024 study, *Modeling the repetitions-in-reserve-velocity relationship*. PMID 38418370. | Validation study | 46 resistance-trained adults | Individual RIR-velocity relationships outperformed general relationships; reinforces individual/context dependence | VERIFIED |
+
+| EVID-REC-002 | HRV/training status | Bellenger CR et al. 2016. *Monitoring Athletic Training Status Through Autonomic Heart Rate Regulation*. Sports Med. PMID 26888648. | Systematic review/meta-analysis | Athletes | HRV/HRR can reflect adaptation, but positive adaptation and overreaching may overlap; additional measures needed | VERIFIED |
+| EVID-REC-003 | HRV-guided training | Düking P et al. 2021. *Heart Rate Variability-Guided Training...* PMID 34639599. | Methodological systematic review/meta-analysis | Endurance training | HRV-guided approaches may help; performance superiority small/uncertain; baseline methodology matters | VERIFIED |
+| EVID-REC-004 | HRV/recovery | 2023. *Influence of physical post-exercise recovery techniques on vagally-mediated HRV*. PMID 37754676. | Systematic review/meta-analysis | Exercise/recovery RCTs | RMSSD reflects autonomic/vagal recovery response, not local muscle recovery percentage | VERIFIED |
+| EVID-REC-005 | Subjective recovery | Saw AE et al. 2016. *Monitoring the athlete training response: subjective self-reported measures trump commonly used objective measures*. PMID 26423706. | Systematic review | Athletes; 56 studies | Subjective wellbeing is useful/sensitive monitoring context; objective and subjective measures often do not correlate | VERIFIED |
+| EVID-REC-006 | Soreness/wellbeing | Duignan C et al. 2020. *Single-Item Self-Report Measures of Team-Sport Athlete Wellbeing...* PMID 32991706. | Systematic review | Team-sport athletes | Soreness/fatigue/sleep/stress useful context but relationships with load are variable, often trivial-moderate | VERIFIED |
+| EVID-REC-007 | Load/recovery | 2025 meta-analysis. *The short-term relation between load and acute psychophysiological responses in football*. PMID 40159621. | Meta-analysis | 62 articles, 1474 football-code athletes | Load relates to wellbeing/soreness/fatigue/sleep, but certainty very low and prediction intervals wide | VERIFIED |
+| EVID-SLEEP-001 | Sleep/performance | Craven J et al. 2022. *Effects of Acute Sleep Loss on Physical Performance*. PMID 35708888. | Systematic review/meta-analysis | 69 publications; exercise-performance outcomes | Acute sleep loss impairs multiple physical-performance categories; large heterogeneity | VERIFIED |
+| EVID-SLEEP-002 | Sleep/endurance | 2023. *How much does sleep deprivation impair endurance performance?* PMID 36472094. | Systematic review/meta-analysis | Endurance performance | Moderate detrimental effect; longer-duration exercise more affected | VERIFIED |
+| EVID-SLEEP-003 | Sleep/athletes | Gong M et al. 2024. *Effects of Acute Sleep Deprivation on Sporting Performance in Athletes*. PMID 39006249. | Systematic review/meta-analysis | Athletes; 27 studies | Acute sleep deprivation impairs overall performance; effect differs by task/timing/protocol | VERIFIED |
+| EVID-SLEEP-004 | Sleep intervention | 2023. *The Impact of Sleep Interventions on Athletic Performance*. PMID 37462808. | Systematic review | Athletes; 25 studies | Supports sleep as modifiable performance/recovery context; intervention evidence heterogeneous | VERIFIED |
+| EVID-RHR-001 | Resting HR | Reimers AK et al. 2018. *Effects of Exercise on the Resting Heart Rate*. PMID 30513777. | Systematic review/meta-analysis | Healthy subjects; 191 studies | Training changes RHR; supports individual baseline context, not a specific acute readiness threshold | VERIFIED |
+| EVID-REC-008 | Recovery strategies | 2024. *Effectiveness of Recovery Strategies After Training and Competition in Endurance Athletes*. PMID 38753045. | Umbrella review | Endurance athletes; 22 reviews | Recovery is multidimensional/time-dependent; no single recovery strategy consistently superior | VERIFIED |
 
 ## Registry rules
 

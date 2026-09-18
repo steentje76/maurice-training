@@ -1,6 +1,6 @@
 # EVIDENCE_REGISTRY.md — Trainingskompas Scientific Evidence Registry
 
-**Registry version:** 0.3-recovery-readiness-wave  
+**Registry version:** 1.0-waves-1-through-9-complete  
 **Baseline:** `0dcb7cd542d97bcba13209f3ef9662384edc72f8`
 
 This registry stores evidence at source level. A source can support multiple calculations/rules, but every use must state applicability and limitations in the Scientific Audit Matrix.
@@ -40,6 +40,22 @@ This registry stores evidence at source level. A source can support multiple cal
 | EVID-SLEEP-004 | Sleep intervention | 2023. *The Impact of Sleep Interventions on Athletic Performance*. PMID 37462808. | Systematic review | Athletes; 25 studies | Supports sleep as modifiable performance/recovery context; intervention evidence heterogeneous | VERIFIED |
 | EVID-RHR-001 | Resting HR | Reimers AK et al. 2018. *Effects of Exercise on the Resting Heart Rate*. PMID 30513777. | Systematic review/meta-analysis | Healthy subjects; 191 studies | Training changes RHR; supports individual baseline context, not a specific acute readiness threshold | VERIFIED |
 | EVID-REC-008 | Recovery strategies | 2024. *Effectiveness of Recovery Strategies After Training and Competition in Endurance Athletes*. PMID 38753045. | Umbrella review | Endurance athletes; 22 reviews | Recovery is multidimensional/time-dependent; no single recovery strategy consistently superior | VERIFIED |
+
+| EVID-LOAD-001 | ACWR | 2025 systematic review/meta-analysis, PMID 41029871 | Systematic review/meta-analysis | Sports injury cohorts | Association reported but heterogeneous methods/applicability; not individual prediction/safe zone | VERIFIED |
+| EVID-END-001 | Endurance TID | Rosenblat et al. 2025, PMID 39888556 | Systematic review/IPD network meta-analysis | Endurance-trained athletes | TID effects context/subgroup dependent; no universal prescription | VERIFIED |
+| EVID-END-002 | Endurance TID | Li et al. 2026, PMID 42171506 | Bayesian network meta-analysis | Endurance athletes | No compared TID showed definite advantage over polarized for VO2max/TT; intervals crossed zero | VERIFIED |
+| EVID-NUT-002 | Energy availability/REDs | Mountjoy et al. 2023 IOC REDs consensus, DOI 10.1136/bjsports-2023-106994 | IOC consensus | Female and male athletes | LEA/REDs framework; app logging/wearable estimates cannot diagnose REDs | VERIFIED |
+| EVID-SUP-001 | Creatine | 2025 systematic review/meta-analysis, PMID 40944139 | Systematic review/meta-analysis | Adults, exercise/training studies | Small significant benefits for selected strength/power outcomes; not universal | VERIFIED |
+| EVID-SUP-002 | Caffeine | Grgic et al. umbrella review, PMID 30926628 | Umbrella review | Exercise performance meta-analyses | Ergogenic across several domains; evidence/individual response varies | VERIFIED |
+| EVID-SUP-003 | Nitrate | Poon et al. 2025, PMID 40085422 | Umbrella review of 20 meta-analyses | Exercise performance | Mixed outcome-specific effects; review quality often low/critically low | VERIFIED |
+| EVID-SUP-004 | Beta-alanine/bicarbonate | Curran-Bowen et al. 2024, PMID 38952910 | Systematic review/meta-analysis | Healthy adults | No clear pooled isolated effect in included combined-supplement evidence; task/protocol specific | VERIFIED |
+| EVID-WEAR-002 | Wearables | 2024 living umbrella review, PMID 39080098 | Living umbrella review | Consumer wearables | Validation sparse and metric/device-specific | VERIFIED |
+| EVID-WEAR-003 | Sleep wearables | Lee et al. 2025, PMID 39484805 | Meta-analysis vs PSG | Consumer wrist sleep devices | Significant errors across key sleep parameters; useful for trends with caution | VERIFIED |
+| EVID-WEAR-004 | Sleep wearables | 2026 systematic review, PMID 41946254 | Systematic review | Adults | Poor-moderate concordance with subjective sleep quality; population variation | VERIFIED |
+| EVID-FEM-001 | Menstrual cycle/performance | 2025 systematic review, PMID 40695607 | Systematic review, high-methodological-standard studies | Eumenorrheic females; 279 participants | Evidence small/heterogeneous; elite athletes underrepresented | VERIFIED |
+| EVID-FEM-002 | Cycle symptoms/performance | Stitelmann et al. 2026, PMID 41790346 | Scoping review | Female athletes | Symptoms/disorders affect multidimensional context; evidence heterogeneous | VERIFIED |
+| EVID-AI-001 | LLM exercise coaching | Lai et al. 2025, PMID 41086432 | Scoping review | LLM exercise/health coaching studies | Evaluation fragmented; low rigor common | VERIFIED |
+| EVID-AI-002 | LLM exercise recommendation | 2026 systematic review, PMID 42422387 | Systematic review | Exercise recommendation studies | Variable efficacy and material safety failures; supports non-autonomous AI role | VERIFIED |
 
 ## Registry rules
 

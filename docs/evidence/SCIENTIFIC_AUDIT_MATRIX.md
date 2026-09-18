@@ -1,6 +1,6 @@
 # SCIENTIFIC_AUDIT_MATRIX.md
 
-**Status:** Wave 1 (Strength/Hypertrophy/RPE-RIR/Progression/Warm-up/Rest) COMPLETE; Wave 2 pending.
+**Status:** Waves 1–2 COMPLETE; Wave 3 pending (Training load / sRPE / TRIMP / ACWR / longitudinal load).
 
 | TK ID | Domain | Calculation | Interpretation | Decision | Athlete/AI claim | Initial verdict | Priority | Evidence IDs | Next scientific action |
 |---|---|---|---|---|---|---|---|---|---|
@@ -13,7 +13,13 @@
 | CALC-STR-001 | Strength | e1RM estimate useful with exercise/rep limitations | Must remain estimate | Can feed prescription with inherited uncertainty | “Estimated 1RM” only | SUPPORTED_WITH_LIMITATIONS | V1-MEDIUM | existing formula-specific validation + EVID-STR-001 | No V1 blocker |
 | CALC-STR-004 | Strength | Deterministic warm-up ladder | Warm-up useful; exact ladder not validated | No hard scientific action | Editable warm-up suggestion | TECHNICAL_HEURISTIC_APPROPRIATE | V1-LOW | EVID-STR-009,EVID-STR-010 | No scientific blocker |
 | Hypertrophy weekly set volume | Hypertrophy | Muscle-level set construct needed | Dose-response exists, individual optimum uncertain | No universal minimum/maximum | Avoid “10 sets required” | SUPPORTED_WITH_LIMITATIONS | V1-HIGH | EVID-STR-001,EVID-STR-005 | SCI-GAP-V1-005 if used for decisions |
-| CALC-REC-* | Recovery | pending | HRV/RHR/sleep/recovery interpretation pending | downstream rules pending | No “HRV = muscle recovered” claim | NOT_YET_AUDITED | V1-CRITICAL | EVID-REC-001 | Wave 2 |
+| CALC-REC-001 | Recovery/HRV | Personal Ln-RMSSD rolling baseline defensible | Autonomic signal, not local muscle recovery | One component only | No diagnosis/forced rest | SUPPORTED_WITH_LIMITATIONS | V1-HIGH | EVID-REC-001,EVID-REC-002,EVID-REC-003 | Preserve baseline; provenance/method confidence |
+| CALC-REC-002 | Recovery | HRV×sleep×cycle arithmetic deterministic | Composite not physiologically validated | Feeds readiness rules | Derived TK index only | PRODUCT_COMPOSITE | V1-HIGH | EVID-REC-003,EVID-SLEEP-001 | SCI-GAP-V1-008 |
+| CALC-REC-003 | Recovery | Weighted 0–100 composite deterministic | 45/30/15/10 weights/bands unvalidated | Advisory context only | Never “% body recovered” | EXPERIMENTAL_PRODUCT_INDEX | V1-HIGH | EVID-REC-005,EVID-SLEEP-001 | SCI-GAP-V1-007 |
+| CALC-REC-004 | Recovery/RHR | Personal RHR delta descriptive | Nonspecific context signal | No standalone action | No causal/diagnostic claim | SUPPORTED_AS_CONTEXT | V1-HIGH | EVID-RHR-001 | SCI-GAP-V1-010 |
+| CALC-STR-005 | Local recovery | Time×RPE model deterministic | Does not validate physiological muscle-recovery % | Must not independently adjust training | “78% recovered” forbidden | OVERCLAIM_REDIRECT | V1-CRITICAL | EVID-REC-004,EVID-REC-005,EVID-REC-006 | SCI-GAP-V1-006: redesign as local recovery context |
+| DEC-RECADJ-001 | Recovery | n/a | Multi-signal adjustment concept plausible | Exact thresholds/deltas heuristic; muscle-% input overprecise | Advisory reasons/confidence | INPUT_AND_CLAIM_REVIEW | V1-CRITICAL | EVID-REC-005,EVID-REC-007 | SCI-GAP-V1-009 |
+| DEC-READY-001 | Readiness | n/a | Composite zone is product interpretation | ≥1.00/≥0.93 not validated thresholds | Advisory only | PRODUCT_HEURISTIC_RETAIN_WITH_GUARDRAIL | V1-HIGH | EVID-REC-003,EVID-SLEEP-001 | SCI-GAP-V1-012 |
 | CALC-LOAD-* | Load | pending | ACWR/load interpretation pending | ACWR guardrail currently documented intact | No injury prediction/safe zone | NOT_YET_AUDITED | V1-CRITICAL | — | Wave 3 |
 | NUTR-* | Nutrition | pending | logging ≠ deficiency already guarded | current rules context/data-only | no fabricated dose/deficiency | NOT_YET_AUDITED | V1-HIGH | EVID-NUT-001 | Wave 5 |
 | Wearable/provider metrics | Wearables | provider-specific | validity must be metric/device-specific | no direct action from low-validity metric alone | estimates labelled as estimates | NOT_YET_AUDITED | V1-HIGH | EVID-WEAR-001 | Wave 7 |

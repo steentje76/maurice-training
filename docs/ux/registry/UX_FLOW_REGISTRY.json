@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0",
+  "status": "FOUNDATION",
+  "flows": [],
+  "maintenance": "Populate from canonical Route Map/Rules and verified runtime. Do not copy stale handbook flow as runtime fact without verification."
+}

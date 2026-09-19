@@ -1,5 +1,5 @@
 (function(root){
-function createProposalPipeline({composer,validator,repository,exporter}){
+function createProposalPipeline({composer,validator,repository,exporter,readinessValidator=null}){
  if(!composer||!validator||!repository||!exporter)throw Error('Composer, validator, repository and exporter required');
  async function propose({proposalId,screenId,viewport,changes={},compositionOverride=null,selectedVariant=null}){
   if(!proposalId)throw Error('proposalId required');
@@ -17,7 +17,9 @@ function createProposalPipeline({composer,validator,repository,exporter}){
   const proposal=await repository.load();if(!proposal||proposal.id!==proposalId)throw Error('Proposal not found '+proposalId);
   if(proposal.status!=='APPROVED')throw Error('PROPOSAL_APPROVAL_REQUIRED');
   if(!proposal.validation||!proposal.validation.valid)throw Error('PROPOSAL_VALIDATION_BLOCKED');
-  const validation={...proposal.validation,freeze_ready:true,engine_version:'composition-v1',applicable_rule_ids:(proposal.validation.evidence||[]).map(x=>x.rule_id).filter(Boolean)};
+  const readiness=readinessValidator?readinessValidator({proposal,flow,scenario,sources,sourceSnapshot}):{valid:false,issues:[{code:'FREEZE_READINESS_VALIDATOR_REQUIRED',severity:'HARD'}]};
+  if(!readiness.valid)throw Error('FREEZE_READINESS_BLOCKED '+(readiness.issues||[]).map(x=>x.code).join(','));
+  const validation={...proposal.validation,freeze_ready:true,freeze_readiness:readiness,engine_version:'composition-v1',applicable_rule_ids:(proposal.validation.evidence||[]).map(x=>x.rule_id).filter(Boolean)};
   return exporter.exportBundle({flow,scenario,validation,sources,sourceSnapshot,selectedBy,approvedAt,proposal,repository:repositoryName,branchName});
  }
  return {propose,review,freeze}

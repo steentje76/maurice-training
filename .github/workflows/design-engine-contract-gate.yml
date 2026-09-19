@@ -92,6 +92,8 @@ jobs:
         run: node docs/design-engine/visual-studio-style-inspector.test.js
       - name: Visual Studio reference compare gate
         run: node docs/design-engine/visual-studio-reference-compare.test.js
+      - name: Visual Studio A B C variants gate
+        run: node docs/design-engine/visual-studio-variants.test.js
       - name: Full inline JavaScript parse gate
         run: node docs/design-engine/runtime-parse.test.js
       - name: Interaction handler syntax smoke gate

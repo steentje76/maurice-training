@@ -1,0 +1,16 @@
+const assert=require('assert'),P=require('./proposal-pipeline'),G=require('./generic-contract-exporter');
+(async()=>{
+ const repository={v:null,async save(x){this.v=x},async load(){return this.v}};
+ const composer={compose:()=>({instances:[],visual_variant:'A'})};
+ const validator={validate:()=>({valid:true,evidence:[]})};
+ const readinessValidator=()=>({valid:true,issues:[]});
+ const exporter=G.createGenericContractExporter();
+ const pipe=P.createProposalPipeline({composer,validator,repository,exporter,readinessValidator,productIdentity:'PACK-PRODUCT'});
+ await pipe.propose({proposalId:'P1',screenId:'S',selectedVariant:'A'});
+ await pipe.review('P1','APPROVED','PO');
+ const b=await pipe.freeze({proposalId:'P1',flow:{id:'F',goal:'g',invariants:[],nodes:[],edges:[]},scenario:{id:'S',capability_coverage:[],required_states:[],designed_states:[],accessibility:{}},sourceSnapshot:{verified_against_main:'abc',sources:{}},selectedBy:'PO',approvedAt:'now'});
+ assert.equal(b.freeze.product_identity,'PACK-PRODUCT');
+ assert.equal(b.contract.product_identity,'PACK-PRODUCT');
+ assert(!JSON.stringify(b).includes('Trainingskompas'));
+ console.log('GENERIC EXPORTER PIPELINE BINDING PASS');
+})().catch(e=>{console.error(e);process.exit(1)});

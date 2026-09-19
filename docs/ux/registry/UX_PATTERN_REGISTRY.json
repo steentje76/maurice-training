@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "status": "FOUNDATION",
+  "patterns": [],
+  "canonical_sources": [
+    "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+    "docs/ux/SCREEN_IMPLEMENTATION_STANDARD_v1.md",
+    "docs/ux/baseline/v1/README.md"
+  ],
+  "maintenance": "Patterns become canonical only after runtime/reference evidence and acceptance."
+}

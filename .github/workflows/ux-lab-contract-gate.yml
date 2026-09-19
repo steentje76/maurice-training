@@ -78,3 +78,5 @@ jobs:
         run: node docs/ux-lab/proposal-persistence-ui.test.js
       - name: Reference and semantic component gate
         run: node docs/ux-lab/reference-semantic-components.test.js
+      - name: Generic design-pack runtime gate
+        run: node docs/ux-lab/design-engine-core.test.js

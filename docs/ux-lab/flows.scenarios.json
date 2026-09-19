@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.1",
+  "schema_version": "2.20",
   "baseline_sha": "b7c77e4a2e5d8b995931a32b1c64ad559294c26b",
   "flows": [
     {
@@ -311,6 +311,196 @@
             "note",
             "coach-return",
             "finish"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-COACH-001",
+      "name": "Coach capability-aware flow",
+      "domain": "coach",
+      "primary_tab": "Coach",
+      "start": "FLOW-COACH-001-hub",
+      "goal": "FLOW-COACH-001-governed-design",
+      "invariants": [
+        "UX-PRES-001",
+        "UX-MATURITY-001"
+      ],
+      "nodes": [
+        {
+          "id": "FLOW-COACH-001-hub",
+          "label": "Coach",
+          "capabilities": [
+            "AI Coach",
+            "Mijn coach / coaches",
+            "Programma's & opdrachten",
+            "Feedback",
+            "Berichten"
+          ]
+        }
+      ],
+      "edges": [],
+      "scenarios": [
+        {
+          "id": "A",
+          "name": "Canonical capability-aware",
+          "intent": "Explore only capabilities whose maturity and evidence are explicit; non-user-ready required capabilities block freeze.",
+          "tap_estimate": 1,
+          "deviations": [],
+          "rule_status": "PASS_WITH_MATURITY_GATES",
+          "removed_capabilities": [],
+          "required_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "designed_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "data_bindings": [
+            {
+              "id": "capability-maturity",
+              "source": "capability-maturity.registry.json",
+              "ui_calculates": false,
+              "unknown_as_zero": false,
+              "unknown_as_green": false
+            }
+          ],
+          "components": [
+            {
+              "id": "capability-card",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 0
+            }
+          ],
+          "accessibility": {
+            "semantic_controls": true,
+            "icon_labels": true,
+            "keyboard": true,
+            "no_color_only": true
+          },
+          "capability_coverage": [
+            "AI Coach",
+            "Mijn coach / coaches",
+            "Programma's & opdrachten",
+            "Feedback",
+            "Berichten"
+          ],
+          "capability_maturity_domain": "coach",
+          "required_maturity_capabilities": [
+            "AI Coach"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FLOW-SAMEN-001",
+      "name": "Samen capability-aware flow",
+      "domain": "social",
+      "primary_tab": "Samen",
+      "start": "FLOW-SAMEN-001-hub",
+      "goal": "FLOW-SAMEN-001-governed-design",
+      "invariants": [
+        "UX-PRES-001",
+        "UX-MATURITY-001"
+      ],
+      "nodes": [
+        {
+          "id": "FLOW-SAMEN-001-hub",
+          "label": "Samen",
+          "capabilities": [
+            "Berichten",
+            "Feed",
+            "Connections",
+            "Groepen",
+            "Challenges",
+            "Teams",
+            "Gym / club"
+          ]
+        }
+      ],
+      "edges": [],
+      "scenarios": [
+        {
+          "id": "A",
+          "name": "Canonical capability-aware",
+          "intent": "Explore only capabilities whose maturity and evidence are explicit; non-user-ready required capabilities block freeze.",
+          "tap_estimate": 1,
+          "deviations": [],
+          "rule_status": "PASS_WITH_MATURITY_GATES",
+          "removed_capabilities": [],
+          "required_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "designed_states": [
+            "loading",
+            "empty",
+            "partial",
+            "error",
+            "offline",
+            "syncing",
+            "stale",
+            "permission_denied",
+            "connection_required"
+          ],
+          "data_bindings": [
+            {
+              "id": "capability-maturity",
+              "source": "capability-maturity.registry.json",
+              "ui_calculates": false,
+              "unknown_as_zero": false,
+              "unknown_as_green": false
+            }
+          ],
+          "components": [
+            {
+              "id": "capability-card",
+              "reuse_checked": true,
+              "new_component": false,
+              "primary_cta_count": 0
+            }
+          ],
+          "accessibility": {
+            "semantic_controls": true,
+            "icon_labels": true,
+            "keyboard": true,
+            "no_color_only": true
+          },
+          "capability_coverage": [
+            "Berichten",
+            "Feed",
+            "Connections",
+            "Groepen",
+            "Challenges",
+            "Teams",
+            "Gym / club"
+          ],
+          "capability_maturity_domain": "social",
+          "required_maturity_capabilities": [
+            "Berichten"
           ]
         }
       ]

@@ -1,0 +1,7 @@
+const assert=require('assert'),S=require('./screen-composer.js'),V=require('./composition-validation.js');
+const rules={rules:[{id:'UX-A11Y-001',statement:'label controls'},{id:'UX-CTA-001',statement:'one primary CTA'},{id:'DATA-CALC-001',statement:'UI does not calculate'}]};
+const pack={id:'PACK-ALPHA',components:{components:[{id:'BUTTON',type:'button',interactive:true},{id:'METRIC',type:'metric'}]},screens:{screens:[{id:'GOOD',instances:[{id:'go',component:'BUTTON',label:'Continue',primary_cta:true,rule_ids:['UX-CTA-001']},{id:'metric',component:'METRIC',data_binding:{source:'engine',ui_calculates:false,rule_id:'DATA-CALC-001'}}]},{id:'BAD',instances:[{id:'a',component:'BUTTON',primary_cta:true},{id:'b',component:'BUTTON',primary_cta:true},{id:'m',component:'METRIC',data_binding:{ui_calculates:true}}]}]}};
+const composer=S.createScreenComposer(pack),validator=V.createCompositionValidator({rules});
+let r=validator.validate(composer.compose('GOOD'));assert.equal(r.valid,true);assert.equal(r.hard_issue_count,0);assert(r.evidence.some(x=>x.rule_id==='UX-CTA-001'));assert(r.evidence.some(x=>x.source==='engine'));
+r=validator.validate(composer.compose('BAD'));assert.equal(r.valid,false);for(const code of ['A11Y_LABEL_MISSING','MULTIPLE_PRIMARY_CTA','UI_RECALCULATES','DATA_SOURCE_MISSING'])assert(r.issues.some(x=>x.code===code),code+' missing');
+console.log('V1 COMPOSITION VALIDATION + EVIDENCE PASS');

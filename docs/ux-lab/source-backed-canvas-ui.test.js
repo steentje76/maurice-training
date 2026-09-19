@@ -1,4 +1,4 @@
-const fs=require('fs');const h=fs.readFileSync(__dirname+'/index.html','utf8');function ok(x,m){if(!x)throw Error(m)}
+const fs=require('fs');const h=fs.readFileSync(__dirname+'/index.html','utf8');require('./test-version').requireUxLabVersion(h,2,9);function ok(x,m){if(!x)throw Error(m)}
 const required=['Next Best Action','Today Timeline','Progress snapshot · compact','Planning & kalender',"Programma's",'Mijn trainingen','Training maken','Historie','Prestaties','Recovery','Training load','Trends & correlaties',"Women's Performance",'Nutrition insights','AI Coach','Mijn coach / coaches',"Programma's & opdrachten",'Feedback','Berichten','Connections','Groepen','Challenges','Teams','Gym / club','Sportprofiel & doelen','Apparaten & verbindingen','Privacy & delen','Account & data'];
 for(const x of required)ok(h.includes(x),x+' missing');
 for(const x of ['Orchestreert alleen · rekent niets zelf','Taakgericht · geen analytics-dashboard','UI rekent nooit zelf · evidence/confidence zichtbaar','AI nooit als mens','health/recovery-data nooit automatisch','Geen bottom-tab · uitsluitend via avatar'])ok(h.includes(x),x+' guard missing');

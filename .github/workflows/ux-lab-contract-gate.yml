@@ -70,3 +70,5 @@ jobs:
         run: node docs/ux-lab/interactive-component-inspector.test.js
       - name: Generic multi-project core gate
         run: node docs/ux-lab/multiproject-core.test.js
+      - name: Guarded proposal editor gate
+        run: node docs/ux-lab/proposal-editor.test.js

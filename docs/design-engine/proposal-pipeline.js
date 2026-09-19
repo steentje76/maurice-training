@@ -1,5 +1,5 @@
 (function(root){
-function createProposalPipeline({composer,validator,repository,exporter,readinessValidator=null}){
+function createProposalPipeline({composer,validator,repository,exporter,readinessValidator=null,productIdentity=null}){
  if(!composer||!validator||!repository||!exporter)throw Error('Composer, validator, repository and exporter required');
  async function propose({proposalId,screenId,viewport,changes={},compositionOverride=null,selectedVariant=null}){
   if(!proposalId)throw Error('proposalId required');
@@ -20,7 +20,7 @@ function createProposalPipeline({composer,validator,repository,exporter,readines
   const readiness=readinessValidator?readinessValidator({proposal,flow,scenario,sources,sourceSnapshot}):{valid:false,issues:[{code:'FREEZE_READINESS_VALIDATOR_REQUIRED',severity:'HARD'}]};
   if(!readiness.valid)throw Error('FREEZE_READINESS_BLOCKED '+(readiness.issues||[]).map(x=>x.code).join(','));
   const validation={...proposal.validation,freeze_ready:true,freeze_readiness:readiness,engine_version:'composition-v1',applicable_rule_ids:(proposal.validation.evidence||[]).map(x=>x.rule_id).filter(Boolean)};
-  return exporter.exportBundle({flow,scenario,validation,sources,sourceSnapshot,selectedBy,approvedAt,proposal,repository:repositoryName,branchName});
+  return exporter.exportBundle({flow,scenario,validation,sources,sourceSnapshot,selectedBy,approvedAt,proposal,repository:repositoryName,branchName,productIdentity});
  }
  return {propose,review,freeze}
 }

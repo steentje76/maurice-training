@@ -12,7 +12,8 @@
  .mobileDock .governanceBtn{background:var(--accent);color:#082d27}
  .mobileDock .labBtn{display:none}
  .panelClose{display:block;position:sticky;top:0;z-index:2;width:100%;min-height:48px;margin:0 0 12px;border:1px solid #d6dfe3;border-radius:12px;background:#fff;font-weight:800}
- .panelBackdrop{display:none;position:fixed;z-index:35;inset:0;background:#0b1d2a66;pointer-events:none}\n .panelBackdrop.on{display:block;pointer-events:none}
+ .panelBackdrop{display:none;position:fixed;z-index:35;inset:0;background:#0b1d2a66;pointer-events:none}
+ .panelBackdrop.on{display:block;pointer-events:none}
  .panelBackdrop.on{display:block}
 }
 @media(max-width:760px){
@@ -21,7 +22,8 @@
  .side.open{transform:translateX(0)}
  .mobileDock .labBtn{display:block}
 }
- .composerControls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.composerControls button{border:1px solid #cfd9de;background:#fff;border-radius:10px;padding:8px 12px}.composerControls button.active{border-color:var(--accent);background:#e7f8f3;font-weight:800}.runtimeHealth{margin:8px 0 14px;padding:9px 10px;border-radius:10px;background:#f4f7f8;font-size:11px}.runtimeHealth.ready{color:#08745f}.runtimeHealth.error{color:#a22;background:#fff1f1} .projectHome{position:fixed;z-index:80;inset:0;background:#f4f7f8;padding:24px;overflow:auto}.projectHome.hidden{display:none}.projectHomeInner{max-width:760px;margin:30px auto}.projectGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.projectCard{background:#fff;border:1px solid #dfe5e8;border-radius:16px;padding:18px;text-align:left;min-height:130px}.projectCard:disabled{opacity:.55}.projectCard b{display:block;font-size:18px;margin-bottom:8px}\n</style><script src="./design-repository.js"></script><script src="./design-engine-core.js"></script><script src="./reference-diff.js"></script><script>
+ .composerControls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.composerControls button{border:1px solid #cfd9de;background:#fff;border-radius:10px;padding:8px 12px}.composerControls button.active{border-color:var(--accent);background:#e7f8f3;font-weight:800}.runtimeHealth{margin:8px 0 14px;padding:9px 10px;border-radius:10px;background:#f4f7f8;font-size:11px}.runtimeHealth.ready{color:#08745f}.runtimeHealth.error{color:#a22;background:#fff1f1} .projectHome{position:fixed;z-index:80;inset:0;background:#f4f7f8;padding:24px;overflow:auto}.projectHome.hidden{display:none}.projectHomeInner{max-width:760px;margin:30px auto}.projectGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.projectCard{background:#fff;border:1px solid #dfe5e8;border-radius:16px;padding:18px;text-align:left;min-height:130px}.projectCard:disabled{opacity:.55}.projectCard b{display:block;font-size:18px;margin-bottom:8px}
+</style><script src="./design-repository.js"></script><script src="./design-engine-core.js"></script><script src="./reference-diff.js"></script><script>
 window.designProjects=null;window.designRuntime=null;window.tkComponentRegistry=null;window.tkScreenCompositions=null;window.designReferences=null;
 (async function(){try{const load=async p=>(await fetch(p)).json();const p=await load('projects.registry.json');window.designProjects=p;window.designRuntime=DesignEngineCore.createProjectRuntime(p,load);const active=await window.designRuntime.activate(p.active_project_id);if(!active.ready)throw Error(active.reason);window.tkComponentRegistry=active.pack.components;window.tkScreenCompositions=active.pack.screens;window.designReferences=await load('reference-inputs.registry.json');document.dispatchEvent(new Event('tk:components-ready'));document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('runtimeHealth');if(el){el.className='runtimeHealth ready';el.textContent='Design Pack gereed'}})}catch(e){window.designRuntimeError=e;console.error('Design Engine model load failed',e);document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('runtimeHealth');if(el){el.className='runtimeHealth error';el.textContent='Design Pack kon niet laden · ververs of controleer bronbestanden'}})}})();
 </script></head><body><section id="projectHome" class="projectHome" aria-label="Design Engine projecten"><div class="projectHomeInner"><div class="brand">DESIGN ENGINE <span class="pill">v2.37</span></div><h1>Kies een project</h1><p>Open een Design Pack om de ontwerpworkspace te starten.</p><div class="projectGrid"><button class="projectCard" type="button" onclick="openDesignProject('trainingskompas')"><b>Trainingskompas</b><span>Actief Design Pack · openen</span></button><button class="projectCard" type="button" disabled><b>MedScan</b><span>Design Pack gepland</span></button><button class="projectCard" type="button" disabled><b>Radioplanner</b><span>Design Pack gepland</span></button><button class="projectCard" type="button" disabled><b>Reisplanner</b><span>Design Pack gepland</span></button></div></div></section><div class="app">
@@ -39,7 +41,8 @@ window.designProjects=null;window.designRuntime=null;window.tkComponentRegistry=
  <button class="governanceBtn" id="governanceBtn" onclick="openMobilePanel('governance')" aria-controls="governancePanel" aria-expanded="false">Governance</button>
 </nav>
 <script>
-function openDesignProject(id){if(id!=='trainingskompas')return;const home=document.getElementById('projectHome');if(home)home.classList.add('hidden');const picker=document.getElementById('projectPicker');if(picker)picker.value=id;sessionStorage.setItem('design-engine-project',id);if(typeof render==='function')render()}\nfunction showProjectHome(){const home=document.getElementById('projectHome');if(home)home.classList.remove('hidden')}
+function openDesignProject(id){if(id!=='trainingskompas')return;const home=document.getElementById('projectHome');if(home)home.classList.add('hidden');const picker=document.getElementById('projectPicker');if(picker)picker.value=id;sessionStorage.setItem('design-engine-project',id);if(typeof render==='function')render()}
+function showProjectHome(){const home=document.getElementById('projectHome');if(home)home.classList.remove('hidden')}
 function setComposerMode(mode){composerMode=mode;document.querySelectorAll('#composerControls button').forEach(function(b){b.classList.toggle('active',b.dataset.mode===mode)});render()}
 function selectTkComponent(id){selectedComponentId=id;render();if(innerWidth<=1050)openMobilePanel('governance')}
 function proposalFor(id){return proposalOverrides[id]||{}}
@@ -158,7 +161,8 @@ render();restoreProposal();
 </script><script>
 function freezeSelected(){
  const r=(window.tkValidationResults||[]).find(x=>x.scenario_id===scenario), out=document.getElementById("contractOut");
- if(composerMode!=="proposal"){out.value="DESIGN FREEZE BLOCKED\nSelecteer Proposal mode voordat je bevriest.";return;}
+ if(composerMode!=="proposal"){out.value="DESIGN FREEZE BLOCKED
+Selecteer Proposal mode voordat je bevriest.";return;}
  if(!r||!r.freeze_ready){out.value="DESIGN FREEZE BLOCKED
 Hard validation issues: "+(r?r.hard_issue_count:"?")+"
 Unresolved HARD conflicts: "+(r?r.hard_conflict_count:"?");return;}

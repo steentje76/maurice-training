@@ -68,3 +68,5 @@ jobs:
         run: node docs/ux-lab/test-version.test.js
       - name: Interactive component inspector gate
         run: node docs/ux-lab/interactive-component-inspector.test.js
+      - name: Generic multi-project core gate
+        run: node docs/ux-lab/multiproject-core.test.js

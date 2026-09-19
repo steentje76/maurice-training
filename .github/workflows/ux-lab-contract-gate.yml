@@ -56,3 +56,5 @@ jobs:
         run: node docs/ux-lab/multiflow-governance.test.js
       - name: Multi-flow freeze handoff gate
         run: node docs/ux-lab/multiflow-freeze-handoff.test.js
+      - name: TK-native visual screen composer gate
+        run: node docs/ux-lab/visual-screen-composer.test.js

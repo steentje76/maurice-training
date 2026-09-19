@@ -86,6 +86,8 @@ jobs:
         run: node docs/design-engine/visual-studio.test.js
       - name: Visual Studio visible UI gate
         run: node docs/design-engine/visual-studio-ui.test.js
+      - name: Visual Studio drag and style gate
+        run: node docs/design-engine/visual-studio-drag-style.test.js
       - name: Full inline JavaScript parse gate
         run: node docs/design-engine/runtime-parse.test.js
       - name: Interaction handler syntax smoke gate

@@ -20,6 +20,8 @@ jobs:
         run: node docs/design-engine/contract-exporter.test.js
       - name: Generic contract exporter gate
         run: node docs/design-engine/generic-contract-exporter.test.js
+      - name: Generic implementation contract semantics gate
+        run: node docs/design-engine/generic-contract-semantics.test.js
       - name: Generic exporter pipeline binding gate
         run: node docs/design-engine/generic-exporter-pipeline.test.js
       - name: End-to-end freeze contract drift gate

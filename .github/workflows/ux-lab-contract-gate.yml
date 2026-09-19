@@ -52,3 +52,5 @@ jobs:
         run: node docs/ux-lab/recovery-flow-ui.test.js
       - name: Maturity registry validator integration gate
         run: node docs/ux-lab/maturity-validator-integration.test.js
+      - name: Multi-flow governance gate
+        run: node docs/ux-lab/multiflow-governance.test.js

@@ -54,3 +54,5 @@ jobs:
         run: node docs/ux-lab/maturity-validator-integration.test.js
       - name: Multi-flow governance gate
         run: node docs/ux-lab/multiflow-governance.test.js
+      - name: Multi-flow freeze handoff gate
+        run: node docs/ux-lab/multiflow-freeze-handoff.test.js

@@ -1,0 +1,4 @@
+(function(root){
+function createProjectRuntime(registry,loadJson){if(!registry||!Array.isArray(registry.projects))throw Error('Project registry required');const byId=id=>registry.projects.find(p=>p.id===id);async function activate(id){const project=byId(id);if(!project)throw Error('Unknown project '+id);if(project.status!=='ACTIVE')return {project,ready:false,reason:'PROJECT_NOT_ACTIVE'};const pack={project};if(project.component_registry)pack.components=await loadJson(project.component_registry);if(project.screen_compositions)pack.screens=await loadJson(project.screen_compositions);return {project,pack,ready:true}}return {projectIds:()=>registry.projects.map(p=>p.id),getProject:byId,activate}}
+const api={createProjectRuntime};if(typeof module!=='undefined')module.exports=api;root.DesignEngineCore=api;
+})(typeof window!=='undefined'?window:globalThis);

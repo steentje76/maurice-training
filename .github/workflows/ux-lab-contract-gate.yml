@@ -72,3 +72,7 @@ jobs:
         run: node docs/ux-lab/multiproject-core.test.js
       - name: Guarded proposal editor gate
         run: node docs/ux-lab/proposal-editor.test.js
+      - name: Persistence repository gate
+        run: node docs/ux-lab/design-repository.test.js
+      - name: Proposal persistence UI gate
+        run: node docs/ux-lab/proposal-persistence-ui.test.js

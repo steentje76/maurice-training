@@ -12,7 +12,7 @@
  .mobileDock .governanceBtn{background:var(--accent);color:#082d27}
  .mobileDock .labBtn{display:none}
  .panelClose{display:block;position:sticky;top:0;z-index:2;width:100%;min-height:48px;margin:0 0 12px;border:1px solid #d6dfe3;border-radius:12px;background:#fff;font-weight:800}
- .panelBackdrop{position:fixed;z-index:35;inset:0;background:#0b1d2a66}
+ .panelBackdrop{display:none;position:fixed;z-index:35;inset:0;background:#0b1d2a66;pointer-events:none}\n .panelBackdrop.on{display:block;pointer-events:auto}
  .panelBackdrop.on{display:block}
 }
 @media(max-width:760px){

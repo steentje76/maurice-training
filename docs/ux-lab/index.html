@@ -38,7 +38,9 @@ window.designProjects=null;window.designRuntime=null;window.tkComponentRegistry=
  <button class="labBtn" id="labBtn" onclick="openMobilePanel('lab')" aria-controls="labPanel" aria-expanded="false">Lab</button>
  <button class="governanceBtn" id="governanceBtn" onclick="openMobilePanel('governance')" aria-controls="governancePanel" aria-expanded="false">Governance</button>
 </nav>
-<script>\nfunction openDesignProject(id){if(id!=='trainingskompas')return;const home=document.getElementById('projectHome');if(home)home.classList.add('hidden');const picker=document.getElementById('projectPicker');if(picker)picker.value=id;sessionStorage.setItem('design-engine-project',id)}\nfunction showProjectHome(){const home=document.getElementById('projectHome');if(home)home.classList.remove('hidden')}\nfunction setComposerMode(mode){composerMode=mode;document.querySelectorAll('#composerControls button').forEach(function(b){b.classList.toggle('active',b.dataset.mode===mode)});render()}
+<script>
+function openDesignProject(id){if(id!=='trainingskompas')return;const home=document.getElementById('projectHome');if(home)home.classList.add('hidden');const picker=document.getElementById('projectPicker');if(picker)picker.value=id;sessionStorage.setItem('design-engine-project',id)}\nfunction showProjectHome(){const home=document.getElementById('projectHome');if(home)home.classList.remove('hidden')}
+function setComposerMode(mode){composerMode=mode;document.querySelectorAll('#composerControls button').forEach(function(b){b.classList.toggle('active',b.dataset.mode===mode)});render()}
 function selectTkComponent(id){selectedComponentId=id;render();if(innerWidth<=1050)openMobilePanel('governance')}
 function proposalFor(id){return proposalOverrides[id]||{}}
 function proposalLabel(id,fallback){if(composerMode!=='proposal')return fallback;const v=proposalFor(id).label;return typeof v==='string'&&v.trim()?v.trim():fallback}

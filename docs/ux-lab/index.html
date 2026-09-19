@@ -36,10 +36,10 @@
  <button class="governanceBtn" id="governanceBtn" onclick="openMobilePanel('governance')" aria-controls="governancePanel" aria-expanded="false">Governance</button>
 </nav>
 <script>
-function closeMobilePanels(){document.getElementById('labPanel').classList.remove('open');document.getElementById('governancePanel').classList.remove('open');document.getElementById('panelBackdrop').classList.remove('on');document.getElementById('labBtn').setAttribute('aria-expanded','false');document.getElementById('governanceBtn').setAttribute('aria-expanded','false');}
+function setComposerMode(mode){composerMode=mode;document.querySelectorAll('#composerControls button').forEach(function(b){b.classList.toggle('active',b.dataset.mode===mode)});render()}\nfunction closeMobilePanels(){document.getElementById('labPanel').classList.remove('open');document.getElementById('governancePanel').classList.remove('open');document.getElementById('panelBackdrop').classList.remove('on');document.getElementById('labBtn').setAttribute('aria-expanded','false');document.getElementById('governanceBtn').setAttribute('aria-expanded','false');}
 function openMobilePanel(which){closeMobilePanels();const panel=document.getElementById(which==='lab'?'labPanel':'governancePanel'),btn=document.getElementById(which==='lab'?'labBtn':'governanceBtn');panel.classList.add('open');document.getElementById('panelBackdrop').classList.add('on');btn.setAttribute('aria-expanded','true');const close=panel.querySelector('.panelClose');if(close)close.focus();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMobilePanels()});
-let scenario='B',currentStep=0,compareOn=false,labView='flows',canvas='train',domain=null,profileDomain=null,recoveryStep=null;window.tkCapabilityMaturity=null;window.tkRules=null;window.tkSources=null;window.tkSnapshot=null; window.tkFreeze=null; window.tkBundle=null;
+let scenario='B',currentStep=0,compareOn=false,labView='flows',canvas='train',domain=null,profileDomain=null,recoveryStep=null,composerMode='canonical';window.tkCapabilityMaturity=null;window.tkRules=null;window.tkSources=null;window.tkSnapshot=null; window.tkFreeze=null; window.tkBundle=null;
 const labCatalog={
  flows:[
  ['FLOW-TRAIN-001','Trainen → Preview → Execution','Canonical execution flow; active state protected.'],

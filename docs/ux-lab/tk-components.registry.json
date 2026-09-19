@@ -1,0 +1,76 @@
+{
+  "schema_version": "2.24",
+  "id": "TK-COMPONENT-REGISTRY",
+  "source_hierarchy": [
+    "docs/ux/baseline/v1/README.md",
+    "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+    "docs/ux/SCREEN_IMPLEMENTATION_STANDARD_v1.md"
+  ],
+  "components": [
+    {
+      "id": "COMP-PAGE-HEADER",
+      "type": "page_header",
+      "icon_style": "outline",
+      "source": "canonical"
+    },
+    {
+      "id": "COMP-AVATAR",
+      "type": "avatar",
+      "icon_style": "outline",
+      "source": "canonical"
+    },
+    {
+      "id": "COMP-SECTION-LABEL",
+      "type": "section_label",
+      "source": "canonical"
+    },
+    {
+      "id": "COMP-CONTENT-CARD",
+      "type": "content_card",
+      "radius_px": 16,
+      "source": "canonical"
+    },
+    {
+      "id": "COMP-TRAINING-NEXT",
+      "type": "next_training",
+      "source": "canonical"
+    },
+    {
+      "id": "COMP-DESTINATION-CARD",
+      "type": "destination_card",
+      "icon_style": "outline",
+      "source": "canonical"
+    },
+    {
+      "id": "COMP-ACTIVITY-TILE",
+      "type": "activity_tile",
+      "icon_style": "outline",
+      "source": "canonical"
+    },
+    {
+      "id": "COMP-CTA-PRIMARY",
+      "type": "primary_cta",
+      "height_px": 51,
+      "radius_px": 14,
+      "token": "primary-cta",
+      "source": "canonical"
+    },
+    {
+      "id": "COMP-BOTTOM-NAV",
+      "type": "bottom_navigation",
+      "icon_style": "outline",
+      "source": "canonical"
+    }
+  ],
+  "tokens": {
+    "primary-cta": "#00B894",
+    "structural-navy": "#0E3B4A",
+    "content-card-radius-px": 16,
+    "page-inset-px": 18
+  },
+  "rules": [
+    "No emoji structural icons",
+    "Reference is visual input, not functional source of truth",
+    "Mock-up omission never removes canonical capability"
+  ]
+}

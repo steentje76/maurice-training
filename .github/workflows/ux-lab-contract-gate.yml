@@ -82,4 +82,6 @@ jobs:
         run: node docs/ux-lab/design-engine-core.test.js
       - name: Full inline JavaScript parse gate
         run: node docs/ux-lab/runtime-parse.test.js
+      - name: Interaction handler syntax smoke gate
+        run: node docs/ux-lab/interaction-syntax-smoke.test.js
 

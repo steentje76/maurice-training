@@ -93,5 +93,5 @@ jobs:
       - name: Real mobile browser interaction smoke
         run: |
           python3 -m http.server 4173 --directory docs/design-engine >/tmp/ux-lab-http.log 2>&1 &
-          npx playwright test docs/design-engine/browser-smoke.spec.js --reporter=line
+          npx playwright test docs/design-engine/browser-smoke.spec.js docs/design-engine/interaction-visual-browser.spec.js --reporter=line
 

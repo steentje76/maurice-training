@@ -1,0 +1,20 @@
+{
+  "schema_version": "2.27",
+  "engine": {"id":"DESIGN-ENGINE-CORE","product_specific":false},
+  "active_project_id": "trainingskompas",
+  "projects": [
+    {
+      "id":"trainingskompas",
+      "name":"Trainingskompas",
+      "design_pack":"TK-DESIGN-PACK",
+      "status":"ACTIVE",
+      "component_registry":"tk-components.registry.json",
+      "screen_compositions":"screen-compositions.json",
+      "persistence":{"provider":"supabase","project_ref":"byvrmgxyvwqfshabrxie"},
+      "guardrails":["Project-specific rules stay in the design pack","Production Trainingskompas data is never stored in the Design Engine persistence project"]
+    },
+    {"id":"medscan","name":"MedScan","design_pack":null,"status":"PLANNED"},
+    {"id":"radioplanner","name":"Radioplanner","design_pack":null,"status":"PLANNED"},
+    {"id":"reisplanner","name":"Reisplanner","design_pack":null,"status":"PLANNED"}
+  ]
+}

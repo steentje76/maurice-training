@@ -1,4 +1,4 @@
-const fs=require('fs');const h=fs.readFileSync(__dirname+'/index.html','utf8');function ok(x,m){if(!x)throw Error(m)}
+const fs=require('fs');const h=fs.readFileSync(__dirname+'/index.html','utf8');require('./test-version').requireUxLabVersion(h,2,10);function ok(x,m){if(!x)throw Error(m)}
 for(const x of ['const insightDomains','function openDomain','function closeDomain','Herstel & belasting anatomie','Alle spiergroepen','Gezondheid & herstel · HRV / rusthartslag / slaap','Volume per spiergroep','Consistentie','Lichaamsmetingen','Verbanden · correlaties','PR per herhaling','Geschatte 1RM','Roei progressie','Cardio records','Cyclus','PRESERVED · DRILL-DOWN','INZICHT_V01_FUNCTIONAL_PRESERVATION_MATRIX.md'])ok(h.includes(x),x+' missing');
 for(const x of ['correlatie ≠ causaliteit','ACWR nooit als blessurevoorspeller','sensitive · opt-in · géén automatische tile'])ok(h.includes(x),x+' guard missing');
 ok(h.includes("canvas==='insight'&&domain"),'drilldown renderer missing');console.log('UX Lab v2.10 Inzicht drill-down gate: PASS');

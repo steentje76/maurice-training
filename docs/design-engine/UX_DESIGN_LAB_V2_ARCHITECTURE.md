@@ -1,10 +1,10 @@
-# Trainingskompas UX Design Lab v2 — Architecture
+# UX Design Engine — Architecture
 
-Status: FOUNDATION DRAFT — isolated branch, no runtime impact.
+Status: GENERIC DESIGN ENGINE — product-agnostic core with isolated Design Packs.
 Baseline main: b7c77e4a2e5d8b995931a32b1c64ad559294c26b (2026-09-18).
 
 ## Goal
-Create a pre-implementation UX environment that reads canonical Trainingskompas rules, preserves capabilities, explores multiple screen/flow scenarios, validates them against rules, and emits a frozen implementation contract for Claude only after Product Owner approval.
+Create a product-agnostic pre-implementation UX environment. The engine loads isolated Design Packs per product, preserves each product's canonical capabilities and rules, explores screen/flow scenarios, validates them, and emits a frozen implementation contract only after Product Owner approval. Trainingskompas is Design Pack #1, not the identity of the engine.
 
 ## Source hierarchy
 Visual composition: canonical UX PNG baseline > TRAININGSKOMPAS_DESIGN_SYSTEM_V1 > runtime.
@@ -52,7 +52,7 @@ ImplementationContract: frozen scenario + source SHA + rule IDs + components + s
 11. Design Freeze Engine — only PO-selected scenario becomes buildable.
 12. Contract Exporter — emits Claude-ready implementation contract and test checklist.
 
-## UX Lab web UI
+## Design Engine web UI
 Left: Flows, Screens, Scenarios, Rules, Components, Conflicts.
 Center: interactive phone frame; switch 320/360/390/430 and light/dark; click through whole flow.
 Right: selected scenario inspector with applicable rules, capability preservation, routes, states, data sources, deviations and PO decisions.
@@ -72,7 +72,7 @@ Evidence mode: click any visible element → why it exists, source rule IDs, dat
 - PO explicitly selects scenario and freezes it.
 
 ## Important repository finding
-The current repository already contains enough normative material to seed this system, but it is not yet one coherent machine-readable rulebase. There are stale/overlapping documents. Example: Design System v1 approves teal as primary CTA, while Handbook H7 still specifies a navy primary button in light mode. The lab must surface this as a source conflict rather than letting Claude choose silently.
+The Trainingskompas Design Pack already has enough normative repository material to seed the engine, but it is not yet one coherent machine-readable rulebase. There are stale/overlapping documents. Example: Design System v1 approves teal as primary CTA, while Handbook H7 still specifies a navy primary button in light mode. The lab must surface this as a source conflict rather than letting Claude choose silently.
 
 ## Phase plan
 V2.0 Foundation: registry + source hierarchy + conflict detection + route rules + baseline screen metadata.

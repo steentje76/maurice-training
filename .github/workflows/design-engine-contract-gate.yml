@@ -84,6 +84,8 @@ jobs:
         run: node docs/design-engine/runtime-parse.test.js
       - name: Interaction handler syntax smoke gate
         run: node docs/design-engine/interaction-syntax-smoke.test.js
+      - name: V1 interaction visual states gate
+        run: node docs/design-engine/interaction-visual-states.test.js
       - name: Install browser smoke runtime
         run: |
           npm install --no-save --ignore-scripts @playwright/test@1.55.0

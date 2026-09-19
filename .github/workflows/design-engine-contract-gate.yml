@@ -85,9 +85,11 @@ jobs:
       - name: Interaction handler syntax smoke gate
         run: node docs/design-engine/interaction-syntax-smoke.test.js
       - name: Install browser smoke runtime
-        run: npx -y playwright@1.55.0 install --with-deps chromium
+        run: |
+          npm install --no-save --ignore-scripts @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
       - name: Real mobile browser interaction smoke
         run: |
           python3 -m http.server 4173 --directory docs/design-engine >/tmp/ux-lab-http.log 2>&1 &
-          npx -y -p @playwright/test@1.55.0 playwright test docs/design-engine/browser-smoke.spec.js --reporter=line
+          npx playwright test docs/design-engine/browser-smoke.spec.js --reporter=line
 

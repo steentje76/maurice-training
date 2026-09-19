@@ -87,5 +87,7 @@ jobs:
       - name: Install browser smoke runtime
         run: npx -y playwright@1.55.0 install --with-deps chromium
       - name: Real mobile browser interaction smoke
-        run: npx -y -p @playwright/test@1.55.0 playwright test docs/ux-lab/browser-smoke.spec.js --reporter=line
+        run: |
+          python3 -m http.server 4173 --directory docs/ux-lab >/tmp/ux-lab-http.log 2>&1 &
+          npx -y -p @playwright/test@1.55.0 playwright test docs/ux-lab/browser-smoke.spec.js --reporter=line
 

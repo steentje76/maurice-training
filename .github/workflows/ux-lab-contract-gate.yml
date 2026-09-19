@@ -64,3 +64,5 @@ jobs:
         run: node docs/ux-lab/component-registry.test.js
       - name: Component model loader gate
         run: node docs/ux-lab/component-model-loader.test.js
+      - name: Shared forward-version helper gate
+        run: node docs/ux-lab/test-version.test.js

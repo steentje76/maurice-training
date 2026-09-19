@@ -1,10 +1,11 @@
 (function(root){
 function createProposalPipeline({composer,validator,repository,exporter}){
  if(!composer||!validator||!repository||!exporter)throw Error('Composer, validator, repository and exporter required');
- async function propose({proposalId,screenId,viewport,changes={}}){
+ async function propose({proposalId,screenId,viewport,changes={},compositionOverride=null,selectedVariant=null}){
   if(!proposalId)throw Error('proposalId required');
-  const composition=composer.compose(screenId,{viewport});
-  const proposal={id:proposalId,status:'PROPOSED',screen_id:screenId,composition,changes,validation:validator.validate(composition)};
+  const composition=compositionOverride||composer.compose(screenId,{viewport});
+  const validation=validator.validate(composition);
+  const proposal={id:proposalId,status:'PROPOSED',screen_id:screenId,composition,changes,selected_variant:selectedVariant||composition.visual_variant||null,validation};
   await repository.save(proposal);return proposal;
  }
  async function review(proposalId,decision,reviewer){
@@ -16,7 +17,7 @@ function createProposalPipeline({composer,validator,repository,exporter}){
   const proposal=await repository.load();if(!proposal||proposal.id!==proposalId)throw Error('Proposal not found '+proposalId);
   if(proposal.status!=='APPROVED')throw Error('PROPOSAL_APPROVAL_REQUIRED');
   if(!proposal.validation||!proposal.validation.valid)throw Error('PROPOSAL_VALIDATION_BLOCKED');
-  const validation={...proposal.validation,freeze_ready:true,engine_version:'composition-v1',applicable_rule_ids:(proposal.validation.evidence||[]).map(x=>x.rule_id).filter(Boolean),hard_conflict_count:0,route_pass:true,evidence_pass:true,capability_pass:true,state_pass:true,a11y_pass:true,source_pass:true,coverage_pass:true,source_invalidation:{scenario_invalidated:false}};
+  const validation={...proposal.validation,freeze_ready:true,engine_version:'composition-v1',applicable_rule_ids:(proposal.validation.evidence||[]).map(x=>x.rule_id).filter(Boolean)};
   return exporter.exportBundle({flow,scenario,validation,sources,sourceSnapshot,selectedBy,approvedAt,proposal,repository:repositoryName,branchName});
  }
  return {propose,review,freeze}

@@ -60,3 +60,5 @@ jobs:
         run: node docs/ux-lab/visual-screen-composer.test.js
       - name: Composer source mode gate
         run: node docs/ux-lab/composer-mode-controls.test.js
+      - name: Canonical component registry and composition gate
+        run: node docs/ux-lab/component-registry.test.js

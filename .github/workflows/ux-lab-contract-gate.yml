@@ -66,3 +66,5 @@ jobs:
         run: node docs/ux-lab/component-model-loader.test.js
       - name: Shared forward-version helper gate
         run: node docs/ux-lab/test-version.test.js
+      - name: Interactive component inspector gate
+        run: node docs/ux-lab/interactive-component-inspector.test.js

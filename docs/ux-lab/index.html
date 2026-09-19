@@ -173,9 +173,6 @@ function exportContract(){
  if(!window.tkFreeze)return;const flow=window.tkFlow,sc=flow.scenarios.find(x=>x.id===scenario);
  const contract=TKContract.createContract({freeze:window.tkFreeze,flow:flow,scenario:sc,repository:"steentje76/maurice-training"});
  window.tkBundle={freeze:window.tkFreeze,contract:contract,claude_prompt:TKContract.claudePrompt(contract)};
- document.getElementById("contractOut").value=window.tkBundle.claude_prompt+"
-
---- MACHINE CONTRACT ---
-"+JSON.stringify(contract,null,2);
+ document.getElementById("contractOut").value=window.tkBundle.claude_prompt+"\\n\\n--- MACHINE CONTRACT ---\\n"+JSON.stringify(contract,null,2);
 }
 </script></body></html>

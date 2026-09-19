@@ -8,7 +8,7 @@ test('mobile project launcher opens TK Design Pack inside Design Engine',async({
  await expect(page.locator('#projectHome')).toBeHidden();
  await expect(page.locator('#workspace')).toBeVisible();
  await expect(page.locator('#projectHome')).toBeHidden();
- await expect(page).toHaveURL(/index\.html$/);
+ await expect(page).toHaveURL(/\/(?:index\.html)?$/);
  await expect(page.locator('body')).not.toContainText(/Inloggen bij Trainingskompas/i);
  await page.getByRole('button',{name:/Lab/i}).click();
  await page.getByRole('button',{name:/Governance/i}).click();

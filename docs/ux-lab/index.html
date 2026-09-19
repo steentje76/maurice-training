@@ -161,8 +161,7 @@ render();restoreProposal();
 </script><script>
 function freezeSelected(){
  const r=(window.tkValidationResults||[]).find(x=>x.scenario_id===scenario), out=document.getElementById("contractOut");
- if(composerMode!=="proposal"){out.value="DESIGN FREEZE BLOCKED
-Selecteer Proposal mode voordat je bevriest.";return;}
+ if(composerMode!=="proposal"){out.value="DESIGN FREEZE BLOCKED\\nSelecteer Proposal mode voordat je bevriest.";return;}
  if(!r||!r.freeze_ready){out.value="DESIGN FREEZE BLOCKED
 Hard validation issues: "+(r?r.hard_issue_count:"?")+"
 Unresolved HARD conflicts: "+(r?r.hard_conflict_count:"?");return;}

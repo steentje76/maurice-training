@@ -162,9 +162,7 @@ render();restoreProposal();
 function freezeSelected(){
  const r=(window.tkValidationResults||[]).find(x=>x.scenario_id===scenario), out=document.getElementById("contractOut");
  if(composerMode!=="proposal"){out.value="DESIGN FREEZE BLOCKED\\nSelecteer Proposal mode voordat je bevriest.";return;}
- if(!r||!r.freeze_ready){out.value="DESIGN FREEZE BLOCKED
-Hard validation issues: "+(r?r.hard_issue_count:"?")+"
-Unresolved HARD conflicts: "+(r?r.hard_conflict_count:"?");return;}
+ if(!r||!r.freeze_ready){out.value="DESIGN FREEZE BLOCKED\\nHard validation issues: "+(r?r.hard_issue_count:"?")+"\\nUnresolved HARD conflicts: "+(r?r.hard_conflict_count:"?");return;}
  const flow=window.tkFlow,sc=flow.scenarios.find(x=>x.id===scenario);
  window.tkFreeze=TKContract.createFreeze({flow:flow,scenario:sc,validation:r,sources:window.tkSources,sourceSnapshot:window.tkSnapshot,selectedBy:"Product Owner",approvedAt:new Date().toISOString(),proposal:{mode:composerMode,overrides:composerMode==="proposal"?proposalOverrides:{}}});
  out.value=JSON.stringify(window.tkFreeze,null,2);document.getElementById("exportBtn").disabled=false;

@@ -50,3 +50,5 @@ jobs:
         run: node docs/ux-lab/integrated-design-intelligence.test.js
       - name: Nested recovery flow gate
         run: node docs/ux-lab/recovery-flow-ui.test.js
+      - name: Maturity registry validator integration gate
+        run: node docs/ux-lab/maturity-validator-integration.test.js

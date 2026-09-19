@@ -88,6 +88,8 @@ jobs:
         run: node docs/design-engine/design-engine-core.test.js
       - name: V1 full generic pipeline release gate
         run: node docs/design-engine/v1-full-pipeline.test.js
+      - name: V1 browser UI generic pipeline binding gate
+        run: node docs/design-engine/v1-ui-generic-pipeline.test.js
       - name: Visual Studio reference order style gate
         run: node docs/design-engine/visual-studio.test.js
       - name: Visual Studio visible UI gate

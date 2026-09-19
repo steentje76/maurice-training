@@ -96,6 +96,8 @@ jobs:
         run: node docs/design-engine/visual-studio-variants.test.js
       - name: Visual Studio variant compare selection gate
         run: node docs/design-engine/visual-studio-variant-compare.test.js
+      - name: Selected visual variant proposal validation gate
+        run: node docs/design-engine/selected-variant-proposal-validation.test.js
       - name: Full inline JavaScript parse gate
         run: node docs/design-engine/runtime-parse.test.js
       - name: Interaction handler syntax smoke gate

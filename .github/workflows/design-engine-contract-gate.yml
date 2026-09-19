@@ -82,6 +82,8 @@ jobs:
         run: node docs/design-engine/design-engine-core.test.js
       - name: V1 full generic pipeline release gate
         run: node docs/design-engine/v1-full-pipeline.test.js
+      - name: Visual Studio reference order style gate
+        run: node docs/design-engine/visual-studio.test.js
       - name: Full inline JavaScript parse gate
         run: node docs/design-engine/runtime-parse.test.js
       - name: Interaction handler syntax smoke gate

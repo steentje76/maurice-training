@@ -1,0 +1,81 @@
+{
+  "schema_version": "2.24",
+  "screens": [
+    {
+      "schema_version": "2.24",
+      "id": "SCREEN-TRAIN-001",
+      "title": "Trainen",
+      "capability_source": "docs/UX_BASELINE_PRESERVATION_MATRIX.md",
+      "instances": [
+        {
+          "id": "train-header",
+          "component": "COMP-PAGE-HEADER",
+          "action": null
+        },
+        {
+          "id": "train-avatar",
+          "component": "COMP-AVATAR",
+          "action": "profile"
+        },
+        {
+          "id": "next-training",
+          "component": "COMP-TRAINING-NEXT",
+          "capability": "planning/start training"
+        },
+        {
+          "id": "my-training",
+          "component": "COMP-DESTINATION-CARD",
+          "label": "Mijn trainingen",
+          "capability": "manage reusable workouts"
+        },
+        {
+          "id": "programs",
+          "component": "COMP-DESTINATION-CARD",
+          "label": "Programma’s",
+          "capability": "programs"
+        },
+        {
+          "id": "planning",
+          "component": "COMP-DESTINATION-CARD",
+          "label": "Planning",
+          "capability": "planning"
+        },
+        {
+          "id": "strength",
+          "component": "COMP-ACTIVITY-TILE",
+          "label": "Kracht",
+          "capability": "start activity"
+        },
+        {
+          "id": "running",
+          "component": "COMP-ACTIVITY-TILE",
+          "label": "Hardlopen",
+          "capability": "start activity"
+        },
+        {
+          "id": "cycling",
+          "component": "COMP-ACTIVITY-TILE",
+          "label": "Fietsen",
+          "capability": "start activity"
+        },
+        {
+          "id": "hyrox",
+          "component": "COMP-ACTIVITY-TILE",
+          "label": "HYROX",
+          "capability": "start activity"
+        },
+        {
+          "id": "more",
+          "component": "COMP-ACTIVITY-TILE",
+          "label": "Meer",
+          "capability": "start activity"
+        },
+        {
+          "id": "bottom-nav",
+          "component": "COMP-BOTTOM-NAV",
+          "capability": "primary navigation"
+        }
+      ]
+    }
+  ]
+}

@@ -323,6 +323,10 @@
       "start": "FLOW-COACH-001-hub",
       "goal": "FLOW-COACH-001-governed-design",
       "invariants": [
+        "ROUTE-R001",
+        "ROUTE-R002",
+        "ROUTE-R005",
+        "ROUTE-R006",
         "UX-PRES-001",
         "UX-MATURITY-001"
       ],
@@ -416,6 +420,10 @@
       "start": "FLOW-SAMEN-001-hub",
       "goal": "FLOW-SAMEN-001-governed-design",
       "invariants": [
+        "ROUTE-R001",
+        "ROUTE-R002",
+        "ROUTE-R005",
+        "ROUTE-R006",
         "UX-PRES-001",
         "UX-MATURITY-001"
       ],

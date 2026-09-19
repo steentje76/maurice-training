@@ -176,8 +176,17 @@
     // - ErgData (APK_OBSERVED): individuele data-chars (PmStrokeData/PmSplitIntervalData,
     //   forceCurveCharacteristic) + CSAFE-control (0x0021/0x0022). Multiplex 0x0080 is in de
     //   APK aanwezig, maar gelijktijdig gebruik met individuele chars is NIET bewezen.
-    // - Daarom: nooit multiplex EN individueel tegelijk. Voorkeur INDIVIDUAL (spec-rol BOTH),
-    //   fallback MULTIPLEXED uitsluitend als de individuele data-chars op dit apparaat ontbreken.
+    // - OFFICIAL_CONFIRMED (Concept2 PM Bluetooth Smart Communication Interface Definition rev. 1.30,
+    //   "C2 PM Rowing Service"): op Android is het aantal gelijktijdige notificaties beperkt (4 resp. 7).
+    //   De spec schrijft expliciet voor dat Android-apps 0x0080 inschakelen IN PLAATS VAN 0x31, 0x32,
+    //   0x33, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A en 0x3B.
+    // - OFFICIAL_CONFIRMED (idem, attribuuttabel 0x0080): payloads worden UITSLUITEND gemultiplexed
+    //   zolang de notificatie van de gelijknamige individuele characteristic NIET is ingeschakeld.
+    //   Individuele abonnementen onderdrukken dus de multiplexed stroom: dat is de bewezen root cause
+    //   van "Notifications totaal = 0" op de fysieke PM5.
+    // - ERGDATA_OBSERVED (ErgData 2.2.29): kent 0x0080 wel, kent 0x31/0x32/0x33/0x36/0x3B niet.
+    // - Daarom: nooit multiplex EN individueel tegelijk. Voorkeur MULTIPLEXED conform spec,
+    //   fallback INDIVIDUAL uitsluitend als 0x0080 op dit apparaat ontbreekt.
     // - Subscriben uitsluitend op characteristics die de plugin na service discovery werkelijk
     //   rapporteert (gateway.getServices, plugin-contract bevestigd); sequentieel, expliciete order.
     var SUBSCRIPTION_MODES = ['AUTO_DISCOVERED', 'INDIVIDUAL', 'MULTIPLEXED'];
@@ -196,12 +205,12 @@
       var indivPresent = indiv.filter(isPresent), muxPresent = mux.filter(isPresent), ctrlPresent = ctrl.filter(isPresent);
       if (mode === 'INDIVIDUAL') { chosen = indivPresent; reason = 'forced_individual'; }
       else if (mode === 'MULTIPLEXED') { chosen = muxPresent; reason = 'forced_multiplexed'; }
-      else if (!present) { chosen = indiv; reason = 'discovery_unavailable_default_individual'; }
-      else if (indivPresent.length) { chosen = indivPresent; reason = 'individual_present'; }
-      else if (muxPresent.length) { chosen = muxPresent; reason = 'individual_absent_fallback_multiplexed'; }
+      else if (!present) { chosen = mux; reason = 'discovery_unavailable_default_multiplexed'; }
+      else if (muxPresent.length) { chosen = muxPresent; reason = 'android_pm5_multiplexed_supported'; }
+      else if (indivPresent.length) { chosen = indivPresent; reason = 'multiplexed_absent_fallback_individual'; }
       else { chosen = []; reason = 'no_known_data_characteristics'; }
       var order = ctrlPresent.concat(chosen);
-      return { mode: mode, selected: (chosen === indiv || chosen === indivPresent) ? 'INDIVIDUAL' : (chosen.length ? 'MULTIPLEXED' : 'NONE'),
+      return { mode: mode, selected: (chosen === mux || chosen === muxPresent) ? 'MULTIPLEXED' : (chosen.length ? 'INDIVIDUAL' : 'NONE'),
                reason: reason, order: order, control: ctrlPresent.length, data: chosen.length };
     }
     function presenceFromServices(services) {

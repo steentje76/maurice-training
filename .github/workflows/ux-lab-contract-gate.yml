@@ -76,3 +76,5 @@ jobs:
         run: node docs/ux-lab/design-repository.test.js
       - name: Proposal persistence UI gate
         run: node docs/ux-lab/proposal-persistence-ui.test.js
+      - name: Reference and semantic component gate
+        run: node docs/ux-lab/reference-semantic-components.test.js

@@ -1,0 +1,11 @@
+{
+  "schema_version":"2.30",
+  "contract":"REFERENCE_IS_VISUAL_INPUT_NOT_FUNCTIONAL_TRUTH",
+  "inputs":[],
+  "allowed_kinds":["IMAGE","MOCKUP","LIVE_APP","OTHER"],
+  "rules":[
+    "Reference input never removes a capability omitted from the reference.",
+    "Reference input never overrides canonical routes, rules, evidence or accessibility contracts.",
+    "Reference provenance must be explicit before a proposal can be frozen."
+  ]
+}

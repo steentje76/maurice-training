@@ -80,4 +80,6 @@ jobs:
         run: node docs/ux-lab/reference-semantic-components.test.js
       - name: Generic design-pack runtime gate
         run: node docs/ux-lab/design-engine-core.test.js
+      - name: Full inline JavaScript parse gate
+        run: node docs/ux-lab/runtime-parse.test.js
 

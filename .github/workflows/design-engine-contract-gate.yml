@@ -104,6 +104,8 @@ jobs:
         run: node docs/design-engine/selected-variant-proposal-validation.test.js
       - name: Selected visual variant binding gate
         run: node docs/design-engine/visual-studio-selected-binding.test.js
+      - name: Selected visual proposal handoff gate
+        run: node docs/design-engine/visual-proposal.test.js
       - name: Freeze readiness evidence gate
         run: node docs/design-engine/freeze-readiness.test.js
       - name: Full inline JavaScript parse gate

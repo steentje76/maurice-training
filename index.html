@@ -6510,6 +6510,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/athleteConstraints.js"></script>
 <script src="core/deviceIntegration.js"></script>
 <script src="core/concept2Live.js"></script>
+<script src="core/concept2Csafe.js"></script>
+<script src="core/concept2Programming.js"></script>
 <script src="core/weather.js"></script>
 <script src="core/cycle.js"></script>
 <script src="core/cycleTraining.js"></script>
@@ -6772,6 +6774,29 @@ function tkDeviceTransport(){
 // Eén duidelijke actie: [Apparaat koppelen]. Geen handmatige PM5 1/2/3-selectie, geen BLE-jargon.
 // Alle status komt uit het transport; NOOIT fake device/connected. Machine-context uit Concept2Live.
 var _c2pair={}, _c2liveLast={};
+/* Gate B.5 — OWNERSHIP. _c2pair is PRESENTATIE-state: tkErgPair() bouwt dat object bij
+   elke pairing/scan-refresh volledig opnieuw op (zie regel ~6824), waardoor eraan gehangen
+   runtime-objecten stilzwijgend verdwenen. Dat was de bewezen root cause van de mislukte
+   PM5-programmering: st._prog werd null en de startflow viel stil door naar de normale flow.
+   _c2rt is daarom een APARTE owner voor BLE-connection/session runtime. Levensduur = die van
+   de fysieke verbinding (generation + deviceId), niet die van de UI. Geen tweede source of
+   truth: _c2pair blijft eigenaar van de presentatie, _c2rt uitsluitend van de runtime. */
+var _c2rt={};
+function _c2rtSet(exId, generation, deviceId, prog, agg){ _c2rt[exId]={ generation:generation, deviceId:deviceId, prog:prog, agg:agg }; }
+/* Levert de runtime alleen wanneer generation EN device overeenkomen; anders is het een
+   andere verbinding of een ander PM5 en mag de oude runtime nooit hergebruikt worden. */
+function _c2rtGet(exId, generation, deviceId){
+  var r=_c2rt[exId]; if(!r) return null;
+  if(generation!=null && r.generation!=null && generation!==r.generation) return null;
+  if(deviceId!=null && r.deviceId!=null && deviceId!==r.deviceId) return null;
+  return r;
+}
+function _c2rtTeardown(exId, reason){
+  var r=_c2rt[exId]; if(!r) return;
+  try{ if(r.prog) r.prog.cancel(reason||'teardown'); }catch(_e){}
+  try{ if(r.agg) r.agg.reset(); }catch(_e){}
+  delete _c2rt[exId];
+}
 var _C2ERGLBL={rowing:'RowErg',skierg:'SkiErg',bikeerg:'BikeErg'};
 function _c2mt(cardioType){ return {rowing:'rowerg',skierg:'skierg',bikeerg:'bikeerg'}[cardioType]||'rowerg'; }
 function _c2msg(state){ return (typeof Concept2Live!=='undefined')?Concept2Live.pairingMessage(state):''; }
@@ -6931,19 +6956,48 @@ function tkErgConnectDevice(exId, idx){
       st._connecting=false;
       if(!res||res.connected!==true){ _c2repaint(exId, _c2note('Verbinding mislukt. Probeer opnieuw.')+_c2btn(exId,'Opnieuw zoeken')); return; }
       st.connected=true; st.wasConnected=true; st.deviceId=d.id; st.lastDevice=d;
+      // Gate A.4: één canonieke PM5-aggregator per verbinding, op dezelfde st-scope.
+      // De multiplexed 0x31/0x32-events zijn partial; Concept2Live voegt ze samen en
+      // mapt RAW->canonical. Geen merge- of mappinglogica hier.
+      st._agg=(typeof Concept2Live!=='undefined'&&Concept2Live.createPm5LiveAggregator)?Concept2Live.createPm5LiveAggregator():null;
+      // Runtime hoort bij de VERBINDING, niet bij de pairing-UI: vastleggen in _c2rt.
+      if(typeof _c2rtTeardown==='function') _c2rtTeardown(exId,'reconnect');
+      var _ctx0=(typeof t.getControlContext==='function')?t.getControlContext():{generation:null,deviceId:d.id};
+      // Gate B.4: één programming-controller per verbinding, naast de aggregator.
+      // CSAFE-encoding en -parsing blijven in core/concept2Programming.js + concept2Csafe.js;
+      // hier alleen lifecycle en bedrading. Geen bytes of protocolkennis in de UI.
+      st._prog=null;
+      try{
+        if(typeof Concept2Programming!=='undefined'&&Concept2Programming.createProgrammingController&&typeof t.writeControlFrame==='function'){
+          st._prog=Concept2Programming.createProgrammingController({ write:function(b){ return t.writeControlFrame(b); } });
+          if(typeof t.setControlResponseHandler==='function') t.setControlResponseHandler(function(bytes,ctx){ if(st._prog) st._prog.handleControlResponse(bytes,ctx); });
+        }
+          // Developer Mode leest de diagnostiek uit DEZE controller (geen statisch object).
+          try{ if(window.TKDeveloperMode&&window.TKDeveloperMode.setProgrammingSource) window.TKDeveloperMode.setProgrammingSource(function(){ return st._prog; }); }catch(_e2){}
+      }catch(_e){ st._prog=null; }
+      if(typeof _c2rtSet==='function') _c2rtSet(exId, _ctx0.generation, d.id, st._prog, st._agg);
       _c2repaint(exId, _c2connectedInner(exId, null));
       // connectie-events uit het transport (geen fake). Fase B: het transport emit bij een echte
       // plugin-disconnect 'disconnected' (nooit meer 'reconnecting' zonder reconnect-mechanisme);
       // de UI zet st.connected=false en toont de expliciete verbroken-staat met acties.
       if(typeof t.subscribeConnection==='function') st._unsubConn=t.subscribeConnection(function(e){
         if(!st.connected) return;
-        if(e&&e.state==='disconnected'){ st.connected=false; st.lastCm=null; _c2repaint(exId, _c2disconnectedInner(exId)); }
+        if(e&&e.state==='disconnected'){ st.connected=false; st.lastCm=null; if(typeof _c2rtTeardown==='function') _c2rtTeardown(exId,'disconnect'); st._agg=null; st._prog=null; if(typeof t.setControlResponseHandler==='function') t.setControlResponseHandler(null); _c2repaint(exId, _c2disconnectedInner(exId)); }
         else if(e&&e.state==='connected') _c2repaint(exId, _c2connectedInner(exId, st.lastCm||null));
       });
       st._unsubMetrics=t.subscribeMetrics(function(evt){
         var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
-             : (typeof Concept2Live!=='undefined'?Concept2Live.normalizeLiveMetric((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
+             : (st._agg?st._agg.push((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
         if(!cm) return; st.lastCm=cm;
+        // Gate B.3: dezelfde canonieke telemetrie voedt de read-back verificatie.
+        // Geen tweede stroom en geen protocolkennis hier: de controller vergelijkt zelf.
+        try{
+          var _rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,null,null):null;
+          if(_rt&&_rt.prog&&_rt.agg&&typeof _rt.prog.verifyFromTelemetry==='function'){
+            var _vctx=(typeof t.getControlContext==='function')?t.getControlContext():{};
+            _rt.prog.verifyFromTelemetry(_rt.agg.getMergedRaw(), _vctx);
+          }
+        }catch(_ev){}
         var now=(typeof performance!=='undefined'&&performance.now)?performance.now():0;
         if(_c2liveLast[exId] && (now-_c2liveLast[exId])<250){ return; }  // gecontroleerde UI-cadans
         _c2liveLast[exId]=now; _c2repaint(exId, _c2connectedInner(exId, cm));
@@ -21365,6 +21419,30 @@ function tkErgSetProtocol(exId,cardioType,type){
 // Legt de protocolintentie CANONIEK vast vóór er ook maar één actual bestaat:
 // pure prescriptie -> IntervalEngineCore-validatie -> ad-hoc training_instance
 // met immutable snapshot. Faalt gesloten (geen half vastgelegd protocol).
+/* Gate B.4 — PM5 fixed-distance programmering vanuit de echte start-handler.
+   Retourneert {attempted:false} wanneer er geen gekoppelde PM5 of geen afstandsdoel is,
+   zodat de bestaande manual/non-PM5 flow ongewijzigd doorloopt. */
+async function tkErgProgramPm5IfNeeded(exId,protocolType,meters){
+  if(protocolType!=='distance') return {attempted:false};
+  const st=(typeof _c2pair!=='undefined'&&_c2pair)?_c2pair[exId]:null;
+  if(!st||!st.connected) return {attempted:false};   // geen PM5 -> bestaande flow
+  const t0=(typeof tkDeviceTransport==='function')?tkDeviceTransport():null;
+  const ctx0=(t0&&typeof t0.getControlContext==='function')?t0.getControlContext():{generation:null,deviceId:st.deviceId||null};
+  const rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,ctx0.generation,st.deviceId||ctx0.deviceId):null;
+  // FAIL CLOSED: PM5 verbonden en een afstandsdoel gevraagd, maar geen programmeerruntime.
+  // Nooit stilzwijgend doorvallen alsof de PM5 is ingesteld.
+  if(!rt||!rt.prog) return {attempted:true,unavailable:true,confirmed:false,state:'UNAVAILABLE',
+                            message:'Training kon niet op de PM5 worden ingesteld (programmering niet beschikbaar).'};
+  const t=(typeof tkDeviceTransport==='function')?tkDeviceTransport():null;
+  const ctx=(t&&typeof t.getControlContext==='function')?t.getControlContext():{connected:true};
+  let r=null;
+  try{ r=await rt.prog.programFixedDistance(meters,ctx); }catch(_e){ r=null; }
+  // Gate B.4: succes is PROGRAMMED (read-back geverifieerd). CONFIRMED was de oude,
+  // te sterke semantiek die alleen frame-acceptatie bewees; die mag nooit meer slagen.
+  const confirmed=!!(r&&r.ok===true&&r.state==='PROGRAMMED');
+  return {attempted:true,confirmed:confirmed,state:r?r.state:null,
+          message:confirmed?null:'Training kon niet op de PM5 worden ingesteld ('+((r&&r.state)||'onbekend')+').'};
+}
 async function tkErgStartProtocol(exId,cardioType){
   // AUDIT-REPARATIE (P3-A): de instanceId-guard alleen was niet async-veilig — hij draaide
   // VOOR de await, terwijl instanceId pas ERNA werd gezet. Twee snelle kliks passeerden dus
@@ -21388,6 +21466,14 @@ async function tkErgStartProtocol(exId,cardioType){
   catch(_e){ instanceId=null; }
   finally{ st.busy=false; }
   if(!instanceId){ toast('Vastleggen mislukt — probeer opnieuw'); tkErgRerenderProtocol(exId,cardioType); return; }
+  // Gate B.4: met gekoppelde PM5 en een afstandsdoel wordt de workout eerst op de PM5
+  // geprogrammeerd. Execution/vastlegging gaat PAS door na PROGRAMMED (read-back geverifieerd);
+  // is geen bevestiging. Zonder PM5 of bij een tijddoel blijft de bestaande flow ongewijzigd.
+  const progRes=(typeof tkErgProgramPm5IfNeeded==='function')?await tkErgProgramPm5IfNeeded(exId,st.type,Math.round(waarde)):null;
+  if(progRes&&progRes.attempted&&!progRes.confirmed){
+    toast(progRes.message||'Training kon niet op de PM5 worden ingesteld.');
+    tkErgRerenderProtocol(exId,cardioType); return;
+  }
   _ergProtocol[exId]={type:st.type,value:Math.round(waarde),instanceId:instanceId,prescription:norm,busy:false};
   toast('Doel vastgelegd: '+ErgProtocolIdentity.protocolLabelNl(st.type,waarde));
   tkErgRerenderProtocol(exId,cardioType);

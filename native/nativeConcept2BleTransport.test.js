@@ -100,10 +100,13 @@ function makeTransport(cfg) {
   ok(uuids.some(function (u) { return u.indexOf('CE060022') === 0; }), 'notify bevat CSAFE transmit 0x0022');
   ok(c._scanServiceUuids.length >= 1, 'software-classificatie kent Concept2 service-UUIDs');
 
-  // 3. alle decoders standaard UNKNOWN (geen gegokte decoder)
+    // 3. alleen CE060080 heeft een officieel onderbouwde decoder (spec rev. 1.30 Tabel 4);
+    //    alle overige notify-chars blijven UNKNOWN (geen gegokte decoder)
   var ds = c.decoderStatus();
-  var allUnknown = Object.keys(ds).every(function (u) { return ds[u] === 'UNKNOWN'; });
-  ok(allUnknown && Object.keys(ds).length > 0, 'alle notify-decoders standaard UNKNOWN');
+    var MUX = 'ce060080-43e5-11e4-916c-0800200c9a66';
+    eq(ds[MUX], 'CONFIRMED', 'CE060080 heeft de officieel gespecificeerde multiplexed router');
+    var restUnknown = Object.keys(ds).every(function (u) { return u === MUX || ds[u] === 'UNKNOWN'; });
+    ok(restUnknown && Object.keys(ds).length > 1, 'alle overige notify-decoders blijven UNKNOWN');
 
   // 4. permissie-mapping — getPermissionState is SYNCHROON (contractvorm zoals mock)
   var syncP = makeTransport().t;
@@ -210,18 +213,18 @@ function makeTransport(cfg) {
     // 8. UNKNOWN payload: capture UIT -> geen capture, geen metric-emit
     var metricHits = 0;
     cn.t.subscribeMetrics(function () { metricHits++; });
-    cn.gw._emit('CE060035-43E5-11E4-916C-0800200C9A66', [0x10, 0x20, 0x30]);
+    cn.gw._emit('CE060080-43E5-11E4-916C-0800200C9A66', [0x10, 0x20, 0x30]);
     eq(metricHits, 0, 'UNKNOWN characteristic emit GEEN metric');
     eq(cn.t.getCapture().length, 0, 'capture uit -> niets vastgelegd');
 
     // 9. capture AAN -> record {uuid,t,bytes} vastgelegd, nog steeds geen metric
     cn.t.enableCapture();
-    cn.gw._emit('CE060035-43E5-11E4-916C-0800200C9A66', [0xDE, 0xAD, 0xBE]);
+    cn.gw._emit('CE060080-43E5-11E4-916C-0800200C9A66', [0xDE, 0xAD, 0xBE]);
     var cap = cn.t.getCapture();
     eq(cap.length, 1, 'capture aan -> 1 record');
     eq(cap[0].hex, 'deadbe', 'capture legt ruwe bytes (hex) vast');
     eq(cap[0].t, 1000, 'capture record heeft timestamp');
-    ok(cap[0].uuid.indexOf('ce060035') === 0, 'capture record heeft characteristic-uuid');
+    ok(cap[0].uuid.indexOf('ce060080') === 0, 'capture record heeft characteristic-uuid');
     eq(metricHits, 0, 'capture aan verandert niets aan metric-emit (nog UNKNOWN)');
     // geen PII/health-velden in capture-record
     ok(!('hr' in cap[0]) && !('heartRate' in cap[0]) && !('name' in cap[0]), 'capture-record bevat geen PII/health-velden');
@@ -231,12 +234,12 @@ function makeTransport(cfg) {
     ok(exp.deviceIdMasked && exp.deviceIdMasked.charAt(0) === '…' && exp.deviceIdMasked.slice(-4) === '2:33' && exp.deviceIdMasked.length === 5, 'exportCapture maskeert deviceId (… + laatste 4)');
 
     // 11. BEVESTIGDE decoder -> metric wordt WEL geëmit als {metrics:raw}, raw gaat door normalizeLiveMetric
-    cn.t.registerDecoder('CE060035-43E5-11E4-916C-0800200C9A66', function (d) {
+    cn.t.registerDecoder('CE060080-43E5-11E4-916C-0800200C9A66', function (d) {
       return { distanceM: d.getUint8(0), elapsedTimeS: d.getUint8(1), strokeRateSPM: d.getUint8(2) };
     }, 'CONFIRMED');
     var lastRaw = null;
     cn.t.subscribeMetrics(function (evt) { lastRaw = evt.metrics; });
-    cn.gw._emit('CE060035-43E5-11E4-916C-0800200C9A66', [100, 42, 30]);
+    cn.gw._emit('CE060080-43E5-11E4-916C-0800200C9A66', [100, 42, 30]);
     ok(lastRaw && lastRaw.distanceM === 100 && lastRaw.strokeRateSPM === 30, 'bevestigde decoder emit RAW metric');
     // web-laag normaliseert die raw:
     var canon = Concept2Live.normalizeLiveMetric(lastRaw, 'rowerg', {});
@@ -245,10 +248,10 @@ function makeTransport(cfg) {
     // 12. (Fase B, Connection Observability) diagnostiek is gevuld na connect (J/K/L)
     var cd = cn.t.getConnectionDiagnostics();
     ok(typeof cd.connectedAt === 'number', 'J: connectedAt gezet na connect');
-    ok(cd.subscriptions.length === 7 && cd.subscriptions.every(function (r) { return r.attempted === true && typeof r.ok === 'boolean' && typeof r.at === 'number' && typeof r.order === 'number'; }),
-      'J: elke subscription-poging is geregistreerd met order (control + 6 individuele data-chars = 7; multiplex NIET tegelijk)');
+    ok(cd.subscriptions.length === 2 && cd.subscriptions.every(function (r) { return r.attempted === true && typeof r.ok === 'boolean' && typeof r.at === 'number' && typeof r.order === 'number'; }),
+      'J: elke subscription-poging is geregistreerd met order (control 0x0022 + multiplexed 0x0080 = 2; individuele data-chars NIET tegelijk)');
     ok(cd.totals.subscriptionsOk + cd.totals.subscriptionsFailed === cd.subscriptions.length, 'J: totals consistent met subscriptielijst');
-    ok(cd.notifications['ce060035-43e5-11e4-916c-0800200c9a66'] && cd.notifications['ce060035-43e5-11e4-916c-0800200c9a66'].count >= 1 && typeof cd.notifications['ce060035-43e5-11e4-916c-0800200c9a66'].lastAt === 'number',
+    ok(cd.notifications['ce060080-43e5-11e4-916c-0800200c9a66'] && cd.notifications['ce060080-43e5-11e4-916c-0800200c9a66'].count >= 1 && typeof cd.notifications['ce060080-43e5-11e4-916c-0800200c9a66'].lastAt === 'number',
       'K: notificatie-teller + lastNotificationAt per characteristic bijgewerkt');
     ok(cd.totals.notifications >= 1, 'K: totaal-notificatieteller > 0');
     ok(!JSON.stringify(cd).includes('hex') && !JSON.stringify(cd).includes('"bytes"'), 'N: verbindingsdiagnostiek bevat GEEN payload');
@@ -276,7 +279,7 @@ function makeTransport(cfg) {
       var d3 = cn.t.getConnectionDiagnostics();
       eq(d3.lastDisconnectReason, 'PLUGIN_DISCONNECT:unknown_native_disconnect', 'eerlijk contract: geen verzonnen native statuscode');
       ok(typeof d3.disconnectedAt === 'number', 'disconnectedAt gezet bij plugin-disconnect');
-      ok(d3.subscriptions.length === 7, 'subscriptie-historie blijft beschikbaar na disconnect (diagnose achteraf)');
+      ok(d3.subscriptions.length === 2, 'subscriptie-historie blijft beschikbaar na disconnect (diagnose achteraf)');
       // 13c. na plugin-disconnect is een app-disconnect idempotent (geen tweede gateway.disconnect nodig)
       var before = cn.gw._state.calls.disconnect;
       return cn.t.disconnect().then(function () {
@@ -286,21 +289,21 @@ function makeTransport(cfg) {
     }).then(function () {
       // 13d. (Fase B, §8/§I) partial subscription failure: ontbrekende characteristics falen
       //      fail-safe (geen fatal disconnect), en de uitkomst per char is zichtbaar in de diagnostiek.
-      var pf = makeTransport({ failNotif: ['ce06003c', 'ce060037'] }); // forceCurve (APK_OBSERVED) + splitData ontbreken op dit toestel
+      var pf = makeTransport({ failNotif: ['ce060080'] }); // multiplexed data-char ontbreekt op dit toestel
       var pfEvents = [];
       pf.t.subscribeConnection(function (e) { pfEvents.push(e.state); });
       return pf.t.connect('rowerg', 'AA:BB:CC:11:22:33').then(function (res) {
-        eq(res.connected, true, 'I: connect slaagt ondanks 2 ontbrekende characteristics (fail-safe, ongewijzigd gedrag)');
+        eq(res.connected, true, 'I: connect slaagt ondanks ontbrekende characteristic (fail-safe, ongewijzigd gedrag)');
         eq(pf.t.getStatus().state, 'connected', 'I: state blijft connected na partial subscription failure');
         ok(pfEvents.indexOf('error') === -1 && pfEvents.indexOf('disconnected') === -1, 'I: geen error/disconnected-event door ontbrekende char');
         var pd = pf.t.getConnectionDiagnostics();
         var failed = pd.subscriptions.filter(function (r) { return r.ok === false; });
-        eq(failed.length, 2, 'J: exact de 2 mislukte subscriptions zijn als failed geregistreerd');
+        eq(failed.length, 1, 'J: exact de mislukte subscription is als failed geregistreerd');
         ok(failed.every(function (r) { return r.error === 'Characteristic not found.'; }), 'J: plugin-foutstring per mislukte char vastgelegd');
-        eq(pd.totals.subscriptionsFailed, 2, 'J: totals.subscriptionsFailed = 2');
-        eq(pd.totals.subscriptionsOk, pd.subscriptions.length - 2, 'J: totals.subscriptionsOk = rest');
+        eq(pd.totals.subscriptionsFailed, 1, 'J: totals.subscriptionsFailed = 1');
+        eq(pd.totals.subscriptionsOk, pd.subscriptions.length - 1, 'J: totals.subscriptionsOk = rest');
         eq(pd.lastDisconnectReason, null, 'I: subscription failure zet geen disconnect-reden (niet fatal)');
-        pf.gw._emit('CE060035-43E5-11E4-916C-0800200C9A66', [1, 2, 3]);
+        pf.gw._emit('CE060022-43E5-11E4-916C-0800200C9A66', [1, 2, 3]);
         eq(pf.t.getConnectionDiagnostics().totals.notifications, 1, 'K: notificaties op wél-geslaagde chars worden geteld');
       });
     }).then(function () {
@@ -313,46 +316,141 @@ function makeTransport(cfg) {
         { uuid: U('30'), characteristics: [rw(U('34')), notify(U('35')), notify(U('37')), notify(U('38')), notify(U('39')), notify(U('3a')), notify(U('80'))] },
         { uuid: '00001826-0000-1000-8000-00805f9b34fb', characteristics: [notify('00002ad1-0000-1000-8000-00805f9b34fb')] }
       ];
-      // a) AUTO + individuele chars aanwezig -> INDIVIDUAL, multiplex NIET, alleen aanwezige (3c ontbreekt -> niet geprobeerd), control eerst
+      // a) AUTO + multiplex aanwezig -> MULTIPLEXED conform spec rev. 1.30 (0x0080 in lieu of 0x31..0x3B),
+      //    individuele data-chars NIET tegelijk (die onderdrukken de multiplexed stroom), control eerst
       var sa = makeTransport({ services: SVC_FULL });
       return sa.t.connect('rowerg', 'AA:BB:CC:11:22:33').then(function () {
         var d = sa.t.getConnectionDiagnostics();
         eq(d.discovery && d.discovery.ok, true, 'S1: service discovery via gateway.getServices() gebruikt');
         eq(d.discovery.serviceCount, 3, 'S1: ontdekte services geregistreerd');
-        eq(d.strategy.selected, 'INDIVIDUAL', 'S2: AUTO kiest INDIVIDUAL wanneer individuele data-chars aanwezig zijn');
-        eq(d.strategy.reason, 'individual_present', 'S2: reden geregistreerd');
+        eq(d.strategy.selected, 'MULTIPLEXED', 'S2: AUTO kiest MULTIPLEXED wanneer 0x0080 aanwezig is (spec rev. 1.30)');
+        eq(d.strategy.reason, 'android_pm5_multiplexed_supported', 'S2: reden geregistreerd');
         eq(d.strategy.order[0], 'ctrlTransmit', 'S3: control (CSAFE tx) als eerste in de volgorde');
-        ok(d.strategy.order.indexOf('multiplexed') === -1, 'S4: multiplexed NIET tegelijk met individuele chars');
+        ok(d.strategy.order.indexOf('strokeData') === -1 && d.strategy.order.indexOf('splitData') === -1,
+          'S4: individuele PM-data chars NIET tegelijk met multiplexed (spec: onderdrukken elkaar)');
         ok(d.strategy.order.indexOf('forceCurve') === -1, 'S5: niet-aanwezige characteristic (0x003C) wordt niet geprobeerd');
-        eq(d.subscriptions.length, 6, 'S5: exact 6 subscriptions (ctrl + 35/37/38/39/3A)');
+        eq(d.subscriptions.length, 2, 'S5: exact 2 canonical subscriptions (ctrl 0x0022 + multiplexed 0x0080)');
         ok(d.subscriptions.every(function (r, i) { return r.order === i + 1 && r.ok === true; }), 'S6: sequentieel, oplopende order, alle geslaagd');
         ok(!d.subscriptions.some(function (r) { return r.ok === false; }), 'S6: geen blinde mislukte pogingen meer');
         ok(d.discoveredServices.length === 3 && d.discoveredServices[1].characteristics.some(function (c) { return c.uuid === U('35') && c.notify; }), 'S7: discoveredServices in diagnostiek (uuid + notify-capability)');
-        eq(d.lastSubscriptionBeforeDisconnect, 'addWorkoutSummary', 'S8: laatste geslaagde subscription bijgehouden');
+        eq(d.lastSubscriptionBeforeDisconnect, 'multiplexed', 'S8: laatste geslaagde subscription bijgehouden');
         ok(d.lastLifecycleEvent && d.lastLifecycleEvent.event === 'subscribing', 'S9: lastLifecycleEvent gezet');
         ok(typeof d.connectionDurationMs === 'number' && d.connectionDurationMs >= 0, 'S10: connectionDurationMs beschikbaar zolang verbonden');
-        sa.gw._emit(U('35').toUpperCase(), [1, 2]);
-        var n = sa.t.getConnectionDiagnostics().notifications[U('35')];
+        sa.gw._emit(U('80').toUpperCase(), [0x31, 1, 2]);
+        var n = sa.t.getConnectionDiagnostics().notifications[U('80')];
         ok(n && n.count === 1 && typeof n.firstAt === 'number' && typeof n.lastAt === 'number', 'S11: firstNotificationAt + lastNotificationAt per char');
       }).then(function () {
-        // b) AUTO + alleen multiplex aanwezig -> fallback MULTIPLEXED (niet beide)
+        // b) AUTO + alleen multiplex aanwezig -> MULTIPLEXED (spec-voorkeur, niet beide)
         var SVC_MUX = [{ uuid: U('30'), characteristics: [notify(U('80'))] }];
         var sb = makeTransport({ services: SVC_MUX });
         return sb.t.connect('rowerg', 'AA:BB:CC:11:22:33').then(function () {
           var d = sb.t.getConnectionDiagnostics();
-          eq(d.strategy.selected, 'MULTIPLEXED', 'S12: fallback naar MULTIPLEXED als individuele chars ontbreken');
-          eq(d.strategy.reason, 'individual_absent_fallback_multiplexed', 'S12: fallback-reden');
+          eq(d.strategy.selected, 'MULTIPLEXED', 'S12: MULTIPLEXED wanneer 0x0080 aanwezig is');
+          eq(d.strategy.reason, 'android_pm5_multiplexed_supported', 'S12: spec-conforme reden');
           eq(d.subscriptions.length, 1, 'S12: exact 1 subscription (0x0080); geen control want niet aanwezig');
         });
       }).then(function () {
-        // c) discovery onbeschikbaar (leeg) -> veilige default INDIVIDUAL (geen multiplex), geen crash
+        // c) discovery onbeschikbaar (leeg) -> veilige default MULTIPLEXED (spec-conform), geen crash
         var sc = makeTransport({ services: [] });
         return sc.t.connect('rowerg', 'AA:BB:CC:11:22:33').then(function () {
           var d = sc.t.getConnectionDiagnostics();
           eq(d.discovery.ok, false, 'S13: discovery onbeschikbaar geregistreerd');
-          eq(d.strategy.reason, 'discovery_unavailable_default_individual', 'S13: default INDIVIDUAL bij ontbrekende discovery');
-          ok(d.strategy.order.indexOf('multiplexed') === -1, 'S13: nooit multiplex zonder bewijs');
-          eq(d.strategy.order.length, 7, 'S13: ctrl + 6 individuele pogingen (fail-safe per char)');
+          eq(d.strategy.reason, 'discovery_unavailable_default_multiplexed', 'S13: default MULTIPLEXED bij ontbrekende discovery');
+          ok(d.strategy.order.indexOf('strokeData') === -1, 'S13: nooit individuele PM-data chars zonder bewijs');
+          eq(d.strategy.order.length, 2, 'S13: ctrl + multiplexed (fail-safe per char)');
+        });
+      }).then(function () {
+        // c2) SPEC rev. 1.30: 0x0080 afwezig -> veilige fallback naar INDIVIDUAL (geen telemetrieverlies)
+        var sf = makeTransport({ services: [
+          { uuid: U('20'), characteristics: [notify(U('22'))] },
+          { uuid: U('30'), characteristics: [notify(U('35')), notify(U('37'))] }
+        ] });
+        return sf.t.connect('rowerg', 'AA:BB:CC:11:22:33').then(function () {
+          var d = sf.t.getConnectionDiagnostics();
+          eq(d.strategy.selected, 'INDIVIDUAL', 'M1: 0x0080 afwezig -> fallback INDIVIDUAL');
+          eq(d.strategy.reason, 'multiplexed_absent_fallback_individual', 'M1: fallback-reden geregistreerd');
+          ok(d.strategy.order.indexOf('multiplexed') === -1, 'M1: geen multiplexed wanneer niet aanwezig');
+        });
+      }).then(function () {
+        // c3) SPEC: control 0x0022 blijft naast multiplexed gesubscribed, en telt notificaties apart
+        var sg = makeTransport({ services: [
+          { uuid: U('20'), characteristics: [notify(U('22'))] },
+          { uuid: U('30'), characteristics: [notify(U('80')), notify(U('35')), notify(U('31'))] }
+        ] });
+        return sg.t.connect('rowerg', 'AA:BB:CC:11:22:33').then(function () {
+          var d = sg.t.getConnectionDiagnostics();
+          eq(d.strategy.selected, 'MULTIPLEXED', 'M2: multiplexed gekozen');
+          ok(d.strategy.order.indexOf('ctrlTransmit') === 0, 'M2: control 0x0022 blijft eerste subscription');
+          ok(d.strategy.order.indexOf('multiplexed') !== -1, 'M2: telemetrie via 0x0080');
+          eq(d.subscriptions.length, 2, 'M2: exact 2 canonical subscriptions');
+          // diagnostiek telt VOOR decoding: onbekende multiplexed payload telt wel mee
+          sg.gw._emit(U('80').toUpperCase(), [0x99, 1, 2, 3]);
+          var d2 = sg.t.getConnectionDiagnostics();
+          eq(d2.totals.notifications, 1, 'M3: notificatieteller loopt vóór decoding, ook bij onbekende identifier');
+          ok(d2.notifications[U('80')] && d2.notifications[U('80')].count === 1, 'M3: per-characteristic teller op 0x0080');
+          // control-notificatie wordt apart geteld
+          sg.gw._emit(U('22').toUpperCase(), [0xF1, 0x00, 0xF2]);
+          var d3 = sg.t.getConnectionDiagnostics();
+          eq(d3.totals.notifications, 2, 'M4: control-respons telt apart mee');
+          ok(d3.notifications[U('22')] && d3.notifications[U('22')].count === 1, 'M4: per-characteristic teller op 0x0022');
+        });
+      }).then(function () {
+        // R) CE060080 multiplexed router - officiele layouts, spec rev. 1.30 Tabel 4
+        var sr = makeTransport({ services: [
+          { uuid: U('20'), characteristics: [notify(U('22'))] },
+          { uuid: U('30'), characteristics: [notify(U('80'))] }
+        ] });
+        return sr.t.connect('rowerg', 'AA:BB:CC:11:22:33').then(function () {
+          var raws = [];
+          sr.t.subscribeMetrics(function (e) { raws.push(e.metrics); });
+          // 0x31: elapsed 12345*0.01=123.45s, distance 20000*0.1=2000.0m, drag 120
+          var p31 = [0x31, 0x39,0x30,0x00, 0x20,0x4E,0x00, 3, 1, 1, 1, 2, 0xE8,0x03,0x00, 0x00,0x00,0x00, 0x80, 120];
+          sr.gw._emit(U('80').toUpperCase(), p31);
+          var r31 = raws[raws.length - 1];
+          ok(Math.abs(r31.elapsedTimeS - 123.45) < 1e-9, 'R1: 0x31 elapsed time LE24 * 0.01 s');
+          ok(Math.abs(r31.distanceM - 2000) < 1e-9, 'R1: 0x31 distance LE24 * 0.1 m');
+          eq(r31.workoutType, 3, 'R1: 0x31 workout type');
+          eq(r31.workoutState, 1, 'R1: 0x31 workout state');
+          eq(r31.dragFactor, 120, 'R1: 0x31 drag factor');
+          eq(r31.workoutDurationType, 0x80, 'R1: 0x31 duration type = distance');
+          eq(r31.multiplexedId, '0x31', 'R1: provenance multiplexedId');
+          eq(r31.source, 'concept2_pm5', 'R1: provenance source');
+          eq(r31.protocol, 'concept2_bts', 'R1: provenance protocol');
+          // 0x32: speed 4500*0.001=4.5 m/s, SPM 28, HR 255 invalid, pace 11000*0.01=110s, power 250 W
+          var p32 = [0x32, 0x39,0x30,0x00, 0x94,0x11, 28, 255, 0xF8,0x2A, 0xF8,0x2A, 0x00,0x00, 0x00,0x00,0x00, 0xFA,0x00, 0];
+          sr.gw._emit(U('80').toUpperCase(), p32);
+          var r32 = raws[raws.length - 1];
+          ok(Math.abs(r32.speedMps - 4.5) < 1e-9, 'R2: 0x32 speed LE16 * 0.001 m/s');
+          eq(r32.strokeRateSPM, 28, 'R2: 0x32 stroke rate spm');
+          eq(r32.heartRateBpm, null, 'R2: 0x32 HR 255 = invalid -> null, geen fake waarde');
+          ok(Math.abs(r32.currentPaceS - 110) < 1e-9, 'R2: 0x32 current pace LE16 * 0.01 s');
+          eq(r32.averagePowerW, 250, 'R2: 0x32 average power W (multiplexed offset 16-17)');
+          eq(r32.multiplexedId, '0x32', 'R2: provenance multiplexedId');
+          var p32b = p32.slice(); p32b[7] = 140;
+          sr.gw._emit(U('80').toUpperCase(), p32b);
+          eq(raws[raws.length - 1].heartRateBpm, 140, 'R3: geldige HR wordt doorgegeven');
+          var before = raws.length;
+          sr.gw._emit(U('80').toUpperCase(), [0x31, 1, 2, 3]);
+          eq(raws.length, before, 'R4: truncated packet emit GEEN metric');
+          sr.gw._emit(U('80').toUpperCase(), [0x35, 1, 2, 3]);
+          eq(raws.length, before, 'R5: recognized_not_decoded emit GEEN metric');
+          sr.gw._emit(U('80').toUpperCase(), [0x99, 1, 2]);
+          eq(raws.length, before, 'R6: onbekende identifier emit GEEN metric');
+          sr.gw._emit(U('80').toUpperCase(), []);
+          eq(raws.length, before, 'R7: leeg pakket veilig afgehandeld');
+          var md = sr.t.getMultiplexedDiagnostics();
+          eq(md.byId['0x31'].count, 2, 'R8: per-ID teller 0x31 (1 geldig + 1 truncated)');
+          eq(md.byId['0x31'].decoded, 1, 'R8: 0x31 decoded telt alleen geslaagde');
+          eq(md.byId['0x31'].failed, 1, 'R8: 0x31 failed telt truncated');
+          eq(md.byId['0x32'].count, 2, 'R8: per-ID teller 0x32');
+          eq(md.byId['0x35'].count, 1, 'R9: recognized_not_decoded wordt geteld');
+          eq(md.byId['0x99'].count, 1, 'R9: onbekende identifier wordt geteld');
+          eq(md.unknownIds, 1, 'R9: unknownIds teller');
+          eq(md.lastDecodedId, '0x32', 'R10: laatst gedecodeerde identifier');
+          ok(md.decoded === 3 && md.decodeFailures >= 1, 'R10: decode-succes en -failures apart geteld');
+          var cd = sr.t.getConnectionDiagnostics();
+          eq(cd.notifications[U('80')].count, 7, 'R11: notificatieteller loopt voor decoding (ook bij failures)');
+          ok(JSON.stringify(md).indexOf('hex') === -1, 'R12: multiplexed diagnostiek bevat geen payload');
         });
       }).then(function () {
         // d) forced modes (dev/test-injecteerbaar) + AUTO zonder bekende data-chars

@@ -80,6 +80,14 @@ export function makeCapacitorBleGateway(options) {
     async stopNotifications(deviceId, service, characteristic) {
       try { await BleClient.stopNotifications(deviceId, lc(service), lc(characteristic)); } catch (e) {}
     },
+    /* CE060021 control write. De plugin verwacht een DataView; de transportlaag
+       levert een byte-array. Write MET response, zodat een mislukte GATT-write
+       een afwijzing oplevert in plaats van stil te verdwijnen. */
+    async write(deviceId, service, characteristic, bytes) {
+      var arr = (bytes && bytes.buffer) ? new Uint8Array(bytes.buffer) : new Uint8Array(bytes || []);
+      var dv = new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
+      return await BleClient.write(deviceId, lc(service), lc(characteristic), dv);
+    },
     async read(deviceId, service, characteristic) {
       return await BleClient.read(deviceId, lc(service), lc(characteristic));
     },

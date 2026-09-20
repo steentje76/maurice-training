@@ -43,6 +43,13 @@
     return out;
   }
 
+  function dataViewToArray(dv) {
+    if (!dv) return [];
+    if (Object.prototype.toString.call(dv) === '[object Array]') return dv.slice();
+    var n = dataViewLength(dv), out = [], i;
+    for (i = 0; i < n; i++) { out.push(dv.getUint8(i)); }
+    return out;
+  }
   function dataViewLength(dv) {
     if (dv == null) return 0;
     if (typeof dv.byteLength === 'number') return dv.byteLength;
@@ -176,8 +183,17 @@
     // - ErgData (APK_OBSERVED): individuele data-chars (PmStrokeData/PmSplitIntervalData,
     //   forceCurveCharacteristic) + CSAFE-control (0x0021/0x0022). Multiplex 0x0080 is in de
     //   APK aanwezig, maar gelijktijdig gebruik met individuele chars is NIET bewezen.
-    // - Daarom: nooit multiplex EN individueel tegelijk. Voorkeur INDIVIDUAL (spec-rol BOTH),
-    //   fallback MULTIPLEXED uitsluitend als de individuele data-chars op dit apparaat ontbreken.
+    // - OFFICIAL_CONFIRMED (Concept2 PM Bluetooth Smart Communication Interface Definition rev. 1.30,
+    //   "C2 PM Rowing Service"): op Android is het aantal gelijktijdige notificaties beperkt (4 resp. 7).
+    //   De spec schrijft expliciet voor dat Android-apps 0x0080 inschakelen IN PLAATS VAN 0x31, 0x32,
+    //   0x33, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A en 0x3B.
+    // - OFFICIAL_CONFIRMED (idem, attribuuttabel 0x0080): payloads worden UITSLUITEND gemultiplexed
+    //   zolang de notificatie van de gelijknamige individuele characteristic NIET is ingeschakeld.
+    //   Individuele abonnementen onderdrukken dus de multiplexed stroom: dat is de bewezen root cause
+    //   van "Notifications totaal = 0" op de fysieke PM5.
+    // - ERGDATA_OBSERVED (ErgData 2.2.29): kent 0x0080 wel, kent 0x31/0x32/0x33/0x36/0x3B niet.
+    // - Daarom: nooit multiplex EN individueel tegelijk. Voorkeur MULTIPLEXED conform spec,
+    //   fallback INDIVIDUAL uitsluitend als 0x0080 op dit apparaat ontbreekt.
     // - Subscriben uitsluitend op characteristics die de plugin na service discovery werkelijk
     //   rapporteert (gateway.getServices, plugin-contract bevestigd); sequentieel, expliciete order.
     var SUBSCRIPTION_MODES = ['AUTO_DISCOVERED', 'INDIVIDUAL', 'MULTIPLEXED'];
@@ -196,12 +212,12 @@
       var indivPresent = indiv.filter(isPresent), muxPresent = mux.filter(isPresent), ctrlPresent = ctrl.filter(isPresent);
       if (mode === 'INDIVIDUAL') { chosen = indivPresent; reason = 'forced_individual'; }
       else if (mode === 'MULTIPLEXED') { chosen = muxPresent; reason = 'forced_multiplexed'; }
-      else if (!present) { chosen = indiv; reason = 'discovery_unavailable_default_individual'; }
-      else if (indivPresent.length) { chosen = indivPresent; reason = 'individual_present'; }
-      else if (muxPresent.length) { chosen = muxPresent; reason = 'individual_absent_fallback_multiplexed'; }
+      else if (!present) { chosen = mux; reason = 'discovery_unavailable_default_multiplexed'; }
+      else if (muxPresent.length) { chosen = muxPresent; reason = 'android_pm5_multiplexed_supported'; }
+      else if (indivPresent.length) { chosen = indivPresent; reason = 'multiplexed_absent_fallback_individual'; }
       else { chosen = []; reason = 'no_known_data_characteristics'; }
       var order = ctrlPresent.concat(chosen);
-      return { mode: mode, selected: (chosen === indiv || chosen === indivPresent) ? 'INDIVIDUAL' : (chosen.length ? 'MULTIPLEXED' : 'NONE'),
+      return { mode: mode, selected: (chosen === mux || chosen === muxPresent) ? 'MULTIPLEXED' : (chosen.length ? 'INDIVIDUAL' : 'NONE'),
                reason: reason, order: order, control: ctrlPresent.length, data: chosen.length };
     }
     function presenceFromServices(services) {
@@ -229,6 +245,9 @@
         decoders[lc(NOTIFY_CHARS[i].uuid)] = { status: 'UNKNOWN', decode: null };
       }
     })();
+    // CE060080 krijgt de officieel onderbouwde multiplexed router (spec rev. 1.30 Tabel 4).
+    // Alle overige notify-chars blijven UNKNOWN: zonder officiële layout wordt niets gedecodeerd.
+    decoders['ce060080-43e5-11e4-916c-0800200c9a66'] = { status: 'CONFIRMED', decode: function (dv) { return decodeMultiplexed(dv); } };
 
     function emitConn(state) {
       connState = state;
@@ -249,6 +268,130 @@
       capture.push({ uuid: lc(uuid), t: now(), len: dataViewLength(dv), hex: bytesToHex(dv) });
     }
 
+    // ── CE060080 multiplexed router (Gate A stap 2) ───────────────────────────────
+    // OFFICIAL_CONFIRMED — Concept2 PM Bluetooth Smart Communication Interface Definition
+    // rev. 1.30, Tabel 4 "C2 Multiplexed Information: Data Definitions".
+    // Byte 0 van 0x0080 is de identifier; daarna volgen N databytes. De spec is expliciet:
+    // "The byte length of the following multiplexed characteristics does not include the
+    //  identifier byte. The total length of the data packet is N+1 bytes."
+    // De multiplexed layouts zijn NIET identiek aan de individuele characteristics; daarom
+    // eigen decoders en géén slice(1) op een individuele decoder.
+    var MUX_ID = { GENERAL_STATUS: 0x31, ADDITIONAL_STATUS_1: 0x32 };
+    var MUX_LEN = {};
+    MUX_LEN[MUX_ID.GENERAL_STATUS] = 19;
+    MUX_LEN[MUX_ID.ADDITIONAL_STATUS_1] = 19;
+    // Identifiers die de spec kent maar die wij (nog) niet decoderen: wel tellen, nooit raden.
+    var MUX_RECOGNIZED = [0x33, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C];
+
+    var muxDiag = { byId: {}, decoded: 0, decodeFailures: 0, unknownIds: 0, lastDecodedId: null };
+    function muxCount(id, field) {
+      var k = '0x' + (id < 16 ? '0' : '') + id.toString(16);
+      if (!muxDiag.byId[k]) muxDiag.byId[k] = { count: 0, decoded: 0, failed: 0, firstAt: now(), lastAt: null, lastLen: null };
+      var e = muxDiag.byId[k];
+      e.count++; e.lastAt = now();
+      if (field) e[field]++;
+      return e;
+    }
+    function u8(dv, i) { return dv.getUint8(i); }
+    function le16(dv, i) { return dv.getUint8(i) | (dv.getUint8(i + 1) << 8); }
+    function le24(dv, i) { return dv.getUint8(i) | (dv.getUint8(i + 1) << 8) | (dv.getUint8(i + 2) << 16); }
+
+    // 0x31 — C2 rowing general status (19 databytes), spec rev. 1.30 Tabel 4.
+    function decodeMux31(dv, o) {
+      return {
+        elapsedTimeS: le24(dv, o + 0) * 0.01,      // 0.01 sec lsb
+        distanceM: le24(dv, o + 3) * 0.1,          // 0.1 m lsb
+        workoutType: u8(dv, o + 6),
+        intervalType: u8(dv, o + 7),
+        workoutState: u8(dv, o + 8),
+        rowingState: u8(dv, o + 9),
+        strokeState: u8(dv, o + 10),
+        totalWorkDistanceM: le24(dv, o + 11),
+        workoutDuration: le24(dv, o + 14),
+        workoutDurationType: u8(dv, o + 17),
+        dragFactor: u8(dv, o + 18)
+      };
+    }
+    // 0x32 — C2 rowing additional status 1 (19 databytes), spec rev. 1.30 Tabel 4.
+    // Let op: de multiplexed variant draagt Average Power op 16-17; de individuele 0x0032 niet.
+    function decodeMux32(dv, o) {
+      var hr = u8(dv, o + 6);
+      return {
+        elapsedTimeS: le24(dv, o + 0) * 0.01,
+        speedMps: le16(dv, o + 3) * 0.001,         // 0.001 m/s lsb
+        strokeRateSPM: u8(dv, o + 5),              // strokes/min
+        heartRateBpm: hr === 255 ? null : hr,      // 255 = invalid -> onbekend blijft onbekend
+        currentPaceS: le16(dv, o + 7) * 0.01,      // 0.01 sec lsb (per 500 m)
+        averagePaceS: le16(dv, o + 9) * 0.01,
+        restDistanceM: le16(dv, o + 11),
+        restTimeS: le24(dv, o + 13) * 0.01,
+        averagePowerW: le16(dv, o + 16),           // watts
+        ergMachineType: u8(dv, o + 18)
+      };
+    }
+    // Pure router: identifier -> decoder. Geen fake metric, geen crash bij onbekend/kort pakket.
+    function decodeMultiplexed(dv) {
+      var total = dataViewLength(dv);
+      if (total < 1) { muxDiag.decodeFailures++; return null; }
+      var id = u8(dv, 0);
+      var need = MUX_LEN[id];
+      if (typeof need !== 'number') {
+        if (MUX_RECOGNIZED.indexOf(id) !== -1) { muxCount(id); } else { muxCount(id); muxDiag.unknownIds++; }
+        return null; // recognized_not_decoded of onbekend: tellen, niets emitten
+      }
+      var e = muxCount(id);
+      e.lastLen = total;
+      if (total < need + 1) { e.failed++; muxDiag.decodeFailures++; return null; } // truncated
+      var raw = null;
+      try { raw = (id === MUX_ID.GENERAL_STATUS) ? decodeMux31(dv, 1) : decodeMux32(dv, 1); }
+      catch (err) { raw = null; }
+      if (!raw) { e.failed++; muxDiag.decodeFailures++; return null; }
+      e.decoded++; muxDiag.decoded++; muxDiag.lastDecodedId = '0x' + id.toString(16);
+      raw.multiplexedId = '0x' + id.toString(16);
+      raw.characteristicUuid = 'ce060080-43e5-11e4-916c-0800200c9a66';
+      raw.source = 'concept2_pm5';
+      raw.transport = 'ble';
+      raw.protocol = 'concept2_bts';
+      return raw;
+    }
+    function getMultiplexedDiagnostics() {
+      var byId = {};
+      for (var k in muxDiag.byId) { if (muxDiag.byId.hasOwnProperty(k)) byId[k] = JSON.parse(JSON.stringify(muxDiag.byId[k])); }
+      return { byId: byId, decoded: muxDiag.decoded, decodeFailures: muxDiag.decodeFailures,
+               unknownIds: muxDiag.unknownIds, lastDecodedId: muxDiag.lastDecodedId };
+    }
+
+    // ── CE060021 control write + CE060022 response routing (Gate B.3) ────────────
+    // OFFICIAL (BTS Interface Definition rev. 1.30, attribuuttabel):
+    //   0x0021 = C2 PM receive characteristic  [WRITE]  app -> PM5
+    //   0x0022 = C2 PM transmit characteristic [NOTIFY] PM5 -> app
+    // Deze laag transporteert alleen: geen CSAFE-kennis, geen state machine.
+    var CTRL_RECEIVE_UUID = 'ce060021-43e5-11e4-916c-0800200c9a66';
+    var CTRL_TRANSMIT_UUID = 'ce060022-43e5-11e4-916c-0800200c9a66';
+    var CTRL_SERVICE_UUID = 'ce060020-43e5-11e4-916c-0800200c9a66';
+    var connectionGeneration = 0;
+    var controlResponseHandler = null;
+    var controlWrites = 0;
+
+    /* Schrijft een voorgebouwd CSAFE-frame naar CE060021 op het ACTIEF verbonden
+       device. Weigert zonder verbinding; er wordt nooit blind naar hardware
+       geschreven. Resolve betekent uitsluitend WRITE_COMPLETED. */
+    function writeControlFrame(bytes) {
+      if (!deviceId) return Promise.reject(new Error('not_connected'));
+      if (!bytes || !bytes.length) return Promise.reject(new Error('empty_frame'));
+      if (!gateway || typeof gateway.write !== 'function') return Promise.reject(new Error('no_write_capability'));
+      controlWrites++;
+      return Promise.resolve(gateway.write(deviceId, CTRL_SERVICE_UUID, CTRL_RECEIVE_UUID, Array.prototype.slice.call(bytes)))
+        .then(function () { return { ok: true, bytes: bytes.length }; });
+    }
+    /* De programming controller registreert zich hier; CE060022-payloads worden
+       doorgegeven met de ACTIEVE sessiecontext, zodat de controller stale
+       generations kan afwijzen. */
+    function setControlResponseHandler(fn) { controlResponseHandler = (typeof fn === 'function') ? fn : null; }
+    function getControlContext() {
+      return { connected: !!deviceId, deviceId: deviceId, generation: connectionGeneration };
+    }
+
     function onNotification(uuid, dv) {
       // 0) observability: teller + laatste tijdstip per characteristic (geen payload)
       var nk = lc(uuid);
@@ -257,6 +400,11 @@
       connDiag.notifications[nk].lastAt = now();
       // 1) capture (alleen expliciet aangezet; ruwe bytes voor dev/validatie)
       pushCapture(uuid, dv);
+      // 1b) CE060022 is de CSAFE-responskant: doorgeven aan de programming controller.
+      //     CE060080 blijft uitsluitend live telemetry; geen cross-routing.
+      if (nk === CTRL_TRANSMIT_UUID && controlResponseHandler) {
+        try { controlResponseHandler(dataViewToArray(dv), getControlContext()); } catch (e) {}
+      }
       // 2) decode ALLEEN als er een BEVESTIGDE decoder is (anders UNKNOWN → niets emitten)
       var d = decoders[lc(uuid)];
       if (d && d.status === 'CONFIRMED' && typeof d.decode === 'function') {
@@ -404,7 +552,7 @@
       connDiag = freshConnDiag(); // nieuwe verbindingspoging = schone diagnostiek
       return Promise.resolve(gateway.connect(id, onDisconnect))
         .then(function () {
-          deviceId = id;
+          deviceId = id; connectionGeneration++;
           connDiag.connectedAt = now();
           // machineType: gebruiker-bevestigd/gekozen (of 'unknown'); NIET gegokt uit BLE.
           machineType = (reqMachineType && CL.MACHINE_TYPES && CL.MACHINE_TYPES.indexOf(reqMachineType) !== -1)
@@ -616,7 +764,12 @@
       clearCapture: clearCapture,
       exportCapture: exportCapture,
       // decoder-registry
+      writeControlFrame: writeControlFrame,
+      setControlResponseHandler: setControlResponseHandler,
+      getControlContext: getControlContext,
+      getControlWriteCount: function () { return controlWrites; },
       registerDecoder: registerDecoder,
+      getMultiplexedDiagnostics: getMultiplexedDiagnostics,
       decoderStatus: decoderStatus,
       // introspectie (tests/diagnostiek)
       _notifyChars: NOTIFY_CHARS,

@@ -23,7 +23,7 @@ ok(/t\.setControlResponseHandler\(function\(bytes,ctx\)\{ if\(st\._prog\) st\._p
 ok(/st\._prog\.cancel\('disconnect'\)/.test(html), 'W4: disconnect annuleert de pending operatie');
 ok(/t\.setControlResponseHandler\(null\)/.test(html), 'W5: response-handler geneutraliseerd bij disconnect');
 ok(/if\(progRes&&progRes\.attempted&&!progRes\.confirmed\)\{/.test(html), 'W6: vastleggen stopt wanneer programmering niet bevestigd is');
-ok(/const progRes=await tkErgProgramPm5IfNeeded\(exId,st\.type,Math\.round\(waarde\)\);/.test(html), 'W7: start-handler roept de helper aan');
+ok(/const progRes=\(typeof tkErgProgramPm5IfNeeded==='function'\)\?await tkErgProgramPm5IfNeeded\(exId,st\.type,Math\.round\(waarde\)\):null;/.test(html), 'W7: start-handler roept de helper aan (defensief: zonder helper blijft de bestaande flow werken)');
 const startFn = html.slice(html.indexOf('async function tkErgStartProtocol('), html.indexOf('async function tkErgStartProtocol(') + 2600);
 ok(startFn.indexOf('progRes') < startFn.indexOf('_ergProtocol[exId]={type:st.type'), 'W8: programmering gebeurt VOOR het vastleggen');
 ok(!/parseResponseFrame|checksum\(|0xF1|stuff\(/.test(startFn), 'W9: geen CSAFE-logica of bytes in de UI-handler');

@@ -21420,7 +21420,7 @@ async function tkErgStartProtocol(exId,cardioType){
   // Gate B.4: met gekoppelde PM5 en een afstandsdoel wordt de workout eerst op de PM5
   // geprogrammeerd. Execution/vastlegging gaat PAS door na CONFIRMED; een geslaagde BLE-write
   // is geen bevestiging. Zonder PM5 of bij een tijddoel blijft de bestaande flow ongewijzigd.
-  const progRes=await tkErgProgramPm5IfNeeded(exId,st.type,Math.round(waarde));
+  const progRes=(typeof tkErgProgramPm5IfNeeded==='function')?await tkErgProgramPm5IfNeeded(exId,st.type,Math.round(waarde)):null;
   if(progRes&&progRes.attempted&&!progRes.confirmed){
     toast(progRes.message||'Training kon niet op de PM5 worden ingesteld.');
     tkErgRerenderProtocol(exId,cardioType); return;

@@ -296,7 +296,7 @@ console.log('\nG. duration_s wordt vastgelegd bij het afronden van een sessie');
 // voegde een toelichtingsblok + projectie-afleiding toe binnen finishSession(), waardoor het
 // krachtschrijfpad buiten het oude, vaste venster viel. Puur een leesvenster-correctie --
 // de onderliggende asserties (G3/I5) zijn ongewijzigd en toetsen exact hetzelfde gedrag.
-const finishSrc = html.slice(html.indexOf('async function finishSession('), html.indexOf('async function finishSession(') + 6200);
+const finishSrc = html.slice(html.indexOf('async function finishSession('), html.indexOf('async function finishSession(') + 8600);
 ok(/const _duurS = trainStart \? Math\.max\(0, Math\.round\(\(Date\.now\(\)-trainStart-\(pausedAccumMs\|\|0\)\)\/1000\)\) : null;/.test(finishSrc),
   'G1: duration_s hergebruikt EXACT dezelfde formule als de al bestaande live-klok (startTrainTimer) -- geen tweede, losse tijdsberekening');
 ok(/duration_s:_duurS/.test(finishSrc), 'G2: het cardio-schrijfpad geeft duration_s mee');

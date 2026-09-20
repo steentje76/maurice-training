@@ -6931,18 +6931,22 @@ function tkErgConnectDevice(exId, idx){
       st._connecting=false;
       if(!res||res.connected!==true){ _c2repaint(exId, _c2note('Verbinding mislukt. Probeer opnieuw.')+_c2btn(exId,'Opnieuw zoeken')); return; }
       st.connected=true; st.wasConnected=true; st.deviceId=d.id; st.lastDevice=d;
+      // Gate A.4: één canonieke PM5-aggregator per verbinding, op dezelfde st-scope.
+      // De multiplexed 0x31/0x32-events zijn partial; Concept2Live voegt ze samen en
+      // mapt RAW->canonical. Geen merge- of mappinglogica hier.
+      st._agg=(typeof Concept2Live!=='undefined'&&Concept2Live.createPm5LiveAggregator)?Concept2Live.createPm5LiveAggregator():null;
       _c2repaint(exId, _c2connectedInner(exId, null));
       // connectie-events uit het transport (geen fake). Fase B: het transport emit bij een echte
       // plugin-disconnect 'disconnected' (nooit meer 'reconnecting' zonder reconnect-mechanisme);
       // de UI zet st.connected=false en toont de expliciete verbroken-staat met acties.
       if(typeof t.subscribeConnection==='function') st._unsubConn=t.subscribeConnection(function(e){
         if(!st.connected) return;
-        if(e&&e.state==='disconnected'){ st.connected=false; st.lastCm=null; _c2repaint(exId, _c2disconnectedInner(exId)); }
+        if(e&&e.state==='disconnected'){ st.connected=false; st.lastCm=null; if(st._agg) st._agg.reset(); _c2repaint(exId, _c2disconnectedInner(exId)); }
         else if(e&&e.state==='connected') _c2repaint(exId, _c2connectedInner(exId, st.lastCm||null));
       });
       st._unsubMetrics=t.subscribeMetrics(function(evt){
         var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
-             : (typeof Concept2Live!=='undefined'?Concept2Live.normalizeLiveMetric((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
+             : (st._agg?st._agg.push((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
         if(!cm) return; st.lastCm=cm;
         var now=(typeof performance!=='undefined'&&performance.now)?performance.now():0;
         if(_c2liveLast[exId] && (now-_c2liveLast[exId])<250){ return; }  // gecontroleerde UI-cadans

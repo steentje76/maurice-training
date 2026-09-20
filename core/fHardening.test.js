@@ -584,7 +584,7 @@ ok(!calcSrcV.includes('openRecoveryDetail') && !calcSrcV.includes('consistentieB
 
 /* ── W. A5 — DEVICE CONNECT HARDENING (v4.66.0) — mid-workout connect, geen state loss ── */
 console.log('\nW. A5: device-connect-hardening -- geen gestapelde subscriptions, geen dubbel-tik-race, geen aanraking van trainingsstaat');
-const connDevSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 3200);
+const connDevSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 4200);
 ok(/typeof st\._unsubMetrics==='function'/.test(connDevSrc), 'W1 (bewezen bug, gerepareerd): ruimt vóór elke nieuwe subscribeMetrics()-aanroep de eerder VASTGELEGDE, exercise-specifieke unsubscribe-functie op -- voorkomt gestapelde listeners bij dubbel verbinden');
 ok(/typeof st\._unsubConn==='function'/.test(connDevSrc), 'W2: idem voor de connection-listener (subscribeConnection)');
 ok(/st\._unsubConn=t\.subscribeConnection\(/.test(connDevSrc), 'W3: legt de door subscribeConnection() teruggegeven unsubscribe-functie vast -- niet alleen aanroepen en negeren');
@@ -599,8 +599,8 @@ const pairSrc = html.slice(html.indexOf('function tkErgPair('), html.indexOf('fu
 ok(/if\(st\._scanning\)return/.test(pairSrc.replace(/\s/g,'')), 'W10 (Sectie 9): dubbel tikken op "apparaat koppelen" tijdens het scannen wordt genegeerd -- geen twee overlappende discover()-aanroepen');
 ok((pairSrc.match(/_scanning=false/g)||[]).length>=3, 'W11: de scan-busy-guard wordt in alle uitgangen correct teruggezet');
 
-const normalizeSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 3200);
-ok(/Concept2Live\.normalizeLiveMetric/.test(normalizeSrc), 'W12 (Sectie 18, live metric ownership): ruwe device-events gaan UITSLUITEND via Concept2Live.normalizeLiveMetric() naar een canoniek object -- nooit ongefilterd RAW naar de UI/sessionLog');
+const normalizeSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 4200);
+ok(/Concept2Live\.createPm5LiveAggregator/.test(normalizeSrc) && /st\._agg\.push\(/.test(normalizeSrc), 'W12 (Sectie 18, live metric ownership): ruwe device-events gaan UITSLUITEND via de Concept2Live PM5-aggregator (die intern normalizeLiveMetric aanroept) naar een canoniek object -- nooit ongefilterd RAW naar de UI/sessionLog');
 
 /* ── X. A5-VERVOLG (v4.67.0) — device-cleanup bij discard/finish (Prioriteiten 9/10) ── */
 console.log('\nX. A5: tkErgDisconnectAll() bij verwerpen/afronden -- geen achtergrond-BLE-verbinding ná einde training');

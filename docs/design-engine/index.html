@@ -190,24 +190,30 @@ render();restoreProposal();
  try{
   const load=async p=>(await fetch(p,{cache:'no-store'})).json();
   const [rules,flows,conflicts,sources,snapshot,maturity]=await Promise.all([load('./rules.seed.json'),load('./flows.scenarios.json'),load('./conflicts.registry.json'),load('./sources.registry.json'),load('./source-verification.snapshot.json'),load('./capability-maturity.registry.json')]);
-  window.tkCapabilityMaturity=maturity; window.tkRules=rules; const flow=flows.flows[0]; window.tkFlow=flow; window.tkSources=sources; window.tkSnapshot=snapshot;renderSourceHealth();renderStates(); const results=TKValidation.validateAll({rules,flow,conflicts,sources,currentMainSha:snapshot.verified_against_main,actualSourceShas:snapshot.sources});
+  window.tkCapabilityMaturity=maturity; window.tkRules=rules; const flow=flows.flows[0]; window.tkFlow=flow; window.tkSources=sources; window.tkSnapshot={...snapshot,baseline_sha:snapshot.baseline_sha||sources.baseline_sha};renderSourceHealth();renderStates(); const results=TKValidation.validateAll({rules,flow,conflicts,sources,currentMainSha:snapshot.verified_against_main,actualSourceShas:snapshot.sources});
   window.tkValidationResults=results;
   const oldRender=render; render=function(){oldRender();const r=results.find(x=>x.scenario_id===scenario);if(!r)return;const k=document.querySelector('.inspect .kpi');if(k)k.innerHTML='<div><b class="'+(r.route_pass?'pass':'bad')+'">'+(r.route_pass?'PASS':'FAIL')+'</b><br><span class="small">route invariants</span></div><div><b class="'+(r.capabilities.lost.length?'bad':'pass')+'">'+r.capabilities.lost.length+'</b><br><span class="small">capabilities lost</span></div><div><b>'+cfg[scenario].taps+'</b><br><span class="small">est. taps</span></div><div><b class="'+(r.hard_conflict_count?'warn':'pass')+'">'+r.hard_conflict_count+'</b><br><span class="small">hard conflicts</span></div>';const gate=document.getElementById('freezeGate');if(gate){gate.className='rule '+(r.freeze_ready?'pass':'bad');gate.textContent=(r.freeze_ready?'READY':'BLOCKED')+' · '+r.hard_issue_count+' validation issues · '+r.hard_conflict_count+' unresolved HARD conflicts';}};render();
  }catch(e){console.error('V2.2 validation load failed',e);}
 })();
 </script><script>
-const designProposalRepository=DesignRepository.localRepository(localStorage,'design-engine-v1-selected-proposal');
-const designGenericExporter=createGenericContractExporter();
+var designProposalRepository,designGenericExporter,designUiValidator,designPipeline;
+function ensureDesignPipeline(){
+ if(designPipeline)return designPipeline;
+ designProposalRepository=DesignRepository.localRepository(localStorage,'design-engine-v1-selected-proposal');
+ designGenericExporter=DesignContractExporter.createGenericContractExporter();
+ designUiValidator={validate:function(composition){const r=(window.tkValidationResults||[]).find(x=>x.scenario_id===scenario);return {valid:!!(r&&r.freeze_ready),hard_issue_count:r?r.hard_issue_count:1,issues:r&&r.freeze_ready?[]:[{severity:'HARD',code:'CANONICAL_VALIDATION_BLOCKED'}],evidence:(r&&r.evidence)||[]}}};
+ designPipeline=DesignProposalPipeline.createProposalPipeline({composer:{compose:uiComposition},validator:designUiValidator,repository:designProposalRepository,exporter:designGenericExporter,readinessValidator:DesignFreezeReadiness.validateFreezeReadiness,productIdentity:'trainingskompas'});
+ return designPipeline;
+}
 function uiComposition(){
  const ids=visualStudio.snapshot().order||[];
  return {screen_id:'SCREEN-TRAIN-001',instances:ids.map(id=>({id})),visual_variant:visualStudio.snapshot().activeVariant};
 }
-const designUiValidator={validate:function(composition){const r=(window.tkValidationResults||[]).find(x=>x.scenario_id===scenario);return {valid:!!(r&&r.freeze_ready),hard_issue_count:r?r.hard_issue_count:1,issues:r&&r.freeze_ready?[]:[{severity:'HARD',code:'CANONICAL_VALIDATION_BLOCKED'}],evidence:(r&&r.evidence)||[]}}};
-const designPipeline=DesignProposalPipeline.createProposalPipeline({composer:{compose:uiComposition},validator:designUiValidator,repository:designProposalRepository,exporter:designGenericExporter,readinessValidator:DesignFreezeReadiness.validateFreezeReadiness,productIdentity:'trainingskompas'});
 async function freezeSelected(){
  const out=document.getElementById("contractOut");
  if(composerMode!=="proposal"){out.value="DESIGN FREEZE BLOCKED\nSelecteer Proposal mode voordat je bevriest.";return;}
  try{
+  ensureDesignPipeline();
   const visual=DesignVisualProposal.createVisualProposalInput({studio:visualStudio,composition:uiComposition()});
   const proposalId='UI-'+scenario+'-'+visual.selectedVariant;
   await designPipeline.propose({proposalId,screenId:'SCREEN-TRAIN-001',compositionOverride:visual.composition,selectedVariant:visual.selectedVariant,changes:{visual_diff:visual.visualDiff,visual_reference:visual.visualReference}});

@@ -6989,6 +6989,12 @@ function tkErgConnectDevice(exId, idx){
         var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
              : (st._agg?st._agg.push((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
         if(!cm) return; st.lastCm=cm;
+        // L1.6D — CANONIEKE HANDOFF. st.lastCm is presentatiestate die bij disconnect en
+        // teardown wordt gewist; de completion-laag mag daar niet uit lezen. De canonieke cm
+        // verlaat hier de BLE-laag via één neutrale uitgaande aanroep, zoals _c2rtGet en
+        // _c2repaint dat al doen. Deze functie noemt bewust geen sessie- of trainingsstate:
+        // de isolatie-guard in fConcept2MidWorkoutIsolation blijft ongewijzigd groen.
+        try{ if(typeof tkErgOnCanonicalMeasurement==='function') tkErgOnCanonicalMeasurement(exId, cm); }catch(_hm){}
         // Gate B.3: dezelfde canonieke telemetrie voedt de read-back verificatie.
         // Geen tweede stroom en geen protocolkennis hier: de controller vergelijkt zelf.
         try{
@@ -21930,6 +21936,19 @@ function validateCardioField(exId, cardioType, field){
   }catch(e){}
 }
 
+// L1.6D — EXECUTION CONSUMER. Neemt de canonieke Concept2-meting over van de BLE-laag
+// en legt haar bij de bestaande execution owner sessionLog[exId], onder een eigen sleutel
+// .c2 zodat gemeten data nooit vermengt met het handmatige .cardio-invoerpad.
+// Deze functie bezit niets, rekent niets uit en schrijft niet naar de database: zij
+// transporteert alleen over de laaggrens. De lifecycle blijft die van sessionLog:
+// reset bij startT, behouden bij een mislukte write voor retry, gewist na afronding.
+function tkErgOnCanonicalMeasurement(exId, cm){
+  if(!exId || !cm || typeof cm!=='object') return;
+  if(typeof sessionLog==='undefined' || !sessionLog) return;
+  if(!sessionLog[exId]) sessionLog[exId]={};
+  sessionLog[exId].c2=cm;
+}
+
 function logCardio(exId, cardioType){
   const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
   if(!sessionLog[exId]) sessionLog[exId]={};
@@ -23188,7 +23207,31 @@ async function finishSession(){
     // gelogd". Mislukte oefeningen worden geteld; de sessie blijft dan behouden voor retry.
     try{
     if(l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
-      const cRow=cardioDataToRow(l.cardio.type,l.cardio);
+      // L1.6D — COMPLETION BRIDGE. Bij een PM5-executie is de gemeten canonieke summary de
+      // bron van waarheid, niet het (vaak lege) cardioformulier. liveWorkoutToActual is de
+      // bestaande converter naar een sessions-row; cardioDataToRow blijft het handmatige pad.
+      // Twee parallelle rij-producenten, daarna exact hetzelfde schrijfpad.
+      var _c2s=l.c2;
+      // Fail closed: alleen een summary met daadwerkelijk gemeten afstand of duur telt.
+      var _c2ok=!!(_c2s&&typeof _c2s==='object'&&typeof liveWorkoutToActual==='function'
+        &&(_c2s.distanceM!=null||_c2s.distance_m!=null||_c2s.elapsedTimeS!=null||_c2s.duration_s!=null));
+      var cRow;
+      if(_c2ok){
+        var _c2sum={ machineType:(_c2s.machineType||_c2s.mt||null),
+          distance_m:(_c2s.distance_m!=null?_c2s.distance_m:_c2s.distanceM),
+          duration_s:(_c2s.duration_s!=null?_c2s.duration_s:_c2s.elapsedTimeS),
+          watts:(_c2s.watts!=null?_c2s.watts:null),
+          stroke_rate_spm:(_c2s.stroke_rate_spm!=null?_c2s.stroke_rate_spm:_c2s.strokeRateSPM),
+          heart_rate_bpm:(_c2s.heart_rate_bpm!=null?_c2s.heart_rate_bpm:_c2s.heartRateBPM),
+          drag_factor:(_c2s.drag_factor!=null?_c2s.drag_factor:_c2s.dragFactor) };
+        cRow=liveWorkoutToActual(_c2sum,{date:today,training_type:t,training_instance_id:activeInstanceId||null}).row;
+        // De omliggende write levert date/exercise_id/training_type/instance zelf al aan; de
+        // note van de converter loopt als extraNote door de bestaande note-compositie.
+        delete cRow.date; delete cRow.exercise_id; delete cRow.training_type; delete cRow.training_instance_id;
+        cRow.extraNote=cRow.note; delete cRow.note;
+      } else {
+        cRow=cardioDataToRow(l.cardio.type,l.cardio);
+      }
       const extraNote=cRow.extraNote;delete cRow.extraNote;
       // P1: oefeningsnotitie mee in de note-kolom, als vrije-notitie-deel vóór de afgeleide extraNote
       // (zodat de bestaande cardio-edit-strip 'm weer als vrije notitie herkent).

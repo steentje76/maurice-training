@@ -197,8 +197,72 @@
       strokeRateSPM: _num(raw.stroke_rate_spm), strokeCount: _num(raw.stroke_count),
       heartRateBPM: hr, heartRateSource: hr != null ? (raw.hr_source || 'concept2_pm5') : null,
       calories: _num(raw.calories_kcal), dragFactor: _num(raw.drag_factor),
-      workoutState: raw.workout_state || null,
+      workoutState: (raw.workout_state != null) ? raw.workout_state : null,
       intervalNumber: _num(raw.interval_number), restState: !!raw.rest_state
+    };
+  }
+
+  // ── PM5 MULTIPLEXED LIVE AGGREGATOR (Gate A.3) ───────────────────────────────
+  // 0x31 en 0x32 komen als AFZONDERLIJKE notificaties binnen en dragen elk maar een
+  // deel van de live metrics. normalizeLiveMetric is puur en bouwt zijn output volledig
+  // uit de meegegeven raw, dus zonder samenvoeging zet elk event de velden van het
+  // andere op null. Deze aggregator houdt de laatst bekende RAW per sessie vast en
+  // levert per notificatie een VOLLEDIGE canonieke raw aan normalizeLiveMetric.
+  //
+  // Grenskeuze: de aggregatie hoort hier, niet in de BLE-router. Concept2Live houdt al
+  // per-sessie live state (current/getCurrentMetrics/reset); de transportlaag is bewust
+  // stateloos per notificatie. Zo blijven de protocoldecoders puur.
+  //
+  // ABSENT vs INVALID: een veld dat niet in het packet zit is AFWEZIG en wist een eerdere
+  // geldige waarde niet. Een veld dat aanwezig is maar protocol-invalid (0x32 heart rate
+  // sentinel 255 -> null) is een geldige meting "onbekend" en overschrijft wel.
+  var PM5_FIELD_MAP = {
+    elapsedTimeS: 'elapsed_s',
+    distanceM: 'distance_m',
+    currentPaceS: 'pace_s_500m',
+    averagePowerW: 'watts',
+    strokeRateSPM: 'stroke_rate_spm',
+    heartRateBpm: 'heart_rate_bpm',
+    dragFactor: 'drag_factor',
+    workoutState: 'workout_state'
+  };
+  // Officiele PM5 Erg Machine Type enum (BTS Interface Definition rev. 1.30, Appendix A).
+  function pm5MachineType(code) {
+    if (code == null) return null;
+    var c = Number(code);
+    if (!isFinite(c)) return null;
+    if (c === 128 || c === 143) return 'skierg';
+    if (c >= 192 && c <= 207) return 'bikeerg';
+    if (c === 224) return 'rowerg';
+    if (c === 225) return 'skierg';
+    if (c === 226) return 'bikeerg';
+    if (c >= 0 && c <= 32) return 'rowerg';
+    return null;
+  }
+  function pm5RawToCanonical(raw) {
+    var out = {};
+    if (!raw || typeof raw !== 'object') return out;
+    for (var k in PM5_FIELD_MAP) {
+      if (Object.prototype.hasOwnProperty.call(raw, k)) out[PM5_FIELD_MAP[k]] = raw[k];
+    }
+    return out;
+  }
+  function createPm5LiveAggregator() {
+    var merged = {};
+    var lastMachineType = null;
+    return {
+      push: function (raw, machineTypeHint, ctx) {
+        var mapped = pm5RawToCanonical(raw), k;
+        for (k in mapped) { if (Object.prototype.hasOwnProperty.call(mapped, k)) merged[k] = mapped[k]; }
+        if (raw && raw.ergMachineType != null) {
+          var mt = pm5MachineType(raw.ergMachineType);
+          if (mt) lastMachineType = mt;
+        }
+        return normalizeLiveMetric(merged, lastMachineType || machineTypeHint || null, ctx || {});
+      },
+      getMergedRaw: function () { var c = {}, k; for (k in merged) { if (Object.prototype.hasOwnProperty.call(merged, k)) c[k] = merged[k]; } return c; },
+      getMachineType: function () { return lastMachineType; },
+      reset: function () { merged = {}; lastMachineType = null; }
     };
   }
 
@@ -319,6 +383,8 @@
     PAIRING_STATES: PAIRING_STATES, PAIRING_MICROCOPY: PAIRING_MICROCOPY, pairingMessage: pairingMessage,
     signalLabel: signalLabel, CARDIO_TO_MACHINE: CARDIO_TO_MACHINE, machineMatchesExercise: machineMatchesExercise,
     normalizeLiveMetric: normalizeLiveMetric, normalizeInterval: normalizeInterval,
+    pm5RawToCanonical: pm5RawToCanonical, pm5MachineType: pm5MachineType,
+    createPm5LiveAggregator: createPm5LiveAggregator,
     localWorkoutId: localWorkoutId, localTag: localTag, alreadyLoggedLive: alreadyLoggedLive,
     liveWorkoutToActual: liveWorkoutToActual, makeMockConcept2PM5: makeMockConcept2PM5
   };

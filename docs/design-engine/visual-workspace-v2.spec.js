@@ -24,8 +24,8 @@ test('Scenario 3: direct pointer reorder in canvas changes active-variant order,
  await enterProposalMode(page);
  const before=await page.locator('#variantCompare .variantCard').first().locator('.miniOrder').textContent();
  expect(before).toContain('my-training');
- const source=page.locator('[data-component-instance="my-training"]');
- const target=page.locator('[data-component-instance="planning"]');
+ const source=page.locator('#screen [data-component-instance="my-training"]');
+ const target=page.locator('#screen [data-component-instance="planning"]');
  const sBox=await source.boundingBox(),tBox=await target.boundingBox();
  await page.mouse.move(sBox.x+sBox.width/2,sBox.y+sBox.height/2);
  await page.mouse.down();
@@ -46,8 +46,8 @@ test('Scenario 4: A/B/C variant isolation — editing active variant B never mut
  const aBefore=await page.locator('#variantCompare .variantCard').nth(0).locator('.miniOrder').textContent();
  const bBefore=await page.locator('#variantCompare .variantCard').nth(1).locator('.miniOrder').textContent();
  const cBefore=await page.locator('#variantCompare .variantCard').nth(2).locator('.miniOrder').textContent();
- const source=page.locator('[data-component-instance="programs"]');
- const target=page.locator('[data-component-instance="my-training"]');
+ const source=page.locator('#screen [data-component-instance="programs"]');
+ const target=page.locator('#screen [data-component-instance="my-training"]');
  const sBox=await source.boundingBox(),tBox=await target.boundingBox();
  await page.mouse.move(sBox.x+sBox.width/2,sBox.y+sBox.height/2);
  await page.mouse.down();
@@ -92,8 +92,8 @@ test('Scenario 6: Audit & bewijs remains fully reachable alongside the visual-fi
 test('Scenario 7: fail-closed freeze is unaffected by direct-manipulation reorder without an explicit selected variant',async({page})=>{
  await openEngine(page);
  await enterProposalMode(page);
- const source=page.locator('[data-component-instance="my-training"]');
- const target=page.locator('[data-component-instance="planning"]');
+ const source=page.locator('#screen [data-component-instance="my-training"]');
+ const target=page.locator('#screen [data-component-instance="planning"]');
  const sBox=await source.boundingBox(),tBox=await target.boundingBox();
  await page.mouse.move(sBox.x+sBox.width/2,sBox.y+sBox.height/2);
  await page.mouse.down();
@@ -108,13 +108,13 @@ test('Scenario 7: fail-closed freeze is unaffected by direct-manipulation reorde
 test('Direct-manipulation drag suppresses the trailing click so it does not toggle selection a second time',async({page})=>{
  await openEngine(page);
  await enterProposalMode(page);
- const source=page.locator('[data-component-instance="my-training"]');
- const target=page.locator('[data-component-instance="planning"]');
+ const source=page.locator('#screen [data-component-instance="my-training"]');
+ const target=page.locator('#screen [data-component-instance="planning"]');
  const sBox=await source.boundingBox(),tBox=await target.boundingBox();
  await page.mouse.move(sBox.x+sBox.width/2,sBox.y+sBox.height/2);
  await page.mouse.down();
  await page.mouse.move(tBox.x+tBox.width/2,tBox.y+tBox.height/2,{steps:10});
  await page.mouse.up();
  await expect(page.locator('#toolbarSelectionChip')).toContainText('my-training');
- await expect(page.locator('[data-component-instance="my-training"].selectedComponent')).toHaveCount(1);
+ await expect(page.locator('#screen [data-component-instance="my-training"].selectedComponent')).toHaveCount(1);
 });

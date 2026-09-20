@@ -6510,6 +6510,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/athleteConstraints.js"></script>
 <script src="core/deviceIntegration.js"></script>
 <script src="core/concept2Live.js"></script>
+<script src="core/concept2Csafe.js"></script>
+<script src="core/concept2Programming.js"></script>
 <script src="core/weather.js"></script>
 <script src="core/cycle.js"></script>
 <script src="core/cycleTraining.js"></script>
@@ -6944,6 +6946,8 @@ function tkErgConnectDevice(exId, idx){
           st._prog=Concept2Programming.createProgrammingController({ write:function(b){ return t.writeControlFrame(b); } });
           if(typeof t.setControlResponseHandler==='function') t.setControlResponseHandler(function(bytes,ctx){ if(st._prog) st._prog.handleControlResponse(bytes,ctx); });
         }
+          // Developer Mode leest de diagnostiek uit DEZE controller (geen statisch object).
+          try{ if(window.TKDeveloperMode&&window.TKDeveloperMode.setProgrammingSource) window.TKDeveloperMode.setProgrammingSource(function(){ return st._prog; }); }catch(_e2){}
       }catch(_e){ st._prog=null; }
       _c2repaint(exId, _c2connectedInner(exId, null));
       // connectie-events uit het transport (geen fake). Fase B: het transport emit bij een echte

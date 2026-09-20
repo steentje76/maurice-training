@@ -6,6 +6,11 @@ function safeJsonClone(value) {
   try { return JSON.parse(JSON.stringify(value)); } catch (_) { return null; }
 }
 
+let programmingSource = null;
+/* index.html registreert hier de ACTIEVE programming-controller, zodat Developer
+   Mode de echte diagnostiek leest en nooit een statisch object. */
+export function setProgrammingSource(fn) { programmingSource = (typeof fn === 'function') ? fn : null; }
+
 export function buildDiagnosticsSnapshot(transport) {
   const out = {
     generatedAt: new Date().toISOString(),
@@ -16,8 +21,14 @@ export function buildDiagnosticsSnapshot(transport) {
     advertisementsSeen: 0,
     matchedDevices: 0,
     devices: [],
-    connection: null
+    connection: null,
+      // Gate B: diagnostiek van de actieve PM5-programmeercontroller.
+      programming: null
   };
+  try {
+    const src = programmingSource && programmingSource();
+    if (src && typeof src.getDiagnostics === 'function') out.programming = src.getDiagnostics();
+  } catch (e) { /* diagnostiek mag de rest nooit blokkeren */ }
   if (!transport) return out;
   try {
     // Fase B: verbindingsdiagnostiek (geen payload, geen persoonsgegevens; device-id gemaskeerd door het transport)
@@ -93,6 +104,32 @@ export function diagnosticsToText(snapshot) {
     const n = c.notifications || {};
     Object.keys(n).forEach((u) => { lines.push('  ' + u + ': ' + n[u].count + 'x, eerste ' + iso(n[u].firstAt) + ', laatste ' + iso(n[u].lastAt)); });
     lines.push('');
+    // ── PM5 workoutprogrammering (Gate B) — leest uit de actieve controller ──
+    const pg = s.programming;
+    if (pg) {
+      lines.push('--- Workout control (PM5 programmering) ---');
+      lines.push('Requested: ' + (pg.requestedWorkoutType != null ? 'fixed distance (type ' + pg.requestedWorkoutType + ')' : '-'));
+      lines.push('Target: ' + (pg.requestedDistanceM != null ? pg.requestedDistanceM + ' m' : '-'));
+      lines.push('State: ' + (pg.state || '-'));
+      lines.push('Generation/sessie: ' + (pg.generation != null ? pg.generation : '-'));
+      lines.push('CE060021 write attempted: ' + (pg.writeAttempted || 0));
+      lines.push('CE060021 write completed: ' + (pg.writeCompleted || 0));
+      lines.push('CE060021 write failed: ' + (pg.writeFailed || 0) + (pg.lastWriteError ? ' (' + pg.lastWriteError + ')' : ''));
+      lines.push('Laatste uitgaand frame: ' + (pg.lastFrameHex || '-'));
+      lines.push('CE060022 responses seen: ' + (pg.responsesSeen || 0));
+      lines.push('CE060022 responses ignored: ' + (pg.responsesIgnored || 0));
+      lines.push('Laatste response: ' + (pg.lastResponseHex || '-'));
+      lines.push('Parse: ' + (pg.lastParse || '-'));
+      lines.push('Previous Frame Status: ' + (pg.previousFrameStatus || '-'));
+      lines.push('PM state-machine: ' + (pg.pmStateMachineState || '-'));
+      lines.push('Laatste resultaat: ' + (pg.lastResult && pg.lastResult.state ? pg.lastResult.state + (pg.lastResult.reason ? ' (' + pg.lastResult.reason + ')' : '') : '-'));
+      lines.push('Laatste event: ' + (pg.startedAt != null ? iso(pg.startedAt) : '-'));
+      lines.push('');
+    } else {
+      lines.push('--- Workout control (PM5 programmering) ---');
+      lines.push('Controller: niet actief (geen verbinding of module niet geladen)');
+      lines.push('');
+    }
   }
   const devices = Array.isArray(s.devices) ? s.devices : [];
   if (!devices.length) lines.push('Geen BLE-advertenties in de laatste Concept2-scan geregistreerd.');

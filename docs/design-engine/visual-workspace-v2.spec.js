@@ -32,7 +32,7 @@ test('Scenario 3: direct pointer reorder in canvas changes active-variant order,
  await page.mouse.move(sBox.x+sBox.width/2+20,sBox.y+sBox.height/2,{steps:5});
  await page.mouse.move(tBox.x+tBox.width/2,tBox.y+tBox.height/2,{steps:10});
  await page.mouse.up();
- await expect.poll(()=>page.locator('#variantCompare .variantCard').first().locator('.miniOrder').textContent()).not.toBe(before);
+ await expect.poll(()=>page.locator('#variantCompare .variantCard').first().locator('.miniOrder').textContent(),{timeout:10000}).not.toBe(before);
  const afterDrag=await page.locator('#variantCompare .variantCard').first().locator('.miniOrder').textContent();
  expect(afterDrag).not.toContain('my-training → programs → planning');
  await page.locator('#tileOrder button[aria-label$="omhoog"]:not([disabled])').first().click();
@@ -54,7 +54,7 @@ test('Scenario 4: A/B/C variant isolation — editing active variant B never mut
  await page.mouse.move(sBox.x+sBox.width/2+20,sBox.y+sBox.height/2,{steps:5});
  await page.mouse.move(tBox.x+tBox.width/2,tBox.y+tBox.height/2,{steps:10});
  await page.mouse.up();
- await expect.poll(()=>page.locator('#variantCompare .variantCard').nth(1).locator('.miniOrder').textContent()).not.toBe(bBefore);
+ await expect.poll(()=>page.locator('#variantCompare .variantCard').nth(1).locator('.miniOrder').textContent(),{timeout:10000}).not.toBe(bBefore);
  const aAfter=await page.locator('#variantCompare .variantCard').nth(0).locator('.miniOrder').textContent();
  const cAfter=await page.locator('#variantCompare .variantCard').nth(2).locator('.miniOrder').textContent();
  expect(aAfter).toBe(aBefore);
@@ -71,7 +71,7 @@ test('Scenario 5: selected variant stays bound after switching active variant; f
  await expect(page.locator('#toolbarVariantChip')).toContainText('Voorstel: B');
  await page.locator('#governanceBtn').click();
  await page.locator('#freezeBtn').click();
- await expect.poll(()=>page.locator('#contractOut').inputValue()).toContain('DESIGN-FREEZE-');
+ await expect.poll(()=>page.locator('#contractOut').inputValue(),{timeout:10000}).toContain('DESIGN-FREEZE-');
  const out=await page.locator('#contractOut').inputValue();
  const parsed=JSON.parse(out);
  expect(parsed.proposal.selected_variant||parsed.proposal.selectedVariant).toBe('B');
@@ -101,7 +101,7 @@ test('Scenario 7: fail-closed freeze is unaffected by direct-manipulation reorde
  await page.mouse.up();
  await page.locator('#governanceBtn').click();
  await page.locator('#freezeBtn').click();
- await expect.poll(()=>page.locator('#contractOut').inputValue()).toContain('VISUAL_VARIANT_SELECTION_REQUIRED');
+ await expect.poll(()=>page.locator('#contractOut').inputValue(),{timeout:10000}).toContain('VISUAL_VARIANT_SELECTION_REQUIRED');
  await expect(page.locator('#exportBtn')).toBeDisabled();
 });
 

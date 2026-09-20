@@ -100,10 +100,13 @@ function makeTransport(cfg) {
   ok(uuids.some(function (u) { return u.indexOf('CE060022') === 0; }), 'notify bevat CSAFE transmit 0x0022');
   ok(c._scanServiceUuids.length >= 1, 'software-classificatie kent Concept2 service-UUIDs');
 
-  // 3. alle decoders standaard UNKNOWN (geen gegokte decoder)
+    // 3. alleen CE060080 heeft een officieel onderbouwde decoder (spec rev. 1.30 Tabel 4);
+    //    alle overige notify-chars blijven UNKNOWN (geen gegokte decoder)
   var ds = c.decoderStatus();
-  var allUnknown = Object.keys(ds).every(function (u) { return ds[u] === 'UNKNOWN'; });
-  ok(allUnknown && Object.keys(ds).length > 0, 'alle notify-decoders standaard UNKNOWN');
+    var MUX = 'ce060080-43e5-11e4-916c-0800200c9a66';
+    eq(ds[MUX], 'CONFIRMED', 'CE060080 heeft de officieel gespecificeerde multiplexed router');
+    var restUnknown = Object.keys(ds).every(function (u) { return u === MUX || ds[u] === 'UNKNOWN'; });
+    ok(restUnknown && Object.keys(ds).length > 1, 'alle overige notify-decoders blijven UNKNOWN');
 
   // 4. permissie-mapping — getPermissionState is SYNCHROON (contractvorm zoals mock)
   var syncP = makeTransport().t;
@@ -390,6 +393,64 @@ function makeTransport(cfg) {
           var d3 = sg.t.getConnectionDiagnostics();
           eq(d3.totals.notifications, 2, 'M4: control-respons telt apart mee');
           ok(d3.notifications[U('22')] && d3.notifications[U('22')].count === 1, 'M4: per-characteristic teller op 0x0022');
+        });
+      }).then(function () {
+        // R) CE060080 multiplexed router - officiele layouts, spec rev. 1.30 Tabel 4
+        var sr = makeTransport({ services: [
+          { uuid: U('20'), characteristics: [notify(U('22'))] },
+          { uuid: U('30'), characteristics: [notify(U('80'))] }
+        ] });
+        return sr.t.connect('rowerg', 'AA:BB:CC:11:22:33').then(function () {
+          var raws = [];
+          sr.t.subscribeMetrics(function (e) { raws.push(e.metrics); });
+          // 0x31: elapsed 12345*0.01=123.45s, distance 20000*0.1=2000.0m, drag 120
+          var p31 = [0x31, 0x39,0x30,0x00, 0x20,0x4E,0x00, 3, 1, 1, 1, 2, 0xE8,0x03,0x00, 0x00,0x00,0x00, 0x80, 120];
+          sr.gw._emit(U('80').toUpperCase(), p31);
+          var r31 = raws[raws.length - 1];
+          ok(Math.abs(r31.elapsedTimeS - 123.45) < 1e-9, 'R1: 0x31 elapsed time LE24 * 0.01 s');
+          ok(Math.abs(r31.distanceM - 2000) < 1e-9, 'R1: 0x31 distance LE24 * 0.1 m');
+          eq(r31.workoutType, 3, 'R1: 0x31 workout type');
+          eq(r31.workoutState, 1, 'R1: 0x31 workout state');
+          eq(r31.dragFactor, 120, 'R1: 0x31 drag factor');
+          eq(r31.workoutDurationType, 0x80, 'R1: 0x31 duration type = distance');
+          eq(r31.multiplexedId, '0x31', 'R1: provenance multiplexedId');
+          eq(r31.source, 'concept2_pm5', 'R1: provenance source');
+          eq(r31.protocol, 'concept2_bts', 'R1: provenance protocol');
+          // 0x32: speed 4500*0.001=4.5 m/s, SPM 28, HR 255 invalid, pace 11000*0.01=110s, power 250 W
+          var p32 = [0x32, 0x39,0x30,0x00, 0x94,0x11, 28, 255, 0xF8,0x2A, 0xF8,0x2A, 0x00,0x00, 0x00,0x00,0x00, 0xFA,0x00, 0];
+          sr.gw._emit(U('80').toUpperCase(), p32);
+          var r32 = raws[raws.length - 1];
+          ok(Math.abs(r32.speedMps - 4.5) < 1e-9, 'R2: 0x32 speed LE16 * 0.001 m/s');
+          eq(r32.strokeRateSPM, 28, 'R2: 0x32 stroke rate spm');
+          eq(r32.heartRateBpm, null, 'R2: 0x32 HR 255 = invalid -> null, geen fake waarde');
+          ok(Math.abs(r32.currentPaceS - 110) < 1e-9, 'R2: 0x32 current pace LE16 * 0.01 s');
+          eq(r32.averagePowerW, 250, 'R2: 0x32 average power W (multiplexed offset 16-17)');
+          eq(r32.multiplexedId, '0x32', 'R2: provenance multiplexedId');
+          var p32b = p32.slice(); p32b[7] = 140;
+          sr.gw._emit(U('80').toUpperCase(), p32b);
+          eq(raws[raws.length - 1].heartRateBpm, 140, 'R3: geldige HR wordt doorgegeven');
+          var before = raws.length;
+          sr.gw._emit(U('80').toUpperCase(), [0x31, 1, 2, 3]);
+          eq(raws.length, before, 'R4: truncated packet emit GEEN metric');
+          sr.gw._emit(U('80').toUpperCase(), [0x35, 1, 2, 3]);
+          eq(raws.length, before, 'R5: recognized_not_decoded emit GEEN metric');
+          sr.gw._emit(U('80').toUpperCase(), [0x99, 1, 2]);
+          eq(raws.length, before, 'R6: onbekende identifier emit GEEN metric');
+          sr.gw._emit(U('80').toUpperCase(), []);
+          eq(raws.length, before, 'R7: leeg pakket veilig afgehandeld');
+          var md = sr.t.getMultiplexedDiagnostics();
+          eq(md.byId['0x31'].count, 2, 'R8: per-ID teller 0x31 (1 geldig + 1 truncated)');
+          eq(md.byId['0x31'].decoded, 1, 'R8: 0x31 decoded telt alleen geslaagde');
+          eq(md.byId['0x31'].failed, 1, 'R8: 0x31 failed telt truncated');
+          eq(md.byId['0x32'].count, 2, 'R8: per-ID teller 0x32');
+          eq(md.byId['0x35'].count, 1, 'R9: recognized_not_decoded wordt geteld');
+          eq(md.byId['0x99'].count, 1, 'R9: onbekende identifier wordt geteld');
+          eq(md.unknownIds, 1, 'R9: unknownIds teller');
+          eq(md.lastDecodedId, '0x32', 'R10: laatst gedecodeerde identifier');
+          ok(md.decoded === 3 && md.decodeFailures >= 1, 'R10: decode-succes en -failures apart geteld');
+          var cd = sr.t.getConnectionDiagnostics();
+          eq(cd.notifications[U('80')].count, 7, 'R11: notificatieteller loopt voor decoding (ook bij failures)');
+          ok(JSON.stringify(md).indexOf('hex') === -1, 'R12: multiplexed diagnostiek bevat geen payload');
         });
       }).then(function () {
         // d) forced modes (dev/test-injecteerbaar) + AUTO zonder bekende data-chars

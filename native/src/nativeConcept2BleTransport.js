@@ -238,6 +238,9 @@
         decoders[lc(NOTIFY_CHARS[i].uuid)] = { status: 'UNKNOWN', decode: null };
       }
     })();
+    // CE060080 krijgt de officieel onderbouwde multiplexed router (spec rev. 1.30 Tabel 4).
+    // Alle overige notify-chars blijven UNKNOWN: zonder officiële layout wordt niets gedecodeerd.
+    decoders['ce060080-43e5-11e4-916c-0800200c9a66'] = { status: 'CONFIRMED', decode: function (dv) { return decodeMultiplexed(dv); } };
 
     function emitConn(state) {
       connState = state;
@@ -256,6 +259,99 @@
       if (!captureEnabled) return;
       if (capture.length >= CAPTURE_MAX) capture.shift();
       capture.push({ uuid: lc(uuid), t: now(), len: dataViewLength(dv), hex: bytesToHex(dv) });
+    }
+
+    // ── CE060080 multiplexed router (Gate A stap 2) ───────────────────────────────
+    // OFFICIAL_CONFIRMED — Concept2 PM Bluetooth Smart Communication Interface Definition
+    // rev. 1.30, Tabel 4 "C2 Multiplexed Information: Data Definitions".
+    // Byte 0 van 0x0080 is de identifier; daarna volgen N databytes. De spec is expliciet:
+    // "The byte length of the following multiplexed characteristics does not include the
+    //  identifier byte. The total length of the data packet is N+1 bytes."
+    // De multiplexed layouts zijn NIET identiek aan de individuele characteristics; daarom
+    // eigen decoders en géén slice(1) op een individuele decoder.
+    var MUX_ID = { GENERAL_STATUS: 0x31, ADDITIONAL_STATUS_1: 0x32 };
+    var MUX_LEN = {};
+    MUX_LEN[MUX_ID.GENERAL_STATUS] = 19;
+    MUX_LEN[MUX_ID.ADDITIONAL_STATUS_1] = 19;
+    // Identifiers die de spec kent maar die wij (nog) niet decoderen: wel tellen, nooit raden.
+    var MUX_RECOGNIZED = [0x33, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C];
+
+    var muxDiag = { byId: {}, decoded: 0, decodeFailures: 0, unknownIds: 0, lastDecodedId: null };
+    function muxCount(id, field) {
+      var k = '0x' + (id < 16 ? '0' : '') + id.toString(16);
+      if (!muxDiag.byId[k]) muxDiag.byId[k] = { count: 0, decoded: 0, failed: 0, firstAt: now(), lastAt: null, lastLen: null };
+      var e = muxDiag.byId[k];
+      e.count++; e.lastAt = now();
+      if (field) e[field]++;
+      return e;
+    }
+    function u8(dv, i) { return dv.getUint8(i); }
+    function le16(dv, i) { return dv.getUint8(i) | (dv.getUint8(i + 1) << 8); }
+    function le24(dv, i) { return dv.getUint8(i) | (dv.getUint8(i + 1) << 8) | (dv.getUint8(i + 2) << 16); }
+
+    // 0x31 — C2 rowing general status (19 databytes), spec rev. 1.30 Tabel 4.
+    function decodeMux31(dv, o) {
+      return {
+        elapsedTimeS: le24(dv, o + 0) * 0.01,      // 0.01 sec lsb
+        distanceM: le24(dv, o + 3) * 0.1,          // 0.1 m lsb
+        workoutType: u8(dv, o + 6),
+        intervalType: u8(dv, o + 7),
+        workoutState: u8(dv, o + 8),
+        rowingState: u8(dv, o + 9),
+        strokeState: u8(dv, o + 10),
+        totalWorkDistanceM: le24(dv, o + 11),
+        workoutDuration: le24(dv, o + 14),
+        workoutDurationType: u8(dv, o + 17),
+        dragFactor: u8(dv, o + 18)
+      };
+    }
+    // 0x32 — C2 rowing additional status 1 (19 databytes), spec rev. 1.30 Tabel 4.
+    // Let op: de multiplexed variant draagt Average Power op 16-17; de individuele 0x0032 niet.
+    function decodeMux32(dv, o) {
+      var hr = u8(dv, o + 6);
+      return {
+        elapsedTimeS: le24(dv, o + 0) * 0.01,
+        speedMps: le16(dv, o + 3) * 0.001,         // 0.001 m/s lsb
+        strokeRateSPM: u8(dv, o + 5),              // strokes/min
+        heartRateBpm: hr === 255 ? null : hr,      // 255 = invalid -> onbekend blijft onbekend
+        currentPaceS: le16(dv, o + 7) * 0.01,      // 0.01 sec lsb (per 500 m)
+        averagePaceS: le16(dv, o + 9) * 0.01,
+        restDistanceM: le16(dv, o + 11),
+        restTimeS: le24(dv, o + 13) * 0.01,
+        averagePowerW: le16(dv, o + 16),           // watts
+        ergMachineType: u8(dv, o + 18)
+      };
+    }
+    // Pure router: identifier -> decoder. Geen fake metric, geen crash bij onbekend/kort pakket.
+    function decodeMultiplexed(dv) {
+      var total = dataViewLength(dv);
+      if (total < 1) { muxDiag.decodeFailures++; return null; }
+      var id = u8(dv, 0);
+      var need = MUX_LEN[id];
+      if (typeof need !== 'number') {
+        if (MUX_RECOGNIZED.indexOf(id) !== -1) { muxCount(id); } else { muxCount(id); muxDiag.unknownIds++; }
+        return null; // recognized_not_decoded of onbekend: tellen, niets emitten
+      }
+      var e = muxCount(id);
+      e.lastLen = total;
+      if (total < need + 1) { e.failed++; muxDiag.decodeFailures++; return null; } // truncated
+      var raw = null;
+      try { raw = (id === MUX_ID.GENERAL_STATUS) ? decodeMux31(dv, 1) : decodeMux32(dv, 1); }
+      catch (err) { raw = null; }
+      if (!raw) { e.failed++; muxDiag.decodeFailures++; return null; }
+      e.decoded++; muxDiag.decoded++; muxDiag.lastDecodedId = '0x' + id.toString(16);
+      raw.multiplexedId = '0x' + id.toString(16);
+      raw.characteristicUuid = 'ce060080-43e5-11e4-916c-0800200c9a66';
+      raw.source = 'concept2_pm5';
+      raw.transport = 'ble';
+      raw.protocol = 'concept2_bts';
+      return raw;
+    }
+    function getMultiplexedDiagnostics() {
+      var byId = {};
+      for (var k in muxDiag.byId) { if (muxDiag.byId.hasOwnProperty(k)) byId[k] = JSON.parse(JSON.stringify(muxDiag.byId[k])); }
+      return { byId: byId, decoded: muxDiag.decoded, decodeFailures: muxDiag.decodeFailures,
+               unknownIds: muxDiag.unknownIds, lastDecodedId: muxDiag.lastDecodedId };
     }
 
     function onNotification(uuid, dv) {
@@ -626,6 +722,7 @@
       exportCapture: exportCapture,
       // decoder-registry
       registerDecoder: registerDecoder,
+      getMultiplexedDiagnostics: getMultiplexedDiagnostics,
       decoderStatus: decoderStatus,
       // introspectie (tests/diagnostiek)
       _notifyChars: NOTIFY_CHARS,

@@ -584,7 +584,7 @@ ok(!calcSrcV.includes('openRecoveryDetail') && !calcSrcV.includes('consistentieB
 
 /* ── W. A5 — DEVICE CONNECT HARDENING (v4.66.0) — mid-workout connect, geen state loss ── */
 console.log('\nW. A5: device-connect-hardening -- geen gestapelde subscriptions, geen dubbel-tik-race, geen aanraking van trainingsstaat');
-const connDevSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 5400);
+const connDevSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 6600);
 ok(/typeof st\._unsubMetrics==='function'/.test(connDevSrc), 'W1 (bewezen bug, gerepareerd): ruimt vóór elke nieuwe subscribeMetrics()-aanroep de eerder VASTGELEGDE, exercise-specifieke unsubscribe-functie op -- voorkomt gestapelde listeners bij dubbel verbinden');
 ok(/typeof st\._unsubConn==='function'/.test(connDevSrc), 'W2: idem voor de connection-listener (subscribeConnection)');
 ok(/st\._unsubConn=t\.subscribeConnection\(/.test(connDevSrc), 'W3: legt de door subscribeConnection() teruggegeven unsubscribe-functie vast -- niet alleen aanroepen en negeren');

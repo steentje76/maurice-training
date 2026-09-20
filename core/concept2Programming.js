@@ -98,12 +98,18 @@
         frameHex: op.frameHex || null, lastResponseHex: op.lastResponseHex || null,
         lastResponseAt: op.lastResponseAt || null, lastParse: op.lastParse || null,
         frameAcceptedAt: op.frameAcceptedAt || null,
+        verificationStartedAt: op.verificationStartedAt || null,
+        verificationTelemetryAt: op.verificationTelemetryAt || null,
+        readbackWorkoutType: op.readbackWorkoutType != null ? op.readbackWorkoutType : null,
+        readbackWorkoutDuration: op.readbackWorkoutDuration != null ? op.readbackWorkoutDuration : null,
+        readbackDurationType: op.readbackDurationType != null ? op.readbackDurationType : null,
+        programmedAt: op.programmedAt || null,
         previousFrameStatus: op.previousFrameStatus != null ? op.previousFrameStatus : null,
         previousFrameLabel: op.previousFrameLabel || null,
         stateMachineLabel: op.stateMachineLabel || null
       };
       setState(s);
-      if (typeof op.resolve === 'function') op.resolve({ ok: s === STATE.CONFIRMED, state: s, reason: reason || null, result: last });
+      if (typeof op.resolve === 'function') op.resolve({ ok: s === STATE.PROGRAMMED, state: s, reason: reason || null, result: last });
       return last;
     }
 
@@ -189,6 +195,8 @@
         // en gaat naar VERIFYING. Zonder read-back (Gate B.3) wordt PROGRAMMED nooit
         // bereikt en loopt de operatie af op de bounded timeout. Fail closed.
         pending.frameAcceptedAt = now();
+        pending.frameAcceptedSeq = telemetrySeq;
+        pending.verificationStartedAt = now();
         setState(STATE.FRAME_ACCEPTED);
         setState(STATE.VERIFYING);
         return { handled: true, state: STATE.VERIFYING, reason: 'frame_accepted_awaiting_verification' };
@@ -197,6 +205,42 @@
       if (parsed.previousFrameStatus === S.BAD) { settle(STATE.FAILED, 'previous_frame_bad'); return { handled: true, state: STATE.FAILED }; }
       // NOT_READY is geen succes en geen definitieve fout: de PM5 is nog niet zover.
       return { handled: true, state: STATE.WAITING_RESPONSE, reason: 'previous_frame_not_ready' };
+    }
+
+    /* Gate B.3 - READ-BACK VERIFICATIE.
+     * Previous Frame Status Ok bewijst alleen frame-acceptatie. PROGRAMMED vereist dat
+     * de PM5 ZELF de gevraagde configuratie rapporteert via de canonieke 0x31 General
+     * Status, die al via CE060080 binnenkomt. Geen tweede decoder, geen shadow-telemetrie.
+     *
+     * VERSHEID is hard: alleen telemetrie NA frame-acceptatie telt, en alleen van hetzelfde
+     * device en dezelfde connection generation. Een oude 0x31 met toevallig dezelfde waarden
+     * mag een nieuwe operatie nooit bevestigen. We gebruiken een monotoon volgnummer naast
+     * de tijdstempel, zodat gelijke klokwaarden geen gat openen.
+     *
+     * Vergelijking in CANONIEKE eenheden: bij duration type distance draagt 0x31 de afstand
+     * in meters, exact zoals de aangevraagde waarde. Geen schaling hier. */
+    var DURATION_TYPE_DISTANCE = 0x80, FIXEDDIST_NOSPLITS = 2;
+    var telemetrySeq = 0;
+    function verifyFromTelemetry(raw, ctx) {
+      telemetrySeq++;
+      var seq = telemetrySeq;
+      if (!pending || state !== STATE.VERIFYING) return { verified: false, reason: 'not_verifying' };
+      if (pending.frameAcceptedSeq == null) return { verified: false, reason: 'not_frame_accepted' };
+      if (seq <= pending.frameAcceptedSeq) return { verified: false, reason: 'stale_telemetry_before_acceptance' };
+      ctx = ctx || {};
+      if (ctx.generation != null && pending.generation != null && ctx.generation !== pending.generation) return { verified: false, reason: 'stale_generation' };
+      if (ctx.deviceId != null && pending.deviceId != null && ctx.deviceId !== pending.deviceId) return { verified: false, reason: 'other_device' };
+      if (!raw || typeof raw !== 'object') return { verified: false, reason: 'no_telemetry' };
+      var t = raw.workout_type_readback, d = raw.workout_duration_readback, dt = raw.workout_duration_type_readback;
+      if (t == null || d == null || dt == null) return { verified: false, reason: 'incomplete_readback' };
+      pending.verificationTelemetryAt = now();
+      pending.readbackWorkoutType = t; pending.readbackWorkoutDuration = d; pending.readbackDurationType = dt;
+      if (Number(dt) !== DURATION_TYPE_DISTANCE) return { verified: false, reason: 'duration_type_mismatch' };
+      if (Number(t) !== FIXEDDIST_NOSPLITS) return { verified: false, reason: 'workout_type_mismatch' };
+      if (Number(d) !== Number(pending.requestedDistanceM)) return { verified: false, reason: 'distance_mismatch' };
+      pending.programmedAt = now();
+      settle(STATE.PROGRAMMED, null);
+      return { verified: true, state: STATE.PROGRAMMED };
     }
 
     // Disconnect of sessiewissel: pending operatie veilig beëindigen, timer weg.
@@ -222,6 +266,12 @@
         lastResponseAt: pending ? pending.lastResponseAt : (last ? last.lastResponseAt : null),
         lastParse: pending ? pending.lastParse : (last ? last.lastParse : null),
         frameAcceptedAt: pending ? pending.frameAcceptedAt : (last ? last.frameAcceptedAt : null),
+        verificationStartedAt: pending ? pending.verificationStartedAt : (last ? last.verificationStartedAt : null),
+        verificationTelemetryAt: pending ? pending.verificationTelemetryAt : (last ? last.verificationTelemetryAt : null),
+        readbackWorkoutType: pending ? pending.readbackWorkoutType : (last ? last.readbackWorkoutType : null),
+        readbackWorkoutDuration: pending ? pending.readbackWorkoutDuration : (last ? last.readbackWorkoutDuration : null),
+        readbackDurationType: pending ? pending.readbackDurationType : (last ? last.readbackDurationType : null),
+        programmedAt: pending ? pending.programmedAt : (last ? last.programmedAt : null),
         previousFrameStatus: pending && pending.previousFrameLabel ? pending.previousFrameLabel : (last ? last.previousFrameLabel : null),
         pmStateMachineState: pending && pending.stateMachineLabel ? pending.stateMachineLabel : (last ? last.stateMachineLabel : null),
         generation: pending ? pending.generation : (last ? last.generation : null),
@@ -234,6 +284,7 @@
       STATE: STATE, TERMINAL: TERMINAL,
       programFixedDistance: programFixedDistance,
       handleControlResponse: handleControlResponse,
+      verifyFromTelemetry: verifyFromTelemetry,
       cancel: cancel, reset: reset,
       getState: function () { return state; },
       isPending: function () { return !!pending; },

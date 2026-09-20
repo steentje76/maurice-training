@@ -224,7 +224,15 @@
     strokeRateSPM: 'stroke_rate_spm',
     heartRateBpm: 'heart_rate_bpm',
     dragFactor: 'drag_factor',
-    workoutState: 'workout_state'
+    workoutState: 'workout_state',
+    // Gate B.3 read-back. BTS Interface Definition rev. 1.30, Tabel 4, 0x31 General Status:
+    //   Workout Type (enum) · Workout Duration (24-bit LE; bij distance-type in METERS,
+    //   bij time-type 0.01 s lsb) · Workout Duration Type (enum, 0x80 = distance).
+    // Ongewijzigd doorgegeven: de vergelijking gebeurt in canonieke eenheden bij de
+    // programmeercontroller, niet hier. Geen schaling, geen interpretatie in de adapter.
+    workoutType: 'workout_type_readback',
+    workoutDuration: 'workout_duration_readback',
+    workoutDurationType: 'workout_duration_type_readback'
   };
   // Officiele PM5 Erg Machine Type enum (BTS Interface Definition rev. 1.30, Appendix A).
   function pm5MachineType(code) {

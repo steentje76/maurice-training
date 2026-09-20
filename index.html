@@ -6989,6 +6989,15 @@ function tkErgConnectDevice(exId, idx){
         var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
              : (st._agg?st._agg.push((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
         if(!cm) return; st.lastCm=cm;
+        // Gate B.3: dezelfde canonieke telemetrie voedt de read-back verificatie.
+        // Geen tweede stroom en geen protocolkennis hier: de controller vergelijkt zelf.
+        try{
+          var _rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,null,null):null;
+          if(_rt&&_rt.prog&&_rt.agg&&typeof _rt.prog.verifyFromTelemetry==='function'){
+            var _vctx=(typeof t.getControlContext==='function')?t.getControlContext():{};
+            _rt.prog.verifyFromTelemetry(_rt.agg.getMergedRaw(), _vctx);
+          }
+        }catch(_ev){}
         var now=(typeof performance!=='undefined'&&performance.now)?performance.now():0;
         if(_c2liveLast[exId] && (now-_c2liveLast[exId])<250){ return; }  // gecontroleerde UI-cadans
         _c2liveLast[exId]=now; _c2repaint(exId, _c2connectedInner(exId, cm));

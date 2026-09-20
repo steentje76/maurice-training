@@ -196,18 +196,24 @@ render();restoreProposal();
  }catch(e){console.error('V2.2 validation load failed',e);}
 })();
 </script><script>
-var designProposalRepository=DesignRepository.localRepository(localStorage,'design-engine-v1-selected-proposal');
-var designGenericExporter=createGenericContractExporter();
+var designProposalRepository,designGenericExporter,designUiValidator,designPipeline;
+function ensureDesignPipeline(){
+ if(designPipeline)return designPipeline;
+ designProposalRepository=DesignRepository.localRepository(localStorage,'design-engine-v1-selected-proposal');
+ designGenericExporter=createGenericContractExporter();
+ designUiValidator={validate:function(composition){const r=(window.tkValidationResults||[]).find(x=>x.scenario_id===scenario);return {valid:!!(r&&r.freeze_ready),hard_issue_count:r?r.hard_issue_count:1,issues:r&&r.freeze_ready?[]:[{severity:'HARD',code:'CANONICAL_VALIDATION_BLOCKED'}],evidence:(r&&r.evidence)||[]}}};
+ designPipeline=DesignProposalPipeline.createProposalPipeline({composer:{compose:uiComposition},validator:designUiValidator,repository:designProposalRepository,exporter:designGenericExporter,readinessValidator:DesignFreezeReadiness.validateFreezeReadiness,productIdentity:'trainingskompas'});
+ return designPipeline;
+}
 function uiComposition(){
  const ids=visualStudio.snapshot().order||[];
  return {screen_id:'SCREEN-TRAIN-001',instances:ids.map(id=>({id})),visual_variant:visualStudio.snapshot().activeVariant};
 }
-var designUiValidator={validate:function(composition){const r=(window.tkValidationResults||[]).find(x=>x.scenario_id===scenario);return {valid:!!(r&&r.freeze_ready),hard_issue_count:r?r.hard_issue_count:1,issues:r&&r.freeze_ready?[]:[{severity:'HARD',code:'CANONICAL_VALIDATION_BLOCKED'}],evidence:(r&&r.evidence)||[]}}};
-var designPipeline=DesignProposalPipeline.createProposalPipeline({composer:{compose:uiComposition},validator:designUiValidator,repository:designProposalRepository,exporter:designGenericExporter,readinessValidator:DesignFreezeReadiness.validateFreezeReadiness,productIdentity:'trainingskompas'});
 async function freezeSelected(){
  const out=document.getElementById("contractOut");
  if(composerMode!=="proposal"){out.value="DESIGN FREEZE BLOCKED\nSelecteer Proposal mode voordat je bevriest.";return;}
  try{
+  ensureDesignPipeline();
   const visual=DesignVisualProposal.createVisualProposalInput({studio:visualStudio,composition:uiComposition()});
   const proposalId='UI-'+scenario+'-'+visual.selectedVariant;
   await designPipeline.propose({proposalId,screenId:'SCREEN-TRAIN-001',compositionOverride:visual.composition,selectedVariant:visual.selectedVariant,changes:{visual_diff:visual.visualDiff,visual_reference:visual.visualReference}});

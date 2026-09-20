@@ -200,7 +200,7 @@ var designProposalRepository,designGenericExporter,designUiValidator,designPipel
 function ensureDesignPipeline(){
  if(designPipeline)return designPipeline;
  designProposalRepository=DesignRepository.localRepository(localStorage,'design-engine-v1-selected-proposal');
- designGenericExporter=createGenericContractExporter();
+ designGenericExporter=DesignContractExporter.createGenericContractExporter();
  designUiValidator={validate:function(composition){const r=(window.tkValidationResults||[]).find(x=>x.scenario_id===scenario);return {valid:!!(r&&r.freeze_ready),hard_issue_count:r?r.hard_issue_count:1,issues:r&&r.freeze_ready?[]:[{severity:'HARD',code:'CANONICAL_VALIDATION_BLOCKED'}],evidence:(r&&r.evidence)||[]}}};
  designPipeline=DesignProposalPipeline.createProposalPipeline({composer:{compose:uiComposition},validator:designUiValidator,repository:designProposalRepository,exporter:designGenericExporter,readinessValidator:DesignFreezeReadiness.validateFreezeReadiness,productIdentity:'trainingskompas'});
  return designPipeline;

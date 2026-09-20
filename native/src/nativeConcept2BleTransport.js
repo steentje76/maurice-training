@@ -43,6 +43,13 @@
     return out;
   }
 
+  function dataViewToArray(dv) {
+    if (!dv) return [];
+    if (Object.prototype.toString.call(dv) === '[object Array]') return dv.slice();
+    var n = dataViewLength(dv), out = [], i;
+    for (i = 0; i < n; i++) { out.push(dv.getUint8(i)); }
+    return out;
+  }
   function dataViewLength(dv) {
     if (dv == null) return 0;
     if (typeof dv.byteLength === 'number') return dv.byteLength;
@@ -354,6 +361,37 @@
                unknownIds: muxDiag.unknownIds, lastDecodedId: muxDiag.lastDecodedId };
     }
 
+    // ── CE060021 control write + CE060022 response routing (Gate B.3) ────────────
+    // OFFICIAL (BTS Interface Definition rev. 1.30, attribuuttabel):
+    //   0x0021 = C2 PM receive characteristic  [WRITE]  app -> PM5
+    //   0x0022 = C2 PM transmit characteristic [NOTIFY] PM5 -> app
+    // Deze laag transporteert alleen: geen CSAFE-kennis, geen state machine.
+    var CTRL_RECEIVE_UUID = 'ce060021-43e5-11e4-916c-0800200c9a66';
+    var CTRL_TRANSMIT_UUID = 'ce060022-43e5-11e4-916c-0800200c9a66';
+    var CTRL_SERVICE_UUID = 'ce060020-43e5-11e4-916c-0800200c9a66';
+    var connectionGeneration = 0;
+    var controlResponseHandler = null;
+    var controlWrites = 0;
+
+    /* Schrijft een voorgebouwd CSAFE-frame naar CE060021 op het ACTIEF verbonden
+       device. Weigert zonder verbinding; er wordt nooit blind naar hardware
+       geschreven. Resolve betekent uitsluitend WRITE_COMPLETED. */
+    function writeControlFrame(bytes) {
+      if (!deviceId) return Promise.reject(new Error('not_connected'));
+      if (!bytes || !bytes.length) return Promise.reject(new Error('empty_frame'));
+      if (!gateway || typeof gateway.write !== 'function') return Promise.reject(new Error('no_write_capability'));
+      controlWrites++;
+      return Promise.resolve(gateway.write(deviceId, CTRL_SERVICE_UUID, CTRL_RECEIVE_UUID, Array.prototype.slice.call(bytes)))
+        .then(function () { return { ok: true, bytes: bytes.length }; });
+    }
+    /* De programming controller registreert zich hier; CE060022-payloads worden
+       doorgegeven met de ACTIEVE sessiecontext, zodat de controller stale
+       generations kan afwijzen. */
+    function setControlResponseHandler(fn) { controlResponseHandler = (typeof fn === 'function') ? fn : null; }
+    function getControlContext() {
+      return { connected: !!deviceId, deviceId: deviceId, generation: connectionGeneration };
+    }
+
     function onNotification(uuid, dv) {
       // 0) observability: teller + laatste tijdstip per characteristic (geen payload)
       var nk = lc(uuid);
@@ -362,6 +400,11 @@
       connDiag.notifications[nk].lastAt = now();
       // 1) capture (alleen expliciet aangezet; ruwe bytes voor dev/validatie)
       pushCapture(uuid, dv);
+      // 1b) CE060022 is de CSAFE-responskant: doorgeven aan de programming controller.
+      //     CE060080 blijft uitsluitend live telemetry; geen cross-routing.
+      if (nk === CTRL_TRANSMIT_UUID && controlResponseHandler) {
+        try { controlResponseHandler(dataViewToArray(dv), getControlContext()); } catch (e) {}
+      }
       // 2) decode ALLEEN als er een BEVESTIGDE decoder is (anders UNKNOWN → niets emitten)
       var d = decoders[lc(uuid)];
       if (d && d.status === 'CONFIRMED' && typeof d.decode === 'function') {
@@ -509,7 +552,7 @@
       connDiag = freshConnDiag(); // nieuwe verbindingspoging = schone diagnostiek
       return Promise.resolve(gateway.connect(id, onDisconnect))
         .then(function () {
-          deviceId = id;
+          deviceId = id; connectionGeneration++;
           connDiag.connectedAt = now();
           // machineType: gebruiker-bevestigd/gekozen (of 'unknown'); NIET gegokt uit BLE.
           machineType = (reqMachineType && CL.MACHINE_TYPES && CL.MACHINE_TYPES.indexOf(reqMachineType) !== -1)
@@ -721,6 +764,10 @@
       clearCapture: clearCapture,
       exportCapture: exportCapture,
       // decoder-registry
+      writeControlFrame: writeControlFrame,
+      setControlResponseHandler: setControlResponseHandler,
+      getControlContext: getControlContext,
+      getControlWriteCount: function () { return controlWrites; },
       registerDecoder: registerDecoder,
       getMultiplexedDiagnostics: getMultiplexedDiagnostics,
       decoderStatus: decoderStatus,

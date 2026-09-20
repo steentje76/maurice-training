@@ -5,7 +5,7 @@ test('mobile project launcher opens TK Design Pack inside Design Engine',async({
  await expect(page.locator('#projectHome')).toBeVisible();
  await page.locator('#projectHome .projectCard:not([disabled])').click();
  await expect(page.locator('#projectHome')).toBeHidden();
- await expect(page.locator('#workspace')).toBeVisible();
+ await expect(page.locator('#visualStudio')).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>sessionStorage.getItem('design-engine-project'))).toBe('trainingskompas');
  await page.locator('#labBtn').click();
  await expect(page.locator('#labPanel')).toHaveClass(/open/);

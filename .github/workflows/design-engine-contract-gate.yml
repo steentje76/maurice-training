@@ -1,0 +1,137 @@
+name: Design Engine Contract Gate
+on:
+  pull_request:
+    paths:
+      - 'docs/design-engine/**'
+      - '.github/workflows/design-engine-contract-gate.yml'
+permissions:
+  contents: read
+jobs:
+  design-engine-contract-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validation engine unit tests
+        run: node docs/design-engine/validation-engine.test.js
+      - name: Contract exporter unit tests
+        run: node docs/design-engine/contract-exporter.test.js
+      - name: Generic contract exporter gate
+        run: node docs/design-engine/generic-contract-exporter.test.js
+      - name: Generic implementation contract semantics gate
+        run: node docs/design-engine/generic-contract-semantics.test.js
+      - name: Generic exporter pipeline binding gate
+        run: node docs/design-engine/generic-exporter-pipeline.test.js
+      - name: End-to-end freeze contract drift gate
+        run: node docs/design-engine/e2e-contract.test.js
+      - name: Mobile governance UI gate
+        run: node docs/design-engine/mobile-governance-ui.test.js
+      - name: UX Lab workbench UI gate
+        run: node docs/design-engine/workbench-ui.test.js
+      - name: Evidence explorer UI gate
+        run: node docs/design-engine/evidence-explorer-ui.test.js
+      - name: Source health and state explorer UI gate
+        run: node docs/design-engine/source-health-state-ui.test.js
+      - name: Primary screen catalog UI gate
+        run: node docs/design-engine/primary-catalog-ui.test.js
+      - name: Multiflow canvas UI gate
+        run: node docs/design-engine/multiflow-canvas-ui.test.js
+      - name: Source-backed primary canvas UI gate
+        run: node docs/design-engine/source-backed-canvas-ui.test.js
+      - name: Inzicht source-backed drill-down UI gate
+        run: node docs/design-engine/insight-drilldown-ui.test.js
+      - name: Profiel canonical drill-down UI gate
+        run: node docs/design-engine/profile-drilldown-ui.test.js
+      - name: Capability maturity status UI gate
+        run: node docs/design-engine/capability-status-ui.test.js
+      - name: Canonical source blob pin gate
+        run: node docs/design-engine/source-pin-ci.test.js
+      - name: Source health semantics UI gate
+        run: node docs/design-engine/source-health-semantics-ui.test.js
+      - name: Capability maturity registry gate
+        run: node docs/design-engine/capability-maturity-registry.test.js
+      - name: Integrated design intelligence gate
+        run: node docs/design-engine/integrated-design-intelligence.test.js
+      - name: Nested recovery flow gate
+        run: node docs/design-engine/recovery-flow-ui.test.js
+      - name: Maturity registry validator integration gate
+        run: node docs/design-engine/maturity-validator-integration.test.js
+      - name: Multi-flow governance gate
+        run: node docs/design-engine/multiflow-governance.test.js
+      - name: Multi-flow freeze handoff gate
+        run: node docs/design-engine/multiflow-freeze-handoff.test.js
+      - name: TK-native visual screen composer gate
+        run: node docs/design-engine/visual-screen-composer.test.js
+      - name: Composer source mode gate
+        run: node docs/design-engine/composer-mode-controls.test.js
+      - name: Canonical component registry and composition gate
+        run: node docs/design-engine/component-registry.test.js
+      - name: Component model loader gate
+        run: node docs/design-engine/component-model-loader.test.js
+      - name: Shared forward-version helper gate
+        run: node docs/design-engine/test-version.test.js
+      - name: Interactive component inspector gate
+        run: node docs/design-engine/interactive-component-inspector.test.js
+      - name: Generic multi-project core gate
+        run: node docs/design-engine/multiproject-core.test.js
+      - name: Guarded proposal editor gate
+        run: node docs/design-engine/proposal-editor.test.js
+      - name: Persistence repository gate
+        run: node docs/design-engine/design-repository.test.js
+      - name: Proposal persistence UI gate
+        run: node docs/design-engine/proposal-persistence-ui.test.js
+      - name: Reference and semantic component gate
+        run: node docs/design-engine/reference-semantic-components.test.js
+      - name: Generic design-pack runtime gate
+        run: node docs/design-engine/design-engine-core.test.js
+      - name: V1 full generic pipeline release gate
+        run: node docs/design-engine/v1-full-pipeline.test.js
+      - name: V1 browser UI generic pipeline binding gate
+        run: node docs/design-engine/v1-ui-generic-pipeline.test.js
+      - name: Visual Studio reference order style gate
+        run: node docs/design-engine/visual-studio.test.js
+      - name: Visual Studio visible UI gate
+        run: node docs/design-engine/visual-studio-ui.test.js
+      - name: Visual Studio workspace V1 UI gate
+        run: node docs/design-engine/visual-studio-workspace-v1.test.js
+      - name: Direct manipulation V1 UI gate
+        run: node docs/design-engine/direct-manipulation-v1.test.js
+      - name: Typography and touch order V1 UI gate
+        run: node docs/design-engine/typography-touch-v1.test.js
+      - name: Visual Studio shell V1 UI gate
+        run: node docs/design-engine/studio-shell-v1.test.js
+      - name: Visual Studio drag and style gate
+        run: node docs/design-engine/visual-studio-drag-style.test.js
+      - name: Visual Studio expanded Style Inspector gate
+        run: node docs/design-engine/visual-studio-style-inspector.test.js
+      - name: Visual Studio reference compare gate
+        run: node docs/design-engine/visual-studio-reference-compare.test.js
+      - name: Visual Studio A B C variants gate
+        run: node docs/design-engine/visual-studio-variants.test.js
+      - name: Visual Studio variant compare selection gate
+        run: node docs/design-engine/visual-studio-variant-compare.test.js
+      - name: Selected visual variant proposal validation gate
+        run: node docs/design-engine/selected-variant-proposal-validation.test.js
+      - name: Selected visual variant binding gate
+        run: node docs/design-engine/visual-studio-selected-binding.test.js
+      - name: Selected visual proposal handoff gate
+        run: node docs/design-engine/visual-proposal.test.js
+      - name: Freeze readiness evidence gate
+        run: node docs/design-engine/freeze-readiness.test.js
+      - name: Full inline JavaScript parse gate
+        run: node docs/design-engine/runtime-parse.test.js
+      - name: Interaction handler syntax smoke gate
+        run: node docs/design-engine/interaction-syntax-smoke.test.js
+      - name: V1 interaction visual states gate
+        run: node docs/design-engine/interaction-visual-states.test.js
+      - name: Install browser smoke runtime
+        run: |
+          npm install --no-save --ignore-scripts @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Real mobile browser interaction smoke
+        run: |
+          python3 -m http.server 4173 --directory docs/design-engine >/tmp/ux-lab-http.log 2>&1 &
+          npx playwright test docs/design-engine/browser-smoke.spec.js docs/design-engine/interaction-visual-browser.spec.js docs/design-engine/v1-browser-release.spec.js --reporter=line
+

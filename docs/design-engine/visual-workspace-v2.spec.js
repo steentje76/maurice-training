@@ -35,7 +35,7 @@ test('Scenario 3: direct pointer reorder in canvas changes active-variant order,
  await expect.poll(()=>page.locator('#variantCompare .variantCard').first().locator('.miniOrder').textContent()).not.toBe(before);
  const afterDrag=await page.locator('#variantCompare .variantCard').first().locator('.miniOrder').textContent();
  expect(afterDrag).not.toContain('my-training → programs → planning');
- await page.locator('[data-component-instance="programs"] + button[aria-label$="omhoog"]').first().click().catch(()=>{});
+ await page.locator('#tileOrder button[aria-label$="omhoog"]:not([disabled])').first().click();
  await expect(page.locator('#tileOrder')).toBeVisible();
 });
 
@@ -44,6 +44,7 @@ test('Scenario 4: A/B/C variant isolation — editing active variant B never mut
  await enterProposalMode(page);
  await page.locator('#variantB').click();
  const aBefore=await page.locator('#variantCompare .variantCard').nth(0).locator('.miniOrder').textContent();
+ const bBefore=await page.locator('#variantCompare .variantCard').nth(1).locator('.miniOrder').textContent();
  const cBefore=await page.locator('#variantCompare .variantCard').nth(2).locator('.miniOrder').textContent();
  const source=page.locator('[data-component-instance="programs"]');
  const target=page.locator('[data-component-instance="my-training"]');
@@ -53,6 +54,7 @@ test('Scenario 4: A/B/C variant isolation — editing active variant B never mut
  await page.mouse.move(sBox.x+sBox.width/2+20,sBox.y+sBox.height/2,{steps:5});
  await page.mouse.move(tBox.x+tBox.width/2,tBox.y+tBox.height/2,{steps:10});
  await page.mouse.up();
+ await expect.poll(()=>page.locator('#variantCompare .variantCard').nth(1).locator('.miniOrder').textContent()).not.toBe(bBefore);
  const aAfter=await page.locator('#variantCompare .variantCard').nth(0).locator('.miniOrder').textContent();
  const cAfter=await page.locator('#variantCompare .variantCard').nth(2).locator('.miniOrder').textContent();
  expect(aAfter).toBe(aBefore);

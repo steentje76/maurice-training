@@ -96,6 +96,8 @@ jobs:
         run: node docs/design-engine/visual-studio-ui.test.js
       - name: Visual Studio workspace V1 UI gate
         run: node docs/design-engine/visual-studio-workspace-v1.test.js
+      - name: Direct manipulation V1 UI gate
+        run: node docs/design-engine/direct-manipulation-v1.test.js
       - name: Visual Studio drag and style gate
         run: node docs/design-engine/visual-studio-drag-style.test.js
       - name: Visual Studio expanded Style Inspector gate

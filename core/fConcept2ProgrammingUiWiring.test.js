@@ -62,13 +62,16 @@ async function run() {
     const f = e.writes[0];
     let be = false, le = false;
     for (let i = 0; i + 3 < f.length; i++) {
-      if (f[i] === 0 && f[i+1] === 0 && f[i+2] === 0x03 && f[i+3] === 0xE8) be = true;
-      if (f[i] === 0xE8 && f[i+1] === 0x03 && f[i+2] === 0 && f[i+3] === 0) le = true;
+      if (f[i] === 0xE8 && f[i+1] === 0x03) be = true;
+      if (f[i] === 0x00 && f[i+1] === 0x00 && f[i+2] === 0x03 && f[i+3] === 0xE8) le = true;
     }
-    ok(be, 'E2E: 1000 m BIG-ENDIAN (00 00 03 E8)'); ok(!le, 'E2E: geen little-endian');
+    ok(be, 'E2E: 1000 m LITTLE-endian (E8 03) via publieke SETHORIZONTAL'); ok(!le, 'E2E: geen oude big-endian volgorde');
     e.controller.handleControlResponse(OK_F, CTX);
+    eq(e.controller.getState(), 'VERIFYING', 'E2E: Ok -> VERIFYING, niet PROGRAMMED');
+    e.fireTimeout();
     const r = await p;
-    eq(r.attempted, true, 'E2E: attempted'); eq(r.confirmed, true, 'E2E: CONFIRMED -> vastleggen mag door');
+    eq(r.attempted, true, 'E2E: attempted');
+    eq(r.confirmed, false, 'E2E: zonder read-back NIET bevestigd (fail closed, B.3 vereist)');
   }
   for (const [fr, lbl] of [[REJECT_F, 'REJECT'], [BAD_F, 'BAD']]) {
     const e = env(); const p = e.helper('EX', 'distance', 1000);
@@ -98,8 +101,8 @@ async function run() {
     await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
     eq(e.writes.length, 1, 'DUBBELTAP: exact één write');
     const rb = await b; eq(rb.confirmed, false, 'DUBBELTAP: tweede tik niet bevestigd');
-    e.controller.handleControlResponse(OK_F, CTX);
-    const ra = await a; eq(ra.confirmed, true, 'DUBBELTAP: eerste bevestigt'); eq(e.writes.length, 1, 'DUBBELTAP: nog één write'); }
+    e.controller.handleControlResponse(OK_F, CTX); e.fireTimeout();
+    const ra = await a; eq(ra.confirmed, false, 'DUBBELTAP: zonder read-back niet bevestigd'); eq(e.writes.length, 1, 'DUBBELTAP: nog één write'); }
   { // manual / non-PM5 regressie
     const e1 = env(); eq((await e1.helper('EX', 'time', 600)).attempted, false, 'MANUAL: tijddoel wordt niet geprogrammeerd');
     eq(e1.writes.length, 0, 'MANUAL: nul writes bij tijddoel');
@@ -117,9 +120,15 @@ async function run() {
     let d = e.controller.getDiagnostics();
     eq(d.requestedDistanceM, 1000, 'DEV: aangevraagde afstand'); eq(d.state, 'WAITING_RESPONSE', 'DEV: state');
     eq(d.writeAttempted, 1, 'DEV: write attempted'); eq(d.writeCompleted, 1, 'DEV: write completed');
-    e.controller.handleControlResponse(OK_F, CTX); await p;
+    e.controller.handleControlResponse(OK_F, CTX);
     d = e.controller.getDiagnostics();
-    eq(d.state, 'CONFIRMED', 'DEV: eindstate'); eq(d.previousFrameStatus, 'ok', 'DEV: Previous Frame Status');
+    eq(d.state, 'VERIFYING', 'DEV: VERIFYING zichtbaar na frame-acceptatie');
+    ok(!!d.frameHex, 'DEV: uitgaand frame-hex bewaard');
+    ok(!!d.lastResponseHex, 'DEV: response-hex bewaard');
+    eq(d.lastParse, 'ok', 'DEV: parse-resultaat bewaard');
+    e.fireTimeout(); await p;
+    d = e.controller.getDiagnostics();
+    eq(d.state, 'TIMEOUT', 'DEV: eindstate (fail closed zonder read-back)'); eq(d.previousFrameStatus, 'ok', 'DEV: Previous Frame Status');
     ok(d.responsesSeen >= 1, 'DEV: responses seen geteld'); }
   console.log('Concept2 programming UI wiring: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail ? 1 : 0);

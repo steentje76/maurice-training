@@ -84,9 +84,9 @@ async function run() {
     eq(writes[0].svc, U('20').toLowerCase(), 'F19: op service CE060020');
     const f = writes[0].bytes; let be = false, le = false;
     for (let i = 0; i + 3 < f.length; i++) {
-      if (f[i] === 0 && f[i+1] === 0 && f[i+2] === 0x03 && f[i+3] === 0xE8) be = true;
-      if (f[i] === 0xE8 && f[i+1] === 0x03 && f[i+2] === 0 && f[i+3] === 0) le = true; }
-    ok(be, 'F20: 1000 m BIG-ENDIAN uit de ECHTE browser-CSAFE-builder'); ok(!le, 'F21: geen little-endian');
+      if (f[i] === 0xE8 && f[i+1] === 0x03) be = true;
+      if (f[i] === 0x00 && f[i+1] === 0x00 && f[i+2] === 0x03 && f[i+3] === 0xE8) le = true; }
+    ok(be, 'F20: 1000 m LITTLE-endian uit de ECHTE browser-CSAFE-builder'); ok(!le, 'F21: geen oude big-endian volgorde');
     eq(ctrl.getState(), 'WAITING_RESPONSE', 'F22: WRITE_COMPLETED != CONFIRMED'); }
   console.log('Concept2 runtime firewall: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail ? 1 : 0);

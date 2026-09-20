@@ -90,17 +90,21 @@ async function run() {
     const f = h.writes[0].bytes;
     let be = false, le = false;
     for (let i = 0; i + 3 < f.length; i++) {
-      if (f[i] === 0x00 && f[i+1] === 0x00 && f[i+2] === 0x03 && f[i+3] === 0xE8) be = true;
-      if (f[i] === 0xE8 && f[i+1] === 0x03 && f[i+2] === 0x00 && f[i+3] === 0x00) le = true;
+      if (f[i] === 0xE8 && f[i+1] === 0x03) be = true;
+      if (f[i] === 0x00 && f[i+1] === 0x00 && f[i+2] === 0x03 && f[i+3] === 0xE8) le = true;
     }
-    ok(be, 'E2E: 1000 m als 00 00 03 E8 (BIG-ENDIAN) uit de echte CSAFE-core');
-    ok(!le, 'E2E: geen little-endian E8 03 00 00');
+    ok(be, 'E2E: 1000 m als E8 03 (LITTLE-endian) uit de echte CSAFE-core');
+    ok(!le, 'E2E: geen oude big-endian volgorde E8 03 00 00');
     eq(f[0], CSAFE.FLAG.STANDARD_START, 'E2E: frame start F1');
     h.emitCtrl(OK_F);                                   // via de echte transport-routing
+    // Gate B.2: Previous Frame Status Ok levert FRAME_ACCEPTED/VERIFYING, GEEN Execution.
+    eq(h.controller.getState(), S.VERIFYING, 'E2E: Ok -> VERIFYING, niet PROGRAMMED');
+    eq(h.exec.starts, 0, 'E2E: FRAME_ACCEPTED start GEEN Execution (read-back volgt in B.3)');
+    h.fireTimeout();
     const r = await started;
-    eq(r.started, true, 'E2E: Execution toegestaan na CONFIRMED');
-    eq(r.state, S.CONFIRMED, 'E2E: eindstate CONFIRMED');
-    eq(h.exec.starts, 1, 'E2E: exact één Execution-start');
+    eq(r.started, false, 'E2E: zonder read-back geen Execution (fail closed)');
+    eq(r.state, S.TIMEOUT, 'E2E: eindstate TIMEOUT na FRAME_ACCEPTED zonder verificatie');
+    eq(h.exec.starts, 0, 'E2E: nul Execution-starts');
     eq(h.writes.length, 1, 'E2E: nog steeds één write');
   }
   // ── negatieve production-scenario's: nul Execution-starts ──
@@ -156,10 +160,10 @@ async function run() {
     eq(h.writes.length, 1, 'DUBBELTAP: exact één CE060021 write');
     const rb = await b;
     eq(rb.started, false, 'DUBBELTAP: tweede tik start geen Execution');
-    h.emitCtrl(OK_F);
+    h.emitCtrl(OK_F); h.fireTimeout();
     const ra = await a;
-    eq(ra.started, true, 'DUBBELTAP: eerste operatie bevestigt');
-    eq(h.exec.starts, 1, 'DUBBELTAP: exact één Execution-start');
+    eq(ra.started, false, 'DUBBELTAP: zonder read-back geen Execution');
+    eq(h.exec.starts, 0, 'DUBBELTAP: nul Execution-starts');
     eq(h.writes.length, 1, 'DUBBELTAP: nog steeds één write');
   }
   { const h = P(); await h.connect();                    // write-fout

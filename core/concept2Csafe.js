@@ -34,7 +34,7 @@
   var MAX_FRAME_BYTES = 120;
 
   // ── COMMANDO'S (rev. 0.31, Table 11/12 + PM Set Configuration Commands) ────
-  var CMD = {
+  var CMD = { SETHORIZONTAL: 0x21, SETPROGRAM: 0x24,
     SETUSERCFG1: 0x1A,          // publieke CSAFE-wrapper voor PM-specifieke commando's
     C2_PROPRIETARY_WRAPPER: 0x76,
     PM_SET_WORKOUTTYPE: 0x01,   // Byte 0: Workout Type
@@ -140,22 +140,58 @@
   }
 
   /* Generieke fixed-distance workout. 1000 m is nergens een uitzondering. */
+  /* Fixed-distance workout, OFFICIAL_CONFIRMED volgens de gewerkte sample
+   * "Public CSAFE Workout Configuration - Fixed Distance" in CSAFE rev. 0.31.
+   *
+   * De eerdere implementatie gebruikte de C2 proprietary wrapper 0x76 met
+   * SET_WORKOUTTYPE/SET_WORKOUTDURATION/CONFIGURE_WORKOUT. De PM5 accepteerde dat
+   * frame syntactisch (Previous Frame Status = Ok) maar configureerde geen workout:
+   * fysiek bleef het scherm ongewijzigd. De officiele weg is het PUBLIEKE
+   * CSAFE-pad, met SETPROGRAM als activatie:
+   *
+   *   0x21 CSAFE_SETHORIZONTAL_CMD   byte count 3
+   *        Byte 0: Horizontal Distance (LSB)      <- 2-byte LITTLE-endian
+   *        Byte 1: Horizontal Distance (MSB)
+   *        Byte 2: Units Specifier (0x21 = meters)
+   *   0x24 CSAFE_SETPROGRAM_CMD      byte count 2
+   *        Byte 0: WORKOUTNUMBER_PROGRAMMED (0x00)
+   *        Byte 1: <don't care>
+   *
+   * Bereik: Table 19 (PM5 Workout Configuration Parameter Limits),
+   * horizontal distance goal 100 m t/m 50.000 m.
+   *
+   * Let op: dit is een ANDER bereik en een ANDERE byte-order dan
+   * CSAFE_PM_SET_WORKOUTDURATION (32-bit big-endian, 100-999999 m). Dat commando
+   * hoort bij het PM-proprietary pad en wordt hier bewust niet gebruikt. */
+  /* OFFICIAL_CONFIRMED - CSAFE rev. 0.31, publieke commandotabel. */
+  var UNITS = { METERS: 0x21 };
+  var WORKOUTNUMBER = { PROGRAMMED: 0x00 };
+  /* Table 19: horizontal distance goal 100 m - 50.000 m. */
+  var HORIZONTAL_MIN_M = 100, HORIZONTAL_MAX_M = 50000;
+  function validateHorizontalDistance(v) {
+    if (v == null) return 'distance_required';
+    var n = Number(v);
+    if (!isFinite(n)) return 'distance_not_finite';
+    if (Math.round(n) !== n) return 'distance_not_integer';
+    if (n < HORIZONTAL_MIN_M) return 'distance_below_minimum';
+    if (n > HORIZONTAL_MAX_M) return 'distance_above_maximum';
+    return null;
+  }
   function buildFixedDistanceWorkout(distanceMeters, options) {
     options = options || {};
-    var err = validateDistance(distanceMeters);
+    var err = validateHorizontalDistance(distanceMeters);
     if (err) return { ok: false, error: err, requestedDistanceM: distanceMeters };
-    var workoutType = options.splits ? WORKOUT_TYPE.FIXEDDIST_SPLITS : WORKOUT_TYPE.FIXEDDIST_NOSPLITS;
+    var d = Math.round(distanceMeters);
     var cmds = []
-      .concat(encodeCommand(CMD.PM_SET_WORKOUTTYPE, [workoutType]))
-      .concat(encodeCommand(CMD.PM_SET_WORKOUTDURATION,
-        [DURATION_TYPE.DISTANCE].concat(encodeDistanceBE32(distanceMeters))))
-      .concat(encodeCommand(CMD.PM_CONFIGURE_WORKOUT, [CONFIGURE_WORKOUT_MODE.ENABLE]));
-    var frame = encodeStandardFrame(encodeC2Wrapper(cmds));
+      .concat(encodeCommand(CMD.SETHORIZONTAL, [d & 0xFF, (d >>> 8) & 0xFF, UNITS.METERS]))
+      .concat(encodeCommand(CMD.SETPROGRAM, [WORKOUTNUMBER.PROGRAMMED, 0x00]));
+    var frame = encodeStandardFrame(cmds);
     return {
       ok: true,
-      requestedDistanceM: distanceMeters,
-      workoutType: workoutType,
+      requestedDistanceM: d,
+      workoutType: WORKOUT_TYPE.FIXEDDIST_NOSPLITS,
       durationType: DURATION_TYPE.DISTANCE,
+      commandSequence: ['CSAFE_SETHORIZONTAL_CMD', 'CSAFE_SETPROGRAM_CMD'],
       frame: frame,
       hex: frame.map(function (b) { return (b < 16 ? '0' : '') + b.toString(16); }).join('')
     };

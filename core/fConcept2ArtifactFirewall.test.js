@@ -70,8 +70,8 @@ ok(sb.Concept2Programming && typeof sb.Concept2Programming.createProgrammingCont
 const built = sb.Concept2Csafe.buildFixedDistanceWorkout(1000, {});
 ok(built && built.ok === true && Array.isArray(built.frame), 'G3: gebouwde CSAFE-core levert een 1000 m frame');
 let be = false; const f = built.frame;
-for (let i = 0; i + 3 < f.length; i++) if (f[i] === 0 && f[i+1] === 0 && f[i+2] === 0x03 && f[i+3] === 0xE8) be = true;
-ok(be, 'G4: 1000 m BIG-ENDIAN in het frame uit het artefact');
+for (let i = 0; i + 1 < f.length; i++) if (f[i] === 0xE8 && f[i+1] === 0x03) be = true;
+ok(be, 'G4: 1000 m LITTLE-endian (E8 03) in het frame uit het artefact');
 
 console.log('Concept2 artifact firewall: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 process.exit(fail ? 1 : 0);

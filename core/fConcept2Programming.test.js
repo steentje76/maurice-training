@@ -46,25 +46,30 @@ async function run() {
     eq(h.c.getState(), S.WAITING_RESPONSE, 'E2E: write resolved -> WAITING_RESPONSE, NIET CONFIRMED');
     // byte-exact: de 1000 m payload is BIG-ENDIAN binnen het echte frame
     const f = h.writes[0];
-    const be = [0x00, 0x00, 0x03, 0xE8];
+    const be = [0xE8, 0x03];
     let found = false;
-    for (let i = 0; i + 3 < f.length; i++) if (f[i] === be[0] && f[i+1] === be[1] && f[i+2] === be[2] && f[i+3] === be[3]) found = true;
-    ok(found, 'E2E: 1000 m staat als 00 00 03 E8 (BIG-ENDIAN) in het frame');
+    for (let i = 0; i + 1 < f.length; i++) if (f[i] === be[0] && f[i+1] === be[1]) found = true;
+    ok(found, 'E2E: 1000 m staat als E8 03 (LITTLE-endian) in het publieke SETHORIZONTAL-commando');
     let le = false;
-    for (let i = 0; i + 3 < f.length; i++) if (f[i] === 0xE8 && f[i+1] === 0x03 && f[i+2] === 0x00 && f[i+3] === 0x00) le = true;
-    ok(!le, 'E2E: little-endian volgorde E8 03 00 00 komt NIET voor');
+    for (let i = 0; i + 3 < f.length; i++) if (f[i] === 0x00 && f[i+1] === 0x00 && f[i+2] === 0x03 && f[i+3] === 0xE8) le = true;
+    ok(!le, 'E2E: oude big-endian volgorde 00 00 03 E8 komt NIET meer voor');
     eq(f[0], CSAFE.FLAG.STANDARD_START, 'E2E: frame start F1');
     eq(f[f.length - 1], CSAFE.FLAG.STOP, 'E2E: frame stop F2');
     const r = h.c.handleControlResponse(OK_F, CTX);
-    eq(r.state, S.CONFIRMED, 'E2E: Previous Frame Status OK -> CONFIRMED');
+    eq(r.state, S.VERIFYING, 'E2E: Previous Frame Status OK -> FRAME_ACCEPTED/VERIFYING, NIET PROGRAMMED');
+    eq(r.reason, 'frame_accepted_awaiting_verification', 'E2E: expliciete reden');
+    ok(h.c.getState() !== S.PROGRAMMED, 'E2E: Ok alleen bewijst NOOIT PROGRAMMED (fail closed)');
+    h.fireTimeout();
     const res = await pr;
-    eq(res.ok, true, 'E2E: promise ok=true');
-    eq(res.state, S.CONFIRMED, 'E2E: eindstate CONFIRMED');
+    eq(res.ok, false, 'E2E: zonder read-back is er GEEN succes (Gate B.3 vereist)');
+    eq(res.state, S.TIMEOUT, 'E2E: eindstate TIMEOUT na FRAME_ACCEPTED zonder verificatie');
+    eq(res.reason, 'frame_accepted_but_not_verified', 'E2E: expliciete reden, geen stille aanname');
     ok(states.indexOf(S.VALIDATING) < states.indexOf(S.ENCODING), 'E2E: VALIDATING voor ENCODING');
     ok(states.indexOf(S.ENCODING) < states.indexOf(S.WRITING), 'E2E: ENCODING voor WRITING');
     ok(states.indexOf(S.WRITING) < states.indexOf(S.WAITING_RESPONSE), 'E2E: WRITING voor WAITING_RESPONSE');
-    ok(states[states.length - 1] === S.CONFIRMED, 'E2E: laatste transitie CONFIRMED');
-    ok(!h.timerActive(), 'E2E: timer opgeruimd na CONFIRMED');
+    ok(states.indexOf(S.FRAME_ACCEPTED) !== -1 && states.indexOf(S.VERIFYING) !== -1, 'E2E: FRAME_ACCEPTED en VERIFYING doorlopen');
+    ok(states.indexOf(S.PROGRAMMED) === -1, 'E2E: PROGRAMMED wordt NOOIT bereikt zonder read-back');
+    ok(!h.timerActive(), 'E2E: timer opgeruimd na terminal state');
     eq(h.c.isPending(), false, 'E2E: geen pending operatie meer');
   }
   // ── negatieve scenario's ──
@@ -128,7 +133,7 @@ async function run() {
     const r2 = h.c.handleControlResponse(OK_F, { connected: true, generation: 7, deviceId: 'DEV-B' });
     eq(r2.reason, 'other_device', 'ISO: response van ander device genegeerd');
     ok(h.c.getState() !== S.CONFIRMED, 'ISO: geen bevestiging door vreemde response');
-    eq(h.c.handleControlResponse(OK_F, CTX).state, S.CONFIRMED, 'ISO: eigen generation bevestigt wel');
+    eq(h.c.handleControlResponse(OK_F, CTX).state, S.VERIFYING, 'ISO: eigen generation levert FRAME_ACCEPTED/VERIFYING');
   }
   { // sessie A pending -> disconnect -> sessie B mag niet bevestigd worden
     const h = harness(); h.c.programFixedDistance(1000, { connected: true, generation: 1, deviceId: 'DEV-A' });
@@ -150,8 +155,9 @@ async function run() {
     await Promise.resolve(); await Promise.resolve();
     eq(h.writes.length, 1, 'DUBBELTAP: exact één CE060021 write');
     h.c.handleControlResponse(OK_F, CTX);
+    h.fireTimeout();
     const r1 = await p1;
-    eq(r1.state, S.CONFIRMED, 'DUBBELTAP: eerste operatie bevestigt normaal');
+    eq(r1.state, S.TIMEOUT, 'DUBBELTAP: eerste operatie loopt af zonder read-back');
     eq(h.writes.length, 1, 'DUBBELTAP: nog steeds één write na bevestiging');
   }
   { // guards: niet verbonden, ongeldige afstanden
@@ -165,7 +171,7 @@ async function run() {
       eq(r.state, S.FAILED, 'GUARD: afstand ' + String(d) + ' geweigerd');
       eq(h2.writes.length, 0, 'GUARD: geen write voor afstand ' + String(d));
     }
-    for (const d of [100, 500, 1000, 2000, 5000, 50000, 999999]) {
+    for (const d of [100, 500, 1000, 2000, 5000, 50000]) {
       const h3 = harness();
       h3.c.programFixedDistance(d, CTX);
       await Promise.resolve(); await Promise.resolve();
@@ -185,7 +191,15 @@ async function run() {
     eq(d.generation, 7, 'DEV: actieve generation zichtbaar');
     h.c.handleControlResponse(OK_F, CTX);
     d = h.c.getDiagnostics();
-    eq(d.state, S.CONFIRMED, 'DEV: eindstate zichtbaar');
+    eq(d.state, S.VERIFYING, 'DEV: VERIFYING zichtbaar');
+    ok(!!d.frameHex, 'DEV: uitgaand frame-hex bewaard');
+    ok(!!d.lastResponseHex, 'DEV: response-hex bewaard');
+    eq(d.lastParse, 'ok', 'DEV: parse-resultaat bewaard');
+    ok(d.frameAcceptedAt != null, 'DEV: FRAME_ACCEPTED timestamp bewaard');
+    h.fireTimeout();
+    d = h.c.getDiagnostics();
+    ok(!!d.lastResult && !!d.lastResult.frameHex, 'DEV: diagnostiek overleeft settle()');
+    ok(!!d.lastResult.lastResponseHex, 'DEV: response-hex overleeft settle()');
     eq(d.previousFrameStatus, 'ok', 'DEV: Previous Frame Status label zichtbaar');
     ok(JSON.stringify(d).indexOf('DEV-A') === -1, 'DEV: geen device-id in diagnostiek');
   }

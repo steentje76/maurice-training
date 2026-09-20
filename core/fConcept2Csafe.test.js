@@ -25,13 +25,40 @@ eq(hex(S.encodeC2Wrapper(cmds)),hex(contents),'OFFICIAL_VECTOR: wrapper + byte c
 // een little-endian implementatie kan dit niet halen:
 ok(hex(S.encodeDistanceBE32(1000))!=='e8 03 00 00','BE-gate: 1000 m is NIET little-endian');
 ok(hex(S.encodeDistanceBE32(2000))!=='d0 07 00 00','BE-gate: 2000 m is NIET little-endian');
-// de duration-payload in het echte frame draagt dezelfde volgorde
-const w=S.buildFixedDistanceWorkout(2000);
-const i=w.frame.indexOf(0x03);
-eq(hex(w.frame.slice(i,i+7)),'03 05 80 00 00 07 d0','2000 m: SET_WORKOUTDURATION len 5, type 0x80, BE32');
+// ── PUBLIEKE FIXED-DISTANCE SEQUENCE (OFFICIAL_CONFIRMED, CSAFE rev. 0.31) ──
+// De oude proprietary route (wrapper 0x76 + SET_WORKOUTTYPE/SET_WORKOUTDURATION/
+// CONFIGURE_WORKOUT) is op echte hardware GEFAALD: de PM5 antwoordde Previous Frame
+// Status Ok maar configureerde geen workout. De officiele gewerkte sample gebruikt het
+// PUBLIEKE pad: SETHORIZONTAL (0x21, 2-byte LITTLE-endian + units 0x21) gevolgd door
+// SETPROGRAM (0x24, WORKOUTNUMBER_PROGRAMMED). Bereik Table 19: 100-50.000 m.
+const GOLDEN = {
+  100:   'f1 21 03 64 00 21 24 02 00 00 41 f2',
+  500:   'f1 21 03 f4 01 21 24 02 00 00 d0 f2',
+  1000:  'f1 21 03 e8 03 21 24 02 00 00 ce f2',
+  2000:  'f1 21 03 d0 07 21 24 02 00 00 f3 02 f2',
+  50000: 'f1 21 03 50 c3 21 24 02 00 00 b6 f2'
+};
+Object.keys(GOLDEN).forEach(function(k){
+  const d=Number(k), r=S.buildFixedDistanceWorkout(d);
+  ok(r.ok===true,'GOLDEN_VECTOR: '+d+' m bouwt');
+  eq(hex(r.frame),GOLDEN[k],'GOLDEN_VECTOR: '+d+' m byte-exact volgens de officiele publieke sequence');
+});
+// commandostructuur expliciet, niet alleen het totaalframe
+const g1000=S.buildFixedDistanceWorkout(1000);
+eq(hex(g1000.frame.slice(1,6)),'21 03 e8 03 21','1000 m: SETHORIZONTAL len 3, distance LITTLE-endian, units 0x21');
+eq(hex(g1000.frame.slice(6,10)),'24 02 00 00','1000 m: SETPROGRAM len 2, WORKOUTNUMBER_PROGRAMMED, unused');
+ok(g1000.frame.indexOf(0x76)===-1,'1000 m: geen proprietary wrapper 0x76 meer in het publieke pad');
+// LE-gate: een big-endian implementatie kan dit niet halen
+ok(hex(g1000.frame.slice(3,5))==='e8 03','LE-gate: 1000 m is little-endian (e8 03), niet 03 e8');
+// 2000 m: verplichte stuffing-invariant. Logische checksum = F2 -> verzonden als F3 02.
+const c2000=[0x21,0x03,0xd0,0x07,0x21,0x24,0x02,0x00,0x00];
+eq(S.checksum(c2000),0xF2,'2000 m: logische XOR-checksum is exact F2');
+const f2000=S.buildFixedDistanceWorkout(2000).frame;
+eq(hex(f2000.slice(f2000.length-3)),'f3 02 f2','2000 m: checksum F2 wordt gestuffed verzonden als F3 02 voor de stopflag');
+ok(f2000.length===13,'2000 m: stuffing maakt het frame een byte langer dan de overige vectoren');
 
 // ── FIXED-DISTANCE BUILDER (§6) ─────────────────────────────────────────────
-[100,500,1000,2000,5000,50000,999999].forEach(function(d){
+[100,500,1000,2000,5000,50000].forEach(function(d){
   const r=S.buildFixedDistanceWorkout(d);
   ok(r.ok===true,'geldig: '+d+' m');
   eq(r.workoutType,2,d+' m -> FIXEDDIST_NOSPLITS');
@@ -41,19 +68,26 @@ eq(hex(w.frame.slice(i,i+7)),'03 05 80 00 00 07 d0','2000 m: SET_WORKOUTDURATION
   ok(r.frame.length<=S.MAX_FRAME_BYTES,d+' m: binnen framelimiet');
 });
 [[99,'distance_below_minimum'],[0,'distance_below_minimum'],[-1,'distance_below_minimum'],
- [1000000,'distance_above_maximum'],[NaN,'distance_not_finite'],[Infinity,'distance_not_finite'],
+ [50001,'distance_above_maximum'],[NaN,'distance_not_finite'],[Infinity,'distance_not_finite'],
  [null,'distance_required'],[undefined,'distance_required'],[1000.5,'distance_not_integer']].forEach(function(t){
   const r=S.buildFixedDistanceWorkout(t[0]);
   ok(r.ok===false,'afgewezen: '+String(t[0]));
   eq(r.error,t[1],'reden voor '+String(t[0]));
   ok(!('frame' in r),'geen frame bij ongeldige invoer '+String(t[0]));
 });
-// 1000 m is geen special case: zelfde vorm als andere afstanden
-const a=S.buildFixedDistanceWorkout(1000), b=S.buildFixedDistanceWorkout(2000);
-eq(a.frame.length,b.frame.length,'1000 m heeft geen afwijkende framelengte');
+// 1000 m is geen special case: identieke commandostructuur als 500 m.
+// (2000 m wijkt alleen in LENGTE af doordat zijn checksum F2 gestuffed wordt.)
+const a=S.buildFixedDistanceWorkout(1000), b=S.buildFixedDistanceWorkout(500);
+eq(a.frame.length,b.frame.length,'1000 m heeft geen afwijkende framelengte t.o.v. 500 m');
+eq(hex(a.frame.slice(1,3)),hex(b.frame.slice(1,3)),'1000 m gebruikt hetzelfde SETHORIZONTAL-commando');
+eq(hex(a.frame.slice(6,10)),hex(b.frame.slice(6,10)),'1000 m gebruikt hetzelfde SETPROGRAM-commando');
 eq(a.workoutType,b.workoutType,'1000 m gebruikt hetzelfde workout type');
-// splits-optie kiest het andere officiele type
-eq(S.buildFixedDistanceWorkout(1000,{splits:true}).workoutType,3,'expliciete splits -> FIXEDDIST_SPLITS');
+eq(a.commandSequence.join(','),'CSAFE_SETHORIZONTAL_CMD,CSAFE_SETPROGRAM_CMD','publieke sequence expliciet benoemd');
+// De publieke fixed-distance sequence kent GEEN splitsvariant: splits zouden
+// CSAFE_PM_SET_SPLITDURATION vereisen en vallen buiten Gate B.2. De builder mag
+// daarom nooit stilzwijgend een ander workout type claimen op basis van options.
+eq(S.buildFixedDistanceWorkout(1000,{splits:true}).workoutType,2,'splits-optie verandert het type NIET in het publieke pad');
+eq(hex(S.buildFixedDistanceWorkout(1000,{splits:true}).frame),GOLDEN[1000],'splits-optie levert hetzelfde officiele frame');
 
 // ── STUFFING (§5) ───────────────────────────────────────────────────────────
 eq(hex(S.stuff([0xF0])),'f3 00','F0 -> F3 00');

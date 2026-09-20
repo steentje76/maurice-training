@@ -21437,7 +21437,9 @@ async function tkErgProgramPm5IfNeeded(exId,protocolType,meters){
   const ctx=(t&&typeof t.getControlContext==='function')?t.getControlContext():{connected:true};
   let r=null;
   try{ r=await rt.prog.programFixedDistance(meters,ctx); }catch(_e){ r=null; }
-  const confirmed=!!(r&&r.ok===true&&r.state==='CONFIRMED');
+  // Gate B.4: succes is PROGRAMMED (read-back geverifieerd). CONFIRMED was de oude,
+  // te sterke semantiek die alleen frame-acceptatie bewees; die mag nooit meer slagen.
+  const confirmed=!!(r&&r.ok===true&&r.state==='PROGRAMMED');
   return {attempted:true,confirmed:confirmed,state:r?r.state:null,
           message:confirmed?null:'Training kon niet op de PM5 worden ingesteld ('+((r&&r.state)||'onbekend')+').'};
 }
@@ -21465,7 +21467,7 @@ async function tkErgStartProtocol(exId,cardioType){
   finally{ st.busy=false; }
   if(!instanceId){ toast('Vastleggen mislukt — probeer opnieuw'); tkErgRerenderProtocol(exId,cardioType); return; }
   // Gate B.4: met gekoppelde PM5 en een afstandsdoel wordt de workout eerst op de PM5
-  // geprogrammeerd. Execution/vastlegging gaat PAS door na CONFIRMED; een geslaagde BLE-write
+  // geprogrammeerd. Execution/vastlegging gaat PAS door na PROGRAMMED (read-back geverifieerd);
   // is geen bevestiging. Zonder PM5 of bij een tijddoel blijft de bestaande flow ongewijzigd.
   const progRes=(typeof tkErgProgramPm5IfNeeded==='function')?await tkErgProgramPm5IfNeeded(exId,st.type,Math.round(waarde)):null;
   if(progRes&&progRes.attempted&&!progRes.confirmed){

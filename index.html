@@ -6774,6 +6774,29 @@ function tkDeviceTransport(){
 // Eén duidelijke actie: [Apparaat koppelen]. Geen handmatige PM5 1/2/3-selectie, geen BLE-jargon.
 // Alle status komt uit het transport; NOOIT fake device/connected. Machine-context uit Concept2Live.
 var _c2pair={}, _c2liveLast={};
+/* Gate B.5 — OWNERSHIP. _c2pair is PRESENTATIE-state: tkErgPair() bouwt dat object bij
+   elke pairing/scan-refresh volledig opnieuw op (zie regel ~6824), waardoor eraan gehangen
+   runtime-objecten stilzwijgend verdwenen. Dat was de bewezen root cause van de mislukte
+   PM5-programmering: st._prog werd null en de startflow viel stil door naar de normale flow.
+   _c2rt is daarom een APARTE owner voor BLE-connection/session runtime. Levensduur = die van
+   de fysieke verbinding (generation + deviceId), niet die van de UI. Geen tweede source of
+   truth: _c2pair blijft eigenaar van de presentatie, _c2rt uitsluitend van de runtime. */
+var _c2rt={};
+function _c2rtSet(exId, generation, deviceId, prog, agg){ _c2rt[exId]={ generation:generation, deviceId:deviceId, prog:prog, agg:agg }; }
+/* Levert de runtime alleen wanneer generation EN device overeenkomen; anders is het een
+   andere verbinding of een ander PM5 en mag de oude runtime nooit hergebruikt worden. */
+function _c2rtGet(exId, generation, deviceId){
+  var r=_c2rt[exId]; if(!r) return null;
+  if(generation!=null && r.generation!=null && generation!==r.generation) return null;
+  if(deviceId!=null && r.deviceId!=null && deviceId!==r.deviceId) return null;
+  return r;
+}
+function _c2rtTeardown(exId, reason){
+  var r=_c2rt[exId]; if(!r) return;
+  try{ if(r.prog) r.prog.cancel(reason||'teardown'); }catch(_e){}
+  try{ if(r.agg) r.agg.reset(); }catch(_e){}
+  delete _c2rt[exId];
+}
 var _C2ERGLBL={rowing:'RowErg',skierg:'SkiErg',bikeerg:'BikeErg'};
 function _c2mt(cardioType){ return {rowing:'rowerg',skierg:'skierg',bikeerg:'bikeerg'}[cardioType]||'rowerg'; }
 function _c2msg(state){ return (typeof Concept2Live!=='undefined')?Concept2Live.pairingMessage(state):''; }
@@ -6937,6 +6960,9 @@ function tkErgConnectDevice(exId, idx){
       // De multiplexed 0x31/0x32-events zijn partial; Concept2Live voegt ze samen en
       // mapt RAW->canonical. Geen merge- of mappinglogica hier.
       st._agg=(typeof Concept2Live!=='undefined'&&Concept2Live.createPm5LiveAggregator)?Concept2Live.createPm5LiveAggregator():null;
+      // Runtime hoort bij de VERBINDING, niet bij de pairing-UI: vastleggen in _c2rt.
+      if(typeof _c2rtTeardown==='function') _c2rtTeardown(exId,'reconnect');
+      var _ctx0=(typeof t.getControlContext==='function')?t.getControlContext():{generation:null,deviceId:d.id};
       // Gate B.4: één programming-controller per verbinding, naast de aggregator.
       // CSAFE-encoding en -parsing blijven in core/concept2Programming.js + concept2Csafe.js;
       // hier alleen lifecycle en bedrading. Geen bytes of protocolkennis in de UI.
@@ -6949,13 +6975,14 @@ function tkErgConnectDevice(exId, idx){
           // Developer Mode leest de diagnostiek uit DEZE controller (geen statisch object).
           try{ if(window.TKDeveloperMode&&window.TKDeveloperMode.setProgrammingSource) window.TKDeveloperMode.setProgrammingSource(function(){ return st._prog; }); }catch(_e2){}
       }catch(_e){ st._prog=null; }
+      if(typeof _c2rtSet==='function') _c2rtSet(exId, _ctx0.generation, d.id, st._prog, st._agg);
       _c2repaint(exId, _c2connectedInner(exId, null));
       // connectie-events uit het transport (geen fake). Fase B: het transport emit bij een echte
       // plugin-disconnect 'disconnected' (nooit meer 'reconnecting' zonder reconnect-mechanisme);
       // de UI zet st.connected=false en toont de expliciete verbroken-staat met acties.
       if(typeof t.subscribeConnection==='function') st._unsubConn=t.subscribeConnection(function(e){
         if(!st.connected) return;
-        if(e&&e.state==='disconnected'){ st.connected=false; st.lastCm=null; if(st._agg) st._agg.reset(); if(st._prog){ try{ st._prog.cancel('disconnect'); }catch(_e){} } if(typeof t.setControlResponseHandler==='function') t.setControlResponseHandler(null); _c2repaint(exId, _c2disconnectedInner(exId)); }
+        if(e&&e.state==='disconnected'){ st.connected=false; st.lastCm=null; if(typeof _c2rtTeardown==='function') _c2rtTeardown(exId,'disconnect'); st._agg=null; st._prog=null; if(typeof t.setControlResponseHandler==='function') t.setControlResponseHandler(null); _c2repaint(exId, _c2disconnectedInner(exId)); }
         else if(e&&e.state==='connected') _c2repaint(exId, _c2connectedInner(exId, st.lastCm||null));
       });
       st._unsubMetrics=t.subscribeMetrics(function(evt){
@@ -21389,11 +21416,18 @@ function tkErgSetProtocol(exId,cardioType,type){
 async function tkErgProgramPm5IfNeeded(exId,protocolType,meters){
   if(protocolType!=='distance') return {attempted:false};
   const st=(typeof _c2pair!=='undefined'&&_c2pair)?_c2pair[exId]:null;
-  if(!st||!st.connected||!st._prog) return {attempted:false};
+  if(!st||!st.connected) return {attempted:false};   // geen PM5 -> bestaande flow
+  const t0=(typeof tkDeviceTransport==='function')?tkDeviceTransport():null;
+  const ctx0=(t0&&typeof t0.getControlContext==='function')?t0.getControlContext():{generation:null,deviceId:st.deviceId||null};
+  const rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,ctx0.generation,st.deviceId||ctx0.deviceId):null;
+  // FAIL CLOSED: PM5 verbonden en een afstandsdoel gevraagd, maar geen programmeerruntime.
+  // Nooit stilzwijgend doorvallen alsof de PM5 is ingesteld.
+  if(!rt||!rt.prog) return {attempted:true,unavailable:true,confirmed:false,state:'UNAVAILABLE',
+                            message:'Training kon niet op de PM5 worden ingesteld (programmering niet beschikbaar).'};
   const t=(typeof tkDeviceTransport==='function')?tkDeviceTransport():null;
   const ctx=(t&&typeof t.getControlContext==='function')?t.getControlContext():{connected:true};
   let r=null;
-  try{ r=await st._prog.programFixedDistance(meters,ctx); }catch(_e){ r=null; }
+  try{ r=await rt.prog.programFixedDistance(meters,ctx); }catch(_e){ r=null; }
   const confirmed=!!(r&&r.ok===true&&r.state==='CONFIRMED');
   return {attempted:true,confirmed:confirmed,state:r?r.state:null,
           message:confirmed?null:'Training kon niet op de PM5 worden ingesteld ('+((r&&r.state)||'onbekend')+').'};

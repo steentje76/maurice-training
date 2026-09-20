@@ -308,7 +308,9 @@ export function installDeveloperMode(options = {}) {
     open: openPanel,
     close: closePanel,
     snapshot: () => buildDiagnosticsSnapshot(getTransport()),
-    text: currentText
+    text: currentText,
+      // Gate B.5: index.html registreert hier de ACTIEVE programming-controller.
+      setProgrammingSource
   };
   window.TKDeveloperMode = api;
   if (enabled) ensureUi();

@@ -20,7 +20,7 @@ function loadHelper(env) {
 ok(/st\._prog=Concept2Programming\.createProgrammingController\(/.test(html), 'W1: controller per verbinding aangemaakt');
 ok(/write:function\(b\)\{ return t\.writeControlFrame\(b\); \}/.test(html), 'W2: write gaat via transport.writeControlFrame');
 ok(/t\.setControlResponseHandler\(function\(bytes,ctx\)\{ if\(st\._prog\) st\._prog\.handleControlResponse\(bytes,ctx\); \}\)/.test(html), 'W3: CE060022 routing naar de controller');
-ok(/st\._prog\.cancel\('disconnect'\)/.test(html), 'W4: disconnect annuleert de pending operatie');
+ok(/_c2rtTeardown\(exId,'disconnect'\)/.test(html), 'W4: disconnect ruimt de runtime op via de owner (cancel + reset)');
 ok(/t\.setControlResponseHandler\(null\)/.test(html), 'W5: response-handler geneutraliseerd bij disconnect');
 ok(/if\(progRes&&progRes\.attempted&&!progRes\.confirmed\)\{/.test(html), 'W6: vastleggen stopt wanneer programmering niet bevestigd is');
 ok(/const progRes=\(typeof tkErgProgramPm5IfNeeded==='function'\)\?await tkErgProgramPm5IfNeeded\(exId,st\.type,Math\.round\(waarde\)\):null;/.test(html), 'W7: start-handler roept de helper aan (defensief: zonder helper blijft de bestaande flow werken)');
@@ -43,7 +43,9 @@ function env(opts) {
     fireTimeout: () => { if (timerFn) timerFn(); },
     helper: loadHelper({
       _c2pair: { EX: st },
-      tkDeviceTransport: () => ({ getControlContext: () => ({ connected: true, deviceId: 'D1', generation: 3 }) })
+      tkDeviceTransport: () => ({ getControlContext: () => ({ connected: true, deviceId: 'D1', generation: 3 }) }),
+      // Gate B.5: de runtime hoort bij de VERBINDING (_c2rt), niet bij de pairing-state.
+      _c2rtGet: () => (st._prog ? { generation: 3, deviceId: 'D1', prog: st._prog, agg: null } : null)
     })
   };
 }
@@ -103,7 +105,12 @@ async function run() {
     eq(e1.writes.length, 0, 'MANUAL: nul writes bij tijddoel');
     const e2 = env({ connected: false }); eq((await e2.helper('EX', 'distance', 1000)).attempted, false, 'MANUAL: geen PM5 verbonden -> geen poging');
     eq(e2.writes.length, 0, 'MANUAL: nul writes zonder PM5');
-    const e3 = env({ noProg: true }); eq((await e3.helper('EX', 'distance', 1000)).attempted, false, 'MANUAL: geen controller -> bestaande flow'); }
+    // Gate B.5 FAIL CLOSED: PM5 verbonden zonder programmeerruntime mag NOOIT stil doorvallen.
+    const e3 = env({ noProg: true }); const r3 = await e3.helper('EX', 'distance', 1000);
+    eq(r3.attempted, true, 'FAILCLOSED: PM5 verbonden -> programmering is van toepassing');
+    eq(r3.unavailable, true, 'FAILCLOSED: ontbrekende runtime -> UNAVAILABLE');
+    eq(r3.confirmed, false, 'FAILCLOSED: niet bevestigd, dus vastleggen wordt geblokkeerd');
+    eq(e3.writes.length, 0, 'FAILCLOSED: geen write zonder runtime'); }
   { // Developer Mode leest uit de ECHTE controller
     const e = env(); const p = e.helper('EX', 'distance', 1000);
     await Promise.resolve(); await Promise.resolve(); await Promise.resolve();

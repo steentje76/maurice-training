@@ -230,7 +230,8 @@ async function run() {
   { const fin = html.slice(html.indexOf('async function finishSession()'), html.indexOf('async function finishSession()') + 12000);
     ok(/tkC2DiagFinishCalled\(\)/.test(fin), 'H2: finishSession-aanroep wordt geobserveerd');
     ok(/tkC2DiagFinishEx\(ex\.id,l\); \}catch\(_dfe\)\{\} \/\* DIAG, fail-open \*\/if\(!l\)continue;/.test(fin), 'H3: lus-controleflow ongewijzigd (continue blijft)');
-    ok(/if\(l\.cardio && CARDIO_TYPES\[l\.cardio\.type\] && \(l\.cardio\.time\|\|l\.cardio\.dist\|\|l\.cardio\.dist_km\|\|l\.cardio\.cals\)\)\{/.test(fin), 'H4: cardio-eligibility-guard ongewijzigd (H3 niet gerepareerd)');
+    // FASE 2A heeft H3 bewust gerepareerd: een geldige .c2 is zelfstandig voldoende; handmatig pad blijft.
+    ok(/if\(_c2Loggable \|\| \(l\.cardio && CARDIO_TYPES\[l\.cardio\.type\] && \(l\.cardio\.time\|\|l\.cardio\.dist\|\|l\.cardio\.dist_km\|\|l\.cardio\.cals\)\)\)\{/.test(fin), 'H4: guard = geldige .c2 OF compleet handmatig formulier (FASE 2A)');
     const _bs = html.indexOf('var _c2s=l.c2;'); const _be = html.indexOf('cRow=cardioDataToRow(l.cardio.type,l.cardio);', _bs);
     const bridge = html.slice(_bs, html.indexOf('}', _be) + 1);
     const stripped = bridge.split(/\r?\n/).filter(x => x.indexOf('tkC2DiagFinishPath') === -1).join('\n');

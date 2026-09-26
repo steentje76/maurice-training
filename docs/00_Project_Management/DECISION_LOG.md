@@ -2339,3 +2339,40 @@ onzichtbaar zijn. Conform de bestaande conventie daarom APP_VER + cache + Androi
 **Bewust niet.** Timeout, CSAFE-frames, fixed-time, fixed-distance, completion, session logging,
 schema, exercise-ID's, BLE-subscriptiestrategie, rowerg→roeien, calculation/AI: ongewijzigd.
 H1–H5 blijven hypotheses.
+
+## DEC-C2FIN-001 — Concept2 FASE 2A: PM5-finalisatie, execution-cleanup en orphan-preventie (27 september 2026)
+
+**Context.** FASE 1 (baseline b378a7d0) classificeerde H3, H4 en H5 als CODE-PROVEN; DB-bewijs 26-09:
+0 ergometer-sessierijen en 6 ad-hoc `training_instances` zonder sessierij.
+
+**Besluit H3.** Eén eligibility-definitie (`tkC2IsLoggableSummary`: machinetype + afstand of duur > 0)
+en één rij-producent (`tkC2SessionRowFromLog`) voor Training én Losse oefening; de converter komt
+uitsluitend van `Concept2Live` (de enige browserbinding). Handmatig pad ongewijzigd; bij beide
+aanwezig wint de gemeten PM5-data (was al de bedoelde regel). Een meting van 0 m / 0 s is geen workout.
+
+**Besluit H4.** Eén `tkC2ExecutionCleanup()` voor terminale lokale afhandeling; alleen lokale
+runtime-state, nooit DB/historie/projectie; nooit vóór of tijdens een herprobeerbare write.
+
+**Besluit H5.** Kleinste correcte oplossing: volgorde omkeren (programmeren -> persisteren) in plaats
+van rollback. Geen delete/patch van instances; historische orphans blijven staan (geen cleanup-query).
+
+**Testcorrectie.** `fConcept2ThreeMachineLogging` injecteerde een bare `liveWorkoutToActual`; dat
+maskeerde het productiedefect. De harness gebruikt nu de echte browserbinding.
+
+**Bewust niet.** CSAFE/units, buildFixedDistanceWorkout, distance-verificatie, timeout, workoutType,
+fixed-time, decoder/aggregator, stop→resume, schema/migraties, exercise-ID's, calculation/AI.
+
+## DEC-C2FIN-002 — H5 completion van losse ad-hoc instances; abort bij verlaten blijft open (27 september 2026)
+
+**Besluit.** `saveLosOefening()` roept na een geslaagde sessions-write de bestaande
+`completeTrainingInstance()` aan voor de `training_instance_id` die in de geschreven row staat, vóór
+`resetLosAllState()`. Foutsemantiek identiek aan `finishSession()`: een mislukte afronding maakt de
+opgeslagen oefening niet ongedaan.
+
+**Niet besloten (open).** Start → verlaten zonder opslag. Schema: `training_instances_status_check`
+staat `active|completed|aborted` toe; `aborted` is in v446 gedefinieerd als "niet-uitgevoerde
+training", maar alleen gezet door een eenmalige migratie. Runtime: geen abort-transitie; het
+discard-principe (EX-DISCARD-2) zegt dat verwerpen nergens naar de DB schrijft. Een runtime-abort
+voor Losse zou daarvan afwijken en een tweede, divergente lifecycle naast de training-discard creëren.
+Daarom niet geïmproviseerd; vraagt een expliciet PO-besluit (abort-transitie voor beide flows, of
+periodieke herclassificatie zoals v446). Geen DELETE, geen historische cleanup.

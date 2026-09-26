@@ -20,12 +20,20 @@ function makeWorld() {
 const _bs = html.indexOf('var _c2s=l.c2;');
 const _be = html.indexOf('cRow=cardioDataToRow(l.cardio.type,l.cardio);', _bs);
 const bridgeSrc = html.slice(_bs, html.indexOf('}', _be) + 1);
+// FASE 2A: de bridge draait nu met de ECHTE browserbinding. Eerder injecteerde deze harness een
+// bare `liveWorkoutToActual`, die in de browser niet bestaat -- dat maskeerde dat de Concept2-tak
+// in productie onbereikbaar was. Nu alleen Concept2Live (zoals in index.html geladen) + de echte
+// helpers uit index.html; geen bare converter meer in scope.
+const helperSrc = ['tkC2IsLoggableSummary', 'tkC2Converter', 'tkC2SessionRowFromLog'].map(function (n) {
+  return html.match(new RegExp('function ' + n + '\\([^)]*\\)\\{[\\s\\S]*?\\n\\}'))[0];
+}).join('\n');
 function buildRow(l, today, t, instanceId) {
-  return new Function('l', 'today', 't', 'activeInstanceId', 'liveWorkoutToActual', 'cardioDataToRow',
-    bridgeSrc + '\nreturn {row:cRow, viaC2:_c2ok};')(
-      l, today, t, instanceId, C2L.liveWorkoutToActual,
+  return new Function('l', 'today', 't', 'activeInstanceId', 'Concept2Live', 'cardioDataToRow',
+    helperSrc + '\n' + bridgeSrc + '\nreturn {row:cRow, viaC2:_c2ok};')(
+      l, today, t, instanceId, C2L,
       function () { return { __manual: true, extraNote: 'handmatig' }; });
 }
+ok(!/typeof liveWorkoutToActual/.test(bridgeSrc), 'FASE2A: bridge gebruikt geen bare liveWorkoutToActual-global (bestaat niet in de browser)');
 
 // ── fixtures met onderscheidende waarden per machine ──────────────────────
 const M = {

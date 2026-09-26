@@ -6,7 +6,35 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.99
+v4.70.1
+
+## Concept2 Corrective FASE 2A.1 — H5 completion-lifecycle (v4.70.1, 27 september 2026)
+
+- **Gesloten:** een succesvol opgeslagen losse Concept2-execution met ad-hoc `training_instance_id`
+  wordt via de bestaande `completeTrainingInstance()` op `completed` gezet — pas na een geslaagde
+  sessions-write en vóór de lokale cleanup. Mislukte write: niet completed, retry met dezelfde
+  instance levert exact één row.
+- **OPEN (bewust niet opgelost): start → verlaten zonder opslag.** Het schema kent `aborted`
+  (migratie v446: "niet-uitgevoerde training"), maar de runtime heeft geen abort-transitie en het
+  vastgelegde discard-principe (EX-DISCARD-2, `fHardening` T16) verbiedt DB-writes bij verwerpen.
+  Een runtime-abort vereist een Product Owner-besluit. Zelfde gat in de training-flow: een ad-hoc
+  erg-instance naast een actieve training-instance blijft `active` zonder row.
+
+## Concept2 Corrective FASE 2A — PM5-finalisatie, cleanup, orphan-preventie (v4.70.0, 27 september 2026)
+
+- **H3 gerepareerd (Training + Losse oefening).** Een geldige `sessionLog[exId].c2` (machinetype +
+  gemeten afstand of duur > 0) is zelfstandig voldoende: `.c2 -> Concept2Live.liveWorkoutToActual()
+  -> writeSessionRow() -> sessions`, exact één row, handmatig formulier niet vereist. Root cause: de
+  PM5-tak zat achter een guard die een ingevuld formulier eiste, én riep een bare global
+  `liveWorkoutToActual` aan die in de browser niet bestaat — de Concept2-tak was in productie
+  onbereikbaar. Losse oefening las `.c2` nooit; nu dezelfde conversie + protocolidentiteit + instance.
+- **H4 gerepareerd.** `tkC2ExecutionCleanup()` na geslaagde finalisatie of bewust verwerpen/verlaten:
+  PM5 ontkoppeld, `_c2rt` opgeruimd, `_ergProtocol` vrijgegeven. Niet bij een mislukte write (retry).
+  Losse `'los'`-state lekt niet meer door naar een volgende machine.
+- **H5 gerepareerd.** Ad-hoc `training_instance` wordt pas na (niet-falende) PM5-programmering
+  gepersisteerd. De zes orphan instances van 26-09 zijn bewust NIET aangeraakt.
+- **Bewust ongewijzigd:** H1/Distance-verificatie en CSAFE-frames, H2/fixed-time, stop→resume,
+  timeout, decoder/aggregator, schema, exercise-ID's. Diagnostiek (#464) behouden.
 
 ## Concept2 Real-Device Diagnostic Instrumentation (v4.69.99, 26 september 2026)
 
@@ -27,7 +55,7 @@ v4.69.99
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.99 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.1 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

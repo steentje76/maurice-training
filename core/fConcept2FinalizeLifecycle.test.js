@@ -44,7 +44,7 @@ function element(v) { return { value: v || '', style: {}, textContent: '', class
 
 function makeWorld(html, over) {
   over = over || {};
-  const writes = []; const creates = []; const disconnects = []; const toasts = []; const completes = [];
+  const events = []; const writes = []; const creates = []; const disconnects = []; const toasts = []; const completes = [];
   const transport = { disconnect: (r) => disconnects.push(r), getStatus: () => ({ state: 'idle' }) };
   const fields = over.fields || {};
   const env = {
@@ -56,11 +56,12 @@ function makeWorld(html, over) {
     LOS_DOMID: 'los', losSelectedExId: null,
     exercisesList: [], getSessionExs: () => env.exercisesList, getExerciseMuscles: () => [],
     ensureSessionExerciseRows: async () => {}, ensureExerciseRow: async () => {},
-    writeSessionRow: async (row) => { if (env.failWrites > 0) { env.failWrites--; if (over.writeReturnsFalse) return false; throw new Error('netwerk'); } writes.push(JSON.parse(JSON.stringify(row))); return true; },
+    writeSessionRow: async (row) => { if (env.failWrites > 0) { env.failWrites--; if (over.writeReturnsFalse) return false; throw new Error('netwerk'); } writes.push(JSON.parse(JSON.stringify(row))); events.push('write:' + (row.training_instance_id || '-')); return true; },
     failWrites: 0,
     sbPostQ: async (table, row) => { if (table !== 'sessions') throw new Error('onverwachte tabel ' + table); return env.writeSessionRow(row); },
     createTrainingInstance: async (arg) => { creates.push(arg); return over.createReturns === undefined ? ('inst-' + creates.length) : over.createReturns; },
-    completeTrainingInstance: async (id) => { completes.push(id); },
+    completeTrainingInstance: async (id) => { events.push('complete:' + id); if (over.completeThrows) throw new Error('offline'); completes.push(id); },
+    sbPatchQ: async (t) => { events.push('patch:' + t); return true; }, sbDeleteQ: async (t) => { events.push('DELETE:' + t); return true; },
     tkDeviceTransport: () => transport,
     resolvePickerEx: (id) => env.exIndex[id] || null, exIndex: {},
     localStorage: { getItem: () => '', setItem() {}, removeItem() {} },
@@ -80,7 +81,7 @@ function makeWorld(html, over) {
     constSrc(html, 'const CARDIO_TYPE_BY_ID').replace('const CARDIO_TYPE_BY_ID', 'CARDIO_TYPE_BY_ID') + '\n' +
     FNS.map(n => fnSrc(html, n)).join('\n') + '\nreturn {' + FNS.join(',') + '};';
   const api = new Function('__env', 'with(__env){\n' + src + '\n}')(proxy);
-  return { env, api, writes, creates, disconnects, toasts, completes, transport };
+  return { env, api, events, writes, creates, disconnects, toasts, completes, transport };
 }
 const CM = { row: { machineType: 'rowerg', distanceM: 2000, elapsedTimeS: 420, watts: 240, strokeRateSPM: 30, heartRateBPM: 150, dragFactor: 125 },
   bike: { machineType: 'bikeerg', distanceM: 5000, elapsedTimeS: 600, watts: 190, strokeRateSPM: 85 },
@@ -210,6 +211,42 @@ async function suite(html, label) {
   { const w = makeWorld(html); w.env.exercisesList = [EX.roeien];         // leeg formulier, geen .c2 -> niets (ongewijzigd)
     w.env.sessionLog.roeien = { cardio: { type: 'rowing' } };
     await w.api.finishSession(); R.r13c = w.writes.length; }
+  // ── FASE 2A.1 (H5) — completion-lifecycle ──
+  // A. Losse PM5 succesvol -> row gekoppeld aan instance -> instance completed (na de write, vóór cleanup)
+  { const w = makeWorld(html); w.env.exIndex.roeien = EX.roeien; w.env.losSelectedExId = 'roeien';
+    w.env._ergProtocol.los = { type: 'distance', value: 500, instanceId: 'I-C1', prescription: IEC.normalizePrescription(EPI.continuousErgPrescription('rowing', 'distance', 500)) };
+    w.api.tkErgOnCanonicalMeasurement('los', CM.row);
+    await w.api.saveLosOefening(null);
+    R.c1 = { events: w.events.slice(), completes: w.completes.slice(), rows: w.writes.length, rowInst: w.writes[0] && w.writes[0].training_instance_id, proto: !!w.env._ergProtocol.los }; }
+  // B. write failure -> niet completed -> retry met DEZELFDE instance -> één row -> completed
+  { const w = makeWorld(html, { writeReturnsFalse: true }); w.env.exIndex.roeien = EX.roeien; w.env.losSelectedExId = 'roeien'; w.env.failWrites = 1;
+    w.env._ergProtocol.los = { type: 'time', value: 600, instanceId: 'I-C2' };
+    w.api.tkErgOnCanonicalMeasurement('los', CM.row);
+    await w.api.saveLosOefening(null);
+    R.c2a = { completes: w.completes.slice(), rows: w.writes.length, kept: !!(w.env._ergProtocol.los && w.env._ergProtocol.los.instanceId === 'I-C2') };
+    await w.api.saveLosOefening(null);
+    R.c2b = { completes: w.completes.slice(), rows: w.writes.length, rowInst: w.writes[0] && w.writes[0].training_instance_id, creates: w.creates.length, events: w.events.slice() }; }
+  // C. completion faalt (offline/exception) -> oefening blijft opgeslagen, state opgeruimd, geen tweede row
+  { const w = makeWorld(html, { completeThrows: true }); w.env.exIndex.roeien = EX.roeien; w.env.losSelectedExId = 'roeien';
+    w.env._ergProtocol.los = { type: 'distance', value: 500, instanceId: 'I-C3' };
+    w.api.tkErgOnCanonicalMeasurement('los', CM.row);
+    await w.api.saveLosOefening(null);
+    R.c3 = { rows: w.writes.length, toastOk: w.toasts.includes('Opgeslagen'), cleaned: !w.env._ergProtocol.los }; }
+  // D. Losse zonder instance (Vrij / niet-Concept2) -> geen completion-aanroep (ongewijzigd)
+  { const w = makeWorld(html); w.env.exIndex.roeien = EX.roeien; w.env.losSelectedExId = 'roeien';
+    w.api.tkErgOnCanonicalMeasurement('los', CM.row); await w.api.saveLosOefening(null);
+    R.c4 = { completes: w.completes.length, patches: w.events.filter(e => /^patch/.test(e)).length, rows: w.writes.length }; }
+  // E. normale training-lifecycle ongewijzigd: exact activeInstanceId completed, na de writes
+  { const w = makeWorld(html, { activeInstanceId: 'I-TR' }); w.env.exercisesList = [EX.roeien];
+    w.api.tkErgOnCanonicalMeasurement('roeien', CM.row); await w.api.finishSession();
+    R.c5 = { completes: w.completes.slice(), events: w.events.slice() }; }
+  { const w = makeWorld(html, { activeInstanceId: 'I-TR2' }); w.env.exercisesList = [EX.roeien]; w.env.failWrites = 1;
+    w.api.tkErgOnCanonicalMeasurement('roeien', CM.row); await w.api.finishSession();
+    R.c5fail = w.completes.length; }
+  // F. start -> verlaten zonder opslag: GEEN DB-write (open gap, zie rapport) en nooit DELETE
+  { const w = makeWorld(html); w.env._ergProtocol.los = { type: 'time', value: 600, instanceId: 'I-LEFT' };
+    w.api.tkErgOnCanonicalMeasurement('los', CM.row); w.api.clearLosSessionState();
+    R.c6 = { events: w.events.slice(), proto: !!w.env._ergProtocol.los }; }
   return R;
 }
 
@@ -262,6 +299,26 @@ async function suite(html, label) {
   eq(JSON.stringify(R.r13sInst), JSON.stringify(['I-S', 'I-S']), 'R13: beide rows aan de training-instance gekoppeld');
   eq(R.r13c, 0, 'R13: leeg formulier zonder PM5 schrijft niets (ongewijzigd)');
 
+  // FASE 2A.1
+  eq(JSON.stringify(R.c1.completes), JSON.stringify(['I-C1']), 'C1: Losse PM5 succesvol -> ad-hoc instance completed (exact één keer)');
+  eq(R.c1.rows, 1, 'C1: exact één sessions-row'); eq(R.c1.rowInst, 'I-C1', 'C1: row gekoppeld aan dezelfde instance');
+  ok(R.c1.events.indexOf('write:I-C1') > -1 && R.c1.events.indexOf('write:I-C1') < R.c1.events.indexOf('complete:I-C1'), 'C1: completion pas NA de geslaagde write');
+  ok(!R.c1.proto, 'C1: lokale protocolidentiteit pas na completion opgeruimd');
+  eq(R.c2a.completes.length, 0, 'C2: mislukte write -> instance NIET completed'); eq(R.c2a.rows, 0, 'C2: geen row'); ok(R.c2a.kept, 'C2: instance-identiteit behouden voor retry');
+  eq(R.c2b.rows, 1, 'C2: retry -> exact één row'); eq(R.c2b.rowInst, 'I-C2', 'C2: retry gebruikt dezelfde instance');
+  eq(JSON.stringify(R.c2b.completes), JSON.stringify(['I-C2']), 'C2: na geslaagde retry exact één completion van dezelfde instance');
+  eq(R.c2b.creates, 0, 'C2: retry maakt geen nieuwe instance');
+  ok(R.c3.rows === 1 && R.c3.toastOk && R.c3.cleaned, 'C3: mislukte completion maakt de opgeslagen oefening niet ongedaan');
+  ok(R.c4.completes === 0 && R.c4.patches === 0 && R.c4.rows === 1, 'C4: losse opslag zonder instance roept geen completion aan (ongewijzigd)');
+  eq(JSON.stringify(R.c5.completes), JSON.stringify(['I-TR']), 'C5: normale training completeert exact activeInstanceId (ongewijzigd)');
+  ok(R.c5.events.indexOf('complete:I-TR') > R.c5.events.lastIndexOf('write:I-TR'), 'C5: training-completion na de writes (ongewijzigd)');
+  eq(R.c5fail, 0, 'C5: mislukte training-write -> geen completion (ongewijzigd)');
+  ok(!R.c6.events.some(e => /^(patch|DELETE|complete|write)/.test(e)), 'C6: verlaten zonder opslag schrijft niets naar de DB (open gap, geen improvisatie)');
+  const allEvents = [].concat(R.c1.events, R.c2b.events, R.c5.events, R.c6.events);
+  ok(!allEvents.some(e => /^DELETE/.test(e)), 'C7: nergens een DELETE');
+  const losSrc = fnSrc(HTML, 'saveLosOefening');
+  ok(!/sbDelete|DELETE|status:\s*'aborted'/.test(losSrc), 'C7: saveLosOefening verwijdert niets en verzint geen status');
+
   // 12. historische/bestaande instances: nergens delete/patch in de nieuwe code
   const cleanup = fnSrc(HTML, 'tkC2ExecutionCleanup'), start = fnSrc(HTML, 'tkErgStartProtocol');
   ok(!/sb[A-Z]\w*\(|fetch\(|training_instances|sessionLog/.test(cleanup), 'T12: cleanup raakt geen DB, instances of sessions');
@@ -279,6 +336,8 @@ async function suite(html, label) {
     ['discard-cleanup weg (H4)', h => h.replace("tkC2ExecutionCleanup(tkC2TrainingExecIds(),'leave_execution')", "void 0"), R2 => R2.tdisc[1] === true],
     ['losse cleanup weg (H4)', h => h.replace("try{ if(typeof tkC2ExecutionCleanup==='function') tkC2ExecutionCleanup([LOS_DOMID],'leave_execution'); }catch(_cl){}", ""), R2 => R2.b8proto || R2.b8rt],
     ['instance vóór programmering (oude H5)', h => h.replace("instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot});\n  }", "}").replace("  let instanceId=null;\n  try{\n", "  let instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot});\n  try{\n"), R2 => R2.t10creates > 0],
+    ['losse completion weg (H5 2A.1)', h => h.replace("    try{ await completeTrainingInstance(row.training_instance_id); }\r\n    catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)'", "    try{ void 0; }\r\n    catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)'"), R2 => R2.c1.completes.length === 0],
+    ['losse completion vóór de write (H5 2A.1)', h => h.replace("  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)", "  if(row.training_instance_id){ try{ await completeTrainingInstance(row.training_instance_id); }catch(_s){} }\r\n  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)"), R2 => R2.c2a.completes.length > 0],
     ['eligibility te ruim (0 m / 0 s)', h => h.replace("return (isFinite(dn)&&dn>0)||(isFinite(en)&&en>0);", "return true;"), R2 => R2.t4zero > 0]
   ];
   for (const [name, mut, detects] of sab) {

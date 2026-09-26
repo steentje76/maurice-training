@@ -2361,3 +2361,18 @@ maskeerde het productiedefect. De harness gebruikt nu de echte browserbinding.
 
 **Bewust niet.** CSAFE/units, buildFixedDistanceWorkout, distance-verificatie, timeout, workoutType,
 fixed-time, decoder/aggregator, stop→resume, schema/migraties, exercise-ID's, calculation/AI.
+
+## DEC-C2FIN-002 — H5 completion van losse ad-hoc instances; abort bij verlaten blijft open (27 september 2026)
+
+**Besluit.** `saveLosOefening()` roept na een geslaagde sessions-write de bestaande
+`completeTrainingInstance()` aan voor de `training_instance_id` die in de geschreven row staat, vóór
+`resetLosAllState()`. Foutsemantiek identiek aan `finishSession()`: een mislukte afronding maakt de
+opgeslagen oefening niet ongedaan.
+
+**Niet besloten (open).** Start → verlaten zonder opslag. Schema: `training_instances_status_check`
+staat `active|completed|aborted` toe; `aborted` is in v446 gedefinieerd als "niet-uitgevoerde
+training", maar alleen gezet door een eenmalige migratie. Runtime: geen abort-transitie; het
+discard-principe (EX-DISCARD-2) zegt dat verwerpen nergens naar de DB schrijft. Een runtime-abort
+voor Losse zou daarvan afwijken en een tweede, divergente lifecycle naast de training-discard creëren.
+Daarom niet geïmproviseerd; vraagt een expliciet PO-besluit (abort-transitie voor beide flows, of
+periodieke herclassificatie zoals v446). Geen DELETE, geen historische cleanup.

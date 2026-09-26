@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## v4.70.1 — Concept2 Corrective FASE 2A.1: H5 completion-lifecycle voor losse ad-hoc instances (27 september 2026)
+
+**Fix.** `saveLosOefening()` rondt een ad-hoc `training_instance` af via de bestaande
+`completeTrainingInstance()`: alleen na een geslaagde sessions-write, met de instance-id uit de
+geschreven row, vóór de lokale cleanup. Mislukte write → niet completed; retry → dezelfde instance,
+één row, daarna completed. Mislukte completion maakt de opgeslagen oefening niet ongedaan.
+
+**Tests.** `core/fConcept2FinalizeLifecycle.test.js` 97/97 (+22), incl. 10 sabotagechecks.
+
+**Open, bewust niet opgelost:** start → verlaten zonder opslag laat de ad-hoc instance `active`
+(zie DEC-C2FIN-002). Geen DELETE, geen nieuwe status, geen schemawijziging.
+
 ## v4.70.0 — Concept2 Corrective FASE 2A: PM5-finalisatie, execution-cleanup, orphan-preventie (27 september 2026)
 
 **Baseline:** `b378a7d0c68028ef3e607c6eeafe98321b21fa3d`. Scope: H3 + H4 + H5 (CODE-PROVEN in FASE 1).

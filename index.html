@@ -7391,7 +7391,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.0';
+const APP_VER = 'v4.70.1';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -17320,6 +17320,15 @@ async function saveLosOefening(btnEl){
   await ensureExerciseRow(exId); // F91/Optie B — FK-compat vóór de losse-oefening-write
   const ok=await sbPostQ('sessions',row); // == writeSessionRow(row): dezelfde sessions-schrijflaag
   if(!ok){toast('Fout bij opslaan');return;} // FASE 2A: retry -- state blijft staan, geen cleanup
+  // FASE 2A.1 (H5): een losse Concept2-execution met ad-hoc instance wordt via de BESTAANDE canonieke
+  // completion afgerond -- pas NA een geslaagde sessions-write (bij falen hierboven al teruggekeerd, dus
+  // nooit 'completed' zonder row) en VOOR resetLosAllState(), dat de lokale protocolidentiteit wist.
+  // De identiteit komt uit de zojuist geschreven row zelf. Zelfde foutsemantiek als finishSession():
+  // een mislukte afronding (sbPatchQ queuet offline) maakt de opgeslagen oefening nooit ongedaan.
+  if(row.training_instance_id){
+    try{ await completeTrainingInstance(row.training_instance_id); }
+    catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)',e&&e.message); }catch(_){ } }
+  }
   // P1 route-unificatie: PR-cache ook bijwerken bij een losse oefening (was inconsistent — finishSession
   // en Guided deden dit al). Zelfde deterministische regel: nieuw record → upsert 'pr'.
   // Sprint 12: zelfde recordregel als bij het afronden van een training (DecisionCore, record.v1).

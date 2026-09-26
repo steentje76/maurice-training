@@ -1,5 +1,33 @@
 # Trainingskompas — Changelog
 
+## v4.70.0 — Concept2 Corrective FASE 2A: PM5-finalisatie, execution-cleanup, orphan-preventie (27 september 2026)
+
+**Baseline:** `b378a7d0c68028ef3e607c6eeafe98321b21fa3d`. Scope: H3 + H4 + H5 (CODE-PROVEN in FASE 1).
+
+**H3 — canonieke PM5-logging.** Root cause: (1) in `finishSession()` zat de Concept2-tak binnen
+`if(l.cardio && … (time||dist||dist_km||cals))`, en `l.cardio` ontstaat alleen via handmatige invoer;
+(2) de tak testte `typeof liveWorkoutToActual==='function'`, maar in de browser bestaat alleen
+`Concept2Live.liveWorkoutToActual` — de tak was dus onbereikbaar; (3) `saveLosOefening()` las `.c2`
+nooit. Fix: `tkC2IsLoggableSummary`, `tkC2Converter`, `tkC2SessionRowFromLog`; guard
+`_c2Loggable || <handmatig compleet>`; Losse oefening gebruikt dezelfde conversie, schrijft via
+het bestaande `sbPostQ('sessions',row)` (identiek aan `writeSessionRow`), en neemt protocol_type/protocol_value + ad-hoc instance mee.
+`losHasUnsavedData()` telt een geldige PM5-meting mee (geen stil verlies bij Terug/wisselen).
+
+**H4 — execution-cleanup.** Root cause: `_ergProtocol` werd nergens gereset; app-disconnect ruimde
+`_c2rt` niet op; Losse deelt de sleutel `'los'` over alle machines. Fix: `tkC2ExecutionCleanup()` na
+geslaagde `finishSession()`, bij `execLeaveDiscard()` en in `clearLosSessionState()`; niet bij een
+mislukte write.
+
+**H5 — orphan-preventie.** Root cause: `tkErgStartProtocol()` persisteerde de ad-hoc instance vóór
+de PM5-programmering en liet hem bij falen achter. Fix: eerst programmeren, dan persisteren.
+
+**Tests.** Nieuw `core/fConcept2FinalizeLifecycle.test.js` (75 asserties) draait de echte functies
+uit index.html met de echte Concept2Live-binding, incl. 8 sabotagechecks. Aangepast:
+`fConcept2ThreeMachineLogging` (geen bare converter meer) en één #464-assertie over de guard.
+
+**Ongewijzigd:** H1/Distance, H2/fixed-time, stop→resume, CSAFE, timeout, decoder/aggregator,
+schema, exercise-ID's. De zes orphan instances van 26-09 zijn niet verwijderd.
+
 ## v4.69.99 — Concept2 Real-Device Diagnostic Instrumentation Gate (26 september 2026)
 
 **Classificatie: DIAGNOSTIC ONLY. Geen functionele Concept2-wijziging.** Baseline main

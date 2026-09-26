@@ -7019,6 +7019,33 @@ function tkErgConnectDevice(exId, idx){
 // ruimt uitsluitend device-gerelateerde state op (via de bestaande,
 // ongewijzigde tkErgDisconnect() per verbonden oefening) -- raakt
 // sessionLog/activeInstanceId/finishSession-uitkomst op geen enkele manier.
+// FASE 2A (H4) — CONCEPT2 EXECUTION-CLEANUP. Eén expliciete opruiming voor terminale lokale
+// afhandeling (succesvol opgeslagen, of bewust verworpen/verlaten). Root cause H4: _ergProtocol
+// werd nergens gereset (vergrendelde protocolknoppen tot app-herstart), en een app-geïnitieerde
+// disconnect ruimde _c2rt (programmeercontroller + aggregator met merged state) niet op. Bij
+// Losse oefening deelt elke machine de sleutel 'los', waardoor BikeErg-state doorlekte naar een
+// volgende RowErg/SkiErg-execution. Raakt NOOIT opgeslagen historie, sessions-rijen,
+// training_instances of de protocolprojectie in de database; alleen lokale runtime-state.
+// Mag uitsluitend worden aangeroepen wanneer er niets meer te herproberen valt.
+// Alle Concept2-execution-sleutels van de lopende TRAINING (nooit de losse namespace 'los').
+function tkC2TrainingExecIds(){
+  var ids={}, k;
+  [(typeof _ergProtocol!=='undefined')?_ergProtocol:null,(typeof _c2rt!=='undefined')?_c2rt:null,(typeof _c2pair!=='undefined')?_c2pair:null].forEach(function(o){ if(o) for(k in o) ids[k]=1; });
+  delete ids[(typeof LOS_DOMID!=='undefined')?LOS_DOMID:'los'];
+  return Object.keys(ids);
+}
+function tkC2ExecutionCleanup(exIds, reason){
+  (exIds||[]).forEach(function(exId){
+    try{
+      var st=(typeof _c2pair!=='undefined'&&_c2pair)?_c2pair[exId]:null;
+      if(st&&st.connected&&typeof tkErgDisconnect==='function') tkErgDisconnect(exId, reason||'session_finish');
+      if(st){ st.lastCm=null; st.wasConnected=false; st._connecting=false; }
+      if(typeof _c2rtTeardown==='function') _c2rtTeardown(exId, reason||'session_finish');
+      if(typeof _ergProtocol!=='undefined'&&_ergProtocol) delete _ergProtocol[exId];
+      if(typeof _c2liveLast!=='undefined'&&_c2liveLast) delete _c2liveLast[exId];
+    }catch(_){}
+  });
+}
 function tkErgDisconnectAll(reason){
   try{
     Object.keys(_c2pair).forEach(function(exId){
@@ -7364,7 +7391,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.99';
+const APP_VER = 'v4.70.0';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -16715,9 +16742,14 @@ function losHasUnsavedData(){
     if(el.value && el.value.trim()!=='')return true;
   }
   if(body.querySelector('.set-circle.done'))return true;
+  // FASE 2A (H3): een geldige PM5-meting is ook niet-opgeslagen data (geen stil verlies bij Terug/wijzigen).
+  try{ if(typeof tkC2IsLoggableSummary==='function'&&sessionLog[LOS_DOMID]&&tkC2IsLoggableSummary(sessionLog[LOS_DOMID].c2))return true; }catch(_){}
   return false;
 }
 function clearLosSessionState(){
+  // FASE 2A (H4): verlaten/wisselen/opslaan van een losse oefening is terminaal voor de Concept2-
+  // execution op 'los' -- geen BikeErg-state die doorlekt naar een volgende RowErg/SkiErg.
+  try{ if(typeof tkC2ExecutionCleanup==='function') tkC2ExecutionCleanup([LOS_DOMID],'leave_execution'); }catch(_cl){}
   delete sessionLog[LOS_DOMID];
   delete cardioSplitMode[LOS_DOMID];
   delete cardioSplits[LOS_DOMID];
@@ -17231,12 +17263,27 @@ async function saveLosOefening(btnEl){
   const val=f=>document.getElementById(domId+'-'+f)?.value||'';
 
   if(cardioType){
-    const d={machine:localStorage.getItem('sel_'+cardioType)||''};
-    CARDIO_TYPES[cardioType].fields.forEach(f=>{d[f]=val(f);});
-    const cRow=cardioDataToRow(cardioType,d);
+    // FASE 2A (H3): een geldige PM5-meting op 'los' gaat via dezelfde canonieke Concept2-conversie als
+    // finishSession(); anders blijft het bestaande handmatige pad (cardioDataToRow) ongewijzigd.
+    const _losC2=(sessionLog[LOS_DOMID]&&sessionLog[LOS_DOMID].c2)||null;
+    const _losConv=(typeof tkC2Converter==='function')?tkC2Converter():null;
+    let cRow;
+    if(_losConv&&typeof tkC2IsLoggableSummary==='function'&&tkC2IsLoggableSummary(_losC2)){
+      cRow=tkC2SessionRowFromLog(_losC2,{date:row.date,training_type:null,training_instance_id:null},_losConv);
+    } else {
+      const d={machine:localStorage.getItem('sel_'+cardioType)||''};
+      CARDIO_TYPES[cardioType].fields.forEach(f=>{d[f]=val(f);});
+      cRow=cardioDataToRow(cardioType,d);
+    }
     const extraNote=cRow.extraNote;delete cRow.extraNote;
     Object.assign(row,cRow);
     row.note='Losse oefening'+(extraNote?' · '+extraNote:'');
+    // FASE 2A (H5): protocolidentiteit + ad-hoc instance van deze losse execution meenemen (zelfde
+    // immutable projectie als finishSession; nooit afgeleid uit de actual).
+    const _losProj=(typeof tkErgProtocolProjectionFor==='function')?tkErgProtocolProjectionFor(LOS_DOMID):null;
+    const _losInst=(typeof tkErgProtocolInstanceId==='function')?tkErgProtocolInstanceId(LOS_DOMID):null;
+    if(_losProj){ row.protocol_type=_losProj.protocol_type; row.protocol_value=_losProj.protocol_value; }
+    if(_losInst) row.training_instance_id=_losInst;
   } else if(ex.type==='wod'){
     const fmtEl=document.getElementById(domId+'-wodfmt');
     const fmt=fmtEl?fmtEl.value:(ex.wod_format||'for_time');
@@ -17271,8 +17318,8 @@ async function saveLosOefening(btnEl){
   }
 
   await ensureExerciseRow(exId); // F91/Optie B — FK-compat vóór de losse-oefening-write
-  const ok=await sbPostQ('sessions',row);
-  if(!ok){toast('Fout bij opslaan');return;}
+  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row): dezelfde sessions-schrijflaag
+  if(!ok){toast('Fout bij opslaan');return;} // FASE 2A: retry -- state blijft staan, geen cleanup
   // P1 route-unificatie: PR-cache ook bijwerken bij een losse oefening (was inconsistent — finishSession
   // en Guided deden dit al). Zelfde deterministische regel: nieuw record → upsert 'pr'.
   // Sprint 12: zelfde recordregel als bij het afronden van een training (DecisionCore, record.v1).
@@ -21468,19 +21515,20 @@ async function tkErgStartProtocol(exId,cardioType){
   if(!raw||!norm||!norm.geldig){ toast('Ongeldig protocol'); return; }
   const snapshot=snapshotFromCustomTraining({id:null,naam:'Losse '+(TK_IV_SPORT_LABEL[cardioType]||cardioType),intervalPrescription:raw},[{exercise_id:exId,sort_order:0}],[]);
   st.busy=true; tkErgRerenderProtocol(exId,cardioType); // knop direct uitgeschakeld: geen tweede write mogelijk
+  // FASE 2A (H5): eerst PM5 programmeren (Gate B.4), pas daarna de ad-hoc instance persisteren --
+  // een mislukte programmering laat zo geen 'active' instance zonder sessierij meer achter.
   let instanceId=null;
-  try{ instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot}); }
+  try{
+    const progRes=(typeof tkErgProgramPm5IfNeeded==='function')?await tkErgProgramPm5IfNeeded(exId,st.type,Math.round(waarde)):null;
+    if(progRes&&progRes.attempted&&!progRes.confirmed){
+      st.busy=false; toast(progRes.message||'Training kon niet op de PM5 worden ingesteld.');
+      tkErgRerenderProtocol(exId,cardioType); return;
+    }
+    instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot});
+  }
   catch(_e){ instanceId=null; }
   finally{ st.busy=false; }
   if(!instanceId){ toast('Vastleggen mislukt — probeer opnieuw'); tkErgRerenderProtocol(exId,cardioType); return; }
-  // Gate B.4: met gekoppelde PM5 en een afstandsdoel wordt de workout eerst op de PM5
-  // geprogrammeerd. Execution/vastlegging gaat PAS door na PROGRAMMED (read-back geverifieerd);
-  // is geen bevestiging. Zonder PM5 of bij een tijddoel blijft de bestaande flow ongewijzigd.
-  const progRes=(typeof tkErgProgramPm5IfNeeded==='function')?await tkErgProgramPm5IfNeeded(exId,st.type,Math.round(waarde)):null;
-  if(progRes&&progRes.attempted&&!progRes.confirmed){
-    toast(progRes.message||'Training kon niet op de PM5 worden ingesteld.');
-    tkErgRerenderProtocol(exId,cardioType); return;
-  }
   _ergProtocol[exId]={type:st.type,value:Math.round(waarde),instanceId:instanceId,prescription:norm,busy:false};
   toast('Doel vastgelegd: '+ErgProtocolIdentity.protocolLabelNl(st.type,waarde));
   tkErgRerenderProtocol(exId,cardioType);
@@ -22053,6 +22101,47 @@ function tkErgOnCanonicalMeasurement(exId, cm){
   if(!sessionLog[exId]) sessionLog[exId]={};
   sessionLog[exId].c2=cm;
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// FASE 2A (H3) — CANONIEKE PM5-LOGGING. Eén eligibility-definitie en één rij-producent,
+// gedeeld door Training (finishSession) en Losse oefening (saveLosOefening).
+// Root cause H3: (1) de PM5-tak zat binnen een guard die een handmatig ingevuld
+// cardioformulier eiste, en (2) de converter werd aangeroepen als bare global
+// `liveWorkoutToActual`, die in de browser niet bestaat (alleen Concept2Live.liveWorkoutToActual).
+// De Concept2-tak was daardoor in productie onbereikbaar. Losse oefening las .c2 nooit.
+// ══════════════════════════════════════════════════════════════════════════
+// Fail closed: alleen een summary met machinetype EN een echt gemeten afstand of duur (> 0)
+// is een workout. Een verbonden PM5 zonder inspanning (0 m / 0 s) is geen workout — geen fake row.
+function tkC2IsLoggableSummary(c2s){
+  if(!c2s||typeof c2s!=='object') return false;
+  var mt=c2s.machineType||c2s.mt||null;
+  if(!mt) return false;
+  var d=(c2s.distance_m!=null)?c2s.distance_m:c2s.distanceM;
+  var e=(c2s.duration_s!=null)?c2s.duration_s:c2s.elapsedTimeS;
+  var dn=(d==null||typeof d==='boolean')?NaN:Number(d), en=(e==null||typeof e==='boolean')?NaN:Number(e);
+  return (isFinite(dn)&&dn>0)||(isFinite(en)&&en>0);
+}
+// De canonieke converter, zoals hij in de browser werkelijk bestaat. Nooit een bare global.
+function tkC2Converter(){
+  return (typeof Concept2Live!=='undefined'&&Concept2Live&&typeof Concept2Live.liveWorkoutToActual==='function')?Concept2Live.liveWorkoutToActual:null;
+}
+// sessionLog[exId].c2 -> liveWorkoutToActual() -> sessions-rijvelden (de aanroeper schrijft via
+// writeSessionRow). Levert date/exercise_id/training_type/instance NIET: die komen van de
+// aanroeper. De note van de converter gaat als extraNote door de bestaande note-compositie.
+function tkC2SessionRowFromLog(c2s, ctx, convert){
+  var sum={ machineType:(c2s.machineType||c2s.mt||null),
+    distance_m:(c2s.distance_m!=null?c2s.distance_m:c2s.distanceM),
+    duration_s:(c2s.duration_s!=null?c2s.duration_s:c2s.elapsedTimeS),
+    watts:(c2s.watts!=null?c2s.watts:null),
+    stroke_rate_spm:(c2s.stroke_rate_spm!=null?c2s.stroke_rate_spm:c2s.strokeRateSPM),
+    heart_rate_bpm:(c2s.heart_rate_bpm!=null?c2s.heart_rate_bpm:c2s.heartRateBPM),
+    drag_factor:(c2s.drag_factor!=null?c2s.drag_factor:c2s.dragFactor) };
+  var row=convert(sum, ctx||{}).row;
+  delete row.date; delete row.exercise_id; delete row.training_type; delete row.training_instance_id;
+  row.extraNote=row.note; delete row.note;
+  return row;
+}
+
 
 function logCardio(exId, cardioType){
   const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
@@ -22812,6 +22901,7 @@ async function execLeaveDiscard(){
   clearTrainingDraft();
   curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
   resolvedWorkout=null;activeInstanceId=null; // dezelfde opruiming als na een afgeronde training -- geen stale instance/session state
+  try{ if(typeof tkC2ExecutionCleanup==='function') tkC2ExecutionCleanup(tkC2TrainingExecIds(),'leave_execution'); }catch(_cl){} // FASE 2A (H4): bewust verworpen = terminaal
   document.querySelectorAll('.ni-dot').forEach(d=>d.classList.remove('show'));
   toast('Training verworpen');
   go('s-home');
@@ -23312,31 +23402,24 @@ async function finishSession(){
     // gym-wifi) mag NOOIT de resterende oefeningen blokkeren — anders "niet alle oefeningen
     // gelogd". Mislukte oefeningen worden geteld; de sessie blijft dan behouden voor retry.
     try{
-    if(l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals)){
+    // FASE 2A (H3): een geldige PM5-meting is zelfstandig voldoende; het handmatige formulier is niet vereist.
+    const _c2Loggable=(typeof tkC2IsLoggableSummary==='function')&&tkC2IsLoggableSummary(l.c2);
+    if(_c2Loggable || (l.cardio && CARDIO_TYPES[l.cardio.type] && (l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals))){
       // L1.6D — COMPLETION BRIDGE. Bij een PM5-executie is de gemeten canonieke summary de
       // bron van waarheid, niet het (vaak lege) cardioformulier. liveWorkoutToActual is de
       // bestaande converter naar een sessions-row; cardioDataToRow blijft het handmatige pad.
       // Twee parallelle rij-producenten, daarna exact hetzelfde schrijfpad.
       var _c2s=l.c2;
       // Fail closed: alleen een summary met daadwerkelijk gemeten afstand of duur telt.
-      var _c2ok=!!(_c2s&&typeof _c2s==='object'&&typeof liveWorkoutToActual==='function'
-        &&(_c2s.distanceM!=null||_c2s.distance_m!=null||_c2s.elapsedTimeS!=null||_c2s.duration_s!=null));
+      // FASE 2A (H3): converter via Concept2Live (de enige browserbinding) + gedeelde eligibility.
+      var _c2conv=(typeof tkC2Converter==='function')?tkC2Converter():null;
+      var _c2ok=!!(_c2conv&&typeof tkC2IsLoggableSummary==='function'&&tkC2IsLoggableSummary(_c2s));
       try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,_c2ok?'c2_eligible':'c2_not_eligible_manual_path'); }catch(_dfp){} // DIAG, fail-open
       var cRow;
       if(_c2ok){
-        var _c2sum={ machineType:(_c2s.machineType||_c2s.mt||null),
-          distance_m:(_c2s.distance_m!=null?_c2s.distance_m:_c2s.distanceM),
-          duration_s:(_c2s.duration_s!=null?_c2s.duration_s:_c2s.elapsedTimeS),
-          watts:(_c2s.watts!=null?_c2s.watts:null),
-          stroke_rate_spm:(_c2s.stroke_rate_spm!=null?_c2s.stroke_rate_spm:_c2s.strokeRateSPM),
-          heart_rate_bpm:(_c2s.heart_rate_bpm!=null?_c2s.heart_rate_bpm:_c2s.heartRateBPM),
-          drag_factor:(_c2s.drag_factor!=null?_c2s.drag_factor:_c2s.dragFactor) };
-        cRow=liveWorkoutToActual(_c2sum,{date:today,training_type:t,training_instance_id:activeInstanceId||null}).row;
+        cRow=tkC2SessionRowFromLog(_c2s,{date:today,training_type:t,training_instance_id:activeInstanceId||null},_c2conv); // = Concept2Live.liveWorkoutToActual
         try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'liveWorkoutToActual_reached'); }catch(_dfl){} // DIAG, fail-open
-        // De omliggende write levert date/exercise_id/training_type/instance zelf al aan; de
-        // note van de converter loopt als extraNote door de bestaande note-compositie.
-        delete cRow.date; delete cRow.exercise_id; delete cRow.training_type; delete cRow.training_instance_id;
-        cRow.extraNote=cRow.note; delete cRow.note;
+        // date/exercise_id/training_type/instance levert de omliggende write; note -> extraNote (zie tkC2SessionRowFromLog).
       } else {
         cRow=cardioDataToRow(l.cardio.type,l.cardio);
       }
@@ -23399,6 +23482,7 @@ async function finishSession(){
   }
   closeModal('m-session-end');stopTrainTimer();
   tkErgDisconnectAll('session_finish'); // A5-hardening (v4.67.0) -- voorkomt een BLE-verbinding/subscriptie die op de achtergrond actief blijft ná het afronden van de training
+  try{ if(typeof tkC2ExecutionCleanup==='function') tkC2ExecutionCleanup(list.map(function(e){ return e.id; }),'session_finish'); }catch(_cl){} // FASE 2A (H4): pas NA volledig geslaagde opslag (failed>0 is hierboven al teruggekeerd)
   clearTrainingDraft();
   /* Fase 2 — LEVENSCYCLUS VAN EEN TRAINING-INSTANCE.
      completeTrainingInstance() bestond sinds Werkblok A maar werd nergens aangeroepen.

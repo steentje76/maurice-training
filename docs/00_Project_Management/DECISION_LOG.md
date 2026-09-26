@@ -2339,3 +2339,25 @@ onzichtbaar zijn. Conform de bestaande conventie daarom APP_VER + cache + Androi
 **Bewust niet.** Timeout, CSAFE-frames, fixed-time, fixed-distance, completion, session logging,
 schema, exercise-ID's, BLE-subscriptiestrategie, rowerg→roeien, calculation/AI: ongewijzigd.
 H1–H5 blijven hypotheses.
+
+## DEC-C2FIN-001 — Concept2 FASE 2A: PM5-finalisatie, execution-cleanup en orphan-preventie (27 september 2026)
+
+**Context.** FASE 1 (baseline b378a7d0) classificeerde H3, H4 en H5 als CODE-PROVEN; DB-bewijs 26-09:
+0 ergometer-sessierijen en 6 ad-hoc `training_instances` zonder sessierij.
+
+**Besluit H3.** Eén eligibility-definitie (`tkC2IsLoggableSummary`: machinetype + afstand of duur > 0)
+en één rij-producent (`tkC2SessionRowFromLog`) voor Training én Losse oefening; de converter komt
+uitsluitend van `Concept2Live` (de enige browserbinding). Handmatig pad ongewijzigd; bij beide
+aanwezig wint de gemeten PM5-data (was al de bedoelde regel). Een meting van 0 m / 0 s is geen workout.
+
+**Besluit H4.** Eén `tkC2ExecutionCleanup()` voor terminale lokale afhandeling; alleen lokale
+runtime-state, nooit DB/historie/projectie; nooit vóór of tijdens een herprobeerbare write.
+
+**Besluit H5.** Kleinste correcte oplossing: volgorde omkeren (programmeren -> persisteren) in plaats
+van rollback. Geen delete/patch van instances; historische orphans blijven staan (geen cleanup-query).
+
+**Testcorrectie.** `fConcept2ThreeMachineLogging` injecteerde een bare `liveWorkoutToActual`; dat
+maskeerde het productiedefect. De harness gebruikt nu de echte browserbinding.
+
+**Bewust niet.** CSAFE/units, buildFixedDistanceWorkout, distance-verificatie, timeout, workoutType,
+fixed-time, decoder/aggregator, stop→resume, schema/migraties, exercise-ID's, calculation/AI.

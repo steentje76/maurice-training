@@ -6,11 +6,28 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.69.98
+v4.69.99
+
+## Concept2 Real-Device Diagnostic Instrumentation (v4.69.99, 26 september 2026)
+
+- **Status: DIAGNOSTIC ONLY — geen functionele Concept2-wijziging.** Developer Mode toont nu:
+  multiplexed packet-tellers (totaal, 0x31, 0x32, overige ID's) met globale en per-ID sequence;
+  de laatste echte 0x31 General Status (productie-decoderoutput + seq/timestamp); programming
+  verification (requested type/afstand, frame hex, acceptatie-/verificatietijdstippen, readback,
+  verifyAttempts, laatste verify-reason overall en tijdens de operatie, reason-tellers,
+  telemetry-seqs, eindstate/reason); sequence-correlatie per verify-aanroep; canonical
+  measurement-teller en laatste cm richting execution; lifecycle (connection, runtime,
+  protocol/target/instance/vergrendeling, sessionLog.c2 + laatste update, finishSession-aanroep,
+  per-oefening finalisatiepad incl. liveWorkoutToActual bereikt).
+- **Real-device bevindingen 26-09-2026 blijven authoritative en ONOPGELOST.** Hypotheses H1–H5
+  (stale merged 0x31 via 0x32; geen fixed-time programmeerpad; c2-finalisatie vereist ingevuld
+  cardioformulier; _ergProtocol nooit gereset; ad-hoc training_instance vóór programmering) zijn
+  uitsluitend meetbaar gemaakt, niet bevestigd en niet gerepareerd. Volgende stap: nieuwe
+  real-device evidence met de debug-APK van deze sprint.
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.69.98 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.69.99 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

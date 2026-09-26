@@ -1,5 +1,37 @@
 # Trainingskompas — Changelog
 
+## v4.69.99 — Concept2 Real-Device Diagnostic Instrumentation Gate (26 september 2026)
+
+**Classificatie: DIAGNOSTIC ONLY. Geen functionele Concept2-wijziging.** Baseline main
+`44692317588563d087bca3f84b33e08e668fc167`.
+
+**Toegevoegd (Developer Mode, read-only).**
+- Transport (`native/src/nativeConcept2BleTransport.js`): globale multiplexed sequence, totaalteller,
+  per-ID `lastSeq`, kopie van de laatste echt gedecodeerde 0x31 en 0x32 (productie-decoder, geen
+  tweede decoder) via de bestaande `getMultiplexedDiagnostics()`.
+- Programming controller (`core/concept2Programming.js`): transparante recorder rond
+  `verifyFromTelemetry()` — verifyAttempts, laatste reason overall en tijdens de operatie (blijft
+  na TIMEOUT staan), reason-tellers, telemetry-seqs. Beslislogica, timeout en frames ongewijzigd.
+- `index.html`: read-only `_c2diag` + `tkC2LifecycleSnapshot()`; fail-open markers in
+  `tkErgOnCanonicalMeasurement`, bij de verify-aanroep en in `finishSession()` (aanroep,
+  per-oefening pad, liveWorkoutToActual bereikt, rij geschreven/mislukt). Geen controleflow gewijzigd.
+- Developer Mode (`native/src/developerMode.mjs`): blokken Multiplexed packets, Laatste echte 0x31,
+  Programming verification, Verify-aanroepen (sequence-correlatie), Canonical measurement → execution,
+  Lifecycle. Nieuw: `setLifecycleSource()`.
+
+**Tests.** Nieuw `core/fConcept2DiagnosticsInstrumentation.test.js` (99 asserties): bevroren
+baseline-gedragstraces, transparantie zonder recorder, reason na TIMEOUT, stale generation/device
+afgewezen, 0x31/0x32 apart, echte readbackvelden, geen tweede loggingroute, fail-open, Developer
+Mode uit = identieke uitkomst, sabotagecheck. Bug-reversal per gewijzigd bestand gedetecteerd.
+
+**Versie.** v4.69.98 → v4.69.99 (APP_VER, CACHE_NAME/CACHE_STATIC, Android versionCode/-Name),
+nodig omdat de service worker statische assets cache-first serveert.
+
+**Open (hypotheses, niet bevestigd, niet gerepareerd).** H1 stale merged 0x31 via verse 0x32 ·
+H2 geen fixed-time programmeerpad · H3 c2-finalisatie vereist ingevuld cardioformulier ·
+H4 `_ergProtocol` nooit gereset (vergrendelde protocolkeuze) · H5 ad-hoc training_instance vóór
+PM5-programmering. Wachten op nieuwe real-device evidence.
+
 ## v4.69.98 — MEDIA-0D: Activity → Start Exercise video presentation defect (16 september 2026)
 
 **Classificatie: ACTIVITY → START EXERCISE VIDEO PRESENTATION DEFECT.**

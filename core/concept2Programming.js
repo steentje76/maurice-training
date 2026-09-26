@@ -75,6 +75,33 @@
     var writeCompletions = 0;
     var responsesSeen = 0;
     var responsesIgnored = 0;
+    /* DIAG (real-device instrumentation): uitsluitend observatie van verifyFromTelemetry().
+       Deze waarden worden NERGENS gelezen voor een beslissing; ze bestaan alleen voor
+       Developer Mode. Reset per nieuwe programmeeroperatie, behouden na TIMEOUT/FAILED. */
+    function freshVerifyDiag() {
+      return { attempts: 0, lastReason: null, lastTelemetrySeq: null, lastAt: null, reasonCounts: {},
+               // 'Pending' = er liep een operatie tijdens de aanroep. Na TIMEOUT blijven deze staan,
+               // ook als daarna nog 'not_verifying'-aanroepen binnenkomen (die overschrijven alleen lastReason).
+               attemptsWhilePending: 0, lastPendingReason: null, lastPendingTelemetrySeq: null, lastPendingAt: null };
+    }
+    var verifyDiag = freshVerifyDiag();
+    function recordVerify(res, seq, wasPending) {
+      try {
+        var r = (res && res.verified === true) ? 'verified' : ((res && res.reason) || 'unknown');
+        verifyDiag.attempts++;
+        verifyDiag.lastReason = r;
+        verifyDiag.lastTelemetrySeq = seq;
+        verifyDiag.lastAt = now();
+        verifyDiag.reasonCounts[r] = (verifyDiag.reasonCounts[r] || 0) + 1;
+        if (wasPending) {
+          verifyDiag.attemptsWhilePending++;
+          verifyDiag.lastPendingReason = r;
+          verifyDiag.lastPendingTelemetrySeq = seq;
+          verifyDiag.lastPendingAt = verifyDiag.lastAt;
+        }
+      } catch (e) { /* diagnostiek is fail-open */ }
+      return res;
+    }
 
     function emit() {
       var snap = getDiagnostics();
@@ -98,6 +125,7 @@
         frameHex: op.frameHex || null, lastResponseHex: op.lastResponseHex || null,
         lastResponseAt: op.lastResponseAt || null, lastParse: op.lastParse || null,
         frameAcceptedAt: op.frameAcceptedAt || null,
+        frameAcceptedSeq: op.frameAcceptedSeq != null ? op.frameAcceptedSeq : null,
         verificationStartedAt: op.verificationStartedAt || null,
         verificationTelemetryAt: op.verificationTelemetryAt || null,
         readbackWorkoutType: op.readbackWorkoutType != null ? op.readbackWorkoutType : null,
@@ -143,6 +171,7 @@
         frameAcceptedAt: null, lastResponseHex: null, lastParse: null
       };
       pending = op;
+      verifyDiag = freshVerifyDiag();
       var promise = new Promise(function (res) { op.resolve = res; });
 
       setState(STATE.WRITING);
@@ -224,6 +253,10 @@
     function verifyFromTelemetry(raw, ctx) {
       telemetrySeq++;
       var seq = telemetrySeq;
+      var wasPending = !!pending;
+      return recordVerify(verifyCore(raw, ctx, seq), seq, wasPending);
+    }
+    function verifyCore(raw, ctx, seq) {
       if (!pending || state !== STATE.VERIFYING) return { verified: false, reason: 'not_verifying' };
       if (pending.frameAcceptedSeq == null) return { verified: false, reason: 'not_frame_accepted' };
       if (seq <= pending.frameAcceptedSeq) return { verified: false, reason: 'stale_telemetry_before_acceptance' };
@@ -276,7 +309,17 @@
         pmStateMachineState: pending && pending.stateMachineLabel ? pending.stateMachineLabel : (last ? last.stateMachineLabel : null),
         generation: pending ? pending.generation : (last ? last.generation : null),
         startedAt: pending ? pending.startedAt : (last ? last.startedAt : null),
-        lastResult: last
+        lastResult: last,
+        verifyAttempts: verifyDiag.attempts,
+        lastVerifyReason: verifyDiag.lastReason,
+        lastVerifyTelemetrySeq: verifyDiag.lastTelemetrySeq,
+        lastVerifyAt: verifyDiag.lastAt,
+        verifyReasonCounts: JSON.parse(JSON.stringify(verifyDiag.reasonCounts)),
+        verifyAttemptsWhilePending: verifyDiag.attemptsWhilePending,
+        lastPendingVerifyReason: verifyDiag.lastPendingReason,
+        lastPendingVerifyTelemetrySeq: verifyDiag.lastPendingTelemetrySeq,
+        lastPendingVerifyAt: verifyDiag.lastPendingAt,
+        frameAcceptedTelemetrySeq: pending ? (pending.frameAcceptedSeq != null ? pending.frameAcceptedSeq : null) : (last ? last.frameAcceptedSeq : null)
       };
     }
 

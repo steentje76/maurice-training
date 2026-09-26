@@ -283,12 +283,16 @@
     // Identifiers die de spec kent maar die wij (nog) niet decoderen: wel tellen, nooit raden.
     var MUX_RECOGNIZED = [0x33, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C];
 
-    var muxDiag = { byId: {}, decoded: 0, decodeFailures: 0, unknownIds: 0, lastDecodedId: null };
+    var muxDiag = { byId: {}, decoded: 0, decodeFailures: 0, unknownIds: 0, lastDecodedId: null,
+                    // DIAG: globale multiplexed sequence (elke CE060080-notificatie, ook onbekend/kort)
+                    totalNotifications: 0, globalSeq: 0,
+                    // DIAG: laatste ECHT gedecodeerde 0x31/0x32 (productie-decoder-output, geen tweede decoder)
+                    last31: null, last32: null };
     function muxCount(id, field) {
       var k = '0x' + (id < 16 ? '0' : '') + id.toString(16);
-      if (!muxDiag.byId[k]) muxDiag.byId[k] = { count: 0, decoded: 0, failed: 0, firstAt: now(), lastAt: null, lastLen: null };
+      if (!muxDiag.byId[k]) muxDiag.byId[k] = { count: 0, decoded: 0, failed: 0, firstAt: now(), lastAt: null, lastLen: null, lastSeq: null };
       var e = muxDiag.byId[k];
-      e.count++; e.lastAt = now();
+      e.count++; e.lastAt = now(); e.lastSeq = muxDiag.globalSeq;
       if (field) e[field]++;
       return e;
     }
@@ -332,6 +336,8 @@
     // Pure router: identifier -> decoder. Geen fake metric, geen crash bij onbekend/kort pakket.
     function decodeMultiplexed(dv) {
       var total = dataViewLength(dv);
+      // DIAG: tel en nummer ELKE multiplexed notificatie vóór enige beslissing (observatie).
+      muxDiag.totalNotifications++; muxDiag.globalSeq++;
       if (total < 1) { muxDiag.decodeFailures++; return null; }
       var id = u8(dv, 0);
       var need = MUX_LEN[id];
@@ -347,6 +353,11 @@
       catch (err) { raw = null; }
       if (!raw) { e.failed++; muxDiag.decodeFailures++; return null; }
       e.decoded++; muxDiag.decoded++; muxDiag.lastDecodedId = '0x' + id.toString(16);
+      // DIAG: kopie van de productie-decoderoutput + packet seq/tijd. Fail-open.
+      try {
+        var snap = { seq: muxDiag.globalSeq, at: now(), fields: JSON.parse(JSON.stringify(raw)) };
+        if (id === MUX_ID.GENERAL_STATUS) muxDiag.last31 = snap; else muxDiag.last32 = snap;
+      } catch (_d) {}
       raw.multiplexedId = '0x' + id.toString(16);
       raw.characteristicUuid = 'ce060080-43e5-11e4-916c-0800200c9a66';
       raw.source = 'concept2_pm5';
@@ -357,8 +368,11 @@
     function getMultiplexedDiagnostics() {
       var byId = {};
       for (var k in muxDiag.byId) { if (muxDiag.byId.hasOwnProperty(k)) byId[k] = JSON.parse(JSON.stringify(muxDiag.byId[k])); }
+      var cp = function (o) { try { return o ? JSON.parse(JSON.stringify(o)) : null; } catch (_) { return null; } };
       return { byId: byId, decoded: muxDiag.decoded, decodeFailures: muxDiag.decodeFailures,
-               unknownIds: muxDiag.unknownIds, lastDecodedId: muxDiag.lastDecodedId };
+               unknownIds: muxDiag.unknownIds, lastDecodedId: muxDiag.lastDecodedId,
+               totalNotifications: muxDiag.totalNotifications, globalSeq: muxDiag.globalSeq,
+               last31: cp(muxDiag.last31), last32: cp(muxDiag.last32) };
     }
 
     // ── CE060021 control write + CE060022 response routing (Gate B.3) ────────────

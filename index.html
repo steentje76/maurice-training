@@ -7001,7 +7001,8 @@ function tkErgConnectDevice(exId, idx){
           var _rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,null,null):null;
           if(_rt&&_rt.prog&&_rt.agg&&typeof _rt.prog.verifyFromTelemetry==='function'){
             var _vctx=(typeof t.getControlContext==='function')?t.getControlContext():{};
-            _rt.prog.verifyFromTelemetry(_rt.agg.getMergedRaw(), _vctx);
+            var _vres=_rt.prog.verifyFromTelemetry(_rt.agg.getMergedRaw(), _vctx);
+            try{ if(typeof tkC2DiagVerifyCall==='function') tkC2DiagVerifyCall(exId,_vres,t); }catch(_dv){} // DIAG, fail-open
           }
         }catch(_ev){}
         var now=(typeof performance!=='undefined'&&performance.now)?performance.now():0;
@@ -7363,7 +7364,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.69.98';
+const APP_VER = 'v4.69.99';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -21942,7 +21943,111 @@ function validateCardioField(exId, cardioType, field){
 // Deze functie bezit niets, rekent niets uit en schrijft niet naar de database: zij
 // transporteert alleen over de laaggrens. De lifecycle blijft die van sessionLog:
 // reset bij startT, behouden bij een mislukte write voor retry, gewist na afronding.
+// ══════════════════════════════════════════════════════════════════════════
+// CONCEPT2 REAL-DEVICE DIAGNOSTIC INSTRUMENTATION (Developer Mode, read-only)
+// ──────────────────────────────────────────────────────────────────────────
+// UITSLUITEND OBSERVATIE. Niets hieronder wordt gelezen door productlogica: geen
+// execution-, logging-, verificatie- of finalisatiebeslissing hangt af van _c2diag.
+// Elke recorder is fail-open (try/catch): een fout hier mag nooit een training,
+// BLE-event, loggingpad of finishSession() blokkeren. _c2diag is GEEN tweede bron
+// van waarheid en GEEN tweede loggingroute: het bewaart alleen tellers, tijdstippen
+// en een kopie van wat al door de bestaande keten ging. Nooit persistent, nooit DB.
+// ══════════════════════════════════════════════════════════════════════════
+var _c2diag={ seq:0, canonicalCount:0, perEx:{}, lastCanonical:null,
+  verifyCalls:0, verifyCallsWith31BeforeAcceptance:0, lastVerifyCall:null,
+  finish:{ calls:0, lastCalledAt:null, perEx:{} } };
+function _c2diagEx(exId){ var k=String(exId); if(!_c2diag.perEx[k]) _c2diag.perEx[k]={ canonicalCount:0, lastCanonicalAt:null, lastCanonicalSeq:null }; return _c2diag.perEx[k]; }
+function _c2diagNow(){ return Date.now(); }
+function tkC2DiagOnCanonical(exId, cm){
+  try{
+    _c2diag.seq++; _c2diag.canonicalCount++;
+    var e=_c2diagEx(exId); e.canonicalCount++; e.lastCanonicalAt=_c2diagNow(); e.lastCanonicalSeq=_c2diag.seq;
+    _c2diag.lastCanonical={ seq:_c2diag.seq, at:e.lastCanonicalAt, exId:String(exId),
+      timestamp:(cm&&cm.timestamp!=null)?cm.timestamp:null, machineType:cm?cm.machineType:null,
+      distanceM:cm?cm.distanceM:null, elapsedTimeS:cm?cm.elapsedTimeS:null,
+      pace500M:cm?cm.pace500M:null, pace1000M:cm?cm.pace1000M:null, watts:cm?cm.watts:null,
+      strokeRateSPM:cm?cm.strokeRateSPM:null, workoutState:cm?cm.workoutState:null,
+      intervalNumber:cm?cm.intervalNumber:null };
+  }catch(_){}
+}
+function tkC2DiagVerifyCall(exId, res, t){
+  try{
+    var mux=(t&&typeof t.getMultiplexedDiagnostics==='function')?t.getMultiplexedDiagnostics():null;
+    var r=(typeof _c2rtGet==='function')?_c2rtGet(exId,null,null):null;
+    var pd=(r&&r.prog&&typeof r.prog.getDiagnostics==='function')?r.prog.getDiagnostics():null;
+    var l31=mux&&mux.last31?mux.last31:null, l32=mux&&mux.last32?mux.last32:null;
+    var gs=mux?mux.globalSeq:null;
+    var acc=pd?pd.frameAcceptedAt:null;
+    // OBSERVATIE (H1): lag de laatste echte 0x31 vóór frame-acceptatie op het moment van deze aanroep?
+    var before=(l31&&acc!=null)?(l31.at<acc):null;
+    _c2diag.verifyCalls++;
+    if(before===true) _c2diag.verifyCallsWith31BeforeAcceptance++;
+    _c2diag.lastVerifyCall={ at:_c2diagNow(), exId:String(exId),
+      muxGlobalSeqAtCall:gs, last31SeqAtCall:l31?l31.seq:null, last32SeqAtCall:l32?l32.seq:null,
+      triggeredByPacket:(gs==null)?null:((l31&&l31.seq===gs)?'0x31':((l32&&l32.seq===gs)?'0x32':'other')),
+      last31BeforeFrameAcceptance:before,
+      controllerTelemetrySeq:pd?pd.lastVerifyTelemetrySeq:null,
+      verified:!!(res&&res.verified===true), reason:(res&&res.verified===true)?'verified':((res&&res.reason)||null) };
+  }catch(_){}
+}
+function tkC2DiagFinishCalled(){ try{ _c2diag.finish.calls++; _c2diag.finish.lastCalledAt=_c2diagNow(); _c2diag.finish.perEx={}; }catch(_){} }
+function tkC2DiagFinishEx(exId, l){
+  try{
+    var c=(l&&l.cardio)?l.cardio:null;
+    _c2diag.finish.perEx[String(exId)]={ hasLog:!!l, hasC2:!!(l&&l.c2), hasCardioForm:!!c,
+      cardioType:c?(c.type||null):null,
+      cardioFormHas:c?{ time:!!c.time, dist:!!c.dist, dist_km:!!c.dist_km, cals:!!c.cals }:null,
+      path:[], reason:(l?'no_cardio_branch_marker':'no_log') };
+  }catch(_){}
+}
+function tkC2DiagFinishPath(exId, marker){
+  try{
+    var e=_c2diag.finish.perEx[String(exId)]; if(!e) return;
+    e.path.push(marker); e.reason=marker;
+  }catch(_){}
+}
+// Read-only lifecycle-snapshot voor Developer Mode. Leest bestaande state; muteert niets.
+function tkC2LifecycleSnapshot(){
+  var out={ generatedAt:_c2diagNow(), exercises:{}, execution:null, canonical:null, verify:null, finish:null };
+  try{
+    out.execution={ curT:(typeof curT!=='undefined')?curT:null,
+      trainingRunning:(typeof trainStart!=='undefined')?(trainStart!=null):null,
+      activeInstanceId:(typeof activeInstanceId!=='undefined')?(activeInstanceId||null):null,
+      finishSessionBusy:(typeof finishSessionBezig!=='undefined')?!!finishSessionBezig:null,
+      intervalExecutionActive:(typeof _ivExec!=='undefined')?!!_ivExec:null };
+  }catch(_){}
+  try{
+    var ids={}, k;
+    if(typeof _c2pair!=='undefined'&&_c2pair) for(k in _c2pair) ids[k]=1;
+    if(typeof _c2rt!=='undefined'&&_c2rt) for(k in _c2rt) ids[k]=1;
+    if(typeof _ergProtocol!=='undefined'&&_ergProtocol) for(k in _ergProtocol) ids[k]=1;
+    for(k in _c2diag.perEx) ids[k]=1;
+    Object.keys(ids).forEach(function(id){
+      var p=(typeof _c2pair!=='undefined'&&_c2pair)?_c2pair[id]:null;
+      var r=(typeof _c2rt!=='undefined'&&_c2rt)?_c2rt[id]:null;
+      var ep=(typeof _ergProtocol!=='undefined'&&_ergProtocol)?_ergProtocol[id]:null;
+      var sl=(typeof sessionLog!=='undefined'&&sessionLog)?sessionLog[id]:null;
+      var de=_c2diag.perEx[id]||null;
+      out.exercises[id]={
+        connection:p?{ connected:!!p.connected, wasConnected:!!p.wasConnected, connecting:!!p._connecting, machineType:p.mt||null }:null,
+        runtime:r?{ present:true, generation:(r.generation!=null?r.generation:null), programmingState:(r.prog&&typeof r.prog.getState==='function')?r.prog.getState():null, hasAggregator:!!r.agg }:{ present:false },
+        concept2SessionState:null, // geen aparte Concept2 live/session-state-owner in de runtime (niet aanwezig)
+        protocol:ep?{ type:ep.type||null, target:(ep.value!=null?ep.value:null), instanceId:ep.instanceId||null, locked:!!ep.instanceId, busy:!!ep.busy }:{ type:'manual', target:null, instanceId:null, locked:false, busy:false, note:'geen _ergProtocol-entry (default Vrij)' },
+        sessionLogC2Exists:!!(sl&&sl.c2),
+        sessionLogC2LastUpdateAt:de?de.lastCanonicalAt:null,
+        canonicalMeasurementsReached:de?de.canonicalCount:0
+      };
+    });
+  }catch(_){}
+  try{ out.canonical={ totalReached:_c2diag.canonicalCount, last:_c2diag.lastCanonical?JSON.parse(JSON.stringify(_c2diag.lastCanonical)):null }; }catch(_){}
+  try{ out.verify={ calls:_c2diag.verifyCalls, callsWith31BeforeAcceptance:_c2diag.verifyCallsWith31BeforeAcceptance, last:_c2diag.lastVerifyCall?JSON.parse(JSON.stringify(_c2diag.lastVerifyCall)):null }; }catch(_){}
+  try{ out.finish=JSON.parse(JSON.stringify(_c2diag.finish)); }catch(_){}
+  return out;
+}
+try{ if(typeof window!=='undefined') window.tkC2LifecycleSnapshot=tkC2LifecycleSnapshot; }catch(_){}
+
 function tkErgOnCanonicalMeasurement(exId, cm){
+  try{ if(typeof tkC2DiagOnCanonical==='function') tkC2DiagOnCanonical(exId, cm); }catch(_dg){} // DIAG, fail-open
   if(!exId || !cm || typeof cm!=='object') return;
   if(typeof sessionLog==='undefined' || !sessionLog) return;
   if(!sessionLog[exId]) sessionLog[exId]={};
@@ -23165,6 +23270,7 @@ let finishSessionBezig=false;
 async function finishSession(){
   if(finishSessionBezig)return;
   finishSessionBezig=true;
+  try{ if(typeof tkC2DiagFinishCalled==='function') tkC2DiagFinishCalled(); }catch(_dfc){} // DIAG, fail-open
   const btn=document.getElementById('finish-session-btn');
   if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
   try{
@@ -23200,7 +23306,7 @@ async function finishSession(){
   // v3.3.52 P7 — premium afronding: aggregeer bestaande cijfers voor de samenvatting-kaart.
   const sessStats={vol:0,sets:0,reps:0,pr:0,heavy:0,muscles:new Set(),compare:[]};
   for(const ex of list){
-    const l=sessionLog[ex.id];if(!l)continue;
+    const l=sessionLog[ex.id];try{ if(typeof tkC2DiagFinishEx==='function') tkC2DiagFinishEx(ex.id,l); }catch(_dfe){} /* DIAG, fail-open */if(!l)continue;
     try{(getExerciseMuscles(ex.id)||[]).forEach(m=>m&&sessStats.muscles.add(m));}catch(_){}
     // F0.7O (P0): schrijf elke oefening onafhankelijk weg. Eén mislukte write (bv. trage
     // gym-wifi) mag NOOIT de resterende oefeningen blokkeren — anders "niet alle oefeningen
@@ -23215,6 +23321,7 @@ async function finishSession(){
       // Fail closed: alleen een summary met daadwerkelijk gemeten afstand of duur telt.
       var _c2ok=!!(_c2s&&typeof _c2s==='object'&&typeof liveWorkoutToActual==='function'
         &&(_c2s.distanceM!=null||_c2s.distance_m!=null||_c2s.elapsedTimeS!=null||_c2s.duration_s!=null));
+      try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,_c2ok?'c2_eligible':'c2_not_eligible_manual_path'); }catch(_dfp){} // DIAG, fail-open
       var cRow;
       if(_c2ok){
         var _c2sum={ machineType:(_c2s.machineType||_c2s.mt||null),
@@ -23225,6 +23332,7 @@ async function finishSession(){
           heart_rate_bpm:(_c2s.heart_rate_bpm!=null?_c2s.heart_rate_bpm:_c2s.heartRateBPM),
           drag_factor:(_c2s.drag_factor!=null?_c2s.drag_factor:_c2s.dragFactor) };
         cRow=liveWorkoutToActual(_c2sum,{date:today,training_type:t,training_instance_id:activeInstanceId||null}).row;
+        try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'liveWorkoutToActual_reached'); }catch(_dfl){} // DIAG, fail-open
         // De omliggende write levert date/exercise_id/training_type/instance zelf al aan; de
         // note van de converter loopt als extraNote door de bestaande note-compositie.
         delete cRow.date; delete cRow.exercise_id; delete cRow.training_type; delete cRow.training_instance_id;
@@ -23244,7 +23352,7 @@ async function finishSession(){
       const _ergProj=(typeof tkErgProtocolProjectionFor==='function')?tkErgProtocolProjectionFor(ex.id):null;
       const _ergInst=(typeof tkErgProtocolInstanceId==='function')?tkErgProtocolInstanceId(ex.id):null;
       const _protoCols=_ergProj?{protocol_type:_ergProj.protocol_type,protocol_value:_ergProj.protocol_value}:{};
-      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow});saved++; // B3: structured erg-actuals in dezelfde, enige sessierij
+      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow});saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
@@ -23281,7 +23389,7 @@ async function finishSession(){
       const prevBest=window._prevBestMap?.[ex.id];
       if(prevBest!=null&&bestKg(best)!=null&&bestKg(best)!==prevBest)sessStats.compare.push({naam:ex.naam,prev:prevBest,now:bestKg(best)});
     }
-    }catch(exErr){ failed++; console.warn('finishSession: oefening niet opgeslagen',ex.id,exErr); }
+    }catch(exErr){ failed++; try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'write_failed'); }catch(_dff){} /* DIAG */ console.warn('finishSession: oefening niet opgeslagen',ex.id,exErr); }
   }
   // F0.7O (P0): gedeeltelijke fout — niet alle oefeningen konden worden opgeslagen. Sessie
   // NIET wissen (sessionLog/modal blijven intact) zodat de sporter opnieuw kan proberen.

@@ -2317,3 +2317,25 @@ vastgelegd, zodat de latere overstap naar object storage/Supabase één plek raa
 **Blijft open.** MEDIA-1 (Range op het webpad, cachestrategie, expliciete offline-download),
 mediamigratie, MoveKit-licentie (publiek versus signed), de twee cycling-posterbronbestanden.
 **Batch 002 blijft BLOCKED.**
+
+## DEC-C2DIAG-001 — Concept2 real-device diagnostiek: observeren, niet repareren (26 september 2026)
+
+**Context.** Fysieke tests (RowErg/BikeErg/SkiErg, 26-09-2026) tonen o.a. Fixed Distance
+TIMEOUT (`frame_accepted_but_not_verified`) ondanks Previous Frame Status OK, Tijd zonder
+CE060021-write, en onbetrouwbare live-verwerking/finalisatie. Bestaande mocks/tests mogen deze
+real-device evidence niet overrulen.
+
+**Besluit.** Eerst uitsluitend Developer Mode-observability; geen corrective sprint zonder nieuwe
+real-device evidence. Alle recorders zijn fail-open (try/catch, typeof-guards), worden door geen
+enkele productbeslissing gelezen, persisteren niets en vormen geen tweede bron van waarheid of
+loggingroute. `verifyFromTelemetry()` krijgt een transparante recorder rond de ongewijzigde
+beslislogica; gedrag is aantoonbaar identiek aan baseline 44692317 (bevroren traces in
+`core/fConcept2DiagnosticsInstrumentation.test.js`).
+
+**Waarom een versiebump.** `sw.js` serveert statische assets cache-first; zonder bump van
+CACHE_NAME/CACHE_STATIC zou een geüpgradede debug-APK de oude JS blijven laden en de diagnostiek
+onzichtbaar zijn. Conform de bestaande conventie daarom APP_VER + cache + Android-versie samen.
+
+**Bewust niet.** Timeout, CSAFE-frames, fixed-time, fixed-distance, completion, session logging,
+schema, exercise-ID's, BLE-subscriptiestrategie, rowerg→roeien, calculation/AI: ongewijzigd.
+H1–H5 blijven hypotheses.

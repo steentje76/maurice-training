@@ -11,6 +11,17 @@ let programmingSource = null;
    Mode de echte diagnostiek leest en nooit een statisch object. */
 export function setProgrammingSource(fn) { programmingSource = (typeof fn === 'function') ? fn : null; }
 
+let lifecycleSource = null;
+/* Real-device diagnostic instrumentation: index.html levert een READ-ONLY lifecycle-snapshot.
+   Fallback op window.tkC2LifecycleSnapshot, zodat laadvolgorde geen rol speelt. */
+export function setLifecycleSource(fn) { lifecycleSource = (typeof fn === 'function') ? fn : null; }
+function readLifecycle() {
+  try {
+    const fn = lifecycleSource || ((typeof window !== 'undefined' && typeof window.tkC2LifecycleSnapshot === 'function') ? window.tkC2LifecycleSnapshot : null);
+    return fn ? safeJsonClone(fn()) : null;
+  } catch (_) { return null; }
+}
+
 export function buildDiagnosticsSnapshot(transport) {
   const out = {
     generatedAt: new Date().toISOString(),
@@ -23,8 +34,12 @@ export function buildDiagnosticsSnapshot(transport) {
     devices: [],
     connection: null,
       // Gate B: diagnostiek van de actieve PM5-programmeercontroller.
-      programming: null
+      programming: null,
+    // Real-device diagnostics: multiplexed packets (transport) en lifecycle (index.html), read-only.
+    multiplexed: null,
+    lifecycle: null
   };
+  out.lifecycle = readLifecycle();
   try {
     const src = programmingSource && programmingSource();
     if (src && typeof src.getDiagnostics === 'function') out.programming = src.getDiagnostics();
@@ -33,6 +48,9 @@ export function buildDiagnosticsSnapshot(transport) {
   try {
     // Fase B: verbindingsdiagnostiek (geen payload, geen persoonsgegevens; device-id gemaskeerd door het transport)
     if (typeof transport.getConnectionDiagnostics === 'function') out.connection = safeJsonClone(transport.getConnectionDiagnostics());
+  } catch (_) {}
+  try {
+    if (typeof transport.getMultiplexedDiagnostics === 'function') out.multiplexed = safeJsonClone(transport.getMultiplexedDiagnostics());
   } catch (_) {}
 
   try {
@@ -124,6 +142,23 @@ export function diagnosticsToText(snapshot) {
       lines.push('PM state-machine: ' + (pg.pmStateMachineState || '-'));
       lines.push('Laatste resultaat: ' + (pg.lastResult && pg.lastResult.state ? pg.lastResult.state + (pg.lastResult.reason ? ' (' + pg.lastResult.reason + ')' : '') : '-'));
       lines.push('Laatste event: ' + (pg.startedAt != null ? iso(pg.startedAt) : '-'));
+      lines.push('--- Programming verification ---');
+      lines.push('Requested workout type: ' + v(pg.requestedWorkoutType));
+      lines.push('Requested distance: ' + (pg.requestedDistanceM != null ? pg.requestedDistanceM + ' m' : '-'));
+      lines.push('Requested time: - (geen fixed-time programmeerpad aanwezig)');
+      lines.push('Frame hex: ' + v(pg.frameHex));
+      lines.push('Frame accepted at: ' + iso(pg.frameAcceptedAt));
+      lines.push('Verification started at: ' + iso(pg.verificationStartedAt));
+      lines.push('Verification telemetry at: ' + iso(pg.verificationTelemetryAt));
+      lines.push('readbackWorkoutType: ' + v(pg.readbackWorkoutType));
+      lines.push('readbackWorkoutDuration: ' + v(pg.readbackWorkoutDuration));
+      lines.push('readbackDurationType: ' + v(pg.readbackDurationType));
+      lines.push('verifyFromTelemetry attempts: ' + (pg.verifyAttempts || 0));
+      lines.push('Laatste verify reason: ' + v(pg.lastVerifyReason) + (pg.lastVerifyAt != null ? ' @ ' + iso(pg.lastVerifyAt) : ''));
+      lines.push('Verify tijdens operatie: ' + (pg.verifyAttemptsWhilePending || 0) + 'x · laatste reason ' + v(pg.lastPendingVerifyReason) + ' (seq ' + v(pg.lastPendingVerifyTelemetrySeq) + ')' + (pg.lastPendingVerifyAt != null ? ' @ ' + iso(pg.lastPendingVerifyAt) : ''));
+      lines.push('Verify reasons: ' + fmtCounts(pg.verifyReasonCounts));
+      lines.push('Controller telemetry seq (acceptatie / laatst beoordeeld): ' + v(pg.frameAcceptedTelemetrySeq) + ' / ' + v(pg.lastVerifyTelemetrySeq));
+      lines.push('Eindstate/reason: ' + v(pg.state) + (pg.lastResult && pg.lastResult.reason ? ' (' + pg.lastResult.reason + ')' : ''));
       lines.push('');
     } else {
       lines.push('--- Workout control (PM5 programmering) ---');
@@ -131,6 +166,7 @@ export function diagnosticsToText(snapshot) {
       lines.push('');
     }
   }
+  appendRealDeviceBlocks(lines, s);
   const devices = Array.isArray(s.devices) ? s.devices : [];
   if (!devices.length) lines.push('Geen BLE-advertenties in de laatste Concept2-scan geregistreerd.');
   devices.forEach((d, i) => {
@@ -142,6 +178,98 @@ export function diagnosticsToText(snapshot) {
     lines.push('  UUIDs: ' + ((d.uuids && d.uuids.length) ? d.uuids.join(', ') : '(geen UUIDs door Android/plugin doorgegeven)'));
   });
   return lines.join('\n');
+}
+
+function v(x) { return (x === null || x === undefined || x === '') ? '-' : String(x); }
+function iso(t) { return (typeof t === 'number' && isFinite(t)) ? new Date(t).toISOString() : '-'; }
+function fmtCounts(o) {
+  if (!o || typeof o !== 'object') return '-';
+  const k = Object.keys(o);
+  return k.length ? k.map((x) => x + '=' + o[x]).join(', ') : '-';
+}
+/* Real-device diagnostic blokken. Alleen weergave van reeds bestaande waarden. Fail-open. */
+export function appendRealDeviceBlocks(lines, s) {
+  try {
+    const m = s && s.multiplexed;
+    lines.push('--- Multiplexed packets (CE060080) ---');
+    if (!m) { lines.push('Geen multiplexed diagnostiek beschikbaar'); }
+    else {
+      lines.push('Totaal multiplexed notifications: ' + (m.totalNotifications || 0));
+      lines.push('Globale multiplexed seq: ' + v(m.globalSeq));
+      const by = m.byId || {};
+      const e31 = by['0x31'], e32 = by['0x32'];
+      lines.push('0x31: ' + (e31 ? e31.count : 0) + 'x · laatste seq ' + v(e31 && e31.lastSeq) + ' · laatste ' + iso(e31 && e31.lastAt));
+      lines.push('0x32: ' + (e32 ? e32.count : 0) + 'x · laatste seq ' + v(e32 && e32.lastSeq) + ' · laatste ' + iso(e32 && e32.lastAt));
+      Object.keys(by).filter((k) => k !== '0x31' && k !== '0x32').forEach((k) => {
+        lines.push('Overig ' + k + ': ' + by[k].count + 'x · laatste seq ' + v(by[k].lastSeq));
+      });
+      lines.push('Decoded/failures/unknown: ' + (m.decoded || 0) + '/' + (m.decodeFailures || 0) + '/' + (m.unknownIds || 0));
+      lines.push('--- Laatste echte 0x31 General Status ---');
+      const l = m.last31;
+      if (!l) lines.push('Nog geen 0x31 gedecodeerd');
+      else {
+        const f = l.fields || {};
+        lines.push('seq ' + v(l.seq) + ' · ontvangen ' + iso(l.at));
+        ['elapsedTimeS', 'distanceM', 'workoutType', 'workoutState', 'rowingState', 'workoutDuration', 'workoutDurationType', 'intervalType', 'dragFactor']
+          .forEach((k) => lines.push('  ' + k + ': ' + v(f[k])));
+      }
+      const l2 = m.last32;
+      lines.push('Laatste echte 0x32: ' + (l2 ? ('seq ' + v(l2.seq) + ' · ' + iso(l2.at)) : '-'));
+    }
+    lines.push('');
+    const lc = s && s.lifecycle;
+    const vc = lc && lc.verify;
+    lines.push('--- Verify-aanroepen (sequence-correlatie) ---');
+    if (!vc) lines.push('-');
+    else {
+      lines.push('Aanroepen: ' + (vc.calls || 0) + ' · waarvan laatste 0x31 vóór frame-acceptatie: ' + (vc.callsWith31BeforeAcceptance || 0));
+      const x = vc.last;
+      if (x) {
+        lines.push('Laatste aanroep: ' + iso(x.at) + ' · getriggerd door ' + v(x.triggeredByPacket));
+        lines.push('  mux global seq bij aanroep: ' + v(x.muxGlobalSeqAtCall));
+        lines.push('  laatste 0x31 seq / 0x32 seq bij aanroep: ' + v(x.last31SeqAtCall) + ' / ' + v(x.last32SeqAtCall));
+        lines.push('  laatste 0x31 vóór frame-acceptatie: ' + v(x.last31BeforeFrameAcceptance));
+        lines.push('  controller telemetry seq: ' + v(x.controllerTelemetrySeq) + ' · resultaat: ' + v(x.reason));
+      }
+    }
+    lines.push('');
+    const cn = lc && lc.canonical;
+    lines.push('--- Canonical measurement → execution ---');
+    lines.push('tkErgOnCanonicalMeasurement bereikt: ' + (cn ? (cn.totalReached || 0) : 0) + 'x');
+    const c = cn && cn.last;
+    if (c) {
+      lines.push('Laatste: seq ' + v(c.seq) + ' · ' + iso(c.at) + ' · ex ' + v(c.exId));
+      lines.push('  machineType ' + v(c.machineType) + ' · distanceM ' + v(c.distanceM) + ' · elapsedTimeS ' + v(c.elapsedTimeS));
+      lines.push('  pace500 ' + v(c.pace500M) + ' · pace1000 ' + v(c.pace1000M) + ' · watts ' + v(c.watts) + ' · strokeRate ' + v(c.strokeRateSPM));
+      lines.push('  workoutState ' + v(c.workoutState) + ' · intervalNumber ' + v(c.intervalNumber));
+    }
+    lines.push('');
+    lines.push('--- Lifecycle (observatie) ---');
+    if (!lc) lines.push('Geen lifecycle-bron beschikbaar');
+    else {
+      const ex = lc.execution || {};
+      lines.push('Execution: training ' + v(ex.trainingRunning) + ' · curT ' + v(ex.curT) + ' · instance ' + v(ex.activeInstanceId) + ' · finishBusy ' + v(ex.finishSessionBusy));
+      Object.keys(lc.exercises || {}).forEach((id) => {
+        const e = lc.exercises[id] || {};
+        const cx = e.connection, rt = e.runtime || {}, pr = e.protocol || {};
+        lines.push('Oefening ' + id + ':');
+        lines.push('  Concept2 connection: ' + (cx ? ((cx.connected ? 'connected' : (cx.connecting ? 'connecting' : 'disconnected')) + ' · ' + v(cx.machineType)) : '-'));
+        lines.push('  Concept2 live/session state: ' + v(e.concept2SessionState));
+        lines.push('  Runtime: ' + (rt.present ? ('gen ' + v(rt.generation) + ' · prog ' + v(rt.programmingState)) : 'afwezig'));
+        lines.push('  Protocol: ' + v(pr.type) + ' · target ' + v(pr.target) + ' · instance ' + v(pr.instanceId) + ' · vergrendeld ' + v(pr.locked));
+        lines.push('  sessionLog.c2: ' + (e.sessionLogC2Exists ? 'ja' : 'nee') + ' · laatste update ' + iso(e.sessionLogC2LastUpdateAt) + ' · cm bereikt ' + v(e.canonicalMeasurementsReached));
+      });
+      const fi = lc.finish || {};
+      lines.push('finishSession() aangeroepen: ' + (fi.calls || 0) + 'x' + (fi.lastCalledAt ? ' · laatst ' + iso(fi.lastCalledAt) : ''));
+      Object.keys(fi.perEx || {}).forEach((id) => {
+        const f = fi.perEx[id];
+        lines.push('  ' + id + ': reden ' + v(f.reason) + ' · pad ' + ((f.path && f.path.length) ? f.path.join(' → ') : '-') + ' · c2 ' + v(f.hasC2) + ' · formulier ' + v(f.hasCardioForm) + (f.cardioFormHas ? ' (' + fmtCounts(f.cardioFormHas) + ')' : ''));
+        lines.push('    liveWorkoutToActual bereikt: ' + ((f.path || []).indexOf('liveWorkoutToActual_reached') !== -1 ? 'ja' : 'nee'));
+      });
+    }
+    lines.push('');
+  } catch (_) { lines.push('(diagnostiek-blok kon niet worden opgebouwd)'); }
+  return lines;
 }
 
 export function installDeveloperMode(options = {}) {
@@ -310,7 +438,8 @@ export function installDeveloperMode(options = {}) {
     snapshot: () => buildDiagnosticsSnapshot(getTransport()),
     text: currentText,
       // Gate B.5: index.html registreert hier de ACTIEVE programming-controller.
-      setProgrammingSource
+      setProgrammingSource,
+    setLifecycleSource
   };
   window.TKDeveloperMode = api;
   if (enabled) ensureUi();

@@ -840,7 +840,7 @@
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
-   "blocker": true,
+   "blocker": false,
    "dependency": null,
    "evidence": [
     "DB VERIFIED (rijaantal, RLS, FK-graaf) + CODE VERIFIED (0 referenties). Zie `docs/BACKUP_RETENTION_CONTRACT.md` voor de volledige classificatietabel."
@@ -850,7 +850,7 @@
    "section": "OPEN",
    "offset": 32381,
    "severity_source": "explicit_field",
-   "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
+   "blocker_evidence": "Metadata alignment: GAP_ANALYSIS_V2 says the audit is complete and action is POLICY_DECISION_REQUIRED; the audit itself blocks nothing. Gap remains OPEN pending PO retention decision.",
    "v1_evidence": "V1_SCOPE_MATRIX: Auth/account-lifecycle = V1 MUST Ja",
    "secondary_tracks": [
     "T6"
@@ -860,7 +860,16 @@
    "affected_capability_ids": [],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "status_history": [
+    {
+     "from_blocker": true,
+     "to_blocker": false,
+     "date": "2026-09-27",
+     "change_type": "AUDIT_METADATA_CORRECTION",
+     "reason": "Metadata alignment: GAP_ANALYSIS_V2 says the audit is complete and action is POLICY_DECISION_REQUIRED; the audit itself blocks nothing. Gap remains OPEN pending PO retention decision."
+    }
+   ]
   },
   {
    "gap_id": "GAP-P2-003",
@@ -898,7 +907,7 @@
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
-   "blocker": true,
+   "blocker": false,
    "dependency": null,
    "evidence": [
     "DB VERIFIED (aanwezigheid, nooit waarden) + CODE VERIFIED (0 referenties). Zie `docs/CONFIGURATION_SECURITY_CONTRACT.md` F-01/F-02/F-03."
@@ -907,7 +916,7 @@
    "section": "OPEN",
    "offset": 34443,
    "severity_source": "explicit_field",
-   "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
+   "blocker_evidence": "Metadata alignment: GAP_ANALYSIS_V2/CONFIGURATION_SECURITY_CONTRACT say F-01/F-02 are MANUAL_USER_VALIDATION_REQUIRED and F-03 PRODUCT_DECISION_REQUIRED; there is no active exposure and these do not block Secrets & Configuration Hygiene closure. Gap remains OPEN.",
    "v1_evidence": "V1_SCOPE_MATRIX: Auth/account-lifecycle = V1 MUST Ja",
    "secondary_tracks": [
     "T6"
@@ -918,7 +927,16 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "Orphaned secret-achtige DB-kolommen; docs/CONFIGURATION_SECURITY_CONTRACT.md is de evidence-bron van SEC-CONFIG-001, DB VERIFIED plus CODE VERIFIED met 0 referenties.",
    "traceability_scope": "CAPABILITY_SCOPED",
-   "capability_id": "SEC-CONFIG-001"
+   "capability_id": "SEC-CONFIG-001",
+   "status_history": [
+    {
+     "from_blocker": true,
+     "to_blocker": false,
+     "date": "2026-09-27",
+     "change_type": "AUDIT_METADATA_CORRECTION",
+     "reason": "Metadata alignment: GAP_ANALYSIS_V2/CONFIGURATION_SECURITY_CONTRACT say F-01/F-02 are MANUAL_USER_VALIDATION_REQUIRED and F-03 PRODUCT_DECISION_REQUIRED; there is no active exposure and these do not block Secrets & Configuration Hygiene closure. Gap remains OPEN."
+    }
+   ]
   },
   {
    "gap_id": "GAP-P2-024",

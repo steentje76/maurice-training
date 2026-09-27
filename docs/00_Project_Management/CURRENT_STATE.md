@@ -6,7 +6,21 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.1
+v4.70.2
+
+## Concept2 Fixed-Distance Corrective — CSAFE units, GOINUSE, GETSTATUS, verse read-back (v4.70.2, 27 september 2026)
+
+- **Aanleiding (hardware-bewezen).** RowErg PM5 430621526, 500 m: frame `f12103f4012124020000d0f2`,
+  antwoord `f18181f2`, daarna verse 0x31 met read-back 3/0/128; PM5 bleef op het verbindingsscherm.
+  H1 (stale 0x31) is als oorzaak REJECTED.
+- **FIX 1.** Units 0x21 (km) -> 0x24 (meters). **FIX 2.** GOINUSE (0x85) na SETPROGRAM.
+  500 m: `f1 21 03 f4 01 24 24 02 00 00 85 50 f2`.
+- **FIX 3.** PROGRAMMED alleen bij een ECHTE 0x31 met packet-sequence > acceptatie, type ∈ {2,3}
+  én duration = gevraagde meters én duration type 0x80. Beginstate 3/0/128 faalt.
+- **FIX 4.** GETSTATUS-vervolgframe (`f1 80 80 f2`); pas dat antwoord draagt de status van het
+  programmeerframe. Direct Ok alleen is niet voldoende. Fail closed.
+- **Bewust niet:** RESET, fixed-time/H2, stop→resume, H3/H4/H5-lifecycle, schema, exercise-ID's.
+  Status: wacht op hardware-hertest.
 
 ## Concept2 Corrective FASE 2A.1 — H5 completion-lifecycle (v4.70.1, 27 september 2026)
 
@@ -55,7 +69,7 @@ v4.70.1
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.1 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.2 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

@@ -55,8 +55,14 @@ async function run() {
     ok(!le, 'E2E: oude big-endian volgorde 00 00 03 E8 komt NIET meer voor');
     eq(f[0], CSAFE.FLAG.STANDARD_START, 'E2E: frame start F1');
     eq(f[f.length - 1], CSAFE.FLAG.STOP, 'E2E: frame stop F2');
+    // FIX 4: een direct Ok (f18181f2) is NIET zelfstandig voldoende -> GETSTATUS-vervolgframe.
+    const r0 = h.c.handleControlResponse(OK_F, CTX);
+    eq(r0.state, S.AWAITING_ACK, 'E2E: direct Ok -> AWAITING_ACK (GETSTATUS), nog geen acceptatie');
+    eq(r0.reason, 'direct_ok_awaiting_ack', 'E2E: expliciete reden direct Ok');
+    eq(h.writes.length, 2, 'E2E: tweede write is het GETSTATUS-vervolgframe');
+    eq(Array.from(h.writes[1]).map(b => (b < 16 ? '0' : '') + b.toString(16)).join(''), 'f18080f2', 'E2E: vervolgframe = GETSTATUS f1 80 80 f2');
     const r = h.c.handleControlResponse(OK_F, CTX);
-    eq(r.state, S.VERIFYING, 'E2E: Previous Frame Status OK -> FRAME_ACCEPTED/VERIFYING, NIET PROGRAMMED');
+    eq(r.state, S.VERIFYING, 'E2E: GETSTATUS-antwoord Previous Frame Status OK -> FRAME_ACCEPTED/VERIFYING, NIET PROGRAMMED');
     eq(r.reason, 'frame_accepted_awaiting_verification', 'E2E: expliciete reden');
     ok(h.c.getState() !== S.PROGRAMMED, 'E2E: Ok alleen bewijst NOOIT PROGRAMMED (fail closed)');
     h.fireTimeout();
@@ -133,7 +139,10 @@ async function run() {
     const r2 = h.c.handleControlResponse(OK_F, { connected: true, generation: 7, deviceId: 'DEV-B' });
     eq(r2.reason, 'other_device', 'ISO: response van ander device genegeerd');
     ok(h.c.getState() !== S.CONFIRMED, 'ISO: geen bevestiging door vreemde response');
-    eq(h.c.handleControlResponse(OK_F, CTX).state, S.VERIFYING, 'ISO: eigen generation levert FRAME_ACCEPTED/VERIFYING');
+    eq(h.c.handleControlResponse(OK_F, CTX).state, S.AWAITING_ACK, 'ISO: eigen generation: direct Ok -> AWAITING_ACK');
+    eq(h.c.handleControlResponse(OK_F, { connected: true, generation: 8, deviceId: 'DEV-A' }).reason, 'stale_generation', 'ISO: GETSTATUS-antwoord uit andere generation genegeerd');
+    eq(h.c.handleControlResponse(OK_F, { connected: true, generation: 7, deviceId: 'DEV-B' }).reason, 'other_device', 'ISO: GETSTATUS-antwoord van ander device genegeerd');
+    eq(h.c.handleControlResponse(OK_F, CTX).state, S.VERIFYING, 'ISO: eigen generation levert na GETSTATUS FRAME_ACCEPTED/VERIFYING');
   }
   { // sessie A pending -> disconnect -> sessie B mag niet bevestigd worden
     const h = harness(); h.c.programFixedDistance(1000, { connected: true, generation: 1, deviceId: 'DEV-A' });
@@ -158,7 +167,8 @@ async function run() {
     h.fireTimeout();
     const r1 = await p1;
     eq(r1.state, S.TIMEOUT, 'DUBBELTAP: eerste operatie loopt af zonder read-back');
-    eq(h.writes.length, 1, 'DUBBELTAP: nog steeds één write na bevestiging');
+    eq(h.writes.filter(w => w[1] === 0x21).length, 1, 'DUBBELTAP: nog steeds één PROGRAMMEER-write na bevestiging');
+    eq(h.writes.filter(w => w[1] === 0x80).length, 1, 'DUBBELTAP: exact één GETSTATUS-vervolgwrite');
   }
   { // guards: niet verbonden, ongeldige afstanden
     const h = harness();
@@ -185,13 +195,19 @@ async function run() {
     let d = h.c.getDiagnostics();
     eq(d.state, S.WAITING_RESPONSE, 'DEV: state zichtbaar');
     eq(d.requestedDistanceM, 1000, 'DEV: aangevraagde afstand zichtbaar');
-    eq(d.requestedWorkoutType, CSAFE.WORKOUT_TYPE.FIXEDDIST_NOSPLITS, 'DEV: workout type = FIXEDDIST_NOSPLITS');
+    eq(JSON.stringify(d.acceptedWorkoutTypes), '[2,3]', 'DEV: toegestane workout types 2/3 zichtbaar (type alleen bewijst niets)');
     eq(d.writeAttempted, 1, 'DEV: write attempted geteld');
     eq(d.writeCompleted, 1, 'DEV: write completed geteld');
     eq(d.generation, 7, 'DEV: actieve generation zichtbaar');
     h.c.handleControlResponse(OK_F, CTX);
     d = h.c.getDiagnostics();
-    eq(d.state, S.VERIFYING, 'DEV: VERIFYING zichtbaar');
+    eq(d.state, S.AWAITING_ACK, 'DEV: AWAITING_ACK zichtbaar na direct Ok');
+    eq(d.ackFrameHex, 'f18080f2', 'DEV: GETSTATUS-frame zichtbaar');
+    eq(d.directPreviousFrameStatus, 'ok', 'DEV: direct antwoord zichtbaar');
+    h.c.handleControlResponse(OK_F, CTX);
+    d = h.c.getDiagnostics();
+    eq(d.state, S.VERIFYING, 'DEV: VERIFYING zichtbaar na GETSTATUS-antwoord');
+    eq(d.ackPreviousFrameStatus, 'ok', 'DEV: status programmeerframe via GETSTATUS zichtbaar');
     ok(!!d.frameHex, 'DEV: uitgaand frame-hex bewaard');
     ok(!!d.lastResponseHex, 'DEV: response-hex bewaard');
     eq(d.lastParse, 'ok', 'DEV: parse-resultaat bewaard');

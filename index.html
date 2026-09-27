@@ -7001,7 +7001,7 @@ function tkErgConnectDevice(exId, idx){
           var _rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,null,null):null;
           if(_rt&&_rt.prog&&_rt.agg&&typeof _rt.prog.verifyFromTelemetry==='function'){
             var _vctx=(typeof t.getControlContext==='function')?t.getControlContext():{};
-            var _vres=_rt.prog.verifyFromTelemetry(_rt.agg.getMergedRaw(), _vctx);
+            var _vres=_rt.prog.verifyFromTelemetry(tkC2ReadbackFromPacket(evt,_vctx), _vctx); // FIX 3: alleen DIT packet
             try{ if(typeof tkC2DiagVerifyCall==='function') tkC2DiagVerifyCall(exId,_vres,t); }catch(_dv){} // DIAG, fail-open
           }
         }catch(_ev){}
@@ -7391,7 +7391,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.1';
+const APP_VER = 'v4.70.2';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -22008,6 +22008,14 @@ function validateCardioField(exId, cardioType, field){
 // Elke recorder is fail-open (try/catch): een fout hier mag nooit een training,
 // BLE-event, loggingpad of finishSession() blokkeren. _c2diag is GEEN tweede bron
 // van waarheid en GEEN tweede loggingroute: het bewaart alleen tellers, tijdstippen
+// FIX 3 (v4.70.2): read-back uitsluitend uit HET ontvangen packet (nooit uit merged aggregator-state),
+// met zijn packet-identiteit in ctx. Een verse 0x32 kan zo nooit een oude 0x31 laten meetellen.
+function tkC2ReadbackFromPacket(evt, vctx){
+  var pkt=(evt&&evt.metrics&&!evt.metrics.schema)?evt.metrics:null;
+  vctx.packetId=pkt?(pkt.multiplexedId||null):null;
+  vctx.packetSeq=(pkt&&pkt.packetSeq!=null)?pkt.packetSeq:null;
+  return (pkt&&typeof Concept2Live!=='undefined'&&Concept2Live&&typeof Concept2Live.pm5RawToCanonical==='function')?Concept2Live.pm5RawToCanonical(pkt):{};
+}
 // en een kopie van wat al door de bestaande keten ging. Nooit persistent, nooit DB.
 // ══════════════════════════════════════════════════════════════════════════
 var _c2diag={ seq:0, canonicalCount:0, perEx:{}, lastCanonical:null,

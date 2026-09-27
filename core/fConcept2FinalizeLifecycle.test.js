@@ -250,6 +250,9 @@ async function suite(html, label) {
   return R;
 }
 
+// Een onopgeloste promise laat node zonder samenvatting met code 0 eindigen; nooit als geslaagd tellen.
+let finished = false;
+process.on('exit', function (code) { if (!finished && code === 0) { console.log('MISLUKT: test eindigde zonder samenvatting (hangende promise)'); process.exitCode = 1; } });
 (async function run() {
   const R = await suite(HTML, '');
   ok(R.ct === 'rowing', 'fixture: roeien is rowing-cardio (' + R.ct + ')');
@@ -347,6 +350,7 @@ async function suite(html, label) {
     if (process.env.SAB_DEBUG) console.log('SAB', name, R2 === null ? 'EXCEPTION' : ('detect=' + detects(R2)));
     ok(R2 !== null && detects(R2), 'SABOTAGE gedetecteerd via assertie (geen exception): ' + name);
   }
+  finished = true;
   console.log('\n[Concept2 FASE 2A finalize-lifecycle] RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log('MISLUKT: exception ' + (e && e.stack)); process.exit(1); });

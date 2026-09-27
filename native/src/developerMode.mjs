@@ -155,6 +155,13 @@ export function diagnosticsToText(snapshot) {
       lines.push('readbackDurationType: ' + v(pg.readbackDurationType));
       lines.push('verifyFromTelemetry attempts: ' + (pg.verifyAttempts || 0));
       lines.push('Laatste verify reason: ' + v(pg.lastVerifyReason) + (pg.lastVerifyAt != null ? ' @ ' + iso(pg.lastVerifyAt) : ''));
+      lines.push('--- CSAFE acknowledgement (GETSTATUS) ---');
+      lines.push('Direct antwoord: ' + v(pg.directResponseHex) + ' · prev status ' + v(pg.directPreviousFrameStatus));
+      lines.push('GETSTATUS frame: ' + v(pg.ackFrameHex) + ' · verstuurd ' + iso(pg.ackSentAt) + ' · writes ' + (pg.ackWriteAttempted || 0) + '/' + (pg.ackWriteCompleted || 0));
+      lines.push('GETSTATUS antwoord: ' + v(pg.ackResponseHex) + ' · ' + iso(pg.ackResponseAt));
+      lines.push('Status programmeerframe (via GETSTATUS): ' + v(pg.ackPreviousFrameStatus) + ' · PM state ' + v(pg.ackStateMachineState));
+      lines.push('Acceptatie mux-seq: ' + v(pg.acceptedMuxSeq) + ' · read-back packet ' + v(pg.readbackPacketId) + ' seq ' + v(pg.readbackPacketSeq));
+      lines.push('Toegestane workout types: ' + (Array.isArray(pg.acceptedWorkoutTypes) ? pg.acceptedWorkoutTypes.join('/') : '-'));
       lines.push('Verify tijdens operatie: ' + (pg.verifyAttemptsWhilePending || 0) + 'x · laatste reason ' + v(pg.lastPendingVerifyReason) + ' (seq ' + v(pg.lastPendingVerifyTelemetrySeq) + ')' + (pg.lastPendingVerifyAt != null ? ' @ ' + iso(pg.lastPendingVerifyAt) : ''));
       lines.push('Verify reasons: ' + fmtCounts(pg.verifyReasonCounts));
       lines.push('Controller telemetry seq (acceptatie / laatst beoordeeld): ' + v(pg.frameAcceptedTelemetrySeq) + ' / ' + v(pg.lastVerifyTelemetrySeq));

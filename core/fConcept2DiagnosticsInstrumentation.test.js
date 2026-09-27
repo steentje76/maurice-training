@@ -25,13 +25,16 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const progSrc = fs.readFileSync(path.join(ROOT, 'core/concept2Programming.js'), 'utf8');
 
 // Bevroren gedragstraces, gegenereerd met core/concept2Programming.js op baseline 44692317.
-const BASELINE_TRACES = {"programmed":{"steps":[{"handled":true,"state":"VERIFYING","reason":"frame_accepted_awaiting_verification"},{"verified":false,"reason":"duration_type_mismatch","state":null},{"verified":true,"reason":null,"state":"PROGRAMMED"},{"verified":false,"reason":"not_verifying","state":null},{"ok":true,"state":"PROGRAMMED","reason":null}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","FRAME_ACCEPTED","VERIFYING","PROGRAMMED"],"writes":1},"timeout":{"steps":[{"handled":true,"state":"VERIFYING","reason":"frame_accepted_awaiting_verification"},{"verified":false,"reason":"incomplete_readback","state":null},{"verified":false,"reason":"workout_type_mismatch","state":null},{"verified":false,"reason":"distance_mismatch","state":null},{"ok":false,"state":"TIMEOUT","reason":"frame_accepted_but_not_verified"},{"verified":false,"reason":"not_verifying","state":null}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","FRAME_ACCEPTED","VERIFYING","TIMEOUT"],"writes":1},"stale":{"steps":[{"handled":false,"reason":"stale_generation"},{"handled":false,"reason":"other_device"},{"handled":true,"state":"VERIFYING","reason":"frame_accepted_awaiting_verification"},{"verified":false,"reason":"stale_generation","state":null},{"verified":false,"reason":"other_device","state":null},{"ok":false,"state":"TIMEOUT","reason":"frame_accepted_but_not_verified"}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","FRAME_ACCEPTED","VERIFYING","TIMEOUT"],"writes":1},"reject":{"steps":[{"handled":true,"state":"FAILED"},{"ok":false,"state":"FAILED","reason":"previous_frame_reject"}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","FAILED"],"writes":1},"noresp":{"steps":[{"ok":false,"state":"TIMEOUT","reason":"no_response_within_timeout"}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","TIMEOUT"],"writes":1},"cancel":{"steps":[{"ok":false,"state":"CANCELLED","reason":"disconnect"},{"verified":false,"reason":"not_verifying","state":null}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","FRAME_ACCEPTED","VERIFYING","CANCELLED"],"writes":1}};
+const BASELINE_TRACES = {"programmed":{"steps":[{"handled":true,"state":"AWAITING_ACK","reason":"direct_ok_awaiting_ack"},{"handled":true,"state":"VERIFYING","reason":"frame_accepted_awaiting_verification"},{"verified":false,"reason":"duration_type_mismatch","state":null},{"verified":true,"reason":null,"state":"PROGRAMMED"},{"verified":false,"reason":"not_verifying","state":null},{"ok":true,"state":"PROGRAMMED","reason":null}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","AWAITING_ACK","FRAME_ACCEPTED","VERIFYING","PROGRAMMED"],"writes":2},"timeout":{"steps":[{"handled":true,"state":"AWAITING_ACK","reason":"direct_ok_awaiting_ack"},{"handled":true,"state":"VERIFYING","reason":"frame_accepted_awaiting_verification"},{"verified":false,"reason":"incomplete_readback","state":null},{"verified":false,"reason":"workout_type_mismatch","state":null},{"verified":false,"reason":"distance_mismatch","state":null},{"ok":false,"state":"TIMEOUT","reason":"frame_accepted_but_not_verified"},{"verified":false,"reason":"not_verifying","state":null}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","AWAITING_ACK","FRAME_ACCEPTED","VERIFYING","TIMEOUT"],"writes":2},"stale":{"steps":[{"handled":false,"reason":"stale_generation"},{"handled":false,"reason":"other_device"},{"handled":true,"state":"AWAITING_ACK","reason":"direct_ok_awaiting_ack"},{"handled":true,"state":"VERIFYING","reason":"frame_accepted_awaiting_verification"},{"verified":false,"reason":"stale_generation","state":null},{"verified":false,"reason":"other_device","state":null},{"ok":false,"state":"TIMEOUT","reason":"frame_accepted_but_not_verified"}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","AWAITING_ACK","FRAME_ACCEPTED","VERIFYING","TIMEOUT"],"writes":2},"reject":{"steps":[{"handled":true,"state":"FAILED"},{"ok":false,"state":"FAILED","reason":"previous_frame_reject"}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","FAILED"],"writes":1},"noresp":{"steps":[{"ok":false,"state":"TIMEOUT","reason":"no_response_within_timeout"}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","TIMEOUT"],"writes":1},"cancel":{"steps":[{"ok":false,"state":"CANCELLED","reason":"disconnect"},{"verified":false,"reason":"not_verifying","state":null}],"states":["VALIDATING","ENCODING","WRITING","WAITING_RESPONSE","AWAITING_ACK","CANCELLED"],"writes":2}};
 
 async function traces(PROG, CSAFE, C2L){
   const OK_F=(()=>{const c=[0x01];return [CSAFE.FLAG.STANDARD_START].concat(CSAFE.stuff(c.concat([CSAFE.checksum(c)]))).concat([CSAFE.FLAG.STOP]);})();
   const REJ_F=(()=>{const c=[0x10];return [CSAFE.FLAG.STANDARD_START].concat(CSAFE.stuff(c.concat([CSAFE.checksum(c)]))).concat([CSAFE.FLAG.STOP]);})();
   const rb=(t,d,dt)=>C2L.pm5RawToCanonical({workoutType:t,workoutDuration:d,workoutDurationType:dt});
   const CTX={connected:true,generation:3,deviceId:'DEV-A'};
+  // FIX 3/4 (v4.70.2): acceptatie via GETSTATUS-antwoord (ACK), read-back alleen uit een verse 0x31 (PK).
+  const ACK=Object.assign({},CTX,{muxSeq:100}); let ps=100;
+  const PK=o=>Object.assign({},CTX,{packetId:'0x31',packetSeq:++ps},o||{});
   function mk(){ let timer=null; const states=[]; const writes=[];
     const c=PROG.createProgrammingController({csafe:CSAFE,write:b=>{writes.push(Array.from(b));return Promise.resolve();},now:()=>1000,
       setTimeoutFn:fn=>{timer=fn;return 1;},clearTimeoutFn:()=>{timer=null;},timeoutMs:5000});
@@ -44,28 +47,31 @@ async function traces(PROG, CSAFE, C2L){
   const scen={
     programmed: async h=>{ const L=[]; const p=h.c.programFixedDistance(1000,CTX); await tick();
       L.push(h.c.handleControlResponse(OK_F,CTX));
-      L.push(vr(h.c.verifyFromTelemetry(rb(0,0,0),CTX)));
-      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),CTX)));
-      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),CTX)));
+      L.push(h.c.handleControlResponse(OK_F,ACK));
+      L.push(vr(h.c.verifyFromTelemetry(rb(0,0,0),PK())));
+      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),PK())));
+      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),PK())));
       L.push(pick(await p)); return L; },
     timeout: async h=>{ const L=[]; const p=h.c.programFixedDistance(2000,CTX); await tick();
       L.push(h.c.handleControlResponse(OK_F,CTX));
-      L.push(vr(h.c.verifyFromTelemetry({},CTX)));
-      L.push(vr(h.c.verifyFromTelemetry(rb(1,2000,0x80),CTX)));
-      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),CTX)));
+      L.push(h.c.handleControlResponse(OK_F,ACK));
+      L.push(vr(h.c.verifyFromTelemetry({},PK())));
+      L.push(vr(h.c.verifyFromTelemetry(rb(1,2000,0x80),PK())));
+      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),PK())));
       h.fire(); L.push(pick(await p));
-      L.push(vr(h.c.verifyFromTelemetry(rb(2,2000,0x80),CTX))); return L; },
+      L.push(vr(h.c.verifyFromTelemetry(rb(2,2000,0x80),PK()))); return L; },
     stale: async h=>{ const L=[]; const p=h.c.programFixedDistance(1000,CTX); await tick();
       L.push(h.c.handleControlResponse(OK_F,{connected:true,generation:99,deviceId:'DEV-A'}));
       L.push(h.c.handleControlResponse(OK_F,{connected:true,generation:3,deviceId:'DEV-B'}));
       L.push(h.c.handleControlResponse(OK_F,CTX));
-      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),{connected:true,generation:99,deviceId:'DEV-A'})));
-      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),{connected:true,generation:3,deviceId:'DEV-B'})));
+      L.push(h.c.handleControlResponse(OK_F,ACK));
+      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),PK({generation:99}))));
+      L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),PK({deviceId:'DEV-B'}))));
       h.fire(); L.push(pick(await p)); return L; },
     reject: async h=>{ const L=[]; const p=h.c.programFixedDistance(1000,CTX); await tick();
       L.push(h.c.handleControlResponse(REJ_F,CTX)); L.push(pick(await p)); return L; },
     noresp: async h=>{ const L=[]; const p=h.c.programFixedDistance(1000,CTX); await tick(); h.fire(); L.push(pick(await p)); return L; },
-    cancel: async h=>{ const L=[]; const p=h.c.programFixedDistance(1000,CTX); await tick(); h.c.handleControlResponse(OK_F,CTX); h.c.cancel('disconnect'); L.push(pick(await p)); L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),CTX))); return L; }
+    cancel: async h=>{ const L=[]; const p=h.c.programFixedDistance(1000,CTX); await tick(); h.c.handleControlResponse(OK_F,CTX); h.c.cancel('disconnect'); L.push(pick(await p)); L.push(vr(h.c.verifyFromTelemetry(rb(2,1000,0x80),PK()))); return L; }
   };
   for(const k of Object.keys(scen)){ const h=mk(); const L=await scen[k](h); out[k]={steps:L,states:h.states,writes:h.writes.length}; }
   return out;
@@ -90,12 +96,15 @@ const OK_F = (() => { const c = [0x01]; return [CSAFE.FLAG.STANDARD_START].conca
 const rb = (t, d, dt) => C2L.pm5RawToCanonical({ workoutType: t, workoutDuration: d, workoutDurationType: dt });
 const CTX = { connected: true, generation: 3, deviceId: 'DEV-A' };
 
+// Een onopgeloste promise laat node zonder samenvatting met code 0 eindigen; nooit als geslaagd tellen.
+let finished = false;
+process.on('exit', function (code) { if (!finished && code === 0) { console.log('MISLUKT: test eindigde zonder samenvatting (hangende promise)'); process.exitCode = 1; } });
 async function run() {
   // ── A. gedrag identiek aan baseline ──
   const now = await traces(PROG, CSAFE, C2L);
-  eq(JSON.stringify(now), JSON.stringify(BASELINE_TRACES), 'A1: states/resultaten/writes identiek aan baseline 44692317');
+  eq(JSON.stringify(now), JSON.stringify(BASELINE_TRACES), 'A1: states/resultaten/writes identiek aan de bevroren traces (v4.70.2: GETSTATUS + verse 0x31)');
   Object.keys(BASELINE_TRACES).forEach(k => eq(now[k].writes, BASELINE_TRACES[k].writes, 'A2: ' + k + ': aantal CE060021-writes ongewijzigd'));
-  eq(now.timeout.steps[4].reason, 'frame_accepted_but_not_verified', 'A3: timeout-reden ongewijzigd (geen succesbehandeling)');
+  eq((now.timeout.steps.filter(x => x && x.state === 'TIMEOUT')[0] || {}).reason, 'frame_accepted_but_not_verified', 'A3: timeout-reden ongewijzigd (geen succesbehandeling)');
   eq(PROG.DEFAULT_TIMEOUT_MS, 5000, 'A4: timeout ongewijzigd');
 
   // ── B. transparantie: recorder eruit -> identiek ──
@@ -109,13 +118,14 @@ async function run() {
     const c = PROG.createProgrammingController({ csafe: CSAFE, write: () => Promise.resolve(), now: () => 1000,
       setTimeoutFn: fn => { timer = fn; return 1; }, clearTimeoutFn: () => { timer = null; }, timeoutMs: 5000 });
     const p = c.programFixedDistance(1000, CTX); await Promise.resolve(); await Promise.resolve();
-    c.handleControlResponse(OK_F, CTX);
-    eq(c.verifyFromTelemetry(rb(2, 1000, 0x80), { connected: true, generation: 99, deviceId: 'DEV-A' }).reason, 'stale_generation', 'C1: stale generation afgewezen');
-    eq(c.verifyFromTelemetry(rb(2, 1000, 0x80), { connected: true, generation: 3, deviceId: 'DEV-B' }).reason, 'other_device', 'C2: ander device afgewezen');
-    c.verifyFromTelemetry(rb(0, 0, 0), CTX);
+    c.handleControlResponse(OK_F, CTX); c.handleControlResponse(OK_F, Object.assign({}, CTX, { muxSeq: 50 }));
+    const PKC = o => Object.assign({ connected: true, generation: 3, deviceId: 'DEV-A', packetId: '0x31', packetSeq: 60 }, o || {});
+    eq(c.verifyFromTelemetry(rb(2, 1000, 0x80), PKC({ generation: 99 })).reason, 'stale_generation', 'C1: stale generation afgewezen');
+    eq(c.verifyFromTelemetry(rb(2, 1000, 0x80), PKC({ deviceId: 'DEV-B' })).reason, 'other_device', 'C2: ander device afgewezen');
+    c.verifyFromTelemetry(rb(0, 0, 0), PKC());
     timer(); const r = await p;
     eq(r.state, 'TIMEOUT', 'C3: operatie loopt af op TIMEOUT');
-    c.verifyFromTelemetry(rb(2, 1000, 0x80), CTX); c.verifyFromTelemetry(rb(2, 1000, 0x80), CTX);
+    c.verifyFromTelemetry(rb(2, 1000, 0x80), PKC()); c.verifyFromTelemetry(rb(2, 1000, 0x80), PKC());
     const d = c.getDiagnostics();
     eq(d.state, 'TIMEOUT', 'C4: state blijft TIMEOUT (late telemetrie bevestigt niet)');
     eq(d.verifyAttempts, 5, 'C5: verifyAttempts telt alle aanroepen, ook na timeout');
@@ -210,9 +220,10 @@ async function run() {
     const c = PROG.createProgrammingController({ csafe: CSAFE, write: () => Promise.resolve(), now: () => clock, setTimeoutFn: fn => { tt = fn; return 1; }, clearTimeoutFn: () => {} });
     w.env._c2rt.roeien = { prog: c, agg: C2L.createPm5LiveAggregator() };
     const pp = c.programFixedDistance(1000, CTX); await Promise.resolve(); await Promise.resolve();
-    clock += 10; c.handleControlResponse(OK_F, CTX);            // acceptatie NA de laatste 0x31 (seq 1)
+    clock += 10; c.handleControlResponse(OK_F, CTX);            // direct antwoord
+    c.handleControlResponse(OK_F, Object.assign({}, CTX, { muxSeq: t.getControlContext().muxSeq })); // GETSTATUS-antwoord: acceptatie NA de laatste 0x31 (seq 1)
     emit(p32);                                                   // verse 0x32, merged 0x31 is van vóór acceptatie
-    const res = c.verifyFromTelemetry(rb(1, 0, 0), CTX);
+    const res = c.verifyFromTelemetry(rb(1, 0, 0), Object.assign({}, CTX, { packetId: '0x32', packetSeq: 5 }));
     w.vcall('roeien', res, t);
     const lv = w.diag.lastVerifyCall;
     eq(lv.triggeredByPacket, '0x32', 'E1: verify-aanroep herkenbaar als getriggerd door 0x32');
@@ -222,7 +233,7 @@ async function run() {
     eq(lv.last31BeforeFrameAcceptance, true, 'E5: stale merged 0x31 aantoonbaar (meetbaar, niet gerepareerd)');
     eq(w.diag.verifyCallsWith31BeforeAcceptance, 1, 'E6: teller stale-0x31-aanroepen');
     ok(typeof lv.controllerTelemetrySeq === 'number', 'E7: controller-seq gecorreleerd');
-    eq(lv.reason, 'duration_type_mismatch', 'E8: reden bij aanroep');
+    eq(lv.reason, 'readback_not_0x31', 'E8: FIX 3 -- een verse 0x32 kan nooit als read-back gelden (H1 structureel afgewezen)');
     eq(c.getState(), 'VERIFYING', 'E9: diag-aanroep verandert de controllerstate niet');
     tt(); await pp; }
 
@@ -271,6 +282,7 @@ async function run() {
     c.verifyFromTelemetry(rb(0, 0, 0), CTX); tm(); await p;
     ok(c.getDiagnostics().lastPendingVerifyReason === null, 'J1: sabotage gedetecteerd (zonder recorder geen reden na TIMEOUT)'); }
 
+  finished = true;
   console.log('\n[Concept2 Diagnostics Instrumentation] RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   if (fail) process.exit(1);
 }

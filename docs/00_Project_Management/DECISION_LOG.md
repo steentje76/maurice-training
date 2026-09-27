@@ -2376,3 +2376,25 @@ discard-principe (EX-DISCARD-2) zegt dat verwerpen nergens naar de DB schrijft. 
 voor Losse zou daarvan afwijken en een tweede, divergente lifecycle naast de training-discard creëren.
 Daarom niet geïmproviseerd; vraagt een expliciet PO-besluit (abort-transitie voor beide flows, of
 periodieke herclassificatie zoals v446). Geen DELETE, geen historische cleanup.
+
+## DEC-C2CSAFE-001 — Fixed-distance CSAFE-correctie op basis van hardware-evidence (27 september 2026)
+
+**Evidence.** Real-device capture RowErg 500 m (v4.70.1): programmeerframe met units 0x21 werd met
+`f18181f2` beantwoord, maar de PM5 configureerde niets (read-back 3/0/128, state Ready). Primaire bron:
+Concept2 PM CSAFE Communication Definition rev. 0.27 (Table 9, Programmed Workout Parameter Limits,
+"Setting Up and Performing Workout"); Concept2 PM3/PM4 sample "0x21 0x03 0x02 0x00 0x21 (… 2 x Km units
+specifier)"; Concept2 SDK csafe.h (KM_0_0 = 0x21, METER_0_0 = 0x24). Corroboratie: PyRow, easy-erg,
+ErgometerJS, PM5-emulator.
+
+**Besluit.** Units 0x24; GOINUSE na SETPROGRAM; GETSTATUS-vervolgframe als acknowledgement (het veld heet
+Previous Frame Status; een Reject/Bad/Not Ready daarin is nooit succes); PROGRAMMED uitsluitend na een
+verse 0x31 (packet-sequence) met type 2/3 én exacte duration én type 0x80. De controller blijft fail closed:
+geen antwoord, stale device/generation of timeout is nooit succes.
+
+**Waarom GETSTATUS robuust is.** Onder beide lezingen van het statusveld (eigen frame of vorig frame) is een
+succes na GETSTATUS nooit ten onrechte: een Reject van het programmeerframe verschijnt direct óf in het
+GETSTATUS-antwoord, en beide leiden tot FAILED.
+
+**Bewust niet.** RESET (eerst hardwaretest zonder), fixed-time, stop→resume, timeout (5000 ms).
+**Testintegriteit.** Tests die de weerlegde vector/semantiek vastlegden zijn gecorrigeerd; drie tests
+kregen een guard tegen stil eindigen met code 0 bij een hangende promise.

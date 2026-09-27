@@ -1,5 +1,24 @@
 # Trainingskompas — Changelog
 
+## v4.70.2 — Concept2 fixed-distance corrective: CSAFE units, GOINUSE, GETSTATUS, verse read-back (27 september 2026)
+
+**Baseline:** `5489579d54bf41fac7f943ad0eed924a88144dce`. Acceptance: real-device capture RowErg 500 m.
+
+- **FIX 1** `concept2Csafe.js`: `UNITS.METERS` 0x21 (km) -> 0x24 (meters); fout commentaar gecorrigeerd.
+- **FIX 2** `concept2Csafe.js`: `CMD.GOINUSE = 0x85`, `encodeShortCommand`; sequence
+  SETHORIZONTAL -> SETPROGRAM -> GOINUSE. 500 m: `f1 21 03 f4 01 24 24 02 00 00 85 50 f2`
+  (was `f1 21 03 f4 01 21 24 02 00 00 d0 f2`).
+- **FIX 3** `concept2Programming.js` + `index.html` + transport: read-back uitsluitend uit het 0x31-packet
+  zelf (niet uit merged state), packet-sequence > acceptatie-sequence, type ∈ {2,3}, exacte duration,
+  duration type 0x80. Transport stempelt `packetSeq`; control-context draagt `muxSeq`.
+- **FIX 4** `concept2Programming.js`: `AWAITING_ACK` + GETSTATUS-vervolgframe (`f1 80 80 f2`); Reject/Bad/
+  Not Ready/geen antwoord -> geen succes.
+- **Developer Mode:** blok "CSAFE acknowledgement (GETSTATUS)".
+- **Tests:** nieuw `core/fConcept2FixedDistanceCorrective.test.js` (58, incl. 8 sabotages); bijgewerkt:
+  fConcept2Csafe, fConcept2Programming, -Verification, -Wiring, -UiWiring, -ProductionE2E, -DiagnosticsInstrumentation;
+  hang-guards tegen stille exit 0.
+- **Ongewijzigd:** RESET (niet toegevoegd), fixed-time, stop→resume, H3/H4/H5-lifecycle, timeout, schema, exercise-ID's.
+
 ## v4.70.1 — Concept2 Corrective FASE 2A.1: H5 completion-lifecycle voor losse ad-hoc instances (27 september 2026)
 
 **Fix.** `saveLosOefening()` rondt een ad-hoc `training_instance` af via de bestaande

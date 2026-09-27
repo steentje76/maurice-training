@@ -67,7 +67,9 @@ async function run() {
     }
     ok(be, 'E2E: 1000 m LITTLE-endian (E8 03) via publieke SETHORIZONTAL'); ok(!le, 'E2E: geen oude big-endian volgorde');
     e.controller.handleControlResponse(OK_F, CTX);
-    eq(e.controller.getState(), 'VERIFYING', 'E2E: Ok -> VERIFYING, niet PROGRAMMED');
+    eq(e.controller.getState(), 'AWAITING_ACK', 'E2E: direct Ok -> AWAITING_ACK (GETSTATUS-vervolgframe, FIX 4)');
+    e.controller.handleControlResponse(OK_F, CTX);
+    eq(e.controller.getState(), 'VERIFYING', 'E2E: GETSTATUS Ok -> VERIFYING, niet PROGRAMMED');
     e.fireTimeout();
     const r = await p;
     eq(r.attempted, true, 'E2E: attempted');
@@ -102,7 +104,7 @@ async function run() {
     eq(e.writes.length, 1, 'DUBBELTAP: exact één write');
     const rb = await b; eq(rb.confirmed, false, 'DUBBELTAP: tweede tik niet bevestigd');
     e.controller.handleControlResponse(OK_F, CTX); e.fireTimeout();
-    const ra = await a; eq(ra.confirmed, false, 'DUBBELTAP: zonder read-back niet bevestigd'); eq(e.writes.length, 1, 'DUBBELTAP: nog één write'); }
+    const ra = await a; eq(ra.confirmed, false, 'DUBBELTAP: zonder read-back niet bevestigd'); eq(e.writes.filter(w => w[1] === 0x21).length, 1, 'DUBBELTAP: nog één PROGRAMMEER-write'); eq(e.writes.filter(w => w[1] === 0x80).length, 1, 'DUBBELTAP: één GETSTATUS-vervolgwrite'); }
   { // manual / non-PM5 regressie
     const e1 = env(); eq((await e1.helper('EX', 'time', 600)).attempted, false, 'MANUAL: tijddoel wordt niet geprogrammeerd');
     eq(e1.writes.length, 0, 'MANUAL: nul writes bij tijddoel');
@@ -120,9 +122,9 @@ async function run() {
     let d = e.controller.getDiagnostics();
     eq(d.requestedDistanceM, 1000, 'DEV: aangevraagde afstand'); eq(d.state, 'WAITING_RESPONSE', 'DEV: state');
     eq(d.writeAttempted, 1, 'DEV: write attempted'); eq(d.writeCompleted, 1, 'DEV: write completed');
-    e.controller.handleControlResponse(OK_F, CTX);
+    e.controller.handleControlResponse(OK_F, CTX); e.controller.handleControlResponse(OK_F, CTX);
     d = e.controller.getDiagnostics();
-    eq(d.state, 'VERIFYING', 'DEV: VERIFYING zichtbaar na frame-acceptatie');
+    eq(d.state, 'VERIFYING', 'DEV: VERIFYING zichtbaar na frame-acceptatie (na GETSTATUS)');
     ok(!!d.frameHex, 'DEV: uitgaand frame-hex bewaard');
     ok(!!d.lastResponseHex, 'DEV: response-hex bewaard');
     eq(d.lastParse, 'ok', 'DEV: parse-resultaat bewaard');

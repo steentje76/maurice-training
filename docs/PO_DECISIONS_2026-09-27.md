@@ -4,6 +4,8 @@ Status: **DECISION RECORD — implementation and proof still required unless exp
 
 Baseline used for this decision round: `main@f8ea45bc487d2bf9a53618da10c09b92cfd056e0`.
 
+PCC synchronization record: `steentje76/trainingskompas-control-center#71` (merged as `5666ee0fc6db45101777dc0fecf5d8dde15f0b79`). Canonical PCC database application remains subject to the PCC human-authenticated governance gate.
+
 This record captures explicit product-owner decisions made after the audit/roadmap review. It does not by itself close audit gaps. `MERGED != CLOSED_PROVEN`: each implementation must still satisfy its closure contract, tests, runtime evidence and governance requirements.
 
 ## Decisions

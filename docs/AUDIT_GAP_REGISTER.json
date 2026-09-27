@@ -4,8 +4,8 @@
  "generated_against_main": "3415744992008607181e7a078483de372d989efd",
  "counts": {
   "entries": 68,
-  "open": 50,
-  "closed_proven": 18,
+  "open": 49,
+  "closed_proven": 19,
   "deferred_accepted": 0,
   "superseded": 2
  },
@@ -166,7 +166,7 @@
    "title": "### GAP-P2-011 — Geen dedicated `core/`-unit-test voor de HRV-baseline-functiegroep (Recovery-sprint)",
    "primary_track": "T4",
    "severity": "P2",
-   "status": "CLOSED",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": false,
    "dependency": null,
@@ -198,7 +198,7 @@
     "BEHAVIORAL UNIT VERIFIED: core/fHrvBaselineCanonicalization.test.js requires core/calculation.js and executes the real production functions, including minimum-data gates, SWC behavior, direction and determinism.",
     "REGISTRY COVERAGE VERIFIED: core/fCalculationRegistryCoverage.test.js now checks the canonical core/calculation.js location."
    ],
-   "closure_rationale": "Target intent achieved: HRV baseline logic is in pure reusable core/calculation.js and has a dedicated behavioral core test; the older statement that it lives only in index.html is stale.",
+   "closure_rationale": "Target intent achieved: HRV baseline logic is in pure reusable core/calculation.js (the canonical Calculation Engine) and has a dedicated behavioral core test; the older statement that it lives only in index.html is stale. Deviation from the literal Target: the module is core/calculation.js, not a new core/recovery.js; the gap text itself names calculation.js as a valid pure-core extraction and core/recovery.js only as an example ('bv.').",
    "status_history": [
     {
      "from": "OPEN",
@@ -206,8 +206,17 @@
      "date": "2026-09-27",
      "change_type": "EVIDENCE_RECONCILIATION",
      "reason": "Target intent achieved: HRV baseline logic is in pure reusable core/calculation.js and has a dedicated behavioral core test; the older statement that it lives only in index.html is stale."
+    },
+    {
+     "from": "CLOSED",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-09-27",
+     "change_type": "AUDIT_METADATA_CORRECTION",
+     "reason": "'CLOSED' is geen geldige registerstatus (check-doc-consistency BASELINE-1.0); evidence opnieuw geverifieerd op f8ea45bc487d2bf9a53618da10c09b92cfd056e0: index.html delegeert lnRmssd/hrvBaseline/hrvRollingRecent/hrvStPersonal/hrvDagFactorPersonal aan CalcCore, fHrvBaselineCanonicalization 69/69, fCalculationRegistryCoverage 5/5."
     }
-   ]
+   ],
+   "closure_verified_at_sha": "f8ea45bc487d2bf9a53618da10c09b92cfd056e0",
+   "closure_method": "read-only evidence re-verification (P2-011/P2-013 register repair); tests uitgevoerd op main"
   },
   {
    "gap_id": "GAP-P2-012",
@@ -245,14 +254,15 @@
    "title": "### GAP-P2-013 — Geen provenance-onderscheid tussen device-gemeten en split-afgeleid vermogen (Endurance & Erg",
    "primary_track": "T4",
    "severity": "P2",
-   "status": "CLOSED",
+   "status": "OPEN",
    "v1_scope": true,
    "blocker": false,
    "dependency": null,
    "evidence": [
-    "CODE VERIFIED: migratie_v548.sql adds watt_source provenance with canonical states concept2_measured/concept2_derived/manual/imported_unknown/unknown.",
-    "BEHAVIORAL UNIT VERIFIED: core/fWattProvenanceGapP2013.test.js executes extracted production logging/persistence paths and verifies manual vs derived provenance plus comparability filtering before watt-based PB/trend checks.",
-    "Negative controls verify incomparable watt provenance is excluded rather than silently compared."
+    "PARTIAL, CODE VERIFIED: migratie_v548.sql adds watt_source provenance with canonical states concept2_measured/concept2_derived/manual/imported_unknown/unknown.",
+    "PARTIAL, BEHAVIORAL UNIT VERIFIED: core/fWattProvenanceGapP2013.test.js covers the manual-form logging/persistence path (manual vs derived) and comparability filtering (wattComparableHistory) before watt-based PB/trend checks.",
+    "NOT COVERED, CODE VERIFIED on f8ea45bc487d2bf9a53618da10c09b92cfd056e0: the Concept2 PM5 persistence path (tkC2SessionRowFromLog -> Concept2Live.liveWorkoutToActual) writes watt without watt_source; index.html itself states concept2_measured is whitelisted for a device path that sets it nowhere.",
+    "NOT COVERED, DATA VERIFIED (read-only, production): the physically saved SkiErg PM5 session (training_instance ae226d65-24a1-4154-aca3-7de0dec000ec, 27-09-2026) has watt=167 and watt_source=NULL."
    ],
    "intended_closure": "expliciete provenance-vlag (`measured`/`derived`) toevoegen aan de opslag van erg-vermogenswaarden.",
    "section": "OPEN",
@@ -273,12 +283,6 @@
    "traceability_evidence": "Geen provenance-onderscheid tussen device-gemeten en split-afgeleid vermogen; closure vraagt een measured/derived-vlag op erg-vermogenswaarden. Raakt provenance en de Concept2-capability.",
    "traceability_scope": "CAPABILITY_SCOPED",
    "capability_id": "CALC-END-REGISTRY-001",
-   "closure_evidence": [
-    "CODE VERIFIED: migratie_v548.sql adds watt_source provenance with canonical states concept2_measured/concept2_derived/manual/imported_unknown/unknown.",
-    "BEHAVIORAL UNIT VERIFIED: core/fWattProvenanceGapP2013.test.js executes extracted production logging/persistence paths and verifies manual vs derived provenance plus comparability filtering before watt-based PB/trend checks.",
-    "Negative controls verify incomparable watt provenance is excluded rather than silently compared."
-   ],
-   "closure_rationale": "Target achieved: stored erg watt values carry explicit provenance and production progression logic uses provenance to prevent invalid cross-source comparisons.",
    "status_history": [
     {
      "from": "OPEN",
@@ -286,8 +290,16 @@
      "date": "2026-09-27",
      "change_type": "EVIDENCE_RECONCILIATION",
      "reason": "Target achieved: stored erg watt values carry explicit provenance and production progression logic uses provenance to prevent invalid cross-source comparisons."
+    },
+    {
+     "from": "CLOSED",
+     "to": "OPEN",
+     "date": "2026-09-27",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Closure door #470 niet volledig bewezen: acceptance vraagt provenance op opgeslagen erg-vermogen, maar het device/PM5-pad schrijft watt zonder watt_source (productiebewijs: SkiErg PM5-rij watt=167, watt_source=NULL). Handmatig pad blijft bewezen; restant in next_action."
     }
-   ]
+   ],
+   "next_action": "Restant: het Concept2 PM5-persistencepad moet watt_source zetten (concept2_measured bij door de PM5 gemeten vermogen, concept2_derived bij door de converter afgeleid vermogen, nooit een verzonnen default), met een gedragstest op dat pad; daarna closure opnieuw beoordelen."
   },
   {
    "gap_id": "GAP-P2-014",

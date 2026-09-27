@@ -265,6 +265,9 @@ export function appendRealDeviceBlocks(lines, s) {
         lines.push('  Runtime: ' + (rt.present ? ('gen ' + v(rt.generation) + ' · prog ' + v(rt.programmingState)) : 'afwezig'));
         lines.push('  Protocol: ' + v(pr.type) + ' · target ' + v(pr.target) + ' · instance ' + v(pr.instanceId) + ' · vergrendeld ' + v(pr.locked));
         lines.push('  sessionLog.c2: ' + (e.sessionLogC2Exists ? 'ja' : 'nee') + ' · laatste update ' + iso(e.sessionLogC2LastUpdateAt) + ' · cm bereikt ' + v(e.canonicalMeasurementsReached));
+        const cp = e.completion || {}, tk = cp.tracker, fz = cp.frozen;
+        lines.push('  PM5 completion: ' + (fz ? ('VASTGEZET (' + v(fz.reason) + ', state ' + v(fz.terminalState) + ', seq ' + v(fz.packetSeq) + ') ' + v(fz.distanceM) + ' m / ' + v(fz.elapsedTimeS) + ' s @ ' + iso(fz.at)) : 'niet vastgezet'));
+        if (tk) lines.push('    tracker: activiteit ' + v(tk.activitySeen) + ' · laatste state ' + v(tk.lastState) + ' (' + v(tk.lastClass) + ') · reden ' + v(tk.lastReason) + ' · genegeerd na freeze ' + (tk.ignoredAfterFreeze || 0) + (tk.lastIgnoredState != null ? ' (laatste state ' + tk.lastIgnoredState + ')' : ''));
       });
       const fi = lc.finish || {};
       lines.push('finishSession() aangeroepen: ' + (fi.calls || 0) + 'x' + (fi.lastCalledAt ? ' · laatst ' + iso(fi.lastCalledAt) : ''));

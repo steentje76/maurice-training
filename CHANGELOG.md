@@ -1,5 +1,20 @@
 # Trainingskompas — Changelog
 
+## v4.70.3 — Concept2 PM5 completion/freeze (27 september 2026)
+
+**Baseline:** `f7fc3537f60f54b6bc65392184a37a8dcbda4eb5` (PR #466).
+
+- `core/concept2Live.js`: `classifyPm5WorkoutState` (0 waiting · 1/4/5 active · 2/3/6-9 rest · 10/11/12 terminal ·
+  13 rearm), `pm5TerminalReason` (10 ended · 11 terminated · 12 logged), `createPm5CompletionTracker` (puur).
+- `index.html`: `tkC2NoteMeta`/`tkC2PacketMeta` (packet-identiteit vóór de ongewijzigde handoff),
+  `tkC2CompletionObserve` (guards: runtime generation/device, #466 acceptedMuxSeq read-only, lopende
+  programmering, opslagwaardigheid), `tkErgOnCanonicalMeasurement` overschrijft `.c2` niet meer na freeze,
+  `_c2connectedInner` toont de bevroren actual + "voltooid"/"afgebroken"-melding.
+- Developer Mode: tracker- en freeze-status per oefening; latere packets blijven zichtbaar.
+- Geen automatische DB-write of `finishSession()`; opslaan via bestaande routes.
+- Tests: nieuw `fConcept2PM5Completion` (46, incl. 9 sabotages, byte-niveau keten); `fConcept2FinalizeLifecycle`
+  +11 (save-flows na freeze). Release gate 404/404.
+
 ## v4.70.2 — Concept2 fixed-distance corrective: CSAFE units, GOINUSE, GETSTATUS, verse read-back (27 september 2026)
 
 **Baseline:** `5489579d54bf41fac7f943ad0eed924a88144dce`. Acceptance: real-device capture RowErg 500 m.

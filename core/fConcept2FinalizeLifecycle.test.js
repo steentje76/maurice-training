@@ -34,7 +34,8 @@ const FNS = ['finishSession', 'saveLosOefening', 'clearLosSessionState', 'losHas
   'tkErgOnCanonicalMeasurement', 'tkC2IsLoggableSummary', 'tkC2Converter', 'tkC2SessionRowFromLog', 'tkC2ExecutionCleanup',
   'tkErgDisconnect', 'tkErgDisconnectAll', '_c2rtTeardown', '_c2rtSet', '_c2rtGet', '_c2repaint', '_c2idleInner', '_c2note', '_c2btn',
   'cardioDataToRow', 'resolveCardioType', 'tkErgProtocolSection', 'tkErgProtocolProjectionFor', 'tkErgProtocolInstanceId',
-  'tkIsErgCardioType', 'execLeaveDiscard', 'resetLosAllState', 'resetLosExerciseSelection', 'buildStrengthSessionRow', 'tkC2TrainingExecIds'];
+  'tkIsErgCardioType', 'execLeaveDiscard', 'resetLosAllState', 'resetLosExerciseSelection', 'buildStrengthSessionRow', 'tkC2TrainingExecIds',
+  '_c2completionTracker', 'tkC2PacketMeta', 'tkC2NoteMeta', 'tkC2CompletionObserve', 'tkC2CompletionIgnored', 'tkC2FrozenFor'];
 const UNDEF = Symbol('undef');
 function deepNoop() {
   const f = function () { return deepNoop(); };
@@ -52,7 +53,7 @@ function makeWorld(html, over) {
     Concept2Live: C2L, DeviceCore: DC, DecisionCore: DecisionCore, sessionPrBase: {}, prFor: () => null, upsertExerciseGoalField: async () => {}, tkSetEvidence: UNDEF, CardioCore: CardioCore, ErgProtocolIdentity: EPI, IntervalEngineCore: IEC,
     liveWorkoutToActual: UNDEF, TKWeather: UNDEF, tkC2DiagFinishPath: UNDEF, tkC2DiagFinishEx: UNDEF, tkC2DiagFinishCalled: UNDEF, tkC2DiagOnCanonical: UNDEF,
     curT: 't1', trainStart: Date.now() - 60000, pausedAccumMs: 0, activeInstanceId: over.activeInstanceId || null,
-    sessionLog: {}, sessionExtra: [], finishSessionBezig: false, _tkErgPending: null, _ergProtocol: {}, _c2pair: {}, _c2rt: {}, _c2liveLast: {},
+    sessionLog: {}, sessionExtra: [], _c2completion: {}, _c2packetMeta: {}, finishSessionBezig: false, _tkErgPending: null, _ergProtocol: {}, _c2pair: {}, _c2rt: {}, _c2liveLast: {},
     LOS_DOMID: 'los', losSelectedExId: null,
     exercisesList: [], getSessionExs: () => env.exercisesList, getExerciseMuscles: () => [],
     ensureSessionExerciseRows: async () => {}, ensureExerciseRow: async () => {},
@@ -212,6 +213,36 @@ async function suite(html, label) {
     w.env.sessionLog.roeien = { cardio: { type: 'rowing' } };
     await w.api.finishSession(); R.r13c = w.writes.length; }
   // ── FASE 2A.1 (H5) — completion-lifecycle ──
+  // ── v4.70.3 PM5-freeze -> bestaande opslagroutes ──
+  const FZT = { getControlContext: () => ({ generation: 1, deviceId: 'A' }) }, FZE = seq => ({ metrics: { multiplexedId: '0x31', packetSeq: seq } });
+  const FZ = (w, exId) => {
+    const feed = (seq, cm) => { w.api.tkC2NoteMeta(exId, FZE(seq), FZT); w.api.tkErgOnCanonicalMeasurement(exId, cm); };
+    feed(1, { machineType: 'skierg', distanceM: 40, elapsedTimeS: 10, watts: 130, strokeRateSPM: 36, workoutState: 1 });
+    feed(2, { machineType: 'skierg', distanceM: 100, elapsedTimeS: 27.57, watts: 133, strokeRateSPM: 37, workoutState: 12 });
+    feed(3, { machineType: 'skierg', distanceM: 0, elapsedTimeS: 0, watts: 0, strokeRateSPM: 0, workoutState: 13 });
+    feed(4, { machineType: 'skierg', distanceM: 0, elapsedTimeS: 0, watts: 0, strokeRateSPM: 0, workoutState: 0 });
+  };
+  { const w = makeWorld(html); w.env.exIndex.skierg = EX.skierg; w.env.losSelectedExId = 'skierg';
+    w.env._ergProtocol.los = { type: 'distance', value: 100, instanceId: 'I-FZ' };
+    FZ(w, 'los');
+    R.fz1pre = { writes: w.writes.length, completes: w.completes.length, frozen: !!w.env.sessionLog.los.c2Completed };
+    await w.api.saveLosOefening(null);
+    R.fz1 = { rows: w.writes.length, dist: w.writes[0] && w.writes[0].distance, inst: w.writes[0] && w.writes[0].training_instance_id,
+      completes: w.completes.slice(), cleaned: !w.env.sessionLog.los && !w.env._ergProtocol.los }; }
+  { const w = makeWorld(html, { writeReturnsFalse: true }); w.env.exIndex.skierg = EX.skierg; w.env.losSelectedExId = 'skierg'; w.env.failWrites = 1;
+    w.env._ergProtocol.los = { type: 'distance', value: 100, instanceId: 'I-FZ2' };
+    FZ(w, 'los');
+    await w.api.saveLosOefening(null);
+    R.fz2a = { rows: w.writes.length, completes: w.completes.length, frozen: !!(w.env.sessionLog.los && w.env.sessionLog.los.c2Completed),
+      dist: w.env.sessionLog.los && w.env.sessionLog.los.c2.distanceM, inst: w.env._ergProtocol.los && w.env._ergProtocol.los.instanceId };
+    await w.api.saveLosOefening(null);
+    R.fz2b = { rows: w.writes.length, dist: w.writes[0] && w.writes[0].distance, inst: w.writes[0] && w.writes[0].training_instance_id, completes: w.completes.slice(), creates: w.creates.length }; }
+  { const w = makeWorld(html, { activeInstanceId: 'I-TRF' }); w.env.exercisesList = [EX.skierg];
+    FZ(w, 'skierg');
+    R.fz3pre = { writes: w.writes.length, completes: w.completes.length, busy: w.env.finishSessionBezig };
+    await w.api.finishSession();
+    R.fz3 = { rows: w.writes.length, dist: w.writes[0] && w.writes[0].distance, inst: w.writes[0] && w.writes[0].training_instance_id, completes: w.completes.slice() }; }
+
   // A. Losse PM5 succesvol -> row gekoppeld aan instance -> instance completed (na de write, vóór cleanup)
   { const w = makeWorld(html); w.env.exIndex.roeien = EX.roeien; w.env.losSelectedExId = 'roeien';
     w.env._ergProtocol.los = { type: 'distance', value: 500, instanceId: 'I-C1', prescription: IEC.normalizePrescription(EPI.continuousErgPrescription('rowing', 'distance', 500)) };
@@ -301,6 +332,18 @@ process.on('exit', function (code) { if (!finished && code === 0) { console.log(
   eq(JSON.stringify(R.r13s), JSON.stringify([['squat', 2, 105, null], ['roeien', null, null, 2000]]), 'R13: krachttraining + PM5-cardio in één sessie -> exact twee correcte rows');
   eq(JSON.stringify(R.r13sInst), JSON.stringify(['I-S', 'I-S']), 'R13: beide rows aan de training-instance gekoppeld');
   eq(R.r13c, 0, 'R13: leeg formulier zonder PM5 schrijft niets (ongewijzigd)');
+
+  // v4.70.3 PM5-freeze -> bestaande opslagroutes
+  eq(JSON.stringify(R.fz1pre), JSON.stringify({ writes: 0, completes: 0, frozen: true }), 'FZ1: PM5-finish bevriest zonder enige DB-write of completion');
+  eq(R.fz1.rows, 1, 'FZ1: Losse Opslaan na freeze -> exact één row'); eq(R.fz1.dist, 100, 'FZ1: row = bevroren 100 m (niet de latere 0 m)');
+  eq(R.fz1.inst, 'I-FZ', 'FZ1: row gekoppeld aan de ad-hoc instance'); eq(JSON.stringify(R.fz1.completes), JSON.stringify(['I-FZ']), 'FZ1: instance completed via bestaande route');
+  ok(R.fz1.cleaned, 'FZ1: cleanup pas na geslaagde opslag (sessionLog + protocol weg)');
+  ok(R.fz2a.rows === 0 && R.fz2a.completes === 0 && R.fz2a.frozen && R.fz2a.dist === 100 && R.fz2a.inst === 'I-FZ2', 'FZ2: opslagfout laat bevroren 100 m + instance intact');
+  ok(R.fz2b.rows === 1 && R.fz2b.dist === 100 && R.fz2b.inst === 'I-FZ2' && R.fz2b.creates === 0, 'FZ2: retry -> exact één row, dezelfde instance, geen nieuwe instance');
+  eq(JSON.stringify(R.fz2b.completes), JSON.stringify(['I-FZ2']), 'FZ2: instance pas na geslaagde retry completed');
+  eq(JSON.stringify(R.fz3pre), JSON.stringify({ writes: 0, completes: 0, busy: false }), 'FZ3: training-oefening: freeze start GEEN finishSession en schrijft niets');
+  ok(R.fz3.rows === 1 && R.fz3.dist === 100 && R.fz3.inst === 'I-TRF', 'FZ3: Training afronden schrijft de bevroren 100 m via de bestaande route');
+  eq(JSON.stringify(R.fz3.completes), JSON.stringify(['I-TRF']), 'FZ3: training-instance completed zoals voorheen');
 
   // FASE 2A.1
   eq(JSON.stringify(R.c1.completes), JSON.stringify(['I-C1']), 'C1: Losse PM5 succesvol -> ad-hoc instance completed (exact één keer)');

@@ -6916,6 +6916,7 @@ function tkErgSelect(exId, idx){
   tkErgConnectDevice(exId, idx);
 }
 function _c2connectedInner(exId, cm){
+  var _fz=(typeof tkC2FrozenFor==='function')?tkC2FrozenFor(exId):null; if(_fz&&_fz.measurement) cm=_fz.measurement; // v4.70.3: vastgezette actual tonen
   var st=_c2pair[exId]; var basis=(typeof Concept2Live!=='undefined')?Concept2Live.paceBasisFor(st.mt):500;
   var paceLbl=(basis===1000)?'/1000m':'/500m';
   var line='<div style="font-size:12px;color:var(--g4)">PM5 verbonden — wachten op trainingsdata</div>';
@@ -6930,6 +6931,8 @@ function _c2connectedInner(exId, cm){
     if(cm.heartRateBPM!=null) p.push('HR <b>'+Math.round(cm.heartRateBPM)+'</b>');
     line='<div style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:14px;color:var(--g5,#1a2b33)">'+p.join('<span style="opacity:.3">·</span>')+'</div>';
   }
+  if(_fz){ var _los=(typeof LOS_DOMID!=='undefined'&&exId===LOS_DOMID);
+    line='<div style="font-size:12px;font-weight:700;margin-bottom:4px;color:'+(_fz.reason==='terminated'?'var(--orange,#b45309)':'var(--green)')+'">'+(_fz.reason==='terminated'?'Workout afgebroken op de PM5 — resultaat vastgelegd':'✓ Workout voltooid op de PM5')+(_los?' · tik Opslaan':' · wordt opgeslagen bij Training afronden')+'</div>'+line; }
   return '<div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px;margin-bottom:6px"><span style="color:var(--green)">🟢</span> '+(_C2ERGLBL[st.cardioType]||'Concept2')+' verbonden · <span style="font-weight:600;color:var(--g4);font-size:11px">Concept2 PM5</span></div>'+
     line+'<button class="btn btn-o btn-sm" style="font-size:12px;margin-top:8px" onclick="tkErgDisconnect(\''+exId+'\')">Verbinding verbreken</button>';
 }
@@ -6994,7 +6997,7 @@ function tkErgConnectDevice(exId, idx){
         // verlaat hier de BLE-laag via één neutrale uitgaande aanroep, zoals _c2rtGet en
         // _c2repaint dat al doen. Deze functie noemt bewust geen sessie- of trainingsstate:
         // de isolatie-guard in fConcept2MidWorkoutIsolation blijft ongewijzigd groen.
-        try{ if(typeof tkErgOnCanonicalMeasurement==='function') tkErgOnCanonicalMeasurement(exId, cm); }catch(_hm){}
+        try{ if(typeof tkC2NoteMeta==='function') tkC2NoteMeta(exId, evt, t); if(typeof tkErgOnCanonicalMeasurement==='function') tkErgOnCanonicalMeasurement(exId, cm); }catch(_hm){}
         // Gate B.3: dezelfde canonieke telemetrie voedt de read-back verificatie.
         // Geen tweede stroom en geen protocolkennis hier: de controller vergelijkt zelf.
         try{
@@ -7391,7 +7394,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.2';
+const APP_VER = 'v4.70.3';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -22087,6 +22090,7 @@ function tkC2LifecycleSnapshot(){
     if(typeof _c2rt!=='undefined'&&_c2rt) for(k in _c2rt) ids[k]=1;
     if(typeof _ergProtocol!=='undefined'&&_ergProtocol) for(k in _ergProtocol) ids[k]=1;
     for(k in _c2diag.perEx) ids[k]=1;
+    if(typeof _c2completion!=='undefined'&&_c2completion) for(k in _c2completion) ids[k]=1;
     Object.keys(ids).forEach(function(id){
       var p=(typeof _c2pair!=='undefined'&&_c2pair)?_c2pair[id]:null;
       var r=(typeof _c2rt!=='undefined'&&_c2rt)?_c2rt[id]:null;
@@ -22100,7 +22104,10 @@ function tkC2LifecycleSnapshot(){
         protocol:ep?{ type:ep.type||null, target:(ep.value!=null?ep.value:null), instanceId:ep.instanceId||null, locked:!!ep.instanceId, busy:!!ep.busy }:{ type:'manual', target:null, instanceId:null, locked:false, busy:false, note:'geen _ergProtocol-entry (default Vrij)' },
         sessionLogC2Exists:!!(sl&&sl.c2),
         sessionLogC2LastUpdateAt:de?de.lastCanonicalAt:null,
-        canonicalMeasurementsReached:de?de.canonicalCount:0
+        canonicalMeasurementsReached:de?de.canonicalCount:0,
+        completion:{ tracker:(typeof _c2completion!=='undefined'&&_c2completion&&_c2completion[id])?_c2completion[id].snapshot():null,
+          frozen:(sl&&sl.c2Completed)?{ at:sl.c2Completed.at, reason:sl.c2Completed.reason, terminalState:sl.c2Completed.terminalState, packetSeq:sl.c2Completed.packetSeq,
+            distanceM:sl.c2Completed.measurement?sl.c2Completed.measurement.distanceM:null, elapsedTimeS:sl.c2Completed.measurement?sl.c2Completed.measurement.elapsedTimeS:null }:null }
       };
     });
   }catch(_){}
@@ -22111,12 +22118,62 @@ function tkC2LifecycleSnapshot(){
 }
 try{ if(typeof window!=='undefined') window.tkC2LifecycleSnapshot=tkC2LifecycleSnapshot; }catch(_){}
 
+// ══════════════════════════════════════════════════════════════════════════
+// PM5 COMPLETION / FREEZE (v4.70.3). Een geldige PM5-eindtoestand (10/11/12) zet de actual van
+// de oefening VAST in sessionLog[exId].c2Completed; daarna overschrijven latere packets (13 REARM,
+// 0 WAITTOBEGIN, een nieuwe workout) sessionLog[exId].c2 niet meer. GEEN database-write, GEEN
+// finishSession(): opslaan blijft bij de bestaande opslagroute (Losse: Opslaan; Training: Training
+// afronden). Wordt gewist met sessionLog zelf (na geslaagde opslag of bewust verwerpen).
+// ══════════════════════════════════════════════════════════════════════════
+var _c2completion={};
+function _c2completionTracker(exId){
+  var k=String(exId);
+  if(!_c2completion[k]&&typeof Concept2Live!=='undefined'&&Concept2Live&&typeof Concept2Live.createPm5CompletionTracker==='function') _c2completion[k]=Concept2Live.createPm5CompletionTracker();
+  return _c2completion[k]||null;
+}
+// Packet-identiteit + verbinding van DIT metric-event (read-only).
+function tkC2PacketMeta(evt, t){
+  var c=(t&&typeof t.getControlContext==='function')?t.getControlContext():{};
+  var m=(evt&&evt.metrics&&!evt.metrics.schema)?evt.metrics:null;
+  return { generation:(c&&c.generation!=null)?c.generation:null, deviceId:(c&&c.deviceId!=null)?c.deviceId:null,
+    packetId:m?(m.multiplexedId||null):null, packetSeq:(m&&m.packetSeq!=null)?m.packetSeq:null };
+}
+// One-shot packet-meta: de producer noteert hem vlak voor de (ongewijzigde) handoff tkErgOnCanonicalMeasurement(exId, cm).
+var _c2packetMeta={};
+function tkC2NoteMeta(exId, evt, t){ _c2packetMeta[String(exId)]=tkC2PacketMeta(evt, t); }
+// Levert een freeze-record of null. Guards: runtime generation/device, programmeer-acceptatie
+// (acceptedMuxSeq, read-only uit de bestaande controller-diagnostiek), activiteit vóór terminal,
+// en een opslagwaardige meting (tkC2IsLoggableSummary).
+function tkC2CompletionObserve(exId, cm){
+  var meta=_c2packetMeta[String(exId)]; delete _c2packetMeta[String(exId)];
+  if(!meta||typeof meta!=='object') return null;
+  var tr=_c2completionTracker(exId); if(!tr) return null;
+  var rt=(typeof _c2rt!=='undefined'&&_c2rt)?_c2rt[exId]:null;
+  if(rt&&((rt.generation!=null&&meta.generation!=null&&rt.generation!==meta.generation)||(rt.deviceId!=null&&meta.deviceId!=null&&rt.deviceId!==meta.deviceId))){ tr.note('runtime_mismatch'); return null; }
+  var pd=null; try{ pd=(rt&&rt.prog&&typeof rt.prog.getDiagnostics==='function')?rt.prog.getDiagnostics():null; }catch(_){ pd=null; }
+  var r=tr.observe(cm, { generation:meta.generation, deviceId:meta.deviceId, packetId:meta.packetId, packetSeq:meta.packetSeq,
+    acceptedMuxSeq:(pd&&pd.acceptedMuxSeq!=null)?pd.acceptedMuxSeq:null, holdUntilAccepted:!!(pd&&pd.isPending&&pd.acceptedMuxSeq==null) });
+  if(!r||!r.freeze) return null;
+  if(!(typeof tkC2IsLoggableSummary==='function'&&tkC2IsLoggableSummary(cm))){ tr.note('terminal_not_loggable'); return null; }
+  tr.consumed();
+  var copy=null; try{ copy=JSON.parse(JSON.stringify(cm)); }catch(_){ copy=null; }
+  return { at:Date.now(), reason:r.reason, terminalState:r.terminalState, generation:r.generation, deviceId:r.deviceId, packetSeq:r.packetSeq, measurement:copy };
+}
+function tkC2CompletionIgnored(exId, cm){ var tr=_c2completionTracker(exId); if(tr) tr.noteIgnored(cm); }
+function tkC2FrozenFor(exId){
+  return (typeof sessionLog!=='undefined'&&sessionLog&&sessionLog[exId]&&sessionLog[exId].c2Completed)?sessionLog[exId].c2Completed:null;
+}
+
 function tkErgOnCanonicalMeasurement(exId, cm){
   try{ if(typeof tkC2DiagOnCanonical==='function') tkC2DiagOnCanonical(exId, cm); }catch(_dg){} // DIAG, fail-open
   if(!exId || !cm || typeof cm!=='object') return;
   if(typeof sessionLog==='undefined' || !sessionLog) return;
   if(!sessionLog[exId]) sessionLog[exId]={};
+  // v4.70.3 FREEZE: na een geldige PM5-eindtoestand blijft de vastgezette actual staan; latere
+  // packets (13/0/nieuwe workout) overschrijven .c2 niet (de diagnostiek hierboven zag ze wel).
+  if(sessionLog[exId].c2Completed){ try{ if(typeof tkC2CompletionIgnored==='function') tkC2CompletionIgnored(exId, cm); }catch(_ci){} return; }
   sessionLog[exId].c2=cm;
+  try{ var _fz=(typeof tkC2CompletionObserve==='function')?tkC2CompletionObserve(exId, cm):null; if(_fz) sessionLog[exId].c2Completed=_fz; }catch(_co){}
 }
 
 // ══════════════════════════════════════════════════════════════════════════

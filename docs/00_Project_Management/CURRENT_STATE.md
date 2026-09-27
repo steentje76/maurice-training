@@ -6,7 +6,7 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.2
+v4.70.3
 
 ## Concept2 Fixed-Distance Corrective — CSAFE units, GOINUSE, GETSTATUS, verse read-back (v4.70.2, 27 september 2026)
 
@@ -21,6 +21,19 @@ v4.70.2
   programmeerframe. Direct Ok alleen is niet voldoende. Fail closed.
 - **Bewust niet:** RESET, fixed-time/H2, stop→resume, H3/H4/H5-lifecycle, schema, exercise-ID's.
   Status: wacht op hardware-hertest.
+
+## Concept2 PM5 completion/freeze (v4.70.3, 27 september 2026)
+
+- **Real-device aanleiding:** SkiErg, Losse, Distance 100 m werd correct geprogrammeerd (#466) en uitgevoerd;
+  de PM5 meldde workoutState 12 (WORKOUTLOGGED), maar TK deed daar niets mee en latere packets
+  (13 REARM / 0 WAITTOBEGIN / nieuwe workout) konden de actual overschrijven.
+- **Nu:** `Concept2Live.classifyPm5WorkoutState` + `createPm5CompletionTracker` (puur). Een terminal state
+  10/11/12 bevriest de actual in `sessionLog[exId].c2Completed` wanneer: eerder activiteit (1-9) is gezien,
+  in dezelfde generation+device, uit een echte 0x31, na #466-acceptatie, en de meting opslagwaardig is.
+  11 = `terminated`. Na freeze overschrijven latere packets `.c2` niet; diagnostiek ziet ze wel.
+- **Geen** automatische DB-write, **geen** automatische `finishSession()`; opslaan blijft via Losse
+  "Opslaan" en Training "Training afronden" (H3/H4/H5 ongewijzigd).
+- Nog fysiek te valideren: statevolgorde bij finish per machine, Vrij/JustRow-einde, afbreken (11), BikeErg/RowErg.
 
 ## Concept2 Corrective FASE 2A.1 — H5 completion-lifecycle (v4.70.1, 27 september 2026)
 
@@ -69,7 +82,7 @@ v4.70.2
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.2 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.3 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

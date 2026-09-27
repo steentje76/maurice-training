@@ -2398,3 +2398,18 @@ GETSTATUS-antwoord, en beide leiden tot FAILED.
 **Bewust niet.** RESET (eerst hardwaretest zonder), fixed-time, stop→resume, timeout (5000 ms).
 **Testintegriteit.** Tests die de weerlegde vector/semantiek vastlegden zijn gecorrigeerd; drie tests
 kregen een guard tegen stil eindigen met code 0 bij een hangende promise.
+
+## DEC-C2FIN-003 — PM5-finish bevriest de actual, schrijft niet (27 september 2026)
+
+**Context.** Hardware (SkiErg, 100 m): workoutState 12 (WORKOUTLOGGED, PM5 BT Smart Interface Definition
+rev. 1.30, Appendix A) werd genegeerd; last-write-wins kon de actual door REARM/nieuwe workout vervangen.
+
+**Besluit.** PM5-finish brengt de oefening in een lokale "voltooid, nog niet opgeslagen"-toestand
+(`sessionLog[exId].c2Completed`) en bevriest `.c2`. Geen automatische opslag: `sessions` heeft geen
+idempotentie-sleutel (alleen PK op id), een tweede schrijf-trigger naast de knop kan dubbele rijen geven,
+en in Training zou automatisch afronden de hele training beëindigen. Opslaan, completion en cleanup
+blijven bij de bestaande routes (H3/H4/H5). Freeze-guards: activiteit vóór terminal, generation+device,
+echte 0x31, #466 `acceptedMuxSeq` (read-only), opslagwaardigheid. 11 heet `terminated`.
+
+**Bewust niet.** RESET, fixed-time, stop→resume, intervalprogrammering, 0x39-decoding, Calculation/Decision/AI,
+exercise-ID-mapping.

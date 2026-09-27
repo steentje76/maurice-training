@@ -100,6 +100,78 @@
   // APK_OBSERVED WorkoutState-waarden (waiting/active/rest/countdown/calibrating).
   var WORKOUT_STATES = ['waiting', 'countdown', 'calibrating', 'active', 'rest', 'interval', 'ended'];
 
+  // ── PM5 COMPLETION (real-device, v4.70.3) ──
+  // OBJ_WORKOUTSTATE_T (Concept2 PM Bluetooth Smart Communication Interface Definition rev. 1.30,
+  // Appendix A): 0 WAITTOBEGIN, 1 WORKOUTROW, 2 COUNTDOWNPAUSE, 3 INTERVALREST, 4 INTERVALWORKTIME,
+  // 5 INTERVALWORKDISTANCE, 6 INTERVALRESTENDTOWORKTIME, 7 INTERVALRESTENDTOWORKDISTANCE,
+  // 8 INTERVALWORKTIMETOREST, 9 INTERVALWORKDISTANCETOREST, 10 WORKOUTEND, 11 TERMINATE,
+  // 12 WORKOUTLOGGED, 13 REARM.
+  function classifyPm5WorkoutState(n) {
+    if (n == null || n === '' || typeof n === 'boolean') return 'unknown';
+    n = Number(n);
+    if (!isFinite(n) || Math.round(n) !== n) return 'unknown';
+    if (n === 0) return 'waiting';
+    if (n === 1 || n === 4 || n === 5) return 'active';
+    if (n === 2 || n === 3 || (n >= 6 && n <= 9)) return 'rest';     // pauze/rust/overgang: NIET afgelopen
+    if (n >= 10 && n <= 12) return 'terminal';
+    if (n === 13) return 'rearm';
+    return 'unknown';
+  }
+  // 11 is een AFGEBROKEN workout: nooit als normale completion labelen.
+  function pm5TerminalReason(n) {
+    n = Number(n);
+    return n === 10 ? 'ended' : n === 11 ? 'terminated' : n === 12 ? 'logged' : null;
+  }
+  // Pure completion-tracker per oefening. Freeze-advies uitsluitend wanneer een terminal state
+  // (10/11/12) volgt op activiteit (1-9) binnen DEZELFDE generation + device, uit een echte 0x31,
+  // na eventuele programmeer-acceptatie. Schrijft niets; de aanroeper beslist over opslag.
+  function createPm5CompletionTracker() {
+    var bind = null, activitySeen = false, lastState = null, lastClass = null, lastReason = null;
+    var observations = 0, ignoredAfterFreeze = 0, lastIgnoredState = null, rebinds = 0, freezes = 0;
+    function res(freeze, reason, extra) {
+      lastReason = reason;
+      var o = { freeze: !!freeze, reason: reason };
+      if (extra) for (var k in extra) o[k] = extra[k];
+      return o;
+    }
+    function observe(cm, meta) {
+      meta = meta || {};
+      observations++;
+      if (meta.packetId != null && meta.packetId !== '0x31') return res(false, 'not_0x31');
+      var ws = (cm && typeof cm === 'object') ? cm.workoutState : null;
+      if (ws == null) return res(false, 'no_workout_state');
+      var g = meta.generation != null ? meta.generation : null, d = meta.deviceId != null ? meta.deviceId : null;
+      if (!bind || bind.generation !== g || bind.deviceId !== d) {
+        if (bind) rebinds++;
+        bind = { generation: g, deviceId: d }; activitySeen = false;
+      }
+      if (meta.holdUntilAccepted) return res(false, 'programming_pending');
+      if (meta.acceptedMuxSeq != null && (meta.packetSeq == null || !(Number(meta.packetSeq) > Number(meta.acceptedMuxSeq)))) {
+        return res(false, 'before_acceptance');
+      }
+      var cls = classifyPm5WorkoutState(ws);
+      lastState = Number(ws); lastClass = cls;
+      if (cls === 'active' || cls === 'rest') { activitySeen = true; return res(false, 'activity'); }
+      if (cls === 'waiting' || cls === 'rearm') { activitySeen = false; return res(false, cls); }
+      if (cls === 'terminal') {
+        if (!activitySeen) return res(false, 'terminal_without_activity');
+        return res(true, pm5TerminalReason(ws), { terminalState: Number(ws), generation: bind.generation,
+          deviceId: bind.deviceId, packetSeq: meta.packetSeq != null ? Number(meta.packetSeq) : null });
+      }
+      return res(false, 'unknown_state');
+    }
+    // Na een (door de aanroeper geaccepteerde) freeze is voor een VOLGENDE freeze nieuwe activiteit nodig.
+    function consumed() { freezes++; activitySeen = false; }
+    function noteIgnored(cm) { ignoredAfterFreeze++; lastIgnoredState = (cm && cm.workoutState != null) ? Number(cm.workoutState) : null; }
+    function note(reason) { lastReason = reason; }
+    function snapshot() {
+      return { bound: bind ? { generation: bind.generation, deviceId: bind.deviceId } : null, activitySeen: activitySeen,
+        lastState: lastState, lastClass: lastClass, lastReason: lastReason, observations: observations,
+        rebinds: rebinds, freezes: freezes, ignoredAfterFreeze: ignoredAfterFreeze, lastIgnoredState: lastIgnoredState };
+    }
+    return { observe: observe, consumed: consumed, noteIgnored: noteIgnored, note: note, snapshot: snapshot };
+  }
+
   // ── FAILURE MODEL (§26) + NL-microcopy ──
   var CONCEPT2_FAILURES = {
     bluetooth_unavailable: 'Bluetooth staat uit of is niet beschikbaar. Zet Bluetooth aan.',
@@ -387,6 +459,8 @@
     MACHINE_TYPES: MACHINE_TYPES, MACHINE_EXERCISE: MACHINE_EXERCISE, paceBasisFor: paceBasisFor, exerciseForMachine: exerciseForMachine,
     CONN_STATES: CONN_STATES, nextConnState: nextConnState,
     SESSION_STATES: SESSION_STATES, nextSessionState: nextSessionState, WORKOUT_STATES: WORKOUT_STATES,
+    classifyPm5WorkoutState: classifyPm5WorkoutState, pm5TerminalReason: pm5TerminalReason,
+    createPm5CompletionTracker: createPm5CompletionTracker,
     CONCEPT2_FAILURES: CONCEPT2_FAILURES, failureMessage: failureMessage,
     PAIRING_STATES: PAIRING_STATES, PAIRING_MICROCOPY: PAIRING_MICROCOPY, pairingMessage: pairingMessage,
     signalLabel: signalLabel, CARDIO_TO_MACHINE: CARDIO_TO_MACHINE, machineMatchesExercise: machineMatchesExercise,

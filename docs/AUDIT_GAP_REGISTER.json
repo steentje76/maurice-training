@@ -166,12 +166,14 @@
    "title": "### GAP-P2-011 — Geen dedicated `core/`-unit-test voor de HRV-baseline-functiegroep (Recovery-sprint)",
    "primary_track": "T4",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED",
    "v1_scope": true,
-   "blocker": "REVIEW_REQUIRED",
+   "blocker": false,
    "dependency": null,
    "evidence": [
-    "CODE VERIFIED, zie het Recovery-sprintrapport in `docs/`."
+    "CODE VERIFIED on current main: core/calculation.js exports the canonical HRV baseline function group (lnRmssd/hrvBaseline/hrvRollingRecent/hrvStPersonal/hrvDagFactorPersonal).",
+    "BEHAVIORAL UNIT VERIFIED: core/fHrvBaselineCanonicalization.test.js requires core/calculation.js and executes the real production functions, including minimum-data gates, SWC behavior, direction and determinism.",
+    "REGISTRY COVERAGE VERIFIED: core/fCalculationRegistryCoverage.test.js now checks the canonical core/calculation.js location."
    ],
    "intended_closure": "de HRV-baseline-functiegroep extraheren naar een pure `core/recovery.js`-module, analoog aan `core/trainingLoad.js`/`core/progression.js`.",
    "section": "OPEN",
@@ -190,7 +192,22 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "Geen dedicated core-unittest voor de HRV-baseline-functiegroep; closure vraagt extractie naar core/recovery.js binnen de recovery-registry. Raakt tevens de HRV-provenancecapability.",
    "traceability_scope": "CAPABILITY_SCOPED",
-   "capability_id": "CALC-REC-REGISTRY-001"
+   "capability_id": "CALC-REC-REGISTRY-001",
+   "closure_evidence": [
+    "CODE VERIFIED on current main: core/calculation.js exports the canonical HRV baseline function group (lnRmssd/hrvBaseline/hrvRollingRecent/hrvStPersonal/hrvDagFactorPersonal).",
+    "BEHAVIORAL UNIT VERIFIED: core/fHrvBaselineCanonicalization.test.js requires core/calculation.js and executes the real production functions, including minimum-data gates, SWC behavior, direction and determinism.",
+    "REGISTRY COVERAGE VERIFIED: core/fCalculationRegistryCoverage.test.js now checks the canonical core/calculation.js location."
+   ],
+   "closure_rationale": "Target intent achieved: HRV baseline logic is in pure reusable core/calculation.js and has a dedicated behavioral core test; the older statement that it lives only in index.html is stale.",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED",
+     "date": "2026-09-27",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Target intent achieved: HRV baseline logic is in pure reusable core/calculation.js and has a dedicated behavioral core test; the older statement that it lives only in index.html is stale."
+    }
+   ]
   },
   {
    "gap_id": "GAP-P2-012",
@@ -228,12 +245,14 @@
    "title": "### GAP-P2-013 — Geen provenance-onderscheid tussen device-gemeten en split-afgeleid vermogen (Endurance & Erg",
    "primary_track": "T4",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED",
    "v1_scope": true,
-   "blocker": "REVIEW_REQUIRED",
+   "blocker": false,
    "dependency": null,
    "evidence": [
-    "CODE VERIFIED, zie het Endurance & Erg-sprintrapport in `docs/`."
+    "CODE VERIFIED: migratie_v548.sql adds watt_source provenance with canonical states concept2_measured/concept2_derived/manual/imported_unknown/unknown.",
+    "BEHAVIORAL UNIT VERIFIED: core/fWattProvenanceGapP2013.test.js executes extracted production logging/persistence paths and verifies manual vs derived provenance plus comparability filtering before watt-based PB/trend checks.",
+    "Negative controls verify incomparable watt provenance is excluded rather than silently compared."
    ],
    "intended_closure": "expliciete provenance-vlag (`measured`/`derived`) toevoegen aan de opslag van erg-vermogenswaarden.",
    "section": "OPEN",
@@ -253,7 +272,22 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "Geen provenance-onderscheid tussen device-gemeten en split-afgeleid vermogen; closure vraagt een measured/derived-vlag op erg-vermogenswaarden. Raakt provenance en de Concept2-capability.",
    "traceability_scope": "CAPABILITY_SCOPED",
-   "capability_id": "CALC-END-REGISTRY-001"
+   "capability_id": "CALC-END-REGISTRY-001",
+   "closure_evidence": [
+    "CODE VERIFIED: migratie_v548.sql adds watt_source provenance with canonical states concept2_measured/concept2_derived/manual/imported_unknown/unknown.",
+    "BEHAVIORAL UNIT VERIFIED: core/fWattProvenanceGapP2013.test.js executes extracted production logging/persistence paths and verifies manual vs derived provenance plus comparability filtering before watt-based PB/trend checks.",
+    "Negative controls verify incomparable watt provenance is excluded rather than silently compared."
+   ],
+   "closure_rationale": "Target achieved: stored erg watt values carry explicit provenance and production progression logic uses provenance to prevent invalid cross-source comparisons.",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED",
+     "date": "2026-09-27",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Target achieved: stored erg watt values carry explicit provenance and production progression logic uses provenance to prevent invalid cross-source comparisons."
+    }
+   ]
   },
   {
    "gap_id": "GAP-P2-014",

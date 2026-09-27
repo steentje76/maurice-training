@@ -2413,3 +2413,18 @@ echte 0x31, #466 `acceptedMuxSeq` (read-only), opslagwaardigheid. 11 heet `termi
 
 **Bewust niet.** RESET, fixed-time, stop→resume, intervalprogrammering, 0x39-decoding, Calculation/Decision/AI,
 exercise-ID-mapping.
+
+## DEC-C2FIN-004 — Persistence false = failure; sessions-schema-contract (27 september 2026)
+
+**Context.** SkiErg Losse 100 m (v4.70.3): de freeze werkte, maar "Fout bij opslaan". Root cause: de payload bevatte
+`protocol_type`/`protocol_value` terwijl `migratie_v566.sql` (en `migratie_v565.sql`, `intervals_detail`) nog niet op
+productie waren uitgevoerd; PostgREST gaf 400 en `sbPostQ` gaf `false`. In `finishSession()` werd die `false`
+genegeerd (stil dataverlies voor Training-cardio). De tests mockten de schrijflaag en zagen het schema nooit.
+
+**Besluit.** (1) v565/v566 op productie uitgevoerd (door de PO); 39 kolommen, geverifieerd. Protocolvelden
+blijven in de payload — nooit strippen om schemafouten te omzeilen. (2) `false` is een mislukte write: geen
+`saved++`, geen completion, geen cleanup. (3) Retry-marker per oefening voorkomt dubbele rijen bij gedeeltelijk
+falen; hij leeft in `sessionLog` en verdwijnt met de sessie. (4) `watt` naar integer vóór persistence
+(deterministisch `Math.round`, alleen `sessions`, alleen dit veld). (5) Canoniek kolommanifest, live geverifieerd,
+bewaakt door een test die faalt zodra een sessions-migratie niet in het manifest is geverifieerd. Geen runtime-
+afhankelijkheid van productie of van het manifest.

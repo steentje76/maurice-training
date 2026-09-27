@@ -7394,7 +7394,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.3';
+const APP_VER = 'v4.70.4';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8624,7 +8624,17 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
 function newClientRowId(){
   return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('row-'+Date.now()+'-'+Math.random().toString(16).slice(2));
 }
+// v4.70.4 SCHEMA-CONTRACT public.sessions: watt is INTEGER (zie docs/db/sessions.columns.json). Afgeleide
+// Concept2-watt (1 decimaal) en handmatige invoer worden met de bestaande canonieke regel Math.round
+// (UI/cardio-velden) genormaliseerd VOOR persistence. Niet-numeriek blijft ongewijzigd: nooit verzinnen.
+function tkNormalizeSessionsRow(row){
+  if(!row||typeof row!=='object'||row.watt==null||row.watt==='') return row;
+  var n=Number(row.watt); if(typeof row.watt==='boolean'||!isFinite(n)) return row;
+  if(typeof row.watt==='number'&&Math.round(n)===n) return row;
+  var out=Object.assign({},row); out.watt=Math.round(n); return out;
+}
 async function sbPostQ(t,d){
+  if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);
   if(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]&&d&&d.id==null){ d={...d,id:newClientRowId()}; }
   const prefer=IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation';
   if(!navigator.onLine){await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return true;}
@@ -8660,6 +8670,7 @@ async function sbPostQ(t,d){
 // de compare-and-set-voorwaarde zelf staat al in f/d en wordt door
 // flushOfflineQueue() ongewijzigd meegestuurd bij de latere, echte poging.
 async function sbPatchQ(t,f,d,opts){
+  if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);
   const wantRows=opts&&opts.returnRows;
   if(!navigator.onLine){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return wantRows?{ok:true,rows:null,superseded:false}:true;}
   try{
@@ -23509,7 +23520,10 @@ async function finishSession(){
       const _ergProj=(typeof tkErgProtocolProjectionFor==='function')?tkErgProtocolProjectionFor(ex.id):null;
       const _ergInst=(typeof tkErgProtocolInstanceId==='function')?tkErgProtocolInstanceId(ex.id):null;
       const _protoCols=_ergProj?{protocol_type:_ergProj.protocol_type,protocol_value:_ergProj.protocol_value}:{};
-      await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow});saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
+      // v4.70.4: alleen een AANTOONBAAR geslaagde write telt (sbPostQ geeft bij een PostgREST-400 false).
+      // Retry schrijft een al gepersisteerde oefening niet opnieuw (geen dubbele rij).
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow}); if(_wOk!==true) throw new Error('session_write_rejected'); l._sessionRowPersistedAt=Date.now(); }
+      saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
       const ws=l.sets.filter(s=>s&&(s.kg||s.reps));if(!ws.length)continue;
@@ -23525,7 +23539,7 @@ async function finishSession(){
       row.weather=_weerData; // ROADMAP POST-V1 #3 — zie de berekening bovenaan finishSession()
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
-      await writeSessionRow(row);
+      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row); if(_wOkS!==true) throw new Error('session_write_rejected'); l._sessionRowPersistedAt=Date.now(); } // v4.70.4
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.

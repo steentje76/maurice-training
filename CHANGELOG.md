@@ -1,5 +1,22 @@
 # Trainingskompas — Changelog
 
+## v4.70.4 — Persistence hardening public.sessions (27 september 2026)
+
+**Baseline:** `7843c6b9e3c6e45e63a4f950413b2fcefc7b7816` (PR #466).
+
+- **Productie:** `migratie_v565.sql` + `migratie_v566.sql` uitgevoerd; `public.sessions` = 39 kolommen incl.
+  `intervals_detail`, `protocol_type`, `protocol_value`.
+- **Fysiek:** SkiErg Losse 100 m fixed-distance bewezen; terminal PM5-resultaat correct bevroren; na de migraties
+  is dezelfde bevroren sessie succesvol opgeslagen (één rij, instance completed).
+- `index.html` `finishSession()`: `writeSessionRow() === false` telt als mislukt (cardio én kracht), retry-marker
+  `_sessionRowPersistedAt` voorkomt dubbele rijen bij gedeeltelijke retry.
+- `index.html` `tkNormalizeSessionsRow()` in `sbPostQ`/`sbPatchQ` (alleen `sessions`): `watt` -> integer.
+- Nieuw: `docs/db/sessions.columns.json`, `tools/verify-sessions-schema.sql`, `core/fSessionsSchemaContract.test.js`.
+- `core/fConcept2FinalizeLifecycle.test.js`: echte `writeSessionRow`/`sbPostQ` tegen een nep-PostgREST die het
+  manifest afdwingt (onbekende kolom en decimaal in integer -> 400 -> `false`); sabotages: false-als-saved,
+  retry-marker weg, watt-normalisatie weg.
+- Niet gewijzigd: CSAFE, BLE, PM5-programmering, completion/freeze, protocolsemantiek.
+
 ## v4.70.3 — Concept2 PM5 completion/freeze (27 september 2026)
 
 **Baseline:** `f7fc3537f60f54b6bc65392184a37a8dcbda4eb5` (PR #466).

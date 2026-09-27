@@ -37,12 +37,36 @@ const FNS = ['finishSession', 'saveLosOefening', 'clearLosSessionState', 'losHas
   'tkIsErgCardioType', 'execLeaveDiscard', 'resetLosAllState', 'resetLosExerciseSelection', 'buildStrengthSessionRow', 'tkC2TrainingExecIds',
   '_c2completionTracker', 'tkC2PacketMeta', 'tkC2NoteMeta', 'tkC2CompletionObserve', 'tkC2CompletionIgnored', 'tkC2FrozenFor'];
 const UNDEF = Symbol('undef');
+const PERSIST_FNS = ['writeSessionRow', 'sbPostQ', 'sbRetryable', 'tkNormalizeSessionsRow', 'newClientRowId'];
 function deepNoop() {
   const f = function () { return deepNoop(); };
   return new Proxy(f, { get: (t, k) => (k === 'then' || k === Symbol.toPrimitive) ? undefined : deepNoop(), apply: () => deepNoop() });
 }
 function element(v) { return { value: v || '', style: {}, textContent: '', className: '', innerHTML: '', disabled: false, classList: { toggle() {}, add() {}, remove() {}, contains: () => false }, querySelectorAll: () => [], querySelector: () => null, setAttribute() {} }; }
 
+// v4.70.4 — nep-PostgREST die het canonieke sessions-manifest afdwingt zoals productie: onbekende kolom ->
+// 400 (PGRST204), decimaal in een integer-kolom -> 400 (22P02). sbPostQ zet een 400 om in false (geen throw).
+const MANIFEST = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/db/sessions.columns.json'), 'utf8'));
+function makePostgrest(opts) {
+  opts = opts || {}; const drop = new Set(opts.missing || []);
+  const cols = new Map(MANIFEST.columns.filter(c => !drop.has(c.name)).map(c => [c.name, c.type]));
+  const rows = [], rejects = [], queued = [];
+  const api = {
+    rows, rejects, queued, cols,
+    setMissing(list) { cols.clear(); const d = new Set(list || []); MANIFEST.columns.filter(c => !d.has(c.name)).forEach(c => cols.set(c.name, c.type)); },
+    async fetch(url, init) {
+      const table = String(url).split('/rest/v1/')[1].split('?')[0];
+      if (table !== 'sessions') return { ok: true, status: 201, text: async () => '[]', json: async () => [] };
+      const body = init.body;
+      for (const k of Object.keys(body)) {
+        if (!cols.has(k)) { rejects.push({ code: 'PGRST204', col: k }); return { ok: false, status: 400, text: async () => 'PGRST204 ' + k }; }
+        if (cols.get(k) === 'integer' && body[k] != null && !(typeof body[k] === 'number' && Math.round(body[k]) === body[k])) { rejects.push({ code: '22P02', col: k, value: body[k] }); return { ok: false, status: 400, text: async () => '22P02' }; }
+      }
+      rows.push(JSON.parse(JSON.stringify(body))); return { ok: true, status: 201, text: async () => '[]', json: async () => [] };
+    }
+  };
+  return api;
+}
 function makeWorld(html, over) {
   over = over || {};
   const events = []; const writes = []; const creates = []; const disconnects = []; const toasts = []; const completes = [];
@@ -70,8 +94,13 @@ function makeWorld(html, over) {
     window: { toast: (m) => toasts.push(m) }, toast: (m) => toasts.push(m),
     td: () => '2026-09-27', TK_IV_SPORT_LABEL: { rowing: 'RowErg', skierg: 'SkiErg', bikeerg: 'BikeErg' },
     snapshotFromCustomTraining: (def) => ({ source: 'custom_training', definition_id: def.id, intervalPrescription: def.intervalPrescription }),
-    console: { log() {}, warn() {}, error() {}, info() {} }, CARDIO_TYPES: null, CARDIO_TYPE_BY_ID: null
+    console: { log() {}, warn() {}, error() {}, info() {} }, CARDIO_TYPES: null, CARDIO_TYPE_BY_ID: null, IDEMPOTENT_TABELLEN_MET_CLIENT_ID: null
   };
+  if (over.pgrst) {        // ECHTE writeSessionRow -> sbPostQ -> tkNormalizeSessionsRow tegen de nep-PostgREST
+    const pg = over.pgrst;
+    Object.assign(env, { writeSessionRow: UNDEF, sbPostQ: UNDEF, SB_URL: 'https://x.supabase.co', navigator: { onLine: true },
+      SB_RETRY_STATUS: JSON.parse((html.match(/SB_RETRY_STATUS\s*=\s*(\[[^\]]*\])/) || [0, '[]'])[1]), sbFetch: (u, i) => pg.fetch(u, i), offlineQueueAdd: async (it) => { pg.queued.push(it); }, updateOfflineBadge: () => {} });
+  }
   Object.assign(env, over.env || {});
   const proxy = new Proxy(env, {
     has: () => true,
@@ -80,7 +109,8 @@ function makeWorld(html, over) {
   });
   const src = constSrc(html, 'const CARDIO_TYPES = {').replace('const CARDIO_TYPES', 'CARDIO_TYPES') + '\n' +
     constSrc(html, 'const CARDIO_TYPE_BY_ID').replace('const CARDIO_TYPE_BY_ID', 'CARDIO_TYPE_BY_ID') + '\n' +
-    FNS.map(n => fnSrc(html, n)).join('\n') + '\nreturn {' + FNS.join(',') + '};';
+    (over.pgrst ? constSrc(html, 'const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = {').replace('const IDEMPOTENT_TABELLEN_MET_CLIENT_ID', 'IDEMPOTENT_TABELLEN_MET_CLIENT_ID') + '\n' : '') +
+    FNS.concat(over.pgrst ? PERSIST_FNS : []).map(n => fnSrc(html, n)).join('\n') + '\nreturn {' + FNS.concat(over.pgrst ? PERSIST_FNS : []).join(',') + '};';
   const api = new Function('__env', 'with(__env){\n' + src + '\n}')(proxy);
   return { env, api, events, writes, creates, disconnects, toasts, completes, transport };
 }
@@ -213,6 +243,47 @@ async function suite(html, label) {
     w.env.sessionLog.roeien = { cardio: { type: 'rowing' } };
     await w.api.finishSession(); R.r13c = w.writes.length; }
   // ── FASE 2A.1 (H5) — completion-lifecycle ──
+  // ── v4.70.4 PERSISTENCE: echte writeSessionRow/sbPostQ tegen een manifest-afdwingende nep-PostgREST ──
+  const PM5W = { machineType: 'skierg', distanceM: 100, elapsedTimeS: 25.61, watts: null, strokeRateSPM: 37, workoutState: 12 }; // watts null -> afgeleid 166.7
+  const ERGP = () => IEC.normalizePrescription(EPI.continuousErgPrescription('skierg', 'distance', 100));
+  { const pg = makePostgrest(); const w = makeWorld(html, { activeInstanceId: 'I-P1', pgrst: pg }); w.env.exercisesList = [EX.skierg];
+    w.api.tkErgOnCanonicalMeasurement('skierg', PM5W); await w.api.finishSession();
+    R.p1 = { rows: pg.rows.length, watt: pg.rows[0] && pg.rows[0].watt, keysOk: pg.rows.every(r => Object.keys(r).every(k => pg.cols.has(k))), completes: w.completes.slice(),
+      toastOk: w.toasts.some(t => /oefeningen opgeslagen/.test(t)) }; }
+  { const pg = makePostgrest({ missing: ['intervals_detail'] }); const w = makeWorld(html, { activeInstanceId: 'I-P2', pgrst: pg }); w.env.exercisesList = [EX.skierg];
+    w.env._ergProtocol.skierg = { type: 'distance', value: 100, instanceId: 'I-ERG', prescription: ERGP() };
+    w.api.tkErgOnCanonicalMeasurement('skierg', PM5W);
+    await w.api.finishSession();
+    R.p2a = { rows: pg.rows.length, rejects: pg.rejects.map(r => r.code + ':' + r.col), completes: w.completes.length, okToast: w.toasts.some(t => /oefeningen opgeslagen/.test(t)),
+      failToast: w.toasts.some(t => /mislukt/i.test(t)), c2: !!(w.env.sessionLog.skierg && w.env.sessionLog.skierg.c2), proto: !!w.env._ergProtocol.skierg,
+      persisted: !!(w.env.sessionLog.skierg && w.env.sessionLog.skierg._sessionRowPersistedAt), busy: w.env.finishSessionBezig };
+    pg.setMissing([]);
+    await w.api.finishSession();
+    R.p2b = { rows: pg.rows.length, dist: pg.rows[0] && pg.rows[0].distance, watt: pg.rows[0] && pg.rows[0].watt, proto: pg.rows[0] && pg.rows[0].protocol_type,
+      completes: w.completes.slice(), cleaned: !w.env._ergProtocol.skierg }; }
+  { const pg = makePostgrest({ missing: ['protocol_type', 'protocol_value'] }); const w = makeWorld(html, { activeInstanceId: 'I-P3', pgrst: pg });
+    w.env.exercisesList = [{ id: 'squat', naam: 'Squat', type: 'strength' }, EX.skierg];
+    w.env.sessionLog.squat = { sets: [{ kg: '100', reps: '5', rpe: '8' }] };
+    w.env._ergProtocol.skierg = { type: 'distance', value: 100, instanceId: 'I-ERG3', prescription: ERGP() };
+    w.api.tkErgOnCanonicalMeasurement('skierg', PM5W);
+    await w.api.finishSession();
+    R.p3a = { rows: pg.rows.map(r => r.exercise_id), partialToast: w.toasts.some(t => /1 opgeslagen, 1 mislukt/.test(t)), completes: w.completes.length };
+    pg.setMissing([]); await w.api.finishSession();
+    R.p3b = { rows: pg.rows.map(r => r.exercise_id).sort(), completes: w.completes.slice(), strengthKeysOk: pg.rows.length > 0 && Object.keys(pg.rows[0]).every(k => pg.cols.has(k)) }; }
+  { const pg = makePostgrest(); const w = makeWorld(html, { pgrst: pg }); w.env.exIndex.skierg = EX.skierg; w.env.losSelectedExId = 'skierg';
+    w.env._ergProtocol.los = { type: 'distance', value: 100, instanceId: 'I-L4', prescription: ERGP() };
+    w.api.tkErgOnCanonicalMeasurement('los', PM5W); await w.api.saveLosOefening(null);
+    const pg2 = makePostgrest(); const w2 = makeWorld(html, { pgrst: pg2, fields: { 'los-time': '10:00', 'los-cals': '120', 'los-watt': '150.6' } });
+    w2.env.exIndex.assault = EX.assault; w2.env.losSelectedExId = 'assault'; await w2.api.saveLosOefening(null);
+    R.p4 = { rows: pg.rows.length, watt: pg.rows[0] && pg.rows[0].watt, keysOk: pg.rows.every(r => Object.keys(r).every(k => pg.cols.has(k))), inst: pg.rows[0] && pg.rows[0].training_instance_id,
+      manRows: pg2.rows.length, manWatt: pg2.rows[0] && pg2.rows[0].watt, manKeysOk: pg2.rows.every(r => Object.keys(r).every(k => pg2.cols.has(k))) }; }
+  { const pg = makePostgrest({ missing: ['protocol_type', 'protocol_value', 'intervals_detail'] }); const w = makeWorld(html, { pgrst: pg }); w.env.exIndex.skierg = EX.skierg; w.env.losSelectedExId = 'skierg';
+    w.env._ergProtocol.los = { type: 'distance', value: 100, instanceId: 'I-L5', prescription: ERGP() };
+    w.api.tkErgOnCanonicalMeasurement('los', PM5W); await w.api.saveLosOefening(null);
+    R.p5a = { rows: pg.rows.length, toast: w.toasts.some(t => /Fout bij opslaan/.test(t)), c2: !!(w.env.sessionLog.los && w.env.sessionLog.los.c2), inst: w.env._ergProtocol.los && w.env._ergProtocol.los.instanceId, completes: w.completes.length };
+    pg.setMissing([]); await w.api.saveLosOefening(null);
+    R.p5b = { rows: pg.rows.length, completes: w.completes.slice() }; }
+
   // ── v4.70.3 PM5-freeze -> bestaande opslagroutes ──
   const FZT = { getControlContext: () => ({ generation: 1, deviceId: 'A' }) }, FZE = seq => ({ metrics: { multiplexedId: '0x31', packetSeq: seq } });
   const FZ = (w, exId) => {
@@ -333,6 +404,23 @@ process.on('exit', function (code) { if (!finished && code === 0) { console.log(
   eq(JSON.stringify(R.r13sInst), JSON.stringify(['I-S', 'I-S']), 'R13: beide rows aan de training-instance gekoppeld');
   eq(R.r13c, 0, 'R13: leeg formulier zonder PM5 schrijft niets (ongewijzigd)');
 
+  // v4.70.4 persistence
+  ok(R.p1.rows === 1 && R.p1.watt === 167 && R.p1.keysOk && R.p1.toastOk, 'P1: training-cardio succes -> 1 row, decimale watt 166.7 -> integer 167, sleutels binnen manifest');
+  eq(JSON.stringify(R.p1.completes), JSON.stringify(['I-P1']), 'P1: completion zoals voorheen');
+  eq(R.p2a.rows, 0, 'P2: onbekende kolom (400/false) -> geen row');
+  ok(R.p2a.rejects.indexOf('PGRST204:intervals_detail') > -1, 'P2: nep-PostgREST weigerde de ontbrekende kolom (400 -> false, geen exception)');
+  ok(R.p2a.completes === 0 && !R.p2a.okToast && R.p2a.failToast, 'P2: false telt NIET als opgeslagen: geen completion, geen "opgeslagen", wel foutmelding');
+  ok(R.p2a.c2 && R.p2a.proto && !R.p2a.persisted && R.p2a.busy === false, 'P2: bevroren resultaat + protocol intact, niet gemarkeerd als gepersisteerd, retry mogelijk');
+  ok(R.p2b.rows === 1 && R.p2b.dist === 100 && R.p2b.watt === 167 && R.p2b.proto === 'distance', 'P2: retry na migratie -> exact één geldige row (incl. protocol_type)');
+  ok(JSON.stringify(R.p2b.completes) === JSON.stringify(['I-P2']) && R.p2b.cleaned, 'P2: completion + cleanup pas na de geslaagde retry');
+  ok(JSON.stringify(R.p3a.rows) === JSON.stringify(['squat']) && R.p3a.partialToast && R.p3a.completes === 0, 'P3: gedeeltelijk: kracht geschreven, cardio geweigerd, eerlijke melding, geen completion');
+  eq(JSON.stringify(R.p3b.rows), JSON.stringify(['skierg', 'squat']), 'P3: retry schrijft alleen de ontbrekende oefening -> geen dubbele kracht-row');
+  ok(JSON.stringify(R.p3b.completes) === JSON.stringify(['I-P3']) && R.p3b.strengthKeysOk, 'P3: completion na volledige opslag; kracht-payload binnen manifest');
+  ok(R.p4.rows === 1 && R.p4.watt === 167 && R.p4.keysOk && R.p4.inst === 'I-L4', 'P4: Losse PM5 -> 1 row, watt integer, sleutels binnen manifest');
+  ok(R.p4.manRows === 1 && R.p4.manWatt === 151 && R.p4.manKeysOk, 'P4: Losse handmatig -> watt 150.6 -> 151, sleutels binnen manifest');
+  ok(R.p5a.rows === 0 && R.p5a.toast && R.p5a.c2 && R.p5a.inst === 'I-L5' && R.p5a.completes === 0, 'P5: Losse zonder v565/v566 -> "Fout bij opslaan", bevroren + instance intact');
+  ok(R.p5b.rows === 1 && JSON.stringify(R.p5b.completes) === JSON.stringify(['I-L5']), 'P5: retry na migratie -> exact één row, dan completion');
+
   // v4.70.3 PM5-freeze -> bestaande opslagroutes
   eq(JSON.stringify(R.fz1pre), JSON.stringify({ writes: 0, completes: 0, frozen: true }), 'FZ1: PM5-finish bevriest zonder enige DB-write of completion');
   eq(R.fz1.rows, 1, 'FZ1: Losse Opslaan na freeze -> exact één row'); eq(R.fz1.dist, 100, 'FZ1: row = bevroren 100 m (niet de latere 0 m)');
@@ -384,6 +472,9 @@ process.on('exit', function (code) { if (!finished && code === 0) { console.log(
     ['instance vóór programmering (oude H5)', h => h.replace("instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot});\n  }", "}").replace("  let instanceId=null;\n  try{\n", "  let instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot});\n  try{\n"), R2 => R2.t10creates > 0],
     ['losse completion weg (H5 2A.1)', h => h.replace("    try{ await completeTrainingInstance(row.training_instance_id); }\r\n    catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)'", "    try{ void 0; }\r\n    catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)'"), R2 => R2.c1.completes.length === 0],
     ['losse completion vóór de write (H5 2A.1)', h => h.replace("  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)", "  if(row.training_instance_id){ try{ await completeTrainingInstance(row.training_instance_id); }catch(_s){} }\r\n  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)"), R2 => R2.c2a.completes.length > 0],
+    ['false telt weer als opgeslagen (training)', h => h.replace(" if(_wOk!==true) throw new Error('session_write_rejected');", ""), R2 => R2.p2a.completes > 0 || R2.p2a.okToast],
+    ['retry-marker weg (kracht)', h => h.replace("if(!l._sessionRowPersistedAt){ const _wOkS=", "if(true){ const _wOkS="), R2 => R2.p3b.rows.filter(x => x === 'squat').length > 1],
+    ['watt-normalisatie weg', h => h.replace("async function sbPostQ(t,d){\r\n  if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);", "async function sbPostQ(t,d){\r\n"), R2 => R2.p1.rows !== 1 || R2.p1.watt !== 167],
     ['eligibility te ruim (0 m / 0 s)', h => h.replace("return (isFinite(dn)&&dn>0)||(isFinite(en)&&en>0);", "return true;"), R2 => R2.t4zero > 0]
   ];
   for (const [name, mut, detects] of sab) {

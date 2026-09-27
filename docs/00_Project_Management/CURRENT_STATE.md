@@ -6,7 +6,7 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.3
+v4.70.4
 
 ## Concept2 Fixed-Distance Corrective — CSAFE units, GOINUSE, GETSTATUS, verse read-back (v4.70.2, 27 september 2026)
 
@@ -21,6 +21,22 @@ v4.70.3
   programmeerframe. Direct Ok alleen is niet voldoende. Fail closed.
 - **Bewust niet:** RESET, fixed-time/H2, stop→resume, H3/H4/H5-lifecycle, schema, exercise-ID's.
   Status: wacht op hardware-hertest.
+
+## Persistence hardening sessions (v4.70.4, 27 september 2026)
+
+- **Productie:** `migratie_v565.sql` en `migratie_v566.sql` zijn op productie uitgevoerd. `public.sessions` heeft
+  nu 39 kolommen, inclusief `intervals_detail`, `protocol_type` en `protocol_value` (read-only geverifieerd).
+- **Fysiek bewezen (SkiErg, Losse, Distance 100 m):** fixed-distance programmering (#466) werkt; het terminal
+  PM5-resultaat werd correct bevroren (100 m / 25,61 s); de eerdere "Fout bij opslaan" kwam door de ontbrekende
+  kolommen. Na de migraties is dezelfde bevroren sessie succesvol opgeslagen (één sessierij, instance completed).
+- **Vanaf v4.70.4:** `writeSessionRow() === false` (PostgREST 400) telt in `finishSession()` als mislukte opslag,
+  nooit als opgeslagen; geen completion of cleanup. Een gedeeltelijke retry dupliceert reeds geschreven rijen niet
+  (`_sessionRowPersistedAt`, wordt met `sessionLog` gewist). `watt` wordt vóór elke sessions-write/patch naar een
+  geheel getal genormaliseerd (kolom is integer).
+- **Schema-contract:** `docs/db/sessions.columns.json` (live geverifieerd t/m migratie 566) +
+  `tools/verify-sessions-schema.sql` + `core/fSessionsSchemaContract.test.js`; de payload-kant wordt in
+  `fConcept2FinalizeLifecycle` tegen een manifest-afdwingende nep-PostgREST getest.
+- **Niet fysiek bewezen:** RowErg/BikeErg-finish, fixed-time, intervallen, stop→resume.
 
 ## Concept2 PM5 completion/freeze (v4.70.3, 27 september 2026)
 
@@ -82,7 +98,7 @@ v4.70.3
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.3 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.4 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

@@ -72,7 +72,7 @@
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
-   "blocker": true,
+   "blocker": false,
    "dependency": null,
    "evidence": [
     "CODE VERIFIED, zie het Home/Dashboard-sprintrapport in `docs/`."
@@ -82,7 +82,7 @@
    "section": "OPEN",
    "offset": 2725,
    "severity_source": "explicit_field",
-   "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
+   "blocker_evidence": "Metadata alignment: GAP_ANALYSIS_V2 classifies the remaining issue as P2 discoverability with data-loss risk already removed; no gap closure or new product evidence.",
    "v1_evidence": "V1_SCOPE_MATRIX: Training = V1 MUST Ja",
    "secondary_tracks": [
     "T7"
@@ -95,7 +95,16 @@
    ],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "status_history": [
+    {
+     "from_blocker": true,
+     "to_blocker": false,
+     "date": "2026-09-27",
+     "change_type": "AUDIT_METADATA_CORRECTION",
+     "reason": "Metadata alignment: GAP_ANALYSIS_V2 classifies the remaining issue as P2 discoverability with data-loss risk already removed; no gap closure or new product evidence."
+    }
+   ]
   },
   {
    "gap_id": "GAP-P2-009",
@@ -253,7 +262,7 @@
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
-   "blocker": true,
+   "blocker": false,
    "dependency": null,
    "evidence": [
     "CODE VERIFIED, zie het Context Taxonomy-sprintrapport in `docs/`."
@@ -262,7 +271,7 @@
    "section": "OPEN",
    "offset": 7514,
    "severity_source": "explicit_field",
-   "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
+   "blocker_evidence": "Metadata alignment: CONTEXT_CONTRACT/MS-F3-06 explicitly classify this as an architecture inconsistency and no technical blocker; no gap closure or new product evidence.",
    "v1_evidence": "PO-besluit 16-09-2026",
    "track_evidence": "Capability-ID bevestigt trefwoordclassificatie",
    "primary_capability_id": "CTX-CONTRACT-001",
@@ -270,7 +279,16 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "ContextEngineCore is dode code, nooit aangeroepen vanuit index.html; closure betreft bedrading in buildCtx(), exact de verantwoordelijkheid van het context-contract.",
    "traceability_scope": "CAPABILITY_SCOPED",
-   "capability_id": "CTX-CONTRACT-001"
+   "capability_id": "CTX-CONTRACT-001",
+   "status_history": [
+    {
+     "from_blocker": true,
+     "to_blocker": false,
+     "date": "2026-09-27",
+     "change_type": "AUDIT_METADATA_CORRECTION",
+     "reason": "Metadata alignment: CONTEXT_CONTRACT/MS-F3-06 explicitly classify this as an architecture inconsistency and no technical blocker; no gap closure or new product evidence."
+    }
+   ]
   },
   {
    "gap_id": "GAP-P2-015",
@@ -909,21 +927,30 @@
    "severity": "P2",
    "status": "OPEN",
    "v1_scope": true,
-   "blocker": true,
+   "blocker": false,
    "dependency": null,
    "evidence": [],
    "intended_closure": "`created_by` op `ON DELETE SET NULL` in plaats van CASCADE, zodat het event (en de aanwezigheidshistorie van anderen) blijft bestaan met een",
    "section": "OPEN",
    "offset": 35876,
    "severity_source": "explicit_field",
-   "blocker_evidence": "expliciete blokkerende formulering in gaptekst",
+   "blocker_evidence": "Metadata alignment: F11_MS_F11_03_REPORT explicitly classifies this as P2 HARDENING, non-blocking for CLOSED; no gap closure or new product evidence.",
    "v1_evidence": "PO-besluit 16-09-2026",
    "primary_capability_id": null,
    "affected_capability_ids": [],
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "status_history": [
+    {
+     "from_blocker": true,
+     "to_blocker": false,
+     "date": "2026-09-27",
+     "change_type": "AUDIT_METADATA_CORRECTION",
+     "reason": "Metadata alignment: F11_MS_F11_03_REPORT explicitly classifies this as P2 HARDENING, non-blocking for CLOSED; no gap closure or new product evidence."
+    }
+   ]
   },
   {
    "gap_id": "GAP-P2-025",

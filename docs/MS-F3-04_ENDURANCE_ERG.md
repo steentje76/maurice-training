@@ -1,5 +1,25 @@
 # MS-F3-04_ENDURANCE_ERG.md — Trainingskompas
 
+## Reconciliatie 28 september 2026 — actuele source of truth
+
+De oorspronkelijke F3-audit hieronder is historisch correct voor het moment waarop hij is uitgevoerd, maar is door latere F6/B9-sprints gedeeltelijk ingehaald. Deze sectie heeft voor de actuele status voorrang op de historische tekst eronder.
+
+- **CALC-END-001 pace/speed/split:** canoniek en geverifieerd.
+- **CALC-END-002 erg-vermogen:** canoniek en geverifieerd.
+- **CALC-END-003 measured/derived provenance:** het oorspronkelijke generieke gap-item blijft als provenance-contract relevant; Concept2-runtime onderscheidt inmiddels wel expliciet gemeten versus afgeleid vermogen.
+- **CALC-END-004 Critical Speed:** inmiddels `LIVE_CANONICAL`; calculation, eligibility op `activities.is_max_effort`, history-integratie en UI bestaan. Context is aangesloten via `tkEnduranceCoachContext()`; Decision blijft bewust niet aangesloten.
+- **CALC-END-004B Critical Power:** inmiddels `LIVE_CANONICAL` met dezelfde architectuurgrens; cycling-eligibility gebruikt expliciet gemarkeerde max-effort-activiteiten met vermogensdata.
+- **CALC-END-005 TRIMP / aerobic decoupling / HR-zones:** blijft bewust `NOT_IMPLEMENTED`. Dit is geen vergeten implementatie: TRIMP en zones vereisen een expliciete methode/evidence-keuze; aerobic decoupling kan met de huidige activity/lap-granulariteit niet valide uit continue paired HR/performance-data worden berekend.
+- **CALC-END-006 Endurance Target Normalization:** geverifieerde technische normalisatielaag; geen fysiologische berekening en geen Decision Rule.
+
+### Actuele acceptance-gate-toetsing
+
+De letterlijke gate blijft *"Pace/power/zones/CS/CP/decoupling/erg metrics."* Pace/power/CS/CP/erg zijn nu aantoonbaar aanwezig. Zones en decoupling zijn nog niet geïmplementeerd en worden niet gefabriceerd om de roadmap administratief te sluiten. Daarom blijft **MS-F3-04 = TESTED, niet CLOSED**. Het resterende werk is evidence-/datamodel-/productkeuze-afhankelijk en is geen P1-runtimebug.
+
+---
+
+## Historische F3-audit
+
 **Auditmethode:** volledige lezing van `core/cardio.js` (pace/split/power/tijd), `core/intervalEngine.js` (work/recovery-blokprescriptie), en `CARDIO_TYPES` (index.html). Repo-brede zoekactie naar TRIMP/critical-speed/critical-power/decoupling/HR-zones.
 
 ## Belangrijke bevinding: bestaande, bewuste scope-grens gevonden en bevestigd

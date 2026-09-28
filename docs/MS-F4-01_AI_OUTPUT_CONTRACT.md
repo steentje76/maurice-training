@@ -1,5 +1,23 @@
 # MS-F4-01_AI_OUTPUT_CONTRACT.md — Trainingskompas
 
+## Reconciliatie 28 september 2026 — actuele source of truth
+
+De oorspronkelijke F4-audit hieronder beschrijft correct wat MS-F4-01 destijds bouwde, maar de runtime is daarna verder gehardend. Deze sectie heeft voor de actuele maturity voorrang.
+
+- Dezelfde `AIOutputContract.validateAiOutputText()` wordt inmiddels **server-side** in `netlify/functions/coach.js` toegepast op alle teruggegeven tekstblokken. Een gemanipuleerde client kan de outputgovernance daardoor niet meer omzeilen.
+- Een contractschending wordt server-side gelogd als `ai.coach.output_contract_violation` en de afgekeurde tekst wordt vervangen door `safeCoachFallback()`; de ruwe tekst wordt niet aan de client doorgegeven.
+- `[[APPLY:exerciseId:kg]]`-markers krijgen aanvullend server-side een absolute `CalcCore.validateProposedWeight()`-grens. De reeds bestaande client-side, e1RM-relatieve validatie blijft de contextgevoelige tweede grens.
+- Programmagenereringspaden behouden hun eigen schema-/exercise-ID-validatie en menselijke preview/bevestiging.
+- Het resterende volledige structured-JSON/reference-contract voor vrije coachproza blijft **GAP-P2-016**: een mogelijke toekomstige architectuurverandering, geen huidige P1-runtimeblokkade.
+
+### Actuele acceptance-gate-toetsing
+
+De letterlijke gate is *"Schema/contract tests; no invented values/diagnosis language."* De huidige architectuur heeft contracttests en technisch afgedwongen diagnose-/risicotaalblokkades, plus deterministische guards voor toepasbare numerieke gewichten. Vrije coachproza is echter nog geen volledig typed/structured output waarin ieder willekeurig genoemd getal naar een canonieke Calculation/Decision-ID kan worden gevalideerd. Daarom blijft **MS-F4-01 = TESTED** en wordt het structured-reference-contract niet kunstmatig als P1 gebouwd of als CLOSED voorgesteld.
+
+---
+
+## Historische F4-audit
+
 **Auditmethode:** repo-brede zoekactie naar alle AI/LLM-aanroeppaden, lezing van elk van de 6 gevonden prompts, en een gerichte Shadow Decision Audit.
 
 ## Baseline audit

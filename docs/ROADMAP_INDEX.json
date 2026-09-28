@@ -1306,8 +1306,10 @@
    302,
    303,
    304,
-   358
-  ]
+   358,
+   466
+  ],
+  "next_action": "PR #466 is afgerond en gemerged op main fdf3062a. Bewezen op fysieke SkiErg: fixed-distance 100 m programmering, PM5 terminal completion/freeze en succesvolle sessions-persistentie na schemahardening. Resterend binnen MS-F5-02: fysieke RowErg- en BikeErg-finish/persistentie; fixed-time-programmering; interval-workouts; stop→resume; volledige production-like drie-machine-validatiematrix. Niet als blokkerende P1-bouwbug behandelen: GAP-F5-003/GAP-P2-020 multiple HR-source precedence blijft P2 en vereist een expliciete productkeuze. RESET en timeout blijven ongewijzigd tenzij nieuwe hardware-evidence een wijziging vereist."
  },
  {
   "id": "MS-F5-03",

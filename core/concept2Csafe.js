@@ -35,6 +35,10 @@
 
   // ── COMMANDO'S (rev. 0.31, Table 11/12 + PM Set Configuration Commands) ────
   var CMD = { SETHORIZONTAL: 0x21, SETPROGRAM: 0x24,
+    /* Publieke CSAFE short commands (PM5 CSAFE Communication Definition rev. 0.27,
+       "Public Short Commands"): command-byte zonder byte count en zonder data. */
+    GETSTATUS: 0x80,            // response: statusbyte (Table 9)
+    GOINUSE: 0x85,              // Ready/Idle/HaveID -> In Use: geconfigureerde workout wordt actief
     SETUSERCFG1: 0x1A,          // publieke CSAFE-wrapper voor PM-specifieke commando's
     C2_PROPRIETARY_WRAPPER: 0x76,
     PM_SET_WORKOUTTYPE: 0x01,   // Byte 0: Workout Type
@@ -101,6 +105,11 @@
   }
 
   /* Eén CSAFE-commando: [command, byteCount, ...data] */
+  /* Short command (MS-bit gezet, 0x80-0xFF): uitsluitend het command-byte (Figure 4). */
+  function encodeShortCommand(command) {
+    if (!isByte(command) || command < 0x80) throw new Error('csafe: geen short command');
+    return [command];
+  }
   function encodeCommand(command, data) {
     data = data || [];
     if (!isByte(command)) throw new Error('csafe: ongeldig command-byte');
@@ -140,22 +149,28 @@
   }
 
   /* Generieke fixed-distance workout. 1000 m is nergens een uitzondering. */
-  /* Fixed-distance workout, OFFICIAL_CONFIRMED volgens de gewerkte sample
-   * "Public CSAFE Workout Configuration - Fixed Distance" in CSAFE rev. 0.31.
-   *
-   * De eerdere implementatie gebruikte de C2 proprietary wrapper 0x76 met
-   * SET_WORKOUTTYPE/SET_WORKOUTDURATION/CONFIGURE_WORKOUT. De PM5 accepteerde dat
-   * frame syntactisch (Previous Frame Status = Ok) maar configureerde geen workout:
-   * fysiek bleef het scherm ongewijzigd. De officiele weg is het PUBLIEKE
-   * CSAFE-pad, met SETPROGRAM als activatie:
+  /* Fixed-distance workout via het PUBLIEKE CSAFE-pad.
    *
    *   0x21 CSAFE_SETHORIZONTAL_CMD   byte count 3
    *        Byte 0: Horizontal Distance (LSB)      <- 2-byte LITTLE-endian
    *        Byte 1: Horizontal Distance (MSB)
-   *        Byte 2: Units Specifier (0x21 = meters)
+   *        Byte 2: Units Specifier = 0x24 (CSAFE_DISTANCE_METER_0_0)
    *   0x24 CSAFE_SETPROGRAM_CMD      byte count 2
    *        Byte 0: WORKOUTNUMBER_PROGRAMMED (0x00)
    *        Byte 1: <don't care>
+   *   0x85 CSAFE_GOINUSE_CMD         short command
+   *
+   * CORRECTIE (hardware-bewezen, RowErg PM5 430621526, 500 m): de vorige versie
+   * gebruikte units 0x21 en noemde dat "meters". 0x21 is CSAFE_DISTANCE_KM_0_0:
+   *   - Concept2 PM3/PM4 CSAFE-spec, gewerkte sample: "0x21 0x03 0x02 0x00 0x21
+   *     (CSAFE_SETHORIZONTAL_CMD, 2 x Km units specifier)";
+   *   - Concept2 SDK csafe.h: CSAFE_DISTANCE_KM_0_0 = 0x21, CSAFE_DISTANCE_METER_0_0 = 0x24;
+   *   - onafhankelijk: PyRow (36 = meters), easy-erg (36), ErgometerJS en een PM5-emulator
+   *     (DISTANCE_METER_0_0 = 0x24).
+   * TK vroeg dus 500 KM aan. Daarnaast ontbrak GOINUSE: volgens rev. 0.27 ("Setting Up
+   * and Performing Workout") wordt vanuit READY eerst geconfigureerd en daarna de PM naar
+   * het workoutscherm (INUSE) gebracht; op de hardware bleef de state Ready (1).
+   * RESET is bewust NIET toegevoegd (eerst hardwaretest zonder RESET).
    *
    * Bereik: Table 19 (PM5 Workout Configuration Parameter Limits),
    * horizontal distance goal 100 m t/m 50.000 m.
@@ -163,8 +178,7 @@
    * Let op: dit is een ANDER bereik en een ANDERE byte-order dan
    * CSAFE_PM_SET_WORKOUTDURATION (32-bit big-endian, 100-999999 m). Dat commando
    * hoort bij het PM-proprietary pad en wordt hier bewust niet gebruikt. */
-  /* OFFICIAL_CONFIRMED - CSAFE rev. 0.31, publieke commandotabel. */
-  var UNITS = { METERS: 0x21 };
+  var UNITS = { METERS: 0x24 };
   var WORKOUTNUMBER = { PROGRAMMED: 0x00 };
   /* Table 19: horizontal distance goal 100 m - 50.000 m. */
   var HORIZONTAL_MIN_M = 100, HORIZONTAL_MAX_M = 50000;
@@ -184,14 +198,20 @@
     var d = Math.round(distanceMeters);
     var cmds = []
       .concat(encodeCommand(CMD.SETHORIZONTAL, [d & 0xFF, (d >>> 8) & 0xFF, UNITS.METERS]))
-      .concat(encodeCommand(CMD.SETPROGRAM, [WORKOUTNUMBER.PROGRAMMED, 0x00]));
+      .concat(encodeCommand(CMD.SETPROGRAM, [WORKOUTNUMBER.PROGRAMMED, 0x00]))
+      .concat(encodeShortCommand(CMD.GOINUSE));
     var frame = encodeStandardFrame(cmds);
     return {
       ok: true,
       requestedDistanceM: d,
-      workoutType: WORKOUT_TYPE.FIXEDDIST_NOSPLITS,
+      /* De PM kent zelf standaard-splits toe na SETHORIZONTAL (Concept2 PM3/PM4 spec),
+         dus de read-back mag FIXEDDIST_NOSPLITS (2) of FIXEDDIST_SPLITS (3) zijn. Het
+         type ALLEEN bewijst nooit iets: duration + duration type moeten ook kloppen. */
+      workoutType: null,
+      acceptedWorkoutTypes: [WORKOUT_TYPE.FIXEDDIST_NOSPLITS, WORKOUT_TYPE.FIXEDDIST_SPLITS],
       durationType: DURATION_TYPE.DISTANCE,
-      commandSequence: ['CSAFE_SETHORIZONTAL_CMD', 'CSAFE_SETPROGRAM_CMD'],
+      unitsSpecifier: UNITS.METERS,
+      commandSequence: ['CSAFE_SETHORIZONTAL_CMD', 'CSAFE_SETPROGRAM_CMD', 'CSAFE_GOINUSE_CMD'],
       frame: frame,
       hex: frame.map(function (b) { return (b < 16 ? '0' : '') + b.toString(16); }).join('')
     };
@@ -226,6 +246,16 @@
     };
   }
 
+  /* GETSTATUS follow-up (FIX 4). Het statusbyte draagt "Previous Frame Status" (Table 9):
+   * de uitkomst van het VORIGE frame. Parameterfouten worden bij SETPROGRAM gemeld als
+   * "PrevReject" (rev. 0.27, Programmed Workout Parameter Limits). Het antwoord op dit
+   * GETSTATUS-frame rapporteert dus de uitkomst van het programmeerframe. */
+  function buildGetStatusFrame() {
+    var frame = encodeStandardFrame(encodeShortCommand(CMD.GETSTATUS));
+    return { ok: true, frame: frame, commandSequence: ['CSAFE_GETSTATUS_CMD'],
+             hex: frame.map(function (b) { return (b < 16 ? '0' : '') + b.toString(16); }).join('') };
+  }
+
   /* Alleen Previous Frame Status = Ok bevestigt acceptatie van het vorige frame. */
   function isProgrammingConfirmed(parsed) {
     return !!(parsed && parsed.ok === true && parsed.previousFrameStatus === PREVIOUS_FRAME_STATUS.OK);
@@ -242,7 +272,9 @@
     encodeCommand: encodeCommand, encodeC2Wrapper: encodeC2Wrapper,
     encodeStandardFrame: encodeStandardFrame, encodeDistanceBE32: encodeDistanceBE32,
     validateDistance: validateDistance, buildFixedDistanceWorkout: buildFixedDistanceWorkout,
-    parseResponseFrame: parseResponseFrame, isProgrammingConfirmed: isProgrammingConfirmed
+    parseResponseFrame: parseResponseFrame, isProgrammingConfirmed: isProgrammingConfirmed,
+    encodeShortCommand: encodeShortCommand, buildGetStatusFrame: buildGetStatusFrame,
+    UNITS: UNITS
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = Concept2Csafe;
   else global.Concept2Csafe = Concept2Csafe;

@@ -97,15 +97,20 @@ async function run() {
     ok(!le, 'E2E: geen oude big-endian volgorde E8 03 00 00');
     eq(f[0], CSAFE.FLAG.STANDARD_START, 'E2E: frame start F1');
     h.emitCtrl(OK_F);                                   // via de echte transport-routing
-    // Gate B.2: Previous Frame Status Ok levert FRAME_ACCEPTED/VERIFYING, GEEN Execution.
-    eq(h.controller.getState(), S.VERIFYING, 'E2E: Ok -> VERIFYING, niet PROGRAMMED');
+    eq(h.controller.getState(), S.AWAITING_ACK, 'E2E: direct Ok -> AWAITING_ACK (FIX 4)');
+    eq(h.writes.length, 2, 'E2E: GETSTATUS-vervolgframe via de echte transport geschreven');
+    eq(h.writes[1].chr, U('21').toLowerCase(), 'E2E: GETSTATUS gaat ook naar CE060021');
+    eq(Array.from(h.writes[1].bytes).map(b => (b < 16 ? '0' : '') + b.toString(16)).join(''), 'f18080f2', 'E2E: vervolgframe = GETSTATUS');
+    h.emitCtrl(OK_F);                                   // GETSTATUS-antwoord
+    // Previous Frame Status Ok (via GETSTATUS) levert FRAME_ACCEPTED/VERIFYING, GEEN Execution.
+    eq(h.controller.getState(), S.VERIFYING, 'E2E: GETSTATUS Ok -> VERIFYING, niet PROGRAMMED');
     eq(h.exec.starts, 0, 'E2E: FRAME_ACCEPTED start GEEN Execution (read-back volgt in B.3)');
     h.fireTimeout();
     const r = await started;
     eq(r.started, false, 'E2E: zonder read-back geen Execution (fail closed)');
     eq(r.state, S.TIMEOUT, 'E2E: eindstate TIMEOUT na FRAME_ACCEPTED zonder verificatie');
     eq(h.exec.starts, 0, 'E2E: nul Execution-starts');
-    eq(h.writes.length, 1, 'E2E: nog steeds één write');
+    eq(h.writes.filter(w => w.bytes[1] === 0x21).length, 1, 'E2E: nog steeds één PROGRAMMEER-write');
   }
   // ── negatieve production-scenario's: nul Execution-starts ──
   for (const [frame, want, label] of [[REJECT_F, S.FAILED, 'REJECT'], [BAD_F, S.FAILED, 'BAD']]) {
@@ -164,7 +169,7 @@ async function run() {
     const ra = await a;
     eq(ra.started, false, 'DUBBELTAP: zonder read-back geen Execution');
     eq(h.exec.starts, 0, 'DUBBELTAP: nul Execution-starts');
-    eq(h.writes.length, 1, 'DUBBELTAP: nog steeds één write');
+    eq(h.writes.filter(w => w.bytes[1] === 0x21).length, 1, 'DUBBELTAP: nog steeds één PROGRAMMEER-write');
   }
   { const h = P(); await h.connect();                    // write-fout
     const h2 = makeProduction({ pm5: true, writeRejects: true }); await h2.connect();

@@ -1,5 +1,56 @@
 # Trainingskompas — Changelog
 
+## v4.70.4 — Persistence hardening public.sessions (27 september 2026)
+
+**Baseline:** `7843c6b9e3c6e45e63a4f950413b2fcefc7b7816` (PR #466).
+
+- **Productie:** `migratie_v565.sql` + `migratie_v566.sql` uitgevoerd; `public.sessions` = 39 kolommen incl.
+  `intervals_detail`, `protocol_type`, `protocol_value`.
+- **Fysiek:** SkiErg Losse 100 m fixed-distance bewezen; terminal PM5-resultaat correct bevroren; na de migraties
+  is dezelfde bevroren sessie succesvol opgeslagen (één rij, instance completed).
+- `index.html` `finishSession()`: `writeSessionRow() === false` telt als mislukt (cardio én kracht), retry-marker
+  `_sessionRowPersistedAt` voorkomt dubbele rijen bij gedeeltelijke retry.
+- `index.html` `tkNormalizeSessionsRow()` in `sbPostQ`/`sbPatchQ` (alleen `sessions`): `watt` -> integer.
+- Nieuw: `docs/db/sessions.columns.json`, `tools/verify-sessions-schema.sql`, `core/fSessionsSchemaContract.test.js`.
+- `core/fConcept2FinalizeLifecycle.test.js`: echte `writeSessionRow`/`sbPostQ` tegen een nep-PostgREST die het
+  manifest afdwingt (onbekende kolom en decimaal in integer -> 400 -> `false`); sabotages: false-als-saved,
+  retry-marker weg, watt-normalisatie weg.
+- Niet gewijzigd: CSAFE, BLE, PM5-programmering, completion/freeze, protocolsemantiek.
+
+## v4.70.3 — Concept2 PM5 completion/freeze (27 september 2026)
+
+**Baseline:** `f7fc3537f60f54b6bc65392184a37a8dcbda4eb5` (PR #466).
+
+- `core/concept2Live.js`: `classifyPm5WorkoutState` (0 waiting · 1/4/5 active · 2/3/6-9 rest · 10/11/12 terminal ·
+  13 rearm), `pm5TerminalReason` (10 ended · 11 terminated · 12 logged), `createPm5CompletionTracker` (puur).
+- `index.html`: `tkC2NoteMeta`/`tkC2PacketMeta` (packet-identiteit vóór de ongewijzigde handoff),
+  `tkC2CompletionObserve` (guards: runtime generation/device, #466 acceptedMuxSeq read-only, lopende
+  programmering, opslagwaardigheid), `tkErgOnCanonicalMeasurement` overschrijft `.c2` niet meer na freeze,
+  `_c2connectedInner` toont de bevroren actual + "voltooid"/"afgebroken"-melding.
+- Developer Mode: tracker- en freeze-status per oefening; latere packets blijven zichtbaar.
+- Geen automatische DB-write of `finishSession()`; opslaan via bestaande routes.
+- Tests: nieuw `fConcept2PM5Completion` (46, incl. 9 sabotages, byte-niveau keten); `fConcept2FinalizeLifecycle`
+  +11 (save-flows na freeze). Release gate 404/404.
+
+## v4.70.2 — Concept2 fixed-distance corrective: CSAFE units, GOINUSE, GETSTATUS, verse read-back (27 september 2026)
+
+**Baseline:** `5489579d54bf41fac7f943ad0eed924a88144dce`. Acceptance: real-device capture RowErg 500 m.
+
+- **FIX 1** `concept2Csafe.js`: `UNITS.METERS` 0x21 (km) -> 0x24 (meters); fout commentaar gecorrigeerd.
+- **FIX 2** `concept2Csafe.js`: `CMD.GOINUSE = 0x85`, `encodeShortCommand`; sequence
+  SETHORIZONTAL -> SETPROGRAM -> GOINUSE. 500 m: `f1 21 03 f4 01 24 24 02 00 00 85 50 f2`
+  (was `f1 21 03 f4 01 21 24 02 00 00 d0 f2`).
+- **FIX 3** `concept2Programming.js` + `index.html` + transport: read-back uitsluitend uit het 0x31-packet
+  zelf (niet uit merged state), packet-sequence > acceptatie-sequence, type ∈ {2,3}, exacte duration,
+  duration type 0x80. Transport stempelt `packetSeq`; control-context draagt `muxSeq`.
+- **FIX 4** `concept2Programming.js`: `AWAITING_ACK` + GETSTATUS-vervolgframe (`f1 80 80 f2`); Reject/Bad/
+  Not Ready/geen antwoord -> geen succes.
+- **Developer Mode:** blok "CSAFE acknowledgement (GETSTATUS)".
+- **Tests:** nieuw `core/fConcept2FixedDistanceCorrective.test.js` (58, incl. 8 sabotages); bijgewerkt:
+  fConcept2Csafe, fConcept2Programming, -Verification, -Wiring, -UiWiring, -ProductionE2E, -DiagnosticsInstrumentation;
+  hang-guards tegen stille exit 0.
+- **Ongewijzigd:** RESET (niet toegevoegd), fixed-time, stop→resume, H3/H4/H5-lifecycle, timeout, schema, exercise-ID's.
+
 ## v4.70.1 — Concept2 Corrective FASE 2A.1: H5 completion-lifecycle voor losse ad-hoc instances (27 september 2026)
 
 **Fix.** `saveLosOefening()` rondt een ad-hoc `training_instance` af via de bestaande

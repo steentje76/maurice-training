@@ -359,6 +359,9 @@
         if (id === MUX_ID.GENERAL_STATUS) muxDiag.last31 = snap; else muxDiag.last32 = snap;
       } catch (_d) {}
       raw.multiplexedId = '0x' + id.toString(16);
+      /* FIX 3 (functioneel): monotone packet-sequence van deze CE060080-notificatie. De
+         programmeerverificatie eist een 0x31 met packetSeq > de sequence bij acceptatie. */
+      raw.packetSeq = muxDiag.globalSeq;
       raw.characteristicUuid = 'ce060080-43e5-11e4-916c-0800200c9a66';
       raw.source = 'concept2_pm5';
       raw.transport = 'ble';
@@ -403,7 +406,9 @@
        generations kan afwijzen. */
     function setControlResponseHandler(fn) { controlResponseHandler = (typeof fn === 'function') ? fn : null; }
     function getControlContext() {
-      return { connected: !!deviceId, deviceId: deviceId, generation: connectionGeneration };
+      /* muxSeq: laatst ontvangen CE060080-sequence (FIX 3). Notificaties worden serieel
+         verwerkt, dus elke 0x31 met een hogere sequence kwam ná dit moment binnen. */
+      return { connected: !!deviceId, deviceId: deviceId, generation: connectionGeneration, muxSeq: muxDiag.globalSeq };
     }
 
     function onNotification(uuid, dv) {

@@ -1,0 +1,205 @@
+{
+  "table": "public.sessions",
+  "purpose": "Canoniek kolommanifest voor alle client-writers naar public.sessions. Payload-sleutels moeten hierin voorkomen; integer-kolommen krijgen geen decimalen. Bron: live information_schema (read-only), niet de repo-migraties.",
+  "verifiedAt": "2026-09-27",
+  "verifiedAgainst": "production (mhfxhzkdmgkaplicdszg), information_schema.columns",
+  "verifiedThroughMigration": 566,
+  "howToUpdate": "Na ELKE migratie die public.sessions raakt: (1) migratie uitvoeren in de Supabase SQL Editor; (2) tools/verify-sessions-schema.sql read-only draaien; (3) dit manifest met het resultaat bijwerken en verifiedThroughMigration ophogen. core/fSessionsSchemaContract.test.js faalt zolang een nieuwere sessions-migratie niet in dit manifest is geverifieerd (voorkomt de v565/v566-drift).",
+  "columns": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": false
+    },
+    {
+      "name": "date",
+      "type": "date",
+      "nullable": false
+    },
+    {
+      "name": "exercise_id",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "sets",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "reps",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "weight",
+      "type": "numeric",
+      "nullable": true
+    },
+    {
+      "name": "rpe",
+      "type": "numeric",
+      "nullable": true
+    },
+    {
+      "name": "distance",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "time_str",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "watt",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "stroke_rate",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "stops",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "wod_name",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "wod_type",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "score",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "note",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "training_type",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": true
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": true
+    },
+    {
+      "name": "calories",
+      "type": "numeric",
+      "nullable": true
+    },
+    {
+      "name": "rounds",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "extra_reps",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "completed",
+      "type": "boolean",
+      "nullable": true
+    },
+    {
+      "name": "hr_avg",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "pace_sec",
+      "type": "numeric",
+      "nullable": true
+    },
+    {
+      "name": "stroke_type",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "gym_id",
+      "type": "uuid",
+      "nullable": true
+    },
+    {
+      "name": "sets_detail",
+      "type": "jsonb",
+      "nullable": true
+    },
+    {
+      "name": "training_instance_id",
+      "type": "uuid",
+      "nullable": true
+    },
+    {
+      "name": "duration_s",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "weather",
+      "type": "jsonb",
+      "nullable": true
+    },
+    {
+      "name": "segment_index",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "start_at",
+      "type": "timestamp with time zone",
+      "nullable": true
+    },
+    {
+      "name": "finish_at",
+      "type": "timestamp with time zone",
+      "nullable": true
+    },
+    {
+      "name": "edit_revision",
+      "type": "integer",
+      "nullable": false
+    },
+    {
+      "name": "watt_source",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "intervals_detail",
+      "type": "jsonb",
+      "nullable": true
+    },
+    {
+      "name": "protocol_type",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "protocol_value",
+      "type": "integer",
+      "nullable": true
+    }
+  ]
+}

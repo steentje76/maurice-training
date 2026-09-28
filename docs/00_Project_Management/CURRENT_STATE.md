@@ -6,7 +6,50 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.1
+v4.70.4
+
+## Concept2 Fixed-Distance Corrective — CSAFE units, GOINUSE, GETSTATUS, verse read-back (v4.70.2, 27 september 2026)
+
+- **Aanleiding (hardware-bewezen).** RowErg PM5 430621526, 500 m: frame `f12103f4012124020000d0f2`,
+  antwoord `f18181f2`, daarna verse 0x31 met read-back 3/0/128; PM5 bleef op het verbindingsscherm.
+  H1 (stale 0x31) is als oorzaak REJECTED.
+- **FIX 1.** Units 0x21 (km) -> 0x24 (meters). **FIX 2.** GOINUSE (0x85) na SETPROGRAM.
+  500 m: `f1 21 03 f4 01 24 24 02 00 00 85 50 f2`.
+- **FIX 3.** PROGRAMMED alleen bij een ECHTE 0x31 met packet-sequence > acceptatie, type ∈ {2,3}
+  én duration = gevraagde meters én duration type 0x80. Beginstate 3/0/128 faalt.
+- **FIX 4.** GETSTATUS-vervolgframe (`f1 80 80 f2`); pas dat antwoord draagt de status van het
+  programmeerframe. Direct Ok alleen is niet voldoende. Fail closed.
+- **Bewust niet:** RESET, fixed-time/H2, stop→resume, H3/H4/H5-lifecycle, schema, exercise-ID's.
+  Status: wacht op hardware-hertest.
+
+## Persistence hardening sessions (v4.70.4, 27 september 2026)
+
+- **Productie:** `migratie_v565.sql` en `migratie_v566.sql` zijn op productie uitgevoerd. `public.sessions` heeft
+  nu 39 kolommen, inclusief `intervals_detail`, `protocol_type` en `protocol_value` (read-only geverifieerd).
+- **Fysiek bewezen (SkiErg, Losse, Distance 100 m):** fixed-distance programmering (#466) werkt; het terminal
+  PM5-resultaat werd correct bevroren (100 m / 25,61 s); de eerdere "Fout bij opslaan" kwam door de ontbrekende
+  kolommen. Na de migraties is dezelfde bevroren sessie succesvol opgeslagen (één sessierij, instance completed).
+- **Vanaf v4.70.4:** `writeSessionRow() === false` (PostgREST 400) telt in `finishSession()` als mislukte opslag,
+  nooit als opgeslagen; geen completion of cleanup. Een gedeeltelijke retry dupliceert reeds geschreven rijen niet
+  (`_sessionRowPersistedAt`, wordt met `sessionLog` gewist). `watt` wordt vóór elke sessions-write/patch naar een
+  geheel getal genormaliseerd (kolom is integer).
+- **Schema-contract:** `docs/db/sessions.columns.json` (live geverifieerd t/m migratie 566) +
+  `tools/verify-sessions-schema.sql` + `core/fSessionsSchemaContract.test.js`; de payload-kant wordt in
+  `fConcept2FinalizeLifecycle` tegen een manifest-afdwingende nep-PostgREST getest.
+- **Niet fysiek bewezen:** RowErg/BikeErg-finish, fixed-time, intervallen, stop→resume.
+
+## Concept2 PM5 completion/freeze (v4.70.3, 27 september 2026)
+
+- **Real-device aanleiding:** SkiErg, Losse, Distance 100 m werd correct geprogrammeerd (#466) en uitgevoerd;
+  de PM5 meldde workoutState 12 (WORKOUTLOGGED), maar TK deed daar niets mee en latere packets
+  (13 REARM / 0 WAITTOBEGIN / nieuwe workout) konden de actual overschrijven.
+- **Nu:** `Concept2Live.classifyPm5WorkoutState` + `createPm5CompletionTracker` (puur). Een terminal state
+  10/11/12 bevriest de actual in `sessionLog[exId].c2Completed` wanneer: eerder activiteit (1-9) is gezien,
+  in dezelfde generation+device, uit een echte 0x31, na #466-acceptatie, en de meting opslagwaardig is.
+  11 = `terminated`. Na freeze overschrijven latere packets `.c2` niet; diagnostiek ziet ze wel.
+- **Geen** automatische DB-write, **geen** automatische `finishSession()`; opslaan blijft via Losse
+  "Opslaan" en Training "Training afronden" (H3/H4/H5 ongewijzigd).
+- Nog fysiek te valideren: statevolgorde bij finish per machine, Vrij/JustRow-einde, afbreken (11), BikeErg/RowErg.
 
 ## Concept2 Corrective FASE 2A.1 — H5 completion-lifecycle (v4.70.1, 27 september 2026)
 
@@ -55,7 +98,7 @@ v4.70.1
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.1 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.4 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

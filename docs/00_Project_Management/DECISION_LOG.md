@@ -2376,3 +2376,55 @@ discard-principe (EX-DISCARD-2) zegt dat verwerpen nergens naar de DB schrijft. 
 voor Losse zou daarvan afwijken en een tweede, divergente lifecycle naast de training-discard creëren.
 Daarom niet geïmproviseerd; vraagt een expliciet PO-besluit (abort-transitie voor beide flows, of
 periodieke herclassificatie zoals v446). Geen DELETE, geen historische cleanup.
+
+## DEC-C2CSAFE-001 — Fixed-distance CSAFE-correctie op basis van hardware-evidence (27 september 2026)
+
+**Evidence.** Real-device capture RowErg 500 m (v4.70.1): programmeerframe met units 0x21 werd met
+`f18181f2` beantwoord, maar de PM5 configureerde niets (read-back 3/0/128, state Ready). Primaire bron:
+Concept2 PM CSAFE Communication Definition rev. 0.27 (Table 9, Programmed Workout Parameter Limits,
+"Setting Up and Performing Workout"); Concept2 PM3/PM4 sample "0x21 0x03 0x02 0x00 0x21 (… 2 x Km units
+specifier)"; Concept2 SDK csafe.h (KM_0_0 = 0x21, METER_0_0 = 0x24). Corroboratie: PyRow, easy-erg,
+ErgometerJS, PM5-emulator.
+
+**Besluit.** Units 0x24; GOINUSE na SETPROGRAM; GETSTATUS-vervolgframe als acknowledgement (het veld heet
+Previous Frame Status; een Reject/Bad/Not Ready daarin is nooit succes); PROGRAMMED uitsluitend na een
+verse 0x31 (packet-sequence) met type 2/3 én exacte duration én type 0x80. De controller blijft fail closed:
+geen antwoord, stale device/generation of timeout is nooit succes.
+
+**Waarom GETSTATUS robuust is.** Onder beide lezingen van het statusveld (eigen frame of vorig frame) is een
+succes na GETSTATUS nooit ten onrechte: een Reject van het programmeerframe verschijnt direct óf in het
+GETSTATUS-antwoord, en beide leiden tot FAILED.
+
+**Bewust niet.** RESET (eerst hardwaretest zonder), fixed-time, stop→resume, timeout (5000 ms).
+**Testintegriteit.** Tests die de weerlegde vector/semantiek vastlegden zijn gecorrigeerd; drie tests
+kregen een guard tegen stil eindigen met code 0 bij een hangende promise.
+
+## DEC-C2FIN-003 — PM5-finish bevriest de actual, schrijft niet (27 september 2026)
+
+**Context.** Hardware (SkiErg, 100 m): workoutState 12 (WORKOUTLOGGED, PM5 BT Smart Interface Definition
+rev. 1.30, Appendix A) werd genegeerd; last-write-wins kon de actual door REARM/nieuwe workout vervangen.
+
+**Besluit.** PM5-finish brengt de oefening in een lokale "voltooid, nog niet opgeslagen"-toestand
+(`sessionLog[exId].c2Completed`) en bevriest `.c2`. Geen automatische opslag: `sessions` heeft geen
+idempotentie-sleutel (alleen PK op id), een tweede schrijf-trigger naast de knop kan dubbele rijen geven,
+en in Training zou automatisch afronden de hele training beëindigen. Opslaan, completion en cleanup
+blijven bij de bestaande routes (H3/H4/H5). Freeze-guards: activiteit vóór terminal, generation+device,
+echte 0x31, #466 `acceptedMuxSeq` (read-only), opslagwaardigheid. 11 heet `terminated`.
+
+**Bewust niet.** RESET, fixed-time, stop→resume, intervalprogrammering, 0x39-decoding, Calculation/Decision/AI,
+exercise-ID-mapping.
+
+## DEC-C2FIN-004 — Persistence false = failure; sessions-schema-contract (27 september 2026)
+
+**Context.** SkiErg Losse 100 m (v4.70.3): de freeze werkte, maar "Fout bij opslaan". Root cause: de payload bevatte
+`protocol_type`/`protocol_value` terwijl `migratie_v566.sql` (en `migratie_v565.sql`, `intervals_detail`) nog niet op
+productie waren uitgevoerd; PostgREST gaf 400 en `sbPostQ` gaf `false`. In `finishSession()` werd die `false`
+genegeerd (stil dataverlies voor Training-cardio). De tests mockten de schrijflaag en zagen het schema nooit.
+
+**Besluit.** (1) v565/v566 op productie uitgevoerd (door de PO); 39 kolommen, geverifieerd. Protocolvelden
+blijven in de payload — nooit strippen om schemafouten te omzeilen. (2) `false` is een mislukte write: geen
+`saved++`, geen completion, geen cleanup. (3) Retry-marker per oefening voorkomt dubbele rijen bij gedeeltelijk
+falen; hij leeft in `sessionLog` en verdwijnt met de sessie. (4) `watt` naar integer vóór persistence
+(deterministisch `Math.round`, alleen `sessions`, alleen dit veld). (5) Canoniek kolommanifest, live geverifieerd,
+bewaakt door een test die faalt zodra een sessions-migratie niet in het manifest is geverifieerd. Geen runtime-
+afhankelijkheid van productie of van het manifest.

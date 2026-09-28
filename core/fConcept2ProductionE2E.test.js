@@ -77,7 +77,11 @@ function makeProduction(opts) {
         if (!cm) return; st.lastCm = cm;
         const rt = RT.get(EX, null, null);
         if (rt && rt.prog && rt.agg && typeof rt.prog.verifyFromTelemetry === 'function') {
-          rt.prog.verifyFromTelemetry(rt.agg.getMergedRaw(), t.getControlContext());
+          // FIX 3: spiegelt index.html -- read-back uit DIT packet, met packet-identiteit.
+          const vctx = t.getControlContext();
+          const pkt = (evt && evt.metrics && !evt.metrics.schema) ? evt.metrics : null;
+          vctx.packetId = pkt ? (pkt.multiplexedId || null) : null; vctx.packetSeq = (pkt && pkt.packetSeq != null) ? pkt.packetSeq : null;
+          rt.prog.verifyFromTelemetry(pkt ? C2L.pm5RawToCanonical(pkt) : {}, vctx);
         }
       });
       RT.down(EX, 'reconnect');
@@ -102,6 +106,9 @@ function makeProduction(opts) {
 }
 const tick = () => Promise.resolve().then(() => {}).then(() => {}).then(() => {});
 
+// Een onopgeloste promise laat node zonder samenvatting met code 0 eindigen; nooit als geslaagd tellen.
+let finished = false;
+process.on('exit', function (code) { if (!finished && code === 0) { console.log('MISLUKT: test eindigde zonder samenvatting (hangende promise)'); process.exitCode = 1; } });
 async function run() {
   // ══ POSITIEVE PRODUCTIE-E2E ══
   {
@@ -114,9 +121,14 @@ async function run() {
     const started = h.start(1000); await tick();
     eq(h.writes.length, 1, 'P9: exact één CE060021 write');
     eq(h.writes[0].chr, U('21').toLowerCase(), 'P9: naar CE060021');
-    eq(hex(h.writes[0].bytes), 'F1 21 03 E8 03 21 24 02 00 00 CE F2', 'P8: canoniek 1000 m frame');
+    eq(hex(h.writes[0].bytes), 'F1 21 03 E8 03 24 24 02 00 00 85 4E F2', 'P8: canoniek 1000 m frame (units 0x24 meters + GOINUSE)');
     eq(h.exec.starts, 0, 'P10: na write alleen -> 0 Execution');
     h.emit22(okFrame);
+    eq(prog.getState(), PROG.STATE.AWAITING_ACK, 'P11: direct Ok -> AWAITING_ACK (GETSTATUS)');
+    eq(h.writes.length, 2, 'P11: GETSTATUS-vervolgwrite'); eq(hex(h.writes[1].bytes), 'F1 80 80 F2', 'P11: GETSTATUS-frame');
+    h.emit80(MATCH_0x31);                                  // 0x31 vóór de ack telt niet
+    eq(prog.getState(), PROG.STATE.AWAITING_ACK, 'P11: matchende 0x31 vóór GETSTATUS-antwoord verifieert niet');
+    h.emit22(okFrame);                                     // GETSTATUS-antwoord
     eq(prog.getState(), PROG.STATE.VERIFYING, 'P12: FRAME_ACCEPTED -> VERIFYING');
     eq(h.exec.starts, 0, 'P13: VERIFYING -> 0 Execution');
     h.emit80(MATCH_0x31);                                  // RUW pakket op de productiegrens
@@ -148,26 +160,31 @@ async function run() {
   await neg('E', async h => { h.emit22([0x01, 0x02]); h.fireTimeout(); });          // malformed
   await neg('F', async h => { const b = okFrame.slice(); b[b.length - 2] ^= 0x7F; h.emit22(b); h.fireTimeout(); });
   await neg('G', async h => { h.down('disconnect'); });                             // disconnect vóór respons
-  await neg('H', async h => { h.emit22(okFrame); h.down('disconnect'); });          // disconnect tijdens VERIFYING
+  await neg('H', async h => { h.emit22(okFrame); h.emit22(okFrame); h.down('disconnect'); });          // disconnect tijdens VERIFYING
   await neg('I', async (h, p) => { p.handleControlResponse(okFrame, { generation: 99, deviceId: 'DEV-A' }); h.fireTimeout(); });
   await neg('K', async h => { h.emit80(MATCH_0x31); h.fireTimeout(); });            // 0x31 vóór FRAME_ACCEPTED
-  await neg('L', async h => { h.emit22(okFrame); h.emit80(raw0x31(12, 0, 4, 1000, 0x80, 120)); h.fireTimeout(); });
-  await neg('M', async h => { h.emit22(okFrame); h.emit80(raw0x31(12, 0, 2, 2000, 0x80, 120)); h.fireTimeout(); });
-  await neg('N', async h => { h.emit22(okFrame); h.emit80(raw0x31(12, 0, 2, 1000, 0x00, 120)); h.fireTimeout(); });
-  await neg('O', async h => { h.emit22(okFrame); h.fireTimeout(); });               // geen read-back
-  await neg('P', async (h, p) => { h.emit22(okFrame); p.verifyFromTelemetry(C2L.pm5RawToCanonical({ workoutType: 2, workoutDuration: 1000, workoutDurationType: 0x80 }), { generation: 1, deviceId: 'DEV-B' }); h.fireTimeout(); });
+  await neg('L', async h => { h.emit22(okFrame); h.emit22(okFrame); h.emit80(raw0x31(12, 0, 4, 1000, 0x80, 120)); h.fireTimeout(); });
+  await neg('M', async h => { h.emit22(okFrame); h.emit22(okFrame); h.emit80(raw0x31(12, 0, 2, 2000, 0x80, 120)); h.fireTimeout(); });
+  await neg('N', async h => { h.emit22(okFrame); h.emit22(okFrame); h.emit80(raw0x31(12, 0, 2, 1000, 0x00, 120)); h.fireTimeout(); });
+  await neg('O', async h => { h.emit22(okFrame); h.emit22(okFrame); h.fireTimeout(); });
+  await neg('O2', async h => { h.emit22(okFrame); h.fireTimeout(); });              // alleen direct Ok, geen GETSTATUS-antwoord
+  await neg('R1', async h => { h.emit22(okFrame); h.emit22(respFrame(0x11)); });    // GETSTATUS: REJECT
+  await neg('R2', async h => { h.emit22(okFrame); h.emit22(respFrame(0x21)); });    // GETSTATUS: BAD
+  await neg('R3', async h => { h.emit22(okFrame); h.emit22(respFrame(0x31)); h.fireTimeout(); }); // GETSTATUS: NOT_READY
+  await neg('R4', async h => { h.emit22(okFrame); h.emit22(okFrame); h.emit80(raw0x31(12, 0, 3, 0, 0x80, 120)); h.fireTimeout(); }); // gemeten beginstate 3/0/128               // geen read-back
+  await neg('P', async (h, p) => { h.emit22(okFrame); h.emit22(okFrame); p.verifyFromTelemetry(C2L.pm5RawToCanonical({ workoutType: 2, workoutDuration: 1000, workoutDurationType: 0x80 }), { generation: 1, deviceId: 'DEV-B' }); h.fireTimeout(); });
   { // J: matchende 0x31 vóór het programmeerverzoek
     const h = makeProduction(); await h.connect('DEV-A');
     h.emit80(MATCH_0x31);
     const started = h.start(1000); await tick();
-    h.emit22(okFrame); h.fireTimeout();
+    h.emit22(okFrame); h.emit22(okFrame); h.fireTimeout();
     await started;
     eq(h.exec.starts, 0, 'J: matchende 0x31 vóór het verzoek -> 0 Execution'); }
   { // Q: dubbeltap
     const h = makeProduction(); await h.connect('DEV-A');
     const a = h.start(1000), b = h.start(1000); await tick();
     eq(h.writes.length, 1, 'Q: exact één programmeeroperatie/write');
-    h.emit22(okFrame); h.emit80(MATCH_0x31);
+    h.emit22(okFrame); h.emit22(okFrame); h.emit80(MATCH_0x31);
     await a; await b;
     eq(h.exec.starts, 1, 'Q: hooguit één Execution'); }
   // ══ LIFECYCLE ══
@@ -178,14 +195,17 @@ async function run() {
     const c2 = await h.connect('DEV-A');
     ok(h.rt().prog !== prog, 'L3: reconnect levert een nieuwe controller');
     ok(h.rt().generation !== null, 'L4: nieuwe generation vastgelegd');
-    const started = h.start(1000); await tick(); h.emit22(okFrame);
+    const started = h.start(1000); await tick(); h.emit22(okFrame); h.emit22(okFrame);
     c2.prog.verifyFromTelemetry(C2L.pm5RawToCanonical({ workoutType: 2, workoutDuration: 1000, workoutDurationType: 0x80 }), { generation: 999, deviceId: 'DEV-A' });
     ok(c2.prog.getState() !== PROG.STATE.PROGRAMMED, 'L5: oude generation kan de nieuwe operatie niet verifiëren');
     h.fireTimeout(); await started;
     eq(h.exec.starts, 0, 'L6: 0 Execution na generatie-mismatch'); }
   // ══ STATISCHE INVARIANT: productie bedraadt identiek ══
-  ok(/_rt\.prog\.verifyFromTelemetry\(_rt\.agg\.getMergedRaw\(\), _vctx\)/.test(html), 'W1: productie voedt de aggregator-output aan de verificatie');
+  ok(/_rt\.prog\.verifyFromTelemetry\(tkC2ReadbackFromPacket\(evt,_vctx\), _vctx\)/.test(html), 'W1: productie voedt de read-back van het packet zelf aan de verificatie');
+  ok(!/verifyFromTelemetry\(_rt\.agg\.getMergedRaw\(\)/.test(html), 'W1b: geen merged-state read-back meer (stale 0x31 via verse 0x32)');
+  ok(/vctx\.packetId=/.test(html) && /vctx\.packetSeq=/.test(html) && /function tkC2ReadbackFromPacket\(evt, vctx\)/.test(html), 'W1c: packet-identiteit gaat mee naar de verificatie (via tkC2ReadbackFromPacket)');
   ok(/const rt=\(typeof _c2rtGet==='function'\)\?_c2rtGet\(/.test(html), 'W2: start-handler leest de runtime uit _c2rt');
+  finished = true;
   console.log('Concept2 productie E2E: ' + pass + ' geslaagd, ' + fail + ' mislukt');
   process.exit(fail ? 1 : 0);
 }

@@ -11,7 +11,9 @@
  *     rev. 0.31 kent geen frame-level ACK/NAK; de status van het vorige frame komt
  *     via de statusbyte (masker 0x30) in het eerstvolgende geldige responseframe.
  *   - Alleen Previous Frame Status OK bevestigt. REJECT en BAD falen; NOT_READY is
- *     geen succes.
+ *     geen succes. Een direct Ok op het programmeerframe is NIET voldoende: pas het
+ *     antwoord op het GETSTATUS-vervolgframe draagt de status van het programmeerframe
+ *     (FIX 4). Daarna blijft een verse 0x31-read-back vereist (FIX 3).
  *   - Elke operatie is gebonden aan device + generation. Een laat antwoord uit een
  *     oude sessie mag een nieuwe sessie nooit bevestigen.
  *   - Geen protocolkennis in deze laag: alle encoding/parsing komt uit Concept2Csafe.
@@ -31,6 +33,9 @@
     ENCODING: 'ENCODING',
     WRITING: 'WRITING',
     WAITING_RESPONSE: 'WAITING_RESPONSE',
+    /* FIX 4: na een direct antwoord zonder Reject/Bad volgt een GETSTATUS-frame. Het
+       antwoord daarop draagt de Previous Frame Status van het PROGRAMMEERFRAME. */
+    AWAITING_ACK: 'AWAITING_ACK',
     /* Gate B.2 — SEMANTIEK. Previous Frame Status Ok bewijst alleen dat de PM5 het
        VORIGE CSAFE-frame heeft verwerkt; op echte hardware volgde daaruit geen
        workoutconfiguratie. FRAME_ACCEPTED zegt dus precies dat, en niets meer.
@@ -75,6 +80,8 @@
     var writeCompletions = 0;
     var responsesSeen = 0;
     var responsesIgnored = 0;
+    var ackWriteAttempts = 0;
+    var ackWriteCompletions = 0;
     /* DIAG (real-device instrumentation): uitsluitend observatie van verifyFromTelemetry().
        Deze waarden worden NERGENS gelezen voor een beslissing; ze bestaan alleen voor
        Developer Mode. Reset per nieuwe programmeeroperatie, behouden na TIMEOUT/FAILED. */
@@ -126,6 +133,17 @@
         lastResponseAt: op.lastResponseAt || null, lastParse: op.lastParse || null,
         frameAcceptedAt: op.frameAcceptedAt || null,
         frameAcceptedSeq: op.frameAcceptedSeq != null ? op.frameAcceptedSeq : null,
+        acceptedWorkoutTypes: op.acceptedWorkoutTypes || null,
+        directResponseHex: op.directResponseHex || null,
+        directPreviousFrameLabel: op.directPreviousFrameLabel || null,
+        directStateMachineLabel: op.directStateMachineLabel || null,
+        ackFrameHex: op.ackFrameHex || null, ackSentAt: op.ackSentAt || null,
+        ackResponseHex: op.ackResponseHex || null, ackResponseAt: op.ackResponseAt || null,
+        ackPreviousFrameLabel: op.ackPreviousFrameLabel || null,
+        ackStateMachineLabel: op.ackStateMachineLabel || null,
+        acceptedMuxSeq: op.acceptedMuxSeq != null ? op.acceptedMuxSeq : null,
+        readbackPacketId: op.readbackPacketId || null,
+        readbackPacketSeq: op.readbackPacketSeq != null ? op.readbackPacketSeq : null,
         verificationStartedAt: op.verificationStartedAt || null,
         verificationTelemetryAt: op.verificationTelemetryAt || null,
         readbackWorkoutType: op.readbackWorkoutType != null ? op.readbackWorkoutType : null,
@@ -167,6 +185,7 @@
         deviceId: ctx.deviceId != null ? ctx.deviceId : null,
         requestedDistanceM: distanceMeters,
         workoutType: built.workoutType != null ? built.workoutType : null,
+        acceptedWorkoutTypes: Array.isArray(built.acceptedWorkoutTypes) ? built.acceptedWorkoutTypes.slice() : null,
         frame: built.frame, frameHex: built.hex || null, startedAt: now(), timer: null, resolve: null,
         frameAcceptedAt: null, lastResponseHex: null, lastParse: null
       };
@@ -182,7 +201,11 @@
         // Een geslaagde write betekent WRITE_COMPLETED, niet PROGRAMMING_CONFIRMED.
         setState(STATE.WAITING_RESPONSE);
         op.timer = setT(function () {
-          if (pending === op) settle(STATE.TIMEOUT, (state === STATE.VERIFYING) ? 'frame_accepted_but_not_verified' : 'no_response_within_timeout');
+          if (pending !== op) return;
+          var why = (state === STATE.VERIFYING) ? 'frame_accepted_but_not_verified'
+                  : (state === STATE.AWAITING_ACK) ? (op.ackNotReady ? 'ack_not_ready' : 'no_ack_within_timeout')
+                  : 'no_response_within_timeout';
+          settle(STATE.TIMEOUT, why);
         }, timeoutMs);
       }).catch(function (e) {
         if (pending !== op) return;
@@ -198,7 +221,7 @@
     function handleControlResponse(bytes, ctx) {
       ctx = ctx || {};
       responsesSeen++;
-      if (!pending || state !== STATE.WAITING_RESPONSE) { responsesIgnored++; return { handled: false, reason: 'no_pending_operation' }; }
+      if (!pending || (state !== STATE.WAITING_RESPONSE && state !== STATE.AWAITING_ACK)) { responsesIgnored++; return { handled: false, reason: 'no_pending_operation' }; }
       if (ctx.generation != null && pending.generation != null && ctx.generation !== pending.generation) {
         responsesIgnored++; return { handled: false, reason: 'stale_generation' };
       }
@@ -219,21 +242,55 @@
       pending.previousFrameLabel = parsed.previousFrameLabel;
       pending.stateMachineLabel = parsed.stateMachineLabel;
       var S = csafe.PREVIOUS_FRAME_STATUS;
-      if (parsed.previousFrameStatus === S.OK) {
-        // Ok bevestigt het FRAME, niet de workout. Geen settle: de operatie blijft open
-        // en gaat naar VERIFYING. Zonder read-back (Gate B.3) wordt PROGRAMMED nooit
-        // bereikt en loopt de operatie af op de bounded timeout. Fail closed.
-        pending.frameAcceptedAt = now();
-        pending.frameAcceptedSeq = telemetrySeq;
-        pending.verificationStartedAt = now();
-        setState(STATE.FRAME_ACCEPTED);
-        setState(STATE.VERIFYING);
-        return { handled: true, state: STATE.VERIFYING, reason: 'frame_accepted_awaiting_verification' };
+      var op = pending;
+      if (state === STATE.AWAITING_ACK) {
+        /* Antwoord op GETSTATUS: Previous Frame Status = uitkomst van het programmeerframe. */
+        op.ackResponseHex = op.lastResponseHex; op.ackResponseAt = op.lastResponseAt;
+        op.ackPreviousFrameLabel = parsed.previousFrameLabel; op.ackStateMachineLabel = parsed.stateMachineLabel;
+        if (parsed.previousFrameStatus === S.OK) {
+          // Ok bevestigt het FRAME, niet de workout. PROGRAMMED vereist daarna nog een verse
+          // 0x31-read-back (verifyFromTelemetry). Fail closed.
+          op.frameAcceptedAt = now();
+          op.frameAcceptedSeq = telemetrySeq;
+          op.acceptedMuxSeq = (ctx.muxSeq != null && isFinite(Number(ctx.muxSeq))) ? Number(ctx.muxSeq) : null;
+          op.verificationStartedAt = now();
+          setState(STATE.FRAME_ACCEPTED);
+          setState(STATE.VERIFYING);
+          return { handled: true, state: STATE.VERIFYING, reason: 'frame_accepted_awaiting_verification' };
+        }
+        if (parsed.previousFrameStatus === S.REJECT) { settle(STATE.FAILED, 'ack_previous_frame_reject'); return { handled: true, state: STATE.FAILED }; }
+        if (parsed.previousFrameStatus === S.BAD) { settle(STATE.FAILED, 'ack_previous_frame_bad'); return { handled: true, state: STATE.FAILED }; }
+        // NOT_READY is geen succes: blijft onbevestigd tot de bounded timeout.
+        op.ackNotReady = true;
+        return { handled: true, state: STATE.AWAITING_ACK, reason: 'ack_not_ready' };
       }
+      /* Direct antwoord op het programmeerframe. Een direct Ok (bv. f18181f2) is NOOIT
+         zelfstandig voldoende: eerst GETSTATUS voor de status van het programmeerframe. */
+      op.directResponseHex = op.lastResponseHex;
+      op.directPreviousFrameLabel = parsed.previousFrameLabel; op.directStateMachineLabel = parsed.stateMachineLabel;
       if (parsed.previousFrameStatus === S.REJECT) { settle(STATE.FAILED, 'previous_frame_reject'); return { handled: true, state: STATE.FAILED }; }
       if (parsed.previousFrameStatus === S.BAD) { settle(STATE.FAILED, 'previous_frame_bad'); return { handled: true, state: STATE.FAILED }; }
-      // NOT_READY is geen succes en geen definitieve fout: de PM5 is nog niet zover.
-      return { handled: true, state: STATE.WAITING_RESPONSE, reason: 'previous_frame_not_ready' };
+      if (parsed.previousFrameStatus !== S.OK) {
+        // NOT_READY is geen succes en geen definitieve fout: de PM5 is nog niet zover.
+        return { handled: true, state: STATE.WAITING_RESPONSE, reason: 'previous_frame_not_ready' };
+      }
+      sendAck(op);
+      return { handled: true, state: state, reason: 'direct_ok_awaiting_ack' };
+    }
+
+    function sendAck(op) {
+      var built = (typeof csafe.buildGetStatusFrame === 'function') ? csafe.buildGetStatusFrame() : null;
+      if (!built || built.ok !== true) { settle(STATE.FAILED, 'ack_unavailable'); return; }
+      op.ackFrameHex = built.hex || null; op.ackSentAt = now();
+      setState(STATE.AWAITING_ACK);          // vóór de write: het eerstvolgende antwoord is het ack-antwoord
+      ackWriteAttempts++;
+      Promise.resolve(writeFn(built.frame)).then(function () {
+        if (pending !== op) return;
+        ackWriteCompletions++;
+      }).catch(function (e) {
+        if (pending !== op) return;
+        settle(STATE.FAILED, 'ack_write_failed:' + ((e && e.message) || 'unknown'));
+      });
     }
 
     /* Gate B.3 - READ-BACK VERIFICATIE.
@@ -248,7 +305,10 @@
      *
      * Vergelijking in CANONIEKE eenheden: bij duration type distance draagt 0x31 de afstand
      * in meters, exact zoals de aangevraagde waarde. Geen schaling hier. */
-    var DURATION_TYPE_DISTANCE = 0x80, FIXEDDIST_NOSPLITS = 2;
+    /* FIX 3: FIXEDDIST_NOSPLITS (2) of FIXEDDIST_SPLITS (3) -- alleen SAMEN met exacte
+       duration en duration type 0x80, uit een 0x31 die ná de acceptatie binnenkwam.
+       De gemeten beginstate 3/0/128 mag dus nooit slagen. */
+    var DURATION_TYPE_DISTANCE = 0x80, DEFAULT_ACCEPTED_TYPES = [2, 3];
     var telemetrySeq = 0;
     function verifyFromTelemetry(raw, ctx) {
       telemetrySeq++;
@@ -263,13 +323,21 @@
       ctx = ctx || {};
       if (ctx.generation != null && pending.generation != null && ctx.generation !== pending.generation) return { verified: false, reason: 'stale_generation' };
       if (ctx.deviceId != null && pending.deviceId != null && ctx.deviceId !== pending.deviceId) return { verified: false, reason: 'other_device' };
+      /* Packet-identiteit (FIX 3): de read-back moet uit een ECHTE 0x31 komen die ná de
+         acceptatie is ontvangen. Een verse 0x32 met een oude 0x31 in merged state telt niet. */
+      if (ctx.packetId !== '0x31') return { verified: false, reason: 'readback_not_0x31' };
+      if (pending.acceptedMuxSeq == null) return { verified: false, reason: 'no_acceptance_packet_seq' };
+      if (ctx.packetSeq == null || !isFinite(Number(ctx.packetSeq))) return { verified: false, reason: 'no_packet_seq' };
+      if (Number(ctx.packetSeq) <= pending.acceptedMuxSeq) return { verified: false, reason: 'stale_packet_before_acceptance' };
       if (!raw || typeof raw !== 'object') return { verified: false, reason: 'no_telemetry' };
       var t = raw.workout_type_readback, d = raw.workout_duration_readback, dt = raw.workout_duration_type_readback;
       if (t == null || d == null || dt == null) return { verified: false, reason: 'incomplete_readback' };
       pending.verificationTelemetryAt = now();
       pending.readbackWorkoutType = t; pending.readbackWorkoutDuration = d; pending.readbackDurationType = dt;
+      pending.readbackPacketId = ctx.packetId; pending.readbackPacketSeq = Number(ctx.packetSeq);
+      var okTypes = pending.acceptedWorkoutTypes || DEFAULT_ACCEPTED_TYPES;
       if (Number(dt) !== DURATION_TYPE_DISTANCE) return { verified: false, reason: 'duration_type_mismatch' };
-      if (Number(t) !== FIXEDDIST_NOSPLITS) return { verified: false, reason: 'workout_type_mismatch' };
+      if (okTypes.indexOf(Number(t)) === -1) return { verified: false, reason: 'workout_type_mismatch' };
       if (Number(d) !== Number(pending.requestedDistanceM)) return { verified: false, reason: 'distance_mismatch' };
       pending.programmedAt = now();
       settle(STATE.PROGRAMMED, null);
@@ -289,6 +357,20 @@
         state: state,
         isPending: !!pending,
         requestedWorkoutType: pending ? pending.workoutType : (last ? last.workoutType : null),
+        acceptedWorkoutTypes: pending ? (pending.acceptedWorkoutTypes || null) : (last ? last.acceptedWorkoutTypes : null),
+        ackWriteAttempted: ackWriteAttempts,
+        ackWriteCompleted: ackWriteCompletions,
+        directResponseHex: pending ? (pending.directResponseHex || null) : (last ? last.directResponseHex : null),
+        directPreviousFrameStatus: pending ? (pending.directPreviousFrameLabel || null) : (last ? last.directPreviousFrameLabel : null),
+        ackFrameHex: pending ? (pending.ackFrameHex || null) : (last ? last.ackFrameHex : null),
+        ackSentAt: pending ? (pending.ackSentAt || null) : (last ? last.ackSentAt : null),
+        ackResponseHex: pending ? (pending.ackResponseHex || null) : (last ? last.ackResponseHex : null),
+        ackResponseAt: pending ? (pending.ackResponseAt || null) : (last ? last.ackResponseAt : null),
+        ackPreviousFrameStatus: pending ? (pending.ackPreviousFrameLabel || null) : (last ? last.ackPreviousFrameLabel : null),
+        ackStateMachineState: pending ? (pending.ackStateMachineLabel || null) : (last ? last.ackStateMachineLabel : null),
+        acceptedMuxSeq: pending ? (pending.acceptedMuxSeq != null ? pending.acceptedMuxSeq : null) : (last ? last.acceptedMuxSeq : null),
+        readbackPacketId: pending ? (pending.readbackPacketId || null) : (last ? last.readbackPacketId : null),
+        readbackPacketSeq: pending ? (pending.readbackPacketSeq != null ? pending.readbackPacketSeq : null) : (last ? last.readbackPacketSeq : null),
         requestedDistanceM: pending ? pending.requestedDistanceM : (last ? last.requestedDistanceM : null),
         writeAttempted: writeAttempts,
         writeCompleted: writeCompletions,

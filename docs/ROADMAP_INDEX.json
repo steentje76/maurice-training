@@ -1042,7 +1042,11 @@
   "primary_track": "T8",
   "secondary_tracks": [],
   "v1_scope": true,
-  "v1_evidence": "PO-besluit 16-09-2026"
+  "v1_evidence": "PO-besluit 16-09-2026",
+  "next_action": "Reconciled 28-09-2026: AIOutputContract wordt inmiddels ook server-side in coach.js afgedwongen; contractschendingen leveren safeCoachFallback op en worden geobserveerd. APPLY-gewichten hebben server-side absolute plus client-side contextuele validatie; programmagenerering heeft eigen schema/exercise-ID-validatie + preview/bevestiging. Resterend GAP-P2-016 = eventueel typed/structured reference-contract voor vrije coachproza; geen P1-runtimeblokkade. Status blijft TESTED, niet kunstmatig CLOSED.",
+  "reconciled_prs": [
+   104
+  ]
  },
  {
   "id": "MS-F4-02",

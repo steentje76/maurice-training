@@ -732,7 +732,7 @@
   "target_maturity": "IMPLEMENTED",
   "objective": "Pace/power/zones/CS/CP/decoupling/erg metrics.",
   "acceptance_gate": [
-   "Pace/power/erg metrics: CLOSED. Zones/CS/CP/decoupling: NOT_IMPLEMENTED (bewust, zie docs/MS-F3-04_ENDURANCE_ERG.md) -- geen productbeslissing genomen zonder vrijgave."
+   "Pace/power/erg metrics + Critical Speed + Critical Power: aantoonbaar geïmplementeerd/canoniek. Zones en aerobic decoupling: bewust NOT_IMPLEMENTED; zie docs/MS-F3-04_ENDURANCE_ERG.md. Status blijft TESTED zolang deze letterlijke gate-onderdelen ontbreken; geen fabricage zonder methode/evidence/data-basis."
   ],
   "validation": {
    "software": "REQUIRED",

@@ -5799,5 +5799,299 @@
   "normalization_evidence": "GEEN implementatie-evidence: 0 treffers in index.html, 0 tests. Mastersprint MS-F15-03 status NOT STARTED, fase F15, epic \"Beyond\", objective \"Future camera/sensor/hardware analysis after feasibility/privacy\"",
   "normalization_change_type": "D BASELINE_MODEL_REVISION (BASELINE-1.1)",
   "next_action": "A-J subcriteria beoordelen in de A-J Product Maturity Audit"
+ },
+ {
+  "id": "MS-TELEMETRY-01",
+  "type": "mastersprint",
+  "phase": "F13",
+  "name": "Product Telemetry & Observability Architecture",
+  "priority": "P1",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-F1-02"
+  ],
+  "objective": "Privacy-aware product telemetry architecture and canonical event registry, reusing the existing Observability Foundation without mixing athlete/training data into analytics.",
+  "acceptance_gate": [
+   "Canonical event registry and architecture define purpose, trigger, allowed/forbidden properties, privacy classification, retention/version/owner/consent; product telemetry remains separated from athlete/training data; redaction/correlation/error normalization reuse MS-F1-02; no vendor-specific tracking is required for architecture closure."
+  ],
+  "validation": [
+   "architecture",
+   "privacy/security",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "Audit existing observability/telemetry implementation against PRODUCT_TELEMETRY_FEEDBACK_ROADMAP_2_0 before adding instrumentation. Existing client_telemetry_events/netlify telemetry is crash/error diagnostics only and must not be misclassified as product analytics."
+ },
+ {
+  "id": "MS-BETA-01",
+  "type": "mastersprint",
+  "phase": "F13",
+  "name": "In-App Beta Feedback & Triage Loop",
+  "priority": "P1",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-TELEMETRY-01"
+  ],
+  "objective": "In-app beta feedback with traceable triage lifecycle and consented technical context.",
+  "acceptance_gate": [
+   "Feedback entry point supports Probleem/Idee/Onduidelijk/Werkt goed; feedback is linked to version/build and optional consented technical context; triage lifecycle is traceable; privacy/redaction boundaries tested."
+  ],
+  "validation": [
+   "software",
+   "database/RLS",
+   "UX",
+   "privacy/security",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "Start only after MS-TELEMETRY-01 architecture/event governance is reconciled."
+ },
+ {
+  "id": "MS-BETA-02",
+  "type": "mastersprint",
+  "phase": "F13",
+  "name": "Release Intelligence & Closed-Beta Readiness",
+  "priority": "P1",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-TELEMETRY-01",
+   "MS-BETA-01"
+  ],
+  "objective": "Closed-beta/release decision evidence from reliability, funnel and feedback signals without replacing the Quality Gate.",
+  "acceptance_gate": [
+   "Closed-beta gate combines crash/error trends, core funnel completion, workout persistence/sync/device reliability where applicable, beta issue trends, privacy/security and known limitations; post-release measurement is traceable."
+  ],
+  "validation": [
+   "integration",
+   "release",
+   "privacy/security",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "Reconcile with existing F13 Production & Scale work after MS-BETA-01 to avoid duplicate release-intelligence infrastructure."
+ },
+ {
+  "id": "MS-I18N-01",
+  "type": "mastersprint",
+  "phase": "CROSS",
+  "name": "Internationalization Foundation",
+  "priority": "P2",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [],
+  "objective": "Locale-independent presentation architecture with nl-NL and en while canonical IDs/calculations/decisions remain language-neutral.",
+  "acceptance_gate": [
+   "Canonical IDs stable across locales; deterministic fallback; missing translation never crashes; language switch does not change Calculation or Decision results; nl-NL and en testable end-to-end."
+  ],
+  "validation": [
+   "software",
+   "UX",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "Schedule after current P1 telemetry/beta foundation; Athlete Core UX is already stable enough for later implementation."
+ },
+ {
+  "id": "MS-I18N-02",
+  "type": "mastersprint",
+  "phase": "CROSS",
+  "name": "Dutch + English Complete Language Coverage",
+  "priority": "P2",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-I18N-01"
+  ],
+  "objective": "Complete NL/EN product-surface localization on the i18n foundation.",
+  "acceptance_gate": [
+   "Full NL and EN coverage; fallback and mobile overflow tested; Decision explanations semantically equivalent; canonical identities identical across locales."
+  ],
+  "validation": [
+   "software",
+   "UX",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "After MS-I18N-01."
+ },
+ {
+  "id": "MS-F6-07",
+  "type": "mastersprint",
+  "phase": "F6",
+  "name": "Teamsport Performance Context & Event Contract",
+  "priority": "P2",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-F3-06",
+   "MS-F3-08"
+  ],
+  "objective": "Generic teamsport training/match context and athlete-event linkage using the existing athlete engine.",
+  "acceptance_gate": [
+   "Training/match event context, role/position, minutes and athlete-event linkage are canonical and feed Context without creating a second calculation/coaching core."
+  ],
+  "validation": [
+   "software",
+   "database/RLS",
+   "privacy/security",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "Audit existing F11 team-event model before implementation; reuse canonical event identity."
+ },
+ {
+  "id": "MS-F6-08",
+  "type": "mastersprint",
+  "phase": "F6",
+  "name": "Teamsport Load, Wearable & GPS Performance",
+  "priority": "P2",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-F6-07",
+   "MS-F5-01"
+  ],
+  "objective": "Evidence/provenance-aware teamsport RPE/sRPE, wearable/GPS and field/match load.",
+  "acceptance_gate": [
+   "Provider-derived metrics carry provenance/units/data quality; no universal injury prediction; new calculations registered before authoritative use."
+  ],
+  "validation": [
+   "software",
+   "integration",
+   "device",
+   "scientific/evidence",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "After MS-F6-07 and provider/evidence audit."
+ },
+ {
+  "id": "MS-F6-09",
+  "type": "mastersprint",
+  "phase": "F6",
+  "name": "Teamsport Trends & Explainable Coaching",
+  "priority": "P2",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-F6-08",
+   "MS-F3-07",
+   "MS-F3-10",
+   "MS-F4-01"
+  ],
+  "objective": "Historical teamsport trends and explainable Decision/AI context without invented metrics.",
+  "acceptance_gate": [
+   "Trends derive from canonical data; Decision/AI consumes approved calculations/context/evidence only; uncertainty and missing data remain explicit."
+  ],
+  "validation": [
+   "software",
+   "scientific/evidence",
+   "AI",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "After MS-F6-08."
+ },
+ {
+  "id": "MS-F11-07",
+  "type": "mastersprint",
+  "phase": "F11",
+  "name": "Team Operations Foundation",
+  "priority": "P2",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-F1-01"
+  ],
+  "objective": "Teams, seasons, roles, events, attendance, selection and RBAC as one operational foundation.",
+  "acceptance_gate": [
+   "Canonical team/event identity; attendance/selection/planning; athlete-to-team link; event→Context contract; tenant/RBAC/privacy boundaries proven."
+  ],
+  "validation": [
+   "software",
+   "database/RLS",
+   "privacy/security",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "Audit existing F11 team/event tables and flows first; do not duplicate already-implemented organization/team foundations."
+ },
+ {
+  "id": "MS-F11-08",
+  "type": "mastersprint",
+  "phase": "F11",
+  "name": "Team Logistics, Tasks & Material",
+  "priority": "P2",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-F11-07"
+  ],
+  "objective": "Generic event-linked tasks/material, responsibility, transport and reminders.",
+  "acceptance_gate": [
+   "Generic task/material model supports responsible person, due/status/confirmation and event linkage without hardcoded equipment lists."
+  ],
+  "validation": [
+   "software",
+   "database/RLS",
+   "UX",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "After MS-F11-07."
+ },
+ {
+  "id": "MS-F11-09",
+  "type": "mastersprint",
+  "phase": "F11",
+  "name": "Team Communication & Event Chat",
+  "priority": "P3",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-F11-07"
+  ],
+  "objective": "Team/event communication reusing canonical team/event identity with moderation/privacy boundaries.",
+  "acceptance_gate": [
+   "Team/event chat, announcements/polls/notifications use team RBAC/privacy boundaries and do not create a disconnected identity model."
+  ],
+  "validation": [
+   "software",
+   "database/RLS",
+   "privacy/security",
+   "UX",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "Deferred until foundation and applicable communication governance are ready."
+ },
+ {
+  "id": "MS-F11-10",
+  "type": "mastersprint",
+  "phase": "F11",
+  "name": "Club/Organization Expansion",
+  "priority": "P3",
+  "status": "NOT STARTED",
+  "v1_scope": true,
+  "dependencies": [
+   "MS-F11-07",
+   "MS-F11-08"
+  ],
+  "objective": "Later multi-team organization scheduling/admin and richer dashboards.",
+  "acceptance_gate": [
+   "Multi-team organization capabilities extend, rather than fork, existing organization/team identity and RBAC."
+  ],
+  "validation": [
+   "software",
+   "database/RLS",
+   "privacy/security",
+   "UX",
+   "tests",
+   "documentation"
+  ],
+  "next_action": "Later/non-blocking after MS-F11-07/08."
  }
 ]

@@ -1027,7 +1027,7 @@
   "target_maturity": "IMPLEMENTED",
   "objective": "Schema/contract tests; no invented values/diagnosis language.",
   "acceptance_gate": [
-   "Schema/contract tests; no invented values/diagnosis language."
+   "Contracttests + server-side blokkade van diagnose/risicotaal + deterministische guards voor toepasbare numerieke gewichten zijn aanwezig. Volledig typed structured-reference-contract voor alle vrije coachproza ontbreekt bewust (GAP-P2-016); daarom TESTED, niet kunstmatig CLOSED."
   ],
   "validation": {
    "software": "REQUIRED",
@@ -1042,7 +1042,11 @@
   "primary_track": "T8",
   "secondary_tracks": [],
   "v1_scope": true,
-  "v1_evidence": "PO-besluit 16-09-2026"
+  "v1_evidence": "PO-besluit 16-09-2026",
+  "next_action": "Reconciled 28-09-2026: AIOutputContract wordt inmiddels ook server-side in netlify/functions/coach.js afgedwongen; contractschendingen krijgen veilige fallback en APPLY-markers een aanvullende absolute CalcCore-grens. Programmagenerering behoudt schema/exercise-ID-validatie + menselijke preview. Het resterende volledige structured-JSON/reference-contract voor vrije coachproza blijft GAP-P2-016 (architectuur/productkeuze), geen P1-runtimeblokkade. Status blijft eerlijk TESTED zolang willekeurige vrije numerieke claims niet typed tegen Calculation/Decision-ID's worden gevalideerd.",
+  "reconciled_prs": [
+   104
+  ]
  },
  {
   "id": "MS-F4-02",

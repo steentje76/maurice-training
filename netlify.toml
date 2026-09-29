@@ -12,3 +12,7 @@
 
 [functions."cleanup-unverified-accounts"]
   schedule = "@daily"
+
+# MS-TELEMETRY-01: 90 dagen retentie voor ruwe product_telemetry_events.
+[functions."cleanup-product-telemetry"]
+  schedule = "@daily"

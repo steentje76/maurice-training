@@ -6,7 +6,19 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.5
+v4.70.6
+
+## MS-TELEMETRY-01 closure — opt-in-UI en 90 dagen retentie (v4.70.6, 29 september 2026)
+
+- **Consent:** switch "Gebruiksstatistieken delen" in Instellingen > Privacy via het bestaande mechanisme
+  (`initSwitch`, localStorage `tk_product_telemetry_consent`, standaard UIT). Intrekken schrijft '0'; de emitter
+  leest de vlag bij elke aanroep, dus nieuwe events stoppen direct. De sleutel staat in `PERSONAL_CACHE_KEYS`:
+  een nieuwe gebruiker op een gedeeld toestel erft geen toestemming. Geen tweede consent-systeem
+  (`research_consents` is bewust research-only).
+- **Retentie:** `netlify/functions/cleanup-product-telemetry.js`, dagelijks gepland (netlify.toml), zelfde patroon
+  als `cleanup-unverified-accounts`: één gefilterde DELETE `created_at < nu − 90 dagen` op uitsluitend
+  `product_telemetry_events`. Geen DDL nodig (service_role heeft al DELETE; index op created_at bestaat).
+- Beleid is voorlopig productbeleid (DEC-BETA-001), **geen vastgestelde AVG-rechtsgrond**.
 
 ## MS-TELEMETRY-01 Slice C — minimale funnel-instrumentatie (v4.70.5, 29 september 2026)
 
@@ -115,7 +127,7 @@ v4.70.5
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.5 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.6 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

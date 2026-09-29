@@ -2453,3 +2453,14 @@ geen screenshots in het basiscontract. Scheiding van product telemetry, crash-di
 athlete data. Voorlopig productbeleid (geen juridische grondslag): feedback 12 maanden bewaren, alleen leesbaar
 voor triage-rollen; producttelemetry opt-in met 90 dagen ruwe retentie (MS-TELEMETRY-01, aparte uitvoering).
 Details: `docs/MS-BETA-01_FEEDBACK_AUDIT_AND_CONTRACT.md`.
+
+## DEC-TELEMETRY-002 — MS-TELEMETRY-01 closure: consent-architectuur en retentie (29 september 2026)
+
+**Besluit.** (1) Producttelemetry-consent hergebruikt het bestaande TK-privacymechanisme (Privacy-scherm,
+`initSwitch`, localStorage, `PERSONAL_CACHE_KEYS`), exact zoals de AI-consent: standaard uit, per gebruiker,
+intrekken stopt nieuwe events direct. `research_consents` is bewust niet gebruikt: dat ledger is expliciet
+research-only en los van elk ander consentmechanisme. Consent is per toestel; de server kan hem niet afdwingen
+(ingestion blijft authenticated-only en registry-gebonden). (2) Retentie 90 dagen via een dagelijkse Netlify
+scheduled function, hetzelfde patroon als `cleanup-unverified-accounts` — geen pg_cron, geen DDL. (3) Ingetrokken
+toestemming verwijdert eerder verzamelde events niet actief; die verlopen via de 90-dagenretentie. (4) Grondslag:
+voorlopig productbeleid (DEC-BETA-001), geen vastgestelde AVG-rechtsgrond.

@@ -1,5 +1,18 @@
 # Trainingskompas — Changelog
 
+## v4.70.6 — MS-TELEMETRY-01 closure: opt-in-UI en 90 dagen retentie (29 september 2026)
+
+**Baseline:** `6f4151e67a24f54229713e7a9191a2deba49dbcb`.
+
+- `index.html`: Privacy-kaart "Productverbetering" met switch `sw-product-telemetry` (standaard uit) via
+  `initSwitch` in `refreshPrivacyScreen()`; `tk_product_telemetry_consent` toegevoegd aan `PERSONAL_CACHE_KEYS`.
+- `netlify/functions/cleanup-product-telemetry.js` + `netlify.toml` (@daily): 90 dagen retentie, strikt
+  `created_at < nu − 90d`, fail-safe (geen key/fout -> niets verwijderd, geen throw).
+- Tests: nieuw `core/productTelemetryConsentRetention.test.js` (36 asserties, 7 sabotages: default aan,
+  consent-check weg, niet per gebruiker gewist, 30 dagen, boundary lte, ongefilterde DELETE, schedule weg);
+  `fTrainingExecutionFinalClosure`: spiegel-lijst `PERSONAL_CACHE_KEYS` bijgewerkt.
+- sw-cache v470060, versionCode 47006. Geen DDL, geen externe provider, contract ongewijzigd.
+
 ## v4.70.5 — MS-TELEMETRY-01 Slice C: minimale funnel-instrumentatie (29 september 2026)
 
 **Baseline:** `a8cd293512a40ec19fbba3a0558bdd06a0bc0dbb`.

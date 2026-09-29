@@ -42,3 +42,10 @@ UI, storage/table, RLS, Netlify function, triage tooling, screenshots, notificat
 ## Next slice (Slice B — isolated storage + ingestion)
 
 Dedicated `beta_feedback` table (RLS on, no anon grants; insert only via a server function that re-validates with `core/betaFeedback.js`; select only for triage roles), retention job for 12 months, a Netlify function mirroring the product-telemetry pattern (authenticated, payload cap, rate limit, fail-safe), and DB/RLS/grant verification against the live database. UI entry point follows in Slice C.
+
+## Slice B status (29-09-2026)
+
+Gebouwd: `migratie_v568.sql` (`beta_feedback`, RLS, geen client-schrijfrechten, triage-read via bestaande
+`system_role` support/developer), `netlify/functions/beta-feedback.js` (authenticated server-side ingestion met
+hervalidatie), `netlify/functions/cleanup-beta-feedback.js` (365 dagen, @daily). Tests: `core/betaFeedbackStorage.test.js`.
+Open voor volgende slices: triage-statusovergangen (met `canTransition`), feedback-UI, screenshots (aparte expliciete actie).

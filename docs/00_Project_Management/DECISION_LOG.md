@@ -2464,3 +2464,15 @@ research-only en los van elk ander consentmechanisme. Consent is per toestel; de
 scheduled function, hetzelfde patroon als `cleanup-unverified-accounts` — geen pg_cron, geen DDL. (3) Ingetrokken
 toestemming verwijdert eerder verzamelde events niet actief; die verlopen via de 90-dagenretentie. (4) Grondslag:
 voorlopig productbeleid (DEC-BETA-001), geen vastgestelde AVG-rechtsgrond.
+
+## DEC-BETA-002 — MS-BETA-01 Slice B: opslag, autorisatie en retentie van beta-feedback (29 september 2026)
+
+**Besluit.** (1) Eigen tabel `beta_feedback`; geen hergebruik van telemetry-, crash-, athlete- of coach-tabellen.
+(2) Schrijven uitsluitend via `netlify/functions/beta-feedback.js` met service_role na hervalidatie met
+`core/betaFeedback.js`; de client heeft geen insert/update/delete/truncate. (3) Triage-leestoegang via het
+BESTAANDE platformrolmodel `users.system_role` (`support`, `developer`) — dezelfde autoriteit als
+`support_access_log` en de globale oefeningencatalogus (v526), beschermd door `protect_privileged_user_columns()`.
+De contract-POLICY-namen `product_triage`/`product_admin` mappen hierop; er is geen nieuw rolmodel gemaakt.
+`tester` leest niet mee. (4) Retentie 365 dagen via een dagelijkse scheduled function (patroon van de bestaande
+cleanups); feedback verdwijnt met het account (cascade). (5) Triage-statuswijzigingen (lifecycle) en UI volgen in
+een latere slice. Grondslag: voorlopig productbeleid (DEC-BETA-001), geen vastgestelde AVG-rechtsgrond.

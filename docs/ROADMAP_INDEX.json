@@ -5846,7 +5846,7 @@
    "tests",
    "documentation"
   ],
-  "next_action": "Start only after MS-TELEMETRY-01 architecture/event governance is reconciled."
+  "next_action": "Slice A (contract, #480) en Slice B (beta_feedback-opslag met RLS, authenticated server-side ingestion, triage-read via bestaande system_role support/developer, 365 dagen retentie) gebouwd. Volgende: triage-statusovergangen en feedback-UI (Probleem/Idee/Onduidelijk/Werkt goed) met expliciete technische-context-keuze; screenshots later als aparte expliciete actie."
  },
  {
   "id": "MS-BETA-02",

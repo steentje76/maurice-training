@@ -1,5 +1,16 @@
 # Trainingskompas — Changelog
 
+## Security — F-SEC-001 closure: social_create_notification + migratie_v571 (29 september 2026, geen appversie-wijziging)
+
+**Baseline:** `d5f88c08533a2e0968b419bad272698729548359`.
+
+- `migratie_v571.sql`: `social_create_notification` bindt de actor aan `auth.uid()`, staat alleen de vijf aantoonbaar
+  geproduceerde typen toe (reaction, comment, connection_request, connection_accepted, responsibility_assigned) en
+  eist per type een server-side relatie; anders fail-closed. Zelfde signature/SECURITY DEFINER/search_path; geen
+  PUBLIC/anon-EXECUTE; geen tabel-/RLS-/policywijziging.
+- `tools/verify-f-sec-001.sql`: rollback-veilige adversarial + regressieverificatie.
+- Tests: `core/fSecNotificationAuthz.test.js` (39 asserties, 7 sabotages). Auditdocument bijgewerkt.
+
 ## MS-BETA-01 Slice B — feedbackopslag, ingestion en retentie (29 september 2026, server-side; APP_VER ongewijzigd v4.70.6)
 
 **Baseline:** `1bf7a5ab023201c78ae1179dc9e780116aac65a6`.

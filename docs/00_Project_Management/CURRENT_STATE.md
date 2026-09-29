@@ -8,6 +8,14 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.7
 
+## Security — F-SEC-001 closure (29 september 2026)
+
+- `social_create_notification` (SECURITY DEFINER) accepteerde caller-gestuurde ontvanger/doel: iedere ingelogde
+  gebruiker kon notificaties voor willekeurige anderen aanmaken (D). Gerepareerd in `migratie_v571.sql` met een
+  per-type autorisatiematrix gebonden aan `auth.uid()`; ongebruikte typen via deze functie fail-closed.
+- Adversarial (rollback, productie): exploit vóór de fix toegestaan; met de nieuwe definitie 17 negatieve scenario's
+  geweigerd en 6 legitieme flows (incl. de team-keten) toegestaan. Status: zie het auditdocument.
+
 ## MS-BETA-01 Slice B — geïsoleerde feedbackopslag, ingestion en retentie (29 september 2026)
 
 - `migratie_v568.sql`: tabel `public.beta_feedback` (eigen sink, constraints gelijk aan `core/betaFeedback.js`), RLS aan,

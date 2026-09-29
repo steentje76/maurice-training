@@ -143,9 +143,9 @@ MS-TELEMETRY-01 may move beyond AUDITED only when:
 | 2 allowlist/forbidden-tests | DONE | `core/productTelemetry.test.js` |
 | 3 scheiding van athlete data | DONE | aparte tabel `product_telemetry_events` (live: RLS aan, geen anon/authenticated-grants); call-site-test S4–S6 |
 | 4 fail-closed/fail-open | DONE | ingestion-test + `core/productTelemetryLifecycle.test.js` (E, F8) |
-| 5 retention/environment/consent | PARTIAL | environment + consent-default (opt-in, uit) expliciet; **retentieduur/opschoning en consent-UX/rechtsgrond: PO-besluit open** |
-| 6 minimale funnel | DONE (inert) | 8 instrumentatiepunten op bewezen boundaries; verstuurt pas na opt-in |
+| 5 retention/environment/consent | DONE (v4.70.6) | opt-in-UI in Privacy (standaard uit, intrekken stopt direct, per gebruiker); 90 dagen retentie via `cleanup-product-telemetry` (@daily); environment expliciet. Grondslag = voorlopig productbeleid, geen vastgestelde AVG-rechtsgrond |
+| 6 minimale funnel | DONE | 8 instrumentatiepunten op bewezen boundaries; verstuurt na opt-in in Privacy |
 | 7 geen externe provider | DONE | geen provider geladen (test S15) |
 
-MS-TELEMETRY-01 blijft daarmee **niet IMPLEMENTED/CLOSED** tot gate-punt 5 volledig is.
+Alle zeven gate-punten zijn per v4.70.6 in code en tests aangetoond: MS-TELEMETRY-01 = **IMPLEMENTED**. Nog niet aangetoond (volgende maturity): productieverificatie van een echte opt-in-event-keten en van een uitgevoerde cleanup-run; AVG-rechtsgrond formeel vastgesteld.
 

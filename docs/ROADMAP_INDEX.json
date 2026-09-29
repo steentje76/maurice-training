@@ -5806,7 +5806,7 @@
   "phase": "F13",
   "name": "Product Telemetry & Observability Architecture",
   "priority": "P1",
-  "status": "NOT STARTED",
+  "status": "IMPLEMENTED",
   "v1_scope": true,
   "dependencies": [
    "MS-F1-02"
@@ -5821,7 +5821,7 @@
    "tests",
    "documentation"
   ],
-  "next_action": "Slices A (#477), B (#478) en C (v4.70.5) op main: registry, geïsoleerde ingestion/tabel en consent-gated funnel (privacy-by-default uit). Open vóór IMPLEMENTED: PO-besluit over consent-UX/rechtsgrond en retentiebeleid (duur/opschoning) voor product_telemetry_events; daarna opt-in-UI en productieverificatie van de funnel."
+  "next_action": "IMPLEMENTED per v4.70.6: registry (#477), geïsoleerde ingestion/tabel (#478), funnel (#479), opt-in-UI in Privacy (standaard uit, per gebruiker) en 90 dagen retentie via dagelijkse cleanup. Volgende maturity: productieverificatie van een echte opt-in-event-keten en een uitgevoerde cleanup-run; AVG-rechtsgrond formeel vaststellen (nu voorlopig productbeleid)."
  },
  {
   "id": "MS-BETA-01",

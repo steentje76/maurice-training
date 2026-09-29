@@ -3996,6 +3996,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">AI Coach toestaan</div><div class="set-row-sub">Deelt bovenstaande gegevens met de AI-leverancier voor persoonlijk advies</div></div><button class="switch" role="switch" id="sw-ai-consent" aria-checked="false" aria-label="AI Coach toestaan"></button></div>
       </div>
     </div>
+    <div class="card" id="pv-product-telemetry-card"><div class="card-hd"><div class="card-title">Productverbetering</div></div><div class="card-body" style="font-size:13px;line-height:1.5;padding-bottom:0">
+      Als je dit aanzet, registreert Trainingskompas welke hoofdstappen je in de app doorloopt (training geopend, bekeken, gestart of afgerond, en de geschiedenis bekeken) om de app te verbeteren. Er gaan geen trainingswaarden, gezondheids-, voedings-, locatie- of AI-gegevens mee. De gebeurtenissen zijn gekoppeld aan je account, worden alleen door Trainingskompas zelf gebruikt (geen externe analysedienst) en na 90 dagen automatisch verwijderd. Standaard staat dit uit; uitzetten stopt het direct.
+    </div>
+      <div class="card-body" style="padding:0 14px 14px">
+        <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Gebruiksstatistieken delen</div><div class="set-row-sub">Alleen app-stappen, nooit je trainings- of gezondheidsdata</div></div><button class="switch" role="switch" id="sw-product-telemetry" aria-checked="false" aria-label="Gebruiksstatistieken delen"></button></div>
+      </div>
+    </div>
     <div class="card"><div class="card-hd"><div class="card-title">Derde partijen</div></div><div class="card-body" style="font-size:13px;line-height:1.6">
       <strong>Supabase</strong> — database, authenticatie en opslag. Al je gegevens staan hier, technisch afgeschermd per gebruiker.<br>
       <strong>Netlify</strong> — hosting van de app en de server-side functies (o.a. de koppeling naar de AI-coach en accountverwijdering).<br>
@@ -6534,7 +6541,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 //  2. FAIL-CLOSED op inhoud: alleen geregistreerde events/properties (ProductTelemetryCore.buildEvent);
 //     nooit athlete/training-metingen. Aanroepers geven uitsluitend source_type/route_id mee.
 //  3. CONSENT (registry: PRODUCT_IMPROVEMENT): privacy-by-default UIT, zelfde conventie als
-//     tk_ai_consent. Zonder expliciete opt-in ('1') wordt er niets verstuurd.
+//     tk_ai_consent (Instellingen > Privacy, initSwitch, PERSONAL_CACHE_KEYS). Zonder expliciete
+//     opt-in ('1') wordt er niets verstuurd; intrekken ('0') stopt nieuwe events direct.
+//     Ruwe events worden server-side na 90 dagen verwijderd (cleanup-product-telemetry, @daily).
 var TK_PRODUCT_TELEMETRY_CONSENT_KEY='tk_product_telemetry_consent';
 function tkProductTelemetryConsent(){ try{ return localStorage.getItem(TK_PRODUCT_TELEMETRY_CONSENT_KEY)==='1'; }catch(_){ return false; } }
 function tkProductTelemetryPlatform(){
@@ -7438,7 +7447,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.5';
+const APP_VER = 'v4.70.6';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -11270,6 +11279,9 @@ function refreshMeldingenScreen(){
 // toestemming geeft, hier of via de eenmalige vraag bij eerste gebruik van de AI Coach).
 function refreshPrivacyScreen(){
   initSwitch('sw-ai-consent','tk_ai_consent',false);
+  // MS-TELEMETRY-01 closure: producttelemetry-opt-in via exact hetzelfde mechanisme (privacy-by-default
+  // uit). Uitzetten schrijft '0'; tkProductTelemetry() leest de vlag bij elke aanroep en stopt dus direct.
+  initSwitch('sw-product-telemetry',TK_PRODUCT_TELEMETRY_CONSENT_KEY,false);
 }
 window.addEventListener('online',()=>{const el=document.getElementById('settings-online-status');if(el)el.textContent='Online';});
 window.addEventListener('offline',()=>{const el=document.getElementById('settings-online-status');if(el)el.textContent='Offline';});
@@ -34157,6 +34169,7 @@ const CACHE_OWNER_KEY='tk_cache_owner_uid';
 const PERSONAL_CACHE_KEYS=[
   'tk_atleet','tk_trainings','tk_active_sport','tk_draft_training','tk_last_training',
   'tk_ai_consent','tk_gw_active','tk_gw_hist','tk_gw_log',
+  'tk_product_telemetry_consent', // MS-TELEMETRY-01: toestemming geldt per gebruiker, nooit geerfd op een gedeeld toestel
   'tk_wb_draft','tk_wb_saved','tk_wb_favs','tk_wb_migrated_v1','tk_vt_meta',
   'tk_lib_favs','tk_lib_recent','tk_lib_recentq',
   'tk_plates','tk_rower','tk_rowers','tk_rest_default',

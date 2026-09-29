@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## Security — F-SEC-002: quota-compensatie server-only + migratie_v573 (29 september 2026, geen appversie-wijziging)
+
+**Baseline:** `fb4c9d10957c77bbfdd6f062c77ac6e61c936563`.
+
+- `migratie_v573.sql`: nieuwe `decrement_usage_for_user` (SECURITY DEFINER, alleen service_role); EXECUTE op
+  `decrement_usage(text, date)` ingetrokken van PUBLIC/anon/authenticated. Een gebruiker kon zijn maandquota
+  onbeperkt terugzetten (bewezen met rollback).
+- `netlify/functions/coach.js`: compensatie na providerfout via `compenseerQuota()` (service key + geverifieerde
+  userId, alleen na eigen reservering; zonder service key geen compensatie).
+- Tests: nieuw `core/fSecUsageQuota.test.js` (9 sabotages); `fCoachEnforcement` P1b. `tools/verify-f-sec-002.sql`.
+  Auditdocument: F-SEC-002-sectie; F-SEC-005 definitief CLOSED_PROVEN.
+
 ## Security — F-SEC-005: least-privilege tabelrechten + migratie_v572 (29 september 2026, geen appversie-wijziging)
 
 **Baseline:** `2b4c963852dde0c4ef2b22aa208f2f55fc96dccd`.

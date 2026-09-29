@@ -2442,3 +2442,14 @@ bewezen success-boundary (Guided negeert de returnwaarde van `writeSessionRow`) 
 start zonder bijbehorende completion zou de funnel vertekenen. (5) Mapping `source_type`: vaste/eigen trainingen
 en Herhalen = `my_training`, programmablokken (`prog_`) = `program`; `builder` en `single_exercise` ongebruikt.
 (6) Native omgeving = `unknown` (client-side niet betrouwbaar vast te stellen).
+
+## DEC-BETA-001 — MS-BETA-01 Slice A: feedbackcontract en voorlopig beleid (29 september 2026)
+
+**Besluit.** Provider-neutraal, puur contract `core/betaFeedback.js` (`user_feedback.v1`) vóór enige UI of opslag:
+vier categorieën (problem/idea/unclear/works_well), lifecycle exact volgens roadmap §7, strikt geallowliste
+technische context alleen met expliciete consent per inzending, vrije tekst geclassificeerd als potentieel gevoelig
+en alleen gesanitized (niet geïnterpreteerd), geen automatische athlete/health/nutrition/AI/GPS/trainingswaarden,
+geen screenshots in het basiscontract. Scheiding van product telemetry, crash-diagnostiek, coach_workout_feedback en
+athlete data. Voorlopig productbeleid (geen juridische grondslag): feedback 12 maanden bewaren, alleen leesbaar
+voor triage-rollen; producttelemetry opt-in met 90 dagen ruwe retentie (MS-TELEMETRY-01, aparte uitvoering).
+Details: `docs/MS-BETA-01_FEEDBACK_AUDIT_AND_CONTRACT.md`.

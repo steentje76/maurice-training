@@ -2494,3 +2494,14 @@ is per inzending opt-in en wordt nooit onthouden; geen screenshots (aparte desig
 waarvan de bedoelde autorisatie niet betrouwbaar uit code/documentatie volgt, worden niet gewijzigd maar als finding
 vastgelegd: `social_create_notification` (D), AI-quota-functies (C), RLS-helper-orakels (C). Leaked-password
 protection wordt niet stilzwijgend ingeschakeld (accountbeleid). Geen nieuw rolmodel, geen auth-refactor.
+
+## DEC-SEC-001 — F-SEC-001: notificatie-autorisatie per type in de privileged write (29 september 2026)
+
+**Besluit.** De autorisatie blijft op de laag van de privileged write (`social_create_notification`, SECURITY
+DEFINER). Actor = `auth.uid()`; per `event_type` een verplichte server-side relatie tussen actor, ontvanger en doel,
+uitsluitend afgeleid uit de bestaande producers (frontend reaction/comment/connecties, DB-keten
+`assign_event_responsibility_notify`). Typen zonder producer via deze functie (group_invite, group_join_approved,
+challenge_invite) en typen met een eigen geautoriseerde route (team_event_*, new_message) zijn via deze functie
+fail-closed — geen nieuwe productregel, alleen het wegnemen van een ongebruikt, onbeveiligd pad. F-SEC-003-helpers
+worden niet als security boundary gebruikt; `team_has_access` (categorie A) wel. Geen nieuw rolmodel, geen
+tabel-/RLS-wijziging.

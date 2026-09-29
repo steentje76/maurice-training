@@ -78,4 +78,67 @@ cross-user kwetsbaarheid · **E** onvoldoende bewijs.
 ## Richting CLOSED_PROVEN
 
 - Kan (na productie-verificatie van v570): F-SEC-004.
-- Niet: F-SEC-001 (D, open), F-SEC-002, F-SEC-003 (C, open), F-SEC-005, F-SEC-006.
+- Niet: F-SEC-002, F-SEC-003 (C, open), F-SEC-005, F-SEC-006. F-SEC-001: zie closure-sectie (v571).
+
+## F-SEC-001 closure (29 september 2026, migratie v571)
+
+**Oorspronkelijke exploit.** Authenticated A → `social_create_notification(B, 'responsibility_assigned', 'team_event',
+<willekeurig>)` → rij in `social_notifications` voor B (actor A). Vóór de fix opnieuw gereproduceerd met rollback:
+TOEGESTAAN, 1 rij in de transactie, 0 rijen erna. Functiedefinitie ongewijzigd sinds de audit (md5 vóór:
+`2cd658eb…`).
+
+**Root cause.** De functie is SECURITY DEFINER (nodig: `social_notifications` heeft geen client-INSERT-policy), maar
+controleerde alleen of de caller ingelogd was en of `event_type`/`target_type` in een allowlist stonden. Ontvanger
+en doel waren volledig caller-gestuurd; er was geen relatie tussen `auth.uid()`, ontvanger en doel.
+
+**Autorisatiematrix (afgeleid uit bestaande producers).**
+
+| Type | Producer | Actor | Ontvanger | Vereiste relatie (server-side bewijs) |
+|---|---|---|---|---|
+| reaction | index.html `socialToggleReaction` (na eigen reaction-insert) | auth.uid() | eigenaar activity | `social_reactions(activity, actor)` en `social_shared_activities.athlete_id = ontvanger`, target_type `shared_activity` |
+| comment | index.html `socialPostComment` (na eigen comment-insert) | auth.uid() | eigenaar activity | `social_comments(activity, actor)` en `athlete_id = ontvanger` |
+| connection_request | index.html `socialFollow` (na pending-insert) | auth.uid() | gevolgde | `social_connections(actor → ontvanger, pending)`, target = profiel actor |
+| connection_accepted | index.html `socialAcceptFollow` (na accept) | auth.uid() | volger | `social_connections(ontvanger → actor, accepted)`, target = profiel actor |
+| responsibility_assigned | DB-keten `assign_event_responsibility_notify` (v540) | auth.uid() | toegewezene | `event_responsibilities(event, assigned_user_id = ontvanger)` en `team_has_access(team, owner/admin/staff)` (categorie A-helper, gebonden aan auth.uid()) |
+| group_invite, group_join_approved, challenge_invite | geen producer | — | — | niet meer via deze functie (fail-closed) |
+| team_event_created/updated/cancelled | eigen geautoriseerde SECDEF-functies (direct insert) | — | — | niet via deze functie (fail-closed) |
+| new_message | trigger `notify_message_participants` | — | — | niet via deze functie |
+
+**Gekozen fix (`migratie_v571.sql`).** Zelfde signature, SECURITY DEFINER, owner en `search_path`; actor =
+`auth.uid()`; allowlist teruggebracht tot de vijf aantoonbaar geproduceerde typen; per type een verplichte
+`exists`-controle zoals in de matrix; zonder bewijs → exception (fail-closed); geen F-SEC-003-orakels gebruikt;
+EXECUTE blijft zonder PUBLIC/anon. Geen wijziging aan tabellen, RLS of policies.
+
+**Verworpen alternatieven.** (1) EXECUTE voor authenticated intrekken: breekt de vier legitieme frontend-flows.
+(2) Alleen blokkeren van niet-verbonden gebruikers via `social_is_blocked_pair`/connecties: dekt reaction/comment/
+responsibility niet en gebruikt een F-SEC-003-orakel als boundary. (3) Notificaties naar een triggerlaag verplaatsen:
+correct maar een brede refactor buiten deze slice.
+
+**Adversarial evidence vóór de fix (live functie, rollback).** N1 exploit: TOEGESTAAN.
+
+**Adversarial + regressie-evidence met de nieuwe definitie (productie, alles in één teruggedraaide transactie; md5
+van de live functie daarna ongewijzigd, 0 restrijen).**
+Geweigerd: N1 exploit (willekeurig doel), N2 reaction naar niet-eigenaar, N3 geldig type verkeerde context, N4
+connection_request met vervalst doel, N5 connection_request zonder relatie, N6 connection_accepted bij pending, N7
+team_event_cancelled via RPC, N8 group_invite, N9 onbekend type, N10 responsibility naar niet-toegewezene, N11
+responsibility door niet-staff, N12 keten door niet-staff, N13 reaction zonder eigen reaction, N14 reaction na
+verwijderen relatie, N15 anon, N16 responsibility op onbestaand event, N17 member → staff.
+Toegestaan: P1 reaction, P2 comment, P3 connection_request, P4 connection_accepted, P5 responsibility (staff →
+toegewezene), P6 keten `assign_event_responsibility_notify` (staff). S1 zichzelf: stille no-op (bestaand gedrag).
+Herhaalbaar: `tools/verify-f-sec-001.sql`.
+
+**Residual risk.** Een gebruiker met een bestaande legitieme relatie kan de bijbehorende notificatie herhaald
+triggeren (bijv. reaction-notificatie meerdere keren) — geen cross-user misbruik, wel mogelijke herhaling; geen
+deduplicatie in deze slice.
+
+**Productie-evidence v571 (29 september 2026).** Migratie `20260929145213:migratie_v571_f_sec_001_notification_authz`
+eenmalig toegepast ná de groene exact-head Quality Gate van PR #485. Live geverifieerd: nieuwe definitie (md5
+`84f8ff62…`, actor gebonden aan `auth.uid()`), één overload, SECURITY DEFINER, owner `postgres`,
+`search_path=public`; EXECUTE: anon nee, PUBLIC nee, authenticated ja, service_role ja; `social_notifications` RLS aan,
+policies ongewijzigd (recipient-select, recipient-update). `tools/verify-f-sec-001.sql` tegen de live functie
+(rollback): N1–N15 en N18 (directe INSERT als RPC-bypass) GEWEIGERD, P1–P6 TOEGESTAAN, S1 no-op; daarna 0 restrijen
+en 0 testcontext. Security Advisors na DDL: geen nieuwe bevinding; SECURITY DEFINER anon-uitvoerbaar 0,
+authenticated-uitvoerbaar 29 (ongewijzigd; `social_create_notification` is nu categorie A).
+
+**Status F-SEC-001:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN zodra de squash-merge en de post-merge
+Quality Gate groen zijn (closure-contract punt 13).

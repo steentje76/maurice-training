@@ -49,3 +49,11 @@ Gebouwd: `migratie_v568.sql` (`beta_feedback`, RLS, geen client-schrijfrechten, 
 `system_role` support/developer), `netlify/functions/beta-feedback.js` (authenticated server-side ingestion met
 hervalidatie), `netlify/functions/cleanup-beta-feedback.js` (365 dagen, @daily). Tests: `core/betaFeedbackStorage.test.js`.
 Open voor volgende slices: triage-statusovergangen (met `canTransition`), feedback-UI, screenshots (aparte expliciete actie).
+
+## Slice C status (29-09-2026)
+
+Gebouwd: feedback-UI (Help > Contact & feedback), per-inzending technische context (standaard uit, allowlist),
+governed triage via `netlify/functions/beta-feedback-triage.js` (system_role support/developer, `canTransition`,
+conditionele PATCH), `migratie_v569.sql` (`duplicate_of`, `status_updated_at/by`). Tests: `core/betaFeedbackUiTriage.test.js`.
+Nog open: productievalidatie (echte inzending + triage-overgang), screenshots (aparte privacy/security-designgate),
+notificaties, en een support-account (nu alleen developer).

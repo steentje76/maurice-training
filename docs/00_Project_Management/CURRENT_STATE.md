@@ -6,7 +6,24 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.4
+v4.70.5
+
+## MS-TELEMETRY-01 Slice C — minimale funnel-instrumentatie (v4.70.5, 29 september 2026)
+
+- Slice A (contract/registry, #477) en Slice B (ingestion + `public.product_telemetry_events`, #478) zijn op main.
+  Database live geverifieerd: tabel bestaat, RLS aan, geen grants voor anon/authenticated, 0 rijen.
+- Slice C: emitter `tkProductTelemetry()` in `index.html` (canoniek contract `core/productTelemetry.js`,
+  endpoint `/.netlify/functions/product-telemetry`); fail-open, fail-closed op inhoud, authenticated-only.
+- Geïnstrumenteerd op bewezen boundaries: `training.opened` (go s-train-mgr), `training.history.viewed`
+  (go s-hist), `training.previewed` (openTrainingPreview), `training.workout.started` (verse start in startT,
+  startCustomTraining, launchProgramTrainScreen, startRepeatWorkout), `training.workout.completed`
+  (finishSession, uitsluitend na volledig geslaagde opslag en de saved===0-guard).
+- **Consent: privacy-by-default UIT** (`tk_product_telemetry_consent`, registry-consent PRODUCT_IMPROVEMENT);
+  zonder opt-in wordt niets verstuurd. Er is nog geen opt-in-UI: de funnel is bedraad maar inert.
+- Niet geïnstrumenteerd (bewust): Guided (GW persisteert fire-and-forget zonder bewezen success-boundary),
+  Structured Endurance en Losse oefening (eigen opslagpaden).
+- **MS-TELEMETRY-01 blijft open:** retentiebeleid (duur/opschoning) en consent-UX/rechtsgrond vragen een
+  PO-besluit (gate-punt 5 in de audit).
 
 ## Concept2 Fixed-Distance Corrective — CSAFE units, GOINUSE, GETSTATUS, verse read-back (v4.70.2, 27 september 2026)
 
@@ -98,7 +115,7 @@ v4.70.4
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.4 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.5 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

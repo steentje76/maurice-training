@@ -10,6 +10,19 @@
 - `netlify/functions/cleanup-beta-feedback.js` + `netlify.toml` (@daily): 365 dagen retentie.
 - Tests: `core/betaFeedbackStorage.test.js` (63 asserties, 11 sabotages). Geen client-/UI-wijziging.
 
+## Security — privileged functions audit + migratie_v570 (29 september 2026, geen appversie-wijziging)
+
+**Baseline:** `c25b121c8de917f5424292324960686f9c7d8889`. Zie `docs/SECURITY_AUDIT_PRIVILEGED_FUNCTIONS.md`.
+
+- Audit van 250 functies / 61 SECURITY DEFINER (alle met `search_path`); rollback-veilige adversarial tests.
+- `migratie_v570.sql`: EXECUTE van PUBLIC/anon ingetrokken voor `upsert_daily_health`, `schedule_my_training`,
+  `get_or_create_direct_thread`, `upsert_endurance_profile_target`, `is_thread_participant`; expliciet
+  authenticated + service_role. Geen body-, definer-, search_path- of policywijziging.
+- `tools/verify-privileged-functions.sql` (read-only verificatie), `core/fSecurityPrivilegedFunctions.test.js`
+  (31 asserties, 5 sabotages).
+- Open, bewust niet gewijzigd (HARD STOP): F-SEC-001 (D) `social_create_notification`, F-SEC-002 (C) AI-quota,
+  F-SEC-003 (C) boolean-orakels, F-SEC-005 tabel-TRUNCATE-grants, F-SEC-006 leaked-password protection.
+
 ## v4.70.7 — MS-BETA-01 Slice C: feedback-UI en governed triage lifecycle (29 september 2026)
 
 **Baseline:** `5a5bd8bdde52b74ef8b6e9a2cdfc2ba24258d60d`.

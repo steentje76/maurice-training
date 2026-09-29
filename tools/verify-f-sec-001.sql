@@ -72,6 +72,10 @@ begin
   set local role anon;
   begin perform public.social_create_notification(b,'reaction','shared_activity',sa); r:='TOEGESTAAN'; exception when others then r:='GEWEIGERD'; end; insert into _r values ('N15 anon', r);
   reset role;
+  perform set_config('request.jwt.claims', json_build_object('sub', a::text, 'role','authenticated')::text, true);
+  set local role authenticated;
+  begin insert into public.social_notifications (recipient_id, event_type, actor_id, target_type, target_id) values (b, 'reaction', a, 'shared_activity', sa); r:='TOEGESTAAN'; exception when others then r:='GEWEIGERD'; end; insert into _r values ('N18 directe INSERT (RPC-bypass)', r);
+  reset role;
   select count(*) into n1 from public.social_notifications;
   insert into _r values ('rijen_in_tx', (n1-n0)::text);
 end $t$;

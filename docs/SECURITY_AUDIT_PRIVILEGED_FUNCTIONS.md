@@ -78,7 +78,7 @@ cross-user kwetsbaarheid · **E** onvoldoende bewijs.
 ## Richting CLOSED_PROVEN
 
 - Kan (na productie-verificatie van v570): F-SEC-004.
-- Niet: F-SEC-001 (D, open), F-SEC-002, F-SEC-003 (C, open), F-SEC-005, F-SEC-006.
+- Niet: F-SEC-002, F-SEC-003 (C, open), F-SEC-005, F-SEC-006. F-SEC-001: zie closure-sectie (v571).
 
 ## F-SEC-001 closure (29 september 2026, migratie v571)
 
@@ -131,4 +131,14 @@ Herhaalbaar: `tools/verify-f-sec-001.sql`.
 triggeren (bijv. reaction-notificatie meerdere keren) — geen cross-user misbruik, wel mogelijke herhaling; geen
 deduplicatie in deze slice.
 
-**Status F-SEC-001:** zie "Productie-evidence v571" hieronder.
+**Productie-evidence v571 (29 september 2026).** Migratie `20260929145213:migratie_v571_f_sec_001_notification_authz`
+eenmalig toegepast ná de groene exact-head Quality Gate van PR #485. Live geverifieerd: nieuwe definitie (md5
+`84f8ff62…`, actor gebonden aan `auth.uid()`), één overload, SECURITY DEFINER, owner `postgres`,
+`search_path=public`; EXECUTE: anon nee, PUBLIC nee, authenticated ja, service_role ja; `social_notifications` RLS aan,
+policies ongewijzigd (recipient-select, recipient-update). `tools/verify-f-sec-001.sql` tegen de live functie
+(rollback): N1–N15 en N18 (directe INSERT als RPC-bypass) GEWEIGERD, P1–P6 TOEGESTAAN, S1 no-op; daarna 0 restrijen
+en 0 testcontext. Security Advisors na DDL: geen nieuwe bevinding; SECURITY DEFINER anon-uitvoerbaar 0,
+authenticated-uitvoerbaar 29 (ongewijzigd; `social_create_notification` is nu categorie A).
+
+**Status F-SEC-001:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN zodra de squash-merge en de post-merge
+Quality Gate groen zijn (closure-contract punt 13).

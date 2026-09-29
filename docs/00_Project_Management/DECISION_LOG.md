@@ -2505,3 +2505,10 @@ challenge_invite) en typen met een eigen geautoriseerde route (team_event_*, new
 fail-closed — geen nieuwe productregel, alleen het wegnemen van een ongebruikt, onbeveiligd pad. F-SEC-003-helpers
 worden niet als security boundary gebruikt; `team_has_access` (categorie A) wel. Geen nieuw rolmodel, geen
 tabel-/RLS-wijziging.
+
+## DEC-SEC-002 — F-SEC-005: tabelrechten die RLS omzeilen of DDL-achtig zijn, alleen voor owner/service_role (29 september 2026)
+
+**Besluit.** Clients (anon/authenticated) krijgen geen TRUNCATE, REFERENCES of TRIGGER op applicatietabellen; dit
+geldt ook voor toekomstige tabellen via de default privileges van de tabel-owner `postgres` in public. DML-rechten
+blijven in het Supabase-model staan en worden door RLS begrensd; een per-tabel DML-least-privilege-pass is een apart
+traject. De default privileges van `supabase_admin` zijn door de projectrol niet te wijzigen (restrisico).

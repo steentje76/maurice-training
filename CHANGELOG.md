@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## Security — F-SEC-005: least-privilege tabelrechten + migratie_v572 (29 september 2026, geen appversie-wijziging)
+
+**Baseline:** `2b4c963852dde0c4ef2b22aa208f2f55fc96dccd`.
+
+- `migratie_v572.sql`: TRUNCATE/REFERENCES/TRIGGER ingetrokken van anon, authenticated en PUBLIC op alle tabellen in
+  public; default privileges van `postgres` in public gehard (nieuwe tabellen erven ze niet meer). Geen DML-, RLS-,
+  policy- of service_role-wijziging.
+- `tools/verify-f-sec-005.sql`, `core/fSecTablePrivileges.test.js` (9 sabotages). Auditdocument: F-SEC-005-sectie en
+  F-SEC-001 definitief CLOSED_PROVEN.
+
 ## Security — F-SEC-001 closure: social_create_notification + migratie_v571 (29 september 2026, geen appversie-wijziging)
 
 **Baseline:** `d5f88c08533a2e0968b419bad272698729548359`.

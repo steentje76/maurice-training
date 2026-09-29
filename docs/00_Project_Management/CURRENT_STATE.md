@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.7
 
+## Security — F-SEC-005 (29 september 2026)
+
+- anon/authenticated hadden via de Supabase-default privileges TRUNCATE/REFERENCES/TRIGGER op 96–99 tabellen;
+  TRUNCATE omzeilt RLS (bewezen in rollback). `migratie_v572.sql` trekt deze rechten in op alle tabellen in public en
+  hardt de default privileges van `postgres`. DML blijft RLS-begrensd; service_role ongemoeid. Status: auditdocument.
+
 ## Security — F-SEC-001 closure (29 september 2026)
 
 - `social_create_notification` (SECURITY DEFINER) accepteerde caller-gestuurde ontvanger/doel: iedere ingelogde

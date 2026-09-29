@@ -10,6 +10,18 @@
 - `netlify/functions/cleanup-beta-feedback.js` + `netlify.toml` (@daily): 365 dagen retentie.
 - Tests: `core/betaFeedbackStorage.test.js` (63 asserties, 11 sabotages). Geen client-/UI-wijziging.
 
+## v4.70.7 — MS-BETA-01 Slice C: feedback-UI en governed triage lifecycle (29 september 2026)
+
+**Baseline:** `5a5bd8bdde52b74ef8b6e9a2cdfc2ba24258d60d`.
+
+- `index.html`: modal `m-beta-feedback` (entry in Help > Contact & feedback) en `m-feedback-triage`; laadt
+  `core/betaFeedback.js`; technische context standaard uit en per inzending; triage-knop alleen voor support/developer.
+- `netlify/functions/beta-feedback-triage.js`: server-side lijst + statusovergang (rolcheck, contractvalidatie,
+  conditionele PATCH, DUPLICATE-verwijzing gecontroleerd).
+- `migratie_v569.sql`: `duplicate_of`, `status_updated_at`, `status_updated_by` + DUPLICATE-constraints; geen grants.
+- Tests: nieuw `core/betaFeedbackUiTriage.test.js` (57 asserties, 12 sabotages).
+- sw-cache v470070 (precache `core/betaFeedback.js`), versionCode 47007.
+
 ## v4.70.6 — MS-TELEMETRY-01 closure: opt-in-UI en 90 dagen retentie (29 september 2026)
 
 **Baseline:** `6f4151e67a24f54229713e7a9191a2deba49dbcb`.

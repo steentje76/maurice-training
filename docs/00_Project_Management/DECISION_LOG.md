@@ -2476,3 +2476,13 @@ De contract-POLICY-namen `product_triage`/`product_admin` mappen hierop; er is g
 `tester` leest niet mee. (4) Retentie 365 dagen via een dagelijkse scheduled function (patroon van de bestaande
 cleanups); feedback verdwijnt met het account (cascade). (5) Triage-statuswijzigingen (lifecycle) en UI volgen in
 een latere slice. Grondslag: voorlopig productbeleid (DEC-BETA-001), geen vastgestelde AVG-rechtsgrond.
+
+## DEC-BETA-003 — MS-BETA-01 Slice C: triage-schrijfpad en UI-grenzen (29 september 2026)
+
+**Besluit.** (1) Statusovergangen lopen uitsluitend via de serverfunctie `beta-feedback-triage.js` met service_role;
+geen client-UPDATE-grant of -policy. Autorisatie = bestaande `users.system_role` support/developer, server-side
+opgehaald (zelfde patroon als coach.js); `tester` niet. (2) De overgang wordt gevalideerd met het canonieke
+`canTransition`; de PATCH is conditioneel op de server-side gelezen status (optimistic concurrency). (3) Minimale DDL
+(v569): `duplicate_of` omdat het contract bij DUPLICATE een verwijzing eist, plus `status_updated_at/by` voor
+toerekenbaarheid. (4) De triage-UI toont geen user_id, accountgegevens of technische context. (5) Technische context
+is per inzending opt-in en wordt nooit onthouden; geen screenshots (aparte designgate). Geen nieuw rolmodel.

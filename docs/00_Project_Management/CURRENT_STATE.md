@@ -6,7 +6,7 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.6
+v4.70.7
 
 ## MS-BETA-01 Slice B — geïsoleerde feedbackopslag, ingestion en retentie (29 september 2026)
 
@@ -18,6 +18,21 @@ v4.70.6
   hervalidatie met het canonieke contract, `user_id` uit het token, status altijd SUBMITTED, geen tekst-echo.
 - `netlify/functions/cleanup-beta-feedback.js` (@daily): 365 dagen retentie, strikt `created_at < nu − 365d`.
 - Geen UI, geen screenshots, geen externe provider. Triage-statuswijzigingen volgen in een latere slice.
+
+## MS-BETA-01 Slice C — feedback-UI en governed triage (v4.70.7, 29 september 2026)
+
+- **Feedback-UI:** Help > Contact & feedback > "Feedback geven in de app" (modal): Probleem/Idee/Onduidelijk/
+  Werkt goed, eigen tekst + optionele stappen, client-validatie met `core/betaFeedback.js` (server valideert
+  opnieuw), loading/success/error, dubbele inzending voorkomen, alleen succes bij bevestigde 201.
+- **Technische context:** standaard uit, per inzending aan te vinken, alleen de contract-allowlist (app-versie,
+  omgeving, platform, OS-/browserfamilie, scherm-id, tijdstip); nooit onthouden. Geen screenshots.
+- **Triage:** `netlify/functions/beta-feedback-triage.js` (lijst + statusovergang), alleen `users.system_role`
+  support/developer (server-side via service_role, patroon coach.js); tester en gewone gebruikers 403.
+  Overgang via `canTransition`, conditionele PATCH op de huidige status (race -> 409), toerekenbaar.
+  Triage-knop alleen zichtbaar voor de eigen rol support/developer; de server blijft de autoriteit.
+- **DDL:** `migratie_v569.sql` — `duplicate_of` (contract eist verwijzing bij DUPLICATE), `status_updated_at/by`.
+  Geen grant-/RLS-wijziging.
+- Nog niet productief gevalideerd (echte inzending, echte triage-overgang).
 
 ## MS-TELEMETRY-01 closure — opt-in-UI en 90 dagen retentie (v4.70.6, 29 september 2026)
 
@@ -138,7 +153,7 @@ v4.70.6
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.6 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.7 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

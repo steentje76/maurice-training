@@ -238,4 +238,19 @@ verbruik binnen quota, server-compensatie via service_role (vloer 0 bij herhalin
 Herhaalbaar: `tools/verify-f-sec-002.sql`. Tests: `core/fSecUsageQuota.test.js` (9 sabotages), `fCoachEnforcement`
 P1b.
 
-**Status F-SEC-002:** zie productie-evidence hieronder.
+**Productie-evidence v573 (29 september 2026).** Migratie `20260929212712:migratie_v573_f_sec_002_usage_quota`
+eenmalig toegepast ná de groene exact-head Quality Gate van PR #487. Live: `decrement_usage` — anon/authenticated/
+PUBLIC geen EXECUTE, service_role wel; `decrement_usage_for_user` — alleen service_role; beide SECURITY DEFINER, owner
+`postgres`, `search_path=public`; `check_and_increment_usage`, `increment_usage`, `consume_credit` ongewijzigd;
+`usage_log` RLS aan met 1 policy. `tools/verify-f-sec-002.sql` tegen de live functies (rollback): N1–N10 GEWEIGERD
+(incl. client- en anon-compensatie, vervalste gebruiker, directe UPDATE 0 rijen), P1–P3 TOEGESTAAN (verbruik binnen
+quota, server-compensatie, vloer 0), stand B ongewijzigd; daarna 0 restrijen. Security Advisors na DDL:
+SECURITY DEFINER uitvoerbaar door authenticated 29 → 28 (`decrement_usage` verdwenen), door anon 0; verder ongewijzigd.
+
+**Restrisico.** Tussen productie-DDL en deploy van de nieuwe coach.js faalde de best-effort compensatie (hooguit één
+eenheid verlies bij een providerfout, nooit gratis capaciteit). `increment_usage`/`consume_credit` blijven client-
+uitvoerbaar zonder callers (B, alleen zelfbenadeling). `check_and_increment_usage` accepteert een door de caller
+gekozen `p_quota`; bij directe aanroep leidt dat alleen tot eigen verbruik, nooit tot AI-toegang.
+
+**Status F-SEC-002:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene post-merge
+Quality Gate.

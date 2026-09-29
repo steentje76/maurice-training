@@ -8,6 +8,17 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.6
 
+## MS-BETA-01 Slice B — geïsoleerde feedbackopslag, ingestion en retentie (29 september 2026)
+
+- `migratie_v568.sql`: tabel `public.beta_feedback` (eigen sink, constraints gelijk aan `core/betaFeedback.js`), RLS aan,
+  alle default-grants van anon/authenticated ingetrokken, alleen `SELECT` voor authenticated en die is via RLS beperkt
+  tot de bestaande platformrol `users.system_role IN ('support','developer')` (zelfde model als `support_access_log`, v526).
+  Geen client insert/update/delete. `user_id` cascade met het account.
+- `netlify/functions/beta-feedback.js`: authenticated-only ingestion, payload-cap 16 KB, rate limit 20/uur per gebruiker,
+  hervalidatie met het canonieke contract, `user_id` uit het token, status altijd SUBMITTED, geen tekst-echo.
+- `netlify/functions/cleanup-beta-feedback.js` (@daily): 365 dagen retentie, strikt `created_at < nu − 365d`.
+- Geen UI, geen screenshots, geen externe provider. Triage-statuswijzigingen volgen in een latere slice.
+
 ## MS-TELEMETRY-01 closure — opt-in-UI en 90 dagen retentie (v4.70.6, 29 september 2026)
 
 - **Consent:** switch "Gebruiksstatistieken delen" in Instellingen > Privacy via het bestaande mechanisme

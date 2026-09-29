@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## MS-BETA-01 Slice B — feedbackopslag, ingestion en retentie (29 september 2026, server-side; APP_VER ongewijzigd v4.70.6)
+
+**Baseline:** `1bf7a5ab023201c78ae1179dc9e780116aac65a6`.
+
+- `migratie_v568.sql`: `public.beta_feedback` met RLS; geen client-schrijfrechten; triage-read via bestaande
+  `system_role` support/developer; checks gelijk aan het contract; cascade met het account.
+- `netlify/functions/beta-feedback.js`: server-side ingestion (auth, cap, rate limit, hervalidatie, fail-safe).
+- `netlify/functions/cleanup-beta-feedback.js` + `netlify.toml` (@daily): 365 dagen retentie.
+- Tests: `core/betaFeedbackStorage.test.js` (63 asserties, 11 sabotages). Geen client-/UI-wijziging.
+
 ## v4.70.6 — MS-TELEMETRY-01 closure: opt-in-UI en 90 dagen retentie (29 september 2026)
 
 **Baseline:** `6f4151e67a24f54229713e7a9191a2deba49dbcb`.

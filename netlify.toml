@@ -16,3 +16,7 @@
 # MS-TELEMETRY-01: 90 dagen retentie voor ruwe product_telemetry_events.
 [functions."cleanup-product-telemetry"]
   schedule = "@daily"
+
+# MS-BETA-01: 365 dagen retentie voor beta_feedback.
+[functions."cleanup-beta-feedback"]
+  schedule = "@daily"

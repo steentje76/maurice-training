@@ -78,7 +78,7 @@ cross-user kwetsbaarheid · **E** onvoldoende bewijs.
 ## Richting CLOSED_PROVEN
 
 - Kan (na productie-verificatie van v570): F-SEC-004.
-- Niet: F-SEC-002, F-SEC-003 (C, open), F-SEC-005, F-SEC-006. F-SEC-001: zie closure-sectie (v571).
+- Niet: F-SEC-002, F-SEC-003 (C, open), F-SEC-006. F-SEC-001: CLOSED_PROVEN (v571). F-SEC-005: zie closure-sectie (v572).
 
 ## F-SEC-001 closure (29 september 2026, migratie v571)
 
@@ -140,5 +140,62 @@ policies ongewijzigd (recipient-select, recipient-update). `tools/verify-f-sec-0
 en 0 testcontext. Security Advisors na DDL: geen nieuwe bevinding; SECURITY DEFINER anon-uitvoerbaar 0,
 authenticated-uitvoerbaar 29 (ongewijzigd; `social_create_notification` is nu categorie A).
 
-**Status F-SEC-001:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN zodra de squash-merge en de post-merge
-Quality Gate groen zijn (closure-contract punt 13).
+**Status F-SEC-001: CLOSED_PROVEN.** Alle closure-contractpunten aangetoond: squash-merge PR #485
+(`2b4c963852dde0c4ef2b22aa208f2f55fc96dccd`) en post-merge Quality Gate groen.
+
+## F-SEC-005 closure (29 september 2026, migratie v572)
+
+**Inventory (live, vóór).** Schema public: 119 tabellen (alle owner `postgres`, alle RLS aan), 7 sequences, geen
+views; geen pg_graphql; schema-USAGE voor anon/authenticated, geen CREATE. Effectieve tabelrechten:
+
+| Recht | authenticated | anon |
+|---|---|---|
+| SELECT | 115 | 96 |
+| INSERT | 115 | 96 |
+| UPDATE / DELETE | 113 | 96 |
+| TRUNCATE | 99 | 96 |
+| REFERENCES | 99 | 96 |
+| TRIGGER | 99 | 96 |
+
+Geen PUBLIC-tabelgrants. De 20 tabellen zonder TRUNCATE hadden dat al eerder gericht ingetrokken (o.a.
+`beta_feedback`, `product_telemetry_events`, `nutrition_*`, `research_*`).
+
+**Root cause.** `pg_default_acl` van rol `postgres` in schema public gaf anon/authenticated `arwdDxtm` op elke nieuwe
+tabel (Supabase-default); migraties maken tabellen als `postgres`. Dezelfde default staat voor `supabase_admin`, die de
+projectrol niet mag wijzigen.
+
+**RLS-interactie.** TRUNCATE valt niet onder RLS. Adversarial (rollback, productie, representatieve back-uptabel):
+authenticated TRUNCATE → TOEGESTAAN (tabel leeg binnen de transactie, erna ongewijzigd); anon TRUNCATE → TOEGESTAAN;
+authenticated CREATE TRIGGER via een tijdelijke functie → TOEGESTAAN; nieuwe tabel erft TRUNCATE/REFERENCES/TRIGGER.
+DML bleef door RLS begrensd (cross-user INSERT geweigerd).
+
+**Classificatie.** TRUNCATE (anon/authenticated) = **C** (RLS-omzeilend en destructief, bewezen uitvoerbaar in een
+anon/authenticated-sessie; geen client-route: PostgREST kent geen TRUNCATE/DDL, geen pg_graphql, geen dynamische SQL in
+aanroepbare functies → niet D). TRIGGER = **C** (trigger aan applicatietabel te hangen). REFERENCES = **B** (geen
+behoefte; FK's naar public vanuit temp-tabellen zijn niet toegestaan). SELECT/INSERT/UPDATE/DELETE = **A** voor de
+Supabase-architectuur (RLS is de begrenzing; buiten deze slice). Sequences (USAGE nodig voor inserts) = A; sequence-UPDATE
+(setval) = restpunt.
+
+**Remediatie (`migratie_v572.sql`).** TRUNCATE, REFERENCES en TRIGGER ingetrokken van anon, authenticated en PUBLIC
+op alle tabellen in public (loop over pg_class) en de default privileges van `postgres` in public gehard. Geen grant,
+geen DML-revoke, RLS/policies/service_role/owners ongewijzigd. Geen TK-client of -functie gebruikt deze rechten.
+
+**Tests.** `core/fSecTablePrivileges.test.js` (CI, 9 sabotages); `tools/verify-f-sec-005.sql` (rollback-verificatie).
+
+**Productie-evidence v572 (29 september 2026).** Migratie `20260929162243:migratie_v572_f_sec_005_table_privileges`
+eenmalig toegepast ná de groene exact-head Quality Gate van PR #486. Live na DDL: TRUNCATE/REFERENCES/TRIGGER voor
+anon en authenticated op 0 van 119 tabellen; SELECT/INSERT/UPDATE/DELETE ongewijzigd (authenticated 115/115/113/113,
+anon 96); service_role TRUNCATE op 119/119; 0 tabellen zonder RLS; default privileges `postgres`/public nu
+`anon=arwdm`, `authenticated=arwdm` (zonder D/x/t). `tools/verify-f-sec-005.sql` (rollback): authenticated en anon
+TRUNCATE GEWEIGERD, authenticated CREATE TRIGGER GEWEIGERD, nieuwe tabel zonder TRUNCATE/REFERENCES/TRIGGER maar met
+SELECT/INSERT, legitieme RLS-insert met FK en eigen RPC (`upsert_daily_health`) TOEGESTAAN, cross-user INSERT
+GEWEIGERD, service_role TRUNCATE en DML TOEGESTAAN; daarna 0 restrijen en geen probe-tabel. Security Advisors na
+DDL: ongewijzigd (de linter controleert geen tabelgrants).
+
+**Restrisico.** (1) Default privileges van `supabase_admin` in public geven nog `arwdDxtm` (projectrol mag dit niet
+wijzigen; alle huidige public-tabellen zijn van `postgres`). (2) Sequence-UPDATE (setval) voor anon/authenticated
+en functie-EXECUTE-defaults voor anon zijn buiten deze slice gebleven. (3) DML-grants blijven in het Supabase-model
+door RLS begrensd.
+
+**Status F-SEC-005:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene post-merge
+Quality Gate.

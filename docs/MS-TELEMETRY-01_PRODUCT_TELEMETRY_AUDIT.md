@@ -134,3 +134,18 @@ MS-TELEMETRY-01 may move beyond AUDITED only when:
 5. retention/environment/consent semantics are explicit;
 6. minimal registered funnel is instrumented;
 7. no external tracking/provider is activated without an explicit, reviewed implementation decision.
+
+## Implementation status (29 september 2026, v4.70.5)
+
+| Gate-punt | Status | Bewijs |
+|---|---|---|
+| 1 registry | DONE | `core/productTelemetry.js` (#477) |
+| 2 allowlist/forbidden-tests | DONE | `core/productTelemetry.test.js` |
+| 3 scheiding van athlete data | DONE | aparte tabel `product_telemetry_events` (live: RLS aan, geen anon/authenticated-grants); call-site-test S4–S6 |
+| 4 fail-closed/fail-open | DONE | ingestion-test + `core/productTelemetryLifecycle.test.js` (E, F8) |
+| 5 retention/environment/consent | PARTIAL | environment + consent-default (opt-in, uit) expliciet; **retentieduur/opschoning en consent-UX/rechtsgrond: PO-besluit open** |
+| 6 minimale funnel | DONE (inert) | 8 instrumentatiepunten op bewezen boundaries; verstuurt pas na opt-in |
+| 7 geen externe provider | DONE | geen provider geladen (test S15) |
+
+MS-TELEMETRY-01 blijft daarmee **niet IMPLEMENTED/CLOSED** tot gate-punt 5 volledig is.
+

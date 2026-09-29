@@ -1,5 +1,20 @@
 # Trainingskompas — Changelog
 
+## v4.70.5 — MS-TELEMETRY-01 Slice C: minimale funnel-instrumentatie (29 september 2026)
+
+**Baseline:** `a8cd293512a40ec19fbba3a0558bdd06a0bc0dbb`.
+
+- `index.html`: laadt `core/productTelemetry.js`; nieuwe emitter `tkProductTelemetry()` — consent-gated
+  (privacy-by-default uit), valideert via `ProductTelemetryCore.buildEvent` (fail-closed), authenticated-only,
+  fire-and-forget naar `/.netlify/functions/product-telemetry` (fail-open). Geen externe provider.
+- Instrumentatie (8 punten, allemaal in try/catch): `training.opened`, `training.history.viewed`,
+  `training.previewed`, `training.workout.started` (4 verse-startpaden, nooit bij hervatten),
+  `training.workout.completed` (finishSession, na geslaagde opslag). Properties: alleen `route_id` of
+  `source_type` (`my_training` voor vaste/eigen trainingen en herhalen, `program` voor programmablokken).
+- `sw.js`: `core/productTelemetry.js` geprecached; cache v470050. Android versionCode 47005.
+- `core/productTelemetryLifecycle.test.js` herschreven van string-aanwezigheid naar gedrag + positie:
+  emitter in sandbox, call-site-analyse, echte `finishSession` (completed alleen na succes), 7 sabotages.
+
 ## v4.70.4 — Persistence hardening public.sessions (27 september 2026)
 
 **Baseline:** `7843c6b9e3c6e45e63a4f950413b2fcefc7b7816` (PR #466).

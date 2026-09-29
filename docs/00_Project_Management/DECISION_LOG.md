@@ -2428,3 +2428,17 @@ falen; hij leeft in `sessionLog` en verdwijnt met de sessie. (4) `watt` naar int
 (deterministisch `Math.round`, alleen `sessions`, alleen dit veld). (5) Canoniek kolommanifest, live geverifieerd,
 bewaakt door een test die faalt zodra een sessions-migratie niet in het manifest is geverifieerd. Geen runtime-
 afhankelijkheid van productie of van het manifest.
+
+## DEC-TELEMETRY-001 — MS-TELEMETRY-01 Slice C: instrumentatiegrenzen en consent-default (29 september 2026)
+
+**Besluit.** (1) Producttelemetry wordt uitsluitend verstuurd na expliciete opt-in (`tk_product_telemetry_consent`
+= '1'); default uit, conform registry-consent `PRODUCT_IMPROVEMENT` en de bestaande privacy-by-default-conventie
+(`tk_ai_consent`). Er is bewust nog geen opt-in-UI: tekst, rechtsgrond en retentie zijn een PO-besluit.
+(2) `training.workout.completed` staat uitsluitend op de bewezen success-boundary in `finishSession()` (na
+`failed>0`-return, na `saved===0`-guard, binnen het try-successpad). (3) `training.workout.started` alleen bij
+een verse start in de vier startpaden die in `finishSession()` eindigen; niet bij hervatten. (4) Guided,
+Structured Endurance en Losse oefening worden in deze slice niet geïnstrumenteerd: hun completion heeft geen
+bewezen success-boundary (Guided negeert de returnwaarde van `writeSessionRow`) of een eigen opslagpad; een
+start zonder bijbehorende completion zou de funnel vertekenen. (5) Mapping `source_type`: vaste/eigen trainingen
+en Herhalen = `my_training`, programmablokken (`prog_`) = `program`; `builder` en `single_exercise` ongebruikt.
+(6) Native omgeving = `unknown` (client-side niet betrouwbaar vast te stellen).

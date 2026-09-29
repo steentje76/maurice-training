@@ -181,3 +181,21 @@ op alle tabellen in public (loop over pg_class) en de default privileges van `po
 geen DML-revoke, RLS/policies/service_role/owners ongewijzigd. Geen TK-client of -functie gebruikt deze rechten.
 
 **Tests.** `core/fSecTablePrivileges.test.js` (CI, 9 sabotages); `tools/verify-f-sec-005.sql` (rollback-verificatie).
+
+**Productie-evidence v572 (29 september 2026).** Migratie `20260929162243:migratie_v572_f_sec_005_table_privileges`
+eenmalig toegepast ná de groene exact-head Quality Gate van PR #486. Live na DDL: TRUNCATE/REFERENCES/TRIGGER voor
+anon en authenticated op 0 van 119 tabellen; SELECT/INSERT/UPDATE/DELETE ongewijzigd (authenticated 115/115/113/113,
+anon 96); service_role TRUNCATE op 119/119; 0 tabellen zonder RLS; default privileges `postgres`/public nu
+`anon=arwdm`, `authenticated=arwdm` (zonder D/x/t). `tools/verify-f-sec-005.sql` (rollback): authenticated en anon
+TRUNCATE GEWEIGERD, authenticated CREATE TRIGGER GEWEIGERD, nieuwe tabel zonder TRUNCATE/REFERENCES/TRIGGER maar met
+SELECT/INSERT, legitieme RLS-insert met FK en eigen RPC (`upsert_daily_health`) TOEGESTAAN, cross-user INSERT
+GEWEIGERD, service_role TRUNCATE en DML TOEGESTAAN; daarna 0 restrijen en geen probe-tabel. Security Advisors na
+DDL: ongewijzigd (de linter controleert geen tabelgrants).
+
+**Restrisico.** (1) Default privileges van `supabase_admin` in public geven nog `arwdDxtm` (projectrol mag dit niet
+wijzigen; alle huidige public-tabellen zijn van `postgres`). (2) Sequence-UPDATE (setval) voor anon/authenticated
+en functie-EXECUTE-defaults voor anon zijn buiten deze slice gebleven. (3) DML-grants blijven in het Supabase-model
+door RLS begrensd.
+
+**Status F-SEC-005:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene post-merge
+Quality Gate.

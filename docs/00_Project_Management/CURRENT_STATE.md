@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.7
 
+## Security — F-SEC-002 (29 september 2026)
+
+- Een ingelogde gebruiker kon via `decrement_usage` zijn AI-maandquota onbeperkt terugzetten (D, alleen eigen
+  account). Compensatie is nu server-only (`decrement_usage_for_user`, service_role; `migratie_v573.sql`) en
+  coach.js compenseert alleen na een eigen reservering. Quota-check blijft atomair en auth.uid()-gebonden.
+
 ## Security — F-SEC-005 (29 september 2026)
 
 - anon/authenticated hadden via de Supabase-default privileges TRUNCATE/REFERENCES/TRIGGER op 96–99 tabellen;

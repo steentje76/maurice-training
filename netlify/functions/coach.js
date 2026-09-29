@@ -95,6 +95,25 @@ function resolveServerAuthoritativeModelAndMaxTokens(requestType, clientRequeste
   return { model: model, maxTokens: maxTokens };
 }
 
+// F-SEC-002: quota-compensatie is UITSLUITEND server-side. Alleen deze functie mag een door de server zelf
+// gereserveerde eenheid terugboeken, na een mislukte provider-call, voor de uit het JWT geverifieerde userId.
+// decrement_usage_for_user is EXECUTE-only voor service_role (migratie_v573); een client kan quota dus niet meer
+// zelf terugzetten. Zonder service key: geen compensatie (fail-safe: nooit gratis capaciteit), wel een log.
+async function compenseerQuota(supabaseUrl, userId, featureKey, periode) {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceKey || !userId || !featureKey || !periode) return false;
+  try {
+    const r = await fetch(`${supabaseUrl}/rest/v1/rpc/decrement_usage_for_user`, {
+      method: 'POST',
+      headers: { apikey: serviceKey, Authorization: 'Bearer ' + serviceKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_user_id: userId, p_feature_key: featureKey, p_periode: periode })
+    });
+    return !!(r && r.ok);
+  } catch (e) {
+    return false;
+  }
+}
+
 async function fetchCommercialContext(supabaseUrl, anonKey, authHeader, userId) {
   const headers = { apikey: anonKey, Authorization: authHeader };
   const [userRes, membershipsRes, planFeaturesRes, planQuotaRes] = await Promise.all([
@@ -305,13 +324,7 @@ exports.handler = async function(event) {
       // reservering -- compenseer, zodat de gebruiker geen gratis actie
       // verliest door een fout die niets met de gebruiker te maken heeft.
       if (quotaGereserveerd) {
-        try {
-          await fetch(`${supabaseUrl}/rest/v1/rpc/decrement_usage`, {
-            method: 'POST',
-            headers: { apikey: anonKey, Authorization: authHeader, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ p_feature_key: featureKey, p_periode: periode })
-          });
-        } catch (compEx) { /* compensatie is best-effort; de primaire fout wordt hieronder al gerapporteerd */ }
+        await compenseerQuota(supabaseUrl, userId, featureKey, periode); // best-effort; primaire fout wordt hieronder gerapporteerd
       }
       Observability.tkLog('ERROR', 'ai.coach.request_failed', 'ai', 'coach', Object.assign(
         { operation: 'request', duration_ms: durationMs, provider: 'anthropic' },
@@ -321,13 +334,7 @@ exports.handler = async function(event) {
     return { statusCode: res.status, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
   } catch (e) {
     if (quotaGereserveerd) {
-      try {
-        await fetch(`${supabaseUrl}/rest/v1/rpc/decrement_usage`, {
-          method: 'POST',
-          headers: { apikey: anonKey, Authorization: authHeader, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ p_feature_key: featureKey, p_periode: periode })
-        });
-      } catch (compEx) { /* best-effort */ }
+      await compenseerQuota(supabaseUrl, userId, featureKey, periode); // best-effort
     }
     Observability.tkLog('ERROR', 'ai.coach.request_failed', 'ai', 'coach', Object.assign(
       { operation: 'request', duration_ms: Date.now() - t0 },

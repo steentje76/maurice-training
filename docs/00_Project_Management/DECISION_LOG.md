@@ -2512,3 +2512,11 @@ tabel-/RLS-wijziging.
 geldt ook voor toekomstige tabellen via de default privileges van de tabel-owner `postgres` in public. DML-rechten
 blijven in het Supabase-model staan en worden door RLS begrensd; een per-tabel DML-least-privilege-pass is een apart
 traject. De default privileges van `supabase_admin` zijn door de projectrol niet te wijzigen (restrisico).
+
+## DEC-SEC-003 — F-SEC-002: quota-compensatie uitsluitend server-side (29 september 2026)
+
+**Besluit.** Terugboeken van AI-verbruik is een servertaak: alleen `netlify/functions/coach.js` mag, na een eigen
+mislukte providercall op een door hemzelf gereserveerde eenheid, via service_role `decrement_usage_for_user`
+aanroepen met de uit het JWT geverifieerde gebruiker. De client heeft geen compensatie-RPC meer. De quota-check
+(`check_and_increment_usage`) blijft auth.uid()-gebonden en atomair met de gebruikers-JWT. Geen wijziging aan plannen,
+quota of credits.

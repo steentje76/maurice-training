@@ -14,6 +14,9 @@ function ok(cond, label) { if (cond) { pass++; } else { fail++; msgs.push('MISLU
 process.env.ANTHROPIC_API_KEY = 'test-key';
 process.env.SUPABASE_URL = 'https://example.supabase.co';
 process.env.SUPABASE_ANON_KEY = 'test-anon-key';
+// F-SEC-002 (migratie_v573): quota-compensatie loopt uitsluitend via de server-only RPC decrement_usage_for_user
+// met de service key; zonder service key compenseert coach.js bewust niet (nooit gratis capaciteit).
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
 
 // Verwijder uit de module-cache tussen scenario's zodat elke test met een
 // schone staat begint (coach.js zelf is stateless, maar dit voorkomt
@@ -36,7 +39,7 @@ function buildFetchMock(opts) {
   const calls = [];
   const quotaState = opts.quotaState || {};
   const mock = async function (url, init) {
-    calls.push({ url: url, method: (init && init.method) || 'GET' });
+    calls.push({ url: url, method: (init && init.method) || 'GET', opts: init || {} });
     if (url.includes('/auth/v1/user')) {
       if (opts.validAuth === false) return jsonRes(401, { error: 'invalid' });
       return jsonRes(200, { id: opts.userId || 'U1' });
@@ -311,6 +314,10 @@ async function run() {
     await handler(buildEvent({ requestType: 'chat', system: 's', messages: [] }));
     const decrementCall = mock.calls.find(function (c) { return c.url.includes('decrement_usage'); });
     ok(!!decrementCall, 'P1: bij een mislukte provider-aanroep wordt de gereserveerde quota-eenheid gecompenseerd (decrement_usage aangeroepen)');
+    const dBody = decrementCall && decrementCall.opts && decrementCall.opts.body ? JSON.parse(decrementCall.opts.body) : {};
+    const dHeaders = (decrementCall && decrementCall.opts && decrementCall.opts.headers) || {};
+    ok(!!decrementCall && /\/rpc\/decrement_usage_for_user$/.test(decrementCall.url) && dHeaders.Authorization === 'Bearer test-service-key' && typeof dBody.p_user_id === 'string' && dBody.p_user_id.length > 0,
+      'P1b (F-SEC-002): compensatie via server-only decrement_usage_for_user met service key en de uit het JWT geverifieerde userId, nooit met de gebruikers-JWT');
   }
 
   // ---- Q. Provider success: geen compensatie ----

@@ -78,7 +78,7 @@ cross-user kwetsbaarheid · **E** onvoldoende bewijs.
 ## Richting CLOSED_PROVEN
 
 - Kan (na productie-verificatie van v570): F-SEC-004.
-- Niet: F-SEC-002, F-SEC-003 (C, open), F-SEC-006. F-SEC-001: CLOSED_PROVEN (v571). F-SEC-005: zie closure-sectie (v572).
+- Niet: F-SEC-003 (C, open), F-SEC-006. F-SEC-001: CLOSED_PROVEN (v571). F-SEC-005: CLOSED_PROVEN (v572). F-SEC-002: zie closure-sectie (v573).
 
 ## F-SEC-001 closure (29 september 2026, migratie v571)
 
@@ -197,5 +197,45 @@ wijzigen; alle huidige public-tabellen zijn van `postgres`). (2) Sequence-UPDATE
 en functie-EXECUTE-defaults voor anon zijn buiten deze slice gebleven. (3) DML-grants blijven in het Supabase-model
 door RLS begrensd.
 
-**Status F-SEC-005:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene post-merge
-Quality Gate.
+**Status F-SEC-005: CLOSED_PROVEN** (binnen de vastgestelde scope: RLS-omzeilende/DDL-achtige tabelrechten).
+Squash-merge PR #486 (`fb4c9d10957c77bbfdd6f062c77ac6e61c936563`) en post-merge Quality Gate groen.
+
+## F-SEC-002 closure (29 september 2026, migratie v573)
+
+**Trust boundary.** Client → `netlify/functions/coach.js` (identiteit uit `/auth/v1/user`; requestType →
+featureKey server-side) → entitlement + quota uit `plan_features`/`plan_feature_quota`/users (server-side;
+verified tester onbeperkt) → `rpc/check_and_increment_usage(featureKey, periode, quota)` met de gebruikers-JWT
+(SECURITY DEFINER, `auth.uid()`-gebonden, atomair: conditionele UPDATE `aantal < p_quota` + unique-violation-retry) →
+Anthropic → bij providerfout of exception: compensatie. `usage_log` heeft RLS met alleen `select_own` (geen client-DML).
+
+**Root cause.** De compensatie `decrement_usage(text, date)` (SECURITY DEFINER, `auth.uid()`, vloer 0) was EXECUTE
+voor authenticated. Bedoeld als server-compensatie, maar direct aanroepbaar: een gebruiker kon het eigen
+maandverbruik onbeperkt terugzetten.
+
+**Exploit vóór de fix (rollback, productie, periode 2000-01-01).** quota 1: eerste verbruik TOEGESTAAN, tweede
+GEWEIGERD; client `decrement_usage` → TOEGESTAAN; daarna opnieuw verbruik TOEGESTAAN (bypass); 3× decrement → stand
+0 (vloer). Cross-user: stand van B ongewijzigd (auth.uid()-gebonden). anon: geweigerd. Directe UPDATE `usage_log`:
+0 rijen (RLS). Zelfgekozen `p_quota` bij directe `check_and_increment_usage` verhoogt alleen het eigen verbruik en
+geeft geen AI-toegang (de server controleert altijd zelf). 0 restrijen.
+
+**Classificatie.** `decrement_usage` client-uitvoerbaar = **D** (bevestigde quota-bypass, alleen eigen account).
+`check_and_increment_usage` = **A** (nodig voor coach.js met gebruikers-JWT; atomair; direct aanroepen = alleen eigen
+verbruik). `increment_usage` en `consume_credit` = **B** (geen callers; kunnen uitsluitend het eigen verbruik
+verhogen/credits verlagen — geen bypass; niet aangepast). Concurrency: race-safe door de conditionele UPDATE en de
+unique-violation-retry in de database (code-bewezen; mock-test "R" in `fCoachEnforcement`); parallelle
+databasesessies waren via de beschikbare tooling niet uitvoerbaar.
+
+**Fix (`migratie_v573.sql` + coach.js).** Nieuwe `decrement_usage_for_user(p_user_id, p_feature_key, p_periode)`,
+SECURITY DEFINER, uitsluitend service_role (zelfde patroon als `ai_usage_registreer`/`grant_credit_purchase`);
+EXECUTE op `decrement_usage(text, date)` ingetrokken van PUBLIC/anon/authenticated. coach.js compenseert alleen na een
+eigen reservering, via de service key met de uit het JWT geverifieerde userId; zonder service key geen compensatie
+(fail-safe). Geen plan-, quota-, credit- of RLS-wijziging.
+
+**Evidence met de nieuwe definitie (productie, in een teruggedraaide transactie).** Geweigerd: client
+`decrement_usage`, client `decrement_usage_for_user` (eigen en vervalste id), anon op alle drie de functies,
+compensatie zonder gebruiker; na geweigerde compensatie blijft de quota vol; directe UPDATE 0 rijen. Toegestaan:
+verbruik binnen quota, server-compensatie via service_role (vloer 0 bij herhaling). Stand van B ongewijzigd.
+Herhaalbaar: `tools/verify-f-sec-002.sql`. Tests: `core/fSecUsageQuota.test.js` (9 sabotages), `fCoachEnforcement`
+P1b.
+
+**Status F-SEC-002:** zie productie-evidence hieronder.

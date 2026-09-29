@@ -19,6 +19,14 @@ v4.70.7
 - `netlify/functions/cleanup-beta-feedback.js` (@daily): 365 dagen retentie, strikt `created_at < nu − 365d`.
 - Geen UI, geen screenshots, geen externe provider. Triage-statuswijzigingen volgen in een latere slice.
 
+## Security audit — privileged database functions (29 september 2026)
+
+- `migratie_v570.sql`: anon/PUBLIC-EXECUTE ingetrokken op 5 SECURITY DEFINER-functies (klasse B; anon werd door de
+  functies zelf al geweigerd). Bewezen open findings, niet gewijzigd: **F-SEC-001 (D)** `social_create_notification`
+  laat notificaties naar niet-verbonden gebruikers toe; **F-SEC-002 (C)** eigen AI-quota omzeilbaar;
+  **F-SEC-003 (C)** RLS-helper-orakels over derden; leaked-password protection staat uit (PO-besluit).
+  Details: `docs/SECURITY_AUDIT_PRIVILEGED_FUNCTIONS.md`.
+
 ## MS-BETA-01 Slice C — feedback-UI en governed triage (v4.70.7, 29 september 2026)
 
 - **Feedback-UI:** Help > Contact & feedback > "Feedback geven in de app" (modal): Probleem/Idee/Onduidelijk/

@@ -2486,3 +2486,11 @@ opgehaald (zelfde patroon als coach.js); `tester` niet. (2) De overgang wordt ge
 (v569): `duplicate_of` omdat het contract bij DUPLICATE een verwijzing eist, plus `status_updated_at/by` voor
 toerekenbaarheid. (4) De triage-UI toont geen user_id, accountgegevens of technische context. (5) Technische context
 is per inzending opt-in en wordt nooit onthouden; geen screenshots (aparte designgate). Geen nieuw rolmodel.
+
+## DEC-SEC-001 — Privileged functions: alleen bewezen onnodige exposure hardenen (29 september 2026)
+
+**Besluit.** Alleen de vijf SECURITY DEFINER-functies met aantoonbaar onnodige PUBLIC/anon-EXECUTE worden gehard
+(`migratie_v570.sql`, conventie v447): intrekken voor PUBLIC/anon, expliciet authenticated + service_role. Functies
+waarvan de bedoelde autorisatie niet betrouwbaar uit code/documentatie volgt, worden niet gewijzigd maar als finding
+vastgelegd: `social_create_notification` (D), AI-quota-functies (C), RLS-helper-orakels (C). Leaked-password
+protection wordt niet stilzwijgend ingeschakeld (accountbeleid). Geen nieuw rolmodel, geen auth-refactor.

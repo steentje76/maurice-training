@@ -2520,3 +2520,12 @@ mislukte providercall op een door hemzelf gereserveerde eenheid, via service_rol
 aanroepen met de uit het JWT geverifieerde gebruiker. De client heeft geen compensatie-RPC meer. De quota-check
 (`check_and_increment_usage`) blijft auth.uid()-gebonden en atomair met de gebruikers-JWT. Geen wijziging aan plannen,
 quota of credits.
+
+## DEC-SEC-004 — F-SEC-003: policy-helpers beantwoorden alleen vragen over de caller (29 september 2026)
+
+**Besluit.** Relatie-/lidmaatschapshelpers die RLS-policies voeden blijven in public en blijven uitvoerbaar voor
+authenticated (nodig voor policy-evaluatie), maar geven alleen een inhoudelijk antwoord als de ingelogde caller partij
+is; voor `org_user_has_role` mag org-staff/admin/owner van die organisatie ook naar een lid vragen (de enige
+policy-gebruiker stelt die voorwaarde al). Interne controles die een derde moeten toetsen (trigger
+`team_events_validate_linked_training`) doen dat inline. Helpers zonder callers verliezen EXECUTE. Geen verplaatsing
+naar een ander schema en geen policywijziging, zodat de RLS-semantiek aantoonbaar gelijk blijft.

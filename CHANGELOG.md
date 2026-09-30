@@ -1,5 +1,16 @@
 # Trainingskompas — Changelog
 
+## Security — F-SEC-003: helper-orakels gebonden aan de caller + migratie_v574 (29 september 2026, geen appversie-wijziging)
+
+**Baseline:** `ddc2caf01ea9d5e4bd1e1f08422022248c387db1`.
+
+- `migratie_v574.sql`: `coach_has_scope`, `social_is_blocked_pair`, `social_is_group_member`, `social_is_group_owner`
+  en `org_user_has_role` beantwoorden geen vragen meer over willekeurige derden (caller moet partij zijn; org-rol van
+  een derde alleen voor org-staff). Trigger `team_events_validate_linked_training` inline; `is_relationship_active`
+  niet meer client-uitvoerbaar. Policies, signatures en RLS ongewijzigd.
+- `tools/verify-f-sec-003.sql`, `core/fSecHelperOracles.test.js` (10 sabotages). Auditdocument: F-SEC-003-sectie;
+  F-SEC-002 definitief CLOSED_PROVEN.
+
 ## Security — F-SEC-002: quota-compensatie server-only + migratie_v573 (29 september 2026, geen appversie-wijziging)
 
 **Baseline:** `fb4c9d10957c77bbfdd6f062c77ac6e61c936563`.

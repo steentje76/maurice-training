@@ -434,4 +434,20 @@ anon/PUBLIC-grant op SECURITY DEFINER zonder `tk-security-allow-anon-execute`-ma
 function-defaults. Migratieconventie: een functie die clients of RLS-policies gebruiken krijgt een expliciete
 `grant execute ... to authenticated`.
 
-**Status F-SEC-010:** zie productie-evidence hieronder.
+**Productie-evidence v576 (30 september 2026).** Migratie
+`20260930091557:migratie_v576_f_sec_010_default_function_execute` eenmalig toegepast ná de groene exact-head Quality
+Gate van PR #491. Live default privileges voor functies: postgres/GLOBAL `{postgres=X}`, postgres/public
+`{postgres=X, service_role=X}`, postgres/extensions `{=X}`; `supabase_admin`- en postgres/storage-defaults ongewijzigd.
+Bestaande postgres-functies in public ongewijzigd (anon 0, authenticated 26, PUBLIC 0, service_role 63 van 63);
+postgres-extensiefuncties PUBLIC 48 van 49 (ongewijzigd). Rollback-probes: nieuwe INVOKER- en SECURITY DEFINER-functie
+in public alleen service_role (authenticated en anon GEWEIGERD); nieuwe functie in extensions houdt PUBLIC; trigger
+vuurt voor authenticated zonder EXECUTE; bestaande RPC `check_and_increment_usage` werkt. Daarna 0 restobjecten en 0
+restrijen. SECURITY DEFINER uitvoerbaar door authenticated 25, door anon 0 (ongewijzigd); 0 tabellen zonder RLS,
+242 policies.
+
+**Restrisico.** `supabase_admin`-defaults (public: nog anon/authenticated/PUBLIC-achtige rechten) zijn platformbeheerd;
+postgres/storage-default bevat nog anon/authenticated (buiten TK-migraties); de guard is statisch (regex op
+migratiebestanden) en dekt geen functies die buiten migraties (dashboard/SQL-editor) worden aangemaakt.
+
+**Status F-SEC-010:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene post-merge
+Quality Gate.

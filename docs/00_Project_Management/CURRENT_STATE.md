@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.7
 
+## Security — F-SEC-003 (29 september 2026)
+
+- Zes relatie-/lidmaatschapshelpers waren via rpc een orakel over derden (coachrelaties, blokkades, org-rollen,
+  groepen). `migratie_v574.sql` bindt ze aan de caller zonder de policies te wijzigen; RLS-flows (coach/athlete,
+  social, groepen, org, team-trigger) bewezen ongewijzigd. Status: auditdocument.
+
 ## Security — F-SEC-002 (29 september 2026)
 
 - Een ingelogde gebruiker kon via `decrement_usage` zijn AI-maandquota onbeperkt terugzetten (D, alleen eigen

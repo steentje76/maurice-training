@@ -78,7 +78,7 @@ cross-user kwetsbaarheid · **E** onvoldoende bewijs.
 ## Richting CLOSED_PROVEN
 
 - Kan (na productie-verificatie van v570): F-SEC-004.
-- Niet: F-SEC-003 (C, open), F-SEC-006. F-SEC-001: CLOSED_PROVEN (v571). F-SEC-005: CLOSED_PROVEN (v572). F-SEC-002: zie closure-sectie (v573).
+- Niet: F-SEC-006. F-SEC-001: CLOSED_PROVEN (v571). F-SEC-005: CLOSED_PROVEN (v572). F-SEC-002: CLOSED_PROVEN (v573). F-SEC-003: zie closure-sectie (v574).
 
 ## F-SEC-001 closure (29 september 2026, migratie v571)
 
@@ -252,5 +252,71 @@ eenheid verlies bij een providerfout, nooit gratis capaciteit). `increment_usage
 uitvoerbaar zonder callers (B, alleen zelfbenadeling). `check_and_increment_usage` accepteert een door de caller
 gekozen `p_quota`; bij directe aanroep leidt dat alleen tot eigen verbruik, nooit tot AI-toegang.
 
-**Status F-SEC-002:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene post-merge
+**Status F-SEC-002: CLOSED_PROVEN.** Squash-merge PR #487 (`ddc2caf01ea9d5e4bd1e1f08422022248c387db1`) en
+post-merge Quality Gate groen.
+
+## F-SEC-003 closure (29 september 2026, migratie v574)
+
+**Helperset (live).** Zes SECURITY DEFINER-booleanhelpers accepteerden identiteiten van derden, allemaal owner
+`postgres`, `search_path=public`, EXECUTE voor authenticated (niet anon/PUBLIC): `coach_has_scope(p_coach_id,
+p_athlete_id, p_scope)`, `org_user_has_role(p_org_id, p_user_id, p_roles)`, `social_is_blocked_pair(a, b)`,
+`social_is_group_member(u, g)`, `social_is_group_owner(u, g)`, `is_relationship_active(rel_id)`. Analoge helpers
+`is_relationship_athlete`, `is_relationship_coach`, `is_thread_participant`, `org_has_role` en `team_has_access` zijn
+al aan `auth.uid()` gebonden (A).
+
+**Dependency graph.** Geen enkele TK-client of Netlify-functie roept de zes direct aan (alleen commentaar in
+index.html/core). RLS-policies: `coach_has_scope` 6 (sessions, hrv_log, cycle_periods, cycle_symptom_logs,
+coach_program_assignments, coach_workout_feedback), `social_is_blocked_pair` 8 (social feed, profielen, reacties,
+comments, challenges, messages), `social_is_group_member` 4, `social_is_group_owner` 1, `org_user_has_role` 1
+(`cpa_org_staff_wijst_toe`), `is_relationship_active` 0. Functies: `get_or_create_direct_thread`
+(`social_is_blocked_pair`), `materialize_coach_assignment` (`coach_has_scope`, `org_user_has_role`), trigger
+`team_events_validate_linked_training` (`org_user_has_role`). Elke policy-aanroep van coach_has_scope,
+social_is_blocked_pair en de groepshelpers geeft `auth.uid()` mee als partij; `materialize_coach_assignment` en
+`get_or_create_direct_thread` eveneens. `org_user_has_role` wordt voor een derde gebruikt in de policy (na
+`org_has_role(owner/admin/staff)` van de caller) en in de trigger.
+
+**Bedoelde semantiek.** De policy-helpers beantwoorden vragen over de caller zelf (of, voor org_user_has_role, over
+leden van een organisatie waarin de caller owner/admin/staff is). Directe beantwoording over willekeurige derden is
+nergens nodig. Een revoke van EXECUTE was geen optie: RLS-policies evalueren de helpers met de rechten van
+`authenticated`.
+
+**Orakel vóór de fix (rollback, productie; A zonder enige relatie).** `coach_has_scope(B,C)`, `social_is_blocked_pair(B,C)`,
+`org_user_has_role(org,C)`, `social_is_group_member(C,G)`, `social_is_group_owner(B,G)` en
+`is_relationship_active(rel)` gaven allemaal `true`, terwijl RLS A 0/0/0/0 onderliggende rijen liet zien. Gelekt:
+bestaan van een actieve coach-athlete-relatie met een specifieke scope, blokkades tussen derden, organisatierol,
+groepslidmaatschap/-eigenaarschap en de actieve status van een relatie-id.
+
+**Classificatie.** De vijf policy-helpers = **C** (bevestigde disclosure over derden; geen schrijf-/leesbypass → niet
+D). `is_relationship_active` = **C** met lage impact (vereist een onbekende relatie-UUID), bovendien zonder callers.
+
+**Fix (`migratie_v574.sql`).** Zelfde functie-objecten (policies blijven ernaar verwijzen), signatures, SECURITY
+DEFINER, STABLE, owner en search_path: `coach_has_scope` en `social_is_blocked_pair` antwoorden alleen als de caller
+partij is; de groepshelpers alleen voor de caller zelf; `org_user_has_role` voor de caller zelf of — alleen als de
+caller owner/admin/staff van die organisatie is — voor een derde; zonder `auth.uid()` altijd false. De trigger
+controleert lidmaatschap inline met de ongewijzigde query. `is_relationship_active`: EXECUTE ingetrokken van
+PUBLIC/anon/authenticated. Geen grant, policy- of RLS-wijziging.
+
+**Evidence met de nieuwe definities (productie, één teruggedraaide transactie; live definities daarna ongewijzigd,
+0 restrijen).** Orakel door A: alle vijf `false`, `is_relationship_active` geweigerd. Positief: coach B →
+`coach_has_scope` true en RLS toont hrv_log van athlete C; groepseigenaar B beheert groepsleden (1 rij); C ziet de
+invite-only groep, eigen blokkade en eigen org-rol; org-staff D ziet de rol van lid C; `get_or_create_direct_thread`
+weigert nog steeds bij blokkade; trigger: gekoppelde training van een lid toegestaan, van een niet-lid geweigerd.
+Negatief blijft: A ziet geen hrv_log/groep en kan geen groepsleden beheren; anon geweigerd. Herhaalbaar:
+`tools/verify-f-sec-003.sql`. Tests: `core/fSecHelperOracles.test.js` (10 sabotages).
+
+**Productie-evidence v574 (30 september 2026).** Migratie `20260930053156:migratie_v574_f_sec_003_helper_oracles`
+eenmalig toegepast ná de groene exact-head Quality Gate van PR #488. Live: de vijf helpers aan `auth.uid()` gebonden,
+SECURITY DEFINER, STABLE, owner `postgres`, `search_path=public`, EXECUTE authenticated + service_role (niet anon/
+PUBLIC); `is_relationship_active` alleen service_role; trigger ongewijzigd SECURITY DEFINER; policy-verwijzingen
+ongewijzigd (6/8/4/1/1), totaal 242 policies, 0 tabellen zonder RLS. `tools/verify-f-sec-003.sql` tegen de live
+functies (rollback): orakel door A overal `false`/GEWEIGERD; coach/athlete-, groeps-, social-, org-staff- en
+triggerflows zoals vóór; daarna 0 restrijen. Security Advisors na DDL: SECURITY DEFINER uitvoerbaar door
+authenticated 28 → 27 (`is_relationship_active` verdwenen), anon 0; verder ongewijzigd.
+
+**Restrisico.** (1) De helpers blijven via rpc aanroepbaar, maar geven over derden altijd `false` (geen onderscheid met
+"geen relatie"). (2) Org-staff/admin/owner kan de org-rol van leden van de eigen organisatie opvragen — dat is de
+bestaande productsemantiek (staff wijst leden trainingen toe). (3) `org_has_role`/`team_has_access` beantwoorden
+alleen vragen over de caller zelf (A).
+
+**Status F-SEC-003:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene post-merge
 Quality Gate.

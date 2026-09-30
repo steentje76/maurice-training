@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## Security — F-SEC-007/-008/-009 residual least-privilege + migratie_v575 (30 september 2026, geen appversie-wijziging)
+
+**Baseline:** `1a0a290b0f85d336be0757552a601496502540fe`.
+
+- `migratie_v575.sql`: EXECUTE op `increment_usage` en `consume_credit` ingetrokken van PUBLIC/anon/authenticated
+  (0 callers); UPDATE (setval) op alle public sequences ingetrokken van PUBLIC/anon/authenticated en default privileges
+  van postgres/public voor sequences gehard. USAGE/SELECT, functies en service_role ongewijzigd.
+- `core/fSecResidualLeastPrivilege.test.js` (10 sabotages), `tools/verify-residual-least-privilege.sql`.
+- Auditdocument: F-SEC-006 dashboardsetting aan en Advisor-melding verdwenen (VERIFYING).
+
 ## Security — F-SEC-006 + residual triage (30 september 2026, alleen documentatie)
 
 **Baseline:** `59ea2cc40205a32ca1211a880a4ca8a2713aeca0`.

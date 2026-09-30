@@ -8,6 +8,13 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.7
 
+## Security — residual least-privilege (30 september 2026)
+
+- `increment_usage`/`consume_credit` (0 callers) niet meer client-uitvoerbaar; sequence-UPDATE (setval) ingetrokken voor
+  anon/authenticated op alle public sequences en in de default privileges (`migratie_v575.sql`). Inserts ongewijzigd.
+- F-SEC-006: "Prevent use of leaked passwords" door de eigenaar aangezet, Advisor-melding weg; functioneel bewijs nog
+  open → VERIFYING.
+
 ## Security — F-SEC-006 en resterende hardening (30 september 2026)
 
 - F-SEC-001/-002/-003/-005: CLOSED_PROVEN. F-SEC-006 (leaked-password protection): EXTERNAL ACTION REQUIRED —

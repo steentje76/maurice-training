@@ -353,3 +353,41 @@ gelekt wachtwoord wordt geweigerd, een sterk wachtwoord slaagt, en een bestaande
 DDL-component; de residuen raken database-privileges met eigen afhankelijkheden en tests. Voorgestelde losse
 vervolgstappen: (1) `increment_usage`/`consume_credit` + sequence-UPDATE (één kleine least-privilege-closure),
 (2) default function EXECUTE + CI-guard (eigen sprint wegens migratieconventie).
+
+## F-SEC-006 update (30 september 2026)
+
+De projecteigenaar heeft in het Supabase-dashboard "Prevent use of leaked passwords" aangezet. Daarna is de Security
+Advisor-melding `Leaked Password Protection Disabled` verdwenen (bevestigd in de Advisors-run van deze sprint).
+Functioneel bewijs (registratie met een bekend gelekt wachtwoord geweigerd, sterk wachtwoord geaccepteerd, bestaande
+login werkt) is nog niet uitgevoerd. **Status F-SEC-006: VERIFYING.**
+
+## F-SEC-007/-008/-009 residual least-privilege closure (30 september 2026, migratie v575)
+
+**Findings.** F-SEC-007: `increment_usage(text, date, integer)` en F-SEC-008: `consume_credit(uuid, integer)` —
+SECURITY DEFINER, owner `postgres`, `search_path=public`, `auth.uid()`-gebonden, EXECUTE voor authenticated (en
+service_role) sinds v522. F-SEC-009: anon/authenticated `rwU` (incl. UPDATE = setval) op alle 7 public sequences en via
+de default privileges van `postgres`/public op elke nieuwe sequence.
+
+**Callers/afhankelijkheden (read-only, opnieuw bevestigd).** Functies: 0 callers in frontend, Netlify-functies,
+databasefuncties, policies en triggers. Sequences: `goals_id_seq`, `exercise_goals_id_seq`, `equipment_types_id_seq`,
+`programs_id_seq`, `program_blocks_id_seq`, `athlete_conditions_id_seq`, `checkin_conditions_id_seq`, allemaal owner
+`postgres` en gekoppeld aan een `GENERATED ALWAYS AS IDENTITY`-kolom `id`; geen client-setval (setval staat in
+pg_catalog en is niet via PostgREST-rpc bereikbaar).
+
+**Classificatie.** Alle drie **B** (onnodige oppervlakte; alleen zelfbenadeling respectievelijk alleen via een
+SQL-sessie).
+
+**Fix (`migratie_v575.sql`).** EXECUTE op beide functies ingetrokken van PUBLIC/anon/authenticated (service_role
+behouden); UPDATE ingetrokken van PUBLIC/anon/authenticated op alle public sequences (loop); default privileges van
+`postgres`/public voor sequences gehard. USAGE/SELECT, functiebodies, sequencewaarden, RLS, policies, service_role en
+`supabase_admin`-defaults ongewijzigd.
+
+**Evidence vóór merge (productie, wijzigingen in een teruggedraaide transactie).** Na de revoke: authenticated en
+anon krijgen "permission denied" op beide functies; service_role kan ze uitvoeren; sequence-UPDATE voor authenticated
+0 van 7, USAGE/SELECT 7 van 7; een nieuwe identity-sequence krijgt geen UPDATE maar wel USAGE; een authenticated
+identity-insert in `programs` (RLS) slaagt; de quota-flow (`check_and_increment_usage`) werkt. Daarna live alles
+ongewijzigd, 0 restrijen (de insert verbruikte één `programs_id_seq`-waarde; sequences zijn niet transactioneel).
+Herhaalbaar: `tools/verify-residual-least-privilege.sql`. Tests: `core/fSecResidualLeastPrivilege.test.js`
+(10 sabotages).
+
+**Status F-SEC-007/-008/-009:** zie productie-evidence hieronder.

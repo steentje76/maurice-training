@@ -304,4 +304,19 @@ weigert nog steeds bij blokkade; trigger: gekoppelde training van een lid toeges
 Negatief blijft: A ziet geen hrv_log/groep en kan geen groepsleden beheren; anon geweigerd. Herhaalbaar:
 `tools/verify-f-sec-003.sql`. Tests: `core/fSecHelperOracles.test.js` (10 sabotages).
 
-**Status F-SEC-003:** zie productie-evidence hieronder.
+**Productie-evidence v574 (30 september 2026).** Migratie `20260930053156:migratie_v574_f_sec_003_helper_oracles`
+eenmalig toegepast ná de groene exact-head Quality Gate van PR #488. Live: de vijf helpers aan `auth.uid()` gebonden,
+SECURITY DEFINER, STABLE, owner `postgres`, `search_path=public`, EXECUTE authenticated + service_role (niet anon/
+PUBLIC); `is_relationship_active` alleen service_role; trigger ongewijzigd SECURITY DEFINER; policy-verwijzingen
+ongewijzigd (6/8/4/1/1), totaal 242 policies, 0 tabellen zonder RLS. `tools/verify-f-sec-003.sql` tegen de live
+functies (rollback): orakel door A overal `false`/GEWEIGERD; coach/athlete-, groeps-, social-, org-staff- en
+triggerflows zoals vóór; daarna 0 restrijen. Security Advisors na DDL: SECURITY DEFINER uitvoerbaar door
+authenticated 28 → 27 (`is_relationship_active` verdwenen), anon 0; verder ongewijzigd.
+
+**Restrisico.** (1) De helpers blijven via rpc aanroepbaar, maar geven over derden altijd `false` (geen onderscheid met
+"geen relatie"). (2) Org-staff/admin/owner kan de org-rol van leden van de eigen organisatie opvragen — dat is de
+bestaande productsemantiek (staff wijst leden trainingen toe). (3) `org_has_role`/`team_has_access` beantwoorden
+alleen vragen over de caller zelf (A).
+
+**Status F-SEC-003:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene post-merge
+Quality Gate.

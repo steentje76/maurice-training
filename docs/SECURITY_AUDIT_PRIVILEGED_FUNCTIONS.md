@@ -390,4 +390,21 @@ ongewijzigd, 0 restrijen (de insert verbruikte één `programs_id_seq`-waarde; s
 Herhaalbaar: `tools/verify-residual-least-privilege.sql`. Tests: `core/fSecResidualLeastPrivilege.test.js`
 (10 sabotages).
 
-**Status F-SEC-007/-008/-009:** zie productie-evidence hieronder.
+**Productie-evidence v575 (30 september 2026).** Migratie `20260930064028:migratie_v575_residual_least_privilege`
+eenmalig toegepast ná de groene exact-head Quality Gate van PR #490. Live: `increment_usage` en `consume_credit`
+ACL `{postgres=X, service_role=X}` (anon/authenticated/PUBLIC geen EXECUTE; SECURITY DEFINER, owner `postgres`,
+`search_path=public` ongewijzigd); alle 7 sequences `anon=rU`, `authenticated=rU` (geen UPDATE), service_role `rwU`;
+default privileges `postgres`/public voor sequences `anon=rU`, `authenticated=rU`; `supabase_admin`-defaults
+ongewijzigd; 0 tabellen zonder RLS, 242 policies. `tools/verify-residual-least-privilege.sql` tegen de live toestand
+(rollback): N1–N4 GEWEIGERD, P1–P4 TOEGESTAAN, nieuwe sequence zonder UPDATE met USAGE; daarna geen probe-tabel en 0
+restrijen (één `programs_id_seq`-waarde verbruikt). SECURITY DEFINER uitvoerbaar door authenticated 27 → 25, door
+anon 0.
+Na een onderbroken sessie opnieuw read-only/rollback geverifieerd (30-09, ± 06:45 UTC): identieke uitkomsten, plus
+N5 `setval` door authenticated GEWEIGERD (permission); 0 restrijen. Security Advisors-run 06:45:54 UTC: authenticated
+SECURITY DEFINER 25, anon 0, geen `Leaked Password Protection Disabled`-melding meer (F-SEC-006 blijft VERIFYING).
+
+**Restrisico.** `supabase_admin`-defaults (platformbeheerd) geven toekomstige door Supabase aangemaakte sequences nog
+`rwU`; standaard function EXECUTE blijft een aparte vervolgstap.
+
+**Status F-SEC-007/-008/-009:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene
+post-merge Quality Gate.

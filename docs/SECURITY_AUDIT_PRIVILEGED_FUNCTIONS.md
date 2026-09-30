@@ -78,7 +78,7 @@ cross-user kwetsbaarheid · **E** onvoldoende bewijs.
 ## Richting CLOSED_PROVEN
 
 - Kan (na productie-verificatie van v570): F-SEC-004.
-- Niet: F-SEC-006. F-SEC-001: CLOSED_PROVEN (v571). F-SEC-005: CLOSED_PROVEN (v572). F-SEC-002: CLOSED_PROVEN (v573). F-SEC-003: zie closure-sectie (v574).
+- Niet: F-SEC-006. F-SEC-001: CLOSED_PROVEN (v571). F-SEC-005: CLOSED_PROVEN (v572). F-SEC-002: CLOSED_PROVEN (v573). F-SEC-003: CLOSED_PROVEN (v574). F-SEC-006 en residuen: zie "Residual triage (30 september 2026)".
 
 ## F-SEC-001 closure (29 september 2026, migratie v571)
 
@@ -318,5 +318,38 @@ authenticated 28 → 27 (`is_relationship_active` verdwenen), anon 0; verder ong
 bestaande productsemantiek (staff wijst leden trainingen toe). (3) `org_has_role`/`team_has_access` beantwoorden
 alleen vragen over de caller zelf (A).
 
-**Status F-SEC-003:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene post-merge
-Quality Gate.
+**Status F-SEC-003: CLOSED_PROVEN.** Squash-merge PR #488 (`59ea2cc40205a32ca1211a880a4ca8a2713aeca0`) en
+post-merge Quality Gate groen.
+
+## Residual triage + F-SEC-006 (30 september 2026)
+
+Read-only vastgesteld op main `59ea2cc40205a32ca1211a880a4ca8a2713aeca0` (laatste migratie v574). Geen productie- of
+configuratiewijziging in deze stap.
+
+**F-SEC-006 — leaked-password protection.** Supabase Auth-instelling (HaveIBeenPwned-controle bij signup en
+wachtwoordwijziging), geen databaseobject en geen repository-configuratie. Security Advisors: `Leaked Password
+Protection Disabled` (uit). De organisatie staat op het Pro-plan, waarop de functie beschikbaar is. De beschikbare
+tooling (Supabase MCP) kan de Auth-configuratie niet lezen of wijzigen; de Management API vereist een persoonlijk
+toegangstoken, dat bewust niet in deze omgeving staat. **Status: EXTERNAL ACTION REQUIRED.**
+Benodigde actie (projecteigenaar): Supabase Dashboard → Authentication → wachtwoordinstellingen van de e-mailprovider →
+"Prevent use of leaked passwords" aan. Impact: alleen nieuwe signups en wachtwoordwijzigingen/-resets; bestaande
+logins en sessies ongewijzigd. De app toont de serverfout al bij registreren (`/auth/v1/signup`) en bij een nieuw
+wachtwoord (`/auth/v1/user` PUT) via `error_description`/`msg`; die melding is Engelstalig. Rollback: dezelfde
+schakelaar uit. Verificatie ná activeren: Security Advisors (lint verdwijnt), een registratie met een bekend
+gelekt wachtwoord wordt geweigerd, een sterk wachtwoord slaagt, en een bestaande login blijft werken.
+
+**Residual matrix.**
+
+| Finding | Huidige blootstelling | Impact | Root cause | Afhankelijkheden | Met F-SEC-006? | Voorstel |
+|---|---|---|---|---|---|---|
+| F-SEC-006 leaked-password protection | uit | credential stuffing met gelekte wachtwoorden bij nieuwe accounts/wachtwoorden | Supabase-default uit | Auth-config (platform) | — | extern: dashboardschakelaar (B/C, geen code) |
+| `increment_usage` EXECUTE authenticated | ja, 0 callers | alleen eigen verbruik verhogen (zelfbenadeling) | bewuste grant in v522, nooit gebruikt | geen (geen policy/functie/client) | nee (andere boundary: quota) | **B**; aparte kleine closure: EXECUTE intrekken |
+| `consume_credit` EXECUTE authenticated | ja, 0 callers | alleen eigen credits verlagen (zelfbenadeling) | bewuste grant in v522, nooit gebruikt | geen | nee | **B**; zelfde aparte closure |
+| Sequence-rechten (7 sequences, owner postgres) | anon/authenticated `rwU` (USAGE/SELECT/UPDATE) | setval alleen via een SQL-sessie; `setval` staat in pg_catalog en is niet via PostgREST-rpc aanroepbaar; USAGE is nodig voor `nextval` bij inserts | default privileges postgres/public type S | inserts op goals, exercise_goals, equipment_types, programs, program_blocks, athlete_conditions, checkin_conditions | nee | **B**; aparte closure: UPDATE (en default S) intrekken, USAGE behouden |
+| Default privileges `supabase_admin` (r, S, f) | geen huidige objecten in public van supabase_admin behalve extensiefuncties | alleen toekomstige objecten die Supabase zelf in public aanmaakt | platform-beheerd | projectrol mag dit niet wijzigen (bewezen in F-SEC-005) | nee | **D** (geen actiebare TK-finding); monitoren via Advisors |
+| Standaard EXECUTE op nieuwe functies | 188 functies in public uitvoerbaar door anon via PUBLIC; SECURITY DEFINER daarvan: 0 | geen huidige bypass (INVOKER draait met RLS van de caller); **toekomstige drift**: een nieuwe SECURITY DEFINER-functie is standaard anon-uitvoerbaar (zo ontstond F-SEC-004) | PostgreSQL-standaard PUBLIC EXECUTE + default ACL postgres/public type f | alle toekomstige migraties met functies | nee | **C (future drift)**; aparte closure: default EXECUTE voor PUBLIC/anon intrekken + CI-guard dat elke SECURITY DEFINER expliciete grants heeft |
+
+**Combinatie.** Niets gecombineerd met F-SEC-006: F-SEC-006 is een platform-Auth-instelling zonder repository- of
+DDL-component; de residuen raken database-privileges met eigen afhankelijkheden en tests. Voorgestelde losse
+vervolgstappen: (1) `increment_usage`/`consume_credit` + sequence-UPDATE (één kleine least-privilege-closure),
+(2) default function EXECUTE + CI-guard (eigen sprint wegens migratieconventie).

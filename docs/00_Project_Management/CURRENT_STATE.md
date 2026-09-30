@@ -8,6 +8,13 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.7
 
+## Security — F-SEC-006 en resterende hardening (30 september 2026)
+
+- F-SEC-001/-002/-003/-005: CLOSED_PROVEN. F-SEC-006 (leaked-password protection): EXTERNAL ACTION REQUIRED —
+  dashboardschakelaar door de projecteigenaar; niet via de beschikbare tooling te wijzigen.
+- Residuen (geen actuele bypass): `increment_usage`/`consume_credit` zonder callers (B), sequence-UPDATE (B),
+  standaard function EXECUTE voor anon (toekomstige drift, C), `supabase_admin`-defaults (platform). Zie auditdocument.
+
 ## Security — F-SEC-003 (29 september 2026)
 
 - Zes relatie-/lidmaatschapshelpers waren via rpc een orakel over derden (coachrelaties, blokkades, org-rollen,

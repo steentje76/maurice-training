@@ -5,6 +5,11 @@
  */
 const fs = require('fs');
 const path = require('path');
+// GAP-P2-008: draftHasData() in index.html delegeert sinds de Home-hervatkaart naar de pure kern,
+// zodat Home en de start-routes niet uit elkaar kunnen lopen over "bevat dit concept echte data".
+// De asserties hieronder blijven ongewijzigd en draaien nog steeds tegen de ECHTE functie uit
+// index.html — alleen de afhankelijkheid die zij aanroept wordt hier beschikbaar gemaakt.
+const HomeResumeCore = require('./homeResume.js'); // eslint-disable-line no-unused-vars
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
 function extractFn(name){

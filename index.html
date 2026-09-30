@@ -2356,6 +2356,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #home-hero .v43-hero{margin-bottom:10px !important}
 #home-coach-vandaag .v43-coach{margin-bottom:10px !important}
 #home-plan .v43-plan{margin-bottom:10px !important}
+/* GAP-P2-008 — hervatkaart. Erft de bestaande plan-kaartstijl (#home-resume gebruikt dezelfde
+   .v43-plan-opbouw) zodat Home één visuele taal houdt; alleen de donkere plan-kleuren van
+   #home-plan gelden hier niet, want dit is de doorlopende sessie en niet het plan van vandaag.
+   Status wordt nooit alleen met kleur verteld: het label "Nog bezig" en de regel "Deze training is
+   nog niet afgerond" staan altijd in tekst. */
+#home-resume .v43-plan{margin-bottom:10px}
+#home-resume .v43-resume{border:1px solid var(--accent,#0E3B4A)}
+#home-resume .v43-start[disabled]{opacity:.6;pointer-events:none}
 #home-weekstats{margin-bottom:10px !important}
 #home-motivatie{margin-bottom:6px !important}
 /* Premium-afwerking: hover/pressed/transities (geen nieuwe kleuren) */
@@ -3745,6 +3753,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
          sporter eerst leest wat vandaag betekent en dan direct doorkan naar de training. -->
     <div id="home-readiness"></div>
     <div id="home-context" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
+    <!-- GAP-P2-008 — hervatbare training: staat bewust VOOR "Vandaag gepland". Een lopende
+         sessie afmaken gaat voor een nieuwe starten. Geen kaart wanneer niets hervatbaar is. -->
+    <div id="home-resume"></div>
     <div id="home-plan"></div>
     <!-- Weather 1.0 — beslissingscontext ("ga ik vandaag/buiten trainen?"), onder het plan, niet vóór de CTA. -->
     <div id="home-weather" class="hcoach-item" style="margin-bottom:14px"></div>
@@ -6559,6 +6570,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/cycleTraining.js"></script>
 <script src="core/womensPerformanceContext.js"></script>
 <script src="core/scheduleAdherence.js"></script>
+<script src="core/homeResume.js"></script>
 <script src="core/inactivityAdherence.js"></script>
 <script src="core/calendarMonthView.js"></script>
 <script src="core/myTrainingScheduling.js"></script>
@@ -18638,9 +18650,10 @@ function cleanupOtherTrainScreens(keepScreenId){
     }
   });
 }
+// GAP-P2-008: één bron voor de regel "hoort dit concept bij de trainingsdag van vandaag". Home en
+// de start-routes mogen hier niet uit elkaar lopen, dus de regel staat in de pure kern.
 function isSameLocalDay(ts){
-  const a=new Date(ts),b=new Date();
-  return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+  return HomeResumeCore.sameLocalDay(ts,Date.now());
 }
 async function startT(t){
   execFocus[t]=0; if(typeof execSkipped!=='undefined')execSkipped[t]=new Set(); // F0.7P/Q: verse start bij eerste oefening, geen skips
@@ -18657,7 +18670,10 @@ async function startT(t){
   }
   // v306 #5: concept van eerder (zelfde dag, niet afgerond) aanbieden om te hervatten
   const draft=restoreTrainingDraft();
-  const resumeDraft=(draft&&draft.t===t&&isSameLocalDay(draft.ts)) ? await confirmModal('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Wil je die hervatten?',{title:'Training hervatten',okLabel:'Hervatten',cancelLabel:'Nieuw starten'}) : false;
+  // GAP-P2-008: komt de gebruiker via de Home-hervatkaart binnen, dan is de keuze al gemaakt en
+  // vraagt de route er niet nóg een keer naar. Alle overige ingangen blijven ongewijzigd bevestigen.
+  const _homeIntent=consumeHomeResumeIntent(t);
+  const resumeDraft=(draft&&draft.t===t&&isSameLocalDay(draft.ts)) ? (_homeIntent?true:await confirmModal('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Wil je die hervatten?',{title:'Training hervatten',okLabel:'Hervatten',cancelLabel:'Nieuw starten'})) : false;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   // P1 UNIVERSELE RECOVERY (vaste training): bepaal éénmalig de deterministische sets/RPE-aanpassing voor
   // vandaag (DecisionCore) en zet die als sessie-scoped delta. getSessionExs past 'm idempotent op kopieën
@@ -22543,14 +22559,11 @@ function restoreTrainingDraft(){
 function clearTrainingDraft(){localStorage.removeItem('tk_draft_training');lastSaveTs=null;saveState='saved';}
 // P0 — bevat een draft daadwerkelijk gelogde (nog niet gesynchroniseerde) trainingsdata? Zo ja, mag hij
 // niet stil gewist worden bij het starten van een ander trainingstype/andere dag.
+// GAP-P2-008: de Home-hervatkaart gebruikt exact deze regel. Om te voorkomen dat Home en de
+// start-routes verschillend oordelen over "bevat dit concept echte data", staat de implementatie in
+// de pure kern (homeResume.v1) en delegeert deze functie ernaartoe.
 function draftHasData(draft){
-  try{
-    const sl=draft&&draft.sessionLog; if(!sl)return false;
-    return Object.keys(sl).some(k=>{ const l=sl[k]; if(!l)return false;
-      return (l.sets&&l.sets.some(s=>s&&(s.kg||s.reps))) ||
-             (l.wu&&l.wu.some(s=>s&&(s.kg||s.reps))) ||
-             (l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals||l.cardio.distance)); });
-  }catch(_){ return false; }
+  return HomeResumeCore.draftHasLoggedData(draft);
 }
 // P0 — centrale draft-guard voor ALLE start-routes (custom/programma/herhalen). Voorkomt dat de ene
 // draft-slot van een lopende, niet-gesynchroniseerde training stil wordt overschreven wanneer een andere
@@ -30294,7 +30307,8 @@ async function startCustomTraining(id,resolvedItems){
   const _draft=restoreTrainingDraft();
   let _resume=false, _resumeElapsedMs=0;
   if(_draft && _draft.t===ctxT && isSameLocalDay(_draft.ts) && draftHasData(_draft)){
-    _resume = await confirmModal('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(_draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Wil je die hervatten?',{title:'Training hervatten',okLabel:'Hervatten',cancelLabel:'Nieuw starten'});
+    // GAP-P2-008: via de Home-hervatkaart is de keuze al gemaakt; anders gewoon bevestigen.
+    _resume = consumeHomeResumeIntent(ctxT) ? true : await confirmModal('Niet-afgeronde training gevonden (laatst opgeslagen om '+new Date(_draft.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})+'). Wil je die hervatten?',{title:'Training hervatten',okLabel:'Hervatten',cancelLabel:'Nieuw starten'});
   }
   if(!_resume){ if(!(await guardExistingDraft(ctxT))) return; }
   curT=ctxT;
@@ -31729,6 +31743,7 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   }
   // VANDAAG GEPLAND (met geïntegreerde programma-info)
   try{window.v43ProgInfo=await v43ProgramInfo();}catch(e){window.v43ProgInfo=null;}
+  renderHomeResumeCard(); // GAP-P2-008 — hervatbare sessie vóór het plan van vandaag
   v43RenderPlan('home-plan',nextT);
   // F7 DASHBOARD 2.0 (MS-F7-05) — uitsluitend consumptie van canonieke outputs, niet-blokkerend.
   try{ renderF7Attention(); }catch(e){}
@@ -31847,6 +31862,118 @@ async function renderF7Attention(){
   el.innerHTML=kaarten.length?kaarten.join(''):'';
 }
 // Gedeelde "Vandaag gepland"-kaart (Home + Training-tab). Integreert programma-info als chip.
+// ══════════════════════════════════════════════════════════
+// GAP-P2-008 — HOME: TRAINING HERVATTEN
+// Home detecteert en presenteert; Home traint niet. Deze twee functies lezen de bestaande draft
+// (persistTrainingDraft/restoreTrainingDraft), laten de pure kern (homeResume.v1) beslissen of hij
+// hervatbaar is, en navigeren daarna naar de BESTAANDE type-specifieke start-/resume-route. Er
+// wordt hier geen sessie opgebouwd, geen training_instance gemaakt, geen logboek aangeraakt en
+// nooit een draft gewist — precies zoals het implementatiecontract eist.
+// ══════════════════════════════════════════════════════════
+function homeResumeLabel(state){
+  try{
+    if(state.type==='vast'){
+      const v=(typeof vasteTrainingen!=='undefined'?vasteTrainingen:[]).find(x=>x.id===state.refId);
+      return (v&&v.naam)?v.naam:('Training '+state.refId);
+    }
+    if(state.type==='custom'){
+      const c=(typeof customTrainings!=='undefined'?customTrainings:[]).find(x=>x.id===state.refId);
+      return (c&&c.naam)?c.naam:'Mijn training';
+    }
+    if(state.type==='program'){
+      const pi=window.v43ProgInfo;
+      return pi&&pi.naam?('Programmatraining · '+pi.naam):'Programmatraining';
+    }
+  }catch(_){}
+  return 'Training';
+}
+function homeResumeMeta(state){
+  const c=state.counts||{sets:0,warmups:0,cardio:0,exercises:0};
+  const parts=[];
+  const gelogd=(c.sets||0)+(c.warmups||0);
+  if(gelogd)parts.push(gelogd+' set'+(gelogd===1?'':'s')+' gelogd');
+  if(c.cardio)parts.push(c.cardio+' cardio-onderdeel'+(c.cardio===1?'':'en'));
+  if(c.exercises)parts.push(c.exercises+' oefening'+(c.exercises===1?'':'en'));
+  if(state.ts){
+    try{parts.push('laatst opgeslagen '+new Date(state.ts).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}));}catch(_){}
+  }
+  return parts.join(' · ');
+}
+function renderHomeResumeCard(){
+  const el=document.getElementById('home-resume');
+  if(!el)return null;
+  let state=null;
+  try{
+    state=HomeResumeCore.resolveResumeState(restoreTrainingDraft(),Date.now(),
+      {activeT:(typeof curT!=='undefined'?curT:null)});
+  }catch(_){ el.innerHTML=''; return null; } // een corrupte draft mag Home nooit laten crashen
+  // Geen hervatbare sessie → geen kaart. Bewust géén lege placeholder op Home.
+  if(!state||!state.resumable){ el.innerHTML=''; return state; }
+  const naam=homeResumeLabel(state);
+  const meta=homeResumeMeta(state);
+  el.innerHTML=`<div class="v43-plan v43-resume">
+    <div class="v43-lbl">Nog bezig</div>
+    <div class="v43-plan-top">
+      <div class="v43-plan-ic">${V43I.dumbbell}</div>
+      <div class="v43-plan-l">
+        <div class="v43-plan-name">${escHtml(naam)}</div>
+        <div class="v43-plan-meta">${meta?'<span>'+escHtml(meta)+'</span>':''}</div>
+        <div class="v43-plan-meta" style="opacity:.8">Deze training is nog niet afgerond.</div>
+      </div>
+    </div>
+    <div class="v43-plan-actions">
+      <button class="v43-start" id="home-resume-btn" type="button"
+        aria-label="Training hervatten: ${escHtml(naam)}"
+        onclick="resumeTrainingFromHome()">${V43I.play} Training hervatten</button>
+    </div>
+  </div>`;
+  return state;
+}
+// Dubbele/snelle taps mogen nooit twee keer dezelfde route openen: één vlag, direct gezet, en de
+// knop wordt zichtbaar uitgeschakeld. De vlag valt altijd terug (finally), ook bij een fout.
+let _tkHomeResumeBusy=false;
+async function resumeTrainingFromHome(){
+  if(_tkHomeResumeBusy)return false;
+  let state=null;
+  try{
+    state=HomeResumeCore.resolveResumeState(restoreTrainingDraft(),Date.now(),
+      {activeT:(typeof curT!=='undefined'?curT:null)});
+  }catch(_){ state=null; }
+  // Tussen renderen en tikken kan de sessie zijn afgerond of verlopen: opnieuw beslissen, nooit
+  // blind vertrouwen op wat er op het scherm stond.
+  if(!state||!state.resumable){
+    renderHomeResumeCard();
+    toast('Deze training is niet meer hervatbaar');
+    return false;
+  }
+  _tkHomeResumeBusy=true;
+  const btn=document.getElementById('home-resume-btn');
+  if(btn){btn.disabled=true;btn.setAttribute('aria-busy','true');}
+  try{
+    // De hervat-intentie is hier al door de gebruiker gegeven; de bestaande start-route hoeft er
+    // niet nóg een keer naar te vragen. De route blijft verder volledig ongewijzigd: dezelfde
+    // sessie, dezelfde instanceId, dezelfde logging- en historie-keten.
+    window._tkResumeIntent=state.ctxT;
+    if(state.type==='vast')await startT(state.refId);
+    else if(state.type==='custom')await startCustomTraining(state.refId);
+    else if(state.type==='program')await startProgramBlockTraining(state.refId);
+    return true;
+  }catch(e){
+    console.warn('home-resume',e);
+    toast('Hervatten lukte niet — probeer opnieuw');
+    return false;
+  }finally{
+    window._tkResumeIntent=null;
+    _tkHomeResumeBusy=false;
+    if(btn){btn.disabled=false;btn.removeAttribute('aria-busy');}
+  }
+}
+// Eenmalig verzilveren: de intentie geldt voor precies één start-aanroep van precies deze sessie.
+function consumeHomeResumeIntent(ctxT){
+  if(!ctxT||window._tkResumeIntent!==ctxT)return false;
+  window._tkResumeIntent=null;
+  return true;
+}
 function v43RenderPlan(elId,nextT,opts){
   const el=document.getElementById(elId);if(!el)return;
   if(!nextT){el.innerHTML='';return;}

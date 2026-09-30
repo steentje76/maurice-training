@@ -1,5 +1,19 @@
 # Trainingskompas — Changelog
 
+## Governance — GAP-P2-008 closure record (1 oktober 2026, alleen documentatie)
+
+**Baseline:** `9589298498dfefcc89e14b45c9ddde53617feda4`.
+
+- `docs/AUDIT_GAP_REGISTER.json`: GAP-P2-008 van `OPEN` naar `READY_FOR_ACCEPTANCE`, met `closure_evidence`
+  (code, gedragstests, routehergebruik, regressie, beide Quality Gates), `closure_rationale`, `closure_pr`,
+  `closure_merge_sha` en een expliciet `open_verification`-punt. Bewust niet `CLOSED_PROVEN`: de praktijkverificatie
+  op een echt toestel is nog niet vastgelegd.
+- `docs/audit/GAP_P2_008_HOME_RESUME_CLOSURE_RECORD.md`: bewijs per contracteis, architectuurgrens en wat nog open is.
+- `docs/GAP_ANALYSIS_V2.md`: statusregel bij GAP-P2-008 met hetzelfde voorbehoud.
+- `counts` in het gapregister mechanisch herberekend (`open` telde REVIEW_REQUIRED en SUPERSEDED mee en liep één
+  status achter); `generated_against_main` bijgewerkt naar de actuele main. Geen andere gapstatus gewijzigd.
+- Geen functionele code gewijzigd.
+
 ## Security — F-SEC-010: default function EXECUTE + CI-guard, migratie_v576 (30 september 2026, geen appversie-wijziging)
 
 **Baseline:** `852410cd6af37d7714ad202404a79da52b305cec`.

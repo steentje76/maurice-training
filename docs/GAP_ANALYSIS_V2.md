@@ -48,6 +48,8 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Evidence:** CODE VERIFIED, zie het Home/Dashboard-sprintrapport in `docs/`.
 **Target:** een prominente resume-banner/kaart bovenaan Home wanneer `restoreTrainingDraft()` een geldige, data-bevattende draft oplevert, die routeert naar de juiste startfunctie op basis van het trainingstype (vaste/custom/programma).
 **Priority:** P2 (discoverability, geen dataverliesrisico meer). **Complexity:** M. **Roadmap phase:** F2 (vervolgwerk — de laatste F2-mastersprint is inmiddels afgerond zonder dit punt op te pakken, blijft dus staan als losstaand vervolgitem, geen eigen nieuwe mastersprint-ID).
+**Status (01-10-2026): READY_FOR_ACCEPTANCE.** Geïmplementeerd en gemerged via PR #492 (`9589298498dfefcc89e14b45c9ddde53617feda4`): `core/homeResume.js` beslist (puur, deterministisch) en `index.html` toont de hervatkaart in het bestaande v4.3-renderpad, vóór "Vandaag gepland". Hervatten loopt uitsluitend via de bestaande `startT()`/`startCustomTraining()`/`startProgramBlockTraining()` — geen tweede execution- of loggingketen, geen nieuw sessieobject, geen databasewijziging. Bewijs: `core/fHomeResume.test.js` 61/61 (voert de echte call-chain uit in een vm-sandbox), volledige core-suite 417 groen, exact-head Quality Gate run 36778341853 en post-merge run 36779012347 beide success.
+**Nog open vóór CLOSED_PROVEN:** de praktijkverificatie op een echt toestel (starten → sets loggen → Home → app opnieuw openen → hervatten → verder loggen → afronden) is nog niet canoniek vastgelegd. Zie `docs/audit/GAP_P2_008_HOME_RESUME_CLOSURE_RECORD.md`.
 
 ### GAP-P2-009 — sRPE-bouwstenen (Load & Progression-sprint) nog niet UI-geïntegreerd
 **Capability-ID:** CALC-LOAD-REGISTRY-001

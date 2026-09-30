@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## Security — F-SEC-006 + residual triage (30 september 2026, alleen documentatie)
+
+**Baseline:** `59ea2cc40205a32ca1211a880a4ca8a2713aeca0`.
+
+- Auditdocument: F-SEC-006 vastgelegd als EXTERNAL ACTION REQUIRED (Supabase Auth-schakelaar, Pro-plan aanwezig,
+  niet via beschikbare tooling te wijzigen) met impact, rollback en verificatiestappen; residual matrix voor
+  `increment_usage`, `consume_credit`, sequence-rechten, `supabase_admin`-defaults en standaard function EXECUTE;
+  F-SEC-003 administratief CLOSED_PROVEN. Geen code-, DDL- of configwijziging.
+
 ## Security — F-SEC-003: helper-orakels gebonden aan de caller + migratie_v574 (29 september 2026, geen appversie-wijziging)
 
 **Baseline:** `ddc2caf01ea9d5e4bd1e1f08422022248c387db1`.

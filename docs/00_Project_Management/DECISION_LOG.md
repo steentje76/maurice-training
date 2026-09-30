@@ -2529,3 +2529,11 @@ is; voor `org_user_has_role` mag org-staff/admin/owner van die organisatie ook n
 policy-gebruiker stelt die voorwaarde al). Interne controles die een derde moeten toetsen (trigger
 `team_events_validate_linked_training`) doen dat inline. Helpers zonder callers verliezen EXECUTE. Geen verplaatsing
 naar een ander schema en geen policywijziging, zodat de RLS-semantiek aantoonbaar gelijk blijft.
+
+## DEC-SEC-004 — Functierechten zijn altijd expliciet (30 september 2026)
+
+**Besluit.** Nieuwe databasefuncties erven geen client-EXECUTE meer via default privileges (migratie_v576). Elke
+migratie na v575 legt per functie expliciet vast wie hem mag uitvoeren; SECURITY DEFINER-functies hebben altijd een
+`set search_path` en een revoke van PUBLIC en anon, en worden alleen via een zichtbare marker aan anon verleend.
+Afgedwongen door `tools/check-function-grants.js` in de release gate. Het `extensions`-schema behoudt zijn huidige
+gedrag; `supabase_admin`-defaults blijven platformbeheerd.

@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## Security — F-SEC-010: default function EXECUTE + CI-guard, migratie_v576 (30 september 2026, geen appversie-wijziging)
+
+**Baseline:** `852410cd6af37d7714ad202404a79da52b305cec`.
+
+- `migratie_v576.sql`: nieuwe postgres-functies krijgen geen PUBLIC/anon/authenticated EXECUTE meer (extensions-schema
+  ongewijzigd gedrag; service_role blijft). Bestaande functies ongewijzigd.
+- `tools/check-function-grants.js` + `core/fSecFunctionGrantsGuard.test.js` (12 sabotages): CI-guard voor expliciete
+  functierechten en SECURITY DEFINER-regels in migraties na v575.
+- Auditdocument: F-SEC-010-sectie; F-SEC-007/-008/-009 administratief CLOSED_PROVEN.
+
 ## Security — F-SEC-007/-008/-009 residual least-privilege + migratie_v575 (30 september 2026, geen appversie-wijziging)
 
 **Baseline:** `1a0a290b0f85d336be0757552a601496502540fe`.

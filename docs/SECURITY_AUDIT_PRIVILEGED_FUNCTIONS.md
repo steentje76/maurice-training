@@ -406,5 +406,32 @@ SECURITY DEFINER 25, anon 0, geen `Leaked Password Protection Disabled`-melding 
 **Restrisico.** `supabase_admin`-defaults (platformbeheerd) geven toekomstige door Supabase aangemaakte sequences nog
 `rwU`; standaard function EXECUTE blijft een aparte vervolgstap.
 
-**Status F-SEC-007/-008/-009:** IMPLEMENTED + productie-geverifieerd; CLOSED_PROVEN na squash-merge en groene
-post-merge Quality Gate.
+**Status F-SEC-007/-008/-009: CLOSED_PROVEN.** Squash-merge PR #490 (`852410cd6af37d7714ad202404a79da52b305cec`)
+en post-merge Quality Gate groen (run 36680779459).
+
+## F-SEC-010 default function EXECUTE + CI-guard (30 september 2026, migratie v576)
+
+**Bevinding (future drift).** Rol `postgres` maakt alle TK-migratiefuncties. Een nieuwe functie in public kreeg
+automatisch EXECUTE voor PUBLIC (PostgreSQL-standaard), anon, authenticated en service_role (default ACL
+postgres/public). Bewezen in een teruggedraaide transactie: nieuwe INVOKER- én SECURITY DEFINER-functie →
+`{=X, postgres=X, anon=X, authenticated=X, service_role=X}`. Dat is exact hoe F-SEC-004 ontstond. Huidige
+blootstelling: geen — alle 63 postgres-functies in public hebben expliciete ACL's (PUBLIC 0, anon 0, authenticated 26,
+service_role 63); de 188 anon-uitvoerbare functies in public zijn `btree_gist`-functies van `supabase_admin`.
+
+**Impactanalyse (rollback-bewijs).** Na hardening: nieuwe functies in public alleen `postgres`/`service_role`.
+Trigger-functies vuren zonder EXECUTE van de aanroeper (insert als authenticated met trigger → trigger liep). Een
+RLS-policy die een helper aanroept faalt zonder EXECUTE ("permission denied for function") en werkt na een
+expliciete `grant execute ... to authenticated`. Per-schema kan de globale PUBLIC-default niet worden ingetrokken
+(bewezen: per-schema revoke liet `=X` staan); daarom globaal, met per-schema herstel voor `extensions` (49 bestaande
+postgres-extensiefuncties hebben PUBLIC EXECUTE; bewezen: nieuwe functie in extensions houdt PUBLIC). Bestaande
+functies, `supabase_admin`- en `storage`-defaults ongewijzigd.
+
+**Fix.** `migratie_v576.sql`: globale PUBLIC EXECUTE-default voor postgres-functies ingetrokken; extensions-schema
+herstelt PUBLIC; public-default zonder anon/authenticated. CI-guard `tools/check-function-grants.js` (via
+`core/fSecFunctionGrantsGuard.test.js` in de release gate) voor migraties na v575: R1 expliciete grant/revoke per
+functie, R2 SECURITY DEFINER met `set search_path`, R3 SECURITY DEFINER met revoke van PUBLIC én anon, R4 geen
+anon/PUBLIC-grant op SECURITY DEFINER zonder `tk-security-allow-anon-execute`-marker, R5 geen verbreding van de
+function-defaults. Migratieconventie: een functie die clients of RLS-policies gebruiken krijgt een expliciete
+`grant execute ... to authenticated`.
+
+**Status F-SEC-010:** zie productie-evidence hieronder.

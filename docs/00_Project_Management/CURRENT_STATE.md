@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.7
 
+## Security — F-SEC-010 default function EXECUTE (30 september 2026)
+
+- Nieuwe functies van `postgres` krijgen geen client-EXECUTE meer via defaults (`migratie_v576.sql`); een CI-guard
+  eist expliciete functierechten en SECURITY DEFINER-hygiëne in elke nieuwe migratie. Bestaande functies ongewijzigd.
+  Migratieconventie: functies voor clients/RLS-policies krijgen een expliciete `grant execute ... to authenticated`.
+
 ## Security — residual least-privilege (30 september 2026)
 
 - `increment_usage`/`consume_credit` (0 callers) niet meer client-uitvoerbaar; sequence-UPDATE (setval) ingetrokken voor

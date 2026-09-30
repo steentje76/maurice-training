@@ -1,13 +1,15 @@
 {
  "_schema": "trainingskompas-audit-gap-register/1.0",
  "baseline": "BASELINE-1.0",
- "generated_against_main": "3415744992008607181e7a078483de372d989efd",
+ "generated_against_main": "9589298498dfefcc89e14b45c9ddde53617feda4",
  "counts": {
   "entries": 68,
-  "open": 49,
+  "open": 41,
   "closed_proven": 19,
   "deferred_accepted": 0,
-  "superseded": 2
+  "superseded": 2,
+  "ready_for_acceptance": 1,
+  "review_required": 5
  },
  "gaps": [
   {
@@ -70,7 +72,7 @@
    "title": "### GAP-P2-008 — Home toont geen proactieve \"hervat je training\"-banner (Home/Dashboard-sprint)",
    "primary_track": "T1",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "READY_FOR_ACCEPTANCE",
    "v1_scope": true,
    "blocker": false,
    "dependency": null,
@@ -103,8 +105,30 @@
      "date": "2026-09-27",
      "change_type": "AUDIT_METADATA_CORRECTION",
      "reason": "Metadata alignment: GAP_ANALYSIS_V2 classifies the remaining issue as P2 discoverability with data-loss risk already removed; no gap closure or new product evidence."
+    },
+    {
+     "from": "OPEN",
+     "to": "READY_FOR_ACCEPTANCE",
+     "date": "2026-10-01",
+     "change_type": "IMPLEMENTATION_MERGED",
+     "reason": "PR #492 gemerged als 9589298498dfefcc89e14b45c9ddde53617feda4; exact-head en post-merge Quality Gate success; fHomeResume 61/61 en volledige core-suite 417 groen. Praktijkverificatie nog niet vastgelegd, daarom niet CLOSED_PROVEN."
     }
-   ]
+   ],
+   "closure_evidence": [
+    "CODE VERIFIED on main 9589298498dfefcc89e14b45c9ddde53617feda4 (squash-merge van PR #492): core/homeResume.js is een pure beslissingskern (resolveResumeState met NO_DRAFT/INVALID_DRAFT/NO_LOGGED_DATA/STALE_DIFFERENT_DAY/ALREADY_ACTIVE/RESUMABLE) en index.html tekent de hervatkaart in het bestaande v4.3-renderpad (renderV43Home -> renderHomeResumeCard), vóór 'Vandaag gepland'.",
+    "BEHAVIORAL UNIT VERIFIED: core/fHomeResume.test.js voert de echte code uit — de kern rechtstreeks, en renderHomeResumeCard()/resumeTrainingFromHome() geëxtraheerd uit index.html in een vm-sandbox met nagebootste DOM. 61/61 geslaagd, inclusief geen-CTA-zonder-draft, CTA bij onafgemaakte sessie, hervatten via dezelfde sessie en instanceId, stale en corrupte draft, dubbeltap-bescherming en het verdwijnen van de kaart na afronden.",
+    "ROUTE REUSE VERIFIED: hervatten loopt uitsluitend via de bestaande startT()/startCustomTraining()/startProgramBlockTraining(); geen tweede execution- of loggingketen, geen nieuw sessieobject, geen extra training_instances-rij, geen databasewijziging.",
+    "SINGLE SOURCE VERIFIED: draftHasData() en isSameLocalDay() in index.html delegeren naar core/homeResume.js; core/fReAuditPersistence.test.js draait zijn tien ongewijzigde asserties nog steeds tegen de echte functie uit index.html (10/10).",
+    "REGRESSION VERIFIED: volledige bestaande core-suite 417/417 groen, coaching.test.js groen, native transport 176/176 groen; bestaande resume-ankers core/fProgramResume.test.js (7/7) en core/fTrainingExecutionFinalClosure.test.js groen.",
+    "GATE VERIFIED: exact-head Quality Gate run 36778341853 success op b150f0a8a537d1281d1dc44a9c970e9aafe1fb58; post-merge Quality Gate run 36779012347 success op 9589298498dfefcc89e14b45c9ddde53617feda4."
+   ],
+   "closure_rationale": "Target intent bereikt: Home toont een proactieve hervatkaart zodra restoreTrainingDraft() een geldige, data-bevattende draft van vandaag oplevert, en routeert naar de bestaande type-specifieke startfunctie (vast/custom/programma). Afwijking van de letterlijke Target-formulering 'banner bovenaan Home': het is een kaart in het bestaande v4.3-renderpad, direct vóór 'Vandaag gepland' — de gaptekst noemt 'banner/kaart' als gelijkwaardige vormen. Status is bewust READY_FOR_ACCEPTANCE en niet CLOSED_PROVEN: het implementatiecontract eist naast code en tests ook een praktijkverificatie, en die is nog niet canoniek vastgelegd.",
+   "open_verification": [
+    "LIVE PRACTICE VERIFICATION OPEN: de keten training starten -> sets loggen -> Home -> app/browser opnieuw openen -> hervatten -> verder loggen -> afronden is nog niet op een echt toestel (Android/PWA) vastgelegd. Zolang dit bewijs ontbreekt blijft GAP-P2-008 READY_FOR_ACCEPTANCE en niet CLOSED_PROVEN."
+   ],
+   "closure_pr": "https://github.com/steentje76/maurice-training/pull/492",
+   "closure_merge_sha": "9589298498dfefcc89e14b45c9ddde53617feda4",
+   "closure_contract": "docs/audit/GAP_P2_008_HOME_RESUME_IMPLEMENTATION_CONTRACT.md"
   },
   {
    "gap_id": "GAP-P2-009",
@@ -1887,5 +1911,6 @@
  "traceability_complete": false,
  "traceability_unresolved": [
   "GAP-P2-010"
- ]
+ ],
+ "_counts_note": "counts zijn op 2026-10-01 mechanisch herberekend uit de gaps-array bij de governance closure van GAP-P2-008. De eerder opgeslagen waarde open=49 telde REVIEW_REQUIRED (5) en SUPERSEDED (2) mee en liep één status achter; de feitelijke verdeling is open=41, closed_proven=19, ready_for_acceptance=1, review_required=5, superseded=2 bij 68 entries. Geen gapstatus is gewijzigd behalve GAP-P2-008."
 }

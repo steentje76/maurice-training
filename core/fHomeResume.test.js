@@ -45,6 +45,13 @@ const NOW = new Date('2026-09-30T18:00:00').getTime();
 const EERDER = new Date('2026-09-30T16:40:00').getTime();
 const GISTEREN = new Date('2026-09-29T17:00:00').getTime();
 
+const NativeDate = Date;
+class FixedDate extends NativeDate {
+  constructor(...args) { super(...(args.length ? args : [NOW])); }
+  static now() { return NOW; }
+}
+
+
 function draftMet(overrides) {
   return Object.assign({
     t: 'A', ts: EERDER, instanceId: 'instance-1',
@@ -100,7 +107,7 @@ function sandbox(draft, extra) {
   const el = maakElement('home-resume');
   const knop = maakElement('home-resume-btn');
   const ctx = {
-    console, Date, Object, Array, JSON, String, Number,
+    console, Date: FixedDate, Object, Array, JSON, String, Number,
     window: {}, calls: [], toasts: [],
     HomeResumeCore,
     V43I: { dumbbell: '<svg id="dumbbell"></svg>', play: '<svg id="play"></svg>' },

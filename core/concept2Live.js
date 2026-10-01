@@ -403,6 +403,7 @@
       distance: dist != null ? Math.round(dist) : null,
       time_str: (dur != null && DC) ? DC.formatDurationStr(dur) : null,
       watt: watts != null ? Math.round(watts * 10) / 10 : null,
+      watt_source: wattsSource,
       stroke_rate: spm != null ? Math.round(spm) : null,
       rpe: null // ACTUAL-only; nooit een prescription/target overschrijven
     };

@@ -92,12 +92,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** bereikt — expliciete provenance wordt opgeslagen op nieuwe Concept2 erg-vermogenswaarden. Zie `docs/audit/GAP_P2_013_CONCEPT2_WATT_PROVENANCE_CLOSURE_RECORD.md`.
 **Priority:** P2. **Complexity:** S.
 
-### GAP-P2-014 — `ContextEngineCore` runtime-integratie (Context-sprint)
+### GAP-P2-014 — **CLOSED_PROVEN** — `ContextEngineCore` runtime-integratie (Context-sprint)
 **Capability-ID:** CTX-CONTRACT-001
 **Historische bevinding:** `core/contextEngine.js` was puur en getest, maar werd niet door de productieruntime geladen of vanuit `buildCtx()` aangeroepen.
-**Implementation status (01-10-2026): CODE IMPLEMENTED, governance closure pending.** `index.html` laadt `core/contextEngine.js`; `buildCtx()` roept `ContextEngineCore.buildStructuredContext()` aan en gebruikt de genormaliseerde `sport.id`/`sport.label` voor het bestaande actieve-sportblok. De fallback behoudt exact het eerdere gedrag wanneer de module onverwacht ontbreekt. Er is geen nieuwe calculatie, beslisregel of extra AI-dataflow toegevoegd.
-**Automated evidence:** `core/contextEngine.test.js` 16/16 en `core/fContextContract.test.js` 18/18 groen; de contracttest bewaakt script-load, productiecaller, daadwerkelijke consumptie, canonical calculation delegation en de bestaande AI-boundary.
-**Target:** technisch bereikt. Formele `CLOSED_PROVEN` volgt pas nadat exact-head en post-merge Quality Gates op GitHub zijn vastgelegd in het auditregister/closure-record.
+**Closure status (01-10-2026): CLOSED_PROVEN.** PR #502 is gemerged als `22b80fe6e395c769008204c53aa0c4621eef9001`: `index.html` laadt `core/contextEngine.js`; `buildCtx()` roept `ContextEngineCore.buildStructuredContext()` aan en consumeert de genormaliseerde `sport.id`/`sport.label` in het bestaande actieve-sportblok. De fallback behoudt het eerdere gedrag wanneer de module onverwacht ontbreekt. Er is geen nieuwe Calculation-, Decision- of AI-dataflow toegevoegd.
+**Automated evidence:** `core/contextEngine.test.js` 16/16, `core/fContextContract.test.js` 18/18 en `core/sw-guard.test.js` 5/5 op de implementatiehead. Exact-head Trainingskompas Quality Gate `36843288642` (#1342) = SUCCESS op `5aa1e3b2a3212634e6c285c870aa144b8b11ac03`.
+**Canonical-main regression proof:** de daaropvolgende benchmark-reconciliatie PR #503 verklaart expliciet `22b80fe6e395c769008204c53aa0c4621eef9001` als canonical TK baseline en classificeert deze dead-code-gap als technisch opgelost; Quality Gate `36886476463` (#1345) = SUCCESS op de daarvan afgeleide PR-head `306b840b84899473a27a34635f9755984d7abd0e`. Dit is bewust als canonical-baseline regressiebewijs vastgelegd en niet onjuist als een post-merge run op de merge-SHA.
+**Target:** bereikt. Zie `docs/audit/GAP_P2_014_CONTEXT_ENGINE_RUNTIME_CLOSURE_RECORD.md`.
 **Priority:** P2. **Complexity:** M.
 
 ### GAP-P2-015 — `recoveryScore()`'s confidence telt alleen componentaantal, geen componentkwaliteit (Data Quality-sprint)

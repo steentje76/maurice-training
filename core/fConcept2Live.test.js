@@ -78,6 +78,7 @@ eq(rowActual.row.exercise_id, 'roeien', 'J: RowErg actual → exercise_id roeien
 eq(rowActual.row.distance, 2000, 'J: distance 2000');
 eq(rowActual.row.time_str, '8:00', 'J: time_str 8:00');
 eq(rowActual.row.stroke_rate, 31, 'J: stroke_rate 31');
+eq(rowActual.row.watt_source, 'concept2_derived', 'H: completion zonder gemeten watts persisteert concept2_derived op sessions-row');
 eq(rowActual.row.rpe, null, 'N: ACTUAL-only rpe null (prescription onaangeroerd)');
 ok(/\[c2:987\]/.test(rowActual.row.note), 'K: Logbook-resultId → [c2:987] identiteit');
 ok(/split:2:00\/500m/.test(rowActual.row.note) && /hr 150/.test(rowActual.row.note), 'J: split 500m + hr in note');
@@ -95,7 +96,10 @@ ok(C.alreadyLoggedLive('987', [{ note:'y [c2:987]' }]) === true, 'K: dedup herke
 ok(C.alreadyLoggedLive('nieuw', [{ note:'[c2:987]' }]) === false, 'K: nieuwe workout niet als duplicaat');
 // measured vs derived provenance op completion
 eq(C.liveWorkoutToActual({ machineType:'rowerg', distance_m:2000, duration_s:480 }, {}).provenance.watts_source, 'concept2_derived', 'H: completion afgeleide watts → concept2_derived');
-eq(C.liveWorkoutToActual({ machineType:'rowerg', distance_m:2000, duration_s:480, watts:210 }, {}).provenance.watts_source, 'concept2_measured', 'H: completion gemeten watts → concept2_measured');
+const measuredActual = C.liveWorkoutToActual({ machineType:'rowerg', distance_m:2000, duration_s:480, watts:210 }, {});
+eq(measuredActual.provenance.watts_source, 'concept2_measured', 'H: completion gemeten watts → concept2_measured');
+eq(measuredActual.row.watt_source, 'concept2_measured', 'H: gemeten PM5-watts persisteren concept2_measured op sessions-row');
+eq(measuredActual.row.watt, 210, 'H: gemeten PM5-wattwaarde blijft ongewijzigd naast provenance');
 // geen prescription-velden
 ok(!('sets' in rowActual.row) && !('reps' in rowActual.row), 'N: actual bevat geen prescription/target-velden');
 

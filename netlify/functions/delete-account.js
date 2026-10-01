@@ -258,19 +258,12 @@ exports.handler = async function(event) {
       // auditeerbaarheid, consistent met het bestaande patroon
       // (bijv. memberships.user_id hierboven).
       ['nutrition_entries', ['user_id']],
-      // B9-H2C: alle drie hebben al correcte CASCADE/SET NULL-foreign-
-      // keys naar auth.users (live bevestigd via pg_constraint), hier
-      // toch expliciet vermeld voor auditeerbaarheid, consistent met
-      // het bestaande patroon (bijv. memberships.user_id hierboven).
-      // BELANGRIJKE, BEKENDE SEMANTIEK: team_events.created_by heeft
-      // ON DELETE CASCADE -- als de maker van een team-event zijn
-      // account verwijdert, verdwijnt het hele event (en daarmee de
-      // operationele geschiedenis voor de rest van het team). Dit is
-      // een bestaande, niet in deze sprint gewijzigde keuze; expliciet
-      // gedocumenteerd als bekend aandachtspunt voor een toekomstige
-      // sprint (mogelijk: created_by op SET NULL i.p.v. CASCADE, zodat
-      // het team-record blijft bestaan zonder een gekoppelde maker).
-      ['team_events', ['created_by']],
+      // GAP-P2-024 (migratie_v577): team_events.created_by gebruikt bewust
+      // ON DELETE SET NULL. Een team-event is gedeelde teamhistorie en mag
+      // daarom NIET expliciet op created_by worden verwijderd wanneer de
+      // organisator zijn account verwijdert; de database ontkoppelt alleen
+      // de creator. De eigen attendance/responsibility van de verwijderde
+      // gebruiker blijft hieronder wel expliciet opruimbaar.
       ['event_attendance', ['user_id']],
       ['event_responsibilities', ['assigned_user_id']]
     ]) {

@@ -9,6 +9,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import { gunzipSync } from 'zlib';
 import { build } from 'esbuild';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -39,8 +41,20 @@ async function rimraf(p) {
 // RC0: testcode hoort niet in een release-artefact. core/ bevat 60+ *.test.js
 // (ruim 300 kB) die anders integraal in de APK/AAB meegingen — onnodige omvang en
 // onnodig veel interne details in een publiek gedistribueerd bestand.
+// OCR-PACKAGING: core/fixtures/ is uitsluitend testmateriaal (o.a. tessdata/*.traineddata.gz
+// voor de Node-integratietests). Geen runtime-code verwijst ernaar; meebundelen kostte ruim
+// 11 MB aan uitgepakte taaldata in de APK.
 function overslaan(naam) {
-  return naam.endsWith('.test.js');
+  return naam.endsWith('.test.js') || naam === 'fixtures';
+}
+async function alleBestanden(dir, rel = '') {
+  const uit = [];
+  for (const e of await fs.readdir(dir, { withFileTypes: true })) {
+    const r = rel ? rel + '/' + e.name : e.name;
+    if (e.isDirectory()) uit.push(...await alleBestanden(path.join(dir, e.name), r));
+    else uit.push(r);
+  }
+  return uit;
 }
 async function copyDir(src, dst) {
   await fs.mkdir(dst, { recursive: true });
@@ -71,6 +85,24 @@ async function main() {
     else console.warn('[build:www] overslaan (map ontbreekt): ' + dir);
   }
 
+  // 1b) OCR-taaldata: expliciet uitpakken voor de native bundel.
+  // De Android Gradle Plugin pakt bij het samenvoegen van assets ELK .gz-bestand uit en haalt
+  // de extensie weg. core/vendor/eng.traineddata.gz kwam zo als eng.traineddata in de APK,
+  // terwijl de app (gzip:true) om eng.traineddata.gz vroeg -> 404 -> OCR laadde nooit.
+  // Daarom doet deze build die stap zelf, zichtbaar en deterministisch: de ene canonieke bron
+  // (de .gz in de repo) wordt hier uitgepakt, en de www-kopie van index.html krijgt gzip:false
+  // (stap 3). www/ is daarmee byte-voor-byte wat in de APK belandt. Web/PWA blijft ongemoeid.
+  for (const rel of await alleBestanden(WWW)) {
+    if (!rel.endsWith('.gz')) continue;
+    if (!rel.endsWith('.traineddata.gz')) {
+      throw new Error('onverwacht .gz-bestand in www/: ' + rel + ' — Android pakt .gz-assets uit en hernoemt ze; sluit het uit of verwerk het hier expliciet.');
+    }
+    const gz = path.join(WWW, rel);
+    await fs.writeFile(gz.slice(0, -3), gunzipSync(await fs.readFile(gz)));
+    await fs.rm(gz);
+    console.log('[build:www] OCR-taaldata uitgepakt: ' + rel + ' -> ' + rel.slice(0, -3));
+  }
+
   // 2) native-transport bundelen (bootstrap -> IIFE)
   console.log('[build:www] esbuild native-transport.js');
   await build({
@@ -95,7 +127,24 @@ async function main() {
       await fs.writeFile(idxPath, html);
       console.log('[build:www] native-transport script-tag geïnjecteerd in www/index.html');
     }
+
+    // 3b) Tesseract in de native kopie laten vragen om de uitgepakte taaldata (zie stap 1b).
+    html = await fs.readFile(idxPath, 'utf8');
+    let ocrPatches = 0;
+    html = html.replace(/(Tesseract\.(?:recognize|createWorker)\([^;]*?gzip\s*:\s*)true/g, (_, voor) => { ocrPatches++; return voor + 'false'; });
+    if (ocrPatches === 0) {
+      throw new Error('geen Tesseract-aanroep met gzip:true gevonden in index.html — de OCR-configuratie is gewijzigd; werk scripts/build-www.mjs (stap 1b/3b) bij.');
+    }
+    await fs.writeFile(idxPath, html);
+    console.log('[build:www] Tesseract gzip:true -> gzip:false in www/index.html (' + ocrPatches + 'x)');
   }
+
+  // 4) Bewijs dat runtimeconfig en verpakte taaldata overeenkomen; anders faalt de build hier
+  //    en niet pas op een toestel.
+  const { verify } = createRequire(import.meta.url)('../tools/verify-ocr-packaging.js');
+  const ocr = verify('native', WWW);
+  if (ocr.errors.length) throw new Error('OCR-packaging klopt niet:\n  - ' + ocr.errors.join('\n  - '));
+  console.log('[build:www] OCR-packaging gecontroleerd: runtimeconfig komt overeen met de verpakte taaldata');
 
   console.log('[build:www] KLAAR -> www/');
 }

@@ -88,6 +88,19 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
+      # De Android Gradle Plugin pakt .gz-assets uit en hernoemt ze. Deze stap opent de gebouwde
+      # APK zelf en bewijst dat de Tesseract-runtimeconfig overeenkomt met de verpakte taaldata.
+      # Ontbreekt de controle (oudere source_sha), dan is dat zichtbaar als waarschuwing.
+      - name: Verify OCR traineddata packaging in built APK
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          if [ -f tools/verify-ocr-packaging.js ]; then
+            node tools/verify-ocr-packaging.js --apk "$APK"
+          else
+            echo "::warning::tools/verify-ocr-packaging.js ontbreekt in deze source; OCR-packaging van de APK is NIET gecontroleerd"
+          fi
+
       - name: Record provenance and SHA-256
         id: provenance
         run: |

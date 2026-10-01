@@ -92,12 +92,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Target:** bereikt — expliciete provenance wordt opgeslagen op nieuwe Concept2 erg-vermogenswaarden. Zie `docs/audit/GAP_P2_013_CONCEPT2_WATT_PROVENANCE_CLOSURE_RECORD.md`.
 **Priority:** P2. **Complexity:** S.
 
-### GAP-P2-014 — `ContextEngineCore` is dode code, nooit aangeroepen vanuit index.html (Context-sprint)
+### GAP-P2-014 — `ContextEngineCore` runtime-integratie (Context-sprint)
 **Capability-ID:** CTX-CONTRACT-001
-**Current:** `core/contextEngine.js` bevat zijn eigen, expliciete commentaar dat bevestigt: het bestand is additief naast `buildCtx()` (index.html, de daadwerkelijke, actief-aangeroepen contextbron) en wordt vanuit `index.html` nergens aangeroepen.
-**Evidence:** CODE VERIFIED, zie het Context Taxonomy-sprintrapport in `docs/`.
-**Target:** ofwel `ContextEngineCore` alsnog bedraden in `buildCtx()` (bewuste architectuurkeuze, geen technische blocker meer sinds F2), ofwel expliciet documenteren als "toekomstige building block, nog niet actief" i.p.v. impliciet ongebruikt te laten staan.
-**Priority:** P2 (architectuurinconsistentie, geen actieve bug — beide bronnen zijn intern consistent, er is geen tegenstrijdige waarheid). **Complexity:** M.
+**Historische bevinding:** `core/contextEngine.js` was puur en getest, maar werd niet door de productieruntime geladen of vanuit `buildCtx()` aangeroepen.
+**Implementation status (01-10-2026): CODE IMPLEMENTED, governance closure pending.** `index.html` laadt `core/contextEngine.js`; `buildCtx()` roept `ContextEngineCore.buildStructuredContext()` aan en gebruikt de genormaliseerde `sport.id`/`sport.label` voor het bestaande actieve-sportblok. De fallback behoudt exact het eerdere gedrag wanneer de module onverwacht ontbreekt. Er is geen nieuwe calculatie, beslisregel of extra AI-dataflow toegevoegd.
+**Automated evidence:** `core/contextEngine.test.js` 16/16 en `core/fContextContract.test.js` 18/18 groen; de contracttest bewaakt script-load, productiecaller, daadwerkelijke consumptie, canonical calculation delegation en de bestaande AI-boundary.
+**Target:** technisch bereikt. Formele `CLOSED_PROVEN` volgt pas nadat exact-head en post-merge Quality Gates op GitHub zijn vastgelegd in het auditregister/closure-record.
+**Priority:** P2. **Complexity:** M.
 
 ### GAP-P2-015 — `recoveryScore()`'s confidence telt alleen componentaantal, geen componentkwaliteit (Data Quality-sprint)
 **Capability-ID:** DQ-CONFIDENCE-CONTRACT-001

@@ -6523,6 +6523,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/nutritionBarcodeRuntime.js"></script>
 <script src="core/nativeBarcodeScannerBridge.js"></script>
 <script src="core/designSystemIcons.js"></script>
+<script src="core/contextEngine.js"></script>
 <script src="core/decision.js"></script>
 <script src="core/aiOutputContract.js"></script>
 <script src="core/cardio.js"></script>
@@ -29315,7 +29316,24 @@ async function buildCtx(ctx){
     const lastRaw=lastSessions[0]?.training_type;
     lastT=vasteTrainingen.find(v=>v.id===lastRaw)?.naam||lastRaw||'?';
   }
-  const sportBlock=resolveSportBlock(getActiveSport(),SPORT_BLOCKS,SPORT_LABELS);
+  // GAP-P2-014 — ContextEngineCore is vanaf hier een echte productiebron voor
+  // de structurele sportcontext. buildCtx() blijft de orchestrator voor de reeds
+  // bestaande domeinblokken; ContextEngineCore rekent/beslist niets en krijgt
+  // uitsluitend reeds beschikbare feiten. Fallback behoudt exact het oude gedrag
+  // wanneer de structurele module onverwacht niet beschikbaar is.
+  const _activeSportRaw=getActiveSport();
+  let structuredContext=null;
+  try{
+    if(window.ContextEngineCore&&typeof window.ContextEngineCore.buildStructuredContext==='function'){
+      structuredContext=window.ContextEngineCore.buildStructuredContext({
+        sportId:_activeSportRaw||null,
+        sportLabel:_activeSportRaw?(SPORT_LABELS[_activeSportRaw]||_activeSportRaw):null
+      });
+    }
+  }catch(_){ structuredContext=null; }
+  const activeSportId=(structuredContext&&structuredContext.sport&&structuredContext.sport.id)||_activeSportRaw;
+  const activeSportLabel=(structuredContext&&structuredContext.sport&&structuredContext.sport.label)||(SPORT_LABELS[activeSportId]||activeSportId);
+  const sportBlock=resolveSportBlock(activeSportId,SPORT_BLOCKS,SPORT_LABELS);
   // v306 #6/#8: sessie-specifieke context — huidige oefening, schema, doel-RPE, reeds gelogde sets
   let sessionCtx='';
   if(ctx?.exId){
@@ -29366,7 +29384,7 @@ ${progressionTrendTekst?'\nPROGRESSIE-TREND PER OEFENING (reeds berekend door Pr
 ${womensCtxTekst?womensCtxTekst+'\n(BELANGRIJK: bereken zelf NOOIT cyclusdag/fase/hormonen, leid nooit zwangerschap/fertility af, stel nooit een diagnose, en pas nooit automatisch trainingsvolume/-intensiteit aan op basis van deze context — erken de context uitsluitend als extra informatie naast readiness/RPE, en laat de sporter zelf beslissen.)':''}
 ${deloadSignaalTekst?'\nGECORROBOREERD BELASTINGSSIGNAAL (reeds bepaald door de Decision Engine op basis van TWEE onafhankelijke signalen, niet zelf herberekenen of op één los signaal baseren):'+deloadSignaalTekst:''}
 
-${enduranceProfielTekst}${enduranceIntelTekst||''}${inactivityAdherenceTekst||''}ACTIEVE SPORT: ${SPORT_LABELS[getActiveSport()]||getActiveSport()}
+${enduranceProfielTekst}${enduranceIntelTekst||''}${inactivityAdherenceTekst||''}ACTIEVE SPORT: ${activeSportLabel}
 ${sportBlock}
 
 ACTIES (v306 #9): als je een concreet gewichtsadvies geeft voor de HUIDIGE OEFENING hierboven,

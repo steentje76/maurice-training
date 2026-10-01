@@ -14,7 +14,7 @@ const T = (name, fn) => { try { fn(); console.log('  ✓ ' + name); pass++; } ca
 const ok = (c, m) => { if (!c) throw new Error(m || 'assert'); };
 
 const ROOT = path.join(__dirname, '..');
-const CORE_FILES = ['core/calculation.js', 'core/decision.js', 'core/cardio.js', 'core/progression.js', 'core/coaching.js', 'core/movement.js', 'core/onboarding.js', 'core/athleteConstraints.js', 'core/relationship.js', 'core/athlete.js'];
+const CORE_FILES = ['core/calculation.js', 'core/contextEngine.js', 'core/decision.js', 'core/cardio.js', 'core/progression.js', 'core/coaching.js', 'core/movement.js', 'core/onboarding.js', 'core/athleteConstraints.js', 'core/relationship.js', 'core/athlete.js'];
 function runtimeCoreFiles() {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   const re = /<script\b[^>]*\bsrc\s*=\s*[\"'](?:\.?\/)?(core\/[^\"'?]+\.js)(?:\?[^\"']*)?[\"'][^>]*>/gi;

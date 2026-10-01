@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## Governance — GAP-P2-014 CLOSED_PROVEN (1 oktober 2026, alleen documentatie)
+
+**Implementation main:** `22b80fe6e395c769008204c53aa0c4621eef9001` (PR #502).
+
+- `ContextEngineCore` is niet langer dode code: de productieruntime laadt de core, `buildCtx()` roept `buildStructuredContext()` aan en consumeert de genormaliseerde actieve sport.
+- De bestaande fallback blijft behouden; geen tweede Calculation/Decision/AI-pad en geen databasewijziging.
+- Context Engine 16/16, Context Contract 18/18 en SW guard 5/5 groen op de implementatiehead.
+- Exact-head Quality Gate `36843288642` (#1342) SUCCESS op `5aa1e3b2a3212634e6c285c870aa144b8b11ac03`.
+- Latere PR #503 gebruikt de gemergde `22b80fe6...` expliciet als canonical TK baseline, classificeert de dead-code-gap als technisch opgelost en heeft Quality Gate `36886476463` (#1345) SUCCESS. Dit wordt correct als canonical-baseline regressiebewijs gebruikt, niet als een verzonnen post-merge run op de merge-SHA.
+- Closure-record: `docs/audit/GAP_P2_014_CONTEXT_ENGINE_RUNTIME_CLOSURE_RECORD.md`.
+- Deze governance-closure wijzigt geen functionele code.
+
 ## Governance — GAP-P2-024 CLOSED_PROVEN (1 oktober 2026, alleen documentatie)
 
 **Implementation main:** `f8bac6a00ef834dc45b1c98f25b7b077da78988e` (PR #500).

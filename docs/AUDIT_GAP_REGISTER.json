@@ -1,11 +1,11 @@
 {
  "_schema": "trainingskompas-audit-gap-register/1.0",
  "baseline": "BASELINE-1.0",
- "generated_against_main": "f8bac6a00ef834dc45b1c98f25b7b077da78988e",
+ "generated_against_main": "c64f4f59f70903831c34b5f7a420c557d3b0ddcc",
  "counts": {
   "entries": 68,
-  "open": 31,
-  "closed_proven": 29,
+  "open": 30,
+  "closed_proven": 30,
   "deferred_accepted": 0,
   "superseded": 2,
   "ready_for_acceptance": 1,
@@ -373,7 +373,7 @@
    "title": "### GAP-P2-014 — `ContextEngineCore` is dode code, nooit aangeroepen vanuit index.html (Context-sprint)",
    "primary_track": "T5",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": false,
    "dependency": null,
@@ -400,8 +400,29 @@
      "date": "2026-09-27",
      "change_type": "AUDIT_METADATA_CORRECTION",
      "reason": "Metadata alignment: CONTEXT_CONTRACT/MS-F3-06 explicitly classify this as an architecture inconsistency and no technical blocker; no gap closure or new product evidence."
+    },
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "IMPLEMENTATION_MERGED_AND_VERIFIED",
+     "reason": "PR #502 is gemerged als 22b80fe6e395c769008204c53aa0c4621eef9001. De exacte PR-head Quality Gate 36843288642 is SUCCESS op 5aa1e3b2a3212634e6c285c870aa144b8b11ac03. De daaropvolgende benchmark-reconciliatie PR #503 is expliciet gebaseerd op canonical main 22b80fe6e395c769008204c53aa0c4621eef9001 en Quality Gate 36886476463 is SUCCESS op 306b840b84899473a27a34635f9755984d7abd0e; daarmee is de gemergde runtime-wiring opnieuw geregressietest."
     }
-   ]
+   ],
+   "closure_evidence": [
+    "CODE VERIFIED on canonical main 22b80fe6e395c769008204c53aa0c4621eef9001 (squash-merge van PR #502): index.html laadt core/contextEngine.js en buildCtx() roept ContextEngineCore.buildStructuredContext() aan; de genormaliseerde sport.id/sport.label wordt daadwerkelijk geconsumeerd in het bestaande actieve-sportcontextblok.",
+    "ARCHITECTURE VERIFIED: de Context Engine normaliseert context maar introduceert geen Calculation- of Decision-berekening. De bestaande fallback blijft actief wanneer ContextEngineCore onverwacht ontbreekt, zodat geen tweede contextbron of runtime hard dependency ontstaat.",
+    "BEHAVIORAL/CONTRACT VERIFIED: core/contextEngine.test.js = 16/16 en core/fContextContract.test.js = 18/18 op de implementatie-PR; de contracttest bewaakt script-load, productiecaller, daadwerkelijke consumptie, canonical calculation delegation en de bestaande AI-boundary.",
+    "SERVICE-WORKER VERIFIED: PR #502 voegt core/contextEngine.js toe aan runtime precache/CORE_SIG; core/sw-guard.test.js = 5/5 op de implementatiehead.",
+    "EXACT-HEAD GATE VERIFIED: Trainingskompas Quality Gate run 36843288642 (#1342) is SUCCESS op PR #502 head 5aa1e3b2a3212634e6c285c870aa144b8b11ac03.",
+    "CANONICAL-BASELINE REGRESSION VERIFIED: docs/benchmark/CURRENT_MAIN_RECONCILIATION_2026-10-01.md in PR #503 gebruikt expliciet canonical TK baseline 22b80fe6e395c769008204c53aa0c4621eef9001, classificeert de ContextEngine dead-code-gap als technisch opgelost en Quality Gate run 36886476463 (#1345) is SUCCESS op die daarop gebaseerde PR-head 306b840b84899473a27a34635f9755984d7abd0e.",
+    "CURRENT-MAIN PRESERVATION VERIFIED: latere merges #505 en #506 bouwen bovenop dezelfde main en wijzigen de Context Engine-wiring niet; huidige closure-baseline is c64f4f59f70903831c34b5f7a420c557d3b0ddcc."
+   ],
+   "closure_rationale": "De intended closure is bereikt via de expliciet gekozen architectuurroute: ContextEngineCore is niet verwijderd maar aangesloten op buildCtx(), wordt door de productieruntime geladen en zijn genormaliseerde actieve-sportcontext wordt daadwerkelijk geconsumeerd. De implementatie is op exacte PR-head groen en daarna opnieuw gevalideerd op een branch die expliciet van de gemergde canonical main vertrekt. Er wordt geen niet-bestaande post-merge run op de merge-SHA geclaimd; het bewijs bestaat uit de exact-head implementatiegate plus de latere canonical-baseline regressiegate.",
+   "closure_pr": "https://github.com/steentje76/maurice-training/pull/502",
+   "closure_merge_sha": "22b80fe6e395c769008204c53aa0c4621eef9001",
+   "closure_verified_at_sha": "c64f4f59f70903831c34b5f7a420c557d3b0ddcc",
+   "closure_method": "exact-head implementation gate + canonical-main baseline regression gate"
   },
   {
    "gap_id": "GAP-P2-015",

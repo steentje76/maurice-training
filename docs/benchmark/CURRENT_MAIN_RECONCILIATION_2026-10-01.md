@@ -130,12 +130,18 @@ Competitor behavior can inspire UX, but cannot become a calculation or decision 
 - wire or explicitly de-scope dormant V1 intelligence/runtime modules;
 - close the remaining READY_FOR_ACCEPTANCE device/practice validations where evidence can be obtained.
 
-### Wave B — MoveKit 226 → 412
-- import the 186 proven-new exercises additively;
+### Wave B0 — mandatory MoveKit Media Scale Gate
+Current canonical project state explicitly blocks Batch 002 until the media architecture is proven beyond the 226-exercise pilot. Before importing further videos, compare normal Git, Git LFS and object storage/Supabase Storage across repository growth, Netlify build/deploy, PWA video cache, Android/Capacitor exclusion, bandwidth/cost and migration of the existing 226 videos.
+
+This is a **hard precondition** for large-scale media import. The benchmark finding that 186 exercise identities are cleanly additive does not override this gate.
+
+### Wave B1 — MoveKit 226 → 412 after the gate
+- import the 186 proven-new exercise identities additively;
 - preserve all existing `TK-000001..TK-000226` IDs;
 - assign new stable IDs only to the 186 additions;
 - run duplicate/semantic checks, category/equipment normalization and asset validation;
 - keep exercise goals disposable as previously decided;
+- do not invent intelligence/relationships where deterministic provenance is absent;
 - re-run Workout Builder, substitution, AthleteConstraints and execution regressions.
 
 ### Wave C — connected-athlete platform
@@ -169,7 +175,7 @@ Do not prioritize:
 
 ## 8. Immediate next task
 
-The highest-confidence, low-ambiguity implementation task is **MoveKit Batch Expansion 002+**: migrate the 186 exact-new MoveKit exercises in controlled batches while preserving the 226 existing canonical IDs.
+The highest-confidence immediate task is **not Batch 002 itself**, but the mandatory **MoveKit Media Scale Gate**. The 186 new identities are already cleanly separable, so after the storage/delivery decision the catalogue expansion can proceed in controlled additive batches while preserving all 226 existing canonical IDs.
 
 In parallel, the highest-impact platform task is the **native Health Connect boundary**, but that should follow the current V1 wiring/governance cleanup so the health data enters an already-proven canonical runtime.
 

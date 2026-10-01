@@ -15,6 +15,15 @@ const ok = (c, m) => { if (!c) throw new Error(m || 'assert'); };
 
 const ROOT = path.join(__dirname, '..');
 const CORE_FILES = ['core/calculation.js', 'core/decision.js', 'core/cardio.js', 'core/progression.js', 'core/coaching.js', 'core/movement.js', 'core/onboarding.js', 'core/athleteConstraints.js', 'core/relationship.js', 'core/athlete.js'];
+function runtimeCoreFiles() {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const re = /<script\b[^>]*\bsrc\s*=\s*[\"'](?:\.?\/)?(core\/[^\"'?]+\.js)(?:\?[^\"']*)?[\"'][^>]*>/gi;
+  const out = [];
+  let m;
+  while ((m = re.exec(html))) if (!out.includes(m[1])) out.push(m[1]);
+  return out;
+}
+const PRECACHE_CORE_FILES = runtimeCoreFiles();
 function norm(p) { return fs.readFileSync(path.join(ROOT, p), 'utf8').replace(/\r/g, ''); }
 const combined = CORE_FILES.map(norm).join('\n');
 const sig = crypto.createHash('sha256').update(combined).digest('hex').slice(0, 16);
@@ -31,8 +40,12 @@ T('sw.js bevat CORE_SIG', () => ok(!!mSig, 'CORE_SIG ontbreekt in sw.js'));
 T('CORE_SIG === hash(core) — core-wijziging vereist sw.js-update', () => {
   ok(mSig && mSig[1] === sig, 'MISMATCH: werk CORE_SIG bij naar "' + sig + '" ÉN bump CACHE_STATIC in sw.js');
 });
-T('elke core-file staat in STATIC_ASSETS-precache', () => {
-  CORE_FILES.forEach(f => ok(sw.indexOf("'/" + f + "'") !== -1, 'niet geprecached: /' + f));
+T('elke runtime core-file uit index.html staat in STATIC_ASSETS-precache', () => {
+  ok(PRECACHE_CORE_FILES.length > 0, 'geen runtime core-scripts uit index.html ontdekt');
+  PRECACHE_CORE_FILES.forEach(f => ok(sw.indexOf("'/" + f + "'") !== -1, 'niet geprecached: /' + f));
+});
+T('alle runtime core-scriptpaden bestaan als bestand', () => {
+  PRECACHE_CORE_FILES.forEach(f => ok(fs.existsSync(path.join(ROOT, f)), 'runtime core-bestand ontbreekt: ' + f));
 });
 T('activate verwijdert oude caches (CACHE_STATIC filter aanwezig)', () => {
   ok(/k\s*!==\s*CACHE_STATIC/.test(sw), 'activate-cleanup mist CACHE_STATIC-filter');

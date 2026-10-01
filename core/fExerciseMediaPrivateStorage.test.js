@@ -20,7 +20,7 @@ console.log('1. Private bucket + default deny');
 ok(/'exercise-media'[\s\S]{0,100}'exercise-media'[\s\S]{0,100}false/i.test(mig), '1a bucket is private');
 ok(/33554432/.test(mig), '1b 32 MiB hard object limit');
 ok(/array\['video\/mp4'\]/i.test(mig), '1c only MP4 allowed in Phase 1');
-ok(!/create\s+policy[\s\S]*exercise[_ ]media/i.test(mig), '1d migration creates no client access policy');
+ok(!/^\s*create\s+policy\b/im.test(mig), '1d migration creates no client access policy');
 ['select_authenticated','insert_authenticated','update_authenticated','delete_authenticated','public_read'].forEach(function (n) {
   ok(mig.indexOf('exercise_media_' + n) >= 0, '1e reserved policy ' + n + ' explicitly dropped');
 });

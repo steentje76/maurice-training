@@ -34,6 +34,17 @@ jobs:
         with:
           ref: ${{ inputs.source_sha || github.sha }}
 
+      # Bewijs dat een opgegeven source_sha ook werkelijk de uitgecheckte commit is:
+      # alleen een volledige 40-hex SHA is toegestaan (geen branchnaam of korte SHA).
+      - name: Verify exact source SHA
+        if: ${{ inputs.source_sha != '' }}
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          echo "$SOURCE_SHA" | grep -Eq '^[0-9a-f]{40}$' || { echo "source_sha moet een volledige 40-hex commit-SHA zijn"; exit 1; }
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          echo "Uitgecheckt: $(git rev-parse HEAD)"
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:

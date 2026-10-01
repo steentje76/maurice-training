@@ -1,11 +1,11 @@
 {
  "_schema": "trainingskompas-audit-gap-register/1.0",
  "baseline": "BASELINE-1.0",
- "generated_against_main": "4a43f82446da0258f00a9c5ef860f3921ded7d9e",
+ "generated_against_main": "ee277c920cabda6a375f270a6b13dc42ed01ee9c",
  "counts": {
   "entries": 68,
-  "open": 27,
-  "closed_proven": 33,
+  "open": 26,
+  "closed_proven": 34,
   "deferred_accepted": 0,
   "superseded": 2,
   "ready_for_acceptance": 1,
@@ -135,7 +135,7 @@
    "title": "### GAP-P2-009 — sRPE-bouwstenen (Load & Progression-sprint) nog niet UI-geïntegreerd",
    "primary_track": "T4",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -154,7 +154,28 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "sRPE-bouwstenen nog niet UI-geintegreerd; de gap beschrijft een tweede belastingsignaal naast de bestaande ACWR-classificatie, de kern van de load-registry.",
    "traceability_scope": "CAPABILITY_SCOPED",
-   "capability_id": "CALC-LOAD-REGISTRY-001"
+   "capability_id": "CALC-LOAD-REGISTRY-001",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "LATER_PRODUCT_INTEGRATION_PROVEN",
+     "reason": "The original gap said sRPE existed only as unused calculation primitives. Later B9/endurance work now consumes the canonical TrainingLoadCore.sessionLoadSRPE()/rollingLoadSum() in visible Running, Cycling and Swimming insight cards, Erg analytics and the bounded endurance AI context. DEC-049 records the product decision to keep sRPE and ACWR separate rather than invent a combined score."
+    }
+   ],
+   "closure_evidence": [
+    "VISIBLE UI VERIFIED on current main ee277c920cabda6a375f270a6b13dc42ed01ee9c: Running, Cycling and Swimming each render a dedicated 'Belasting' card backed by TrainingLoadCore.sessionLoadSRPE()/rollingLoadSum(), showing AU only for sessions with RPE and an explicit empty state when RPE is absent.",
+    "CURRENT TARGETED TESTS on 2026-10-01: core/fB9_03RunningIntelligence.test.js 17/17; core/fCyclingIntelligenceCore.test.js 7/7; core/fB9_05CyclingIntelligence.test.js 14/14; core/fSwimmingFoundation.test.js 22/22; core/fSwimmingFeasibility.test.js 6/6.",
+    "ERG INTEGRATION VERIFIED: core/fErgAnalyticsProjection.test.js 88/88; Erg sessions reuse canonical sessionLoadSRPE()/rollingLoadSum() when RPE exists and return null instead of fabricating load when RPE is missing.",
+    "AI CONTEXT VERIFIED: core/fEnduranceCoachContext.test.js 39/39. tkEnduranceCoachContext() supplies already-calculated 7-day/28-day sRPE sums with RPE coverage counts and explicitly labels CALC-LOAD-003/005 plus 'geen ACWR-interpretatie'.",
+    "SEPARATION VERIFIED: existing AthleteCore ACWR remains a distinct calculation/signal; no combined sRPE+ACWR score is introduced and no injury-prediction interpretation is added.",
+    "PRODUCT DECISION: DEC-049 formalizes the non-confusing design requested by the original intended closure: sRPE is an internal-load signal in sport-specific endurance insights and bounded AI context, while ACWR remains separately identified. A generic combined global card is deliberately not added."
+   ],
+   "closure_rationale": "The original statement ('nowhere in UI or AI context') is no longer true. The requested product decision has also been made: expose canonical sRPE where its required inputs exist, preserve missing-RPE as unknown, and keep it semantically separate from ACWR instead of combining two different load concepts. Building another parallel global load engine/card would duplicate an already integrated capability and increase interpretation risk.",
+   "closure_verified_at_sha": "ee277c920cabda6a375f270a6b13dc42ed01ee9c",
+   "closure_method": "current-code UI inspection + targeted multi-sport regressions + explicit product decision DEC-049",
+   "closure_decision": "DEC-049"
   },
   {
    "gap_id": "GAP-P2-010",

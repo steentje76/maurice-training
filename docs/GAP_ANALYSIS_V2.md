@@ -51,12 +51,14 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Status (01-10-2026): READY_FOR_ACCEPTANCE.** Geïmplementeerd en gemerged via PR #492 (`9589298498dfefcc89e14b45c9ddde53617feda4`): `core/homeResume.js` beslist (puur, deterministisch) en `index.html` toont de hervatkaart in het bestaande v4.3-renderpad, vóór "Vandaag gepland". Hervatten loopt uitsluitend via de bestaande `startT()`/`startCustomTraining()`/`startProgramBlockTraining()` — geen tweede execution- of loggingketen, geen nieuw sessieobject, geen databasewijziging. Bewijs: `core/fHomeResume.test.js` 61/61 (voert de echte call-chain uit in een vm-sandbox), volledige core-suite 417 groen, exact-head Quality Gate run 36778341853 en post-merge run 36779012347 beide success.
 **Nog open vóór CLOSED_PROVEN:** de praktijkverificatie op een echt toestel (starten → sets loggen → Home → app opnieuw openen → hervatten → verder loggen → afronden) is nog niet canoniek vastgelegd. Zie `docs/audit/GAP_P2_008_HOME_RESUME_CLOSURE_RECORD.md`.
 
-### GAP-P2-009 — sRPE-bouwstenen (Load & Progression-sprint) nog niet UI-geïntegreerd
+### GAP-P2-009 ? **CLOSED_PROVEN** (later ge?ntegreerd; gereconcilieerd 1 oktober 2026) ? sRPE-bouwstenen in productroutes
 **Capability-ID:** CALC-LOAD-REGISTRY-001
-**Current:** `sessionLoadSRPE()`/`rollingLoadSum()` (nieuw, Foster-methode) bestaan als geteste, geciteerde pure calculaties in `core/trainingLoad.js`, maar worden nergens in de UI of AI-coachcontext gebruikt. Er bestaat ook nog geen sRPE-gebaseerde rolling-load-trend naast de bestaande, volume-gebaseerde ACWR.
-**Evidence:** CODE VERIFIED, zie het Load & Progression-sprintrapport in `docs/`.
-**Target:** productbeslissing + ontwerp voor hoe een tweede belasting-signaal (sRPE-gebaseerd) naast de bestaande ACWR-classificatie zinvol en niet-verwarrend getoond kan worden.
-**Priority:** P2. **Complexity:** M. **Roadmap phase:** F3 (vervolgwerk) of later productbeslissing.
+**Historische bevinding:** `sessionLoadSRPE()`/`rollingLoadSum()` bestonden aanvankelijk alleen als geteste Calculation Engine-bouwstenen; de toenmalige UI en AI-context consumeerden ze nog niet.
+**Current/closure:** die situatie is door latere B9/endurance-sprints aantoonbaar gewijzigd. Running, Cycling en Swimming tonen elk een zichtbare **Belasting**-kaart die de canonieke `TrainingLoadCore.sessionLoadSRPE()`/`rollingLoadSum()` gebruikt. Alleen sessies met RPE tellen mee; ontbrekende RPE blijft unknown/afwezig. Erg-analytics hergebruikt dezelfde calculation. `tkEnduranceCoachContext()` levert reeds berekende 7 d/28 d sRPE-sommen met coverage aan de AI en instrueert expliciet: geen herberekening en geen ACWR-/blessure-interpretatie.
+**Productbeslissing:** zie DEC-049. sRPE blijft een afzonderlijk intern-belastingssignaal in sport-specifieke endurance-inzichten en bounded AI-context. De bestaande ACWR blijft semantisch afzonderlijk; Trainingskompas bouwt geen gecombineerde sRPE+ACWR-score en voegt geen tweede globale load-engine toe.
+**Current regression proof (01-10-2026):** Running Intelligence 17/17; Cycling Intelligence Core 7/7; Cycling-integratie 14/14; Swimming Foundation 22/22; Swimming Feasibility 6/6; Erg Analytics Projection 88/88; Endurance Coach Context 39/39.
+**Target:** bereikt. De oorspronkelijke productbeslissing en niet-verwarrende presentatie zijn gerealiseerd zonder de twee loadconcepten te vermengen.
+**Priority:** P2. **Complexity:** M. **Roadmap phase:** CLOSED.
 
 ### GAP-P2-010 — 13 `core/*.js`-bestanden ontbreken in de service-worker-precache
 **Capability-ID:** geen bewezen canonical owner. De historische toewijzing `PLAT-OBSERVABILITY-001` is in de v1.2-traceability-reconciliatie verworpen; deze gesloten gap blijft daarom historisch `INCOMPLETE/UNSCOPED` in plaats van een owner te verzinnen.

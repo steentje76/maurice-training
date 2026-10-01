@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## Governance ? GAP-P2-009 CLOSED_PROVEN (1 oktober 2026, alleen documentatie)
+
+- Oude auditclaim gereconcilieerd: canonical sRPE is inmiddels zichtbaar ge?ntegreerd in Running/Cycling/Swimming, Erg analytics en bounded endurance-AI-context.
+- DEC-049 legt vast dat sRPE en ACWR gescheiden blijven; geen gecombineerde loadscore of tweede load-engine.
+- Current targeted proof: 17/17 + 7/7 + 14/14 + 22/22 + 6/6 + 88/88 + 39/39.
+- Register: 68 entries ? 26 OPEN / 34 CLOSED_PROVEN / 1 READY_FOR_ACCEPTANCE / 5 REVIEW_REQUIRED / 2 SUPERSEDED.
+- Geen runtime- of databasewijziging.
+
 ## Governance - stale P3/P4 CLOSED-status reconciliation (1 oktober 2026, alleen documentatie)
 
 - GAP-P3-033, GAP-P4-003 en GAP-P4-004 van stale `OPEN` naar `CLOSED_PROVEN` gereconcilieerd.

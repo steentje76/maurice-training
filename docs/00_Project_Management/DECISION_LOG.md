@@ -2537,3 +2537,14 @@ migratie na v575 legt per functie expliciet vast wie hem mag uitvoeren; SECURITY
 `set search_path` en een revoke van PUBLIC en anon, en worden alleen via een zichtbare marker aan anon verleend.
 Afgedwongen door `tools/check-function-grants.js` in de release gate. Het `extensions`-schema behoudt zijn huidige
 gedrag; `supabase_admin`-defaults blijven platformbeheerd.
+
+## DEC-049
+- Datum: 1 oktober 2026
+- Beslissing: **sRPE en ACWR blijven twee expliciet gescheiden belastingssignalen.** De canonieke sRPE-berekeningen (`CALC-LOAD-003/005`) worden getoond in sport-specifieke endurance-inzichten (Running/Cycling/Swimming) en mogen als reeds berekende waarden naar de endurance-AI-context. Trainingskompas bouwt geen gecombineerde sRPE+ACWR-score en voegt nu geen extra globale sRPE-kaart toe naast de bestaande ACWR-/belastingroutes.
+- Reden: sRPE (duur ? sessie-RPE) is een intern, RPE-afhankelijk belastingssignaal; ACWR vergelijkt acute en chronische belasting en heeft een andere semantiek en beperkingen. E?n gecombineerde score zou schijnprecisie cre?ren en de reeds vastgelegde ACWR-beperking (geen blessurevoorspeller/geen universele veilige zone) vertroebelen. De latere B9-routes hebben de oorspronkelijk openstaande sRPE-UI-integratie inmiddels feitelijk opgelost.
+- Missing-dataregel: alleen sessies met geldige RPE dragen bij aan sRPE. Ontbrekende RPE wordt nooit geschat of door AI ingevuld; UI en context communiceren de coverage.
+- AI-grens: AI mag uitsluitend de door de Calculation Engine berekende sRPE-uitkomsten uitleggen/contextualiseren. AI herberekent niet en interpreteert sRPE/ACWR niet als blessurevoorspelling.
+- Alternatieven: (A) ??n globale gecombineerde loadscore ? afgewezen wegens vermenging en schijnprecisie; (B) tweede generieke sRPE-kaart naast ACWR ? nu afgewezen wegens duplicatie van de reeds aanwezige sport-specifieke presentatie; (C) sRPE nergens tonen ? achterhaald door de bewezen B9-integratie.
+- Impact: GAP-P2-009 kan `CLOSED_PROVEN` worden; geen nieuwe calculation, Decision Rule, databasekolom of AI-rekenpad nodig.
+- Verantwoordelijke: Maurice / Trainingskompas productgovernance
+

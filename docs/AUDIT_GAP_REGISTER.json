@@ -1,11 +1,11 @@
 {
  "_schema": "trainingskompas-audit-gap-register/1.0",
  "baseline": "BASELINE-1.0",
- "generated_against_main": "160426393ef61e205c05eb010e1d53d8b1206d8d",
+ "generated_against_main": "cbd5de44154274a711419fdd0f4dfddb114aa0cb",
  "counts": {
   "entries": 68,
-  "open": 40,
-  "closed_proven": 20,
+  "open": 33,
+  "closed_proven": 27,
   "deferred_accepted": 0,
   "superseded": 2,
   "ready_for_acceptance": 1,
@@ -546,7 +546,7 @@
    "title": "### GAP-P2-021 — **CLOSED** (Endurance Registry Source-of-Truth Fix, 13 september 2026) — Critical Speed/Power",
    "primary_track": "T3",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -567,7 +567,24 @@
    ],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "CANONICAL ANALYSIS ALREADY CLOSED: docs/GAP_ANALYSIS_V2.md records activities.is_max_effort as the explicit maximal-effort marker and criticalSpeedEligiblePerformances()/criticalPowerEligiblePerformances() as the canonical eligibility gates feeding CardioCore criticalSpeed/criticalPower.",
+    "CURRENT MAIN REGRESSION VERIFIED on cbd5de44154274a711419fdd0f4dfddb114aa0cb: Quality Gate run 36819550363 SUCCESS; fB9_03RunningIntelligence 17/17, fB9_05CyclingIntelligence 14/14, fCyclingIntelligence 13/13 and fCyclingIntelligenceCore 7/7 all pass.",
+    "REPO-WIDE CALL-CHAIN EVIDENCE: current source contains criticalSpeedEligiblePerformances, criticalPowerEligiblePerformances, renderRunningInsights, renderCyclingInsights and is_max_effort references in the canonical running/cycling intelligence layers and their regression tests."
+   ],
+   "closure_rationale": "The historical target was an explicit time-trial/max-effort marker before wiring Critical Speed/Power to activity history. That marker and eligibility layer now exist and are covered by current-main tests; the gap analysis has already marked this item CLOSED. The remaining Context/Decision/AI concerns were split into separate gaps and are not part of this closure.",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Canonical GAP_ANALYSIS already records GAP-P2-021 as closed/implemented; current-main Quality Gate run 36819550363 re-executes the relevant regression suite successfully."
+    }
+   ],
+   "closure_verified_at_sha": "cbd5de44154274a711419fdd0f4dfddb114aa0cb",
+   "closure_method": "read-only evidence reconciliation against canonical analysis + current-main automated regression proof"
   },
   {
    "gap_id": "GAP-P2-022",
@@ -602,7 +619,7 @@
    "title": "### GAP-P2-027 — **CLOSED** (Endurance → Context Fase B1, 13 september 2026) — Endurance-profieldrempels niet ",
    "primary_track": "T3",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -619,14 +636,31 @@
    "affected_capability_ids": [],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "CANONICAL ANALYSIS ALREADY CLOSED: docs/GAP_ANALYSIS_V2.md records athlete_endurance_profile thresholds wired into buildCtx() with bounded querying, sport isolation, explicit user-entered provenance and a do-not-estimate missing-data state.",
+    "CURRENT MAIN REGRESSION VERIFIED on cbd5de44154274a711419fdd0f4dfddb114aa0cb: Quality Gate run 36819550363 SUCCESS; fEnduranceContextProfileThresholds 30/30 passes.",
+    "NO CALCULATION FABRICATION: profile thresholds remain user-reported values and are explicitly separated from Critical Speed/Power."
+   ],
+   "closure_rationale": "The profile-threshold-to-Context target is implemented and directly covered by the current-main behavioral test; the canonical analysis already marks it CLOSED.",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Canonical GAP_ANALYSIS already records GAP-P2-027 as closed/implemented; current-main Quality Gate run 36819550363 re-executes the relevant regression suite successfully."
+    }
+   ],
+   "closure_verified_at_sha": "cbd5de44154274a711419fdd0f4dfddb114aa0cb",
+   "closure_method": "read-only evidence reconciliation against canonical analysis + current-main automated regression proof"
   },
   {
    "gap_id": "GAP-P2-026",
    "title": "### GAP-P2-026 — **CLOSED** (Endurance → Context Gap 1b, 13 september 2026) — Berekende endurance-intelligence",
    "primary_track": "T3",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -648,14 +682,31 @@
    ],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "CANONICAL ANALYSIS ALREADY CLOSED: docs/GAP_ANALYSIS_V2.md records tkEnduranceCoachContext() wired into buildCtx() with bounded queries, canonical cores only, sport isolation, explicit insufficient states and no Decision Engine recomputation.",
+    "CURRENT MAIN REGRESSION VERIFIED on cbd5de44154274a711419fdd0f4dfddb114aa0cb: Quality Gate run 36819550363 SUCCESS; fEnduranceCoachContext 39/39 passes.",
+    "CALCULATION/CONTEXT BOUNDARY PRESERVED: the context adapter forwards already-calculated canonical outputs and does not create a second calculation path."
+   ],
+   "closure_rationale": "The requested canonical endurance intelligence adapter into Context exists, is current-main tested, and the source analysis already classifies the gap CLOSED.",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Canonical GAP_ANALYSIS already records GAP-P2-026 as closed/implemented; current-main Quality Gate run 36819550363 re-executes the relevant regression suite successfully."
+    }
+   ],
+   "closure_verified_at_sha": "cbd5de44154274a711419fdd0f4dfddb114aa0cb",
+   "closure_method": "read-only evidence reconciliation against canonical analysis + current-main automated regression proof"
   },
   {
    "gap_id": "GAP-P2-028",
    "title": "### GAP-P2-028 — **CLOSED** (Structured Intervals Fase B1, 13 september 2026) — RUNNING CANONICAL LIFECYCLE vo",
    "primary_track": "T3",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -674,14 +725,31 @@
    ],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "CANONICAL ANALYSIS ALREADY CLOSED FOR RUNNING: docs/GAP_ANALYSIS_V2.md records the full Running structured-interval lifecycle from Builder through Training Definition, Preview, execution, immutable instance snapshot, laps persistence and planned-vs-actual History.",
+    "CURRENT MAIN REGRESSION VERIFIED on cbd5de44154274a711419fdd0f4dfddb114aa0cb: Quality Gate run 36819550363 SUCCESS; fStructuredIntervalsCanonical 109/109 passes.",
+    "CROSS-SPORT WORK WAS SPLIT OUT: cycling/swimming consolidation is GAP-P2-029 and erg persistence is GAP-P2-031, so their existence does not keep the running-specific P2-028 open."
+   ],
+   "closure_rationale": "P2-028 is explicitly running-scoped in its closure analysis; that lifecycle remains fully tested on current main. Subsequent cross-sport work was tracked separately.",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Canonical GAP_ANALYSIS already records GAP-P2-028 as closed/implemented; current-main Quality Gate run 36819550363 re-executes the relevant regression suite successfully."
+    }
+   ],
+   "closure_verified_at_sha": "cbd5de44154274a711419fdd0f4dfddb114aa0cb",
+   "closure_method": "read-only evidence reconciliation against canonical analysis + current-main automated regression proof"
   },
   {
    "gap_id": "GAP-P2-029",
    "title": "### GAP-P2-029 — **CLOSED voor running/cycling/swimming** (Structured Intervals B2, v4.69.91) — CROSS-SPORT ST",
    "primary_track": "T3",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -702,14 +770,31 @@
    ],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "CANONICAL ANALYSIS RECORDS B2 CLOSED for running/cycling/swimming: one sport-neutral structured layer, shared IntervalEngineCore lifecycle, cross-sport persistence and planned-vs-actual History; erg was explicitly moved to GAP-P2-031.",
+    "CURRENT MAIN REGRESSION VERIFIED on cbd5de44154274a711419fdd0f4dfddb114aa0cb: Quality Gate run 36819550363 SUCCESS; fStructuredIntervalsB2 181/181 and fStructuredIntervalsCanonical 109/109 pass.",
+    "DEPENDENT ERG FOLLOW-UP ALSO PROVEN: GAP-P2-031's dedicated B3 path is present and fStructuredIntervalsB3Erg 182/182 passes on the same current main."
+   ],
+   "closure_rationale": "The B2 target for cycling/swimming consolidation is implemented and current-main tested. The only item intentionally left out of B2, erg persistence, was moved to P2-031 and is independently implemented and tested, so P2-029 no longer has an open remainder.",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Canonical GAP_ANALYSIS already records GAP-P2-029 as closed/implemented; current-main Quality Gate run 36819550363 re-executes the relevant regression suite successfully."
+    }
+   ],
+   "closure_verified_at_sha": "cbd5de44154274a711419fdd0f4dfddb114aa0cb",
+   "closure_method": "read-only evidence reconciliation against canonical analysis + current-main automated regression proof"
   },
   {
    "gap_id": "GAP-P2-031",
    "title": "### GAP-P2-031 — **CLOSED** (Structured Intervals B3, v4.69.92) — ERG STRUCTURED PERSISTENCE",
    "primary_track": "T3",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -725,7 +810,24 @@
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "closure_evidence": [
+    "CANONICAL ANALYSIS ALREADY CLOSED: docs/GAP_ANALYSIS_V2.md records the PO decision that erg actuals remain in the sessions domain via sessions.intervals_detail (erg_intervals_actual.v1), with immutable Training Definition snapshot and planned-vs-actual History.",
+    "CURRENT MAIN REGRESSION VERIFIED on cbd5de44154274a711419fdd0f4dfddb114aa0cb: Quality Gate run 36819550363 SUCCESS; fStructuredIntervalsB3Erg 182/182 passes.",
+    "HISTORICAL REMEDIATION PRESERVED: the canonical analysis also records the prior sabotage/remediation check and explicit repository-level RLS-test infrastructure limitation rather than overstating live cross-account proof."
+   ],
+   "closure_rationale": "The PO-selected sessions-domain erg persistence path is implemented and remains fully green on current main. The gap analysis already marks P2-031 CLOSED; this change reconciles only the stale register status.",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Canonical GAP_ANALYSIS already records GAP-P2-031 as closed/implemented; current-main Quality Gate run 36819550363 re-executes the relevant regression suite successfully."
+    }
+   ],
+   "closure_verified_at_sha": "cbd5de44154274a711419fdd0f4dfddb114aa0cb",
+   "closure_method": "read-only evidence reconciliation against canonical analysis + current-main automated regression proof"
   },
   {
    "gap_id": "GAP-P2-030",
@@ -1068,7 +1170,7 @@
    "title": "### GAP-P2-025 (F13 Post-Audit P1-10, GEIMPLEMENTEERD via B9-01) — Endurance datamodel (running/cycling/rowing",
    "primary_track": "T3",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -1084,7 +1186,24 @@
    "affected_capability_ids": [],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "CANONICAL ANALYSIS ALREADY IMPLEMENTED: docs/GAP_ANALYSIS_V2.md records the endurance data foundation as implemented via migratie_v533.sql with activities, activity_laps and athlete_endurance_profile, SI units, provenance, RLS, grants and indexing.",
+    "CURRENT MAIN REGRESSION VERIFIED on cbd5de44154274a711419fdd0f4dfddb114aa0cb: Quality Gate run 36819550363 SUCCESS; fB9EnduranceFoundation 26/26 and fEnduranceArchitectureContract 10/10 pass.",
+    "SCOPE PRESERVED: this closure concerns the canonical endurance data foundation only; Critical Speed/Power product integration was deliberately separated and is not being silently folded into this gap."
+   ],
+   "closure_rationale": "The gap's own target says the canonical endurance data layer is the closure condition, and the canonical analysis records that target as reached. Current-main foundation and architecture tests remain green.",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "EVIDENCE_RECONCILIATION",
+     "reason": "Canonical GAP_ANALYSIS already records GAP-P2-025 as closed/implemented; current-main Quality Gate run 36819550363 re-executes the relevant regression suite successfully."
+    }
+   ],
+   "closure_verified_at_sha": "cbd5de44154274a711419fdd0f4dfddb114aa0cb",
+   "closure_method": "read-only evidence reconciliation against canonical analysis + current-main automated regression proof"
   },
   {
    "gap_id": "GAP-P2-005",
@@ -1933,5 +2052,5 @@
  "_migrated_at_sha": "42c6aeb61d628dd4b95cd43f748089c74a8a1ce6",
  "traceability_complete": true,
  "traceability_unresolved": [],
- "_counts_note": "counts zijn op 2026-10-01 mechanisch herberekend uit de gaps-array bij de governance closure van GAP-P2-010. GAP-P2-010 is OPEN -> CLOSED_PROVEN; feitelijke verdeling: open=40, closed_proven=20, ready_for_acceptance=1, review_required=5, superseded=2 bij 68 entries. traceability_unresolved is conform het bestaande v1.2-contract herberekend over alleen open/review-required V1-gaps; er resteert geen unresolved open V1-gap."
+ "_counts_note": "counts zijn op 2026-10-01 mechanisch herberekend uit de gaps-array bij de evidence-reconciliatie van GAP-P2-021/025/026/027/028/029/031. Zeven administratief OPEN gebleven records waarvan de canonieke analyse al CLOSED/GEIMPLEMENTEERD aangaf zijn na current-main regressieverificatie naar CLOSED_PROVEN gezet. Feitelijke verdeling: open=33, closed_proven=27, ready_for_acceptance=1, review_required=5, superseded=2 bij 68 entries."
 }

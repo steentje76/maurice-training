@@ -1,5 +1,16 @@
 # Trainingskompas — Changelog
 
+## Governance — GAP-P2-024 CLOSED_PROVEN (1 oktober 2026, alleen documentatie)
+
+**Implementation main:** `f8bac6a00ef834dc45b1c98f25b7b077da78988e` (PR #500).
+
+- Gedeelde `team_events` blijven voortaan bestaan wanneer de organisator zijn account verwijdert: `created_by` is nullable en de live FK gebruikt `ON DELETE SET NULL`.
+- `delete-account.js` bevat geen tweede expliciet delete-pad meer voor `team_events.created_by`; eigen attendance/responsibility-opruiming van de verwijderde gebruiker blijft behouden.
+- `notify_team_event_created()` is voor `created_by=NULL` fail-closed via `IS DISTINCT FROM auth.uid()`; ACL blijft zonder anon/PUBLIC EXECUTE.
+- Live Supabase-schema/RLS/ACL gecontroleerd; exact-head Quality Gate `36833848714` SUCCESS; post-merge Quality Gate `36834191270` SUCCESS.
+- `core/fTeamEventCreatorRetention.test.js` draait 24/24 groen. Geen Calculation/Context/Decision/AI-logica gewijzigd.
+- Deze governance-closure wijzigt geen functionele code.
+
 ## Governance — GAP-P2-013 CLOSED_PROVEN (1 oktober 2026, alleen documentatie)
 
 **Implementation main:** `de3d48d5520d4d27ea8413910020bc4371684fa0` (PR #498).

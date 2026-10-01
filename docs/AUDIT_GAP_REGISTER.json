@@ -1,11 +1,11 @@
 {
  "_schema": "trainingskompas-audit-gap-register/1.0",
  "baseline": "BASELINE-1.0",
- "generated_against_main": "c64f4f59f70903831c34b5f7a420c557d3b0ddcc",
+ "generated_against_main": "4a43f82446da0258f00a9c5ef860f3921ded7d9e",
  "counts": {
   "entries": 68,
-  "open": 30,
-  "closed_proven": 30,
+  "open": 27,
+  "closed_proven": 33,
   "deferred_accepted": 0,
   "superseded": 2,
   "ready_for_acceptance": 1,
@@ -992,7 +992,7 @@
    "title": "### GAP-P3-033 — **CLOSED** (Canonical Replacement/Add Prescription, 14 september 2026) — Swap/toegevoegde oef",
    "primary_track": "T9",
    "severity": "P3",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -1009,7 +1009,27 @@
    "affected_capability_ids": [],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "STALE_REGISTER_RECONCILIATION",
+     "reason": "Historical implementation is merged as c1e143272d06341781e749b1534dba95561c2669; current targeted regression is green (core/fReplacementPrescription.test.js 47/47 and core/fExerciseSwapPrescriptionWeight.test.js 34/34) and current exact-head Quality Gate 36899823420 is SUCCESS. GAP_ANALYSIS_V2 already recorded the gap as CLOSED."
+    }
+   ],
+   "closure_evidence": [
+    "IMPLEMENTATION MERGED: https://github.com/steentje76/maurice-training/pull/350 is present on canonical history as c1e143272d06341781e749b1534dba95561c2669.",
+    "CURRENT-CODE BEHAVIORAL REPROOF on 2026-10-01: core/fReplacementPrescription.test.js 47/47 and core/fExerciseSwapPrescriptionWeight.test.js 34/34 on the PR #508 branch based on current main.",
+    "CURRENT QUALITY GATE: PR #508 exact-head Trainingskompas Quality Gate 36899823420 (#1354) = SUCCESS on 2c0a26bff6b7a587a6a9202202d59013163da367.",
+    "GOVERNANCE CROSS-CHECK: docs/GAP_ANALYSIS_V2.md already records this gap as CLOSED; this change reconciles the stale canonical register only."
+   ],
+   "closure_rationale": "Canonical replacement/add prescription is merged; current tests prove the replacement exercise is prescribed through the canonical basis/resolver path without carrying weight from the replaced exercise. No runtime behavior is changed by this register reconciliation.",
+   "closure_pr": "https://github.com/steentje76/maurice-training/pull/350",
+   "closure_merge_sha": "c1e143272d06341781e749b1534dba95561c2669",
+   "closure_verified_at_sha": "2c0a26bff6b7a587a6a9202202d59013163da367",
+   "closure_method": "historical merged implementation + current targeted regression + current exact-head Quality Gate"
   },
   {
    "gap_id": "GAP-P3-023",
@@ -1405,7 +1425,7 @@
    "title": "### GAP-P4-003 — **CLOSED** (v4.69.90) — `tkWeekOverview()` leest `program_blocks` zonder eigenaarschap-scopin",
    "primary_track": "T12",
    "severity": "P4",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -1423,14 +1443,34 @@
    ],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "STALE_REGISTER_RECONCILIATION",
+     "reason": "Historical implementation is merged as 56262b7190fa82afd442c9a671af1ee0f6a3facf; current targeted regression is green (core/fWeekOverviewOwnership.test.js 28/28) and current exact-head Quality Gate 36899823420 is SUCCESS. GAP_ANALYSIS_V2 already recorded the gap as CLOSED."
+    }
+   ],
+   "closure_evidence": [
+    "IMPLEMENTATION MERGED: https://github.com/steentje76/maurice-training/pull/352 is present on canonical history as 56262b7190fa82afd442c9a671af1ee0f6a3facf.",
+    "CURRENT-CODE BEHAVIORAL REPROOF on 2026-10-01: core/fWeekOverviewOwnership.test.js 28/28 on the PR #508 branch based on current main.",
+    "CURRENT QUALITY GATE: PR #508 exact-head Trainingskompas Quality Gate 36899823420 (#1354) = SUCCESS on 2c0a26bff6b7a587a6a9202202d59013163da367.",
+    "GOVERNANCE CROSS-CHECK: docs/GAP_ANALYSIS_V2.md already records this gap as CLOSED; this change reconciles the stale canonical register only."
+   ],
+   "closure_rationale": "tkWeekOverview is merged on the canonical owned-program_blocks helper and current tests re-prove owner scoping, cross-user isolation and fail-closed behavior. No runtime behavior is changed by this register reconciliation.",
+   "closure_pr": "https://github.com/steentje76/maurice-training/pull/352",
+   "closure_merge_sha": "56262b7190fa82afd442c9a671af1ee0f6a3facf",
+   "closure_verified_at_sha": "2c0a26bff6b7a587a6a9202202d59013163da367",
+   "closure_method": "historical merged implementation + current targeted regression + current exact-head Quality Gate"
   },
   {
    "gap_id": "GAP-P4-004",
    "title": "### GAP-P4-004 — **CLOSED** (v4.69.90, PR #352) — `renderKalender()` en `inzichtRenderDevelopment()` lazen `pr",
    "primary_track": "T12",
    "severity": "P4",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": "REVIEW_REQUIRED",
    "dependency": null,
@@ -1446,7 +1486,27 @@
    "affected_capability_ids": [],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "status_history": [
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "STALE_REGISTER_RECONCILIATION",
+     "reason": "Historical implementation is merged as 56262b7190fa82afd442c9a671af1ee0f6a3facf; current targeted regression is green (core/fWeekOverviewOwnership.test.js 28/28) and current exact-head Quality Gate 36899823420 is SUCCESS. GAP_ANALYSIS_V2 already recorded the gap as CLOSED."
+    }
+   ],
+   "closure_evidence": [
+    "IMPLEMENTATION MERGED: https://github.com/steentje76/maurice-training/pull/352 is present on canonical history as 56262b7190fa82afd442c9a671af1ee0f6a3facf.",
+    "CURRENT-CODE BEHAVIORAL REPROOF on 2026-10-01: core/fWeekOverviewOwnership.test.js 28/28 on the PR #508 branch based on current main.",
+    "CURRENT QUALITY GATE: PR #508 exact-head Trainingskompas Quality Gate 36899823420 (#1354) = SUCCESS on 2c0a26bff6b7a587a6a9202202d59013163da367.",
+    "GOVERNANCE CROSS-CHECK: docs/GAP_ANALYSIS_V2.md already records this gap as CLOSED; this change reconciles the stale canonical register only."
+   ],
+   "closure_rationale": "renderKalender and inzichtRenderDevelopment are merged on the same owned-program_blocks helper; the current repo-wide guard proves zero unscoped program_blocks reads across the guarded read helpers. No runtime behavior is changed by this register reconciliation.",
+   "closure_pr": "https://github.com/steentje76/maurice-training/pull/352",
+   "closure_merge_sha": "56262b7190fa82afd442c9a671af1ee0f6a3facf",
+   "closure_verified_at_sha": "2c0a26bff6b7a587a6a9202202d59013163da367",
+   "closure_method": "historical merged implementation + current targeted regression + current exact-head Quality Gate"
   },
   {
    "gap_id": "GAP-P4-001",

@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## Governance — Endurance CLOSED-status reconciliation (1 oktober 2026, alleen documentatie)
+
+**Evidence-baseline:** `cbd5de44154274a711419fdd0f4dfddb114aa0cb`; post-merge Quality Gate run `36819550363` SUCCESS.
+
+- Zeven stale auditregisterrecords gereconcilieerd van `OPEN` naar `CLOSED_PROVEN`: GAP-P2-021, GAP-P2-025, GAP-P2-026, GAP-P2-027, GAP-P2-028, GAP-P2-029 en GAP-P2-031.
+- Geen nieuwe productclaim geïntroduceerd: ieder record stond in `docs/GAP_ANALYSIS_V2.md` al expliciet als **CLOSED** of **GEIMPLEMENTEERD** beschreven.
+- Current-main regressiebewijs opnieuw uitgevoerd: Endurance Foundation 26/26; Running Intelligence 17/17; Cycling Intelligence 14/14; Endurance Coach Context 39/39; Endurance profile Context 30/30; Structured Intervals canonical 109/109; B2 181/181; B3 Erg 182/182.
+- Counts mechanisch herberekend; geen functionele code, database of trainingslogica gewijzigd.
+
+
 ## Governance — GAP-P2-010 CLOSED_PROVEN (1 oktober 2026, alleen documentatie)
 
 **Implementation main:** `160426393ef61e205c05eb010e1d53d8b1206d8d` (PR #493).

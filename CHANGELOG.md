@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## Governance — GAP-P2-010 CLOSED_PROVEN (1 oktober 2026, alleen documentatie)
+
+**Implementation main:** `160426393ef61e205c05eb010e1d53d8b1206d8d` (PR #493).
+
+- `docs/AUDIT_GAP_REGISTER.json`: GAP-P2-010 van `OPEN` naar `CLOSED_PROVEN`, met post-merge DATA_PROOF, closure-rationale en mechanisch herberekende counts.
+- `docs/GAP_ANALYSIS_V2.md`: actuele 94/94-precache-invariant, cache-bump en Quality Gate-bewijs vastgelegd; historische, verworpen capability-owner niet vervangen door een onbewezen owner.
+- `docs/audit/GAP_P2_010_SERVICE_WORKER_PRECACHE_CLOSURE_RECORD.md`: bewijs per closure-contractcriterium.
+- Exact-head Quality Gate `36817819955` SUCCESS; post-merge Quality Gate `36817980823` SUCCESS. In de post-merge job draait `core/sw-guard.test.js` werkelijk mee en bevestigt dat elk runtime-corebestand wordt geprecachet en bestaat.
+- Register-level `traceability_unresolved` is conform het bestaande v1.2-contract leeg na sluiting van de enige unresolved open V1-gap; er is geen capability-ID verzonnen.
+- Geen functionele code gewijzigd.
+
+
 ## Governance — GAP-P2-008 closure record (1 oktober 2026, alleen documentatie)
 
 **Baseline:** `9589298498dfefcc89e14b45c9ddde53617feda4`.

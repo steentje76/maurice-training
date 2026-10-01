@@ -5,10 +5,9 @@
  * geen browser-opslag, geen AI, geen globale mutable state. INPUT -> OUTPUT.
  *
  * DOEL: de Context Engine LEVERT context, ze REKENT niet (dat is CalcCore) en
- * BESLIST niet (dat is DecisionCore). Dit bestand is additief naast de
- * bestaande buildCtx() in index.html — het VERVANGT buildCtx() niet en wordt
- * in deze sprint nog NERGENS aangeroepen vanuit index.html (geen pushtoegang
- * deze sessie om dat te bedraden; zie implementatierapport).
+ * BESLIST niet (dat is DecisionCore). buildCtx() in index.html gebruikt deze
+ * module als canonieke structurele contextlaag en combineert de uitkomst daarna
+ * met reeds bestaande domeinspecifieke contextblokken voor de AI Coach.
  *
  * Input is een reeds-opgehaalde, platte databag (de aanroeper doet alle
  * Supabase/fetch-calls elders, precies zoals bij CalcCore/DecisionCore) —

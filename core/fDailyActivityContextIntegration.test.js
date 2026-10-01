@@ -29,14 +29,14 @@ const buildCtxBlock = html.slice(buildCtxStart, buildCtxStart + 1 + nextFnMatch)
 
 console.log('DEVICES/WEARABLES MASTER SPRINT — C0-C6 Live Context-integratie (buildCtx)');
 
-// ---- A. C0/C1: contextEngine.js is bevestigd NIET de live pad; buildCtx() is dat wel ----
+// ---- A. C0/C1: ContextEngineCore is live bedraad; buildCtx() blijft de runtime-orchestrator ----
 {
   const contextEngineFile = fs.readFileSync(path.join(ROOT, 'core/contextEngine.js'), 'utf8');
-  ok(contextEngineFile.includes('nog NERGENS aangeroepen vanuit index.html'),
-    'A1: contextEngine.js documenteert zelf expliciet dat het dormant is -- classificatie B (oud/dormant ontwerp), geen aanname');
-  ok(!html.match(/ContextEngineCore\.(buildStructuredContext|mergeAthleteContexts)\(/),
-    'A2: index.html roept ContextEngineCore inderdaad nergens aan -- bevestigt de forensische claim met een echte negatieve grep, niet alleen het bestandscommentaar geloven');
-  ok(html.includes('async function buildCtx(ctx){'), 'A3: buildCtx() bestaat en is de daadwerkelijke, aanroepbare functie die de AI Coach-prompt samenstelt');
+  ok(contextEngineFile.includes('buildCtx() in index.html gebruikt deze') && !contextEngineFile.includes('nog NERGENS aangeroepen vanuit index.html'),
+    'A1: contextEngine.js documenteert de actuele productie-integratie en bevat geen stale dormant-claim');
+  ok(html.includes('<script src="core/contextEngine.js"></script>') && /ContextEngineCore\.buildStructuredContext\(/.test(buildCtxBlock),
+    'A2: index.html laadt ContextEngineCore en buildCtx() roept buildStructuredContext() daadwerkelijk aan');
+  ok(html.includes('async function buildCtx(ctx){'), 'A3: buildCtx() bestaat en blijft de daadwerkelijke, aanroepbare orchestrator die de AI Coach-prompt samenstelt');
 }
 
 // ---- B. C2: hergebruik van de bestaande hd-fetch, geen tweede query/engine ----

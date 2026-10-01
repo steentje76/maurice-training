@@ -1,8 +1,8 @@
 /* fContextContract.test.js — MS-F3-06 regressietest.
  *
- * A. Bevestigt de kernbevinding blijft waar: ContextEngineCore blijft puur/berekent
- *    niets, en buildCtx() delegeert aan canonieke calculaties zonder zelf te
- *    herberekenen.
+ * A. Bevestigt ContextEngineCore puur blijft/berekent niets én daadwerkelijk
+ *    in productie door buildCtx() wordt gebruikt voor de structurele sportcontext,
+ *    terwijl buildCtx() calculaties blijft delegeren aan canonieke rekenkernen.
  * B. Bevestigt de cruciale AI-grens-instructietekst rond het Live Coach-blok blijft
  *    exact aanwezig (geen stille verzwakking van "wijzig het advies niet").
  * C. Structurele registry-tests voor CONTEXT_CONTRACT.md.
@@ -50,11 +50,19 @@ function extractFunctionBody(source, name) {
     'buildStructuredContext vult een ontbrekend athleteId niet met een default, blijft null');
 }
 
-// ---- A2. buildCtx() delegeert aan canonieke calculaties, herberekent niets lokaal ----
+// ---- A2. buildCtx() gebruikt de canonieke Context Engine én delegeert calculaties ----
+ok(html.includes('<script src="core/contextEngine.js"></script>'),
+  'ContextEngineCore wordt in de productiebundel geladen');
 {
   const body = extractFunctionBody(html, 'buildCtx');
   ok(body !== null, 'buildCtx() wordt gevonden');
   if (body) {
+    ok(/ContextEngineCore\.buildStructuredContext\(/.test(body),
+      'buildCtx() gebruikt ContextEngineCore.buildStructuredContext() als productiecaller');
+    ok(/structuredContext&&structuredContext\.sport/.test(body),
+      'de door ContextEngineCore geleverde sportcontext wordt daadwerkelijk geconsumeerd');
+    ok(/ACTIEVE SPORT: \$\{activeSportLabel\}/.test(body),
+      'de AI-context gebruikt het uit StructuredContext afgeleide sportlabel');
     ok(/hrvDagFactorPersonal\(/.test(body), 'buildCtx() gebruikt de canonieke hrvDagFactorPersonal() i.p.v. zelf een HRV-factor te berekenen');
     ok(/TrainingLoadCore\.classifyAcwr\(/.test(body), 'buildCtx() gebruikt de canonieke TrainingLoadCore.classifyAcwr() i.p.v. een eigen ACWR-classificatie');
     ok(/TrainingLoadCore\.corroboratedLoadSignal\(/.test(body), 'buildCtx() gebruikt de canonieke corroboratieregel, geen eigen "hoge belasting"-logica');
@@ -71,7 +79,8 @@ ok(html.includes("reeds besloten door de Decision Engine — niet herberekenen")
 ok(contractText.includes('## Context Field Inventory'), 'CONTEXT_CONTRACT.md bevat de verplichte Context Field Inventory');
 ok(contractText.includes('## Context Engine berekent niets'), 'CONTEXT_CONTRACT.md bevat de expliciete "berekent niets"-bevestiging');
 ok(contractText.includes('## No fabricated context'), 'CONTEXT_CONTRACT.md bevat de expliciete "geen fabricage"-bevestiging');
-ok(contractText.includes('GAP-P2-014'), 'CONTEXT_CONTRACT.md registreert de ContextEngineCore-dode-code-bevinding als gap, verzwijgt het niet');
+ok(contractText.includes('GAP-P2-014') && contractText.includes('Technisch geïmplementeerd'),
+  'CONTEXT_CONTRACT.md registreert GAP-P2-014 als technisch geïmplementeerd met formele governance-closure nog apart');
 
 console.log('fContextContract: ' + pass + ' geslaagd, ' + fail + ' mislukt');
 if (msgs.length) console.log(msgs.join('\n'));

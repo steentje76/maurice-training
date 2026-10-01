@@ -5,13 +5,14 @@
 // Reden: de static-fetch is cache-first over ALLE caches; een oude core-entry in de niet-gebumpte
 // dynamische cache kon de nieuwe precache overschaduwen (stale serve na deploy). Door CACHE_NAME mee te
 // bumpen ruimt de activate-handler de oude dynamische cache op. REGEL: core wijzigt -> bump CACHE_NAME + CACHE_STATIC.
-const CACHE_NAME = 'trainingskompas-v470071';
-const CACHE_STATIC = 'trainingskompas-static-v470071';
-// F1.9 SW-GUARD: hash (CRLF-agnostisch) van core/calculation.js + core/decision.js.
+const CACHE_NAME = 'trainingskompas-v470072';
+const CACHE_STATIC = 'trainingskompas-static-v470072';
+// F1.9 SW-GUARD: CRLF-agnostische hash van de kritieke canonical core-set,
+// inclusief ContextEngineCore nu deze door buildCtx() in productie wordt gebruikt.
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
 // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem
 // hier bij ÉN bump CACHE_STATIC, zodat bestaande browsers de nieuwe core daadwerkelijk laden.
-const CORE_SIG = 'c25caffd5f361104';
+const CORE_SIG = 'a694e0e34edc782d';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';
 const VIDEO_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB LRU-plafond
@@ -55,6 +56,7 @@ const STATIC_ASSETS = [
   '/core/nutritionBarcodeRuntime.js',
   '/core/nativeBarcodeScannerBridge.js',
   '/core/designSystemIcons.js',
+  '/core/contextEngine.js',
   '/core/decision.js',
   '/core/aiOutputContract.js',
   '/core/cardio.js',

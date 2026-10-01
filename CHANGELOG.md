@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## Android-buildketen — OCR-taaldata packaging hersteld (1 oktober 2026, geen app-code gewijzigd)
+
+- **Root cause (bewezen op APK `Trainingskompas-v4.70.7-ee277c920-debug.apk`):** de Android Gradle Plugin pakt `.gz`-assets uit en haalt de extensie weg. `core/vendor/eng.traineddata.gz` stond als `eng.traineddata` in de APK, terwijl Tesseract (`gzip:true`) om `eng.traineddata.gz` vroeg: 404, `recognize()` kwam niet terug, voedingslabel-OCR werkte in de APK niet.
+- **Oplossing, alleen in de native buildketen:** `scripts/build-www.mjs` pakt de ene canonieke bron (`core/vendor/eng.traineddata.gz`) zelf uit naar `www/core/vendor/eng.traineddata` en zet in de www-kopie van `index.html` `gzip:false`. De build faalt als er een ander `.gz`-bestand in `www/` staat of als de Tesseract-config niet meer wordt herkend.
+- `core/fixtures/` (testmateriaal, o.a. 2 tessdata-bestanden) gaat niet meer mee in `www/`/de APK.
+- **Web/PWA ongewijzigd:** `index.html`, `sw.js` en `core/*` zijn niet aangeraakt; geen APP_VER-/CACHE_NAME-bump.
+- **Gate:** `tools/verify-ocr-packaging.js` (web, native map, APK) + `core/fAndroidOcrAssetPackaging.test.js` (24 tests, incl. foute combinaties). De workflow `android-debug-apk.yml` inspecteert de gebouwde APK met dezelfde controle.
+- Niet bewezen op een fysiek toestel; OCR in Android WebView blijft `NOT VERIFIED` tot een toesteltest.
+
 ## Governance - stale P3/P4 CLOSED-status reconciliation (1 oktober 2026, alleen documentatie)
 
 - GAP-P3-033, GAP-P4-003 en GAP-P4-004 van stale `OPEN` naar `CLOSED_PROVEN` gereconcilieerd.

@@ -59,11 +59,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Priority:** P2. **Complexity:** M. **Roadmap phase:** F3 (vervolgwerk) of later productbeslissing.
 
 ### GAP-P2-010 — 13 `core/*.js`-bestanden ontbreken in de service-worker-precache
-**Capability-ID:** PLAT-OBSERVABILITY-001 (platform/PWA-track, breder dan één capability)
+**Capability-ID:** geen bewezen canonical owner. De historische toewijzing `PLAT-OBSERVABILITY-001` is in de v1.2-traceability-reconciliatie verworpen; deze gesloten gap blijft daarom historisch `INCOMPLETE/UNSCOPED` in plaats van een owner te verzinnen.
 **Current:** `sw.js`'s `STATIC_ASSETS` bevat 15 van de 28 daadwerkelijk in `index.html` geladen `core/*.js`-modules. 13 ontbreken (o.a. `contextEngine.js`, `scientificEvidence.js`, `cycle.js`, `intervalEngine.js`, `teamPerformance.js`) — deze modules zijn dus niet gegarandeerd offline beschikbaar, in tegenstelling tot bijvoorbeeld `calculation.js`/`progression.js`/(sinds deze sprint) `trainingLoad.js`.
 **Evidence:** CODE VERIFIED, repo-brede vergelijking van `index.html`-scripttags tegen `sw.js`'s `STATIC_ASSETS`-array.
 **Target:** de resterende 13 bestanden toevoegen aan `STATIC_ASSETS`, met een `CACHE_STATIC`-bump.
 **Priority:** P2. **Complexity:** S (mechanische toevoeging, wel een volledige regressietest + versiebump per keer).
+**Status (01-10-2026): CLOSED_PROVEN.** PR #493 is squash-gemerged als `160426393ef61e205c05eb010e1d53d8b1206d8d`. De actuele runtime-set telt 94 `core/*.js`-scripts; `sw.js` precachet 94/94 en `CACHE_NAME` + `CACHE_STATIC` staan beide op v470071. `core/sw-guard.test.js` ontdekt de runtime-set rechtstreeks uit `index.html`, eist dat elk pad fysiek bestaat en faalt bij iedere ontbrekende precache-entry.
+**Closure-bewijs:** exact-head Quality Gate run 36817819955 SUCCESS op `655c423b201cb004156d92417834043e13a04bda`; post-merge Quality Gate run 36817980823 SUCCESS op `160426393ef61e205c05eb010e1d53d8b1206d8d`. De post-merge joblog voert `core/sw-guard.test.js` werkelijk uit en bevestigt beide invarianten. De historische telling van 13 is niet herschreven: op de implementatiebaseline waren door productgroei inmiddels 68 modules buiten de precache geraakt; de bewezen actuele uitkomst is 0 ontbrekend. Zie `docs/audit/GAP_P2_010_SERVICE_WORKER_PRECACHE_CLOSURE_RECORD.md`.
 
 ### GAP-P2-011 — Geen dedicated `core/`-unit-test voor de HRV-baseline-functiegroep (Recovery-sprint)
 **Capability-ID:** CALC-REC-REGISTRY-001

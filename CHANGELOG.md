@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## Governance - stale P3/P4 CLOSED-status reconciliation (1 oktober 2026, alleen documentatie)
+
+- GAP-P3-033, GAP-P4-003 en GAP-P4-004 van stale `OPEN` naar `CLOSED_PROVEN` gereconcilieerd.
+- Historische implementaties blijven PR #350 (`c1e14327...`) en PR #352 (`56262b71...`); er is geen functionele code gewijzigd.
+- Actuele gedragsherverificatie: replacement prescription 47/47 + swap weight 34/34; ownership 28/28.
+- Exact-head Quality Gate `36899823420` (#1354) SUCCESS op PR #508 head `2c0a26b...`.
+- Geen historische workflowrun verzonnen waar GitHub die niet meer exposeert; provenance is expliciet vastgelegd in `docs/audit/STALE_GAP_STATUS_RECONCILIATION_P3_P4_2026-10-01.md`.
+- Register telt nu 27 OPEN en 33 CLOSED_PROVEN van 68 entries.
+
 ## Governance — GAP-P2-014 CLOSED_PROVEN (1 oktober 2026, alleen documentatie)
 
 **Implementation main:** `22b80fe6e395c769008204c53aa0c4621eef9001` (PR #502).

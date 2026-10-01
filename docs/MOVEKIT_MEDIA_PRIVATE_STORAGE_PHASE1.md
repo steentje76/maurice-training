@@ -39,3 +39,15 @@ After merge and exact-head Quality Gate:
 5. only then design dual-read/cut-over.
 
 This keeps the working application unchanged while creating the protected delivery foundation required by the Media Scale Gate.
+
+## Production verification — 1 oktober 2026
+
+Post-merge read-only verification confirms:
+- migration `movekit_private_media_foundation_v578` is present in production;
+- bucket `exercise-media` exists with `public=false`, 32 MiB object limit and `video/mp4` allowlist;
+- object policies on `storage.objects` remain avatar-only;
+- production Netlify deploy `c64f4f59f70903831c34b5f7a420c557d3b0ddcc` is ready and includes `exercise-media-url`;
+- the private bucket is still empty before the bounded pilot.
+
+The next controlled action is therefore the bounded integrity pilot documented in `docs/MOVEKIT_MEDIA_PILOT_RUNBOOK.md`. Phase 2 dual-read and Batch 002 remain blocked until that pilot proves real-object signing, Range/seek and authenticated broker behavior.
+

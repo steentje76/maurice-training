@@ -2,6 +2,16 @@ name: Android Debug APK
 
 on:
   workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 'Exacte commit-SHA om te bouwen (leeg = de gedispatchte ref)'
+        required: false
+        default: ''
+      publish_prerelease:
+        description: 'APK ook als pre-release asset publiceren (directe .apk-download)'
+        type: boolean
+        required: false
+        default: false
   push:
     branches:
       - 'feature/android-debug-apk'
@@ -13,10 +23,27 @@ jobs:
   build-debug-apk:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      build_sha: ${{ steps.provenance.outputs.build_sha }}
+      apk_name: ${{ steps.provenance.outputs.apk_name }}
+      app_ver: ${{ steps.provenance.outputs.app_ver }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+
+      # Bewijs dat een opgegeven source_sha ook werkelijk de uitgecheckte commit is:
+      # alleen een volledige 40-hex SHA is toegestaan (geen branchnaam of korte SHA).
+      - name: Verify exact source SHA
+        if: ${{ inputs.source_sha != '' }}
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          echo "$SOURCE_SHA" | grep -Eq '^[0-9a-f]{40}$' || { echo "source_sha moet een volledige 40-hex commit-SHA zijn"; exit 1; }
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          echo "Uitgecheckt: $(git rev-parse HEAD)"
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -62,6 +89,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Record provenance and SHA-256
+        id: provenance
         run: |
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
           test -f "$APK"
@@ -69,14 +97,64 @@ jobs:
           sha256sum "$APK" > app-debug.apk.sha256
           cat android-debug-apk-commit.txt
           cat app-debug.apk.sha256
+          # Traceerbare bestandsnaam: Trainingskompas-<APP_VER>-<shortSHA>-debug.apk
+          BUILD_SHA="$(git rev-parse HEAD)"
+          APP_VER="$(grep -oE "const APP_VER = 'v[0-9.]+'" index.html | grep -oE "v[0-9.]+" | head -n1)"
+          test -n "$APP_VER"
+          APK_NAME="Trainingskompas-${APP_VER}-${BUILD_SHA:0:9}-debug.apk"
+          mkdir -p dist
+          cp "$APK" "dist/${APK_NAME}"
+          (cd dist && sha256sum "${APK_NAME}" > "${APK_NAME}.sha256")
+          cp android-debug-apk-commit.txt dist/
+          echo "build_sha=${BUILD_SHA}" >> "$GITHUB_OUTPUT"
+          echo "apk_name=${APK_NAME}" >> "$GITHUB_OUTPUT"
+          echo "app_ver=${APP_VER}" >> "$GITHUB_OUTPUT"
 
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: trainingskompas-android-debug-${{ github.sha }}
+          name: trainingskompas-android-debug-${{ steps.provenance.outputs.build_sha }}
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
             app-debug.apk.sha256
             android-debug-apk-commit.txt
+            dist/
           if-no-files-found: error
           retention-days: 7
+
+  # Optioneel en alleen bij handmatige dispatch: publiceert de zojuist gebouwde debug-APK
+  # als pre-release asset, zodat de .apk direct (ook vanaf een telefoon) te downloaden is
+  # zonder Actions-artifact-zip. De build-job zelf houdt contents: read; alleen deze job
+  # krijgt contents: write. De tag wijst naar exact de gebouwde commit.
+  publish-prerelease:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_prerelease }}
+    needs: build-debug-apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download debug APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: trainingskompas-android-debug-${{ needs.build-debug-apk.outputs.build_sha }}
+          path: artifact
+
+      - name: Publish pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_SHA: ${{ needs.build-debug-apk.outputs.build_sha }}
+          APK_NAME: ${{ needs.build-debug-apk.outputs.apk_name }}
+          APP_VER: ${{ needs.build-debug-apk.outputs.app_ver }}
+        run: |
+          TAG="apk-debug-${APP_VER}-${BUILD_SHA:0:9}-run${GITHUB_RUN_NUMBER}"
+          test -f "artifact/dist/${APK_NAME}"
+          gh release create "$TAG" \
+            "artifact/dist/${APK_NAME}" \
+            "artifact/dist/${APK_NAME}.sha256" \
+            "artifact/dist/android-debug-apk-commit.txt" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$BUILD_SHA" \
+            --prerelease \
+            --title "Android debug APK ${APP_VER} (${BUILD_SHA:0:9})" \
+            --notes "Debug-APK (niet voor Google Play). Bron-commit: ${BUILD_SHA}. Workflow-run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

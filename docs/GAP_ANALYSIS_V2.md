@@ -83,9 +83,13 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 
 ### GAP-P2-013 — Geen provenance-onderscheid tussen device-gemeten en split-afgeleid vermogen (Endurance & Erg-sprint)
 **Capability-ID:** CALC-END-REGISTRY-001
-**Current:** `CARDIO_TYPES` (RowErg/BikeErg/SkiErg) laat zowel een rechtstreeks device-ingevoerd `watt`-veld toe als een split-gebaseerde afleiding (CALC-END-002), zonder een vlag die vastlegt welke van de twee een specifieke opgeslagen waarde is.
-**Evidence:** CODE VERIFIED, zie het Endurance & Erg-sprintrapport in `docs/`.
-**Target:** expliciete provenance-vlag (`measured`/`derived`) toevoegen aan de opslag van erg-vermogenswaarden.
+**Status (01-10-2026): CLOSED_PROVEN.**
+**Original residual gap:** `sessions.watt_source` en de vocabulaire `concept2_measured`/`concept2_derived` bestonden al, maar het daadwerkelijke Concept2 PM5-persistencepad schreef `watt` zonder `watt_source`. Daardoor bestond aantoonbaar een opgeslagen SkiErg-PM5-rij met `watt=167` en `watt_source=NULL`.
+**Resolution:** PR #498 is squash-gemerged als `de3d48d5520d4d27ea8413910020bc4371684fa0`. `Concept2Live.liveWorkoutToActual()` schrijft de reeds deterministisch bepaalde `wattsSource` nu ook naar de canonical `sessions`-row: `concept2_measured` uitsluitend wanneer PM5-watts werkelijk zijn aangeleverd, `concept2_derived` uitsluitend wanneer vermogen uit afstand+tijd wordt afgeleid, en geen verzonnen bron wanneer geen vermogen beschikbaar is.
+**Evidence:** `core/fWattProvenanceGapP2013.test.js` voert de echte productieconverter uit voor measured én derived; `core/fConcept2Live.test.js` controleert de completion-row; `core/fConcept2ThreeMachineLogging.test.js` bewijst voor RowErg, SkiErg en BikeErg dat `watt_source` de echte `tkErgOnCanonicalMeasurement → tkC2SessionRowFromLog → Concept2Live.liveWorkoutToActual`-persistentiebrug en de writeSessionRow-roundtrip overleeft.
+**Quality Gates:** exact-head run `36824963642` (#1331) SUCCESS op `ae0a87817c34ec20ac79953e0f0c9ebeb17c07c2`; post-merge run `36825140808` (#1332) SUCCESS op canonical main `de3d48d5520d4d27ea8413910020bc4371684fa0`.
+**Legacy handling:** historische rijen met `watt_source=NULL` worden bewust niet teruggevuld; measured versus derived kan achteraf niet betrouwbaar worden gereconstrueerd en blijft daarom veilig `unknown`.
+**Target:** bereikt — expliciete provenance wordt opgeslagen op nieuwe Concept2 erg-vermogenswaarden. Zie `docs/audit/GAP_P2_013_CONCEPT2_WATT_PROVENANCE_CLOSURE_RECORD.md`.
 **Priority:** P2. **Complexity:** S.
 
 ### GAP-P2-014 — `ContextEngineCore` is dode code, nooit aangeroepen vanuit index.html (Context-sprint)

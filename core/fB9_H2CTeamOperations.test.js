@@ -15,6 +15,7 @@ function ok(cond, label) { if (cond) { pass++; } else { fail++; msgs.push('MISLU
 const migratie = fs.readFileSync(path.join(ROOT, 'migratie_v540.sql'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const delAcct = fs.readFileSync(path.join(ROOT, 'netlify/functions/delete-account.js'), 'utf8');
+const retentionMigration = fs.readFileSync(path.join(ROOT, 'migratie_v577.sql'), 'utf8');
 
 // ---- 1. Canonical team gebruikt, geen nieuw team-model ----
 ok(!migratie.includes('create table') || !migratie.match(/create table.*teams/i),
@@ -78,9 +79,12 @@ ok(!migratie.includes('<div') && !migratie.includes('onclick'),
     '12 (zelf gevonden en gerepareerd): team_events ontbrak in de bestaande, generieke idempotency-registratie -- een netwerk-retry bij event-aanmaak zou een duplicaat event hebben kunnen creëren. Toegevoegd aan het reeds bestaande mechanisme (geen nieuw framework, sectie 45). Controleert aanwezigheid, niet de exacte, inmiddels uitgebreide lijst-inhoud.');
 }
 
-// ---- 13. Account deletion: team-tabellen expliciet gedekt (zelf gevonden gat, sectie 41) ----
-ok(delAcct.includes("['team_events', ['created_by']]") && delAcct.includes("['event_attendance', ['user_id']]") && delAcct.includes("['event_responsibilities', ['assigned_user_id']]"),
-  '13 (zelf gevonden en gerepareerd): team_events/event_attendance/event_responsibilities ontbraken in de expliciete account-deletion-lijst (hadden al correcte CASCADE/SET NULL-FK live bevestigd, maar niet expliciet vermeld voor auditeerbaarheid, conform het bestaande projectpatroon)');
+// ---- 13. Account deletion: gedeelde eventhistorie blijft behouden (GAP-P2-024 / v577) ----
+ok(!delAcct.includes("['team_events', ['created_by']]") &&
+   delAcct.includes("['event_attendance', ['user_id']]") &&
+   delAcct.includes("['event_responsibilities', ['assigned_user_id']]") &&
+   /foreign key \(created_by\) references auth\.users\(id\)[\s\S]{0,80}on delete set null/i.test(retentionMigration),
+  '13 (GAP-P2-024): team_events is gedeelde historie en wordt niet expliciet via created_by verwijderd; v577 ontkoppelt de verwijderde organisator met ON DELETE SET NULL, terwijl eigen attendance/responsibility wel opruimbaar blijft');
 
 // ---- 14. Attendance-vs-availability RLS-fix (zelf gevonden tijdens UI-requirements-analyse, sectie 16/49/50) ----
 ok(migratie.includes('event_attendance_self_or_staff_insert') && migratie.includes('event_attendance_self_or_staff_update'),

@@ -1,11 +1,11 @@
 {
  "_schema": "trainingskompas-audit-gap-register/1.0",
  "baseline": "BASELINE-1.0",
- "generated_against_main": "de3d48d5520d4d27ea8413910020bc4371684fa0",
+ "generated_against_main": "f8bac6a00ef834dc45b1c98f25b7b077da78988e",
  "counts": {
   "entries": 68,
-  "open": 32,
-  "closed_proven": 28,
+  "open": 31,
+  "closed_proven": 29,
   "deferred_accepted": 0,
   "superseded": 2,
   "ready_for_acceptance": 1,
@@ -1158,7 +1158,7 @@
    "title": "### GAP-P2-024 (nieuw, F11.03) — team_events.created_by CASCADE kan andermans aanwezigheidshistorie meeslepen",
    "primary_track": "T10",
    "severity": "P2",
-   "status": "OPEN",
+   "status": "CLOSED_PROVEN",
    "v1_scope": true,
    "blocker": false,
    "dependency": null,
@@ -1182,8 +1182,30 @@
      "date": "2026-09-27",
      "change_type": "AUDIT_METADATA_CORRECTION",
      "reason": "Metadata alignment: F11_MS_F11_03_REPORT explicitly classifies this as P2 HARDENING, non-blocking for CLOSED; no gap closure or new product evidence."
+    },
+    {
+     "from": "OPEN",
+     "to": "CLOSED_PROVEN",
+     "date": "2026-10-01",
+     "change_type": "IMPLEMENTATION_MERGED_AND_VERIFIED",
+     "reason": "PR #500 gemerged als f8bac6a00ef834dc45b1c98f25b7b077da78988e; live Supabase FK is ON DELETE SET NULL en created_by nullable; exact-head Quality Gate 36833848714 SUCCESS; post-merge Quality Gate 36834191270 SUCCESS; retention-guard 24/24 groen."
     }
-   ]
+   ],
+   "closure_evidence": [
+    "CODE VERIFIED on canonical main f8bac6a00ef834dc45b1c98f25b7b077da78988e (squash-merge van PR #500): migratie_v577.sql maakt team_events.created_by nullable en vervangt team_events_created_by_fkey door ON DELETE SET NULL; netlify/functions/delete-account.js verwijdert gedeelde team_events niet langer expliciet via created_by.",
+    "LIVE DATABASE VERIFIED na migratie gap_p2_024_team_event_creator_retention: team_events_created_by_fkey = FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL; created_by_not_null=false; team_events/event_attendance/event_responsibilities stonden alle drie op 0 rijen tijdens migratie en verificatie.",
+    "AUTHORIZATION VERIFIED: de twee live team_events-RLS-policies blijven team_events_manage_staff en team_events_select, beide uitsluitend gebaseerd op team_has_access(team_id,...); created_by is geen access-boundary.",
+    "RPC FAIL-CLOSED VERIFIED: public.notify_team_event_created(uuid) gebruikt v_created_by IS DISTINCT FROM auth.uid(); SECURITY DEFINER en search_path=public blijven actief; ACL is uitsluitend postgres, authenticated en service_role (geen anon/PUBLIC EXECUTE).",
+    "BEHAVIORAL/STATIC REGRESSION VERIFIED: core/fTeamEventCreatorRetention.test.js draait 24/24 groen op post-merge main en bewaakt nullable+SET NULL, delete-account-semantiek, RPC NULL-guard, scopebegrenzing en sabotagegevallen; core/fB9_H2CTeamOperations.test.js is op de nieuwe retention-semantiek gereconcilieerd.",
+    "EXACT-HEAD VERIFIED: Quality Gate run 36833848714 (run #1336) is SUCCESS op PR #500 head f4111d59b455155444cb2f42f22f11e7ccbadc11. De eerdere run 36833605555 faalde vóór productie uitsluitend omdat een oudere B9-H2C-regressietest nog expliciete team_events-deletion vereiste; die stale verwachting is gecorrigeerd voordat v577 werd toegepast.",
+    "POST-MERGE VERIFIED: Quality Gate run 36834191270 is SUCCESS op exact canonical main f8bac6a00ef834dc45b1c98f25b7b077da78988e, inclusief deterministic suite, NativeConcept2BleTransport 176/176 en repositorychecks.",
+    "SCOPE VERIFIED: geen Calculation/Context/Decision/AI-semantiek, Team Operations-UI of attendance/responsibility-FK gewijzigd. Alleen creator-retention, de bijbehorende notification-guard en regressiebewijs zijn aangepast."
+   ],
+   "closure_rationale": "De geregistreerde data-retentie-gap is aantoonbaar gesloten: verwijderen van de auth.users-rij van een event-creator ontkoppelt created_by nu op databaseniveau via SET NULL in plaats van het gedeelde event te cascaden, en de server-side account-delete-flow bevat geen tweede delete-pad meer voor team_events.created_by. De resterende teamhistorie blijft autoriseren via team_has_access; de create-notification-RPC is expliciet fail-closed voor NULL-creator. Exact-head, live database en post-merge bewijs zijn aanwezig.",
+   "closure_pr": "https://github.com/steentje76/maurice-training/pull/500",
+   "closure_merge_sha": "f8bac6a00ef834dc45b1c98f25b7b077da78988e",
+   "closure_verified_at_sha": "f8bac6a00ef834dc45b1c98f25b7b077da78988e",
+   "closure_method": "live Supabase schema/ACL verification + exact-head/post-merge automated regression proof"
   },
   {
    "gap_id": "GAP-P2-025",

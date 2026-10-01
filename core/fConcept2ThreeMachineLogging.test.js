@@ -56,6 +56,7 @@ Object.keys(M).forEach(function (mt) {
   eq(row.distance, sum.distance_m, mt + ': distance');
   ok(typeof row.time_str === 'string' && row.time_str.length > 0, mt + ': duur als time_str');
   eq(row.watt, sum.watts, mt + ': watts gemeten');
+  eq(row.watt_source, 'concept2_measured', mt + ': gemeten watt_source bereikt de persistente sessions-row');
   eq(row.stroke_rate, sum.stroke_rate_spm, mt + ': cadence/stroke rate behouden');
   eq(row.rpe, null, mt + ': RPE blijft user-owned');
   ok(new RegExp('hr ' + sum.heart_rate_bpm).test(row.extraNote), mt + ': HR in de note');
@@ -83,6 +84,7 @@ Object.keys(M).forEach(function (mt) {
   const r = persisted[mt];
   eq(r.distance, M[mt].distance_m, mt + ': distance overleeft de roundtrip');
   eq(r.watt, M[mt].watts, mt + ': watts overleven de roundtrip');
+  eq(r.watt_source, 'concept2_measured', mt + ': watt_source overleeft de writeSessionRow-roundtrip');
   eq(r.stroke_rate, M[mt].stroke_rate_spm, mt + ': cadence overleeft de roundtrip');
   eq(r.training_instance_id, 'inst-' + mt, mt + ': training_instance_id behouden');
   const basis = (mt === 'bikeerg') ? 1000 : 500;

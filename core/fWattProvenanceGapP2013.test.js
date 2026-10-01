@@ -18,6 +18,7 @@ const path = require('path');
 const vm = require('vm');
 const ROOT = path.join(__dirname, '..');
 const ProgressionCore = require(path.join(ROOT, 'core', 'progression.js'));
+const Concept2Live = require(path.join(ROOT, 'core', 'concept2Live.js'));
 
 let pass = 0, fail = 0;
 const msgs = [];
@@ -35,9 +36,7 @@ function slice(startMarker, endMarker) {
 // ═══ Migratie-audit (bijgewerkte vocabulaire) ═══
 const migratie = fs.readFileSync(path.join(ROOT, 'migratie_v548.sql'), 'utf8');
 ok(migratie.indexOf("CHECK (watt_source IS NULL OR watt_source IN ('concept2_measured', 'concept2_derived', 'manual', 'imported_unknown', 'unknown'))") > 0,
-  'MIGRATIE (gecorrigeerd): CHECK-constraint bevat nu alle vijf benodigde states (concept2_measured/concept2_derived/manual/imported_unknown/unknown)');
-ok(migratie.indexOf('NOT REACHABLE') > 0 || migratie.indexOf('nergens reachable') > 0,
-  'MIGRATIE: documenteert expliciet dat concept2_measured momenteel nergens door een bestaand datapad wordt gezet');
+  'MIGRATIE (gecorrigeerd): CHECK-constraint bevat alle vijf benodigde states (concept2_measured/concept2_derived/manual/imported_unknown/unknown)');
 
 // ═══ Extractie van de ECHTE, gecorrigeerde productiecode ═══
 const src = [
@@ -114,8 +113,16 @@ function run(sandbox) {
     ok(mod.cardioWattSource['ex2'] === 'concept2_derived', '2. Uit afstand+tijd afgeleide watt -> concept2_derived');
   }
 
-  // ═══ 3. Device-measured pad: NOT REACHABLE (expliciet gerapporteerd, geen fictieve test) ═══
-  ok(true === true, '3. PERSISTED CONCEPT2_MEASURED PATH: NOT REACHABLE -- geen bestaande, gepersisteerde PM5/native-schrijfroute gevonden (tkRenderConcept2Actual/DeviceCore.resolveConcept2Watts worden nergens vanuit een save-flow aangeroepen); geen fictieve test gemaakt, conform opdracht sectie 5/40.');
+  // ═══ 3. Device-measured/derived PM5-pad: provenance staat op de daadwerkelijk gepersisteerde sessions-row ═══
+  {
+    const measured = Concept2Live.liveWorkoutToActual({ machineType: 'skierg', date: '2026-10-01', distance_m: 1000, duration_s: 240, watts: 167 }, {});
+    ok(measured.row.watt === 167 && measured.row.watt_source === 'concept2_measured', '3a. PM5 gemeten watt -> sessions.watt_source=concept2_measured');
+    ok(measured.provenance.watts_source === measured.row.watt_source, '3b. Los provenance-object en persisted row spreken elkaar niet meer tegen');
+
+    const derived = Concept2Live.liveWorkoutToActual({ machineType: 'rowerg', date: '2026-10-01', distance_m: 2000, duration_s: 480 }, {});
+    ok(derived.row.watt != null && derived.row.watt_source === 'concept2_derived', '3c. PM5 completion zonder gemeten watts -> afgeleide watt persisteert als concept2_derived');
+    ok(derived.provenance.watts_source === derived.row.watt_source, '3d. Derived provenance is identiek in metadata en sessions-row');
+  }
 
   // ═══ 4. Legacy NULL blijft veilig unknown (geen fout geclassificeerd) ═══
   {

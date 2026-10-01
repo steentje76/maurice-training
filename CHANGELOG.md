@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## Governance — GAP-P2-013 CLOSED_PROVEN (1 oktober 2026, alleen documentatie)
+
+**Implementation main:** `de3d48d5520d4d27ea8413910020bc4371684fa0` (PR #498).
+
+- De resterende Concept2-provenancegap is gesloten: PM5-vermogen wordt nu op de canonical `sessions`-row opgeslagen met `watt_source=concept2_measured` of `concept2_derived`, volgens de al bestaande deterministische converterregel.
+- Geen migratie nodig: `sessions.watt_source` en de toegestane provenance-vocabulaire bestonden al via `migratie_v548.sql`.
+- Gedragsbewijs loopt door de echte productieconverter en de RowErg/SkiErg/BikeErg-persistencebrug; geen mock-only closure.
+- Exact-head Quality Gate `36824963642` (#1331) SUCCESS; post-merge Quality Gate `36825140808` (#1332) SUCCESS op canonical main.
+- Historische `watt_source=NULL`-rijen blijven bewust unknown; er wordt geen measured/derived-provenance achteraf gefabriceerd.
+- Deze governance-closure wijzigt geen functionele code.
+
+
 ## Governance — Endurance CLOSED-status reconciliation (1 oktober 2026, alleen documentatie)
 
 **Evidence-baseline:** `cbd5de44154274a711419fdd0f4dfddb114aa0cb`; post-merge Quality Gate run `36819550363` SUCCESS.

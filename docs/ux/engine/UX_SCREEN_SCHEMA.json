@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Trainingskompas UX Screen Registry",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "screens"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "screens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "domain",
+          "status",
+          "change_mode",
+          "route",
+          "interactions",
+          "states",
+          "components",
+          "acceptance"
+        ],
+        "properties": {
+          "id": {
+            "pattern": "^TK-UX-[A-Z]+-[0-9]{3}[A-Z]?$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "PO_REVIEW_REQUIRED",
+              "UX_SPEC_READY",
+              "IMPLEMENTED_UNPROVEN",
+              "UX_PROVEN",
+              "DEPRECATED"
+            ]
+          },
+          "change_mode": {
+            "enum": [
+              "REUSE",
+              "EXTEND",
+              "NEW"
+            ]
+          },
+          "route": {
+            "type": "object",
+            "required": [
+              "screen_id"
+            ],
+            "properties": {
+              "screen_id": {
+                "type": "string"
+              },
+              "parent": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "back": {
+                "type": "string"
+              }
+            }
+          },
+          "mockup_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "interactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "element_id",
+                "trigger",
+                "effect"
+              ],
+              "properties": {
+                "element_id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "trigger": {
+                  "enum": [
+                    "tap",
+                    "double_tap",
+                    "long_press",
+                    "swipe",
+                    "drag",
+                    "keyboard",
+                    "system_back"
+                  ]
+                },
+                "effect": {
+                  "type": "string"
+                },
+                "destination": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "preserve_state": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "states": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "normal",
+                "loading",
+                "empty",
+                "error",
+                "offline",
+                "degraded"
+              ]
+            }
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "data_sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "calculation_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "decision_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "do_not_change": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "acceptance": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

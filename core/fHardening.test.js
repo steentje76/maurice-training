@@ -570,7 +570,9 @@ ok(/hb\.zone==='ready'/.test(consBrugSrc), 'V2: de brug verschijnt uitsluitend w
 ok(!/setsDelta|rpeDelta\s*[-+]?=/.test(consBrugSrc), 'V3 (kernprincipe): de consistentiebrug wijzigt NERGENS setsDelta/rpeDelta -- puur uitleg, geen nieuwe beslissing');
 ok(/escHtml\(hb\.zoneLabel/.test(consBrugSrc), 'V4 (XSS-veiligheid): de Home-zonelabel-tekst wordt via escHtml() weergegeven');
 
-const recDetailSrc = html.slice(html.indexOf('async function openRecoveryDetail('), html.indexOf('async function openRecoveryDetail(') + 4200);
+// De hele functie (tot de volgende functie) i.p.v. een vast venster van 4200 tekens: de functie is
+// sinds v4.70.11 langer, en een vast venster knipte de laatste secties eraf.
+const recDetailSrc = html.slice(html.indexOf('async function openRecoveryDetail('), html.indexOf('function renderCoachAdvies('));
 ok(/hrvBaseline\(hd\)/.test(recDetailSrc) && /hrvStPersonal\(hd\)/.test(recDetailSrc), 'V5: HRV-sectie hergebruikt UITSLUITEND de bestaande hrvBaseline()/hrvStPersonal() -- geen nieuwe SWC-drempel, geen nieuwe classificatie');
 ok(/rhrBaselineDelta\(hd\)/.test(recDetailSrc), 'V6: RHR-sectie hergebruikt UITSLUITEND de bestaande rhrBaselineDelta()');
 ok(!/slaapBaseline|sleepBaseline/i.test(recDetailSrc) && /Nog geen persoonlijk gebruikelijk niveau berekend voor slaap/.test(recDetailSrc), 'V7 (kernprincipe): GEEN nieuwe slaap-baselineformule -- expliciet gedocumenteerd als ontbrekend i.p.v. stilzwijgend verzonnen');

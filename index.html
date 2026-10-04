@@ -2954,6 +2954,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .grid{display:flex;gap:8px;margin-top:16px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m{flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 6px;text-align:center}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .v{font-size:15px;font-weight:800;color:#fff}
+:is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .w{font-size:9px;font-weight:600;color:rgba(230,240,243,.62);margin-top:5px;line-height:1.2}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .k{font-size:8px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anat{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:16px}
 :is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anat .v43-lich-toggle{display:flex;justify-content:center;margin-bottom:8px}
@@ -7646,7 +7647,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.10';
+const APP_VER = 'v4.70.11';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -24146,22 +24147,29 @@ async function refreshHome(){
   let dfInfo=null,nextT=null;
   if(lh){
     const hrvComponent=hrvDagFactorPersonal(hd);
-    const st=hrvComponent.st;
     const cyclusVandaag=tkCyclusFaseVandaag(lh); // alleen de fase van de rij van vandaag
     const df=dagfactor(hrvComponent,lh.sleep,cyclusVandaag,hq.signalen);
+    // Presentatie volgt de berekening: df.basis bewijst wat de dagfactor werkelijk voedde;
+    // alleen dat wordt als reden genoemd en geteld. Elk signaal houdt zijn eigen meetdatum.
+    const hv=tkHealthVandaag(hq,hrvComponent,df);
+    const st=df.hrvSt;
     // v3.3.36 Batch 2 #1: dagfactor gepromoveerd tot dominant, tikbaar dag-element (H8 explainable AI).
     const heroKleur='var(--day)'; // v3.3.50 P6 — dagfactor-ring volgt het dag-thema (dayState)
     const dfStat=dagfactorStatus(df.factor);
     const ringPct=Math.max(0,Math.min(1,(df.factor-0.85)/0.20));const RC=Math.round(2*Math.PI*24);
-    const uitleg=dagfactorUitleg(lh.hrv,lh.sleep,cyclusVandaag,df);
+    const uitleg=dagfactorUitleg(hv.hrv.gebruikt||hv.hrv.referentie,hv.slaap.gebruikt?hv.slaap.waarde:null,hv.cyclus.gebruikt?cyclusVandaag:null,df,hv);
     dfInfo={factor:df.factor,uitleg,hero:heroKleur,st};
-    const sig=[lh.hrv,lh.sleep,cyclusVandaag].filter(Boolean).length;
-    const conf=(lh.hrv&&lh.sleep)?'Hoog':(lh.hrv||lh.sleep)?'Middel':'Laag';
-    const cyc=cyclusVandaag?` × cyclus ${df.cyclusFactor.toFixed(2)}`:'';
+    const sig=[hv.hrv.gebruikt,hv.slaap.gebruikt,hv.cyclus.gebruikt].filter(Boolean).length;
+    const conf=(hv.hrv.gebruikt&&hv.slaap.gebruikt)?'Hoog':(hv.hrv.gebruikt||hv.slaap.gebruikt)?'Middel':'Laag';
+    // Eén datum achter de uitleg alleen wanneer alle gebruikte onderdelen dezelfde datum hebben.
+    const datums=[hv.hrv.gebruikt?hv.hrv.datum:null,hv.slaap.gebruikt?hv.slaap.datum:null,hv.cyclus.gebruikt?td():null].filter(Boolean);
+    const eenDatum=(datums.length&&datums.every(function(x){return x===datums[0];}))?datums[0]:'';
+    const rijDatum=eenDatum?` · ${eenDatum}`:'';
+    const cyc=hv.cyclus.gebruikt?` × cyclus ${df.cyclusFactor.toFixed(2)}`:'';
     const dc=dagfactorCoach(df.factor);
     // v3.3.48 — betekenis-eerst + premium "Waarom?": rauwe cijfers/pills verhuizen naar de
     // uitklap (renderDagfactorDetail), zodat de kaart als coach voelt i.p.v. dashboard.
-    window.homeDfDetail={factor:df.factor,uitleg,hrv:lh.hrv,rhr:lh.rhr,sleep:lh.sleep,cyclus:cyclusVandaag,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:lh.date,statusTxt:dfStat.txt,hrvBaseline:df.hrvBaseline};
+    window.homeDfDetail={factor:df.factor,uitleg,hrv:hv.hrv.gebruikt?hv.hrv.waarde:null,rhr:hv.rhr.gebruikt?hv.rhr.waarde:null,sleep:hv.slaap.gebruikt?hv.slaap.waarde:null,ctx:hv,cyclus:hv.cyclus.gebruikt?cyclusVandaag:null,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:eenDatum,statusTxt:dfStat.txt,hrvBaseline:df.hrvBaseline};
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:14px">
       <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" class="df-head">
         <div class="df-ring">
@@ -24174,7 +24182,7 @@ async function refreshHome(){
         <div style="flex:1;min-width:0">
           <div class="df-headline ${dc.cls}">${dc.headline}</div>
           <div class="df-meaning">${dc.meaning}</div>
-          <div class="df-tech">${uitleg} · ${lh.date}</div>
+          <div class="df-tech">${escHtml(uitleg)}${rijDatum}</div>
           <div id="dagfactor-chevron" class="df-why">Waarom vandaag? →</div>
         </div>
       </button>
@@ -24442,8 +24450,8 @@ async function openRecoveryDetail(){
   openModal('m-recovery-detail');
   try{
     /* GAP-P2-015: het detail toont dezelfde gekeurde rijen als waarmee gerekend is. */
-    const hd=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35')).rows;
-    const lh=hd[0]||null;
+    const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));
+    const hd=hq.rows, lh=hd[0]||null, hv=tkHealthVandaag(hq);
     let secties='';
     // HRV — hergebruikt EXACT hrvBaseline()/hrvStPersonal(), geen nieuwe SWC-drempel.
     if(lh&&lh.hrv!=null){
@@ -24453,7 +24461,7 @@ async function openRecoveryDetail(){
       secties+='<div style="margin-bottom:12px"><div style="font-weight:700">HRV</div>'+
         '<div>'+escHtml(tkMetingLabel(lh))+': '+lh.hrv+' ms</div>'+
         (baseline.ready?'<div style="color:var(--g4)">Persoonlijk niveau ('+baseline.fase+'): '+Math.round(baseline.meanRaw)+' ms</div>':'<div style="color:var(--g4)">Persoonlijk niveau: '+ (baseline.days||0)+' van de benodigde dagen historie</div>')+
-        '<div style="color:var(--g4)">Status: '+statusTekst+'</div></div>';
+        '<div style="color:var(--g4)">'+tkStatusLabel(hv.hrv)+statusTekst+'</div>'+tkNietMeeHtml(hv.hrv)+'</div>';
     }
     // RHR — hergebruikt EXACT rhrBaselineDelta(), puur beschrijvend (geen "goed/slecht"-oordeel
     // toegevoegd, want daarvoor bestaat geen canonical drempel).
@@ -24462,7 +24470,7 @@ async function openRecoveryDetail(){
       secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Rusthartslag</div>'+
         '<div>'+escHtml(tkMetingLabel(lh))+': '+lh.rhr+' bpm</div>'+
         (delta!=null?'<div style="color:var(--g4)">'+(delta>0?'+':'')+delta+' bpm t.o.v. je recente gemiddelde</div>':'<div style="color:var(--g4)">Onvoldoende historie voor een vergelijking</div>')+
-        '</div>';
+        tkNietMeeHtml(hv.rhr)+'</div>';
     }
     // Slaap — GEEN nieuwe baseline-formule (bestaat niet canoniek); uitsluitend vandaag +
     // recente losse waarden, geen "boven/onder gebruikelijk"-claim.
@@ -24471,7 +24479,7 @@ async function openRecoveryDetail(){
       secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Slaap</div>'+
         '<div>'+(lh&&lh.sleep!=null?escHtml(tkMetingLabel(lh))+': '+tkSleepHours(lh.sleep)+' uur':'Vandaag: niet ingevuld')+'</div>'+
         '<div style="color:var(--g4)">Laatste '+slaapRijen.length+' metingen: '+slaapRijen.map(r=>tkSleepHours(r.sleep)).join(', ')+' uur</div>'+
-        '<div style="font-size:11px;color:var(--g4);margin-top:2px">Nog geen persoonlijk gebruikelijk niveau berekend voor slaap.</div></div>';
+        '<div style="font-size:11px;color:var(--g4);margin-top:2px">Nog geen persoonlijk gebruikelijk niveau berekend voor slaap.</div>'+tkNietMeeHtml(hv.slaap)+'</div>';
     }
     // Subjectief — expliciet gemarkeerd als zelf ingevuld, nooit gemengd met meetdata.
     if(progCheckinCtx&&(progCheckinCtx.voelt||progCheckinCtx.pijn)){
@@ -24798,6 +24806,58 @@ function tkCyclusFaseVandaag(rij){
   const d=(rij.date!=null)?String(rij.date).slice(0,10):'';
   return (d!==''&&d===td())?rij.cyclus_fase:null;
 }
+// PRESENTATIECONTEXT. Wat mag de UI over HRV, rusthartslag, slaap en cyclus zeggen?
+//   - Kwaliteit/versheid (hq.signalen) zegt of een meting BRUIKBAAR is.
+//   - df.basis (uitkomst van dagfactor()) bewijst of een onderdeel de dagfactor van vandaag
+//     WERKELIJK heeft gevoed. Dat is de bron voor "telt mee", de signaaltelling en de uitleg.
+// Per signaal de nieuwste bruikbare meting met haar EIGEN datum (hq.signalen.<x>.datum): bij
+// gemengde rijen kan HRV van drie dagen geleden zijn en slaap van vandaag. Er is dus geen
+// gezamenlijke rijdatum.
+// HRV is reeks-gebaseerd: de basis is wat hrvDagFactorPersonal() als `recent` gebruikte
+// (7-daags gemiddelde of laatste meting). Die uitkomst wordt hier alleen doorgegeven; er wordt
+// niets opnieuw berekend en er staat geen drempel.
+//   hq           uitkomst van tkHealthQualified()
+//   hrvComponent uitkomst van hrvDagFactorPersonal() (optioneel)
+//   df           uitkomst van dagfactor() (optioneel; zonder df is `gebruikt` onbekend = false)
+//   -> { hrv:{waarde,datum,wanneer,isVandaag,oud,gebruikt,referentie,basis}, rhr:{...,gebruikt},
+//        slaap:{...,gebruikt}, cyclus:{gebruikt} }
+function tkHealthVandaag(hq, hrvComponent, df){
+  const rijen=(hq&&Array.isArray(hq.rows))?hq.rows:[];
+  const sig=(hq&&hq.signalen)||{};
+  const basis=(df&&df.basis)||null;
+  const vandaag=td();
+  const meting=function(veld,naam){
+    const s=sig[naam]||null;
+    const datum=(s&&s.datum)?s.datum:null;
+    const rij=datum?rijen.find(function(r){ return r&&r[veld]!=null&&r[veld]!==''&&String(r.date).slice(0,10)===datum; }):null;
+    return {waarde:rij?rij[veld]:null, datum:rij?datum:null, wanneer:rij?tkMetingWanneer(datum):'', isVandaag:!!(rij&&datum===vandaag), oud:!!(rij&&tkSignaalOnbetrouwbaar(s))};
+  };
+  const hrv=meting('hrv','hrv'), rhr=meting('rhr','rhr'), slaap=meting('sleep','slaap');
+  hrv.gebruikt=!!(basis&&basis.hrv);
+  slaap.gebruikt=!!(basis&&basis.slaap);
+  const recent=(hrv.gebruikt&&hrvComponent&&hrvComponent.recent)?hrvComponent.recent:null;
+  hrv.basis=recent?{waarde:recent.meanRaw,n:recent.n,bron:recent.bron}:null;
+  // Er is een actuele HRV-meting maar (nog) geen oordeel: zichtbaar, zonder invloed op de dagfactor.
+  hrv.referentie=!hrv.gebruikt&&hrv.waarde!=null&&!hrv.oud;
+  // Rusthartslag voedt de dagfactor niet; "telt mee" volgt hier de kwaliteit, net als de RHR-delta.
+  rhr.gebruikt=rhr.waarde!=null&&!rhr.oud;
+  return {hrv:hrv, rhr:rhr, slaap:slaap, cyclus:{gebruikt:!!(basis&&basis.cyclus)}};
+}
+// Mensentaal voor een laatste meting die vandaag niet meetelt.
+function tkNietMeegeteldTxt(naam, meting){
+  return (meting&&meting.wanneer)?(naam+' van '+meting.wanneer+' telt vandaag niet mee'):('laatste '+naam+'-meting telt vandaag niet mee');
+}
+// " (3 dagen geleden)" achter een meting die niet van vandaag is; leeg bij vandaag of zonder datum.
+function tkMetingNa(meting, voor){
+  return (meting&&meting.wanneer&&!meting.isVandaag)?' ('+(voor||'')+meting.wanneer+')':'';
+}
+// Hersteldetail: een meting die vandaag meetelt heeft een "Status"; bij een oudere meting hoort
+// de positie t.o.v. het persoonlijke niveau bij DIE meting, niet bij vandaag.
+function tkStatusLabel(ctx){ return (ctx&&ctx.oud)?'Bij die meting: ':'Status: '; }
+// Regel in het hersteldetail bij een meting die vandaag niet meetelt (anders leeg).
+function tkNietMeeHtml(ctx){
+  return (ctx&&ctx.oud)?'<div style="font-size:11px;color:var(--g4);margin-top:2px">Te oud om vandaag mee te tellen in je herstel.</div>':'';
+}
 // Dezelfde lijst als readinessDay() gebruikt (DecisionCore), geen kopie.
 function tkSignaalOnbetrouwbaar(signaal){
   const lijst=(typeof DecisionCore!=='undefined'&&Array.isArray(DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT))?DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT:[];
@@ -25048,20 +25108,31 @@ function dagfactorCoach(f){
 // Sprint 5.7.1/5.7.4/5.7.5: expliciet onderscheid referentiefase vs. persoonlijke
 // baseline vs. (impliciet) gemeten waarde — nooit meer "HRV goed/laag/kritiek" tonen
 // zonder te vermelden of dat op eigen data berust.
-function dagfactorUitleg(hrv,slaapUren,cyclusFase,df){
+// `vandaag` (optioneel) = tkHealthVandaag(...). De aanroeper geeft hrv/slaap/cyclus alleen mee
+// wanneer df.basis zegt dat ze de dagfactor voedden (of, voor HRV, dat er een actuele meting in
+// de referentiefase is). Een meting die niet meetelt wordt als zodanig genoemd, nooit als reden.
+function dagfactorUitleg(hrv,slaapUren,cyclusFase,df,vandaag){
   const parts=[];
+  const v=vandaag||null;
   if(hrv){
     const st=df.hrvSt, bl=df.hrvBaseline;
     if(st==='ref'){
       const dagenTeGaan=bl?Math.max(0,HRV_BASELINE_MIN_DAYS-bl.days):HRV_BASELINE_MIN_DAYS;
-      parts.push(bl&&bl.n>0?`HRV: referentiefase (nog ${dagenTeGaan} dagen tot je eigen baseline)`:'HRV: referentiefase (baseline wordt opgebouwd)');
+      // Er is een bruikbare HRV-meting, maar df.basis.hrv is false: expliciet zeggen dat zij de
+      // dagfactor nog niet voedt (alleen met context; de aanroep zonder context blijft zoals hij was).
+      const nogNiet=(v&&v.hrv&&v.hrv.referentie)?' — telt nog niet mee':'';
+      parts.push((bl&&bl.n>0?`HRV: referentiefase (nog ${dagenTeGaan} dagen tot je eigen baseline)`:'HRV: referentiefase (baseline wordt opgebouwd)')+nogNiet);
     }else{
       const bron=bl.fase==='volledig'?'eigen baseline':'voorlopige eigen baseline';
-      parts.push(st==='g'?`HRV goed t.o.v. je ${bron}`:st==='o'?`HRV verlaagd t.o.v. je ${bron}`:`HRV sterk verlaagd t.o.v. je ${bron}`);
+      parts.push((st==='g'?`HRV goed t.o.v. je ${bron}`:st==='o'?`HRV verlaagd t.o.v. je ${bron}`:`HRV sterk verlaagd t.o.v. je ${bron}`)+(v?tkMetingNa(v.hrv,'laatste meting '):''));
     }
   }
-  if(slaapUren)parts.push(df.slaapFactor>=1?'slaap voldoende':df.slaapFactor>=0.97?'slaap kort':'slaap te kort');
+  if(slaapUren)parts.push((df.slaapFactor>=1?'slaap voldoende':df.slaapFactor>=0.97?'slaap kort':'slaap te kort')+(v?tkMetingNa(v.slaap):''));
   if(cyclusFase)parts.push('cyclus: '+cyclusFase);
+  if(v){
+    if(v.hrv&&v.hrv.oud)parts.push(tkNietMeegeteldTxt('HRV',v.hrv));
+    if(v.slaap&&!v.slaap.gebruikt&&v.slaap.waarde!=null)parts.push(tkNietMeegeteldTxt('slaap',v.slaap));
+  }
   return parts.join(', ')||'onvoldoende data';
 }
 // v3.3.48 P4 — premium "Waarom vandaag?": composeert de uitleg lui (bij eerste opening)
@@ -25076,8 +25147,17 @@ function renderDagfactorDetail(){
   const row=(lbl,val)=>`<div class="dfd-row"><span class="dfd-lbl">${lbl}</span><span class="dfd-val">${val}</span></div>`;
   let html='<div class="dfd-title">Waarom vandaag?</div>';
   html+=row('Dagfactor',`${d.factor} · ${escHtml(d.statusTxt)}`);
-  const sig=[d.hrv?`HRV ${d.hrv} ms`:'',d.rhr?`RHR ${d.rhr}`:'',d.sleep?`slaap ${fmtSleep(d.sleep)}`:'',d.cyclus?`cyclus ${d.cyclus}`:''].filter(Boolean).join(' · ')||'—';
+  // Per signaal de eigen meetdatum; alleen wat de dagfactor voedde staat bij de herstelsignalen.
+  const c=d.ctx||{hrv:{},rhr:{},slaap:{},cyclus:{}};
+  const sig=[d.hrv?`HRV ${d.hrv} ms${tkMetingNa(c.hrv)}`:'',d.rhr?`RHR ${d.rhr}${tkMetingNa(c.rhr)}`:'',d.sleep?`slaap ${fmtSleep(d.sleep)}${tkMetingNa(c.slaap)}`:'',d.cyclus?`cyclus ${d.cyclus}`:''].filter(Boolean).join(' · ')||'—';
   html+=row('Herstelsignalen',escHtml(sig));
+  // Metingen die er wel zijn maar de dagfactor van vandaag niet voedden: apart, met de reden.
+  const nietMee=[
+    (!c.hrv.gebruikt&&c.hrv.waarde!=null)?`HRV ${c.hrv.waarde} ms (${[c.hrv.wanneer,c.hrv.referentie?'persoonlijke baseline wordt nog opgebouwd':''].filter(Boolean).join(', ')})`:'',
+    (c.rhr.waarde!=null&&c.rhr.oud)?`RHR ${c.rhr.waarde} (${c.rhr.wanneer})`:'',
+    (!c.slaap.gebruikt&&c.slaap.waarde!=null)?`slaap ${fmtSleep(c.slaap.waarde)} (${c.slaap.wanneer})`:''
+  ].filter(Boolean).join(' · ');
+  if(nietMee)html+=row('Telt vandaag niet mee',escHtml(nietMee));
   if(rec.length)html+=row('Spiergroepen',rec.slice(0,4).map(r=>`${escHtml(r.muscle)} ${r.pct}%`).join(' · '));
   if(wk&&wk.volKg)html+=row('Weekvolume',`${wk.volKg} kg · ${wk.pctStr} vs vorige week`);
   if(window.homeCoachText)html+=`<div class="dfd-concl">${escHtml(window.homeCoachText)}</div>`;
@@ -25086,9 +25166,11 @@ function renderDagfactorDetail(){
   // persoonlijke baseline is.
   let hrvBronTxt='';
   const bl=d.hrvBaseline;
-  if(d.hrv && bl){
+  if((d.hrv||c.hrv.referentie) && bl){
     if(!bl.ready)hrvBronTxt=` HRV-beoordeling: referentiefase (${bl.n} meting${bl.n===1?'':'en'}, nog geen persoonlijke baseline — pas vanaf 14 dagen eigen data).`;
     else hrvBronTxt=` HRV-beoordeling t.o.v. je ${bl.fase==='volledig'?'volledige':'voorlopige'} eigen baseline (${bl.n} metingen over ${bl.days} dagen).`;
+    // De basis die de berekening gebruikte (uitkomst van hrvDagFactorPersonal, niet opnieuw berekend).
+    if(c.hrv.basis)hrvBronTxt+=` Vergeleken met ${c.hrv.basis.bron==='7d-gemiddelde'?`je gemiddelde van ${c.hrv.basis.n} metingen in de laatste 7 dagen`:'je laatste meting'} (${Math.round(c.hrv.basis.waarde)} ms).`;
   }
   // Sprint 5.7.2/5.7.5 — herstelmodel is een vuistregel (48-72u, RPE-afhankelijk),
   // geen gemeten fysiologische waarde. Alleen tonen als er daadwerkelijk spiergroepen
@@ -32318,13 +32400,15 @@ async function renderLichaamPremium(){
     const R=42,C=2*Math.PI*R,off=C*(1-((ov!=null?ov:0)/100));
     const ringSvg=`<svg width="96" height="96" viewBox="0 0 96 96" style="transform:rotate(-90deg)"><circle cx="48" cy="48" r="${R}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/><circle cx="48" cy="48" r="${R}" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>`;
     // Fase 1 — elke waarde toont of hij gemeten is of afgeleid.
-    const tile=(v,k,src)=>`<div class="m"><div class="v">${v}</div><div class="k">${k}</div><div class="lich-src">${src}</div></div>`;
+    // Het meetmoment komt uit dezelfde helper als het hersteldetail (observation.v1).
+    const tile=(v,k,src,w)=>`<div class="m"><div class="v">${v}</div><div class="k">${k}</div><div class="lich-src">${src}</div>${w?`<div class="w">${escHtml(w)}</div>`:''}</div>`;
+    const wanneer=lh?tkMetingLabel(lh):'';
     hero.innerHTML=`<div class="lich-rhero">
       <div class="top">
         <div class="rring">${ringSvg}<div class="c"><div class="n">${ov!=null?ov+'%':'—'}</div><div class="l">Herstel</div></div></div>
         <div class="st"><div class="eye">Vandaag</div><div class="rd">${escHtml(ready)}</div><div class="badge">${escHtml(badge)}</div></div>
       </div>
-      <div class="grid">${tile(df!=null?df.toFixed(2):'—','Dagfactor','berekend')}${tile(lh&&lh.sleep!=null?v43SlaapTxt(lh.sleep):'—','Slaap','gemeten')}${tile(lh&&lh.hrv!=null?lh.hrv:'—','HRV','gemeten')}${tile(lh&&lh.rhr!=null?lh.rhr:'—','Rust HR','gemeten')}</div>
+      <div class="grid">${tile(df!=null?df.toFixed(2):'—','Dagfactor','berekend')}${tile(lh&&lh.sleep!=null?v43SlaapTxt(lh.sleep):'—','Slaap','gemeten',(lh&&lh.sleep!=null)?wanneer:'')}${tile(lh&&lh.hrv!=null?lh.hrv:'—','HRV','gemeten',(lh&&lh.hrv!=null)?wanneer:'')}${tile(lh&&lh.rhr!=null?lh.rhr:'—','Rust HR','gemeten',(lh&&lh.rhr!=null)?wanneer:'')}</div>
     </div>`;
   }
   // Body/Health foundation + apparaatstatus (echte data only). Fail-safe: eigen try/catch.

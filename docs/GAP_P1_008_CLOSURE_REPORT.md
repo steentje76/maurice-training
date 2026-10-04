@@ -63,3 +63,16 @@ Sinds v4.70.8 loopt ook de bestand-import via `upsert_daily_health` (`tkImportHr
 
 Resterende beperking: de database dwingt de enkele writer niet af. `authenticated` heeft INSERT/UPDATE/DELETE op
 `hrv_log` (RLS: alleen eigen rijen); een toekomstige directe write wordt dus alleen door de testguard tegengehouden.
+
+## Addendum 4 oktober 2026 -- Phase 2: database-afdwinging (migratie_v579, nog niet op productie)
+
+- **Phase 1** (PR #513, v4.70.8): één writer op applicatieniveau. Gemerged als `bc165eab`.
+- **Phase 2** (`migratie_v579.sql`): `anon`/`authenticated`/PUBLIC verliezen INSERT/UPDATE/DELETE/TRUNCATE op
+  `public.hrv_log`. Daarmee vervalt de "resterende beperking" uit het addendum van 3 oktober zodra de migratie op
+  productie staat.
+
+Bewijs in de repo: `core/fHrvDbSingleWriterEnforcement.test.js` (echte PostgreSQL via PGlite, echte functie- en
+migratie-SQL). Bewijs op productie: nog niet aanwezig. De migratie is niet toegepast; `tools/verify-hrv-single-writer.sql`
+levert dat bewijs na een goedgekeurde apply.
+
+**Status van de database-afgedwongen single writer: IMPLEMENTED, niet CLOSED_PROVEN** zolang de live verificatie ontbreekt.

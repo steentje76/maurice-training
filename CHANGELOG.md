@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## Security — HRV single-writer Phase 2: database dwingt de canonieke writer af (4 oktober 2026, server-side; APP_VER ongewijzigd v4.70.8)
+
+**Status: migratie in de repo, NIET op productie toegepast.** Apply volgt pas na onafhankelijke review en expliciet akkoord.
+
+- **Phase 1 (#513, v4.70.8):** één writer in de applicatie. **Phase 2 (deze wijziging):** de database dwingt dat af.
+- **Root cause (live read-only vastgesteld, main `bc165eab`):** `anon` en `authenticated` hebben via de default privileges van `postgres` INSERT/UPDATE/DELETE op `public.hrv_log`; RLS was de enige begrenzing. Een ingelogde gebruiker kon zijn eigen dagrijen dus rechtstreeks invoegen, leegmaken of verwijderen, buiten bronvalidatie, COALESCE-merge en provenance van `upsert_daily_health` om.
+- **`migratie_v579.sql`:** trekt INSERT/UPDATE/DELETE/TRUNCATE op `public.hrv_log` in van `anon`, `authenticated` en PUBLIC. SELECT, RLS, policies, de functie en `service_role` blijven ongewijzigd. Een afsluitende controle laat de migratie afbreken als de invariant niet geldt (o.a. functie niet SECURITY DEFINER, anon met EXECUTE, service_role zonder DELETE).
+- **Waarom dit veilig is:** `upsert_daily_health` is SECURITY DEFINER met owner `postgres` (tabel-owner) en vaste `search_path`; zij hangt niet af van tabelrechten van de aanroeper. Geen client-, Netlify- of databasecode doet een directe mutatie; accountverwijdering en cleanup gebruiken de service-role-sleutel.
+- **Bewijs:** `core/fHrvDbSingleWriterEnforcement.test.js` (67 tests) draait de echte functie (v560), de echte EXECUTE-rechten (v570) en de echte v579 op PostgreSQL (PGlite): directe INSERT/UPDATE/DELETE/UPSERT geweigerd voor authenticated en anon, RPC voor eigen gebruiker geslaagd, cross-user en anon geweigerd, service_role-RPC en -DELETE werken, gedeeltelijke update behoudt waarden en bron. Zes sabotagegevallen breken de migratie af en draaien terug. `tools/verify-hrv-single-writer.sql` is het rollback-veilige script voor de live controle na apply.
+- **Nieuw devDependency:** `@electric-sql/pglite` 0.5.8 (exact gepind, geen transitieve afhankelijkheden), alleen voor deze test.
+- **Gevolg na apply:** clients t/m v4.70.7 die nog rechtstreeks naar `hrv_log` schrijven (de oude bestand-import) krijgen op die write 403 en melden die als mislukt.
+
 ## v4.70.8 — HRV single-writer: bestand-import via upsert_daily_health (3 oktober 2026)
 
 **Aanleiding.** Maturity-audit `hrv-log-atomicity-001`, criterium B: naast de canonieke writer bestond een derde, actief schrijfpad naar `hrv_log`.

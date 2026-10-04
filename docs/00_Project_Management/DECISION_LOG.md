@@ -2546,3 +2546,12 @@ import op een bestaande dag aangeleverde waarden bijwerkt (laatste write wint pe
 overschrijven, gelijk aan check-in en wearable-sync. Het oude gedrag ("bestaande dag blijft onaangeroerd") is
 losgelaten omdat het alleen met een niet-atomaire lees-dan-schrijf-stap of een tweede databasecontract te behouden
 was. Herkomst die het model niet kan uitdrukken (bron `NULL` in oude exports) wordt `unknown`, niet geraden.
+
+## DEC-HRV-002 — De database dwingt de enkele hrv_log-writer af met tabelrechten, niet met RLS (4 oktober 2026)
+
+**Besluit.** `anon` en `authenticated` krijgen geen INSERT/UPDATE/DELETE/TRUNCATE op `public.hrv_log`
+(`migratie_v579.sql`). Schrijven kan alleen via `upsert_daily_health` (SECURITY DEFINER, EXECUTE voor authenticated en
+service_role) of met de service-role-sleutel (wearable-sync via dezelfde RPC; accountverwijdering en cleanup via
+DELETE). RLS blijft de leesgrens en is geen vervanging voor privilege-isolatie. Een eindgebruiker kan een dagrij niet
+zelf verwijderen; de app biedt die actie ook niet. De bestaande functie is niet gewijzigd en er is geen tweede RPC.
+Productie-apply is een aparte, expliciet goed te keuren stap; tot dan geldt de invariant alleen in de repo.

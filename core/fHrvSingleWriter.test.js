@@ -13,6 +13,8 @@
  *   D. Het mergecontract zelf: gedeeltelijke, herhaalde en door elkaar lopende writes.
  *   E. Guard: er bestaat geen directe hrv_log-writer meer, en de guard faalt aantoonbaar
  *      wanneer er opnieuw een wordt toegevoegd.
+ *   G. Phase 2 (migratie_v579): de database trekt de directe mutatierechten in; gedrag bewezen in
+ *      core/fHrvDbSingleWriterEnforcement.test.js.
  *
  * GRENS VAN HET BEWIJS. De atomiciteit van INSERT..ON CONFLICT..DO UPDATE is een eigenschap
  * van Postgres en is hier niet te reproduceren zonder database. Sectie D draait op een
@@ -362,6 +364,12 @@ async function main() {
     if (schrijft && defs.indexOf(f) < 0) sqlFout.push(f);
   });
   eq(sqlFout, [], 'F7 geen migratie buiten de upsert_daily_health-definities (v500 incl. eenmalige opschoning, v525, v560) schrijft naar hrv_log');
+
+  /* ══ G. Phase 2: de database dwingt dezelfde invariant af (migratie_v579) ═ */
+  // Het privilegegedrag zelf wordt op echte PostgreSQL bewezen in core/fHrvDbSingleWriterEnforcement.test.js.
+  const v579 = fs.existsSync(path.join(ROOT, 'migratie_v579.sql')) ? fs.readFileSync(path.join(ROOT, 'migratie_v579.sql'), 'utf8').replace(/--.*$/gm, '') : '';
+  ok(/revoke insert, update, delete, truncate on table public\.hrv_log from anon, authenticated, public;/.test(v579), 'G1 migratie_v579 trekt directe mutatierechten op hrv_log in van anon, authenticated en PUBLIC');
+  ok(fs.existsSync(path.join(ROOT, 'core', 'fHrvDbSingleWriterEnforcement.test.js')) && fs.existsSync(path.join(ROOT, 'tools', 'verify-hrv-single-writer.sql')), 'G2 database-gedragssuite en live-verificatiescript aanwezig');
 }
 
 main().then(function () {

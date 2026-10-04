@@ -543,12 +543,27 @@
   // brengt de dag-rollups naar device_canonical.v1. HRV = RMSSD (Google Health-bron) en wordt
   // EXPLICIET zo getagd (sourceMetric), zodat het NOOIT met Apple SDNN samengevoegd wordt.
   // Units zijn al canoniek (ms/bpm/min) → geen conversie (HRV blijft ms, geen ms→s-val).
+  //
+  // CANONIEKE GRENS (GAP-P2-018 R3). De paden hieronder beschrijven NIET de ruwe Google-Health-
+  // payload. Die kent per metric meerdere veldnamen en vormen (int64-als-string, geneste records,
+  // dailyRollUp) en wordt defensief gelezen door de providerparser in
+  // netlify/functions/_wearableSyncLib.js. De map beschrijft het PARSED-DAY-object dat die parser
+  // oplevert: { hrv_ms, resting_hr_bpm, sleep_minutes, steps_count }. Tot v4.70.11 stonden hier
+  // paden (dailyHeartRateVariability.rmssdMillis, dailyRestingHeartRate.bpm, sleep.totalMinutes)
+  // die met geen enkele werkelijk verwerkte payloadvorm overeenkwamen, waardoor
+  // normalizeHealthDaily() niet op de echte ingest aangesloten kon worden.
+  //
+  // DIT IS DE ENE BRON VAN DE CONTRACTGRENZEN. Ingest (qualifyDayValues in _wearableSyncLib.js) en
+  // de keuring bij lezen (DQ_CONTRACT / qualifySeries) lezen beide deze lijst.
+  // Stappen (R1): een structureel datacontract — een telling is een niet-negatief geheel getal.
+  // Er is bewust GEEN bovengrens: die zou een verzonnen norm zijn.
   var GOOGLE_HEALTH_MAP = {
-    provider: 'google-health', source: 'fitbit_via_google_health', method: 'api',
+    provider: 'google-health', source: 'fitbit_via_google_health', method: 'api', shape: 'parsed_day',
     metrics: [
-      { key: 'hrv_ms',          path: 'dailyHeartRateVariability.rmssdMillis', unit: 'ms',  sourceMetric: 'rmssd', min: 0, max: 400 },
-      { key: 'resting_hr_bpm',  path: 'dailyRestingHeartRate.bpm',             unit: 'bpm', min: 20, max: 120 },
-      { key: 'sleep_minutes',   path: 'sleep.totalMinutes',                    unit: 'min', min: 0, max: 1440 }
+      { key: 'hrv_ms',          path: 'hrv_ms',          unit: 'ms',    sourceMetric: 'rmssd', min: 0, max: 400 },
+      { key: 'resting_hr_bpm',  path: 'resting_hr_bpm',  unit: 'bpm',   min: 20, max: 120 },
+      { key: 'sleep_minutes',   path: 'sleep_minutes',   unit: 'min',   min: 0, max: 1440 },
+      { key: 'steps_count',     path: 'steps_count',     unit: 'count', min: 0, integer: true }
     ]
   };
 
@@ -563,7 +578,8 @@
       var value = null, quality = cls.status;
       if (cls.status === 'valid') {
         value = cls.value;
-        if (m.min != null && value < m.min) quality = 'implausible';
+        if (m.integer && Math.floor(value) !== value) { quality = 'invalid'; value = null; } // telling: geheel getal
+        else if (m.min != null && value < m.min) quality = 'implausible';
         else if (m.max != null && value > m.max) quality = 'implausible';
       }
       var prov = buildProvenance({
@@ -860,11 +876,14 @@
     for (var i = 0; i < lijst.length; i++) {
       if (lijst[i] && lijst[i].key === metricKey) {
         var d = (typeof deler === 'number' && deler > 0) ? deler : 1;
-        return {
+        var c = {
           min: lijst[i].min != null ? lijst[i].min / d : null,
           max: lijst[i].max != null ? lijst[i].max / d : null,
           bron: metricKey
         };
+        // Structurele eigenschap uit dezelfde bron; alleen aanwezig waar het contract haar definieert.
+        if (lijst[i].integer === true) c.integer = true;
+        return c;
       }
     }
     return null;
@@ -873,6 +892,7 @@
     hrv:    _contractVan('hrv_ms'),
     rhr:    _contractVan('resting_hr_bpm'),
     sleep:  _contractVan('sleep_minutes', 60),   // contract in minuten -> app rekent in uren
+    steps:  _contractVan('steps_count'),          // R1: niet-negatief geheel getal; geen bovengrens
     weight: null                                  // geen brondata-contract: gewicht is ingevoerd
   };
 
@@ -950,6 +970,10 @@
         return { date: datum, value: n, source: bron, status: 'excluded', reason: 'buiten_contract' };
       }
       if (contract && contract.max != null && n > contract.max) {
+        return { date: datum, value: n, source: bron, status: 'excluded', reason: 'buiten_contract' };
+      }
+      // Het contract kan een geheel getal eisen (een telling); generiek, niet per metric.
+      if (contract && contract.integer === true && Math.floor(n) !== n) {
         return { date: datum, value: n, source: bron, status: 'excluded', reason: 'buiten_contract' };
       }
       return { date: datum, value: n, source: bron, status: 'valid', reason: null };
@@ -1289,9 +1313,9 @@
   //   NOT_AVAILABLE= niet via de huidige dag-rollup-route beschikbaar (bv. intraday HR-stream).
   var FITBIT_METRIC_STATUS = {
     hrv_ms:          { status: 'SUPPORTED',     unit: 'ms',    note: 'RMSSD (Google Health) — expliciet als rmssd getagd' },
-    resting_hr_bpm:  { status: 'SUPPORTED',     unit: 'bpm',   note: 'dailyRestingHeartRate.bpm' },
-    sleep_minutes:   { status: 'SUPPORTED',     unit: 'min',   note: 'sleep.totalMinutes' },
-    steps:           { status: 'OPTIONAL',      unit: 'count', note: 'dagstappen — bron levert dit; nog niet gemapt/gevalideerd' },
+    resting_hr_bpm:  { status: 'SUPPORTED',     unit: 'bpm',   note: 'dagelijkse rusthartslag (parsed-day: resting_hr_bpm)' },
+    sleep_minutes:   { status: 'SUPPORTED',     unit: 'min',   note: 'slaapduur (parsed-day: sleep_minutes)' },
+    steps:           { status: 'SUPPORTED',     unit: 'count', note: 'dagstappen (parsed-day: steps_count) — niet-negatief geheel getal, geen bovengrens' },
     calories:        { status: 'OPTIONAL',      unit: 'kcal',  note: 'dagcalorieën — nog niet gemapt/gevalideerd' },
     spo2:            { status: 'OPTIONAL',      unit: 'pct',   note: 'SpO2 — apparaat-afhankelijk; nog niet gemapt' },
     weight_kg:       { status: 'EXTERNAL',      unit: 'kg',    note: 'vereist body/weegschaal-scope of aparte bron' },

@@ -77,6 +77,68 @@ function buildRow(date, userId, vals, existing) {
   return { row: row, contributed: contrib, isUpdate: !!existing };
 }
 
+/* ── INGEST-KWALITEIT (GAP-P2-018 R2/R3) ──────────────────────────────────────
+ * Een providerwaarde gaat alleen naar opslag wanneer zij volgens het bestaande brondata-contract
+ * geldig is. De keuring gebeurt hier, VOOR de schrijfbeslissing (contributed/classifyWrite), zodat
+ * een afgewezen waarde null is: de atomaire merge van upsert_daily_health laat een bestaande
+ * geldige waarde dan staan, en een dag met alleen afgewezen waarden wordt niet geschreven.
+ *
+ * Geen eigen grenzen en geen tweede kwaliteitsmodel: de classificatie komt uit
+ * DeviceCore.normalizeHealthDaily() met DeviceCore.GOOGLE_HEALTH_MAP — dezelfde lijst waaruit de
+ * keuring bij lezen (DQ_CONTRACT) haar grenzen haalt.
+ *
+ * Grens: het parsed-day-object { hrv_ms, resting_hr_bpm, sleep_minutes, steps_count }. De parsers
+ * leveren slaap in uren; voor de toets tegen het contract (minuten) wordt dat omgerekend. Opgeslagen
+ * wordt de waarde van de parser, niet die van de normalisatie.
+ *
+ * FAIL-CLOSED: ontbreekt de keuringslaag, gooit zij, of geeft zij een onbekende of misvormde
+ * uitkomst, dan zijn ALLE vier de waarden null en is ok=false. Er valt nooit een ruwe waarde door.
+ * Het resultaat bevat alleen statussen en redenen, nooit de afgewezen waarde zelf.
+ * ────────────────────────────────────────────────────────────────────────────*/
+var INGEST_VELDEN = { hrv: 'hrv_ms', rhr: 'resting_hr_bpm', sleep: 'sleep_minutes', steps: 'steps_count' };
+var INGEST_STATUSSEN = ['valid', 'implausible', 'invalid', 'empty'];
+function _deviceCore() {
+  try { return require('../../core/deviceIntegration.js'); } catch (_) { return null; }
+}
+// vals: { hrv (ms), rhr (bpm), sleep (uren), steps (aantal) } zoals de parsers opleveren.
+// core: optioneel, alleen voor tests; standaard de echte DeviceCore.
+// -> { ok, vals:{hrv,rhr,sleep,steps}, status:{...}, rejected:{veld:reden} }
+function qualifyDayValues(vals, core) {
+  vals = vals || {};
+  var velden = Object.keys(INGEST_VELDEN);
+  var dicht = function (reden) {
+    var rej = {};
+    velden.forEach(function (k) { if (vals[k] != null) rej[k] = reden; });
+    return { ok: false, vals: { hrv: null, rhr: null, sleep: null, steps: null }, status: {}, rejected: rej };
+  };
+  try {
+    var dc = (core === undefined) ? _deviceCore() : core;
+    if (!dc || typeof dc.normalizeHealthDaily !== 'function' || !dc.GOOGLE_HEALTH_MAP) return dicht('quality_unavailable');
+    var parsedDay = {
+      hrv_ms: vals.hrv,
+      resting_hr_bpm: vals.rhr,
+      sleep_minutes: (typeof vals.sleep === 'number') ? vals.sleep * 60 : vals.sleep,
+      steps_count: vals.steps
+    };
+    var norm = dc.normalizeHealthDaily(parsedDay, dc.GOOGLE_HEALTH_MAP, {});
+    if (!norm || !Array.isArray(norm.metrics)) return dicht('quality_malformed');
+    var perKey = {};
+    norm.metrics.forEach(function (m) { if (m && m.key) perKey[m.key] = m; });
+    var uit = { hrv: null, rhr: null, sleep: null, steps: null }, status = {}, rejected = {};
+    for (var i = 0; i < velden.length; i++) {
+      var veld = velden[i], m = perKey[INGEST_VELDEN[veld]];
+      if (!m || INGEST_STATUSSEN.indexOf(m.quality) === -1) return dicht('quality_malformed');
+      if (m.quality === 'valid' && !(typeof m.value === 'number' && isFinite(m.value))) return dicht('quality_malformed');
+      status[veld] = m.quality;
+      if (m.quality === 'valid') uit[veld] = vals[veld];
+      else if (vals[veld] != null) rejected[veld] = m.quality;
+    }
+    return { ok: true, vals: uit, status: status, rejected: rejected };
+  } catch (_) {
+    return dicht('quality_error');
+  }
+}
+
 function classifyWrite(vals, hasExisting) {
   if (!contributed(vals)) return 'skipped';
   return hasExisting ? 'updated' : 'imported';
@@ -150,12 +212,15 @@ function parseSleepPoint(point) {
 // vaste veldnaam blind aannemen) -- countSum kan int64-als-string zijn.
 // Retourneert null bij een ontbrekend steps-veld (UNKNOWN, sectie 3 van de
 // opdracht) -- NOOIT 0 tenzij de provider countSum=0 daadwerkelijk teruggaf.
+// GAP-P2-018 R1: de parser bewaart de numerieke providerwaarde en rondt NIET af. Of een
+// waarde een geldige telling is (niet-negatief, geheel getal) beslist uitsluitend de
+// keuringslaag op basis van het contract; een afgeronde 12.5 zou die toets ontlopen.
 function parseStepsRollupPoint(rollupPoint) {
   var date = _dateFrom(rollupPoint && rollupPoint.civilStartTime) || _dateFrom(rollupPoint && rollupPoint.civilEndTime) || _dateFrom(rollupPoint && rollupPoint.date);
   var stepsRec = rollupPoint && rollupPoint.steps;
   if (!stepsRec) return { date: date, value: null }; // geen steps-veld in deze rollup-entry -> UNKNOWN
   var count = firstNum(stepsRec, ['countSum', 'count_sum', 'count']);
-  return { date: date, value: count == null ? null : Math.round(count) };
+  return { date: date, value: count == null ? null : count };
 }
 
 function minutesToHours(min) {
@@ -231,5 +296,6 @@ module.exports = {
   sleepMinutesOf: sleepMinutesOf, minutesToHours: minutesToHours, pointShape: pointShape, recordShape: recordShape,
   amsterdamToday: amsterdamToday, todaySummary: todaySummary, syncResult: syncResult,
   parseHrvPoint: parseHrvPoint, parseRhrPoint: parseRhrPoint, parseSleepPoint: parseSleepPoint,
-  parseStepsRollupPoint: parseStepsRollupPoint
+  parseStepsRollupPoint: parseStepsRollupPoint,
+  qualifyDayValues: qualifyDayValues
 };

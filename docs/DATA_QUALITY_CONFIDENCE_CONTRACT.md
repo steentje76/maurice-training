@@ -35,10 +35,11 @@ De eerste versie van dit contract noemde de onderstaande lagen niet, terwijl ze 
 |---|---|---|---|
 | dataquality.v1 — `qualifySeries()` | Is dit getal technisch bruikbaar als invoer? | per dag en veld: `valid` / `excluded` + reden (`niet_numeriek`, `buiten_contract`, `extreme_uitschieter`) / `insufficient_data` | bij lezen |
 | observation.v1 — `observation()` + `observationQuality()` | Hoe actueel is de nieuwste meting, en hoe staat de bron ervoor? | `no_data`, `syncing`, `sync_failed`, `source_unavailable`, `stale`, `partial`, `current` | bij lezen |
-| `normalizeHealthDaily()` | Is de providerwaarde bij ingestie geldig? | `valid` / `implausible` / `invalid` / `empty` | niet aangesloten in runtime |
+| `normalizeHealthDaily()` | Is de providerwaarde bij ingestie geldig? | `valid` / `implausible` / `invalid` / `empty` | bij ingestie, sinds v4.70.12: alleen `valid` wordt opgeslagen; de status zelf niet |
 
 Quality is geen provenance (`manual`/`wearable`/`unknown`), geen evidence en geen confidence. De grenzen komen uit
-het brondata-contract (`GOOGLE_HEALTH_MAP`): HRV 0–400 ms, rusthartslag 20–120 bpm, slaap 0–24 uur.
+het brondata-contract (`GOOGLE_HEALTH_MAP`): HRV 0–400 ms, rusthartslag 20–120 bpm, slaap 0–24 uur, stappen niet-negatief geheel getal
+zonder bovengrens. Die ene lijst geldt voor de ingest én voor de keuring bij lezen.
 
 ### Brug naar herstel en readiness (healthinput.v1, v4.70.9)
 

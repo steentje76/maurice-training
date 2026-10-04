@@ -48,6 +48,7 @@ const ERR = {
   SUPABASE: 'SUPABASE_ERROR',            // PostgREST gaf een fout of onverwachte vorm
   INVALID_RESPONSE: 'INVALID_RESPONSE',  // niet-JSON of onverwachte structuur
   NOT_CONNECTED: 'NOT_CONNECTED',
+  QUALITY: 'QUALITY_UNAVAILABLE',        // keuringslaag ontbreekt of faalt -> niets schrijven (fail-closed)
   UNKNOWN: 'UNKNOWN_ERROR'
 };
 const USER_MSG = 'Synchroniseren met Fitbit is momenteel niet gelukt. Probeer het later opnieuw.';
@@ -190,6 +191,21 @@ exports.handler = async function (event) {
     // en laat de kolom ongemoeid (COALESCE-semantiek in de RPC).
     stepsData.forEach(p => { const r = LIB.parseStepsRollupPoint(p); if (r && r.date && r.value != null) { (byDate[r.date] ||= {}).steps = r.value; parsedSteps++; } });
 
+    // GAP-P2-018 R2: keuren VOOR de schrijfbeslissing. Alleen een waarde die volgens het bestaande
+    // brondata-contract geldig is blijft staan; een afgewezen waarde wordt null, zodat de RPC een
+    // bestaande geldige waarde niet overschrijft en een dag met alleen afgewezen waarden niet wordt
+    // geschreven. Faalt de keuringslaag, dan wordt er niets geschreven (fail-closed).
+    const rejected = { hrv: 0, rhr: 0, sleep: 0, steps: 0 };
+    const accepted = { hrv: 0, rhr: 0, sleep: 0, steps: 0 };
+    for (const date of Object.keys(byDate)) {
+      const q = LIB.qualifyDayValues(byDate[date]);
+      if (!q || q.ok !== true) throw tkError(ERR.QUALITY, 'quality layer unavailable');
+      Object.keys(q.rejected).forEach(k => { if (k in rejected) rejected[k]++; });
+      Object.keys(accepted).forEach(k => { if (q.vals[k] != null) accepted[k]++; });
+      byDate[date] = q.vals;
+    }
+    const rejectedMetrics = rejected.hrv + rejected.rhr + rejected.sleep + rejected.steps;
+
     let imported = 0, updated = 0, skipped = 0;
     let todayWrite = 'none'; // 'imported' | 'updated' | 'skipped' | 'none' — wat gebeurde er specifiek met VANDAAG
     for (const [date, vals] of Object.entries(byDate)) {
@@ -240,6 +256,8 @@ exports.handler = async function (event) {
       http: { hrv: hrvR.status, rhr: rhrR.status, sleep: sleepR.status, steps: stepsR.status },
       fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length, steps: stepsData.length },
       parsed: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep, steps: parsedSteps },
+      // Na de keuring: aantallen, nooit de afgewezen waarden zelf.
+      accepted: accepted, rejected: rejected,
       // VANDAAG apart: onderscheidt A (upstream heeft vandaag niet: fetched=false) van B (veldnaam: fetched=true, parsed=false)
       todayDiag: { date: todayAms, fetched: today.fetched, parsed: today.metrics, written: today.written, available: today.available },
       shape: { hrv: LIB.pointShape(hrvData[0]), rhr: LIB.pointShape(rhrData[0]), sleep: LIB.pointShape(sleepData[0]), steps: LIB.pointShape(stepsData[0]) },
@@ -270,7 +288,10 @@ exports.handler = async function (event) {
       http: httpStatuses,
       code: providerErr,
       fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length, steps: stepsData.length },
-      metrics: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep, steps: parsedSteps },
+      // metrics = wat na de keuring is geaccepteerd (bij geldige data gelijk aan wat de parser las).
+      metrics: accepted,
+      // Aantal afgewezen providerwaarden per metric; nooit de waarde zelf.
+      rejected: rejected, rejectedMetrics: rejectedMetrics,
       today: today });
   } catch (e) {
     const code = classifyException(e);

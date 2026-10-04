@@ -6,7 +6,17 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.11
+v4.70.12
+
+## Wearable-ingest keurt vóór opslag (v4.70.12, 4 oktober 2026)
+
+- `wearable-sync` schrijft alleen providerwaarden die volgens het brondata-contract geldig zijn; een afgewezen waarde
+  is null en overschrijft niets. Keuring: `qualifyDayValues()` → `DeviceCore.normalizeHealthDaily(GOOGLE_HEALTH_MAP)`.
+- `GOOGLE_HEALTH_MAP` beschrijft het parsed-day-object van de providerparser en is de ene contractbron voor ingest en
+  voor de keuring bij lezen. Stappen: niet-negatief geheel getal, geen bovengrens.
+- Zonder werkende keuringslaag schrijft de sync niets (`QUALITY_UNAVAILABLE`).
+- GAP-P2-018: R1–R3 opgelost en bewezen in de testketen; R4–R6 open. Niet geverifieerd tegen een live providersync.
+- Guard: `core/fWearableIngestQuality.test.js`.
 
 ## Presentatie van health-data volgt de berekening (v4.70.11, 4 oktober 2026)
 
@@ -261,7 +271,7 @@ v4.70.11
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.11 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.12 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

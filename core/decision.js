@@ -320,6 +320,21 @@
    * }
    * -> readiness_day.v1-contract
    */
+  // Kwaliteitsstatussen (observation.v1, DeviceCore.QUALITY_STATES) waarbij een health-signaal
+  // NIET als actueel signaal voor vandaag telt. Eén lijst, gebruikt door readinessDay() en door
+  // de herstel-orkestratie (dagfactor, RHR-delta, herstelscore) — GAP-P2-015.
+  //
+  // Productbesluit DEC-DQ-001 (4 oktober 2026):
+  //   'no_data'  er is geen meting.
+  //   'stale'    de nieuwste meting is 7 dagen of ouder (observation.v1). Zij blijft in de
+  //              historie staan en mag baseline en trend blijven voeden, maar is geen signaal
+  //              voor de beslissing van vandaag.
+  //   'sync_failed' staat hier NIET meer in: sync-status is transport/connectiviteit, geen
+  //              meetgeldigheid. Een opgeslagen, actuele en contractueel geldige meting blijft
+  //              geldig wanneer een latere sync mislukt. (Tot v4.70.8 stond hier sync_failed
+  //              en ontbrak stale.)
+  var READINESS_ONBETROUWBARE_KWALITEIT = ['no_data', 'stale'];
+
   function readinessDay(input) {
     var i = input || {};
     var sig = i.signalen || {};
@@ -338,7 +353,7 @@
     // VOORDAT de datakwaliteit wordt bepaald: anders zou een dag waarop drie van de zes
     // signalen niet gesynchroniseerd zijn zichzelf nog steeds 'volledig' noemen — precies het
     // tegenovergestelde van wat deze laag hoort te doen. (Sprint 15, gevonden bij de audit.)
-    var ONBETROUWBAAR = ['no_data', 'sync_failed'];
+    var ONBETROUWBAAR = READINESS_ONBETROUWBARE_KWALITEIT;
     ['hrv', 'rhr', 'slaap'].forEach(function (k) {
       var v = sig[k];
       if (v && v.waarde != null && v.kwaliteit && ONBETROUWBAAR.indexOf(v.kwaliteit) >= 0) {
@@ -805,6 +820,7 @@
     DAYZONE_VERSIE: DAYZONE_VERSIE,
     readinessDay: readinessDay,
     READINESS_DAY_VERSIE: READINESS_DAY_VERSIE,
+    READINESS_ONBETROUWBARE_KWALITEIT: READINESS_ONBETROUWBARE_KWALITEIT,
     READINESS_ZONES: READINESS_ZONES,
     READINESS_SIGNALEN: READINESS_SIGNALEN,
     READINESS_ZONE_TEKST: READINESS_ZONE_TEKST,

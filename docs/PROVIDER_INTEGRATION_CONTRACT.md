@@ -22,7 +22,7 @@ Bevestigd aanwezig in de bestaande code-commentaren van core/concept2Live.js ("P
 
 | Provider | Transport | Auth | Data | Direction | Provenance | Dedup | Quality | Active? |
 |---|---|---|---|---|---|---|---|---|
-| Google Health (Fitbit-opvolger) | Server-side OAuth 2.0 | OAuth, JWT-geverifieerd, one-time state-token | HRV, RHR, slaap | Provider naar TK (pull) | Per-veld (hrv_source/rhr_source/sleep_source, MS-F3-10) | UNIQUE(user_id,provider) + merge-duplicates-upsert (connectie); UNIQUE(user_id,date) + atomaire RPC (dagelijkse data) | Impliciet via provenance | JA, actief |
+| Google Health (Fitbit-opvolger) | Server-side OAuth 2.0 | OAuth, JWT-geverifieerd, one-time state-token | HRV, RHR, slaap | Provider naar TK (pull) | Per-veld (hrv_source/rhr_source/sleep_source, MS-F3-10) | UNIQUE(user_id,provider) + merge-duplicates-upsert (connectie); UNIQUE(user_id,date) + atomaire RPC (dagelijkse data) | Bij lezen, per waarde: dataquality.v1 (`valid`/`excluded`/`insufficient_data`) en observation.v1 (versheid, syncstatus), los van provenance. Niet bij ingestie en niet opgeslagen. CORRECTIE 4 oktober 2026: eerder ten onrechte "impliciet via provenance" | JA, actief |
 | Concept2 PM5 | BLE (native transport, NIET in deze repo) | Geen (lokale BLE-pairing) | Elapsed time, afstand, pace, watts, stroke rate | Apparaat naar TK (live stream) | CONFIRMED_OFFICIAL/APK_OBSERVED/BOTH/INFERRED-classificatie per UUID | Niet van toepassing | Bron-classificatie per veld aanwezig | Pure core: JA. Native BLE-transport: NIET in deze repo -- real-device-validatie categorisch onmogelijk in deze omgeving |
 | Weather | Server-side request-URL-opbouw + client-side fetch (Open-Meteo) | Geen (geen key vereist voor het niet-commerciële endpoint) | Temperatuur, gevoelstemperatuur, vocht, luchtdruk, wind, neerslag, UV | Provider naar TK (pull, per sessie) | Volledig canoniek object incl. observed_or_forecast en quality per veld, opgeslagen in sessions.weather (jsonb) | Niet van toepassing (per-sessie-attachment) | Per-veld classificatie (valid/invalid/implausible/empty) | JA, actief -- CORRECTIE t.o.v. de oorspronkelijke versie van dit rapport, zie MS-F5-06: eerder ten onrechte als "nog niet geïmplementeerd" vermeld op basis van een gedateerd modulecommentaar, niet op daadwerkelijke code-audit |
 | Garmin/Polar/WHOOP/Suunto/COROS | -- | -- | -- | -- | -- | -- | -- | NEE -- geen code gevonden, feasibility is MS-F5-05 |
@@ -47,7 +47,7 @@ Bevestigd aanwezig in de bestaande code-commentaren van core/concept2Live.js ("P
 | Timestamps/timezones | OK | amsterdamToday(), geen toISOString()-daggrensbug |
 | Provenance | OK | Per-veld *_source-kolommen |
 | Measured/derived status | OK | Provider-gerapporteerd, geen TK-berekening |
-| Data quality | GEDEELTELIJK -- geen expliciet quality-veld naast provenance |
+| Data quality | GEDEELTELIJK -- HRV/RHR/slaap worden bij lezen per waarde gekeurd (dataquality.v1, observation.v1). Open: stappen hebben geen contract; `wearable-sync` classificeert niet vóór opslag; `normalizeHealthDaily()` is niet aangesloten |
 | Missing fields | OK | null, nooit 0 |
 | Deduplication | OK | UNIQUE(user_id,date) + atomaire RPC |
 | Idempotency | OK | Herhaalde sync -> één canonieke rij, functioneel bewezen |
@@ -67,7 +67,7 @@ Geen providerspecifieke veldnamen lekken door naar de Calculation Engine. hrv/rh
 ms (HRV), bpm (RHR), uren (slaap), meters/seconden (Concept2), C/m/s/mm/h/% (weer, canoniek maar nog niet live gevoed).
 
 ## Nieuw gevonden gaps
-- GAP-F5-001 (P2): geen granulair, per-waarde quality-veld naast provenance voor wearable-gezondheidsdata.
+- GAP-F5-001 (P2, nu GAP-P2-018): oorspronkelijk "geen granulair, per-waarde quality-veld naast provenance". Geherdefinieerd op 4 oktober 2026 -- de per-waarde keuring bestond al in `core/deviceIntegration.js`; zie `docs/GAP_ANALYSIS_V2.md` voor de resterende punten.
 - GAP-F5-002 (P2): geen expliciete, geautomatiseerde retry-met-backoff in wearable-sync.js.
 
 Beide niet-kritiek: geen dataverlies, geen silent-corruption-risico.

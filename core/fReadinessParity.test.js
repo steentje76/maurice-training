@@ -23,7 +23,7 @@ function extractFn(name) {
   for (let j = i; j < html.length; j++) { if (html[j] === '{') d++; else if (html[j] === '}') { d--; if (d === 0) return html.slice(m.index, j + 1); } }
   return null;
 }
-const FNS = ['recoveryAdjustmentForToday', 'todayPainMuscle', 'computeProgAdjustment', 'applySessionRecovery', 'applyRecoveryToGuidedPlan',
+const FNS = ['recoveryAdjustmentForToday', 'tkHealthFailClosed', 'tkHealthQualified', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'todayPainMuscle', 'computeProgAdjustment', 'applySessionRecovery', 'applyRecoveryToGuidedPlan',
   'recoveryWeightFactor', 'readinessInputsText', 'buildPrevBlock', 'strengthBasisText', 'roundKg', 'resolveWorkingWeight', 'detrainingFactor',
   'daysBetweenDates', 'suggestWeightForRepsRpe', 'resolvePrescriptionRepTarget', 'previewOneRM', 'estimatedOneRM', 'getOneRM', 'oneRMFor',
   'strengthBasisProvenance', 'manualOneRMDate', 'recoveryAdjustToast'];

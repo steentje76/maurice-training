@@ -6,15 +6,35 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.8
+v4.70.9
 
-## HRV single-writer Phase 2 — database-afdwinging (4 oktober 2026; migratie NIET toegepast op productie)
+## Herstel/readiness leest gekeurde health-data (v4.70.9, 4 oktober 2026)
 
-- `migratie_v579.sql` staat in de repo en trekt INSERT/UPDATE/DELETE/TRUNCATE op `public.hrv_log` in van `anon`,
-  `authenticated` en PUBLIC. **Op productie is zij nog niet toegepast:** daar hebben `anon`/`authenticated` deze
-  rechten nog (RLS-beperkt tot eigen rijen). De database-afgedwongen invariant geldt dus nog niet live.
-- Bewezen op echte PostgreSQL-semantiek in `core/fHrvDbSingleWriterEnforcement.test.js`; live controle na apply met
-  `tools/verify-hrv-single-writer.sql`.
+- Eén keuringspunt voor de keten: `tkHealthQualified()` -> `DeviceCore.qualifyHealthRows()` (healthinput.v1), dat alleen
+  de bestaande lagen dataquality.v1 en observation.v1 aanroept. Waarden met reden `niet_numeriek` of `buiten_contract`
+  zijn ontbrekend vóór dagfactor, RHR-delta, herstelscore en readiness.
+- `readinessDay()` krijgt in runtime de bestaande kwaliteitsstatus; de herstelscore telt alleen componenten met een
+  werkelijke basis.
+- DEC-DQ-001: een `stale` meting (7+ dagen) telt niet als actueel signaal voor vandaag maar blijft historie; sync-status
+  is geen invoer van de keten; statistische uitschieters blijven meetellen; zonder keuringslaag zijn HRV/RHR/slaap
+  ontbrekend (fail-closed).
+- Guard: `core/fRecoveryReadinessQualityWiring.test.js`.
+
+## HRV single-writer Phase 2 — database-afdwinging (migratie_v579 op productie sinds 4 oktober 2026; status CLOSED_PROVEN)
+
+- `migratie_v579.sql` is op 4 oktober 2026 om 08:20 UTC op de productiedatabase toegepast (migratie-ledger versie
+  `20261004082007`, `migratie_v579_hrv_single_writer_db_enforcement`; de opgeslagen tekst heeft dezelfde md5 als het
+  bestand in de repo).
+- Live ACL (opnieuw gecontroleerd op 4 oktober 2026, 15:12 UTC): `anon` en `authenticated` hebben op `public.hrv_log`
+  alleen SELECT — geen INSERT, UPDATE, DELETE of TRUNCATE. `service_role` heeft SELECT/INSERT/UPDATE/DELETE. RLS staat
+  aan. `upsert_daily_health` is SECURITY DEFINER met vaste `search_path`; EXECUTE voor `authenticated` en
+  `service_role`, niet voor `anon` of PUBLIC.
+- Live gedrag: `tools/verify-hrv-single-writer.sql` is op 4 oktober 2026 direct na de apply volledig uitgevoerd; alle
+  19 regels gaven de verwachte uitkomst (directe INSERT/UPDATE/DELETE geweigerd, RPC voor de eigen gebruiker
+  toegestaan, cross-user en anon geweigerd, service_role RPC en DELETE toegestaan, gedeeltelijke merge met bron per
+  veld correct). De transactie is teruggedraaid; aantal rijen en inhoud van `hrv_log` waren vóór en na gelijk.
+- Niet live getest: een aanroep via de REST-interface met een echte gebruikerssessie.
+- Regressiebewijs in de repo: `core/fHrvDbSingleWriterEnforcement.test.js` (echte PostgreSQL-semantiek).
 
 ## HRV single-writer — bestand-import via de canonieke writer (v4.70.8, 3 oktober 2026)
 
@@ -224,7 +244,7 @@ v4.70.8
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.8 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.9 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

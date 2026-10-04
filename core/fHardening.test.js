@@ -45,13 +45,15 @@ eq(r.datakwaliteit, 'volledig', 'A1: zes geldige signalen -> volledig');
 eq(r.beschikbaar.length, 6, 'A2: en zes beschikbaar');
 eq(r.ontbreekt, [], 'A3: niets ontbreekt');
 
-r = metSignalen({ hrv: { waarde: 28, kwaliteit: 'sync_failed' } });
-eq(r.beschikbaar.length, 5, 'A4: één mislukte synchronisatie telt niet mee als aanwezig');
+// DEC-DQ-001 (4 oktober 2026): de lijst van niet-actuele statussen is no_data + stale.
+// sync_failed is transport-status en maakt een opgeslagen meting niet ongeldig (zie A16).
+r = metSignalen({ hrv: { waarde: 28, kwaliteit: 'stale' } });
+eq(r.beschikbaar.length, 5, 'A4: één verouderd signaal telt niet mee als aanwezig');
 eq(r.datakwaliteit, 'volledig', 'A5: vijf geldige signalen is nog steeds volledig');
 ok(r.ontbreekt.indexOf('hrv') >= 0, 'A6: en het signaal staat bij ontbreekt');
 
-r = metSignalen({ hrv: { waarde: 28, kwaliteit: 'sync_failed' }, rhr: { waarde: 57, kwaliteit: 'sync_failed' } });
-eq(r.beschikbaar.length, 4, 'A7: twee mislukte synchronisaties');
+r = metSignalen({ hrv: { waarde: 28, kwaliteit: 'stale' }, rhr: { waarde: 57, kwaliteit: 'stale' } });
+eq(r.beschikbaar.length, 4, 'A7: twee verouderde signalen');
 eq(r.datakwaliteit, 'gedeeltelijk', 'A8: vier geldige signalen -> gedeeltelijk (dit was het defect)');
 
 r = metSignalen({ hrv: { waarde: 28, kwaliteit: 'no_data' }, rhr: { waarde: 57, kwaliteit: 'no_data' },
@@ -72,14 +74,14 @@ ok(['hrv','rhr','slaap'].every(function(k){ return r.ontbreekt.indexOf(k) >= 0; 
   });
 // gemengd: aanwezig maar onbetrouwbaar telt hetzelfde als afwezig
 const gemengd = basis(); delete gemengd.signalen.gevoel; gemengd.signalen.trainingsdagen7 = null;
-gemengd.signalen.hrv = { waarde: 28, kwaliteit: 'sync_failed' };
+gemengd.signalen.hrv = { waarde: 28, kwaliteit: 'stale' };
 const uitGemengd = D.readinessDay(gemengd);
 eq(uitGemengd.beschikbaar.length, 3, 'A14: ontbrekend en onbetrouwbaar tellen even zwaar');
 eq(uitGemengd.datakwaliteit, 'gedeeltelijk', 'A15: en leveren dezelfde kwaliteit op');
 // geldige kwaliteitslabels blijven meetellen
 r = metSignalen({ hrv: { waarde: 28, kwaliteit: 'current' }, rhr: { waarde: 57, kwaliteit: 'partial' },
-                  slaap: { waarde: 7, kwaliteit: 'stale' } });
-eq(r.datakwaliteit, 'volledig', 'A16: current/partial/stale zijn wél bruikbaar');
+                  slaap: { waarde: 7, kwaliteit: 'sync_failed' } });
+eq(r.datakwaliteit, 'volledig', 'A16: current/partial/sync_failed zijn wél bruikbaar (sync-status is geen meetgeldigheid)');
 eq(r.beschikbaar.length, 6, 'A17: en tellen dus mee');
 // ontbrekende afzonderlijke signalen
 ['hrv','rhr','slaap'].forEach(function(k){

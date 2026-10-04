@@ -1130,6 +1130,118 @@
     return 'current';
   }
 
+  // ══════════════════════════════════════════════════════════════════════════════
+  // HEALTH-INPUT (healthinput.v1) — de brug van de twee bestaande kwaliteitslagen naar
+  // de herstel-/readinessketen (GAP-P2-015).
+  //
+  // Dit is GEEN derde kwaliteitsmodel. De functie roept uitsluitend qualifySeries
+  // (dataquality.v1) en observation/observationQuality (observation.v1) aan en geeft hun
+  // uitkomst door in de vorm die de keten nodig heeft: dezelfde hrv_log-rijen, en per
+  // signaal de bestaande kwaliteitsstatus.
+  //
+  // MAPPING — volledig en bewust klein:
+  //   dataquality.v1 'excluded' met reden niet_numeriek of buiten_contract
+  //       -> de waarde is technisch geen geldige meting van deze grootheid en wordt in de
+  //          teruggegeven rij null. Stroomafwaarts is hij dus ONTBREKEND, niet "aanwezig
+  //          met lagere betrouwbaarheid".
+  //   dataquality.v1 'excluded' met reden extreme_uitschieter
+  //       -> BLIJFT STAAN. De uitschietertoets is gemaakt om reeksanalyses (Spearman) te
+  //          beschermen. Een extreme maar plausibele meting van vandaag — een nacht van
+  //          drie uur, een scherpe HRV-daling — is precies het signaal waar de dagfactor
+  //          op hoort te reageren. Of zo'n meting voor de training van vandaag genegeerd
+  //          mag worden is een productbesluit; deze brug neemt het niet. De uitschieters
+  //          worden wel apart teruggegeven (`uitschieters`), zodat het zichtbaar blijft.
+  //   dataquality.v1 'valid' / 'insufficient_data'
+  //       -> ongewijzigd (aanwezig resp. al ontbrekend).
+  //   observation.v1-status uit de OPGESLAGEN data (no_data | stale | partial | current)
+  //       -> ONGEWIJZIGD doorgegeven als `kwaliteit`. Deze functie verwijdert op grond
+  //          daarvan niets uit de rijen: een verouderde meting blijft historie en mag
+  //          baseline en trend blijven voeden. Welke status een signaal voor VANDAAG
+  //          ongeldig maakt beslist de Decision Engine
+  //          (DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT).
+  //
+  // SYNC-STATUS is hier bewust GEEN invoer (DEC-DQ-001): het is transport-/connectiviteits-
+  // status, geen meetgeldigheid. Een opgeslagen, actuele en contractueel geldige meting blijft
+  // geldig wanneer een latere sync mislukt. Dezelfde opgeslagen rijen geven daardoor altijd
+  // dezelfde uitkomst, ongeacht welk scherm eerder is geopend. De sync-status blijft voor de
+  // UI beschikbaar via observationQuality(obs, sync) en deviceConnectionState().
+  //
+  // Provenance blijft los: de *_source-kolommen worden niet gelezen om kwaliteit te
+  // bepalen en niet gewijzigd. Rijen zonder uitgesloten waarde zijn DEZELFDE objecten als
+  // in de invoer; alleen een rij met een uitgesloten waarde wordt gekopieerd.
+  //
+  // PUUR: `today` wordt ingespoten. Geen Date.now, geen mutatie van de invoer.
+  //   rows: hrv_log-rijen [{date, hrv, rhr, sleep, hrv_source, ...}]
+  //   opts: { today:'YYYY-MM-DD', sleepHours: fn (sleep_unit.v1, optioneel) }
+  //   -> { version, rows, signalen:{hrv,rhr,slaap:{kwaliteit,versheid,datum,bron,geldig,uitgesloten}},
+  //        uitgesloten:[{veld,date,value,reason}], uitschieters:[{veld,date,value}] }
+  // ══════════════════════════════════════════════════════════════════════════════
+  var HEALTH_INPUT_VERSION = 'healthinput.v1';
+  // De redenen uit dataquality.v1 die een waarde technisch ongeldig maken (zie MAPPING).
+  var HEALTH_INPUT_UITSLUITREDENEN = ['niet_numeriek', 'buiten_contract'];
+  var HEALTH_INPUT_VELDEN = [
+    { veld: 'hrv', signaal: 'hrv' },
+    { veld: 'rhr', signaal: 'rhr' },
+    { veld: 'sleep', signaal: 'slaap' }
+  ];
+  function qualifyHealthRows(rows, opts) {
+    var o = opts || {};
+    var arr = Array.isArray(rows) ? rows : [];
+    var uit = arr.slice();
+    var signalen = {}, uitgesloten = [], uitschieters = [];
+    HEALTH_INPUT_VELDEN.forEach(function (f) {
+      var bron = [];
+      arr.forEach(function (r, i) {
+        if (!r || r.date == null) return;
+        var v = r[f.veld];
+        if (v == null || v === '') return;
+        var waarde = v;
+        // Slaap wordt tegen het contract in uren getoetst; een legacy-minutenwaarde wordt
+        // eerst genormaliseerd, precies zoals de dagfactor dat zelf doet (sleep_unit.v1).
+        if (f.veld === 'sleep' && typeof o.sleepHours === 'function') {
+          var uren = o.sleepHours(v);
+          if (uren != null) waarde = uren;
+        }
+        var src = r[f.veld + '_source'];
+        bron.push({ i: i, n: bron.length, date: String(r.date).slice(0, 10), value: waarde, source: src != null ? src : null });
+      });
+      bron.sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : a.n - b.n); });
+      var q = qualifySeries(bron.map(function (p) { return { date: p.date, value: p.value, source: p.source }; }), { field: f.veld });
+      var nUit = 0;
+      var bruikbaar = q.points.map(function (p, k) {
+        var weg = p.status === 'excluded' && HEALTH_INPUT_UITSLUITREDENEN.indexOf(p.reason) >= 0;
+        var telt = p.status === 'valid' || (p.status === 'excluded' && !weg);
+        return { date: p.date, value: telt ? bron[k].value : null, source: p.source };
+      });
+      q.points.forEach(function (p, k) {
+        if (p.status !== 'excluded') return;
+        var i = bron[k].i;
+        if (HEALTH_INPUT_UITSLUITREDENEN.indexOf(p.reason) < 0) {
+          uitschieters.push({ veld: f.veld, date: p.date, value: arr[i][f.veld] });
+          return;
+        }
+        nUit++;
+        if (uit[i] === arr[i]) {
+          var kopie = {};
+          Object.keys(arr[i]).forEach(function (key) { kopie[key] = arr[i][key]; });
+          uit[i] = kopie;
+        }
+        uit[i][f.veld] = null;
+        uitgesloten.push({ veld: f.veld, date: p.date, value: arr[i][f.veld], reason: p.reason });
+      });
+      var obs = observation(bruikbaar, { today: o.today });
+      signalen[f.signaal] = {
+        kwaliteit: observationQuality(obs, null),
+        versheid: obs.freshness,
+        datum: obs.date,
+        bron: obs.source,
+        geldig: bruikbaar.length - nUit,
+        uitgesloten: nUit
+      };
+    });
+    return { version: HEALTH_INPUT_VERSION, rows: uit, signalen: signalen, uitgesloten: uitgesloten, uitschieters: uitschieters };
+  }
+
   // ── GENERIEKE CONNECTIE-/SYNC-STATUS (Fitbit én Concept2) ─────────────────────────────
   // Eén canonieke afleiding van device-connectiestatus voor de UI. PUUR: `now` wordt ingespoten
   // (geen Date.now). Nooit een fake "synced": de status volgt strikt uit de ingespoten feiten.
@@ -1220,6 +1332,7 @@
     PARTIAL_COVERAGE_MAX: PARTIAL_COVERAGE_MAX,
     FRESHNESS_RECENT_DAYS: FRESHNESS_RECENT_DAYS,
     normalizeHealthDaily: normalizeHealthDaily,
+    qualifyHealthRows: qualifyHealthRows, HEALTH_INPUT_VERSION: HEALTH_INPUT_VERSION,
     ADAPTER_METHODS: ADAPTER_METHODS,
     CONCEPT2_MAP: CONCEPT2_MAP,
     CONCEPT2_STROKE_MAP: CONCEPT2_STROKE_MAP,

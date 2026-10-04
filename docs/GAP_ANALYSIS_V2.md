@@ -106,6 +106,7 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Current:** `recoveryScore()`'s confidence is uitsluitend gebaseerd op `comps.length`. In tegenstelling tot `readinessDay()`, dat een `ONBETROUWBAAR`-filter (`no_data`/`sync_failed`) toepast vóórdat een signaal meetelt, telt `recoveryScore()` een verouderde of onbetrouwbare component even zwaar mee als een verse.
 **Evidence:** CODE VERIFIED, zie het Data Quality & Confidence-sprintrapport in `docs/`.
 **Target:** `recoveryScore()` uitbreiden met hetzelfde soort kwaliteitsfilter dat `readinessDay()` al gebruikt.
+**Stand (04-10-2026, v4.70.9, nog niet gemerged bij schrijven):** geïmplementeerd in de orkestratie, niet in `recoveryScore()` zelf. Contractueel ongeldige waarden zijn ontbrekend vóór de berekening; een `stale` of ontbrekend signaal stuurt de dagfactor, de RHR-delta en de herstelscore van vandaag niet en telt niet in `readinessDay()` (één lijst: `no_data`, `stale`); `readinessDay()` krijgt in runtime de kwaliteit mee; zonder keuringslaag faalt de keten gesloten. Besluiten: DEC-DQ-001. Registerstatus blijft OPEN tot na merge.
 **Priority:** P2 (niet-kritiek — Recovery Score is altijd een aanvullend, informatief getal, nooit de directe bron van een Decision Rule-uitkomst zelf). **Complexity:** S.
 
 ### GAP-P2-016 (voorheen GAP-P1-003) — AI-outputcontract, resterend structured-JSON-gat — **STATUS: DEELS GESLOTEN (TESTED, niet CLOSED)**
@@ -118,9 +119,16 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 
 ### GAP-P2-018 (voorheen GAP-F5-001) — Geen granulair per-waarde quality-veld voor wearable-gezondheidsdata
 **Capability-ID:** PROVIDER-INTEGRATION-CONTRACT-001
-**Current:** wearable-gezondheidsdata (HRV/RHR/slaap) heeft per-veld provenance (`manual`/`wearable`/`unknown`, uit een eerdere Explainability & Provenance-sprint), maar geen aparte, granulaire "quality"-classificatie per individuele meting (bv. "vers"/"verouderd"/"onbetrouwbaar" los van de bron zelf).
-**Evidence:** CODE VERIFIED, zie het Provider Integration Contract-sprintrapport in `docs/`.
-**Target:** eventueel een expliciet quality-veld toevoegen, alleen indien een concrete productbehoefte dit vereist.
+**Reconciliatie (04-10-2026, tegen main `9ef622d9`).** De oorspronkelijke claim -- "geen granulaire quality-classificatie per individuele meting, los van de bron" -- was onjuist op het moment van vastleggen. `core/deviceIntegration.js` bevat sinds 18-08-2026 dataquality.v1 (`qualifySeries`: per dag en veld `valid`/`excluded` met reden/`insufficient_data`) en observation.v1 (`observationQuality`: versheid en syncstatus), beide los van provenance, getest in `core/fDataQuality.test.js` en `core/fObservation.test.js`. De F5-audit van 29-08-2026 heeft die lagen niet meegenomen. Er worden GEEN quality-kolommen aan `hrv_log` toegevoegd: plausibiliteit is herberekenbaar uit waarde en contract, versheid is tijdsafhankelijk.
+**Current (resterend):**
+- R1. Stappen hebben geen brondata-contract; een negatieve waarde wordt als `valid` beoordeeld.
+- R2. `wearable-sync` classificeert of valideert niet vóór opslag; een waarde buiten het contract wordt opgeslagen en pas bij lezen uitgesloten.
+- R3. `normalizeHealthDaily()` (ingest-classificatie `valid`/`implausible`/`invalid`/`empty`) bestaat maar is niet aangesloten; de paden in `GOOGLE_HEALTH_MAP` komen niet overeen met de velden die `_wearableSyncLib.js` werkelijk leest.
+- R4. Slaap valt bij ontbrekende slaapduur terug op het interval (tijd in bed) zonder dat dit wordt vastgelegd.
+- R5. `hrv_metric_type` wordt nooit gezet (alle rijen `unknown`).
+- R6. `healthSeries()` bepaalt de bron uit de notitie-tag, niet uit de `*_source`-kolommen.
+**Evidence:** CODE VERIFIED op main `9ef622d9`; de keten herstel/readiness gebruikt de bestaande lagen sinds v4.70.9 (`core/fRecoveryReadinessQualityWiring.test.js`).
+**Target:** R1-R3 oplossen in de ingest-keten; R4-R6 zijn provenance-punten. Geen opgeslagen quality-veld zonder concrete productbehoefte.
 **Priority:** P2 (niet-kritiek — geen dataverlies, geen silent-corruption-risico, puur een verfijningsmogelijkheid). **Complexity:** M.
 
 ### GAP-P2-019 (voorheen GAP-F5-002) — Geen geautomatiseerde retry-met-backoff in wearable-sync

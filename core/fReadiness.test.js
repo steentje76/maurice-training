@@ -136,9 +136,13 @@ ok(D.readinessDay(ZONDER_HIST).ontbreekt.indexOf('trainingsbelasting') >= 0, 'D1
 const ZONDER_CHECKIN = kopie(VOL); ZONDER_CHECKIN.signalen.gevoel = null;
 ok(D.readinessDay(ZONDER_CHECKIN).ontbreekt.indexOf('gevoel') >= 0, 'D20: ontbrekende check-in wordt gemeld');
 // onbetrouwbaar signaal telt niet als aanwezig
-const SLECHTE_KWALITEIT = kopie(VOL); SLECHTE_KWALITEIT.signalen.hrv = { waarde: 30, kwaliteit: 'sync_failed' };
+// DEC-DQ-001: niet-actueel = no_data of stale; sync_failed is geen meetgeldigheid.
+const SLECHTE_KWALITEIT = kopie(VOL); SLECHTE_KWALITEIT.signalen.hrv = { waarde: 30, kwaliteit: 'stale' };
 ok(D.readinessDay(SLECHTE_KWALITEIT).ontbreekt.indexOf('hrv') >= 0,
-   'D21: een signaal met mislukte synchronisatie telt niet als aanwezig');
+   'D21: een verouderd signaal telt niet als aanwezig');
+const SYNC_MISLUKT = kopie(VOL); SYNC_MISLUKT.signalen.hrv = { waarde: 30, kwaliteit: 'sync_failed' };
+ok(D.readinessDay(SYNC_MISLUKT).beschikbaar.indexOf('hrv') >= 0,
+   'D21b: een mislukte synchronisatie maakt een aanwezige meting niet ongeldig');
 
 /* ── E. GEDEELTELIJKE DATA ───────────────────────────────────────────────── */
 console.log('\nE. Gedeeltelijke data');

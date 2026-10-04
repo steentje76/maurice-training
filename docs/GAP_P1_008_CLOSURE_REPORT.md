@@ -66,6 +66,8 @@ Resterende beperking: de database dwingt de enkele writer niet af. `authenticate
 
 ## Addendum 4 oktober 2026 -- Phase 2: database-afdwinging (migratie_v579, nog niet op productie)
 
+> Stand van het moment van schrijven (vóór de apply). Actuele status: zie het addendum "productie-apply en live verificatie" hieronder.
+
 - **Phase 1** (PR #513, v4.70.8): één writer op applicatieniveau. Gemerged als `bc165eab`.
 - **Phase 2** (`migratie_v579.sql`): `anon`/`authenticated`/PUBLIC verliezen INSERT/UPDATE/DELETE/TRUNCATE op
   `public.hrv_log`. Daarmee vervalt de "resterende beperking" uit het addendum van 3 oktober zodra de migratie op
@@ -76,3 +78,17 @@ migratie-SQL). Bewijs op productie: nog niet aanwezig. De migratie is niet toege
 levert dat bewijs na een goedgekeurde apply.
 
 **Status van de database-afgedwongen single writer: IMPLEMENTED, niet CLOSED_PROVEN** zolang de live verificatie ontbreekt.
+
+## Addendum 4 oktober 2026 -- productie-apply en live verificatie van migratie_v579
+
+- **APPLIED:** `migratie_v579` is op 4 oktober 2026 om 08:20 UTC op de productiedatabase toegepast (migratie-ledger
+  versie `20261004082007`; opgeslagen tekst met dezelfde md5 als `migratie_v579.sql`).
+- **Live ACL:** vóór de apply `anon=arwdm`, `authenticated=arwdm`; na de apply `anon=rm`, `authenticated=rm`;
+  `service_role` ongewijzigd. Opnieuw gecontroleerd op 4 oktober 2026 om 15:12 UTC. RLS aan, policies ongewijzigd,
+  functie `upsert_daily_health` ongewijzigd (SECURITY DEFINER, EXECUTE alleen `authenticated` en `service_role`).
+- **Live gedrag:** `tools/verify-hrv-single-writer.sql` volledig uitgevoerd met op alle 19 regels de verwachte uitkomst;
+  transactie teruggedraaid; `hrv_log` vóór en na identiek (zelfde aantal rijen, zelfde inhoud).
+- **Niet live getest:** een aanroep via de REST-interface met een echte gebruikerssessie.
+
+**Status van de database-afgedwongen single writer: CLOSED_PROVEN.** De "resterende beperking" uit het addendum van
+3 oktober is hiermee vervallen.

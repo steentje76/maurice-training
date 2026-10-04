@@ -1,8 +1,29 @@
 # Trainingskompas — Changelog
 
+## v4.70.9 — Herstel/readiness: bestaande datakwaliteit doorgegeven aan de keten (GAP-P2-015) (4 oktober 2026)
+
+**Aanleiding.** De herstel-/readinessketen las `hrv_log` rauw. De per-waarde kwaliteit die al sinds augustus in `core/deviceIntegration.js` bestaat (dataquality.v1, observation.v1) werd wel in Lichaam/Gezondheidsgegevens gebruikt, maar niet door dagfactor, RHR-delta, herstelscore en readiness.
+
+- **Root cause.** (1) Een waarde buiten het brondata-contract (bv. HRV 450 ms, rusthartslag 150) ging ongekeurd de dagfactor, de RHR-delta en de herstelscore in. (2) `tkReadinessVandaag()` gaf alleen `{waarde}` door; het `ONBETROUWBAAR`-filter in `readinessDay()` deed in runtime dus nooit iets. (3) Een dagfactor zonder enige invoer (1.00) telde als aanwezige herstelcomponent.
+- **Oplossing — geen nieuw kwaliteitsmodel.** `DeviceCore.qualifyHealthRows()` (healthinput.v1) roept uitsluitend `qualifySeries` en `observation`/`observationQuality` aan. `index.html` heeft één keuringspunt, `tkHealthQualified()`, dat nu wordt gebruikt door Home, readiness, het startpad, de programma-check-in, Lichaam, het dagthema en het hersteldetail.
+- **Wat wordt uitgesloten.** Alleen `niet_numeriek` en `buiten_contract` uit dataquality.v1: de waarde is dan ontbrekend vóór elke berekening, niet "meegerekend met een lager label".
+- **Herstelscore.** De dagfactor is alleen een component als hij een werkelijke basis heeft (HRV-oordeel, slaap of cyclusfase). `recovery_score.v1` zelf is niet gewijzigd.
+- **Readiness.** `readinessDay()` ontvangt nu de bestaande kwaliteitsstatus voor HRV, RHR en slaap. Geen tweede Decision-pad.
+- **Besluit `stale` (DEC-DQ-001).** Een meting van 7 dagen of ouder telt niet als actueel signaal voor vandaag: HRV valt terug op het neutrale 'ref', slaap en RHR-delta ontbreken, en `readinessDay()` telt het signaal niet. De meting blijft in de historie staan en voedt baseline en trend. `DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT` is daarom `no_data` + `stale`.
+- **Besluit `sync_failed`.** Sync-status is transport, geen meetgeldigheid, en is geen invoer van de keten meer (`window._tkLichSync` wordt er niet gelezen). `sync_failed` is uit de Decision-lijst gehaald. Dezelfde opgeslagen data geeft dezelfde uitkomst, ongeacht of het Lichaam-scherm is geopend.
+- **Besluit uitschieters.** `extreme_uitschieter` binnen het contract blijft meetellen en blijft gemarkeerd.
+- **Fail-closed.** Ontbreekt of faalt de keuringslaag, dan gaan HRV, rusthartslag en slaap niet rauw de berekening in; ze zijn dan ontbrekend (`no_data`). Spierherstel, gevoel en cyclusfase blijven werken.
+- **Ongewijzigd bij geldige, actuele invoer.** Volledig geldige wearable- of handmatige data, gedeeltelijke data, ontbrekende slaap en een mislukte sync geven exact dezelfde dagfactor, herstelscore, band, betrouwbaarheid, zone en trainingsaanpassing.
+- **Niet gewijzigd:** `recoveryScore`, `calculateDayFactor`, HRV-baseline, Decision Rules, drempels, AI-coach, database, `upsert_daily_health`.
+- **Gate:** `core/fRecoveryReadinessQualityWiring.test.js` (118 tests) op de echte, uit `index.html` gehaalde runtimefuncties met de echte cores. `fHardening` en `fReadiness` zijn aangepast aan de nieuwe Decision-lijst.
+- **GAP-P2-018 gereconcilieerd:** de brede claim was verouderd; zie `docs/GAP_ANALYSIS_V2.md`.
+- sw-cache v470090, CORE_SIG bijgewerkt, versionCode 47009.
+
 ## Security — HRV single-writer Phase 2: database dwingt de canonieke writer af (4 oktober 2026, server-side; APP_VER ongewijzigd v4.70.8)
 
-**Status: migratie in de repo, NIET op productie toegepast.** Apply volgt pas na onafhankelijke review en expliciet akkoord.
+**Status bij merge (#514, 4 oktober 2026):** migratie in de repo, op dat moment nog niet op productie toegepast; de apply was een aparte stap na review en expliciet akkoord.
+
+**Update 4 oktober 2026, na de merge:** `migratie_v579` is om 08:20 UTC op productie toegepast (ledger-versie `20261004082007`) en live geverifieerd: `anon` en `authenticated` hebben op `hrv_log` alleen nog SELECT, en `tools/verify-hrv-single-writer.sql` gaf op alle 19 regels de verwachte uitkomst (teruggedraaid, geen datawijziging). Status: CLOSED_PROVEN. Niet live getest: een aanroep via de REST-interface met een echte gebruikerssessie.
 
 - **Phase 1 (#513, v4.70.8):** één writer in de applicatie. **Phase 2 (deze wijziging):** de database dwingt dat af.
 - **Root cause (live read-only vastgesteld, main `bc165eab`):** `anon` en `authenticated` hebben via de default privileges van `postgres` INSERT/UPDATE/DELETE op `public.hrv_log`; RLS was de enige begrenzing. Een ingelogde gebruiker kon zijn eigen dagrijen dus rechtstreeks invoegen, leegmaken of verwijderen, buiten bronvalidatie, COALESCE-merge en provenance van `upsert_daily_health` om.

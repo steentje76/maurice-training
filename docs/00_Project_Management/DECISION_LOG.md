@@ -2555,3 +2555,22 @@ service_role) of met de service-role-sleutel (wearable-sync via dezelfde RPC; ac
 DELETE). RLS blijft de leesgrens en is geen vervanging voor privilege-isolatie. Een eindgebruiker kan een dagrij niet
 zelf verwijderen; de app biedt die actie ook niet. De bestaande functie is niet gewijzigd en er is geen tweede RPC.
 Productie-apply is een aparte, expliciet goed te keuren stap; tot dan geldt de invariant alleen in de repo.
+
+## DEC-DQ-001 — Welke bestaande kwaliteitsstatus de herstel-/readinessketen beïnvloedt (4 oktober 2026)
+
+**Besluit (alleen wat uit bestaande contracten volgt).**
+1. dataquality.v1 `excluded` met reden `niet_numeriek` of `buiten_contract`: de waarde is geen geldige meting van de
+   grootheid en is voor de keten ontbrekend, vóór elke berekening.
+2. observation.v1-statussen worden ongewijzigd doorgegeven. `readinessDay()` beslist met zijn bestaande lijst
+   (`no_data`, `sync_failed`); de herstelscore gebruikt dezelfde lijst voor de RHR-delta en voor de basis van de dagfactor.
+3. De sync-status geldt voor de wearable-bron: een waarde met bron `manual` wordt er niet door geraakt.
+4. Een dagfactor zonder HRV-oordeel, zonder slaap en zonder cyclusfase is een neutrale invulling en geen herstelcomponent.
+
+**Bewust NIET besloten — open voor de Product Owner.** In alle drie de gevallen verandert er nu niets aan het gedrag.
+- **`stale` (meting van 7 of meer dagen oud).** `readinessDay()` noemt `stale` niet als onbetrouwbaar;
+  `verbandTrainingContext()` doet dat wel. Twee bestaande lijsten, twee uitkomsten. De keten gebruikt een oude meting
+  daardoor nog steeds als die van vandaag.
+- **Mislukte sync en de dagfactor.** Bij `sync_failed` vallen de signalen weg uit readiness en herstelscore, maar de
+  dagfactor (en daarmee DEC-RECADJ-001) rekent nog met de eerder gesynchroniseerde waarden.
+- **Statistische uitschieters (`extreme_uitschieter`).** Blijven staan: een nacht van drie uur of een scherpe
+  HRV-daling is juist het signaal waarop de dagfactor hoort te reageren. Negeren zou een nieuwe trainingsregel zijn.

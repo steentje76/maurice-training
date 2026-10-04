@@ -320,6 +320,13 @@
    * }
    * -> readiness_day.v1-contract
    */
+  // Kwaliteitsstatussen (observation.v1, DeviceCore.QUALITY_STATES) waarbij een signaal niet als
+  // aanwezig telt. Inhoud ONGEWIJZIGD sinds Sprint 15; alleen naar moduleniveau gebracht en
+  // geexporteerd, zodat de herstelscore-orkestratie exact dezelfde lijst gebruikt (GAP-P2-015)
+  // in plaats van een eigen kopie. 'stale' staat hier bewust NIET in: of een verouderde meting
+  // voor vandaag mag meetellen is een open productbesluit, geen wiring.
+  var READINESS_ONBETROUWBARE_KWALITEIT = ['no_data', 'sync_failed'];
+
   function readinessDay(input) {
     var i = input || {};
     var sig = i.signalen || {};
@@ -338,7 +345,7 @@
     // VOORDAT de datakwaliteit wordt bepaald: anders zou een dag waarop drie van de zes
     // signalen niet gesynchroniseerd zijn zichzelf nog steeds 'volledig' noemen — precies het
     // tegenovergestelde van wat deze laag hoort te doen. (Sprint 15, gevonden bij de audit.)
-    var ONBETROUWBAAR = ['no_data', 'sync_failed'];
+    var ONBETROUWBAAR = READINESS_ONBETROUWBARE_KWALITEIT;
     ['hrv', 'rhr', 'slaap'].forEach(function (k) {
       var v = sig[k];
       if (v && v.waarde != null && v.kwaliteit && ONBETROUWBAAR.indexOf(v.kwaliteit) >= 0) {
@@ -805,6 +812,7 @@
     DAYZONE_VERSIE: DAYZONE_VERSIE,
     readinessDay: readinessDay,
     READINESS_DAY_VERSIE: READINESS_DAY_VERSIE,
+    READINESS_ONBETROUWBARE_KWALITEIT: READINESS_ONBETROUWBARE_KWALITEIT,
     READINESS_ZONES: READINESS_ZONES,
     READINESS_SIGNALEN: READINESS_SIGNALEN,
     READINESS_ZONE_TEKST: READINESS_ZONE_TEKST,

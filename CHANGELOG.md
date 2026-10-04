@@ -1,5 +1,22 @@
 # Trainingskompas — Changelog
 
+## v4.70.9 — Herstel/readiness: bestaande datakwaliteit doorgegeven aan de keten (GAP-P2-015) (4 oktober 2026)
+
+**Aanleiding.** De herstel-/readinessketen las `hrv_log` rauw. De per-waarde kwaliteit die al sinds augustus in `core/deviceIntegration.js` bestaat (dataquality.v1, observation.v1) werd wel in Lichaam/Gezondheidsgegevens gebruikt, maar niet door dagfactor, RHR-delta, herstelscore en readiness.
+
+- **Root cause.** (1) Een waarde buiten het brondata-contract (bv. HRV 450 ms, rusthartslag 150) ging ongekeurd de dagfactor, de RHR-delta en de herstelscore in. (2) `tkReadinessVandaag()` gaf alleen `{waarde}` door; het `ONBETROUWBAAR`-filter in `readinessDay()` deed in runtime dus nooit iets. (3) Een dagfactor zonder enige invoer (1.00) telde als aanwezige herstelcomponent.
+- **Oplossing — geen nieuw kwaliteitsmodel.** `DeviceCore.qualifyHealthRows()` (healthinput.v1) roept uitsluitend `qualifySeries` en `observation`/`observationQuality` aan. `index.html` heeft één keuringspunt, `tkHealthQualified()`, dat nu wordt gebruikt door Home, readiness, het startpad, de programma-check-in, Lichaam, het dagthema en het hersteldetail.
+- **Wat wordt uitgesloten.** Alleen `niet_numeriek` en `buiten_contract` uit dataquality.v1: de waarde is dan ontbrekend vóór elke berekening, niet "meegerekend met een lager label".
+- **Herstelscore.** De dagfactor is alleen een component als hij een werkelijke, betrouwbare basis heeft (HRV-oordeel, slaap of cyclusfase). De RHR-delta en die basis gebruiken dezelfde lijst als `readinessDay()` (`DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT`, inhoudelijk ongewijzigd: `no_data`, `sync_failed`). `recovery_score.v1` zelf is niet gewijzigd.
+- **Readiness.** `readinessDay()` ontvangt nu de bestaande kwaliteitsstatus voor HRV, RHR en slaap. Geen tweede Decision-pad.
+- **Sync-status** telt alleen voor niet-handmatige waarden: een handmatige check-in wordt niet ongeldig door een mislukte wearable-sync.
+- **Ongewijzigd bij geldige invoer.** Volledig geldige wearable- of handmatige data, gedeeltelijke data en ontbrekende slaap geven exact dezelfde dagfactor, herstelscore, band, betrouwbaarheid, zone en trainingsaanpassing.
+- **Bewust NIET besloten** (labels worden doorgegeven, er verandert niets aan het gedrag): `stale` (7+ dagen oud), een mislukte sync als reden om waarden uit de dagfactor te halen, en statistische uitschieters (`extreme_uitschieter`). Zie DEC-DQ-001.
+- **Niet gewijzigd:** `recoveryScore`, `calculateDayFactor`, HRV-baseline, Decision Rules, drempels, AI-coach, database, `upsert_daily_health`.
+- **Gate:** `core/fRecoveryReadinessQualityWiring.test.js` (73 tests) op de echte, uit `index.html` gehaalde runtimefuncties met de echte cores.
+- **GAP-P2-018 gereconcilieerd:** de brede claim was verouderd; zie `docs/GAP_ANALYSIS_V2.md`.
+- sw-cache v470090, CORE_SIG bijgewerkt, versionCode 47009.
+
 ## Security — HRV single-writer Phase 2: database dwingt de canonieke writer af (4 oktober 2026, server-side; APP_VER ongewijzigd v4.70.8)
 
 **Status: migratie in de repo, NIET op productie toegepast.** Apply volgt pas na onafhankelijke review en expliciet akkoord.

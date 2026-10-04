@@ -6,7 +6,18 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.8
+v4.70.9
+
+## Herstel/readiness leest gekeurde health-data (v4.70.9, 4 oktober 2026)
+
+- Eén keuringspunt voor de keten: `tkHealthQualified()` -> `DeviceCore.qualifyHealthRows()` (healthinput.v1), dat alleen
+  de bestaande lagen dataquality.v1 en observation.v1 aanroept. Waarden met reden `niet_numeriek` of `buiten_contract`
+  zijn ontbrekend vóór dagfactor, RHR-delta, herstelscore en readiness.
+- `readinessDay()` krijgt in runtime de bestaande kwaliteitsstatus; de herstelscore telt alleen componenten met een
+  werkelijke, betrouwbare basis.
+- Niet besloten en daarom zonder gedragseffect: `stale`, sync-status als uitsluitgrond voor de dagfactor, en
+  statistische uitschieters (DEC-DQ-001).
+- Guard: `core/fRecoveryReadinessQualityWiring.test.js`.
 
 ## HRV single-writer Phase 2 — database-afdwinging (4 oktober 2026; migratie NIET toegepast op productie)
 
@@ -224,7 +235,7 @@ v4.70.8
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.8 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.9 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

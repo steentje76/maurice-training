@@ -876,11 +876,14 @@
     for (var i = 0; i < lijst.length; i++) {
       if (lijst[i] && lijst[i].key === metricKey) {
         var d = (typeof deler === 'number' && deler > 0) ? deler : 1;
-        return {
+        var c = {
           min: lijst[i].min != null ? lijst[i].min / d : null,
           max: lijst[i].max != null ? lijst[i].max / d : null,
           bron: metricKey
         };
+        // Structurele eigenschap uit dezelfde bron; alleen aanwezig waar het contract haar definieert.
+        if (lijst[i].integer === true) c.integer = true;
+        return c;
       }
     }
     return null;
@@ -889,7 +892,7 @@
     hrv:    _contractVan('hrv_ms'),
     rhr:    _contractVan('resting_hr_bpm'),
     sleep:  _contractVan('sleep_minutes', 60),   // contract in minuten -> app rekent in uren
-    steps:  _contractVan('steps_count'),          // R1: niet-negatief; geen bovengrens
+    steps:  _contractVan('steps_count'),          // R1: niet-negatief geheel getal; geen bovengrens
     weight: null                                  // geen brondata-contract: gewicht is ingevoerd
   };
 
@@ -967,6 +970,10 @@
         return { date: datum, value: n, source: bron, status: 'excluded', reason: 'buiten_contract' };
       }
       if (contract && contract.max != null && n > contract.max) {
+        return { date: datum, value: n, source: bron, status: 'excluded', reason: 'buiten_contract' };
+      }
+      // Het contract kan een geheel getal eisen (een telling); generiek, niet per metric.
+      if (contract && contract.integer === true && Math.floor(n) !== n) {
         return { date: datum, value: n, source: bron, status: 'excluded', reason: 'buiten_contract' };
       }
       return { date: datum, value: n, source: bron, status: 'valid', reason: null };

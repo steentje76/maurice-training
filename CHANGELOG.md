@@ -9,13 +9,13 @@
 - **Root cause R3.** De paden in `GOOGLE_HEALTH_MAP` (`dailyHeartRateVariability.rmssdMillis`, `dailyRestingHeartRate.bpm`, `sleep.totalMinutes`) kwamen met geen enkele werkelijk verwerkte payloadvorm overeen.
 - **Canonieke grens.** Ruwe providerpayload → bestaande defensieve parser (`_wearableSyncLib.js`, ongewijzigd) → parsed-day-object `{hrv_ms, resting_hr_bpm, sleep_minutes, steps_count}` → `DeviceCore.normalizeHealthDaily(GOOGLE_HEALTH_MAP)` → alleen `valid` naar `upsert_daily_health`.
 - **Eén contractbron.** `GOOGLE_HEALTH_MAP` beschrijft nu het parsed-day-object en is de bron voor zowel de ingest (`qualifyDayValues()`) als de keuring bij lezen (`DQ_CONTRACT`). Bestaande grenzen ongewijzigd: HRV 0–400 ms, rusthartslag 20–120 bpm, slaap 0–24 uur.
-- **Stappencontract (R1).** Unit count; ontbrekend = null; 0 is geldig; negatief of niet-geheel = ongeldig; **geen bovengrens**. Bij lezen worden bestaande negatieve stappen nu ook uitgesloten.
+- **Stappencontract (R1).** Unit count; ontbrekend = null; 0 is geldig; negatief of niet-geheel = ongeldig; **geen bovengrens**. Het contract geldt end-to-end: de parser rondt de providerwaarde niet meer af (een 12.5 bereikt de keuring en wordt afgewezen), en `integer` gaat uit dezelfde lijst mee naar `DQ_CONTRACT`, zodat bij lezen een negatieve of niet-gehele stappenwaarde wordt uitgesloten.
 - **Gedrag.** Een afgewezen waarde wordt null, zodat de atomaire merge een bestaande geldige waarde laat staan. Een dag met alleen afgewezen waarden wordt niet geschreven. Negatieve stappen blokkeren de rest van de dag niet meer.
 - **Fail-closed.** Ontbreekt of faalt de keuringslaag, dan schrijft de sync niets en meldt `sync_failed` met code `QUALITY_UNAVAILABLE`.
 - **Respons.** Bestaande velden ongewijzigd; `metrics` telt wat na de keuring is geaccepteerd; nieuw zijn `rejected` (aantal per metric) en `rejectedMetrics`. Nooit de afgewezen waarde zelf, ook niet in de log.
 - **Niet gewijzigd.** `upsert_daily_health`, `hrv_log`, de parsers, de leeslagen (`qualifySeries`, `qualifyHealthRows`, observation.v1), Calculation, Decision, AI. Geen migratie, geen quality-kolommen. Historische data is niet herschreven.
 - **Buiten scope en nog open:** R4 (slaap-terugval op tijd in bed), R5 (`hrv_metric_type`), R6 (bronselectie in `healthSeries`).
-- **Gate:** `core/fWearableIngestQuality.test.js` (64 tests): echte parsers, echte handler, echte `upsert_daily_health` op PostgreSQL (PGlite). Niet geverifieerd tegen een live providersync.
+- **Gate:** `core/fWearableIngestQuality.test.js` (81 tests): echte parsers, echte handler, echte `upsert_daily_health` op PostgreSQL (PGlite). Niet geverifieerd tegen een live providersync.
 - sw-cache v470120, versionCode 47012.
 
 ## v4.70.11 — Presentatie van health-data volgt de berekening (4 oktober 2026)

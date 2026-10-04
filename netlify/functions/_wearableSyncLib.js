@@ -212,12 +212,15 @@ function parseSleepPoint(point) {
 // vaste veldnaam blind aannemen) -- countSum kan int64-als-string zijn.
 // Retourneert null bij een ontbrekend steps-veld (UNKNOWN, sectie 3 van de
 // opdracht) -- NOOIT 0 tenzij de provider countSum=0 daadwerkelijk teruggaf.
+// GAP-P2-018 R1: de parser bewaart de numerieke providerwaarde en rondt NIET af. Of een
+// waarde een geldige telling is (niet-negatief, geheel getal) beslist uitsluitend de
+// keuringslaag op basis van het contract; een afgeronde 12.5 zou die toets ontlopen.
 function parseStepsRollupPoint(rollupPoint) {
   var date = _dateFrom(rollupPoint && rollupPoint.civilStartTime) || _dateFrom(rollupPoint && rollupPoint.civilEndTime) || _dateFrom(rollupPoint && rollupPoint.date);
   var stepsRec = rollupPoint && rollupPoint.steps;
   if (!stepsRec) return { date: date, value: null }; // geen steps-veld in deze rollup-entry -> UNKNOWN
   var count = firstNum(stepsRec, ['countSum', 'count_sum', 'count']);
-  return { date: date, value: count == null ? null : Math.round(count) };
+  return { date: date, value: count == null ? null : count };
 }
 
 function minutesToHours(min) {

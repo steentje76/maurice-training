@@ -121,9 +121,9 @@ async function main() {
     eq([P(-1), keur(-1).vals.steps, keur(-1).status.steps, keur(-1).rejected], [-1, null, 'invalid', { steps: 'invalid' }], 'A4 stappen -1: de parser leest het, de keuring wijst het af VOOR opslag');
     eq([P('veel'), P({}), keur('veel').vals.steps, keur('veel').status.steps], [null, null, null, 'empty'], 'A5 niet-numerieke stappen: null, geen opslagwaarde');
     eq([LIB.parseStepsRollupPoint(stappenPunt(D1, undefined)).value, LIB.parseStepsRollupPoint({ civilStartTime: D1 + 'T00:00:00' }).value, Q({}).vals.steps], [null, null, null], 'A6 ontbrekende stappen: null, nooit 0');
-    eq([Q({ steps: 250000 }).status.steps, Q({ steps: 12.5 }).status.steps], ['valid', 'invalid'], 'A7 geen verzonnen bovengrens; een niet-geheel getal is ongeldig');
+    eq([keur(250000).status.steps, keur(12.5).status.steps, keur('12.5').status.steps], ['valid', 'invalid', 'invalid'], 'A7 geen verzonnen bovengrens; een niet-geheel getal is ongeldig — door de ECHTE parser heen');
     const m = DC.GOOGLE_HEALTH_MAP.metrics.find((x) => x.key === 'steps_count');
-    eq([m.unit, m.min, m.max === undefined, m.integer, DC.DQ_CONTRACT.steps], ['count', 0, true, true, { min: 0, max: null, bron: 'steps_count' }], 'A8 stappencontract: unit count, >= 0, geheel getal, geen maximum; ook beschikbaar voor de keuring bij lezen');
+    eq([m.unit, m.min, m.max === undefined, m.integer, DC.DQ_CONTRACT.steps], ['count', 0, true, true, { min: 0, max: null, bron: 'steps_count', integer: true }], 'A8 stappencontract: unit count, >= 0, geheel getal, geen maximum; ook beschikbaar voor de keuring bij lezen');
     const s = DC.qualifySeries([{ date: D1, value: -20 }, { date: D2, value: 0 }, { date: D3, value: 9000 }], { field: 'steps' });
     eq(s.points.map((p) => p.status + (p.reason ? ':' + p.reason : '')), ['excluded:buiten_contract', 'valid', 'valid'], 'A9 bij lezen: bestaande negatieve stappen worden nu ook uitgesloten (was valid)');
   }
@@ -231,20 +231,58 @@ async function main() {
     // dezelfde grenswaarden door beide lagen: ingest (qualifyDayValues) en lezen (qualifySeries)
     const lezen = (veld, v) => DC.qualifySeries([{ date: D1, value: v }], { field: veld }).points[0].status === 'valid';
     const ingest = (veld, v) => Q({ [veld]: v }).status[veld] === 'valid';
-    const rooster = { hrv: [0, 0.5, 55, 400, 400.1, 9999], rhr: [19, 20, 60, 120, 121, 300], sleep: [0.5, 7.5, 24, 24.01, 30], steps: [0, 1, 9000, 250000] };
+    const rooster = { hrv: [0, 0.5, 55, 400, 400.1, 9999], rhr: [19, 20, 60, 120, 121, 300], sleep: [0.5, 7.5, 24, 24.01, 30], steps: [0, 1, 9000, 250000, 12.5, 0.5, '12.5', '12345'] };
     Object.keys(rooster).forEach((veld) => {
       eq(rooster[veld].map((v) => ingest(veld, v)), rooster[veld].map((v) => lezen(veld, v)), 'F22 ' + veld + ': ingest en keuring-bij-lezen beslissen identiek over ' + JSON.stringify(rooster[veld]));
     });
     eq([ingest('hrv', -1), lezen('hrv', -1), ingest('steps', -1), lezen('steps', -1)], [false, false, false, false], 'F22b negatieve waarden: in beide lagen ongeldig');
     const g = {}; DC.GOOGLE_HEALTH_MAP.metrics.forEach((x) => { g[x.key] = x; });
     eq([DC.DQ_CONTRACT.hrv, DC.DQ_CONTRACT.rhr, DC.DQ_CONTRACT.sleep, DC.DQ_CONTRACT.steps],
-      [{ min: g.hrv_ms.min, max: g.hrv_ms.max, bron: 'hrv_ms' }, { min: g.resting_hr_bpm.min, max: g.resting_hr_bpm.max, bron: 'resting_hr_bpm' }, { min: g.sleep_minutes.min / 60, max: g.sleep_minutes.max / 60, bron: 'sleep_minutes' }, { min: g.steps_count.min, max: null, bron: 'steps_count' }],
-      'F22c het lees-contract is afgeleid van dezelfde lijst (GOOGLE_HEALTH_MAP)');
+      [{ min: g.hrv_ms.min, max: g.hrv_ms.max, bron: 'hrv_ms' }, { min: g.resting_hr_bpm.min, max: g.resting_hr_bpm.max, bron: 'resting_hr_bpm' }, { min: g.sleep_minutes.min / 60, max: g.sleep_minutes.max / 60, bron: 'sleep_minutes' }, { min: g.steps_count.min, max: null, bron: 'steps_count', integer: g.steps_count.integer }],
+      'F22c het lees-contract is afgeleid van dezelfde lijst (GOOGLE_HEALTH_MAP), inclusief integer');
     eq([g.hrv_ms.min, g.hrv_ms.max, g.resting_hr_bpm.min, g.resting_hr_bpm.max, g.sleep_minutes.min, g.sleep_minutes.max], [0, 400, 20, 120, 0, 1440], 'F22d de bestaande grenzen zijn ongewijzigd (HRV 0-400, RHR 20-120, slaap 0-1440 min)');
     const ingestCode = rd('netlify/functions/_wearableSyncLib.js') + rd('netlify/functions/wearable-sync.js');
     const zonderCommentaar = ingestCode.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     ok(!/\b(400|120|1440)\b/.test(zonderCommentaar) && !/[<>]=?\s*24\b/.test(zonderCommentaar), 'F22e de ingest-code bevat zelf geen contractgrenzen');
     ok(!/hrv_quality|rhr_quality|sleep_quality|steps_quality/.test(ingestCode + rd('core/deviceIntegration.js')), 'F22f geen quality-kolommen en geen tweede kwaliteitsmodel');
+  }
+
+  /* ══ H. Stappen: het geheel-getal-contract geldt end-to-end ══════════════ */
+  {
+    const P = (v, veld) => LIB.parseStepsRollupPoint(stappenPunt(D1, v, veld)).value;
+    // 1. echte parser -> echte keuring
+    eq([P(12.5), P('12.5'), P(12.4), P(0.6)], [12.5, 12.5, 12.4, 0.6], 'H1 de parser bewaart de providerwaarde en rondt niet af voor de keuring (12.5 blijft 12.5)');
+    eq([Q({ steps: P(12.5) }).vals.steps, Q({ steps: P(12.5) }).status.steps, Q({ steps: P(12.5) }).rejected], [null, 'invalid', { steps: 'invalid' }], 'H1b parser -> keuring: 12.5 stappen wordt afgewezen');
+    eq([P('12345'), Q({ steps: P('12345') }).vals.steps, P(12345.0), P(0), Q({ steps: P(0) }).vals.steps], [12345, 12345, 12345, 0, 0], 'H3/H4 "12345" blijft 12345 en is geldig; 0 is geldig en blijft 0');
+    eq([P(-1), Q({ steps: P(-1) }).status.steps], [-1, 'invalid'], 'H5 -1 bereikt de keuring onveranderd en wordt daar afgewezen');
+    ok(!/Math\.(round|floor|ceil|trunc)|isInteger|parseInt/.test(LIB.parseStepsRollupPoint.toString()), 'H1c de parser bevat geen afronding en geen eigen integerregel');
+    // 2. echte handler -> echte RPC
+    const db = await maakDb();
+    const h = await sync(db, { hrv: [hrvPunt(D1, 55)], steps: [stappenPunt(D1, 12.5)] });
+    const r1 = perDatum(h.rpcs)[D1];
+    eq([h.rpcs.length, r1.p_hrv, r1.p_steps, h.body.rejected, h.body.imported, (await rij(db, D1)).hrv, (await rij(db, D1)).steps], [1, 55, null, { hrv: 0, rhr: 0, sleep: 0, steps: 1 }, 1, 55, null], 'H2 handler: HRV 55 + stappen 12.5 -> HRV geschreven, p_steps null, rejected.steps = 1, geen stappen in de database');
+    const h3 = await sync(db, { hrv: [hrvPunt(D2, 52)], steps: [stappenPunt(D2, '12345')] });
+    eq([perDatum(h3.rpcs)[D2].p_steps, (await rij(db, D2)).steps, h3.body.rejected.steps], [12345, 12345, 0], 'H3b handler: "12345" wordt als 12345 opgeslagen');
+    const h4 = await sync(db, { steps: [stappenPunt(D3, 0)] });
+    eq([perDatum(h4.rpcs)[D3].p_steps, (await rij(db, D3)).steps, h4.body.imported], [0, 0, 1], 'H4b handler: 0 stappen wordt als 0 opgeslagen');
+    const h5 = await sync(db, { rhr: [rhrPunt('2026-09-27', '58')], sleep: [slaapPunt('2026-09-27', { minutesAsleep: '420' })], steps: [stappenPunt('2026-09-27', -1)] });
+    const r5 = await rij(db, '2026-09-27');
+    eq([r5.rhr, r5.sleep, r5.steps, h5.body.rejected.steps], [58, 7, null, 1], 'H5b handler: -1 stappen afgewezen; de overige geldige metrics van die dag zijn geschreven');
+    ok(!/12\.5/.test(JSON.stringify(h.body)) && !/"steps":\s*12\.5|12\.5/.test(h.logs), 'H2b de afgewezen waarde staat niet in de respons of de log');
+    await db.close();
+    // 6-7. bij lezen
+    const lees = (v) => { const p = DC.qualifySeries([{ date: D1, value: v }], { field: 'steps' }).points[0]; return p.status + (p.reason ? ':' + p.reason : ''); };
+    eq([lees(12.5), lees('12.5'), lees(0.5)], ['excluded:buiten_contract', 'excluded:buiten_contract', 'excluded:buiten_contract'], 'H6 bij lezen: een niet-gehele stappenwaarde is excluded / buiten_contract (bestaande reden, geen nieuwe status)');
+    eq([0, 1, 9000, 250000, '12345'].map(lees), ['valid', 'valid', 'valid', 'valid', 'valid'], 'H7 bij lezen: 0, 1, 9000, 250000 en "12345" zijn valid');
+    // 8. contract
+    const bron = DC.GOOGLE_HEALTH_MAP.metrics.find((x) => x.key === 'steps_count');
+    eq([DC.DQ_CONTRACT.steps.integer, bron.integer, DC.DQ_CONTRACT.steps.min, bron.min, DC.DQ_CONTRACT.steps.bron], [true, true, 0, 0, 'steps_count'], 'H8 DQ_CONTRACT.steps is afgeleid van GOOGLE_HEALTH_MAP.steps_count, inclusief integer:true');
+    eq([DC.DQ_CONTRACT.hrv, DC.DQ_CONTRACT.rhr, DC.DQ_CONTRACT.sleep], [{ min: 0, max: 400, bron: 'hrv_ms' }, { min: 20, max: 120, bron: 'resting_hr_bpm' }, { min: 0, max: 24, bron: 'sleep_minutes' }], 'H8b de contractobjecten van HRV, rusthartslag en slaap zijn ongewijzigd (geen integer-eigenschap)');
+    eq([DC.qualifySeries([{ date: D1, value: 47.5 }], { field: 'hrv' }).points[0].status, DC.qualifySeries([{ date: D1, value: 7.25 }], { field: 'sleep' }).points[0].status], ['valid', 'valid'], 'H8c niet-gehele HRV en slaap blijven geldig: de integerregel geldt alleen waar het contract hem definieert');
+    const dcSrc = rd('core/deviceIntegration.js');
+    const qs = dcSrc.slice(dcSrc.indexOf('function qualifySeries('), dcSrc.indexOf('function qualifySeries(') + 2600);
+    ok(/contract\.integer/.test(qs) && !/steps/.test(qs), 'H8d qualifySeries past contract.integer generiek toe, zonder eigen stappenregel');
+    ok(!/steps[^\n]{0,40}(isInteger|Math\.floor)|(isInteger|Math\.floor)[^\n]{0,40}steps/.test(dcSrc + rd('netlify/functions/_wearableSyncLib.js') + rd('netlify/functions/wearable-sync.js')), 'H8e nergens een harde integerregel op metricnaam');
   }
 
   /* ══ G. R4, R5 en R6 zijn onaangeraakt ═══════════════════════════════════ */

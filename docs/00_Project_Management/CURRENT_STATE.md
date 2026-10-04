@@ -10,8 +10,9 @@ v4.70.11
 
 ## Presentatie van health-data volgt de berekening (v4.70.11, 4 oktober 2026)
 
-- Home-dagfactorkaart en "Waarom vandaag?" noemen alleen signalen die vandaag meetellen (`tkHealthVandaag()`); een
-  verouderde meting staat er apart bij als laatste meting die niet meetelt.
+- Home-dagfactorkaart en "Waarom vandaag?" noemen en tellen alleen onderdelen die de dagfactor werkelijk voedden
+  (`df.basis`, via `tkHealthVandaag()`); de HRV-basis komt uit `hrvComponent.recent` en elk signaal heeft zijn eigen
+  meetdatum. Een meting die niet meetelt staat er apart bij.
 - De Lichaam-hero toont onder Slaap, HRV en Rust HR het meetmoment.
 - Het hersteldetail presenteert de status van een verouderde meting als "Bij die meting", niet als status van vandaag.
 - Guard: `core/fStaleHealthPresentation.test.js`.

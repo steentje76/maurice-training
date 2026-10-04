@@ -8,7 +8,8 @@
  *   - de ECHTE functie uit de laatste migratie die upsert_daily_health definieert (v560),
  *   - de ECHTE EXECUTE-rechten uit migratie_v570,
  *   - de ECHTE, ongewijzigde migratie_v579,
- *   - het ECHTE verificatiescript tools/verify-hrv-single-writer.sql.
+ *   - het ECHTE verificatiescript tools/verify-hrv-single-writer.sql (vaste synthetische identiteiten; kiest
+ *     geen account uit auth.users).
  * Fixture (niet uit de repo, want de basistabel staat in geen enkele migratie): de tabel, de RLS-policy, de
  * trigger, de rollen en de tabel-ACL zoals read-only vastgesteld op productie op 2026-10-04. De live rol
  * `postgres` (geen superuser, wel owner en BYPASSRLS) heet hier `tk_owner`. De coach-leespolicy is weggelaten
@@ -31,6 +32,9 @@ function eq(a, b, label) { ok(JSON.stringify(a) === JSON.stringify(b), label + '
 
 const A = '11111111-1111-1111-1111-111111111111';
 const B = '22222222-2222-2222-2222-222222222222';
+// Vaste synthetische identiteiten van tools/verify-hrv-single-writer.sql: geen account in auth.users.
+const SYN_A = '00000000-0000-0000-0000-00000000a579';
+const SYN_B = '00000000-0000-0000-0000-00000000b579';
 const SIG = '(uuid, date, numeric, integer, numeric, text, text, text, text, integer)';
 const MIG = rd('migratie_v579.sql');
 const VERIFY = rd('tools/verify-hrv-single-writer.sql');
@@ -199,11 +203,29 @@ async function main() {
 
   /* ══ F. Verificatiescript na de migratie ══════════════════════════════════ */
   const na = await verifyRegels(db);
-  eq(na, { '01': '0', '02': 'true', '03': 'true', '04': 'true', '05': '1/true/true', '06': 'false/true/true', '07': '0',
+  eq(na, { '00': 'true', '01': '0', '02': 'true', '03': 'true', '04': 'true', '05': '1/true/true', '06': 'false/true/true', '07': '0',
     '10': 'GEWEIGERD', '11': 'GEWEIGERD', '12': 'GEWEIGERD', '13': 'TOEGESTAAN', '14': '50/manual/55/wearable', '15': 'GEWEIGERD',
     '20': 'GEWEIGERD', '21': 'GEWEIGERD', '22': 'GEWEIGERD', '30': 'TOEGESTAAN', '31': 'TOEGESTAAN' }, 'F1 tools/verify-hrv-single-writer.sql geeft na v579 op elke regel de verwachte uitkomst');
   eq((await db.query("select count(*)::int n from public.hrv_log where date = '1900-01-01'")).rows[0].n, 0, 'F2 het verificatiescript laat geen schildwachtrij achter');
   ok(/^begin;/m.test(VERIFY) && /rollback;\s*$/.test(VERIFY.trim()) && !/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/.test(VERIFY), 'F3 verificatiescript is rollback-veilig en bevat geen echte user-id');
+  // Synthetische-identiteitencontract: het script kiest geen echt account en raakt er geen aan.
+  const vCode = VERIFY.split('\n').filter((l) => !/^\s*--/.test(l)).join('\n');
+  const uuids = vCode.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g) || [];
+  eq(uuids.slice().sort(), [SYN_A, SYN_B], 'F4 het script gebruikt precies de twee vaste synthetische UUID\'s');
+  ok(uuids.every((u) => u[14] === '0'), 'F5 beide UUID\'s hebben versie-nibble 0 en kunnen dus geen door auth uitgegeven (v4) account zijn');
+  ok(!/\binto\s+\w+\s+from\s+auth\.users/i.test(vCode) && !/from\s+auth\.users[^;]*order\s+by/i.test(vCode), 'F6 het script selecteert geen identiteit uit auth.users');
+  eq((await db.query('select count(*)::int n from auth.users where id in ($1, $2)', [SYN_A, SYN_B])).rows[0].n, 0, 'F7 de synthetische identiteiten bestaan niet als account; de verificatie slaagt toch (geen FK, geen bestaanscontrole in de RPC)');
+  eq((await db.query('select count(*)::int n from public.hrv_log where user_id in ($1, $2)', [SYN_A, SYN_B])).rows[0].n, 0, 'F8 na het script bestaat geen rij voor een synthetische identiteit');
+  const echtVoor = JSON.stringify((await db.query('select * from public.hrv_log order by user_id, date')).rows);
+  await verifyRegels(db);
+  ok(JSON.stringify((await db.query('select * from public.hrv_log order by user_id, date')).rows) === echtVoor, 'F9 het script wijzigt geen enkele rij van een echte gebruiker');
+  await db.query("insert into auth.users values ($1, '2026-03-01')", [SYN_A]);
+  let botsing = null;
+  try { await db.exec(VERIFY); } catch (e) { botsing = String(e.message); }
+  await db.exec('rollback');
+  ok(botsing !== null && /synthetische testidentiteit bestaat/.test(botsing), 'F10 bestaat een synthetische UUID toch als account, dan breekt het script af vóór de eerste write');
+  ok(JSON.stringify((await db.query('select * from public.hrv_log order by user_id, date')).rows) === echtVoor, 'F11 en ook dan blijft er niets achter');
+  await db.query('delete from auth.users where id = $1', [SYN_A]);
 
   /* ══ G. Herstelpad uit de migratiekop ═════════════════════════════════════ */
   const herstel = (MIG.match(/^--\s+(grant insert, update, delete on table public\.hrv_log to anon, authenticated;)\s*$/m) || [])[1];

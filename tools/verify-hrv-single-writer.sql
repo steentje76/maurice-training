@@ -1,7 +1,11 @@
 -- tools/verify-hrv-single-writer.sql — rollback-veilige verificatie van de HRV single-writer-invariant
 -- (migratie_v579). Draai in de SQL-editor; eindigt met ROLLBACK, er blijft niets achter.
 -- Alle writes gebruiken de schildwachtdatum 1900-01-01, zodat geen bestaande dagrij wordt geraakt.
--- Testidentiteiten: de twee oudste accounts, alleen binnen de transactie.
+-- Testidentiteiten: twee vaste, synthetische UUID's (versie-nibble 0, dus nooit door auth/gen_random_uuid
+-- uitgegeven). Er wordt GEEN echt account gekozen of aangeraakt. Dat kan omdat hrv_log.user_id geen FK naar
+-- auth.users heeft en upsert_daily_health het bestaan van de gebruiker niet controleert (live vastgesteld
+-- 2026-10-04). Bestaat een van beide UUID's toch als account of als hrv_log-rij, dan breekt het script af
+-- vóór de eerste write.
 -- Verwacht NA migratie_v579: elke regel eindigt op de waarde tussen haakjes in de omschrijving.
 -- VOOR migratie_v579 tonen de regels 10-12 en 20-21 "TOEGESTAAN"/"GEWEIGERD (RLS)": dat is de te sluiten opening.
 begin;
@@ -9,10 +13,15 @@ set local lock_timeout = '2s';
 create temp table _r(k text, v text) on commit drop;
 grant all on _r to authenticated, anon, service_role;
 do $t$
-declare a uuid; b uuid; r text; d date := date '1900-01-01';
+declare
+  a uuid := '00000000-0000-0000-0000-00000000a579';
+  b uuid := '00000000-0000-0000-0000-00000000b579';
+  r text; d date := date '1900-01-01';
 begin
-  select id into a from auth.users order by created_at limit 1;
-  select id into b from auth.users where id <> a order by created_at limit 1;
+  if exists (select 1 from auth.users where id in (a, b)) or exists (select 1 from public.hrv_log where user_id in (a, b)) then
+    raise exception 'verify-hrv-single-writer: synthetische testidentiteit bestaat als account of hrv_log-rij; afgebroken zonder write';
+  end if;
+  insert into _r values ('00 synthetische testidentiteiten: geen account, geen hrv_log-rij (true)', 'true');
 
   insert into _r select '01 mutatierechten anon/authenticated op hrv_log (0)', count(*)::text
     from unnest(array['anon','authenticated']) rol, unnest(array['INSERT','UPDATE','DELETE','TRUNCATE']) recht

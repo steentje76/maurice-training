@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## v4.70.13 — Bron per veld in de health-reeksen (GAP-P2-018 R6) (5 oktober 2026)
+
+- **Root cause.** `healthSeries()` bepaalde de bron uit de rij-brede `[src:...]`-tag in `note`. Een wearable-sync zet die tag op de hele rij, dus een handmatig ingevulde rusthartslag op een dag met een wearable-HRV kreeg de bron "Fitbit". `pickLatestMetric()` las de bron al uit de canonieke per-veld kolom.
+- **Oplossing.** `healthSeries()` gebruikt dezelfde volgorde als `pickLatestMetric()`: eerst `<veld>_source` (`hrv_source`, `rhr_source`, `sleep_source`, `steps_source`), en alleen voor historische rijen waar die kolom leeg is de legacy-tag. Een expliciete bron `unknown` geeft geen bron (null) in plaats van "Check-in".
+- **Ongewijzigd.** Datums en waarden van de reeks, trend en statistiek zijn identiek; alleen de bron verandert waar de kolom iets anders zegt dan de tag. Geen databasewijziging, geen migratie van oude tags.
+- **Live (alleen tellingen, 4 oktober 2026):** 86 rijen; de per-veld bron is gevuld bij 25–27 van de 70–84 waarden per metric; 11 rijen hangen nog van de legacy-tag af; geen enkele rij waar tag en kolom elkaar nu tegenspreken.
+- **Gate:** `core/fHealthSeriesProvenance.test.js` (31 tests).
+- sw-cache v470130, versionCode 47013.
+
 ## v4.70.12 — Wearable-ingest keurt vóór opslag (GAP-P2-018 R1–R3) (4 oktober 2026)
 
 **Aanleiding.** Drie resterende punten van GAP-P2-018: stappen hadden geen contract (R1), `wearable-sync` schreef providerwaarden ongekeurd weg (R2), en de bestaande ingest-classificatie `normalizeHealthDaily()` was niet aan te sluiten omdat `GOOGLE_HEALTH_MAP` een payloadvorm beschreef die de echte parser nooit ziet (R3).

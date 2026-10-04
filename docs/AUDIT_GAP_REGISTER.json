@@ -505,9 +505,9 @@
    "blocker": true,
    "dependency": null,
    "evidence": [
-    "CODE VERIFIED: per-waarde keuring bij lezen bestaat sinds 2026-08-18 (dataquality.v1, observation.v1). R1-R3 opgelost in v4.70.12 en bewezen in core/fWearableIngestQuality.test.js (echte parsers, echte wearable-sync-handler, echte upsert_daily_health op PostgreSQL); niet geverifieerd tegen een live providersync. R4-R6 open: zie docs/GAP_ANALYSIS_V2.md."
+    "CODE VERIFIED: per-waarde keuring bij lezen bestaat sinds 2026-08-18 (dataquality.v1, observation.v1). R1-R3 opgelost in v4.70.12 (core/fWearableIngestQuality.test.js). R6 opgelost in v4.70.13 (core/fHealthSeriesProvenance.test.js): healthSeries leest de bron per veld uit <veld>_source. R4 en R5 open: zie docs/GAP_ANALYSIS_V2.md."
    ],
-   "intended_closure": "R4-R6 (provenance-punten: slaap-terugval op tijd in bed, hrv_metric_type, bronselectie in healthSeries) blijven open. Geen opgeslagen quality-veld zonder concrete productbehoefte.",
+   "intended_closure": "R4 (slaap-terugval op tijd in bed wordt niet als zodanig vastgelegd) en R5 (hrv_metric_type wordt niet gezet) blijven open. Geen opgeslagen quality-veld zonder concrete productbehoefte.",
    "capability_id": "PROVIDER-INTEGRATION-CONTRACT-001",
    "section": "OPEN",
    "offset": 10739,
@@ -535,6 +535,11 @@
      "date": "2026-10-04",
      "change_type": "AUDIT_METADATA_CORRECTION",
      "reason": "R1-R3 (stappencontract, keuring voor opslag, normalizeHealthDaily aangesloten op de echte ingest) opgelost in v4.70.12. Gap versmald tot R4-R6. Status ongewijzigd OPEN; geen gap closure en geen nieuwe gap-ID's."
+    },
+    {
+     "date": "2026-10-05",
+     "change_type": "AUDIT_METADATA_CORRECTION",
+     "reason": "R6 (bronselectie in healthSeries) opgelost in v4.70.13, zonder databasewijziging. Gap versmald tot R4 en R5. Status ongewijzigd OPEN; geen gap closure en geen nieuwe gap-ID's."
     }
    ]
   },

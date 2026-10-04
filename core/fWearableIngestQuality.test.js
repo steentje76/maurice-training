@@ -294,7 +294,8 @@ async function main() {
     ok(!/hrv_metric_type/.test(ws), 'G-R5 hrv_metric_type wordt nog steeds niet geschreven');
     const dcSrc = rd('core/deviceIntegration.js');
     const hs = dcSrc.slice(dcSrc.indexOf('function healthSeries('), dcSrc.indexOf('function healthSeries(') + 1600);
-    ok(/_parseSrcTag\(r\.note\)/.test(hs) && !/\+ '_source'|hrv_source|rhr_source|sleep_source/.test(hs), 'G-R6 healthSeries bepaalt de bron nog steeds uit de notitie-tag');
+    // R6 is sinds v4.70.13 opgelost (core/fHealthSeriesProvenance.test.js): per-veld kolom eerst, tag als terugval.
+    ok(/kolomBron \? kolomBron : _parseSrcTag\(r\.note\)/.test(hs), 'G-R6 healthSeries leest de bron primair uit de per-veld kolom (R6 gesloten)');
     ok(rd('netlify/functions/_wearableSyncLib.js').indexOf("else if (iv && iv.startTime && iv.endTime) {") > 0, 'G-R4c de terugvalcode in parseSleepPoint is ongewijzigd aanwezig');
   }
 }

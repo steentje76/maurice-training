@@ -2558,19 +2558,23 @@ Productie-apply is een aparte, expliciet goed te keuren stap; tot dan geldt de i
 
 ## DEC-DQ-001 — Welke bestaande kwaliteitsstatus de herstel-/readinessketen beïnvloedt (4 oktober 2026)
 
-**Besluit (alleen wat uit bestaande contracten volgt).**
-1. dataquality.v1 `excluded` met reden `niet_numeriek` of `buiten_contract`: de waarde is geen geldige meting van de
-   grootheid en is voor de keten ontbrekend, vóór elke berekening.
-2. observation.v1-statussen worden ongewijzigd doorgegeven. `readinessDay()` beslist met zijn bestaande lijst
-   (`no_data`, `sync_failed`); de herstelscore gebruikt dezelfde lijst voor de RHR-delta en voor de basis van de dagfactor.
-3. De sync-status geldt voor de wearable-bron: een waarde met bron `manual` wordt er niet door geraakt.
-4. Een dagfactor zonder HRV-oordeel, zonder slaap en zonder cyclusfase is een neutrale invulling en geen herstelcomponent.
+Besluiten van de Product Owner bij PR #515. Er staan geen punten meer open.
 
-**Bewust NIET besloten — open voor de Product Owner.** In alle drie de gevallen verandert er nu niets aan het gedrag.
-- **`stale` (meting van 7 of meer dagen oud).** `readinessDay()` noemt `stale` niet als onbetrouwbaar;
-  `verbandTrainingContext()` doet dat wel. Twee bestaande lijsten, twee uitkomsten. De keten gebruikt een oude meting
-  daardoor nog steeds als die van vandaag.
-- **Mislukte sync en de dagfactor.** Bij `sync_failed` vallen de signalen weg uit readiness en herstelscore, maar de
-  dagfactor (en daarmee DEC-RECADJ-001) rekent nog met de eerder gesynchroniseerde waarden.
-- **Statistische uitschieters (`extreme_uitschieter`).** Blijven staan: een nacht van drie uur of een scherpe
-  HRV-daling is juist het signaal waarop de dagfactor hoort te reageren. Negeren zou een nieuwe trainingsregel zijn.
+1. **Contractueel ongeldig.** dataquality.v1 `excluded` met reden `niet_numeriek` of `buiten_contract`: de waarde is
+   voor de keten ontbrekend, vóór elke berekening.
+2. **`stale`.** Een observatie van 7 dagen of ouder (observation.v1, bestaande grens) telt NIET als actueel HRV-, RHR-
+   of slaapsignaal voor de herstel-/readinessbeslissing van vandaag. De meting blijft in de historie staan en mag
+   baseline en trend blijven voeden: stale voor vandaag is niet historisch ongeldig.
+3. **`sync_failed`.** Sync-status is transport/connectiviteit, geen meetgeldigheid. Een opgeslagen, actuele en
+   contractueel geldige meting blijft geldig wanneer een sync mislukt. De keten gebruikt de sync-status niet als invoer;
+   dezelfde opgeslagen data geeft dezelfde uitkomst, ongeacht of het Lichaam-scherm is geopend. De sync-status blijft
+   zichtbaar in de UI.
+4. **`extreme_uitschieter`.** Binnen het brondata-contract blijft de waarde meetellen in de dagelijkse herstelberekening
+   en blijft zij gemarkeerd. Statistische afwijking is geen reden tot uitsluiting; geen confidenceweging, geen nieuwe
+   trainingsregel.
+5. **Fail-closed.** Ontbreekt of faalt de keuringslaag, dan gaan HRV, rusthartslag en slaap niet rauw de keten in; ze
+   zijn dan ontbrekend (`no_data`). Spierherstel, gevoel en cyclusfase blijven werken.
+6. Een dagfactor zonder HRV-oordeel, zonder slaap en zonder cyclusfase is een neutrale invulling en geen herstelcomponent.
+
+**Gevolg in code.** `DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT` is `['no_data', 'stale']` (was `['no_data',
+'sync_failed']`). Die ene lijst geldt voor `readinessDay()`, de dagfactor van vandaag, de RHR-delta en de herstelscore.

@@ -1153,22 +1153,26 @@
   //          worden wel apart teruggegeven (`uitschieters`), zodat het zichtbaar blijft.
   //   dataquality.v1 'valid' / 'insufficient_data'
   //       -> ongewijzigd (aanwezig resp. al ontbrekend).
-  //   observation.v1-status (QUALITY_STATES)
+  //   observation.v1-status uit de OPGESLAGEN data (no_data | stale | partial | current)
   //       -> ONGEWIJZIGD doorgegeven als `kwaliteit`. Deze functie verwijdert op grond
-  //          daarvan niets; welke status een signaal ongeldig maakt beslist de Decision
-  //          Engine (DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT).
+  //          daarvan niets uit de rijen: een verouderde meting blijft historie en mag
+  //          baseline en trend blijven voeden. Welke status een signaal voor VANDAAG
+  //          ongeldig maakt beslist de Decision Engine
+  //          (DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT).
   //
-  // SYNC-STATUS geldt voor de wearable-bron. Een handmatig ingevoerde waarde (bron 'manual')
-  // wordt niet ongeldig doordat een wearable-sync mislukt; bij elke andere of onbekende
-  // bron wordt de sync-status wel meegewogen (nooit een geruststellende status bij twijfel).
+  // SYNC-STATUS is hier bewust GEEN invoer (DEC-DQ-001): het is transport-/connectiviteits-
+  // status, geen meetgeldigheid. Een opgeslagen, actuele en contractueel geldige meting blijft
+  // geldig wanneer een latere sync mislukt. Dezelfde opgeslagen rijen geven daardoor altijd
+  // dezelfde uitkomst, ongeacht welk scherm eerder is geopend. De sync-status blijft voor de
+  // UI beschikbaar via observationQuality(obs, sync) en deviceConnectionState().
   //
   // Provenance blijft los: de *_source-kolommen worden niet gelezen om kwaliteit te
   // bepalen en niet gewijzigd. Rijen zonder uitgesloten waarde zijn DEZELFDE objecten als
   // in de invoer; alleen een rij met een uitgesloten waarde wordt gekopieerd.
   //
-  // PUUR: `today` en `sync` worden ingespoten. Geen Date.now, geen mutatie van de invoer.
+  // PUUR: `today` wordt ingespoten. Geen Date.now, geen mutatie van de invoer.
   //   rows: hrv_log-rijen [{date, hrv, rhr, sleep, hrv_source, ...}]
-  //   opts: { today:'YYYY-MM-DD', sync:{status}|null, sleepHours: fn (sleep_unit.v1, optioneel) }
+  //   opts: { today:'YYYY-MM-DD', sleepHours: fn (sleep_unit.v1, optioneel) }
   //   -> { version, rows, signalen:{hrv,rhr,slaap:{kwaliteit,versheid,datum,bron,geldig,uitgesloten}},
   //        uitgesloten:[{veld,date,value,reason}], uitschieters:[{veld,date,value}] }
   // ══════════════════════════════════════════════════════════════════════════════
@@ -1226,9 +1230,8 @@
         uitgesloten.push({ veld: f.veld, date: p.date, value: arr[i][f.veld], reason: p.reason });
       });
       var obs = observation(bruikbaar, { today: o.today });
-      var sync = (obs.source === 'manual') ? null : (o.sync || null);
       signalen[f.signaal] = {
-        kwaliteit: observationQuality(obs, sync),
+        kwaliteit: observationQuality(obs, null),
         versheid: obs.freshness,
         datum: obs.date,
         bron: obs.source,

@@ -7,13 +7,15 @@
 - **Root cause.** (1) Een waarde buiten het brondata-contract (bv. HRV 450 ms, rusthartslag 150) ging ongekeurd de dagfactor, de RHR-delta en de herstelscore in. (2) `tkReadinessVandaag()` gaf alleen `{waarde}` door; het `ONBETROUWBAAR`-filter in `readinessDay()` deed in runtime dus nooit iets. (3) Een dagfactor zonder enige invoer (1.00) telde als aanwezige herstelcomponent.
 - **Oplossing — geen nieuw kwaliteitsmodel.** `DeviceCore.qualifyHealthRows()` (healthinput.v1) roept uitsluitend `qualifySeries` en `observation`/`observationQuality` aan. `index.html` heeft één keuringspunt, `tkHealthQualified()`, dat nu wordt gebruikt door Home, readiness, het startpad, de programma-check-in, Lichaam, het dagthema en het hersteldetail.
 - **Wat wordt uitgesloten.** Alleen `niet_numeriek` en `buiten_contract` uit dataquality.v1: de waarde is dan ontbrekend vóór elke berekening, niet "meegerekend met een lager label".
-- **Herstelscore.** De dagfactor is alleen een component als hij een werkelijke, betrouwbare basis heeft (HRV-oordeel, slaap of cyclusfase). De RHR-delta en die basis gebruiken dezelfde lijst als `readinessDay()` (`DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT`, inhoudelijk ongewijzigd: `no_data`, `sync_failed`). `recovery_score.v1` zelf is niet gewijzigd.
+- **Herstelscore.** De dagfactor is alleen een component als hij een werkelijke basis heeft (HRV-oordeel, slaap of cyclusfase). `recovery_score.v1` zelf is niet gewijzigd.
 - **Readiness.** `readinessDay()` ontvangt nu de bestaande kwaliteitsstatus voor HRV, RHR en slaap. Geen tweede Decision-pad.
-- **Sync-status** telt alleen voor niet-handmatige waarden: een handmatige check-in wordt niet ongeldig door een mislukte wearable-sync.
-- **Ongewijzigd bij geldige invoer.** Volledig geldige wearable- of handmatige data, gedeeltelijke data en ontbrekende slaap geven exact dezelfde dagfactor, herstelscore, band, betrouwbaarheid, zone en trainingsaanpassing.
-- **Bewust NIET besloten** (labels worden doorgegeven, er verandert niets aan het gedrag): `stale` (7+ dagen oud), een mislukte sync als reden om waarden uit de dagfactor te halen, en statistische uitschieters (`extreme_uitschieter`). Zie DEC-DQ-001.
+- **Besluit `stale` (DEC-DQ-001).** Een meting van 7 dagen of ouder telt niet als actueel signaal voor vandaag: HRV valt terug op het neutrale 'ref', slaap en RHR-delta ontbreken, en `readinessDay()` telt het signaal niet. De meting blijft in de historie staan en voedt baseline en trend. `DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT` is daarom `no_data` + `stale`.
+- **Besluit `sync_failed`.** Sync-status is transport, geen meetgeldigheid, en is geen invoer van de keten meer (`window._tkLichSync` wordt er niet gelezen). `sync_failed` is uit de Decision-lijst gehaald. Dezelfde opgeslagen data geeft dezelfde uitkomst, ongeacht of het Lichaam-scherm is geopend.
+- **Besluit uitschieters.** `extreme_uitschieter` binnen het contract blijft meetellen en blijft gemarkeerd.
+- **Fail-closed.** Ontbreekt of faalt de keuringslaag, dan gaan HRV, rusthartslag en slaap niet rauw de berekening in; ze zijn dan ontbrekend (`no_data`). Spierherstel, gevoel en cyclusfase blijven werken.
+- **Ongewijzigd bij geldige, actuele invoer.** Volledig geldige wearable- of handmatige data, gedeeltelijke data, ontbrekende slaap en een mislukte sync geven exact dezelfde dagfactor, herstelscore, band, betrouwbaarheid, zone en trainingsaanpassing.
 - **Niet gewijzigd:** `recoveryScore`, `calculateDayFactor`, HRV-baseline, Decision Rules, drempels, AI-coach, database, `upsert_daily_health`.
-- **Gate:** `core/fRecoveryReadinessQualityWiring.test.js` (73 tests) op de echte, uit `index.html` gehaalde runtimefuncties met de echte cores.
+- **Gate:** `core/fRecoveryReadinessQualityWiring.test.js` (118 tests) op de echte, uit `index.html` gehaalde runtimefuncties met de echte cores. `fHardening` en `fReadiness` zijn aangepast aan de nieuwe Decision-lijst.
 - **GAP-P2-018 gereconcilieerd:** de brede claim was verouderd; zie `docs/GAP_ANALYSIS_V2.md`.
 - sw-cache v470090, CORE_SIG bijgewerkt, versionCode 47009.
 

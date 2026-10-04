@@ -18980,7 +18980,7 @@ async function buildTrainIntro(t,list){
   const muscles=[...mset];
   const n=(list||[]).length;
   let key='goed';
-  try{const hd=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35')).rows;if(hd&&hd[0]){const df=dagfactor(hrvDagFactorPersonal(hd),hd[0].sleep,hd[0].cyclus_fase);key=dayState(df.factor).key;}}catch(_){}
+  try{const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));const hd=hq.rows;if(hd&&hd[0]){const df=dagfactor(hrvDagFactorPersonal(hd),hd[0].sleep,hd[0].cyclus_fase,hq.signalen);key=dayState(df.factor).key;}}catch(_){}
   const focus={goed:'Je herstel is goed — focus op sterke, gecontroleerde sets.',
     normaal:'Prima dag — train op gevoel en houd je techniek scherp.',
     vermoeid:'Rustig opbouwen vandaag. Kwaliteit boven gewicht.',
@@ -24758,19 +24758,33 @@ function cyclusDagFactor(fase){ return CalcCore.cyclusDagFactor(fase); } /* F1.5
 // rijen laat keuren; de keuring zelf zit in DeviceCore (dataquality.v1 + observation.v1),
 // de beslissing welke status een signaal ongeldig maakt in DecisionCore. Hier staat geen
 // eigen drempel en geen eigen lijst.
-//   - 'excluded' door dataquality.v1  -> de waarde is null in de teruggegeven rijen, dus
-//     ontbrekend VOOR elke berekening (niet: meegerekend met een lager label).
-//   - observation.v1-status          -> ongewijzigd beschikbaar in .signalen.
-//   - 'stale' sluit niets uit: dat is een open productbesluit.
-// Valt DeviceCore weg, dan blijven de rijen zoals ze waren (oud gedrag) — er wordt nooit
-// een kwaliteit verzonnen.
+//   - niet_numeriek / buiten_contract (dataquality.v1) -> de waarde is null in de teruggegeven
+//     rijen, dus ontbrekend VOOR elke berekening (niet: meegerekend met een lager label).
+//   - extreme_uitschieter -> blijft meetellen; een statistische afwijking sluit een meting niet uit.
+//   - observation.v1-status uit de opgeslagen data -> in .signalen. Een 'stale' signaal telt
+//     niet voor vandaag (dagfactor(), tkRhrDeltaHerstel(), readinessDay()); de rij zelf blijft
+//     staan voor baseline en trend.
+//   - sync-status is GEEN invoer: dezelfde opgeslagen rijen geven dezelfde uitkomst, ongeacht
+//     of het Lichaam-scherm al is geopend (DEC-DQ-001).
+// FAIL-CLOSED: ontbreekt of faalt de keuringslaag, dan gaan HRV, rusthartslag en slaap NIET
+// rauw de keten in. Ze zijn dan ontbrekend (bestaande status no_data); datum, cyclusfase en
+// gevoel blijven staan, zodat spierherstel en gevoel gewoon blijven werken.
+function tkHealthFailClosed(rijen){
+  return {
+    version:null, gekeurd:false,
+    rows:rijen.map(function(r){ return (r&&typeof r==='object')?Object.assign({},r,{hrv:null,rhr:null,sleep:null}):r; }),
+    signalen:{hrv:{kwaliteit:'no_data'},rhr:{kwaliteit:'no_data'},slaap:{kwaliteit:'no_data'}},
+    uitgesloten:[], uitschieters:[]
+  };
+}
 function tkHealthQualified(hd){
   const rijen=Array.isArray(hd)?hd:[];
-  const ongekeurd={version:null,rows:rijen,signalen:{},uitgesloten:[]};
   try{
-    if(typeof DeviceCore==='undefined'||typeof DeviceCore.qualifyHealthRows!=='function') return ongekeurd;
-    return DeviceCore.qualifyHealthRows(rijen,{today:td(),sync:(window._tkLichSync||null),sleepHours:tkSleepHours});
-  }catch(_){ return ongekeurd; }
+    if(typeof DeviceCore==='undefined'||typeof DeviceCore.qualifyHealthRows!=='function') return tkHealthFailClosed(rijen);
+    const hq=DeviceCore.qualifyHealthRows(rijen,{today:td(),sleepHours:tkSleepHours});
+    if(!hq||!Array.isArray(hq.rows)||hq.rows.length!==rijen.length||!hq.signalen) return tkHealthFailClosed(rijen);
+    return hq;
+  }catch(_){ return tkHealthFailClosed(rijen); }
 }
 // Dezelfde lijst als readinessDay() gebruikt (DecisionCore), geen kopie.
 function tkSignaalOnbetrouwbaar(signaal){
@@ -24778,16 +24792,23 @@ function tkSignaalOnbetrouwbaar(signaal){
   return !!(signaal&&signaal.kwaliteit&&lijst.indexOf(signaal.kwaliteit)>=0);
 }
 // RHR-delta voor de herstelscore: uit gekeurde rijen, en niet wanneer het RHR-signaal volgens
-// de bestaande lijst onbetrouwbaar is. Dan ontbreekt de component (null), hij wordt niet 0.
+// de Decision-lijst niet actueel is (no_data, stale). Dan ontbreekt de component (null), hij
+// wordt niet 0. De delta zelf blijft de bestaande berekening over de historie.
 function tkRhrDeltaHerstel(hq){
   if(hq&&hq.signalen&&tkSignaalOnbetrouwbaar(hq.signalen.rhr)) return null;
   return rhrBaselineDelta(hq?hq.rows:[]);
 }
-// signalen (optioneel) = tkHealthQualified(...).signalen. `basis` legt vast welke invoer de
-// factor WERKELIJK heeft gevoed: zonder HRV-oordeel ('ref'), zonder slaap en zonder cyclusfase
-// is 1.00 een neutrale invulling en geen meting. De factor zelf verandert hierdoor niet.
-function dagfactor(hrvComponent,slaapUren,cyclusFase,signalen){
-  const hc = hrvComponent || {factor:1.00, st:'ref', baseline:null};
+// signalen (optioneel) = tkHealthQualified(...).signalen. Een HRV- of slaapsignaal dat volgens
+// de Decision-lijst niet actueel is (no_data, stale) stuurt de dagfactor van VANDAAG niet: HRV
+// valt terug op 'ref' (1.00), slaap op ontbrekend. De HRV-baseline zelf blijft uit de historie
+// komen. `basis` legt vast welke invoer de factor WERKELIJK heeft gevoed: zonder HRV-oordeel,
+// zonder slaap en zonder cyclusfase is 1.00 een neutrale invulling en geen meting.
+function dagfactor(hrvComponent,slaapInvoer,cyclusFase,signalen){
+  // Zonder signalen (aanroep met drie argumenten) wordt er niets gekeurd: exact het oude gedrag.
+  const onb=function(k){ return signalen ? tkSignaalOnbetrouwbaar(signalen[k]) : false; };
+  const hcIn = hrvComponent || {factor:1.00, st:'ref', baseline:null};
+  const hc = onb('hrv') ? {factor:1.00, st:'ref', baseline:(hcIn.baseline||null)} : hcIn;
+  const slaapUren = onb('slaap') ? null : slaapInvoer;
   const hrvFactor=hc.factor;
   /* sleep_unit.v1: de dagfactor krijgt uitsluitend canonieke decimale uren. Eén normalisatie
      hier, zodat de getoonde slaapFactor en de berekende factor niet uiteen kunnen lopen. */
@@ -24796,11 +24817,9 @@ function dagfactor(hrvComponent,slaapUren,cyclusFase,signalen){
   const cyclusFactor=cyclusDagFactor(cyclusFase);
   /* F1.5C: product/clamp/round -> CalcCore.calculateDayFactor (dayfactor.v1) */
   const factor=CalcCore.calculateDayFactor({hrvFactor,sleepHours:slaapUur,cyclePhase:cyclusFase});
-  // Zonder signalen (aanroep met drie argumenten) wordt er niets gekeurd: exact het oude gedrag.
-  const onb=function(k){ return signalen ? tkSignaalOnbetrouwbaar(signalen[k]) : false; };
   const basis={
-    hrv: hc.st!=='ref' && !onb('hrv'),
-    slaap: !!slaapUur && !onb('slaap'),
+    hrv: hc.st!=='ref',
+    slaap: !!slaapUur,
     cyclus: cyclusFase!=null && cyclusFase!==''
   };
   return {factor,hrvFactor,slaapFactor,cyclusFactor,hrvSt:hc.st,hrvBaseline:hc.baseline,basis};
@@ -32263,9 +32282,9 @@ async function renderLichaam(){
 async function renderLichaamPremium(){
   const rec=window.v43LichRec||{overall:100,rows:[],hasData:false};
   const rows=rec.rows||[];
-  let hd=[]; let lh=null; try{hd=tkHealthQualified(await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35')).rows; lh=(hd&&hd[0])?hd[0]:null;}catch(_){}
+  let hd=[]; let lh=null; let hq=null; try{hq=tkHealthQualified(await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35')); hd=hq.rows; lh=(hd&&hd[0])?hd[0]:null;}catch(_){}
   let df=null,ger=null,ds=null;
-  if(lh){ try{ df=dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
+  if(lh){ try{ df=dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase,hq.signalen).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
   const hero=document.getElementById('lich-hero');
   if(hero){
     const ov=rec.hasData?rec.overall:null;

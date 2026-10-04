@@ -14,9 +14,10 @@ v4.70.9
   de bestaande lagen dataquality.v1 en observation.v1 aanroept. Waarden met reden `niet_numeriek` of `buiten_contract`
   zijn ontbrekend vóór dagfactor, RHR-delta, herstelscore en readiness.
 - `readinessDay()` krijgt in runtime de bestaande kwaliteitsstatus; de herstelscore telt alleen componenten met een
-  werkelijke, betrouwbare basis.
-- Niet besloten en daarom zonder gedragseffect: `stale`, sync-status als uitsluitgrond voor de dagfactor, en
-  statistische uitschieters (DEC-DQ-001).
+  werkelijke basis.
+- DEC-DQ-001: een `stale` meting (7+ dagen) telt niet als actueel signaal voor vandaag maar blijft historie; sync-status
+  is geen invoer van de keten; statistische uitschieters blijven meetellen; zonder keuringslaag zijn HRV/RHR/slaap
+  ontbrekend (fail-closed).
 - Guard: `core/fRecoveryReadinessQualityWiring.test.js`.
 
 ## HRV single-writer Phase 2 — database-afdwinging (4 oktober 2026; migratie NIET toegepast op productie)

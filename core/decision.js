@@ -320,12 +320,20 @@
    * }
    * -> readiness_day.v1-contract
    */
-  // Kwaliteitsstatussen (observation.v1, DeviceCore.QUALITY_STATES) waarbij een signaal niet als
-  // aanwezig telt. Inhoud ONGEWIJZIGD sinds Sprint 15; alleen naar moduleniveau gebracht en
-  // geexporteerd, zodat de herstelscore-orkestratie exact dezelfde lijst gebruikt (GAP-P2-015)
-  // in plaats van een eigen kopie. 'stale' staat hier bewust NIET in: of een verouderde meting
-  // voor vandaag mag meetellen is een open productbesluit, geen wiring.
-  var READINESS_ONBETROUWBARE_KWALITEIT = ['no_data', 'sync_failed'];
+  // Kwaliteitsstatussen (observation.v1, DeviceCore.QUALITY_STATES) waarbij een health-signaal
+  // NIET als actueel signaal voor vandaag telt. Eén lijst, gebruikt door readinessDay() en door
+  // de herstel-orkestratie (dagfactor, RHR-delta, herstelscore) — GAP-P2-015.
+  //
+  // Productbesluit DEC-DQ-001 (4 oktober 2026):
+  //   'no_data'  er is geen meting.
+  //   'stale'    de nieuwste meting is 7 dagen of ouder (observation.v1). Zij blijft in de
+  //              historie staan en mag baseline en trend blijven voeden, maar is geen signaal
+  //              voor de beslissing van vandaag.
+  //   'sync_failed' staat hier NIET meer in: sync-status is transport/connectiviteit, geen
+  //              meetgeldigheid. Een opgeslagen, actuele en contractueel geldige meting blijft
+  //              geldig wanneer een latere sync mislukt. (Tot v4.70.8 stond hier sync_failed
+  //              en ontbrak stale.)
+  var READINESS_ONBETROUWBARE_KWALITEIT = ['no_data', 'stale'];
 
   function readinessDay(input) {
     var i = input || {};

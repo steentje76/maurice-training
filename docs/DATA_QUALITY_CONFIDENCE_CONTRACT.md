@@ -21,7 +21,7 @@
 | Functie | Confidence-bron | Schaal |
 |---|---|---|
 | `recoveryScore()` | `comps.length` over de componenten die de orkestratie aanlevert; sinds v4.70.9 levert `recoveryScoreFrom()` alleen componenten met gekeurde invoer en een betrouwbare basis | `'hoog'`(≥3)/`'gemiddeld'`(2)/`'laag'`(<2)/`'geen'`(0) |
-| `readinessDay()` | expliciete telling beschikbare signalen (na ONBETROUWBAAR-filter) | `'volledig'`(≥5)/`'gedeeltelijk'`(≥2)/`'onvoldoende'`(<2) |
+| `readinessDay()` | expliciete telling beschikbare signalen (na ONBETROUWBAAR-filter: `no_data`, `stale`) | `'volledig'`(≥5)/`'gedeeltelijk'`(≥2)/`'onvoldoende'`(<2) |
 | `hrvBaseline()` | dagen + aantal metingen | `'referentie'`/`'voorlopig'`/`'volledig'` (fase, geen los confidence-label maar functioneel equivalent) |
 
 **Bevinding (sectie 15, opdracht-voorspelling bevestigd):** `recoveryScore()`'s confidence is uitsluitend gebaseerd op **componentaantal**, niet op de KWALITEIT van elk component. Een verouderde of onbetrouwbare HRV-meting telt in deze functie even zwaar mee als een verse, betrouwbare meting — in tegenstelling tot `readinessDay()`, die al wél een `ONBETROUWBAAR`-filter (`no_data`/`sync_failed`) toepast vóórdat de telling plaatsvindt. Dit is een reële, maar niet-kritieke inconsistentie tussen twee confidence-implementaties in dezelfde codebase. **Niet binnen deze sprint gefixed** (zou de compositiefunctie zelf moeten wijzigen, een risicovollere ingreep dan een audit rechtvaardigt) — geregistreerd als GAP-P2-015.
@@ -45,17 +45,19 @@ het brondata-contract (`GOOGLE_HEALTH_MAP`): HRV 0–400 ms, rusthartslag 20–1
 `DeviceCore.qualifyHealthRows()` roept alleen de twee bovenste lagen aan. `index.html` gebruikt hem via
 `tkHealthQualified()` op elke plek waar de keten `hrv_log` leest.
 
-| Bestaande status | Effect op de berekening (dagfactor, RHR-delta, herstelscore) | Effect op `readinessDay()` |
+| Bestaande status | Effect op de berekening van vandaag (dagfactor, RHR-delta, herstelscore) | Effect op `readinessDay()` |
 |---|---|---|
 | `excluded`: `niet_numeriek`, `buiten_contract` | waarde is ontbrekend vóór de berekening | signaal ontbreekt |
-| `excluded`: `extreme_uitschieter` | **geen** — waarde blijft staan (open besluit) | signaal telt |
+| `excluded`: `extreme_uitschieter` | geen — de waarde blijft meetellen en blijft gemarkeerd | signaal telt |
 | `insufficient_data` | al ontbrekend | signaal ontbreekt |
-| `no_data`, `sync_failed` | herstelscore: RHR-delta en de basis van de dagfactor tellen niet. Dagfactor zelf: **geen effect** (open besluit) | signaal telt niet (bestaande lijst) |
-| `stale` | **geen** (open besluit) | status wordt meegegeven, signaal telt (bestaande lijst) |
-| `partial`, `syncing`, `source_unavailable`, `current` | geen | status wordt meegegeven, signaal telt |
+| `no_data` | signaal stuurt niets | signaal telt niet |
+| `stale` (7+ dagen) | HRV valt terug op 'ref', slaap en RHR-delta ontbreken; de meting blijft historie en voedt baseline en trend | signaal telt niet |
+| `partial`, `current` | geen | signaal telt |
+| sync-status (`sync_failed`, `syncing`, ...) | geen invoer van de keten | geen invoer van de keten |
 
-De lijst `no_data`/`sync_failed` staat op één plek: `DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT`. De sync-status
-wordt niet toegepast op een waarde met bron `manual`. Open besluiten: `docs/00_Project_Management/DECISION_LOG.md`, DEC-DQ-001.
+De lijst `no_data`/`stale` staat op één plek: `DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT`. Sync-status is
+transport, geen meetgeldigheid; zij blijft zichtbaar in de UI. Valt de keuringslaag weg, dan zijn HRV, rusthartslag en
+slaap ontbrekend (fail-closed). Besluiten: `docs/00_Project_Management/DECISION_LOG.md`, DEC-DQ-001.
 
 ## Unknown ≠ Zero — bevestigd correct
 Repo-brede zoekactie naar `||0`/`??0`-patronen op RPE/HRV/gewicht/reps leverde geen treffers op. Ontbrekende waarden resulteren consistent in `null`, nooit stilzwijgend `0`.
@@ -80,7 +82,7 @@ Repo-brede zoekactie naar `||0`/`??0`-patronen op RPE/HRV/gewicht/reps leverde g
 De AI ontvangt uitsluitend reeds-besloten Decision-uitkomsten met expliciete promptinstructie deze niet te wijzigen. Bij onvoldoende data levert de Decision Engine zelf al `geen_advies`/`null`. **Precieze formulering (gecorrigeerd t.o.v. een eerdere, te sterke claim):** dit betekent dat de deterministische upstream-keten de AI geen gefabriceerde Decision-waarde aanreikt en het model instrueert deze grens te respecteren — het betekent NIET dat het technisch onmogelijk is voor een AI-modelantwoord om van deze instructie af te wijken. Er bestaat momenteel geen technische output-validator die elk afwijkend AI-antwoord afdwingbaar blokkeert; dat is expliciet **GAP-P1-003, met bestemming F4 (AI Output Contract)** — geen F3-capability. F3 claimt dus: "de AI krijgt nooit een gefabriceerde waarde aangereikt en wordt geïnstrueerd de grens te respecteren", niet: "de AI kan technisch onmogelijk fabriceren."
 
 ## Open Gap
-**Stand 4 oktober 2026 (v4.70.9):** de bedrading hieronder is geïmplementeerd voor contractueel ongeldige waarden, `no_data` en `sync_failed`. Voor `stale` is geen besluit genomen; de gap is daarom niet als gesloten aangemerkt. De oorspronkelijke bevinding blijft hieronder staan.
+**Stand 4 oktober 2026 (v4.70.9):** de bedrading hieronder is geïmplementeerd, inclusief de besluiten uit DEC-DQ-001 (stale, sync-status, uitschieters, fail-closed). De registerstatus wijzigt pas na merge. De oorspronkelijke bevinding blijft hieronder staan.
 
 **GAP-P2-015** (nieuw): `recoveryScore()`'s confidence-model telt alleen componenten, filtert niet op componentkwaliteit (in tegenstelling tot `readinessDay()`'s wél-aanwezige `ONBETROUWBAAR`-filter). Niet kritiek (geen hard advies wordt hierdoor onveilig geproduceerd — de Recovery Score is altijd een aanvullend, informatief getal, nooit de directe bron van een Decision Rule-uitkomst zelf), maar een reële inconsistentie tussen twee vergelijkbare confidence-implementaties.
 

@@ -2556,6 +2556,11 @@ DELETE). RLS blijft de leesgrens en is geen vervanging voor privilege-isolatie. 
 zelf verwijderen; de app biedt die actie ook niet. De bestaande functie is niet gewijzigd en er is geen tweede RPC.
 Productie-apply is een aparte, expliciet goed te keuren stap; tot dan geldt de invariant alleen in de repo.
 
+**Statusnotitie (4 oktober 2026).** De productie-apply is uitgevoerd: `migratie_v579` staat sinds 08:20 UTC op de
+productiedatabase (ledger-versie `20261004082007`). De live ACL is geverifieerd (`anon`/`authenticated` alleen SELECT op
+`hrv_log`; opnieuw gecontroleerd om 15:12 UTC) en `tools/verify-hrv-single-writer.sql` is volledig en met de verwachte
+uitkomst uitgevoerd, binnen een teruggedraaide transactie. Status: CLOSED_PROVEN. Het besluit hierboven is ongewijzigd.
+
 ## DEC-DQ-001 — Welke bestaande kwaliteitsstatus de herstel-/readinessketen beïnvloedt (4 oktober 2026)
 
 Besluiten van de Product Owner bij PR #515. Er staan geen punten meer open.

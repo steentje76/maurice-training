@@ -21,7 +21,9 @@
 
 ## Security — HRV single-writer Phase 2: database dwingt de canonieke writer af (4 oktober 2026, server-side; APP_VER ongewijzigd v4.70.8)
 
-**Status: migratie in de repo, NIET op productie toegepast.** Apply volgt pas na onafhankelijke review en expliciet akkoord.
+**Status bij merge (#514, 4 oktober 2026):** migratie in de repo, op dat moment nog niet op productie toegepast; de apply was een aparte stap na review en expliciet akkoord.
+
+**Update 4 oktober 2026, na de merge:** `migratie_v579` is om 08:20 UTC op productie toegepast (ledger-versie `20261004082007`) en live geverifieerd: `anon` en `authenticated` hebben op `hrv_log` alleen nog SELECT, en `tools/verify-hrv-single-writer.sql` gaf op alle 19 regels de verwachte uitkomst (teruggedraaid, geen datawijziging). Status: CLOSED_PROVEN. Niet live getest: een aanroep via de REST-interface met een echte gebruikerssessie.
 
 - **Phase 1 (#513, v4.70.8):** één writer in de applicatie. **Phase 2 (deze wijziging):** de database dwingt dat af.
 - **Root cause (live read-only vastgesteld, main `bc165eab`):** `anon` en `authenticated` hebben via de default privileges van `postgres` INSERT/UPDATE/DELETE op `public.hrv_log`; RLS was de enige begrenzing. Een ingelogde gebruiker kon zijn eigen dagrijen dus rechtstreeks invoegen, leegmaken of verwijderen, buiten bronvalidatie, COALESCE-merge en provenance van `upsert_daily_health` om.

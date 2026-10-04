@@ -44,7 +44,7 @@ function extractFn(src, name) {
   throw new Error('functie niet afgesloten: ' + name);
 }
 const NAMEN = ['td', 'tkSleepHours', 'lnRmssd', 'hrvBaseline', 'hrvRollingRecent', 'hrvStPersonal', 'hrvDagFactorPersonal',
-  'slaapDagFactor', 'cyclusDagFactor', 'tkHealthFailClosed', 'tkHealthQualified', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor',
+  'slaapDagFactor', 'cyclusDagFactor', 'tkCyclusFaseVandaag', 'tkHealthFailClosed', 'tkHealthQualified', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor',
   'tkDagfactorHeeftBasis', 'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle', 'recoveryAdjustmentForToday',
   'computeProgAdjustment', 'v43GereedheidScore', 'tkReadinessVandaag'];
 const PROD = NAMEN.map(function (n) { return extractFn(HTML, n); }).join('\n');
@@ -69,7 +69,7 @@ function runtime(state, opts) {
 // De Home-orkestratie, letterlijk zoals refreshHome hem uitvoert (zie sectie G voor de bronbinding).
 function homeDf(sb, hdRuw) {
   const hq = sb.tkHealthQualified(hdRuw); const hd = hq.rows; const lh = hd[0];
-  return lh ? sb.dagfactor(sb.hrvDagFactorPersonal(hd), lh.sleep, lh.cyclus_fase, hq.signalen) : null;
+  return lh ? sb.dagfactor(sb.hrvDagFactorPersonal(hd), lh.sleep, sb.tkCyclusFaseVandaag(lh), hq.signalen) : null;
 }
 async function draai(state, opts) {
   const sb = runtime(state, opts);
@@ -315,7 +315,7 @@ async function main() {
     ok(/tkHealthQualified\(/.test(src) && !/(?:const|let)\s+hd\s*=\s*await\s+(?:sbGet|v43SafeGet)\('hrv_log'/.test(src), 'G1 ' + naam + ' rekent op gekeurde rijen (geen rauwe hrv_log naar de keten)');
   });
   const home = extractFn(HTML, 'refreshHome');
-  ok(/const hq=tkHealthQualified\(await v43SafeGet\('hrv_log'[^)]*\)\);\s*const hd=hq\.rows;\s*const lh=hd\[0\];/.test(home) && /dagfactor\(hrvComponent,lh\.sleep,lh\.cyclus_fase,hq\.signalen\)/.test(home), 'G2 refreshHome voert exact de orkestratie uit die deze suite gebruikt');
+  ok(/const hq=tkHealthQualified\(await v43SafeGet\('hrv_log'[^)]*\)\);\s*const hd=hq\.rows;\s*const lh=hd\[0\];/.test(home) && /const cyclusVandaag=tkCyclusFaseVandaag\(lh\);/.test(home) && /dagfactor\(hrvComponent,lh\.sleep,cyclusVandaag,hq\.signalen\)/.test(home), 'G2 refreshHome voert exact de orkestratie uit die deze suite gebruikt');
   const rv = extractFn(HTML, 'tkReadinessVandaag');
   ok((rv.match(/DecisionCore\.readinessDay\(/g) || []).length === 1 && /kwaliteit:kw\('hrv'\)/.test(rv) && /kwaliteit:kw\('rhr'\)/.test(rv) && /kwaliteit:kw\('slaap'\)/.test(rv), 'G3 één Decision-aanroep, met kwaliteit voor hrv, rhr en slaap');
   ok(!/trainReadiness|dayZone|computeProgAdjustment/.test(rv), 'G4 tkReadinessVandaag bevat geen tweede readiness-/zoneberekening');

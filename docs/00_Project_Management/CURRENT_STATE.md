@@ -8,6 +8,14 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.8
 
+## HRV single-writer Phase 2 — database-afdwinging (4 oktober 2026; migratie NIET toegepast op productie)
+
+- `migratie_v579.sql` staat in de repo en trekt INSERT/UPDATE/DELETE/TRUNCATE op `public.hrv_log` in van `anon`,
+  `authenticated` en PUBLIC. **Op productie is zij nog niet toegepast:** daar hebben `anon`/`authenticated` deze
+  rechten nog (RLS-beperkt tot eigen rijen). De database-afgedwongen invariant geldt dus nog niet live.
+- Bewezen op echte PostgreSQL-semantiek in `core/fHrvDbSingleWriterEnforcement.test.js`; live controle na apply met
+  `tools/verify-hrv-single-writer.sql`.
+
 ## HRV single-writer — bestand-import via de canonieke writer (v4.70.8, 3 oktober 2026)
 
 - `hrv_log` heeft in de applicatiecode één schrijfcontract: `upsert_daily_health` (check-in via `upsertHrvLog`,
@@ -15,8 +23,7 @@ v4.70.8
   `importFromFile` (`resolution=ignore-duplicates`) is verwijderd.
 - Import op een bestaande dag volgt het mergecontract: aangeleverde waarden werken het veld bij, lege velden
   overschrijven niets. Per-veld bron blijft behouden; een ontbrekende bron wordt `unknown`.
-- Guard: `core/fHrvSingleWriter.test.js`. Niet afgedwongen in de database: `authenticated` heeft nog INSERT/UPDATE op
-  `hrv_log` (RLS-beperkt tot eigen rijen). Geen migratie in deze wijziging.
+- Guard: `core/fHrvSingleWriter.test.js`. Database-afdwinging: zie Phase 2 hierboven.
 
 ## Security — F-SEC-010 default function EXECUTE (30 september 2026)
 

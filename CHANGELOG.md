@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## v4.70.10 — Herstelcontext: cyclusfase alleen van vandaag, hersteldetail toont het echte meetmoment (4 oktober 2026)
+
+Twee restpunten uit v4.70.9 (PR #515). Geen nieuwe trainingslogica, geen nieuwe kwaliteitslaag.
+
+- **Cyclusfase — root cause.** De dagfactor nam `cyclus_fase` uit de nieuwste `hrv_log`-rij, hoe oud die ook was. Een fase van tien dagen geleden stuurde zo de dagfactor van vandaag; bij verouderde health-data was dat zelfs de enige invoer die nog meetelde.
+- **Oplossing.** `tkCyclusFaseVandaag()`: de fase telt alleen wanneer de rij de datum van vandaag heeft. Dezelfde regel als voor het gevoel uit de check-in. Toegepast op Home, het startpad, de programma-check-in, het Lichaam-scherm en het dagthema. Een oudere fase blijft historie; er wordt niets geschat of doorgetrokken (`CycleCore` blijft een suggestie voor de check-in). Zonder fase van vandaag geldt de bestaande neutrale cyclusfactor 1.00.
+- **Hersteldetail — root cause.** `openRecoveryDetail()` zette "Vandaag:" voor de nieuwste HRV-, rusthartslag- en slaapwaarde, ook als die dagen oud was.
+- **Oplossing.** Het label komt uit de bestaande versheid van observation.v1 via `tkMetingWanneer()`: Vandaag / Gisteren / N dagen geleden, anders de datum; zonder geldige datum "Laatste meting". `tkMetingHerkomst()` gebruikt dezelfde helper en geeft dezelfde tekst als voorheen.
+- **Ongewijzigd.** Volledig actuele, geldige invoer geeft dezelfde dagfactor, herstelscore en trainingsaanpassing. De keuring en de stale-regel uit v4.70.9 zijn intact. `CalcCore`, `DecisionCore`, `CycleCore`, database en AI-coach zijn niet gewijzigd.
+- **Gate:** `core/fRecoveryContextFreshness.test.js` (51 tests) op de echte runtimefuncties, inclusief de echte `openRecoveryDetail`.
+- sw-cache v470100, versionCode 47010.
+
 ## v4.70.9 — Herstel/readiness: bestaande datakwaliteit doorgegeven aan de keten (GAP-P2-015) (4 oktober 2026)
 
 **Aanleiding.** De herstel-/readinessketen las `hrv_log` rauw. De per-waarde kwaliteit die al sinds augustus in `core/deviceIntegration.js` bestaat (dataquality.v1, observation.v1) werd wel in Lichaam/Gezondheidsgegevens gebruikt, maar niet door dagfactor, RHR-delta, herstelscore en readiness.

@@ -2583,3 +2583,11 @@ Besluiten van de Product Owner bij PR #515. Er staan geen punten meer open.
 
 **Gevolg in code.** `DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT` is `['no_data', 'stale']` (was `['no_data',
 'sync_failed']`). Die ene lijst geldt voor `readinessDay()`, de dagfactor van vandaag, de RHR-delta en de herstelscore.
+
+## DEC-CYCLE-001 — Cycluscontext voor de dagfactor is datumgebonden (4 oktober 2026)
+
+**Besluit (Product Owner).** `hrv_log.cyclus_fase` geldt alleen voor de dag waarop zij in de check-in is vastgelegd. De
+dagfactor van vandaag gebruikt haar uitsluitend wanneer de rij de datum van vandaag heeft. Een fase uit een oudere rij
+blijft historische context en wordt niet vooruit geprojecteerd; er wordt geen fase geschat op basis van kalenderdagen.
+`CycleCore.cycleContext()` blijft een suggestie voor de check-in en is geen invoer van de dagfactor. Zonder fase van
+vandaag geldt de bestaande neutrale cyclusfactor (1.00). De cyclusfactoren zelf zijn niet gewijzigd.

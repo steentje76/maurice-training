@@ -7646,7 +7646,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.9';
+const APP_VER = 'v4.70.10';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -18980,7 +18980,7 @@ async function buildTrainIntro(t,list){
   const muscles=[...mset];
   const n=(list||[]).length;
   let key='goed';
-  try{const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));const hd=hq.rows;if(hd&&hd[0]){const df=dagfactor(hrvDagFactorPersonal(hd),hd[0].sleep,hd[0].cyclus_fase,hq.signalen);key=dayState(df.factor).key;}}catch(_){}
+  try{const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));const hd=hq.rows;if(hd&&hd[0]){const df=dagfactor(hrvDagFactorPersonal(hd),hd[0].sleep,tkCyclusFaseVandaag(hd[0]),hq.signalen);key=dayState(df.factor).key;}}catch(_){}
   const focus={goed:'Je herstel is goed — focus op sterke, gecontroleerde sets.',
     normaal:'Prima dag — train op gevoel en houd je techniek scherp.',
     vermoeid:'Rustig opbouwen vandaag. Kwaliteit boven gewicht.',
@@ -24147,20 +24147,21 @@ async function refreshHome(){
   if(lh){
     const hrvComponent=hrvDagFactorPersonal(hd);
     const st=hrvComponent.st;
-    const df=dagfactor(hrvComponent,lh.sleep,lh.cyclus_fase,hq.signalen);
+    const cyclusVandaag=tkCyclusFaseVandaag(lh); // alleen de fase van de rij van vandaag
+    const df=dagfactor(hrvComponent,lh.sleep,cyclusVandaag,hq.signalen);
     // v3.3.36 Batch 2 #1: dagfactor gepromoveerd tot dominant, tikbaar dag-element (H8 explainable AI).
     const heroKleur='var(--day)'; // v3.3.50 P6 — dagfactor-ring volgt het dag-thema (dayState)
     const dfStat=dagfactorStatus(df.factor);
     const ringPct=Math.max(0,Math.min(1,(df.factor-0.85)/0.20));const RC=Math.round(2*Math.PI*24);
-    const uitleg=dagfactorUitleg(lh.hrv,lh.sleep,lh.cyclus_fase,df);
+    const uitleg=dagfactorUitleg(lh.hrv,lh.sleep,cyclusVandaag,df);
     dfInfo={factor:df.factor,uitleg,hero:heroKleur,st};
-    const sig=[lh.hrv,lh.sleep,lh.cyclus_fase].filter(Boolean).length;
+    const sig=[lh.hrv,lh.sleep,cyclusVandaag].filter(Boolean).length;
     const conf=(lh.hrv&&lh.sleep)?'Hoog':(lh.hrv||lh.sleep)?'Middel':'Laag';
-    const cyc=lh.cyclus_fase?` × cyclus ${df.cyclusFactor.toFixed(2)}`:'';
+    const cyc=cyclusVandaag?` × cyclus ${df.cyclusFactor.toFixed(2)}`:'';
     const dc=dagfactorCoach(df.factor);
     // v3.3.48 — betekenis-eerst + premium "Waarom?": rauwe cijfers/pills verhuizen naar de
     // uitklap (renderDagfactorDetail), zodat de kaart als coach voelt i.p.v. dashboard.
-    window.homeDfDetail={factor:df.factor,uitleg,hrv:lh.hrv,rhr:lh.rhr,sleep:lh.sleep,cyclus:lh.cyclus_fase,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:lh.date,statusTxt:dfStat.txt,hrvBaseline:df.hrvBaseline};
+    window.homeDfDetail={factor:df.factor,uitleg,hrv:lh.hrv,rhr:lh.rhr,sleep:lh.sleep,cyclus:cyclusVandaag,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:lh.date,statusTxt:dfStat.txt,hrvBaseline:df.hrvBaseline};
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:14px">
       <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" class="df-head">
         <div class="df-ring">
@@ -24450,7 +24451,7 @@ async function openRecoveryDetail(){
       const stInfo=hrvStPersonal(hd);
       const statusTekst={g:'boven persoonlijk niveau',o:'onder persoonlijk niveau',r:'sterk lager dan gebruikelijk',ref:'onvoldoende historie voor een persoonlijk niveau'}[stInfo.st]||'onbekend';
       secties+='<div style="margin-bottom:12px"><div style="font-weight:700">HRV</div>'+
-        '<div>Vandaag: '+lh.hrv+' ms</div>'+
+        '<div>'+escHtml(tkMetingLabel(lh))+': '+lh.hrv+' ms</div>'+
         (baseline.ready?'<div style="color:var(--g4)">Persoonlijk niveau ('+baseline.fase+'): '+Math.round(baseline.meanRaw)+' ms</div>':'<div style="color:var(--g4)">Persoonlijk niveau: '+ (baseline.days||0)+' van de benodigde dagen historie</div>')+
         '<div style="color:var(--g4)">Status: '+statusTekst+'</div></div>';
     }
@@ -24459,7 +24460,7 @@ async function openRecoveryDetail(){
     if(lh&&lh.rhr!=null){
       const delta=rhrBaselineDelta(hd);
       secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Rusthartslag</div>'+
-        '<div>Vandaag: '+lh.rhr+' bpm</div>'+
+        '<div>'+escHtml(tkMetingLabel(lh))+': '+lh.rhr+' bpm</div>'+
         (delta!=null?'<div style="color:var(--g4)">'+(delta>0?'+':'')+delta+' bpm t.o.v. je recente gemiddelde</div>':'<div style="color:var(--g4)">Onvoldoende historie voor een vergelijking</div>')+
         '</div>';
     }
@@ -24468,7 +24469,7 @@ async function openRecoveryDetail(){
     const slaapRijen=hd.filter(r=>r.sleep!=null).slice(0,7);
     if(slaapRijen.length){
       secties+='<div style="margin-bottom:12px"><div style="font-weight:700">Slaap</div>'+
-        '<div>Vandaag: '+(lh&&lh.sleep!=null?tkSleepHours(lh.sleep)+' uur':'niet ingevuld')+'</div>'+
+        '<div>'+(lh&&lh.sleep!=null?escHtml(tkMetingLabel(lh))+': '+tkSleepHours(lh.sleep)+' uur':'Vandaag: niet ingevuld')+'</div>'+
         '<div style="color:var(--g4)">Laatste '+slaapRijen.length+' metingen: '+slaapRijen.map(r=>tkSleepHours(r.sleep)).join(', ')+' uur</div>'+
         '<div style="font-size:11px;color:var(--g4);margin-top:2px">Nog geen persoonlijk gebruikelijk niveau berekend voor slaap.</div></div>';
     }
@@ -24786,6 +24787,17 @@ function tkHealthQualified(hd){
     return hq;
   }catch(_){ return tkHealthFailClosed(rijen); }
 }
+// CYCLUSFASE VAN VANDAAG. hrv_log.cyclus_fase is zelf-gerapporteerde check-in-context en is
+// datumgebonden: zij geldt voor de dag waarop zij is ingevuld. Dezelfde regel als voor het
+// gevoel uit de check-in (hd[0].date===td() in recoveryAdjustmentForToday). Een fase uit een
+// oudere rij blijft historie en wordt niet naar vandaag doorgetrokken; er wordt ook geen fase
+// geschat (CycleCore.cycleContext is een suggestie voor de check-in, geen invoer van de
+// dagfactor). Ontbrekende of ongeldige datum -> geen fase -> bestaande neutrale cyclusfactor.
+function tkCyclusFaseVandaag(rij){
+  if(!rij||rij.cyclus_fase==null||rij.cyclus_fase==='') return null;
+  const d=(rij.date!=null)?String(rij.date).slice(0,10):'';
+  return (d!==''&&d===td())?rij.cyclus_fase:null;
+}
 // Dezelfde lijst als readinessDay() gebruikt (DecisionCore), geen kopie.
 function tkSignaalOnbetrouwbaar(signaal){
   const lijst=(typeof DecisionCore!=='undefined'&&Array.isArray(DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT))?DecisionCore.READINESS_ONBETROUWBARE_KWALITEIT:[];
@@ -24878,7 +24890,7 @@ async function recoveryAdjustmentForToday(muscleNames, opts){
   try{
     const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));
     const hd=hq.rows;
-    const dfInfo=dagfactor(hrvDagFactorPersonal(hd), (hd&&hd[0])?hd[0].sleep:null, (hd&&hd[0])?hd[0].cyclus_fase:null, hq.signalen);
+    const dfInfo=dagfactor(hrvDagFactorPersonal(hd), (hd&&hd[0])?hd[0].sleep:null, tkCyclusFaseVandaag(hd&&hd[0]), hq.signalen);
     let recRows=[]; try{ if(Array.isArray(muscleNames)&&muscleNames.length) recRows=await getRelevantMuscleRecovery(muscleNames); }catch(_){}
     // GEVOEL: expliciete check-in > hrv_log.voelt van vandaag > null.
     const hdVoelt=(hd&&hd[0]&&hd[0].date===td()&&hd[0].voelt)?String(hd[0].voelt):null;
@@ -30319,20 +30331,32 @@ async function renderBodyMeasurements(){
 // (rechtstreeks door een gekoppeld apparaat aangeleverd).
 function tkMetingHerkomst(datum, bron, soort, waarde){
   if(!datum) return '';
+  const wanneer=tkMetingWanneer(datum, bron, soort, waarde);
+  const soortLbl=(soort==='measured')?'gemeten':'ingevoerd';
+  return 'Bron: '+(bron||'handmatig')+' · '+wanneer+' · '+soortLbl;
+}
+// Wanneer is een meting gedaan? Eén plek, op de bestaande versheid uit de observatielaag
+// (observation.v1): vandaag / gisteren / N dagen geleden, anders de feitelijke datum.
+// Zonder (geldige) datum: lege string — er wordt nooit een tijdsaanduiding verzonnen.
+function tkMetingWanneer(datum, bron, soort, waarde){
+  if(datum==null) return '';
   const d=String(datum).slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) return '';
   const dc=(typeof DeviceCore!=='undefined')?DeviceCore:null;
   let obs=null;
   try{ obs=dc?dc.observation([{date:d,value:(waarde!=null?waarde:1),source:bron||null}],{today:td(),kind:soort||'entered'}):null; }catch(_){}
-  let wanneer;
   switch(obs&&obs.freshness){
-    case 'today':     wanneer='vandaag'; break;
-    case 'yesterday': wanneer='gisteren'; break;
+    case 'today':     return 'vandaag';
+    case 'yesterday': return 'gisteren';
     case 'recent':
-    case 'stale':     wanneer=obs.ageDays+' dagen geleden'; break;
-    default:          wanneer=(typeof fmtDate==='function')?fmtDate(d):d;
+    case 'stale':     return obs.ageDays+' dagen geleden';
+    default:          return (typeof fmtDate==='function')?fmtDate(d):d;
   }
-  const soortLbl=(soort==='measured')?'gemeten':'ingevoerd';
-  return 'Bron: '+(bron||'handmatig')+' · '+wanneer+' · '+soortLbl;
+}
+// Label vóór een meetwaarde in het hersteldetail: "Vandaag" alleen als de meting van vandaag is.
+function tkMetingLabel(rij){
+  const w=tkMetingWanneer(rij&&rij.date);
+  return w?capitalize(w):'Laatste meting';
 }
 
 async function askCoachProfiel(){
@@ -30785,7 +30809,7 @@ async function evaluateProgAdjustment(){
   const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));
   const hd=hq.rows;
   const lh=hd[0];
-  const df=lh?dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase,hq.signalen):{factor:1};
+  const df=lh?dagfactor(hrvDagFactorPersonal(hd),lh.sleep,tkCyclusFaseVandaag(lh),hq.signalen):{factor:1};
   const muscleSet=new Set();
   rows.forEach(r=>getExerciseMuscles(r.exercise_id).forEach(m=>muscleSet.add(m)));
   const muscleRows=await getRelevantMuscleRecovery([...muscleSet]);
@@ -32284,7 +32308,7 @@ async function renderLichaamPremium(){
   const rows=rec.rows||[];
   let hd=[]; let lh=null; let hq=null; try{hq=tkHealthQualified(await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35')); hd=hq.rows; lh=(hd&&hd[0])?hd[0]:null;}catch(_){}
   let df=null,ger=null,ds=null;
-  if(lh){ try{ df=dagfactor(hrvDagFactorPersonal(hd),lh.sleep,lh.cyclus_fase,hq.signalen).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
+  if(lh){ try{ df=dagfactor(hrvDagFactorPersonal(hd),lh.sleep,tkCyclusFaseVandaag(lh),hq.signalen).factor; ger=v43GereedheidScore(df); ds=dayState(df); }catch(_){} }
   const hero=document.getElementById('lich-hero');
   if(hero){
     const ov=rec.hasData?rec.overall:null;

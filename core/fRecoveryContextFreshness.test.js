@@ -37,7 +37,7 @@ function extractFn(src, name) {
   throw new Error('functie niet afgesloten: ' + name);
 }
 const NAMEN = ['td', 'tkSleepHours', 'lnRmssd', 'hrvBaseline', 'hrvRollingRecent', 'hrvStPersonal', 'hrvDagFactorPersonal',
-  'slaapDagFactor', 'cyclusDagFactor', 'tkCyclusFaseVandaag', 'tkHealthFailClosed', 'tkHealthQualified', 'tkSignaalOnbetrouwbaar',
+  'slaapDagFactor', 'cyclusDagFactor', 'tkCyclusFaseVandaag', 'tkHealthFailClosed', 'tkHealthQualified', 'tkHealthVandaag', 'tkNietMeeHtml', 'tkStatusLabel', 'tkSignaalOnbetrouwbaar',
   'tkRhrDeltaHerstel', 'dagfactor', 'tkDagfactorHeeftBasis', 'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle',
   'recoveryAdjustmentForToday', 'computeProgAdjustment', 'v43GereedheidScore', 'tkReadinessVandaag',
   'fmtDate', 'capitalize', 'tkMetingHerkomst', 'tkMetingWanneer', 'tkMetingLabel', 'openRecoveryDetail'];

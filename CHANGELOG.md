@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## v4.70.11 — Presentatie van health-data volgt de berekening (4 oktober 2026)
+
+Sinds v4.70.9/v4.70.10 telt een verouderde (7+ dagen) HRV-, rusthartslag- of slaapmeting niet meer als signaal voor vandaag. De presentatie liep daar op drie plekken achter. Alleen presentatie; geen wijziging aan berekening of beslissing.
+
+- **Home-dagfactorkaart — root cause.** De uitlegregel, de signaaltelling en "Waarom vandaag?" lazen de rauwe nieuwste rij (`lh.hrv`, `lh.sleep`, `lh.rhr`). Was die rij verouderd, dan stond er "HRV: referentiefase …, slaap voldoende", "Confidence: Hoog (2/3 signalen)" en een HRV-beoordeling, terwijl de dagfactor die metingen niet gebruikte.
+- **Oplossing.** `tkHealthVandaag()`: één presentatiecontext op dezelfde gekeurde rijen, dezelfde signalen en dezelfde Decision-lijst als de berekening. Een meting die vandaag niet meetelt, wordt genoemd als "HRV van 10 dagen geleden telt vandaag niet mee" en staat in "Waarom vandaag?" apart onder "Laatste meting". De signaaltelling telt alleen wat werkelijk is gebruikt.
+- **Lichaam-hero.** Onder de tegels Slaap, HRV en Rust HR staat nu het meetmoment (Vandaag / Gisteren / N dagen geleden / Laatste meting), uit dezelfde helper als het hersteldetail.
+- **Hersteldetail.** Bij een meting die vandaag niet meetelt staat "Bij die meting: …" in plaats van "Status: …", met de regel "Te oud om vandaag mee te tellen in je herstel." Het persoonlijke niveau blijft zichtbaar.
+- **Ongewijzigd.** Bij actuele data zijn alle teksten gelijk aan voorheen. Dagfactor, herstelscore, readiness en trainingsaanpassing zijn numeriek gelijk; `CalcCore`, `DecisionCore`, `DeviceCore`, database en AI-coach zijn niet aangeraakt.
+- **Gate:** `core/fStaleHealthPresentation.test.js` (48 tests) voert de echte Home-kaart, de echte Lichaam-hero en het echte hersteldetail uit.
+- sw-cache v470110, versionCode 47011.
+
 ## v4.70.10 — Herstelcontext: cyclusfase alleen van vandaag, hersteldetail toont het echte meetmoment (4 oktober 2026)
 
 Twee restpunten uit v4.70.9 (PR #515). Geen nieuwe trainingslogica, geen nieuwe kwaliteitslaag.

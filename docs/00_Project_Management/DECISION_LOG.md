@@ -2537,3 +2537,12 @@ migratie na v575 legt per functie expliciet vast wie hem mag uitvoeren; SECURITY
 `set search_path` en een revoke van PUBLIC en anon, en worden alleen via een zichtbare marker aan anon verleend.
 Afgedwongen door `tools/check-function-grants.js` in de release gate. Het `extensions`-schema behoudt zijn huidige
 gedrag; `supabase_admin`-defaults blijven platformbeheerd.
+
+## DEC-HRV-001 — Bestand-import van dagelijkse health-rijen volgt het canonieke mergecontract (3 oktober 2026)
+
+**Besluit.** Elke route die een dagelijkse `hrv_log`-rij schrijft, gebruikt `upsert_daily_health`. Bron-specifieke
+parsing vóór de writer is toegestaan; eigen persistentieregels niet. Voor de bestand-import betekent dit dat een
+import op een bestaande dag aangeleverde waarden bijwerkt (laatste write wint per veld) en lege velden nooit iets
+overschrijven, gelijk aan check-in en wearable-sync. Het oude gedrag ("bestaande dag blijft onaangeroerd") is
+losgelaten omdat het alleen met een niet-atomaire lees-dan-schrijf-stap of een tweede databasecontract te behouden
+was. Herkomst die het model niet kan uitdrukken (bron `NULL` in oude exports) wordt `unknown`, niet geraden.

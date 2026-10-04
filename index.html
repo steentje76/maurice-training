@@ -7646,7 +7646,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.7';
+const APP_VER = 'v4.70.8';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8751,6 +8751,89 @@ async function upsertHrvLog(fields){
     p_source:'manual'
   });
   return result!==null;
+}
+// HRV SINGLE-WRITER (hrv-log-atomicity-001/B): bestand-import van dagelijkse health-rijen.
+// importFromFile() schreef hrv_log-rijen rechtstreeks via REST (resolution=ignore-duplicates)
+// en omzeilde daarmee de canonieke upsert_daily_health-keten: autorisatie op p_user_id,
+// bronvalidatie, per-veld COALESCE-merge en per-veld provenance. Onderstaande functies doen
+// UITSLUITEND bron-specifieke parsing van het importbestand; de persistentie loopt via
+// dezelfde atomaire RPC als de check-in (upsertHrvLog) en wearable-sync.js. Er is hier
+// bewust GEEN lees-dan-schrijf-stap: elk veld wordt in de database zelf gemerged.
+//   - id/user_id/created_at uit het bestand worden genegeerd: de RPC schrijft altijd naar
+//     de ingelogde gebruiker en de database bepaalt de rij (UNIQUE(user_id,date)).
+//   - Een leeg/ontbrekend veld betekent "geen waarde" en overschrijft nooit iets.
+//   - Per-veld bron (hrv_source/rhr_source/sleep_source/steps_source) blijft behouden:
+//     velden met dezelfde bron gaan samen in één RPC-aanroep. Een ontbrekende of
+//     ongeldige bron wordt 'unknown' (er wordt geen herkomst geraden).
+const TK_HEALTH_SOURCES=['manual','wearable','unknown'];
+function tkHrvImportCalls(row,userId){
+  if(!row||typeof row!=='object'||Array.isArray(row))return {error:'geen record'};
+  if(!userId)return {error:'niet ingelogd'};
+  const date=(typeof row.date==='string'&&/^\d{4}-\d{2}-\d{2}(?:$|[T ])/.test(row.date))?row.date.slice(0,10):null;
+  if(!date)return {error:'ongeldige datum'};
+  const leeg=(v)=>v===null||v===undefined||v==='';
+  const num=(v)=>{
+    if(leeg(v))return null;
+    const n=(typeof v==='number')?v:((typeof v==='string'&&v.trim()!=='')?Number(v):NaN);
+    return Number.isFinite(n)?n:NaN;
+  };
+  const txt=(v)=>leeg(v)?null:String(v);
+  const waarden={hrv:num(row.hrv),rhr:num(row.rhr),sleep:num(row.sleep),steps:num(row.steps)};
+  const velden=['hrv','rhr','sleep','steps'];
+  if(velden.some(k=>waarden[k]!==null&&Number.isNaN(waarden[k])))return {error:'niet-numerieke meetwaarde'};
+  if(waarden.rhr!==null&&!Number.isInteger(waarden.rhr))return {error:'rusthartslag is geen geheel getal'};
+  if(waarden.steps!==null&&(!Number.isInteger(waarden.steps)||waarden.steps<0))return {error:'ongeldig aantal stappen'};
+  const perBron={};
+  velden.forEach(k=>{
+    if(waarden[k]===null)return;
+    const bron=TK_HEALTH_SOURCES.includes(row[k+'_source'])?row[k+'_source']:'unknown';
+    (perBron[bron]=perBron[bron]||{})[k]=waarden[k];
+  });
+  const extra={cyclus_fase:txt(row.cyclus_fase),edema:txt(row.edema),note:txt(row.note)};
+  const heeftExtra=extra.cyclus_fase!==null||extra.edema!==null||extra.note!==null;
+  const bronnen=TK_HEALTH_SOURCES.filter(s=>perBron[s]); // vaste volgorde -> deterministisch
+  if(!bronnen.length&&!heeftExtra)return {skip:true};    // rij zonder enige waarde: niets te schrijven
+  if(!bronnen.length){bronnen.push('manual');perBron.manual={};} // alleen cyclus/oedeem/notitie: bron raakt geen veld
+  const calls=bronnen.map((bron,i)=>{
+    const v=perBron[bron];
+    const of=(k)=>(v[k]!==undefined?v[k]:null);
+    return {
+      p_user_id:userId, p_date:date,
+      p_hrv:of('hrv'), p_rhr:of('rhr'), p_sleep:of('sleep'),
+      p_cyclus_fase:i===0?extra.cyclus_fase:null,
+      p_edema:i===0?extra.edema:null,
+      p_note:i===0?extra.note:null,
+      p_source:bron,
+      p_steps:of('steps')
+    };
+  });
+  return {calls:calls};
+}
+async function tkImportHrvRows(rows){
+  const uid=(authSession&&authSession.user&&authSession.user.id)?authSession.user.id:null;
+  const res={ok:0,fail:0,skipped:0};
+  // Deterministisch: bevat het bestand meerdere rijen voor dezelfde dag (export van vóór
+  // UNIQUE(user_id,date)), dan gaat de oudste created_at eerst, zodat de nieuwste echte
+  // waarde wint -- ongeacht de volgorde in het bestand.
+  const tijd=(r)=>{const t=Date.parse((r&&r.created_at)||'');return Number.isNaN(t)?-Infinity:t;};
+  const volgorde=(Array.isArray(rows)?rows:[]).map((r,i)=>({r:r,i:i})).sort((a,b)=>{
+    const da=String((a.r&&a.r.date)||''), db=String((b.r&&b.r.date)||'');
+    if(da!==db)return da<db?-1:1;
+    const ta=tijd(a.r), tb=tijd(b.r);
+    if(ta!==tb)return ta<tb?-1:1;
+    return a.i-b.i;
+  });
+  for(const item of volgorde){
+    const plan=tkHrvImportCalls(item.r,uid);
+    if(plan.error){res.fail++;continue;}
+    if(plan.skip){res.skipped++;continue;}
+    let gelukt=true;
+    for(const args of plan.calls){
+      if((await sbRpc('upsert_daily_health',args))===null){gelukt=false;break;}
+    }
+    if(gelukt)res.ok++; else res.fail++;
+  }
+  return res;
 }
 // Eén canoniek gewichtsrecord per dag: overschrijft bestaand record i.p.v. dupliceren
 // (voorheen schreven saveHRV/saveWeight/saveBC alle drie los naar weight_log)
@@ -29656,13 +29739,14 @@ async function importFromFile(input){
       const r=await fetch(`${SB_URL}/rest/v1/body_comp`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates'},body:JSON.stringify(b)});
       r.ok?ok++:fail++;
     }
-    for(const h of hrvs){
-      const r=await fetch(`${SB_URL}/rest/v1/hrv_log`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates'},body:JSON.stringify(h)});
-      r.ok?ok++:fail++;
-    }
+    // HRV SINGLE-WRITER: dagelijkse health-rijen gaan via de canonieke upsert_daily_health-RPC
+    // (zie tkImportHrvRows) -- nooit meer rechtstreeks naar de tabel.
+    const hrvRes=await tkImportHrvRows(hrvs);
+    ok+=hrvRes.ok; fail+=hrvRes.fail;
+    const leegTxt=hrvRes.skipped?' · '+hrvRes.skipped+' leeg overgeslagen':'';
     if(errors.length) console.error('Import errors:', errors);
-    if(statusEl) statusEl.textContent = `${ok} records geïmporteerd${fail?' · '+fail+' mislukt':''}`;
-    toast(ok+' records geïmporteerd'+(fail?' · '+fail+' mislukt':''));
+    if(statusEl) statusEl.textContent = `${ok} records geïmporteerd${fail?' · '+fail+' mislukt':''}${leegTxt}`;
+    toast(ok+' records geïmporteerd'+(fail?' · '+fail+' mislukt':'')+leegTxt);
     if(ok>0){ refreshHome(); }
     input.value='';
   } catch(e) {

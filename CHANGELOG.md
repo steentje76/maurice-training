@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## v4.70.8 — HRV single-writer: bestand-import via upsert_daily_health (3 oktober 2026)
+
+**Aanleiding.** Maturity-audit `hrv-log-atomicity-001`, criterium B: naast de canonieke writer bestond een derde, actief schrijfpad naar `hrv_log`.
+
+- **Root cause (bewezen op main `4250ac61`):** `importFromFile()` (Profiel → Data → Import logboek, voor elke ingelogde gebruiker bereikbaar) stuurde elke rij uit `hrv_log` in het importbestand rechtstreeks naar `/rest/v1/hrv_log` met `Prefer: resolution=ignore-duplicates`. Dat pad omzeilde de bronvalidatie, de per-veld COALESCE-merge en de per-veld provenance van `upsert_daily_health`; bron-kolommen kwamen ongecontroleerd uit het bestand. Op een bestaande dag deed het niets (zelfde `id`: stil genegeerd maar als "geïmporteerd" geteld) of faalde het op `UNIQUE(user_id,date)`.
+- **Oplossing:** `tkHrvImportCalls()` doet alleen de bron-specifieke parsing; `tkImportHrvRows()` schrijft via `sbRpc('upsert_daily_health')`. Geen lees-dan-schrijf-stap. `id`/`user_id`/`created_at` uit het bestand worden genegeerd; de RPC schrijft naar de ingelogde gebruiker.
+- **Provenance:** velden met dezelfde bron gaan samen in één RPC-aanroep (maximaal drie per rij). Ontbrekende of ongeldige bron wordt `unknown`.
+- **Gedragswijziging:** import op een dag die al bestaat volgt nu hetzelfde mergecontract als check-in en wearable: een aangeleverde waarde werkt het veld bij, een leeg veld overschrijft niets. Voorheen bleef een bestaande dag onaangeroerd. Rijen zonder enige waarde worden overgeslagen en als zodanig gemeld; `hrv_metric_type` wordt niet meer uit het bestand overgenomen (live staan alle rijen op de default `unknown`).
+- **Niet gewijzigd:** `upsert_daily_health`, database, RLS, `upsertHrvLog`, `wearable-sync.js`, Calculation/Context/Decision. De imports van `sessions`, `weight_log` en `body_comp` zijn ongemoeid.
+- **Gate:** `core/fHrvSingleWriter.test.js` (69 tests): echte geëxtraheerde clientfuncties en de echte wearable-sync-handler, mergecontract, en een guard die faalt bij elke nieuwe code-vermelding van `hrv_log` buiten een bekende lees-context.
+- sw-cache v470080, versionCode 47008.
+
 ## Android-buildketen — OCR-taaldata packaging hersteld (1 oktober 2026, geen app-code gewijzigd)
 
 - **Root cause (bewezen op APK `Trainingskompas-v4.70.7-ee277c920-debug.apk`):** de Android Gradle Plugin pakt `.gz`-assets uit en haalt de extensie weg. `core/vendor/eng.traineddata.gz` stond als `eng.traineddata` in de APK, terwijl Tesseract (`gzip:true`) om `eng.traineddata.gz` vroeg: 404, `recognize()` kwam niet terug, voedingslabel-OCR werkte in de APK niet.

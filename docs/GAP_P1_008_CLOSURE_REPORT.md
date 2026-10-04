@@ -50,3 +50,16 @@ core/fHrvConcurrencyClosure.test.js (nieuw, 15/15, sabotagebewijs geleverd). cor
 - [x] Post-merge remote main te verifiëren na PR
 
 **GAP-P1-008: CLOSED** (technisch en live bevestigd; formele post-merge-verificatie volgt na PR-merge).
+
+## Addendum 3 oktober 2026 -- derde schrijfpad gevonden en gesloten (v4.70.8)
+
+De closure hierboven dekte het handmatige en het wearable-schrijfpad. De maturity-audit `hrv-log-atomicity-001`
+(criterium B) vond een derde, actief pad dat destijds niet is geïnventariseerd: `importFromFile()` in `index.html`
+schreef rijen uit een importbestand rechtstreeks naar `/rest/v1/hrv_log` (`resolution=ignore-duplicates`), buiten
+`upsert_daily_health` om. De uitspraak "schrijfpaden atomair-veilig" gold dus voor twee van de drie paden.
+
+Sinds v4.70.8 loopt ook de bestand-import via `upsert_daily_health` (`tkImportHrvRows`). Bewaakt door
+`core/fHrvSingleWriter.test.js`, inclusief een guard op elke nieuwe directe writer.
+
+Resterende beperking: de database dwingt de enkele writer niet af. `authenticated` heeft INSERT/UPDATE/DELETE op
+`hrv_log` (RLS: alleen eigen rijen); een toekomstige directe write wordt dus alleen door de testguard tegengehouden.

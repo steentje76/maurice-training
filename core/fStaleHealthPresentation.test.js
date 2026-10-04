@@ -223,13 +223,25 @@ async function main() {
     eq([k.hv.hrv.gebruikt, k.hv.hrv.referentie, k.hv.hrv.basis, k.hv.hrv.waarde, k.hv.hrv.isVandaag], [false, true, null, KORT[0].hrv, true], 'F13 de context: HRV is er (vandaag) maar is niet gebruikt');
     const h = home(kloon(KORT));
     eq([h.detail.sig, h.detail.conf, h.detail.hrv, h.detail.sleep], [1, 'Middel', null, KORT[0].sleep], 'F14 HRV verhoogt de signaaltelling en confidence niet: 1/3, Middel (was 2/3, Hoog)');
-    ok(/^HRV: referentiefase \(nog \d+ dagen tot je eigen baseline\), slaap voldoende · /.test(h.tech) && !/HRV goed|HRV verlaagd/.test(h.tech), 'F15 de uitleg zegt dat HRV in de referentiefase zit; geen oordeel, geen reden');
+    eq(h.tech, 'HRV: referentiefase (nog 9 dagen tot je eigen baseline) — telt nog niet mee, slaap voldoende · ' + VANDAAG, 'F15 de hoofdregel zegt expliciet dat HRV nog niet meetelt; slaap is de actuele reden');
+    ok(/— telt nog niet mee/.test(h.tech) && /slaap voldoende/.test(h.tech) && !/HRV goed|HRV verlaagd/.test(h.tech), 'F15b geen HRV-oordeel in de hoofdregel');
+    eq([k.hc.st, k.df.basis.hrv, h.detail.sig, h.detail.conf], ['ref', false, 1, 'Middel'], 'F15c zelfde toestand als de berekening: st ref, basis.hrv false, 1/3, Middel');
+    // referentiefase zonder enige eerdere meting in de baseline-telling: zelfde toevoeging
+    const eerste = home([{ date: VANDAAG, hrv: 46, hrv_source: 'manual', rhr: null, sleep: 7.5, sleep_source: 'manual', cyclus_fase: null }]);
+    ok(/^HRV: referentiefase \((nog \d+ dagen tot je eigen baseline|baseline wordt opgebouwd)\) — telt nog niet mee, slaap voldoende · /.test(eerste.tech), 'F15d ook bij de allereerste HRV-meting');
+    const sbU = runtime({ hd: [] });
+    eq(sbU.dagfactorUitleg(46, 7.5, null, { hrvSt: 'ref', hrvBaseline: { n: 5, days: 5 }, slaapFactor: 1 }), 'HRV: referentiefase (nog 9 dagen tot je eigen baseline), slaap voldoende', 'F15e de aanroep zonder context (vier argumenten) geeft de bestaande tekst ongewijzigd');
     eq([rij(h.waarom, 'Herstelsignalen'), rij(h.waarom, 'Telt vandaag niet mee')], ['RHR 53 · slaap 7u 30m', 'HRV 46 ms (vandaag, persoonlijke baseline wordt nog opgebouwd)'], 'F16 "Waarom vandaag?": HRV staat niet bij de herstelsignalen maar apart, met de reden');
     ok(/Confidence: Middel \(1\/3 signalen\)/.test(h.waarom) && /HRV-beoordeling: referentiefase \(5 metingen, nog geen persoonlijke baseline/.test(h.waarom) && !/Vergeleken met/.test(h.waarom), 'F17 de bestaande referentiefase-toelichting blijft; er wordt geen vergelijkingsbasis genoemd');
   }
   {
     // C. voldoende baseline + HRV vandaag, en G. numeriek ongewijzigd
     const a = ctx(kloon(ACTUEEL)); const h = home(kloon(ACTUEEL));
+    eq(h.tech, 'HRV goed t.o.v. je eigen baseline, slaap voldoende · ' + VANDAAG, 'F17b voldoende baseline + gebruikte HRV: de bestaande hoofdregel exact ongewijzigd, zonder "telt nog niet mee"');
+    const laag = kloon(ACTUEEL); laag.slice(0, 7).forEach(function (x) { x.hrv = 30; });
+    ok(/^HRV (sterk )?verlaagd t\.o\.v\. je eigen baseline, slaap voldoende · /.test(home(laag).tech) && !/telt nog niet mee/.test(home(laag).tech), 'F17c verlaagde HRV met voldoende baseline: bestaande "HRV verlaagd …"-tekst ongewijzigd');
+    ok(!/telt nog niet mee/.test(home(kloon(GEMENGD)).tech) && /^HRV goed t\.o\.v\. je eigen baseline \(laatste meting 3 dagen geleden\)/.test(home(kloon(GEMENGD)).tech), 'F17d HRV van 3 dagen geleden die via het 7-daags gemiddelde is gebruikt blijft als gebruikte basis staan');
+    ok(home(kloon(ALLES_OUD)).tech.indexOf('HRV van 10 dagen geleden telt vandaag niet mee') === 0 && !/referentiefase|telt nog niet mee/.test(home(kloon(ALLES_OUD)).tech), 'F17e verouderde HRV blijft expliciet niet-meetellend, zonder referentiefase-tekst');
     eq([a.df.basis, a.hv.hrv.gebruikt, a.hv.hrv.basis.bron, a.hv.hrv.basis.n, h.detail.sig, h.detail.conf], [{ hrv: true, slaap: true, cyclus: false }, true, '7d-gemiddelde', a.hc.recent.n, 2, 'Hoog'], 'F18 voldoende baseline + HRV vandaag: HRV telt normaal (2/3, Hoog)');
     ok(new RegExp('Vergeleken met je gemiddelde van ' + a.hc.recent.n + ' metingen in de laatste 7 dagen \\(' + Math.round(a.hc.recent.meanRaw) + ' ms\\)\\.').test(h.waarom), 'F19 de vergelijkingsbasis staat erbij, uit hrvComponent.recent');
     // E. afzonderlijke datums

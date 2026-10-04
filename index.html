@@ -25118,7 +25118,10 @@ function dagfactorUitleg(hrv,slaapUren,cyclusFase,df,vandaag){
     const st=df.hrvSt, bl=df.hrvBaseline;
     if(st==='ref'){
       const dagenTeGaan=bl?Math.max(0,HRV_BASELINE_MIN_DAYS-bl.days):HRV_BASELINE_MIN_DAYS;
-      parts.push(bl&&bl.n>0?`HRV: referentiefase (nog ${dagenTeGaan} dagen tot je eigen baseline)`:'HRV: referentiefase (baseline wordt opgebouwd)');
+      // Er is een bruikbare HRV-meting, maar df.basis.hrv is false: expliciet zeggen dat zij de
+      // dagfactor nog niet voedt (alleen met context; de aanroep zonder context blijft zoals hij was).
+      const nogNiet=(v&&v.hrv&&v.hrv.referentie)?' — telt nog niet mee':'';
+      parts.push((bl&&bl.n>0?`HRV: referentiefase (nog ${dagenTeGaan} dagen tot je eigen baseline)`:'HRV: referentiefase (baseline wordt opgebouwd)')+nogNiet);
     }else{
       const bron=bl.fase==='volledig'?'eigen baseline':'voorlopige eigen baseline';
       parts.push((st==='g'?`HRV goed t.o.v. je ${bron}`:st==='o'?`HRV verlaagd t.o.v. je ${bron}`:`HRV sterk verlaagd t.o.v. je ${bron}`)+(v?tkMetingNa(v.hrv,'laatste meting '):''));

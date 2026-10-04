@@ -185,11 +185,11 @@ eq(adT.fetchWorkouts({from:'x'}).called, 'list', 'adapter delegeert naar ingespo
 eq(adT.authenticate('AUTHCODE').token, 'X', 'adapter.authenticate delegeert (geen secrets in core)');
 
 // ── HEALTH/WEARABLE DAGMETRIEKEN (Google Health / Fitbit) → CANONIEK ──
-const gh = {
-  dailyHeartRateVariability: { rmssdMillis: 42 },
-  dailyRestingHeartRate: { bpm: 54 },
-  sleep: { totalMinutes: 430 }
-};
+// GAP-P2-018 R3: GOOGLE_HEALTH_MAP beschrijft het PARSED-DAY-object dat de providerparser
+// (netlify/functions/_wearableSyncLib.js) oplevert, niet een ruwe payload. De eerdere invoer
+// hier ({dailyHeartRateVariability:{rmssdMillis}}, {dailyRestingHeartRate:{bpm}},
+// {sleep:{totalMinutes}}) kwam met geen enkele werkelijk verwerkte payloadvorm overeen.
+const gh = { hrv_ms: 42, resting_hr_bpm: 54, sleep_minutes: 430, steps_count: 9000 };
 const hd = D.normalizeHealthDaily(gh, D.GOOGLE_HEALTH_MAP, { date:'2026-08-15', receivedAt:1700000000000 });
 function hmet(o,k){ var m=o.metrics.find(x=>x.key===k); return m; }
 eq(hd.provider, 'google-health', 'health: provider');
@@ -202,16 +202,27 @@ eq(hmet(hd,'sleep_minutes').value, 430, 'slaap 430 min');
 eq(hmet(hd,'hrv_ms').provenance.provider, 'google-health', 'health: metric-provenance provider');
 eq(hmet(hd,'hrv_ms').provenance.method, 'api', 'health: method api');
 // ontbrekend → null, geen fabricatie
-const hd2 = D.normalizeHealthDaily({ dailyRestingHeartRate:{ bpm:60 } }, D.GOOGLE_HEALTH_MAP, { date:'2026-08-15' });
+const hd2 = D.normalizeHealthDaily({ resting_hr_bpm: 60 }, D.GOOGLE_HEALTH_MAP, { date:'2026-08-15' });
 eq(hmet(hd2,'hrv_ms').value, null, 'ontbrekende HRV → null (geen fabricatie)');
 eq(hmet(hd2,'hrv_ms').quality, 'empty', 'ontbrekende HRV → quality empty');
 eq(hmet(hd2,'resting_hr_bpm').value, 60, 'aanwezige RHR blijft');
 // onwaarschijnlijk → implausible, waarde behouden
-const hd3 = D.normalizeHealthDaily({ dailyHeartRateVariability:{ rmssdMillis:999 } }, D.GOOGLE_HEALTH_MAP, {});
+const hd3 = D.normalizeHealthDaily({ hrv_ms: 999 }, D.GOOGLE_HEALTH_MAP, {});
 eq(hmet(hd3,'hrv_ms').quality, 'implausible', 'HRV 999 → implausible (boven 400)');
 eq(hmet(hd3,'hrv_ms').value, 999, 'implausibele HRV behoudt echte waarde');
 // bron niet gemuteerd
-eq(gh.dailyHeartRateVariability.rmssdMillis, 42, 'bron-payload ongewijzigd (geen mutatie)');
+eq(gh.hrv_ms, 42, 'bron-payload ongewijzigd (geen mutatie)');
+// stappen: structureel contract (niet-negatief geheel getal), geen bovengrens
+eq(hmet(hd,'steps_count').value, 9000, 'stappen 9000');
+eq(hmet(hd,'steps_count').quality, 'valid', 'stappen valid');
+eq(hmet(D.normalizeHealthDaily({ steps_count: 0 }, D.GOOGLE_HEALTH_MAP, {}),'steps_count').quality, 'valid', 'stappen 0 is geldig');
+eq(hmet(D.normalizeHealthDaily({ steps_count: -1 }, D.GOOGLE_HEALTH_MAP, {}),'steps_count').quality, 'invalid', 'negatieve stappen → invalid');
+eq(hmet(D.normalizeHealthDaily({ steps_count: 12.5 }, D.GOOGLE_HEALTH_MAP, {}),'steps_count').quality, 'invalid', 'niet-gehele stappen → invalid');
+eq(hmet(D.normalizeHealthDaily({ steps_count: 250000 }, D.GOOGLE_HEALTH_MAP, {}),'steps_count').quality, 'valid', 'geen verzonnen bovengrens voor stappen');
+// de vroegere, fictieve ruwe payloadvorm levert niets meer op (geen stille schijn-aansluiting)
+const hdOud = D.normalizeHealthDaily({ dailyHeartRateVariability:{ rmssdMillis:42 }, dailyRestingHeartRate:{ bpm:54 }, sleep:{ totalMinutes:430 } }, D.GOOGLE_HEALTH_MAP, {});
+ok(hdOud.metrics.every(function(m){ return m.value === null && m.quality === 'empty'; }), 'ruwe providervorm wordt niet door de map gelezen: dat doet de providerparser');
+eq(D.GOOGLE_HEALTH_MAP.shape, 'parsed_day', 'map beschrijft expliciet de parsed-day-grens');
 
 // ── CONCEPT2 WATTS-AFGELEIDE (officiële formule watts = 2.80 / (s/m)³) ──
 close(D.deriveWatts(2000, 500), 179.2, 'watts uit 2000m/500s (Concept2-formule)', 0.1);

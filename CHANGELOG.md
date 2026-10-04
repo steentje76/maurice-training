@@ -1,5 +1,23 @@
 # Trainingskompas — Changelog
 
+## v4.70.12 — Wearable-ingest keurt vóór opslag (GAP-P2-018 R1–R3) (4 oktober 2026)
+
+**Aanleiding.** Drie resterende punten van GAP-P2-018: stappen hadden geen contract (R1), `wearable-sync` schreef providerwaarden ongekeurd weg (R2), en de bestaande ingest-classificatie `normalizeHealthDaily()` was niet aan te sluiten omdat `GOOGLE_HEALTH_MAP` een payloadvorm beschreef die de echte parser nooit ziet (R3).
+
+- **Root cause R2 (bewezen met de echte handler en de echte RPC).** Een wearable-HRV van 999 ms overschreef een bestaande handmatige HRV van 47; HRV 450, rusthartslag 150 en 30 uur slaap werden opgeslagen en pas bij lezen uitgesloten.
+- **Root cause R1.** `parseStepsRollupPoint()` gaf een negatieve telling door. De databasecheck `steps >= 0` weigerde dan de hele dag-write, zodat ook de geldige HRV/rusthartslag/slaap van die dag stil verloren gingen.
+- **Root cause R3.** De paden in `GOOGLE_HEALTH_MAP` (`dailyHeartRateVariability.rmssdMillis`, `dailyRestingHeartRate.bpm`, `sleep.totalMinutes`) kwamen met geen enkele werkelijk verwerkte payloadvorm overeen.
+- **Canonieke grens.** Ruwe providerpayload → bestaande defensieve parser (`_wearableSyncLib.js`, ongewijzigd) → parsed-day-object `{hrv_ms, resting_hr_bpm, sleep_minutes, steps_count}` → `DeviceCore.normalizeHealthDaily(GOOGLE_HEALTH_MAP)` → alleen `valid` naar `upsert_daily_health`.
+- **Eén contractbron.** `GOOGLE_HEALTH_MAP` beschrijft nu het parsed-day-object en is de bron voor zowel de ingest (`qualifyDayValues()`) als de keuring bij lezen (`DQ_CONTRACT`). Bestaande grenzen ongewijzigd: HRV 0–400 ms, rusthartslag 20–120 bpm, slaap 0–24 uur.
+- **Stappencontract (R1).** Unit count; ontbrekend = null; 0 is geldig; negatief of niet-geheel = ongeldig; **geen bovengrens**. Bij lezen worden bestaande negatieve stappen nu ook uitgesloten.
+- **Gedrag.** Een afgewezen waarde wordt null, zodat de atomaire merge een bestaande geldige waarde laat staan. Een dag met alleen afgewezen waarden wordt niet geschreven. Negatieve stappen blokkeren de rest van de dag niet meer.
+- **Fail-closed.** Ontbreekt of faalt de keuringslaag, dan schrijft de sync niets en meldt `sync_failed` met code `QUALITY_UNAVAILABLE`.
+- **Respons.** Bestaande velden ongewijzigd; `metrics` telt wat na de keuring is geaccepteerd; nieuw zijn `rejected` (aantal per metric) en `rejectedMetrics`. Nooit de afgewezen waarde zelf, ook niet in de log.
+- **Niet gewijzigd.** `upsert_daily_health`, `hrv_log`, de parsers, de leeslagen (`qualifySeries`, `qualifyHealthRows`, observation.v1), Calculation, Decision, AI. Geen migratie, geen quality-kolommen. Historische data is niet herschreven.
+- **Buiten scope en nog open:** R4 (slaap-terugval op tijd in bed), R5 (`hrv_metric_type`), R6 (bronselectie in `healthSeries`).
+- **Gate:** `core/fWearableIngestQuality.test.js` (64 tests): echte parsers, echte handler, echte `upsert_daily_health` op PostgreSQL (PGlite). Niet geverifieerd tegen een live providersync.
+- sw-cache v470120, versionCode 47012.
+
 ## v4.70.11 — Presentatie van health-data volgt de berekening (4 oktober 2026)
 
 Sinds v4.70.9/v4.70.10 telt een verouderde (7+ dagen) HRV-, rusthartslag- of slaapmeting niet meer als signaal voor vandaag. De presentatie liep daar op drie plekken achter. Alleen presentatie; geen wijziging aan berekening of beslissing.

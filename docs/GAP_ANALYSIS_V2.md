@@ -121,14 +121,15 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 **Capability-ID:** PROVIDER-INTEGRATION-CONTRACT-001
 **Reconciliatie (04-10-2026, tegen main `9ef622d9`).** De oorspronkelijke claim -- "geen granulaire quality-classificatie per individuele meting, los van de bron" -- was onjuist op het moment van vastleggen. `core/deviceIntegration.js` bevat sinds 18-08-2026 dataquality.v1 (`qualifySeries`: per dag en veld `valid`/`excluded` met reden/`insufficient_data`) en observation.v1 (`observationQuality`: versheid en syncstatus), beide los van provenance, getest in `core/fDataQuality.test.js` en `core/fObservation.test.js`. De F5-audit van 29-08-2026 heeft die lagen niet meegenomen. Er worden GEEN quality-kolommen aan `hrv_log` toegevoegd: plausibiliteit is herberekenbaar uit waarde en contract, versheid is tijdsafhankelijk.
 **Current (resterend):**
-- R1. Stappen hebben geen brondata-contract; een negatieve waarde wordt als `valid` beoordeeld.
-- R2. `wearable-sync` classificeert of valideert niet vóór opslag; een waarde buiten het contract wordt opgeslagen en pas bij lezen uitgesloten.
-- R3. `normalizeHealthDaily()` (ingest-classificatie `valid`/`implausible`/`invalid`/`empty`) bestaat maar is niet aangesloten; de paden in `GOOGLE_HEALTH_MAP` komen niet overeen met de velden die `_wearableSyncLib.js` werkelijk leest.
+- R1. GESLOTEN in v4.70.12 (bewezen in de testketen). Stappen hebben een structureel contract (`steps_count`: niet-negatief geheel getal, geen bovengrens); negatieve stappen worden bij ingest afgewezen en bij lezen uitgesloten.
+- R2. GESLOTEN in v4.70.12 (bewezen in de testketen). `wearable-sync` keurt HRV, rusthartslag, slaap en stappen vóór de schrijfbeslissing; alleen geldige waarden gaan naar `upsert_daily_health`. Fail-closed zonder keuringslaag.
+- R3. GESLOTEN in v4.70.12 (bewezen in de testketen). `GOOGLE_HEALTH_MAP` beschrijft het parsed-day-object van de providerparser; `normalizeHealthDaily()` is aangesloten op de echte ingest. Eén contractbron voor ingest en lezen.
+- R1–R3 zijn bewezen met de echte parsers, de echte handler en de echte RPC op PostgreSQL (`core/fWearableIngestQuality.test.js`), nog niet tegen een live providersync.
 - R4. Slaap valt bij ontbrekende slaapduur terug op het interval (tijd in bed) zonder dat dit wordt vastgelegd.
 - R5. `hrv_metric_type` wordt nooit gezet (alle rijen `unknown`).
 - R6. `healthSeries()` bepaalt de bron uit de notitie-tag, niet uit de `*_source`-kolommen.
 **Evidence:** CODE VERIFIED op main `9ef622d9`; de keten herstel/readiness gebruikt de bestaande lagen sinds v4.70.9 (`core/fRecoveryReadinessQualityWiring.test.js`).
-**Target:** R1-R3 oplossen in de ingest-keten; R4-R6 zijn provenance-punten. Geen opgeslagen quality-veld zonder concrete productbehoefte.
+**Target:** R4-R6 (provenance-punten) blijven open. Geen opgeslagen quality-veld zonder concrete productbehoefte.
 **Priority:** P2 (niet-kritiek — geen dataverlies, geen silent-corruption-risico, puur een verfijningsmogelijkheid). **Complexity:** M.
 
 ### GAP-P2-019 (voorheen GAP-F5-002) — Geen geautomatiseerde retry-met-backoff in wearable-sync

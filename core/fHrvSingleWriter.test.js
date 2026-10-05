@@ -66,12 +66,21 @@ function maakDb() {
       const nn = function (v) { return v === undefined ? null : v; };
       const key = a.p_user_id + '|' + a.p_date;
       const cur = rijen.get(key);
+      // migratie_v580: het metric-type hoort bij de waarde (zelfde patroon als <veld>_source).
+      const TYPEN = { hrv: ['rmssd', 'sdnn', 'unknown'], sleep: ['asleep', 'time_in_bed', 'unknown'] };
+      for (const soort of ['hrv', 'sleep']) {
+        const t = nn(a['p_' + soort + '_metric_type']);
+        if (t !== null && TYPEN[soort].indexOf(t) < 0) return null;
+      }
       const nieuw = cur ? Object.assign({}, cur) : { user_id: a.p_user_id, date: a.p_date,
-        hrv: null, hrv_source: null, rhr: null, rhr_source: null, sleep: null, sleep_source: null,
+        hrv: null, hrv_source: null, hrv_metric_type: 'unknown', rhr: null, rhr_source: null, sleep: null, sleep_source: null, sleep_metric_type: 'unknown',
         cyclus_fase: null, edema: null, note: null, steps: null, steps_source: null };
       ['hrv', 'rhr', 'sleep', 'steps'].forEach(function (k) {
         const v = nn(a['p_' + k]);
-        if (v !== null) { nieuw[k] = v; nieuw[k + '_source'] = bron; }
+        if (v !== null) {
+          nieuw[k] = v; nieuw[k + '_source'] = bron;
+          if (k === 'hrv' || k === 'sleep') nieuw[k + '_metric_type'] = nn(a['p_' + k + '_metric_type']) || 'unknown';
+        }
       });
       ['cyclus_fase', 'edema', 'note'].forEach(function (k) {
         const v = nn(a['p_' + k]);
@@ -344,7 +353,7 @@ async function main() {
   const defs = migs.filter(function (f) { return /CREATE OR REPLACE FUNCTION public\.upsert_daily_health\(/i.test(fs.readFileSync(path.join(ROOT, f), 'utf8')); });
   const laatste = defs[defs.length - 1];
   const sql = fs.readFileSync(path.join(ROOT, laatste), 'utf8');
-  ok(laatste === 'migratie_v560.sql', 'F1 laatste definitie van upsert_daily_health staat in migratie_v560.sql (kreeg ' + laatste + ') — wijzigt het contract, herzie dan het model in sectie D');
+  ok(laatste === 'migratie_v580.sql', 'F1 laatste definitie van upsert_daily_health staat in migratie_v580.sql (kreeg ' + laatste + ') — wijzigt het contract, herzie dan het model in sectie D');
   ok(sql.indexOf('ON CONFLICT (user_id, date) DO UPDATE') > 0, 'F2 atomaire INSERT..ON CONFLICT (user_id, date) DO UPDATE');
   ['hrv', 'rhr', 'sleep', 'steps'].forEach(function (k) {
     ok(new RegExp(k + '\\s*=\\s*COALESCE\\(EXCLUDED\\.' + k + ', public\\.hrv_log\\.' + k + '\\)').test(sql)

@@ -100,16 +100,26 @@ var INGEST_STATUSSEN = ['valid', 'implausible', 'invalid', 'empty'];
 function _deviceCore() {
   try { return require('../../core/deviceIntegration.js'); } catch (_) { return null; }
 }
-// vals: { hrv (ms), rhr (bpm), sleep (uren), steps (aantal) } zoals de parsers opleveren.
+// vals: { hrv (ms), rhr (bpm), sleep (uren), steps (aantal), sleepBasis } zoals de parsers opleveren.
 // core: optioneel, alleen voor tests; standaard de echte DeviceCore.
-// -> { ok, vals:{hrv,rhr,sleep,steps}, status:{...}, rejected:{veld:reden} }
+// -> { ok, vals:{hrv,rhr,sleep,steps}, status:{...}, rejected:{veld:reden},
+//      meta:{hrv_metric_type, sleep_metric_type} }
+//
+// META (GAP-P2-018 R4/R5): wat de geaccepteerde waarde MEET. Provenance, geen kwaliteit.
+//   hrv_metric_type   komt uit de contractbron: sourceMetric van de genormaliseerde HRV-metric
+//                     (GOOGLE_HEALTH_MAP). Alleen bij een geaccepteerde HRV.
+//   sleep_metric_type komt van de parser (welk payloadpad de waarde leverde). Alleen bij een
+//                     geaccepteerde slaapwaarde.
+//   Een waarde die niet in DeviceCore.HEALTH_METRIC_TYPES staat wordt null: er wordt geen type
+//   verzonnen en geen onbekende tekst doorgegeven.
 function qualifyDayValues(vals, core) {
   vals = vals || {};
   var velden = Object.keys(INGEST_VELDEN);
   var dicht = function (reden) {
     var rej = {};
     velden.forEach(function (k) { if (vals[k] != null) rej[k] = reden; });
-    return { ok: false, vals: { hrv: null, rhr: null, sleep: null, steps: null }, status: {}, rejected: rej };
+    return { ok: false, vals: { hrv: null, rhr: null, sleep: null, steps: null }, status: {}, rejected: rej,
+      meta: { hrv_metric_type: null, sleep_metric_type: null } };
   };
   try {
     var dc = (core === undefined) ? _deviceCore() : core;
@@ -133,7 +143,13 @@ function qualifyDayValues(vals, core) {
       if (m.quality === 'valid') uit[veld] = vals[veld];
       else if (vals[veld] != null) rejected[veld] = m.quality;
     }
-    return { ok: true, vals: uit, status: status, rejected: rejected };
+    var typen = dc.HEALTH_METRIC_TYPES || {};
+    var toegestaan = function (soort, t) { return (t && Array.isArray(typen[soort]) && typen[soort].indexOf(t) !== -1) ? t : null; };
+    var meta = {
+      hrv_metric_type: uit.hrv != null ? toegestaan('hrv', perKey[INGEST_VELDEN.hrv].sourceMetric) : null,
+      sleep_metric_type: uit.sleep != null ? toegestaan('sleep', vals.sleepBasis) : null
+    };
+    return { ok: true, vals: uit, status: status, rejected: rejected, meta: meta };
   } catch (_) {
     return dicht('quality_error');
   }
@@ -197,13 +213,21 @@ function parseSleepPoint(point) {
   // Alle duurvelden kunnen int64-als-string zijn; firstNum coerceert veilig.
   var asleepMin = firstNum(sum, ['minutesAsleep', 'totalSleepMinutes']);
   var asleepMs  = firstNum(sum, ['totalSleepDurationMillis', 'totalDurationMillis']);
-  if (asleepMin != null) min = Math.round(asleepMin);
-  else if (asleepMs != null) min = Math.round(asleepMs / 60000);
+  // GAP-P2-018 R4: leg vast WELK pad de waarde leverde. De waarde zelf is ongewijzigd.
+  //   asleep       summary.minutesAsleep — het enige veld dat de Google Health API documenteert
+  //                als slaapduur ("Total number of minutes asleep").
+  //   time_in_bed  terugval op het interval van de slaapsessie (bedtijd tot opstaan).
+  //   unknown      een van de overige, defensief ondersteunde duurvelden: niet gedocumenteerd,
+  //                dus er wordt niet geraden wat het meet.
+  var basis = null;
+  if (asleepMin != null) { min = Math.round(asleepMin); basis = (toNum(sum && sum.minutesAsleep) != null) ? 'asleep' : 'unknown'; }
+  else if (asleepMs != null) { min = Math.round(asleepMs / 60000); basis = 'unknown'; }
   else if (iv && iv.startTime && iv.endTime) {
     var ms = Date.parse(iv.endTime) - Date.parse(iv.startTime);
-    if (isFinite(ms) && ms > 0) min = Math.round(ms / 60000);
+    if (isFinite(ms) && ms > 0) { min = Math.round(ms / 60000); basis = 'time_in_bed'; }
   }
-  return { date: date, value: minutesToHours(min) };
+  var uren = minutesToHours(min);
+  return { date: date, value: uren, basis: uren == null ? null : basis };
 }
 
 // Devices/Wearables Master Sprint — dailyRollUp-respons voor stappen

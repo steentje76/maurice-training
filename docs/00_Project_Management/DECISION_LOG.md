@@ -2591,3 +2591,26 @@ dagfactor van vandaag gebruikt haar uitsluitend wanneer de rij de datum van vand
 blijft historische context en wordt niet vooruit geprojecteerd; er wordt geen fase geschat op basis van kalenderdagen.
 `CycleCore.cycleContext()` blijft een suggestie voor de check-in en is geen invoer van de dagfactor. Zonder fase van
 vandaag geldt de bestaande neutrale cyclusfactor (1.00). De cyclusfactoren zelf zijn niet gewijzigd.
+
+## DEC-HRV-003 — Metric-type is typed provenance bij de waarde; Google Health dag-HRV is RMSSD (5 oktober 2026)
+
+**Context.** `hrv_metric_type` (migratie_v542) werd door geen enkele writer gezet. v542 legde als onzekerheid vast dat
+een HRV-veld RMSSD of SDNN kan zijn, afhankelijk van het apparaat. Voor slaap lag nergens vast of de opgeslagen waarde
+een gerapporteerde slaapduur of een terugval op tijd in bed was.
+
+**Besluit.**
+1. Wat een opgeslagen waarde meet is een niet-herberekenbaar ingestfeit en wordt als getypte kolom vastgelegd, niet in
+   de vrije-tekst-notitie: `hrv_metric_type` en (nieuw, migratie_v580) `sleep_metric_type`. Eén vocabulaire in
+   `DeviceCore.HEALTH_METRIC_TYPES`; de database spiegelt haar.
+2. Het type hoort bij de waarde, zoals `<veld>_source`: alleen de aanroep van `upsert_daily_health` die de waarde
+   schrijft zet het type. Zonder opgegeven type is het `unknown`.
+3. De Google Health-ingest schrijft `rmssd`. Grond: deze integratie leest het dagtype
+   `daily-heart-rate-variability`, veld `averageHeartRateVariabilityMilliseconds`, dat de API-referentie definieert als
+   berekend met RMSSD. De onzekerheid uit v542 geldt voor het sample-type `heartRateVariability` (RMSSD of SDNN); dat
+   leest deze integratie niet. Dit rust op de providerdocumentatie, niet op een live payload-inspectie.
+4. Slaap: `asleep` alleen voor `summary.minutesAsleep` (gedocumenteerd als slaapduur); `time_in_bed` voor de terugval
+   op het sessie-interval; `unknown` voor de overige, niet-gedocumenteerde duurvelden.
+5. Dit is provenance, geen kwaliteit: geen effect op Calculation, Decision of AI.
+
+**Status.** Code gemerged-klaar; `migratie_v580` niet op productie toegepast. Productie-apply is een aparte, expliciet
+goed te keuren stap.

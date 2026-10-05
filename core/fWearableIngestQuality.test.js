@@ -178,7 +178,8 @@ async function main() {
     await sync(db, { hrv: [hrvPunt(D3, 51)], rhr: [rhrPunt(D3, '56')] });
     ok(JSON.stringify((await db.query('select * from public.hrv_log order by date')).rows.map((x) => Object.assign(x, { created_at: null }))) === voor, 'C11 dezelfde sync nogmaals: database identiek (idempotent)');
     eq(await aantal(db), 3, 'C12 geen betekenisloze extra rijen: precies drie dagen');
-    ok(g.rpcs.concat(m.rpcs, n.rpcs, v.rpcs).every((x) => Object.keys(x).sort().join() === 'p_cyclus_fase,p_date,p_edema,p_hrv,p_note,p_rhr,p_sleep,p_source,p_steps,p_user_id'), 'C13 het RPC-contract is ongewijzigd: dezelfde tien argumenten, geen quality-veld');
+    const TIEN = 'p_cyclus_fase,p_date,p_edema,p_hrv,p_note,p_rhr,p_sleep,p_source,p_steps,p_user_id';
+    ok(g.rpcs.concat(m.rpcs, n.rpcs, v.rpcs).every((x) => Object.keys(x).filter((k) => k !== 'p_hrv_metric_type' && k !== 'p_sleep_metric_type').sort().join() === TIEN), 'C13 het RPC-contract: de tien bestaande argumenten, hooguit aangevuld met de twee optionele type-argumenten van migratie_v580; geen quality-veld');
     await db.close();
   }
 
@@ -288,15 +289,16 @@ async function main() {
   /* ══ G. R4, R5 en R6 zijn onaangeraakt ═══════════════════════════════════ */
   {
     const fb = LIB.parseSleepPoint({ sleep: { interval: { startTime: D1 + 'T00:00:00Z', endTime: D1 + 'T07:30:00Z' }, summary: {} } });
-    eq([fb.value, Q({ sleep: fb.value }).vals.sleep], [7.5, 7.5], 'G-R4 de interval-terugval (tijd in bed) werkt zoals voorheen en wordt als slaap opgeslagen; niet als zodanig gemarkeerd');
+    eq([fb.value, Q({ sleep: fb.value }).vals.sleep], [7.5, 7.5], 'G-R4 de interval-terugval (tijd in bed) geeft dezelfde waarde als voorheen en wordt als slaap opgeslagen');
     eq(Q({ sleep: LIB.parseSleepPoint({ sleep: { interval: { startTime: '2026-09-27T00:00:00Z', endTime: '2026-09-28T07:30:00Z' }, summary: {} } }).value }).status.sleep, 'implausible', 'G-R4b een terugval boven 24 uur wordt wel tegen het contract getoetst en afgewezen');
     const ws = rd('netlify/functions/wearable-sync.js') + rd('netlify/functions/_wearableSyncLib.js');
-    ok(!/hrv_metric_type/.test(ws), 'G-R5 hrv_metric_type wordt nog steeds niet geschreven');
+    // R5 is sinds v4.70.14 geïmplementeerd (core/fHealthIngestProvenance.test.js): het type gaat mee als RPC-argument.
+    ok(/p_hrv_metric_type: hrvType/.test(ws) && !/hrv_metric_type\s*=|\/rest\/v1\/hrv_log[^`]*`,\s*\{\s*method:\s*'(POST|PATCH)'/.test(ws), 'G-R5 het HRV-type gaat uitsluitend via upsert_daily_health; geen direct schrijfpad');
     const dcSrc = rd('core/deviceIntegration.js');
     const hs = dcSrc.slice(dcSrc.indexOf('function healthSeries('), dcSrc.indexOf('function healthSeries(') + 1600);
     // R6 is sinds v4.70.13 opgelost (core/fHealthSeriesProvenance.test.js): per-veld kolom eerst, tag als terugval.
     ok(/kolomBron \? kolomBron : _parseSrcTag\(r\.note\)/.test(hs), 'G-R6 healthSeries leest de bron primair uit de per-veld kolom (R6 gesloten)');
-    ok(rd('netlify/functions/_wearableSyncLib.js').indexOf("else if (iv && iv.startTime && iv.endTime) {") > 0, 'G-R4c de terugvalcode in parseSleepPoint is ongewijzigd aanwezig');
+    ok(rd('netlify/functions/_wearableSyncLib.js').indexOf("else if (iv && iv.startTime && iv.endTime) {") > 0 && fb.basis === 'time_in_bed', 'G-R4c de terugval bestaat nog en wordt sinds v4.70.14 als time_in_bed gemeld (waarde ongewijzigd)');
   }
 }
 

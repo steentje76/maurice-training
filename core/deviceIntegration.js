@@ -567,6 +567,18 @@
     ]
   };
 
+  // METRIC-TYPE-VOCABULAIRE (GAP-P2-018 R4/R5). Wat een opgeslagen waarde MEET is een ingestfeit
+  // dat achteraf niet te herberekenen is. Dit is de ene lijst voor de ingest; de CHECK-constraints
+  // op hrv_log.hrv_metric_type (migratie_v542) en hrv_log.sleep_metric_type (migratie_v580) en de
+  // validatie in upsert_daily_health spiegelen haar.
+  //   hrv:   rmssd | sdnn | unknown        — RMSSD en SDNN zijn niet onderling vergelijkbaar
+  //   sleep: asleep | time_in_bed | unknown — gerapporteerde slaapduur vs. interval van de sessie
+  // Dit is provenance, geen kwaliteit: het heeft geen effect op berekeningen of beslissingen.
+  var HEALTH_METRIC_TYPES = {
+    hrv:   ['rmssd', 'sdnn', 'unknown'],
+    sleep: ['asleep', 'time_in_bed', 'unknown']
+  };
+
   // Normaliseer één dag-payload → { schema, provider, date, metrics:[canonical metric], provenance }.
   // PUUR. Canonieke unit = bron-unit (geen conversie). Ontbrekend/ongeldig → value null (geen fabricatie).
   function normalizeHealthDaily(rawDay, spec, ctx){
@@ -1341,6 +1353,7 @@
     VERSIONS: VERSIONS,
     UNIT_CONV: UNIT_CONV,
     GOOGLE_HEALTH_MAP: GOOGLE_HEALTH_MAP,
+    HEALTH_METRIC_TYPES: HEALTH_METRIC_TYPES,
     FITBIT_METRIC_STATUS: FITBIT_METRIC_STATUS,
     DEVICE_STATUSES: DEVICE_STATUSES,
     deviceConnectionState: deviceConnectionState,

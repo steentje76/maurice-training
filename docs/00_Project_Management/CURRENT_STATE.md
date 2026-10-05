@@ -6,7 +6,15 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.13
+v4.70.14
+
+## Typed ingest-provenance voor slaap en HRV (v4.70.14, 5 oktober 2026; migratie_v580 NIET toegepast)
+
+- Code: de wearable-ingest stuurt mee wat de HRV- en slaapwaarde meten (`rmssd`; `asleep` of `time_in_bed`).
+- Database: `migratie_v580.sql` staat in de repo en is niet op productie toegepast. Tot dan valt de sync terug op de
+  bestaande tien RPC-argumenten en blijft het type `unknown`.
+- Geen effect op berekeningen of beslissingen. GAP-P2-018 R4/R5: implementatie gereed, migratie in afwachting.
+- Guard: `core/fHealthIngestProvenance.test.js`.
 
 ## Bron per veld in de health-reeksen (v4.70.13, 5 oktober 2026)
 
@@ -277,7 +285,7 @@ v4.70.13
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.13 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.14 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

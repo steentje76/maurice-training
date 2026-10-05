@@ -223,7 +223,9 @@ async function main() {
     eq([k.hv.hrv.gebruikt, k.hv.hrv.referentie, k.hv.hrv.basis, k.hv.hrv.waarde, k.hv.hrv.isVandaag], [false, true, null, KORT[0].hrv, true], 'F13 de context: HRV is er (vandaag) maar is niet gebruikt');
     const h = home(kloon(KORT));
     eq([h.detail.sig, h.detail.conf, h.detail.hrv, h.detail.sleep], [1, 'Middel', null, KORT[0].sleep], 'F14 HRV verhoogt de signaaltelling en confidence niet: 1/3, Middel (was 2/3, Hoog)');
-    eq(h.tech, 'HRV: referentiefase (nog 9 dagen tot je eigen baseline) — telt nog niet mee, slaap voldoende · ' + VANDAAG, 'F15 de hoofdregel zegt expliciet dat HRV nog niet meetelt; slaap is de actuele reden');
+    // Het aantal resterende dagen hangt af van het tijdstip waarop de test draait (CalcCore rekent de
+    // baseline-duur vanaf 'nu'): vóór 12:00 UTC is het 10, daarna 9. De tekst eromheen is vast.
+    ok(new RegExp('^HRV: referentiefase \\(nog (9|10) dagen tot je eigen baseline\\) — telt nog niet mee, slaap voldoende · ' + VANDAAG + '$').test(h.tech), 'F15 de hoofdregel zegt expliciet dat HRV nog niet meetelt; slaap is de actuele reden (kreeg ' + h.tech + ')');
     ok(/— telt nog niet mee/.test(h.tech) && /slaap voldoende/.test(h.tech) && !/HRV goed|HRV verlaagd/.test(h.tech), 'F15b geen HRV-oordeel in de hoofdregel');
     eq([k.hc.st, k.df.basis.hrv, h.detail.sig, h.detail.conf], ['ref', false, 1, 'Middel'], 'F15c zelfde toestand als de berekening: st ref, basis.hrv false, 1/3, Middel');
     // referentiefase zonder enige eerdere meting in de baseline-telling: zelfde toevoeging

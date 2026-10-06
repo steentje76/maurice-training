@@ -47,7 +47,7 @@ Bevestigd aanwezig in de bestaande code-commentaren van core/concept2Live.js ("P
 | Timestamps/timezones | OK | amsterdamToday(), geen toISOString()-daggrensbug |
 | Provenance | OK | Per-veld *_source-kolommen |
 | Measured/derived status | OK | Provider-gerapporteerd, geen TK-berekening |
-| Data quality | GEDEELTELIJK -- HRV/RHR/slaap worden bij lezen per waarde gekeurd (dataquality.v1, observation.v1). Sinds v4.70.12 keurt `wearable-sync` vóór opslag via `normalizeHealthDaily()` en hebben stappen een structureel contract (niet-negatief geheel getal, geen bovengrens). Open: slaap-terugval op tijd in bed (R4), `hrv_metric_type` (R5), bronselectie in `healthSeries` (R6) |
+| Data quality | GEDEELTELIJK -- HRV/RHR/slaap worden bij lezen per waarde gekeurd (dataquality.v1, observation.v1). Sinds v4.70.12 keurt `wearable-sync` vóór opslag via `normalizeHealthDaily()` en hebben stappen een structureel contract (niet-negatief geheel getal, geen bovengrens). Sinds v4.70.13 leest `healthSeries()` de bron per veld uit `<veld>_source` (R6). Open: slaap-terugval op tijd in bed (R4), `hrv_metric_type` (R5) |
 | Missing fields | OK | null, nooit 0 |
 | Deduplication | OK | UNIQUE(user_id,date) + atomaire RPC |
 | Idempotency | OK | Herhaalde sync -> één canonieke rij, functioneel bewezen |

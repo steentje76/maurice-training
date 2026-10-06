@@ -655,26 +655,41 @@
     for (var i = n-1; i >= 0; i--){ var d = _ymdShift(endYmd, -i); if (d) out.push(d); }
     return out;
   }
-  // Bron per rij: [src:...]-tag → 'Fitbit'|'Google Health'|tag; geen tag → 'Check-in'. Provider-agnostisch.
+  // Bron → label voor de reeks: 'Fitbit'|'Google Health'|'Check-in'|tag. Provider-agnostisch.
+  //   'wearable' (per-veld kolom) → 'Fitbit', zoals _sourceLabel() dat voor de nieuwste meting doet.
+  //   'unknown'  (per-veld kolom) → null: een expliciet onbekende bron is geen check-in.
+  //   geen kolom en geen tag      → 'Check-in' (bestaand contract voor historische rijen).
   function _sourceLabelHistory(tag){
-    if (tag === 'fitbit') return 'Fitbit';
+    if (tag === 'fitbit' || tag === 'wearable') return 'Fitbit';
     if (tag === 'google_health' || tag === 'google-health') return 'Google Health';
     if (tag === 'checkin' || tag === 'check-in' || tag === 'manual') return 'Check-in';
+    if (tag === 'unknown') return null;
     return tag ? tag : 'Check-in';
   }
+  function _isWearableTag(tag){
+    return tag === 'wearable' || tag === 'fitbit' || tag === 'google_health' || tag === 'google-health';
+  }
   // Serie voor één metric over de periode: elke dag → {date, value|null, source|null}. Ontbrekend = null (GAP),
-  // NOOIT 0. Bij meerdere rijen op dezelfde datum wint de wearable-bron (getagd) boven handmatige check-in.
+  // NOOIT 0. Bij meerdere rijen op dezelfde datum wint de wearable-bron boven handmatige check-in.
+  //
+  // BRON (GAP-P2-018 R6): de bron is PER VELD en komt primair uit de canonieke kolom
+  // <veld>_source (hrv_source, rhr_source, sleep_source, steps_source) — dezelfde volgorde als
+  // pickLatestMetric(). De [src:...]-tag in note is een rij-brede legacy-aanduiding en geldt
+  // alleen nog als terugval voor historische rijen waar die kolom leeg is. Zo krijgt een
+  // handmatig ingevulde rusthartslag op een dag met een wearable-HRV niet langer 'Fitbit'.
   function healthSeries(rows, field, endYmd, days){
     rows = Array.isArray(rows) ? rows : [];
     var byDate = {};
     rows.forEach(function(r){
       if (!r || r.date == null) return;
       var v = r[field]; if (v == null || v === '') return;
-      var tag = _parseSrcTag(r.note);
+      var kolomBron = r[field + '_source'];   // 'manual' | 'wearable' | 'unknown' | null (pre-migratie)
+      var tag = kolomBron ? kolomBron : _parseSrcTag(r.note);
+      var wearable = _isWearableTag(tag);
       var key = String(r.date).slice(0,10);
       var prior = byDate[key];
-      // prioriteit: getagde (wearable) bron > ongetagde (check-in). Geen stille overschrijving binnen bron.
-      if (!prior || (tag && !prior.tag)) byDate[key] = { value: v, tag: tag };
+      // prioriteit: wearable-bron > check-in. Geen stille overschrijving binnen dezelfde bron.
+      if (!prior || (wearable && !prior.wearable)) byDate[key] = { value: v, tag: tag, wearable: wearable };
     });
     return dateRange(endYmd, days).map(function(d){
       var e = byDate[d];

@@ -127,9 +127,9 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 - R1–R3 zijn bewezen met de echte parsers, de echte handler en de echte RPC op PostgreSQL (`core/fWearableIngestQuality.test.js`), nog niet tegen een live providersync.
 - R4. Slaap valt bij ontbrekende slaapduur terug op het interval (tijd in bed) zonder dat dit wordt vastgelegd.
 - R5. `hrv_metric_type` wordt nooit gezet (alle rijen `unknown`).
-- R6. `healthSeries()` bepaalt de bron uit de notitie-tag, niet uit de `*_source`-kolommen.
+- R6. GESLOTEN in v4.70.13 (bewezen in `core/fHealthSeriesProvenance.test.js`). `healthSeries()` leest de bron per veld uit `<veld>_source`; de notitie-tag is alleen nog terugval voor historische rijen. Geen databasewijziging nodig.
 **Evidence:** CODE VERIFIED op main `9ef622d9`; de keten herstel/readiness gebruikt de bestaande lagen sinds v4.70.9 (`core/fRecoveryReadinessQualityWiring.test.js`).
-**Target:** R4-R6 (provenance-punten) blijven open. Geen opgeslagen quality-veld zonder concrete productbehoefte.
+**Target:** R4 en R5 (provenance bij ingest) blijven open; R6 is gesloten. Geen opgeslagen quality-veld zonder concrete productbehoefte.
 **Priority:** P2 (niet-kritiek — geen dataverlies, geen silent-corruption-risico, puur een verfijningsmogelijkheid). **Complexity:** M.
 
 ### GAP-P2-019 (voorheen GAP-F5-002) — Geen geautomatiseerde retry-met-backoff in wearable-sync

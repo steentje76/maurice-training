@@ -1,7 +1,7 @@
 {
  "_schema": "trainingskompas-audit-gap-register/1.0",
  "baseline": "BASELINE-1.0",
- "generated_against_main": "4a43f82446da0258f00a9c5ef860f3921ded7d9e",
+ "generated_against_main": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
  "counts": {
   "entries": 68,
   "open": 27,
@@ -1596,7 +1596,14 @@
    "affected_capability_ids": [],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "Historical live proof (docs/GAP_ANALYSIS_V2.md): after migratie_v498.sql, a two-tenant SQL transaction test proved tenant-A ALLOW, tenant-B DENY, unrelated-user DENY and owner bootstrap ALLOW; the gap was closed on 2026-08-28.",
+    "Current regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fGymRlsMultiTenant.test.js is present and is included by the discovery-based core/*.test.js Quality Gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS for SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650; the workflow executes every core/*.test.js file."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-P0-004",
@@ -1621,7 +1628,14 @@
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "closure_evidence": [
+    "Historical live proof (docs/GAP_ANALYSIS_V2.md): after migratie_v497.sql, self-updates of gym_role/gym_id/system_role were blocked while the service-role path remained functional; closure recorded 2026-08-28.",
+    "Current regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fGymRlsMultiTenant.test.js remains present and is executed by the discovery-based Quality Gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS for SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-P0-001",
@@ -1646,7 +1660,14 @@
    "affected_capability_ids": [],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "Historical live proof (docs/GAP_ANALYSIS_V2.md): after migratie_v496.sql, SET LOCAL ROLE anon/authenticated returned 0 gyms rows while service_role returned the intended row; closure recorded 2026-08-28.",
+    "Current regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fGymsRlsSecurity.test.js remains present and is executed by the discovery-based Quality Gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS for SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-P0-002",
@@ -1671,7 +1692,14 @@
    "affected_capability_ids": [],
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "Historical closure proof (docs/GAP_ANALYSIS_V2.md): dedicated security suites were added for coach proxy, gym-team, wearable auth and delete-account; the work also found and fixed the manager-to-owner demotion authorization bug.",
+    "Current exact-head regression set exists at SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fCoachProxySecurity.test.js, core/fGymTeamSecurity.test.js, core/fWearableAuthSecurity.test.js and core/fDeleteAccountSecurity.test.js.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS; its core regression step executes every core/*.test.js file."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-P0-003",
@@ -1696,7 +1724,14 @@
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "closure_evidence": [
+    "Historical closure proof (docs/GAP_ANALYSIS_V2.md): core/release-gate.js v2 replaced the hardcoded test list with discovery-based execution and was sabotage-tested before closure.",
+    "Current code proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/release-gate.js still identifies itself as discovery-based P0-003 fix and discovers core/*.test.js automatically.",
+    "Exact-head GitHub Quality Gate run 37458396188 completed SUCCESS and independently uses a nullglob core/*.test.js discovery loop, providing a second discovery-based regression gate."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-001",
@@ -1714,7 +1749,14 @@
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "closure_evidence": [
+    "Historical live/adversarial proof (docs/GAP_ANALYSIS_V2.md): migratie_v519.sql made the cohort minimum a server-side floor via GREATEST(...,5); the p_min_cohort_size=1 attack then returned insufficient_data.",
+    "Current targeted regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fTeamAnalyticsCohortFloor.test.js remains present and is included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS; F11 documentation also records the server-side cohort floor and adversarial re-verification."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-002",
@@ -1732,7 +1774,14 @@
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "closure_evidence": [
+    "Historical live/adversarial proof (docs/GAP_ANALYSIS_V2.md): migratie_v518.sql added four INSERT/UPDATE guards for cross-tenant location, team_id mutation, linked training membership and attendance/responsibility identity mutation.",
+    "Current targeted regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fTeamEventsAdversarialFixes.test.js remains present and is included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS; docs/F11_MASTER_REPORT.md records the four tenant/data-integrity fixes as reverified on merged main."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-003",
@@ -1750,7 +1799,14 @@
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "closure_evidence": [
+    "Historical live/adversarial proof (docs/GAP_ANALYSIS_V2.md): memberships self-insert as owner and self-update member→owner were reproduced, then blocked by the corrected RLS policies while legitimate member/bootstrap cases still passed.",
+    "Current targeted regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fMembershipsSelfElevationFix.test.js remains present and is included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS for SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-004",
@@ -1768,7 +1824,14 @@
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "closure_evidence": [
+    "Historical live/adversarial proof (docs/GAP_ANALYSIS_V2.md): the broken direct coach-write path was replaced by coach-owned templates/assignments plus athlete-only materialize_coach_assignment(), preserving all existing trg_set_user_id ownership invariants.",
+    "Current regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fCoachProgramCore.test.js, core/fCoachProgramRls.test.js and core/fDeleteAccountSecurity.test.js remain present and are in the full regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS; the source analysis records eight critical scenarios including ownership, authorization, atomicity and idempotency."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-005",
@@ -1786,7 +1849,14 @@
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "closure_evidence": [
+    "Historical closure proof (docs/GAP_ANALYSIS_V2.md): MS-F8-01 explicitly resolved the five Women's Performance product decisions, with IMPLEMENT for the proven cycle/symptom foundation and conservative DEFER decisions for the remaining life-stage domains.",
+    "Current regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fWomensPerformanceDecisions.test.js remains present and is included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS; the canonical decision documents remain docs/MS-F8-01_WOMENS_PERFORMANCE_PRODUCT_DECISIONS.md and docs/F8_PRODUCT_OWNER_DECISIONS.md."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-006",
@@ -1806,7 +1876,14 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
    "capability_id": "CALC-REC-REGISTRY-001",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "Historical live proof (docs/GAP_ANALYSIS_V2.md): duplicate (user_id,date) HRV rows were reconciled, UNIQUE(user_id,date) and atomic upsert_daily_health were applied live, and zero remaining duplicates plus mixed-source behavior were verified.",
+    "Current targeted regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fHrvConcurrencyClosure.test.js remains present and is included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS for SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-007",
@@ -1827,7 +1904,14 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
    "capability_id": "CALC-REC-REGISTRY-001",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "Historical live proof (docs/GAP_ANALYSIS_V2.md): migratie_v499.sql added per-field hrv_source/rhr_source/sleep_source provenance, with live schema/RLS verification and mixed-source functional verification.",
+    "Current targeted regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fProvenanceClosure.test.js remains present and is included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS for SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-008",
@@ -1845,7 +1929,14 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
    "capability_id": "TRAIN-EXECUTION-001",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "Historical closure proof (docs/GAP_ANALYSIS_V2.md): Programma and Repeat Workout were given canonical createTrainingInstance() creation with source provenance; live DB verification confirmed training_instances.snapshot accepts the fields without schema change.",
+    "Current targeted regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fGapP1006Closure.test.js remains present and is included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS; the closure deliberately preserved the richer source-specific pre-execution UI while converging execution identity."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-009",
@@ -1865,7 +1956,14 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
    "capability_id": "TRAIN-EXECUTION-001",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "Historical closure proof (docs/GAP_ANALYSIS_V2.md): launchProgramTrainScreen() gained the same valid-draft resume branch as the existing training flows, restoring sessionLog/sessionExtra/activeInstanceId/timer instead of resetting progress.",
+    "Current targeted regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fProgramResume.test.js and core/fExecutionIdentity.test.js remain present and are included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS for SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-010",
@@ -1883,7 +1981,14 @@
    "traceability_status": "COMPLETE",
    "traceability_evidence": "PO-goedgekeurde reconciliatie (BASELINE-1.2 traceability gate), inhoudelijk geverifieerd tegen titel, intended_closure en evidence van deze gap en tegen de canonieke capability-index",
    "capability_id": "TRAIN-EXECUTION-001",
-   "traceability_scope": "CAPABILITY_SCOPED"
+   "traceability_scope": "CAPABILITY_SCOPED",
+   "closure_evidence": [
+    "Historical closure proof (docs/GAP_ANALYSIS_V2.md): startRepeatWorkout() and launchProgramTrainScreen() reset activeInstanceId before a new session, preventing a prior instance identity from leaking into a later session.",
+    "Current targeted regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fExecutionIdentity.test.js remains present and is included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS for SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-HIST-011",
@@ -1901,7 +2006,14 @@
    "traceability_status": "NO_CAPABILITY_RELATION_PROVEN",
    "traceability_evidence": "read-only reconciliatie van alle 59 gaps vond geen inhoudelijke relatie met een canonical capability: titel, intended_closure en evidence van deze gap wijzen geen capability aan en de gap droeg geen capability_id",
    "traceability_scope": "NOT_APPLICABLE",
-   "capability_id": null
+   "capability_id": null,
+   "closure_evidence": [
+    "Historical closure proof (docs/GAP_ANALYSIS_V2.md and docs/MS-F2-01_CANONICAL_TRAINING_START.md): custom training timer startup was changed from hardcoded 'A' to curT and its elapsed element id was aligned with the canonical context convention.",
+    "Current targeted regression proof at exact SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650: core/fExecutionIdentity.test.js remains present and is included in the full core regression gate.",
+    "Exact-head Quality Gate run 37458396188 completed SUCCESS for SHA 3e9b2a8d0ffad3aaac5eca25b75f84de07266650."
+   ],
+   "closure_verified_at_sha": "3e9b2a8d0ffad3aaac5eca25b75f84de07266650",
+   "closure_method": "historical closure evidence reconciliation + current exact-head automated regression proof"
   },
   {
    "gap_id": "GAP-P2-006-DUP",

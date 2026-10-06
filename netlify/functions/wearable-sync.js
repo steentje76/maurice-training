@@ -181,7 +181,7 @@ exports.handler = async function (event) {
     // Datum + waarde komen uit het geneste record — niet top-level (dat was de parsed:0-bug).
     const byDate = {};
     let parsedHrv = 0, parsedRhr = 0, parsedSleep = 0, parsedSteps = 0;
-    hrvData.forEach(p => { const r = LIB.parseHrvPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).hrv = r.value; if (r.value != null) parsedHrv++; } });
+    hrvData.forEach(p => { const r = LIB.parseHrvPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).hrv = r.value; byDate[r.date].hrvBasis = r.basis || null; if (r.value != null) parsedHrv++; } });
     rhrData.forEach(p => { const r = LIB.parseRhrPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).rhr = r.value; if (r.value != null) parsedRhr++; } });
     sleepData.forEach(p => { const r = LIB.parseSleepPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).sleep = r.value; byDate[r.date].sleepBasis = r.basis || null; if (r.value != null) parsedSleep++; } });
     // UNKNOWN != ZERO (sectie 3): alleen schrijven als de rollup-entry een
@@ -293,7 +293,7 @@ exports.handler = async function (event) {
       shape: { hrv: LIB.pointShape(hrvData[0]), rhr: LIB.pointShape(rhrData[0]), sleep: LIB.pointShape(sleepData[0]), steps: LIB.pointShape(stepsData[0]) },
       recordShape: { hrv: LIB.recordShape(hrvData[0], 'dailyHeartRateVariability'), rhr: LIB.recordShape(rhrData[0], 'dailyRestingHeartRate'), sleep: LIB.recordShape(sleepData[0], 'sleep'), steps: LIB.recordShape(stepsData[0], 'steps') },
       // sleep.summary-keys: bewijst of we een echte slaapduur gebruiken of terugvallen op
-      // het interval (= tijd in bed). Alleen KEYS, nooit waarden.
+      // het geobserveerde slaapinterval. Alleen KEYS, nooit waarden.
       sleepSummaryShape: LIB.sleepSummaryShape(sleepData[0]),
       providerError: providerErr,
       written: { imported, updated, skipped }

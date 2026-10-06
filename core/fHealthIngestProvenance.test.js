@@ -4,7 +4,7 @@
  *     het type (GOOGLE_HEALTH_MAP: sourceMetric 'rmssd'); het ging verloren tussen de keuring en de
  *     RPC, omdat qualifyDayValues() het niet doorgaf en upsert_daily_health er geen argument voor had.
  * R4. parseSleepPoint() valt bij een ontbrekende slaapduur terug op het interval van de slaapsessie
- *     (tijd in bed). Welke van de twee is opgeslagen lag nergens vast.
+ *     (starttijd tot eindtijd). Welke van de twee is opgeslagen lag nergens vast.
  *
  * Oplossing: migratie_v580 (kolom sleep_metric_type + twee optionele RPC-argumenten), de parser
  * meldt het pad, de keuring geeft het type door, de handler stuurt het mee. Zolang de migratie niet
@@ -131,13 +131,19 @@ async function main() {
   {
     const slaap = (summary, iv) => LIB.parseSleepPoint({ sleep: { interval: iv === undefined ? { startTime: D1 + 'T00:00:00Z', endTime: D1 + 'T07:30:00Z' } : iv, summary: summary } });
     eq([slaap({ minutesAsleep: '420' }).basis, slaap({ minutesAsleep: '420' }).value], ['asleep', 7], 'A1 R4: summary.minutesAsleep (gedocumenteerde slaapduur) -> asleep');
-    eq([slaap({}).basis, slaap({}).value, slaap(undefined).basis, slaap({ minutesInSleepPeriod: '450' }).basis], ['time_in_bed', 7.5, 'time_in_bed', 'time_in_bed'], 'A2 R4: geen slaapduur -> terugval op het interval -> time_in_bed');
+    eq([slaap({}).basis, slaap({}).value, slaap(undefined).basis, slaap({ minutesInSleepPeriod: '450' }).basis], ['sleep_interval', 7.5, 'sleep_interval', 'sleep_interval'], 'A2 R4: geen slaapduur -> terugval op het interval -> sleep_interval');
     eq([slaap({ totalSleepMinutes: 420 }).basis, slaap({ totalSleepDurationMillis: '25200000' }).basis, slaap({ totalDurationMillis: 25200000 }).basis], ['unknown', 'unknown', 'unknown'], 'A3 R4: overige, niet-gedocumenteerde duurvelden -> unknown (er wordt niet geraden)');
     eq([slaap({}, null).basis, slaap({}, null).value, slaap({ minutesAsleep: '0' }, null).basis], [null, null, null], 'A4 R4: geen slaapwaarde -> geen basis');
     eq([slaap({ minutesAsleep: '420' }).value, slaap({ totalSleepMinutes: 420 }).value, slaap({}).value], [7, 7, 7.5], 'A5 R4: de numerieke slaapwaarde is per pad exact zoals voorheen');
     const g = {}; DC.GOOGLE_HEALTH_MAP.metrics.forEach((x) => { g[x.key] = x; });
-    eq([g.hrv_ms.sourceMetric, DC.HEALTH_METRIC_TYPES], ['rmssd', { hrv: ['rmssd', 'sdnn', 'unknown'], sleep: ['asleep', 'time_in_bed', 'unknown'] }], 'A6 R5: het HRV-type staat in de contractbron (rmssd); één vocabulaire in DeviceCore');
-    eq(Q({ hrv: 55, sleep: 7.5, sleepBasis: 'time_in_bed' }).meta, { hrv_metric_type: 'rmssd', sleep_metric_type: 'time_in_bed' }, 'A7 de keuring geeft beide types door bij geaccepteerde waarden');
+    eq([g.hrv_ms.sourceMetric, DC.HEALTH_METRIC_TYPES], ['rmssd', { hrv: ['rmssd', 'sdnn', 'unknown'], sleep: ['asleep', 'sleep_interval', 'unknown'] }], 'A6 R5: het HRV-type staat in de contractbron (rmssd); één vocabulaire in DeviceCore');
+    eq(Q({ hrv: 55, hrvBasis: 'rmssd', sleep: 7.5, sleepBasis: 'sleep_interval' }).meta, { hrv_metric_type: 'rmssd', sleep_metric_type: 'sleep_interval' }, 'A7 de keuring geeft beide types door bij geaccepteerde waarden');
+    // R5: het type volgt het veld dat de waarde leverde, niet de aanname "HRV is RMSSD"
+    const hrvP = (rec) => LIB.parseHrvPoint({ dailyHeartRateVariability: Object.assign({ date: { year: 2026, month: 9, day: 1 } }, rec) });
+    eq([hrvP({ averageHeartRateVariabilityMilliseconds: 55 }).basis, hrvP({ averageHeartRateVariabilityMilliseconds: '55.5' }).basis, hrvP({ averageHeartRateVariabilityMilliseconds: 55, rmssdMillis: 40 }).value], ['rmssd', 'rmssd', 55], 'A7a R5: het door Google als RMSSD gedocumenteerde veld -> rmssd (ook als tekstgetal); dat veld heeft voorrang');
+    eq([hrvP({ rmssdMillis: 54 }).basis, hrvP({ rmssdMillis: 54 }).value], ['unknown', 54], 'A7b R5: het niet-gedocumenteerde rmssdMillis levert de waarde, maar geen type (niet op de veldnaam afgaan)');
+    eq([hrvP({}).basis, hrvP({}).value, hrvP({ averageHeartRateVariabilityMilliseconds: 'x' }).basis], [null, null, null], 'A7c R5: geen HRV-waarde -> geen basis');
+    eq([Q({ hrv: 55 }).meta.hrv_metric_type, Q({ hrv: 55, hrvBasis: 'unknown' }).meta.hrv_metric_type, Q({ hrv: 55, hrvBasis: 'sdnn' }).meta.hrv_metric_type, Q({ hrv: 55, hrvBasis: 'geraden' }).meta.hrv_metric_type], [null, null, null, null], 'A7d R5: zonder bewezen basis, of met een basis die niet met de contractbron overeenkomt, wordt geen type doorgegeven');
     eq([Q({ rhr: 60 }).meta, Q({ hrv: 450, sleep: 30, sleepBasis: 'asleep' }).meta], [{ hrv_metric_type: null, sleep_metric_type: null }, { hrv_metric_type: null, sleep_metric_type: null }], 'A8 geen HRV/slaap, of afgewezen waarden -> geen type (niets gefabriceerd)');
     eq([Q({ sleep: 7, sleepBasis: 'geraden' }).meta.sleep_metric_type, Q({ sleep: 7 }).meta.sleep_metric_type], [null, null], 'A9 een type buiten de vocabulaire of een ontbrekende basis wordt null, niet doorgegeven');
     eq(Q({ hrv: 55 }, null).meta, { hrv_metric_type: null, sleep_metric_type: null }, 'A10 fail-closed: zonder keuringslaag ook geen type');
@@ -146,7 +152,7 @@ async function main() {
     // dezelfde vocabulaire in database en code
     const check = (sql, kolom) => (new RegExp(kolom + "\\s+in\\s*\\(([^)]*)\\)", 'i').exec(sql) || [null, ''])[1].replace(/['\s]/g, '').toLowerCase().split(',');
     eq([check(rd('migratie_v542.sql'), 'hrv_metric_type'), check(V580, 'sleep_metric_type')], [DC.HEALTH_METRIC_TYPES.hrv, DC.HEALTH_METRIC_TYPES.sleep], 'A12 de CHECK-constraints (v542, v580) spiegelen DeviceCore.HEALTH_METRIC_TYPES');
-    ok(/p_hrv_metric_type NOT IN \('rmssd','sdnn','unknown'\)/.test(V580) && /p_sleep_metric_type NOT IN \('asleep','time_in_bed','unknown'\)/.test(V580), 'A13 de RPC valideert dezelfde vocabulaire');
+    ok(/p_hrv_metric_type NOT IN \('rmssd','sdnn','unknown'\)/.test(V580) && /p_sleep_metric_type NOT IN \('asleep','sleep_interval','unknown'\)/.test(V580), 'A13 de RPC valideert dezelfde vocabulaire');
   }
 
   /* ══ B. De migratie zelf, op de toestand van productie ═══════════════════ */
@@ -204,15 +210,15 @@ async function main() {
     eq([a.body.status, a.body.provenance, a.rpcs.length], ['success', { rpc: 'typed', typed: { hrv: 1, sleep: 1 } }, 1], 'C2 respons: provenance typed, één RPC');
     // terugval op het interval
     const b = await sync(db, { sleep: [slaapPunt(D2, {})] });
-    eq([(await rij(db, D2)).sleep, (await rij(db, D2)).sleep_metric_type, (await rij(db, D2)).hrv_metric_type, b.body.provenance.typed], [7.5, 'time_in_bed', 'unknown', { hrv: 0, sleep: 1 }], 'C3 terugval op het interval -> time_in_bed; zelfde numerieke slaapwaarde; geen HRV -> HRV-type blijft unknown (niets gefabriceerd)');
+    eq([(await rij(db, D2)).sleep, (await rij(db, D2)).sleep_metric_type, (await rij(db, D2)).hrv_metric_type, b.body.provenance.typed], [7.5, 'sleep_interval', 'unknown', { hrv: 0, sleep: 1 }], 'C3 terugval op het interval -> sleep_interval; zelfde numerieke slaapwaarde; geen HRV -> HRV-type blijft unknown (niets gefabriceerd)');
     // update van alleen slaap wist het HRV-type niet; update van alleen RHR wist het slaaptype niet
     await sync(db, { sleep: [slaapPunt(D1, {})] });
-    eq([(await rij(db, D1)).hrv_metric_type, (await rij(db, D1)).sleep_metric_type, (await rij(db, D1)).hrv], ['rmssd', 'time_in_bed', 55], 'C4 een latere slaap-only-sync wist het HRV-type niet; het slaaptype volgt de nieuwe slaapwaarde');
+    eq([(await rij(db, D1)).hrv_metric_type, (await rij(db, D1)).sleep_metric_type, (await rij(db, D1)).hrv], ['rmssd', 'sleep_interval', 55], 'C4 een latere slaap-only-sync wist het HRV-type niet; het slaaptype volgt de nieuwe slaapwaarde');
     await sync(db, { rhr: [rhrPunt(D1, '59')] });
-    eq([(await rij(db, D1)).rhr, (await rij(db, D1)).hrv_metric_type, (await rij(db, D1)).sleep_metric_type], [59, 'rmssd', 'time_in_bed'], 'C5 een update van alleen de rusthartslag laat beide types staan');
+    eq([(await rij(db, D1)).rhr, (await rij(db, D1)).hrv_metric_type, (await rij(db, D1)).sleep_metric_type], [59, 'rmssd', 'sleep_interval'], 'C5 een update van alleen de rusthartslag laat beide types staan');
     // handmatige HRV: geen type verzinnen; het type hoort bij de waarde
     await rpc(db, { sub: UID, role: 'authenticated' }, { p_user_id: UID, p_date: D1, p_hrv: 48, p_source: 'manual' });
-    eq([(await rij(db, D1)).hrv, (await rij(db, D1)).hrv_source, (await rij(db, D1)).hrv_metric_type, (await rij(db, D1)).sleep_metric_type], [48, 'manual', 'unknown', 'time_in_bed'], 'C6 handmatige HRV daarna: bron manual en type unknown (het rmssd-type hoorde bij de vervangen waarde); slaaptype onaangeroerd');
+    eq([(await rij(db, D1)).hrv, (await rij(db, D1)).hrv_source, (await rij(db, D1)).hrv_metric_type, (await rij(db, D1)).sleep_metric_type], [48, 'manual', 'unknown', 'sleep_interval'], 'C6 handmatige HRV daarna: bron manual en type unknown (het rmssd-type hoorde bij de vervangen waarde); slaaptype onaangeroerd');
     await rpc(db, { sub: UID, role: 'authenticated' }, { p_user_id: UID, p_date: D4, p_hrv: 50, p_sleep: 7, p_source: 'manual' });
     eq([(await rij(db, D4)).hrv_metric_type, (await rij(db, D4)).sleep_metric_type], ['unknown', 'unknown'], 'C7 handmatige invoer zonder type blijft unknown');
     // type zonder waarde wordt genegeerd; ongeldig type wordt geweigerd
@@ -234,7 +240,7 @@ async function main() {
     // gemengde dag: bron en type per veld
     await rpc(db, { sub: UID, role: 'authenticated' }, { p_user_id: UID, p_date: D2, p_rhr: 62, p_source: 'manual' });
     await sync(db, { hrv: [hrvPunt(D2, 54, 'rmssdMillis')], steps: [stappenPunt(D2, '7000')] });
-    eq(await rij(db, D2), { hrv: 54, hrv_source: 'wearable', hrv_metric_type: 'rmssd', rhr: 62, rhr_source: 'manual', sleep: 7.5, sleep_source: 'wearable', steps: 7000, steps_source: 'wearable', sleep_metric_type: 'time_in_bed' }, 'C12 gemengde dag: bron en type kloppen per veld (HRV wearable/rmssd, rusthartslag manual, slaap wearable/time_in_bed)');
+    eq(await rij(db, D2), { hrv: 54, hrv_source: 'wearable', hrv_metric_type: 'unknown', rhr: 62, rhr_source: 'manual', sleep: 7.5, sleep_source: 'wearable', steps: 7000, steps_source: 'wearable', sleep_metric_type: 'sleep_interval' }, 'C12 gemengde dag: bron en type kloppen per veld (HRV wearable via het niet-gedocumenteerde rmssdMillis -> type unknown, rusthartslag manual, slaap wearable/sleep_interval)');
     const reeks = (await db.query('select date::text date, hrv::float8 hrv, hrv_source, rhr, rhr_source, sleep::float8 sleep, sleep_source, note from public.hrv_log where user_id = $1', [UID])).rows;
     eq([DC.healthSeries(reeks, 'hrv', D4, 4).find((p) => p.date === D2).source, DC.healthSeries(reeks, 'rhr', D4, 4).find((p) => p.date === D2).source], ['Fitbit', 'Check-in'], 'C13 en healthSeries (R6) leest die bron per veld');
     await db.close();
@@ -266,7 +272,7 @@ async function main() {
     const bron = (f) => rd(f);
     ok(!/sleep_metric_type|hrv_metric_type/.test(bron('core/calculation.js') + bron('core/decision.js') + bron('core/coaching.js')), 'E1 Calculation, Decision en Coaching lezen geen metric-type');
     ok(!/sleep_metric_type/.test(bron('index.html')), 'E2 de app leest of toont het slaaptype niet (geen nieuw herstel- of confidence-effect)');
-    const q1 = LIB.qualifyDayValues({ sleep: 7.5, sleepBasis: 'asleep' }), q2 = LIB.qualifyDayValues({ sleep: 7.5, sleepBasis: 'time_in_bed' });
+    const q1 = LIB.qualifyDayValues({ sleep: 7.5, sleepBasis: 'asleep' }), q2 = LIB.qualifyDayValues({ sleep: 7.5, sleepBasis: 'sleep_interval' });
     eq([q1.vals, q1.status], [q2.vals, q2.status], 'E3 de keuring en de opgeslagen waarde zijn gelijk voor beide bases: alleen de provenance verschilt');
     const ws = bron('netlify/functions/wearable-sync.js');
     ok(!/\/rest\/v1\/hrv_log[^`]*`,\s*\{\s*method:\s*'(POST|PATCH|PUT|DELETE)'/.test(ws) && (ws.match(/rest\/v1\/hrv_log/g) || []).length === 1, 'E4 de handler heeft geen direct schrijfpad naar hrv_log; alleen de bestaande leescontrole');

@@ -67,7 +67,7 @@ function maakDb() {
       const key = a.p_user_id + '|' + a.p_date;
       const cur = rijen.get(key);
       // migratie_v580: het metric-type hoort bij de waarde (zelfde patroon als <veld>_source).
-      const TYPEN = { hrv: ['rmssd', 'sdnn', 'unknown'], sleep: ['asleep', 'time_in_bed', 'unknown'] };
+      const TYPEN = { hrv: ['rmssd', 'sdnn', 'unknown'], sleep: ['asleep', 'sleep_interval', 'unknown'] };
       for (const soort of ['hrv', 'sleep']) {
         const t = nn(a['p_' + soort + '_metric_type']);
         if (t !== null && TYPEN[soort].indexOf(t) < 0) return null;

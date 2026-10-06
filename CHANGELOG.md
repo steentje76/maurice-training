@@ -5,11 +5,12 @@
 **Status: code en `migratie_v580.sql` in de repo. De migratie is NIET op productie toegepast.** Tot dat gebeurt werkt de sync zoals voorheen; alleen het type wordt nog niet opgeslagen.
 
 - **R5 — root cause.** `hrv_log.hrv_metric_type` bestaat sinds v542, maar geen writer zette hem: `upsert_daily_health` had er geen argument voor en `qualifyDayValues()` gaf `sourceMetric` uit de contractbron niet door. Alle 84 HRV-rijen op productie staan op `unknown`.
-- **R4 — root cause.** `parseSleepPoint()` valt bij een ontbrekende slaapduur terug op het interval van de slaapsessie (tijd in bed). Welke van de twee was opgeslagen lag nergens vast en is achteraf niet te reconstrueren.
-- **`migratie_v580.sql` (ontwerp).** Nieuwe kolom `hrv_log.sleep_metric_type` (`asleep` | `time_in_bed` | `unknown`, default `unknown`, naar het voorbeeld van `hrv_metric_type`). `upsert_daily_health` krijgt twee optionele argumenten aan het einde: `p_hrv_metric_type` en `p_sleep_metric_type`. De tien bestaande argumenten, de merge en de autorisatie zijn ongewijzigd; de oude overload wordt in dezelfde transactie verwijderd; rechten expliciet teruggezet (geen PUBLIC, geen anon); sluitende controles op signatuur, rechten, RLS en de single-writer-invariant. Geen backfill, geen datawijziging.
+- **R4 — root cause.** `parseSleepPoint()` valt bij een ontbrekende slaapduur terug op de duur van het slaapinterval van de sessie (starttijd tot eindtijd). Welke van de twee was opgeslagen lag nergens vast en is achteraf niet te reconstrueren.
+- **`migratie_v580.sql` (ontwerp).** Nieuwe kolom `hrv_log.sleep_metric_type` (`asleep` | `sleep_interval` | `unknown`, default `unknown`, naar het voorbeeld van `hrv_metric_type`). `upsert_daily_health` krijgt twee optionele argumenten aan het einde: `p_hrv_metric_type` en `p_sleep_metric_type`. De tien bestaande argumenten, de merge en de autorisatie zijn ongewijzigd; de oude overload wordt in dezelfde transactie verwijderd; rechten expliciet teruggezet (geen PUBLIC, geen anon); sluitende controles op signatuur, rechten, RLS en de single-writer-invariant. Geen backfill, geen datawijziging.
 - **Semantiek.** Het type hoort bij de waarde, net als `<veld>_source`: het verandert alleen wanneer de aanroep die waarde schrijft. Een slaap-only-update wist het HRV-type niet. Een handmatige HRV krijgt `unknown`.
-- **Ingest.** De parser meldt welk pad de slaapwaarde leverde: `summary.minutesAsleep` → `asleep`; terugval op het interval → `time_in_bed`; de overige, niet-gedocumenteerde duurvelden → `unknown`. Het HRV-type komt uit de contractbron (`GOOGLE_HEALTH_MAP`: `rmssd`). Eén vocabulaire: `DeviceCore.HEALTH_METRIC_TYPES`.
-- **Waarom `rmssd`.** De Google Health API documenteert `dailyHeartRateVariability.averageHeartRateVariabilityMilliseconds` als RMSSD. De onzekerheid die v542 vastlegde (RMSSD of SDNN, afhankelijk van het apparaat) geldt voor het sample-type `heartRateVariability`, dat deze integratie niet leest. Zie DEC-HRV-003.
+- **Ingest.** De parser meldt welk pad de slaapwaarde leverde: `summary.minutesAsleep` → `asleep`; terugval op het interval → `sleep_interval`; de overige, niet-gedocumenteerde duurvelden → `unknown`. Het HRV-type komt uit de contractbron (`GOOGLE_HEALTH_MAP`: `rmssd`). Eén vocabulaire: `DeviceCore.HEALTH_METRIC_TYPES`.
+- **Waarom `rmssd`.** De Google Health API-referentie documenteert `dailyHeartRateVariability.averageHeartRateVariabilityMilliseconds` als RMSSD; alleen een waarde uit dat veld krijgt het type. Het oudere veld `rmssdMillis` blijft `unknown`. De onzekerheid die v542 vastlegde (RMSSD of SDNN) geldt voor het sample-type `heartRateVariability`, dat deze integratie niet leest. Bron en citaten: DEC-HRV-003.
+- **Waarom `sleep_interval`.** De bron garandeert een "observed sleep interval", geen tijd in bed.
 - **Volgorde-veilig.** Zolang de database de nieuwe argumenten niet kent antwoordt PostgREST met 404/PGRST202; de handler schrijft dezelfde dag dan direct opnieuw met de tien bestaande argumenten. De respons meldt `provenance.rpc`: `typed` of `legacy`.
 - **Geen effect op berekeningen.** De numerieke slaapwaarde is per pad exact gelijk; Calculation, Decision en de app lezen het type niet. Geen penalty, geen confidencegewicht.
 - **Gate:** `core/fHealthIngestProvenance.test.js` (58 tests): de echte migratie op PostgreSQL bovenop de productietoestand, met de echte handler vóór en na de migratie.
@@ -23,6 +24,15 @@
 - **Live (alleen tellingen, 4 oktober 2026):** 86 rijen; de per-veld bron is gevuld bij 25–27 van de 70–84 waarden per metric; 11 rijen hangen nog van de legacy-tag af; geen enkele rij waar tag en kolom elkaar nu tegenspreken.
 - **Gate:** `core/fHealthSeriesProvenance.test.js` (31 tests).
 - sw-cache v470130, versionCode 47013.
+
+### In dezelfde release: de HRV-baseline telt kalenderdagen
+
+- **Bug (productcode).** `hrv_log.date` is een kalenderdatum, maar `CalcCore.hrvBaseline()` rekende met tijdstippen: `Math.round((nu − eersteMeting) / 86400000)`. Dezelfde dataset gaf op dezelfde dag vóór 12:00 UTC N dagen en daarna N+1. De teller "nog X dagen tot je eigen baseline" versprong midden op de dag, en de overgangen referentie → baseline (14 dagen) en voorlopig → volledig (28 dagen) vielen een halve dag te vroeg. Tussen 00:00 lokale tijd en 00:00 UTC viel de meting van vandaag bovendien buiten de reeks.
+- **Oplossing.** Eén pure helper (`_calDay`) zet elke datum om naar een kalenderdagnummer; `hrvBaseline()` en `hrvRollingRecent()` vergelijken alleen nog dagnummers. Een datumtekst telt op de geschreven datum, een tijdstip op de lokale kalenderdag. Ongevoelig voor het tijdstip van de dag en voor klokwissels. Geen tijdzone-afleiding.
+- **Venster van het 7-daags gemiddelde.** De meting van precies 7 dagen vóór de referentiedag telt mee — het al vastgelegde contract (`fHrvBaselineCanonicalization`: "inclusieve grens"). Dat gold tot nu toe alleen bij een referentie op de datumgrens; bij "nu" viel die meting buiten het venster. Het gemiddelde van vandaag kan daardoor één meting meer bevatten dan voorheen.
+- **Ongewijzigd.** 14 / 28 dagen, minimaal 4 metingen, SWC, de 15%-daling, de HRV-factor en alle readiness-regels.
+- **Gate:** `core/fHrvCalendarDay.test.js` (61 controles in elk van drie tijdzones) op de echte core met een vervangen klok. De tijdelijke test die "9 of 10 dagen" accepteerde is vervangen door een exacte.
+- CORE_SIG bijgewerkt (core/calculation.js gewijzigd).
 
 ## v4.70.12 — Wearable-ingest keurt vóór opslag (GAP-P2-018 R1–R3) (4 oktober 2026)
 

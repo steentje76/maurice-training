@@ -12,7 +12,7 @@ const CACHE_STATIC = 'trainingskompas-static-v470140';
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
 // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem
 // hier bij ÉN bump CACHE_STATIC, zodat bestaande browsers de nieuwe core daadwerkelijk laden.
-const CORE_SIG = '419c39e8e374da7d';
+const CORE_SIG = '75307d7e99767d1d';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';
 const VIDEO_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB LRU-plafond

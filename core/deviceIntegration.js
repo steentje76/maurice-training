@@ -572,11 +572,11 @@
   // op hrv_log.hrv_metric_type (migratie_v542) en hrv_log.sleep_metric_type (migratie_v580) en de
   // validatie in upsert_daily_health spiegelen haar.
   //   hrv:   rmssd | sdnn | unknown        — RMSSD en SDNN zijn niet onderling vergelijkbaar
-  //   sleep: asleep | time_in_bed | unknown — gerapporteerde slaapduur vs. interval van de sessie
+  //   sleep: asleep | sleep_interval | unknown — gerapporteerde slaapduur vs. interval van de sessie
   // Dit is provenance, geen kwaliteit: het heeft geen effect op berekeningen of beslissingen.
   var HEALTH_METRIC_TYPES = {
     hrv:   ['rmssd', 'sdnn', 'unknown'],
-    sleep: ['asleep', 'time_in_bed', 'unknown']
+    sleep: ['asleep', 'sleep_interval', 'unknown']
   };
 
   // Normaliseer één dag-payload → { schema, provider, date, metrics:[canonical metric], provenance }.

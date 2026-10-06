@@ -21,8 +21,10 @@ const calcCoreSrc = fs.readFileSync(path.join(ROOT, 'core/calculation.js'), 'utf
 // HRV Canonicalization Sprint: implementatie verhuisd van index.html naar core/calculation.js
 // (CALC-REC-001, hrv_baseline.v1) -- index.html bevat nu uitsluitend een dunne CalcCore-wrapper,
 // dus deze structurele bewijzen worden voortaan tegen de canonieke locatie gecontroleerd.
-ok(calcCoreSrc.match(/days\s*=\s*Math\.max\(0,\s*Math\.round\(\(ref\s*-\s*rows\[0\]\.date\)\s*\/\s*86400000\)\)/),
-  'A1: hrvBaseline() (core/calculation.js) berekent het venster op basis van werkelijk verstreken dagen (tijdrollend), niet een vast aantal rijen');
+// v4.70.13: de telling is in KALENDERDAGEN (eerste meting -> referentiedag), niet meer in afgeronde
+// etmalen; zie core/fHrvCalendarDay.test.js. Het bewijs blijft hetzelfde: een tijdrollend venster.
+ok(calcCoreSrc.match(/days\s*=\s*Math\.max\(0,\s*refDay\s*-\s*rows\[0\]\.day\)/),
+  'A1: hrvBaseline() (core/calculation.js) berekent het venster op basis van werkelijk verstreken kalenderdagen (tijdrollend), niet een vast aantal rijen');
 ok(calcCoreSrc.includes('HRV_BASELINE_MIN_DAYS = 14') && calcCoreSrc.includes('HRV_BASELINE_FULL_DAYS = 28'),
   'A2: de baseline-vensterwaarden (14/28 dagen) zijn expliciete, benoemde constanten in core/calculation.js, geen magic numbers');
 

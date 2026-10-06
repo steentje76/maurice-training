@@ -10,12 +10,12 @@
 --       voor. De ingest weet het type wel (GOOGLE_HEALTH_MAP: sourceMetric 'rmssd'); het gaat
 --       verloren voor opslag. Dit is een niet-herberekenbaar ingestfeit.
 --   R4. De providerparser valt bij een ontbrekende slaapduur terug op het interval van de
---       slaapsessie (tijd in bed). Die waarde wordt opgeslagen als hrv_log.sleep zonder dat
+--       slaapsessie (starttijd tot eindtijd). Die waarde wordt opgeslagen als hrv_log.sleep zonder dat
 --       vastligt of het een gerapporteerde slaapduur of een terugval is. Achteraf is dat uit
 --       de rij niet te reconstrueren.
 --
 -- WAT DEZE MIGRATIE DOET
---   1. Nieuwe kolom hrv_log.sleep_metric_type (asleep | time_in_bed | unknown, default
+--   1. Nieuwe kolom hrv_log.sleep_metric_type (asleep | sleep_interval | unknown, default
 --      'unknown'), exact naar het voorbeeld van hrv_metric_type (migratie_v542). Bestaande
 --      rijen worden 'unknown': er wordt niets gegokt en niets teruggerekend.
 --   2. upsert_daily_health krijgt twee optionele argumenten AAN HET EINDE:
@@ -43,11 +43,11 @@
 
 ALTER TABLE public.hrv_log
   ADD COLUMN IF NOT EXISTS sleep_metric_type text DEFAULT 'unknown'
-  CHECK (sleep_metric_type IN ('asleep', 'time_in_bed', 'unknown'));
+  CHECK (sleep_metric_type IN ('asleep', 'sleep_interval', 'unknown'));
 
 COMMENT ON COLUMN public.hrv_log.sleep_metric_type IS
   'GAP-P2-018 R4: wat de opgeslagen slaapwaarde meet. asleep = door de provider gerapporteerde slaapduur; '
-  'time_in_bed = terugval op het interval van de slaapsessie (tijd in bed); unknown = niet vastgelegd '
+  'sleep_interval = terugval op de duur van het geobserveerde slaapinterval van de sessie (starttijd tot eindtijd; kan wakkere periodes bevatten); unknown = niet vastgelegd '
   '(handmatige invoer, import, historische rijen). Het type hoort bij de waarde en verandert alleen '
   'wanneer upsert_daily_health een nieuwe slaapwaarde schrijft. Heeft geen effect op berekeningen.';
 
@@ -97,7 +97,7 @@ BEGIN
     RAISE EXCEPTION 'invalid hrv metric type: %', p_hrv_metric_type;
   END IF;
 
-  IF p_sleep_metric_type IS NOT NULL AND p_sleep_metric_type NOT IN ('asleep','time_in_bed','unknown') THEN
+  IF p_sleep_metric_type IS NOT NULL AND p_sleep_metric_type NOT IN ('asleep','sleep_interval','unknown') THEN
     RAISE EXCEPTION 'invalid sleep metric type: %', p_sleep_metric_type;
   END IF;
 

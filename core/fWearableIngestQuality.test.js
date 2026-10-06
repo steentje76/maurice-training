@@ -11,7 +11,7 @@
  *
  * Deze suite voert de ECHTE keten uit: de echte parsers, de echte wearable-sync-handler (alleen
  * fetch is vervangen) en de ECHTE upsert_daily_health uit migratie_v560 op PostgreSQL (PGlite).
- * Buiten scope en hier als ongewijzigd vastgelegd: R4 (slaap-terugval op tijd in bed), R5
+ * Buiten scope en hier als ongewijzigd vastgelegd: R4 (slaap-terugval op het slaapinterval), R5
  * (hrv_metric_type) en R6 (bronselectie in healthSeries).
  */
 'use strict';
@@ -289,7 +289,7 @@ async function main() {
   /* ══ G. R4, R5 en R6 zijn onaangeraakt ═══════════════════════════════════ */
   {
     const fb = LIB.parseSleepPoint({ sleep: { interval: { startTime: D1 + 'T00:00:00Z', endTime: D1 + 'T07:30:00Z' }, summary: {} } });
-    eq([fb.value, Q({ sleep: fb.value }).vals.sleep], [7.5, 7.5], 'G-R4 de interval-terugval (tijd in bed) geeft dezelfde waarde als voorheen en wordt als slaap opgeslagen');
+    eq([fb.value, Q({ sleep: fb.value }).vals.sleep], [7.5, 7.5], 'G-R4 de interval-terugval geeft dezelfde waarde als voorheen en wordt als slaap opgeslagen');
     eq(Q({ sleep: LIB.parseSleepPoint({ sleep: { interval: { startTime: '2026-09-27T00:00:00Z', endTime: '2026-09-28T07:30:00Z' }, summary: {} } }).value }).status.sleep, 'implausible', 'G-R4b een terugval boven 24 uur wordt wel tegen het contract getoetst en afgewezen');
     const ws = rd('netlify/functions/wearable-sync.js') + rd('netlify/functions/_wearableSyncLib.js');
     // R5 is sinds v4.70.14 geïmplementeerd (core/fHealthIngestProvenance.test.js): het type gaat mee als RPC-argument.
@@ -298,7 +298,7 @@ async function main() {
     const hs = dcSrc.slice(dcSrc.indexOf('function healthSeries('), dcSrc.indexOf('function healthSeries(') + 1600);
     // R6 is sinds v4.70.13 opgelost (core/fHealthSeriesProvenance.test.js): per-veld kolom eerst, tag als terugval.
     ok(/kolomBron \? kolomBron : _parseSrcTag\(r\.note\)/.test(hs), 'G-R6 healthSeries leest de bron primair uit de per-veld kolom (R6 gesloten)');
-    ok(rd('netlify/functions/_wearableSyncLib.js').indexOf("else if (iv && iv.startTime && iv.endTime) {") > 0 && fb.basis === 'time_in_bed', 'G-R4c de terugval bestaat nog en wordt sinds v4.70.14 als time_in_bed gemeld (waarde ongewijzigd)');
+    ok(rd('netlify/functions/_wearableSyncLib.js').indexOf("else if (iv && iv.startTime && iv.endTime) {") > 0 && fb.basis === 'sleep_interval', 'G-R4c de terugval bestaat nog en wordt sinds v4.70.14 als sleep_interval gemeld (waarde ongewijzigd)');
   }
 }
 

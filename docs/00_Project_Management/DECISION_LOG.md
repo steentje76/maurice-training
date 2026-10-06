@@ -2592,11 +2592,21 @@ blijft historische context en wordt niet vooruit geprojecteerd; er wordt geen fa
 `CycleCore.cycleContext()` blijft een suggestie voor de check-in en is geen invoer van de dagfactor. Zonder fase van
 vandaag geldt de bestaande neutrale cyclusfactor (1.00). De cyclusfactoren zelf zijn niet gewijzigd.
 
-## DEC-HRV-003 — Metric-type is typed provenance bij de waarde; Google Health dag-HRV is RMSSD (5 oktober 2026)
+## DEC-HRV-003 — Metric-type is typed provenance bij de waarde; Google Health dag-HRV is RMSSD (5 oktober 2026, herzien 6 oktober 2026)
 
 **Context.** `hrv_metric_type` (migratie_v542) werd door geen enkele writer gezet. v542 legde als onzekerheid vast dat
 een HRV-veld RMSSD of SDNN kan zijn, afhankelijk van het apparaat. Voor slaap lag nergens vast of de opgeslagen waarde
-een gerapporteerde slaapduur of een terugval op tijd in bed was.
+een gerapporteerde slaapduur was of een terugval op de duur van het sessie-interval.
+
+**Primaire bron.** Google Health API, REST-referentie v4, resource `users.dataTypes.dataPoints`
+(https://developers.google.com/health/reference/rest/v4/users.dataTypes.dataPoints), geraadpleegd 5 oktober 2026:
+- `DailyHeartRateVariability.averageHeartRateVariabilityMilliseconds`: "A user's average heart rate variability
+  calculated using the root mean square of successive differences (RMSSD) in times between heartbeats."
+- `HeartRateVariability` (het sample-type, door deze integratie NIET gelezen): gemeten als RMSSD "or by standard
+  deviation of the inter-beat intervals (SDNN)". Hier hoort de onzekerheid uit v542 thuis.
+- `Sleep.SleepSummary.minutesAsleep`: "Total number of minutes asleep" (som van de slaapstadia, zonder AWAKE).
+- `Sleep.interval`: "Observed sleep interval" (start- en eindtijd van de sessie). `minutesInSleepPeriod` is "Delta
+  between wake time and bedtime". De API kent daarnaast aparte `outOfBedSegments`.
 
 **Besluit.**
 1. Wat een opgeslagen waarde meet is een niet-herberekenbaar ingestfeit en wordt als getypte kolom vastgelegd, niet in
@@ -2604,13 +2614,13 @@ een gerapporteerde slaapduur of een terugval op tijd in bed was.
    `DeviceCore.HEALTH_METRIC_TYPES`; de database spiegelt haar.
 2. Het type hoort bij de waarde, zoals `<veld>_source`: alleen de aanroep van `upsert_daily_health` die de waarde
    schrijft zet het type. Zonder opgegeven type is het `unknown`.
-3. De Google Health-ingest schrijft `rmssd`. Grond: deze integratie leest het dagtype
-   `daily-heart-rate-variability`, veld `averageHeartRateVariabilityMilliseconds`, dat de API-referentie definieert als
-   berekend met RMSSD. De onzekerheid uit v542 geldt voor het sample-type `heartRateVariability` (RMSSD of SDNN); dat
-   leest deze integratie niet. Dit rust op de providerdocumentatie, niet op een live payload-inspectie.
-4. Slaap: `asleep` alleen voor `summary.minutesAsleep` (gedocumenteerd als slaapduur); `time_in_bed` voor de terugval
-   op het sessie-interval; `unknown` voor de overige, niet-gedocumenteerde duurvelden.
+3. HRV: `rmssd` uitsluitend wanneer de waarde uit `averageHeartRateVariabilityMilliseconds` komt (zie bron). Het oudere,
+   niet-gedocumenteerde veld `rmssdMillis` blijft als waarde ondersteund maar krijgt `unknown`: er wordt niet op een
+   veldnaam afgegaan. Dit rust op de providerdocumentatie, niet op een live payload-inspectie.
+4. Slaap: `asleep` alleen voor `summary.minutesAsleep`; `sleep_interval` voor de terugval op de duur van
+   `sleep.interval`; `unknown` voor de overige, niet-gedocumenteerde duurvelden. De naam is `sleep_interval` en niet
+   `time_in_bed`: de bron garandeert een geobserveerd slaapinterval, geen tijd in bed.
 5. Dit is provenance, geen kwaliteit: geen effect op Calculation, Decision of AI.
 
-**Status.** Code gemerged-klaar; `migratie_v580` niet op productie toegepast. Productie-apply is een aparte, expliciet
-goed te keuren stap.
+**Status.** Code klaar voor review; `migratie_v580` niet op productie toegepast. Productie-apply is een aparte, expliciet
+goed te keuren stap. Daarna kan de terugval op de tien-argumenten-aanroep in `wearable-sync.js` vervallen.

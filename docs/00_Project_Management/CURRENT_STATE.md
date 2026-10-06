@@ -10,7 +10,7 @@ v4.70.14
 
 ## Typed ingest-provenance voor slaap en HRV (v4.70.14, 5 oktober 2026; migratie_v580 NIET toegepast)
 
-- Code: de wearable-ingest stuurt mee wat de HRV- en slaapwaarde meten (`rmssd`; `asleep` of `time_in_bed`).
+- Code: de wearable-ingest stuurt mee wat de HRV- en slaapwaarde meten (`rmssd`; `asleep` of `sleep_interval`).
 - Database: `migratie_v580.sql` staat in de repo en is niet op productie toegepast. Tot dan valt de sync terug op de
   bestaande tien RPC-argumenten en blijft het type `unknown`.
 - Geen effect op berekeningen of beslissingen. GAP-P2-018 R4/R5: implementatie gereed, migratie in afwachting.
@@ -21,6 +21,8 @@ v4.70.14
 - `healthSeries()` leest de bron per veld uit `<veld>_source`; de `[src:...]`-tag in `note` is alleen nog terugval voor
   historische rijen. Zelfde volgorde als `pickLatestMetric()`. GAP-P2-018 R6 opgelost.
 - Guard: `core/fHealthSeriesProvenance.test.js`.
+- De HRV-baseline telt kalenderdagen (`_calDay` in `core/calculation.js`): dagtelling, 14/28-dagengrens en het
+  7-daagse venster zijn niet meer afhankelijk van het tijdstip van de dag. Guard: `core/fHrvCalendarDay.test.js`.
 
 ## Wearable-ingest keurt vóór opslag (v4.70.12, 4 oktober 2026)
 

@@ -9,6 +9,15 @@
 - **Gate:** `core/fHealthSeriesProvenance.test.js` (31 tests).
 - sw-cache v470130, versionCode 47013.
 
+### In dezelfde release: de HRV-baseline telt kalenderdagen
+
+- **Bug (productcode).** `hrv_log.date` is een kalenderdatum, maar `CalcCore.hrvBaseline()` rekende met tijdstippen: `Math.round((nu − eersteMeting) / 86400000)`. Dezelfde dataset gaf op dezelfde dag vóór 12:00 UTC N dagen en daarna N+1. De teller "nog X dagen tot je eigen baseline" versprong midden op de dag, en de overgangen referentie → baseline (14 dagen) en voorlopig → volledig (28 dagen) vielen een halve dag te vroeg. Tussen 00:00 lokale tijd en 00:00 UTC viel de meting van vandaag bovendien buiten de reeks.
+- **Oplossing.** Eén pure helper (`_calDay`) zet elke datum om naar een kalenderdagnummer; `hrvBaseline()` en `hrvRollingRecent()` vergelijken alleen nog dagnummers. Een datumtekst telt op de geschreven datum, een tijdstip op de lokale kalenderdag. Ongevoelig voor het tijdstip van de dag en voor klokwissels. Geen tijdzone-afleiding.
+- **Venster van het 7-daags gemiddelde.** De meting van precies 7 dagen vóór de referentiedag telt mee — het al vastgelegde contract (`fHrvBaselineCanonicalization`: "inclusieve grens"). Dat gold tot nu toe alleen bij een referentie op de datumgrens; bij "nu" viel die meting buiten het venster. Het gemiddelde van vandaag kan daardoor één meting meer bevatten dan voorheen.
+- **Ongewijzigd.** 14 / 28 dagen, minimaal 4 metingen, SWC, de 15%-daling, de HRV-factor en alle readiness-regels.
+- **Gate:** `core/fHrvCalendarDay.test.js` (61 controles in elk van drie tijdzones) op de echte core met een vervangen klok. De tijdelijke test die "9 of 10 dagen" accepteerde is vervangen door een exacte.
+- CORE_SIG bijgewerkt (core/calculation.js gewijzigd).
+
 ## v4.70.12 — Wearable-ingest keurt vóór opslag (GAP-P2-018 R1–R3) (4 oktober 2026)
 
 **Aanleiding.** Drie resterende punten van GAP-P2-018: stappen hadden geen contract (R1), `wearable-sync` schreef providerwaarden ongekeurd weg (R2), en de bestaande ingest-classificatie `normalizeHealthDaily()` was niet aan te sluiten omdat `GOOGLE_HEALTH_MAP` een payloadvorm beschreef die de echte parser nooit ziet (R3).

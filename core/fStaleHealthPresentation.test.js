@@ -196,14 +196,14 @@ async function main() {
   {
     // A. rij van vandaag met slaap; HRV alleen tot 3 dagen geleden
     const g = ctx(kloon(GEMENGD));
-    eq([g.hq.signalen.hrv.kwaliteit, g.hq.signalen.hrv.datum, g.hc.st, g.hc.factor, g.hc.recent.bron, g.hc.recent.n, g.df.factor, g.df.basis], ['current', dag(3), 'g', 1.05, '7d-gemiddelde', 4, 1.02, { hrv: true, slaap: true, cyclus: false }],
-      'F1 uitgangspunt: de berekening GEBRUIKT de HRV van 3 dagen geleden (7-daags gemiddelde van 4 metingen, st g, basis.hrv true; dagfactor 1.02)');
+    eq([g.hq.signalen.hrv.kwaliteit, g.hq.signalen.hrv.datum, g.hc.st, g.hc.factor, g.hc.recent.bron, g.hc.recent.n, g.df.factor, g.df.basis], ['current', dag(3), 'g', 1.05, '7d-gemiddelde', 5, 1.02, { hrv: true, slaap: true, cyclus: false }],
+      'F1 uitgangspunt: de berekening GEBRUIKT de HRV van 3 dagen geleden (7-daags gemiddelde van 5 metingen: dag 3 t/m 7, grens inclusief; st g, basis.hrv true; dagfactor 1.02)');
     eq([g.hv.hrv.gebruikt, g.hv.hrv.waarde, g.hv.hrv.datum, g.hv.hrv.isVandaag, g.hv.hrv.wanneer, g.hv.slaap.gebruikt, g.hv.slaap.datum, g.hv.slaap.isVandaag], [true, GEMENGD[1].hrv, dag(3), false, '3 dagen geleden', true, VANDAAG, true], 'F2 de context volgt dat: HRV gebruikt met datum 3 dagen geleden, slaap gebruikt met datum vandaag');
     const h = home(kloon(GEMENGD));
     eq(h.tech, 'HRV goed t.o.v. je eigen baseline (laatste meting 3 dagen geleden), slaap kort', 'F3 Home noemt HRV als reden, met het eigen meetmoment; geen gezamenlijke datum omdat HRV en slaap van verschillende dagen zijn');
     eq([h.detail.sig, h.detail.conf, h.detail.hrv, h.detail.sleep, h.detail.date, h.ring], [2, 'Hoog', GEMENGD[1].hrv, 6.5, '', '1.02'], 'F4 signaaltelling 2/3 en confidence Hoog, gelijk aan df.basis; geen rijdatum');
     eq(rij(h.waarom, 'Herstelsignalen'), 'HRV ' + GEMENGD[1].hrv + ' ms (3 dagen geleden) · slaap 6u 30m', 'F5 "Waarom vandaag?": de HRV-meting staat er met haar eigen datum, niet als vandaag');
-    ok(/HRV-beoordeling t\.o\.v\. je volledige eigen baseline/.test(h.waarom) && /Vergeleken met je gemiddelde van 4 metingen in de laatste 7 dagen \(\d+ ms\)\./.test(h.waarom), 'F6 de HRV-basis van de berekening (7-daags gemiddelde) staat apart van de laatste meting');
+    ok(/HRV-beoordeling t\.o\.v\. je volledige eigen baseline/.test(h.waarom) && /Vergeleken met je gemiddelde van 5 metingen in de laatste 7 dagen \(\d+ ms\)\./.test(h.waarom), 'F6 de HRV-basis van de berekening (7-daags gemiddelde) staat apart van de laatste meting');
     eq(Math.round(g.hv.hrv.basis.waarde), Number((h.waarom.match(/laatste 7 dagen \((\d+) ms\)/) || [])[1]), 'F7 het getoonde gemiddelde is hrvComponent.recent.meanRaw, alleen afgerond');
     eq([g.hv.hrv.basis.n, g.hv.hrv.basis.bron, g.hv.hrv.basis.waarde], [g.hc.recent.n, g.hc.recent.bron, g.hc.recent.meanRaw], 'F8 de context geeft hrvComponent.recent ongewijzigd door');
     const uiCode = extractFn(HTML, 'tkHealthVandaag') + extractFn(HTML, 'renderDagfactorDetail') + extractFn(HTML, 'dagfactorUitleg');
@@ -223,9 +223,10 @@ async function main() {
     eq([k.hv.hrv.gebruikt, k.hv.hrv.referentie, k.hv.hrv.basis, k.hv.hrv.waarde, k.hv.hrv.isVandaag], [false, true, null, KORT[0].hrv, true], 'F13 de context: HRV is er (vandaag) maar is niet gebruikt');
     const h = home(kloon(KORT));
     eq([h.detail.sig, h.detail.conf, h.detail.hrv, h.detail.sleep], [1, 'Middel', null, KORT[0].sleep], 'F14 HRV verhoogt de signaaltelling en confidence niet: 1/3, Middel (was 2/3, Hoog)');
-    // Het aantal resterende dagen hangt af van het tijdstip waarop de test draait (CalcCore rekent de
-    // baseline-duur vanaf 'nu'): vóór 12:00 UTC is het 10, daarna 9. De tekst eromheen is vast.
-    ok(new RegExp('^HRV: referentiefase \\(nog (9|10) dagen tot je eigen baseline\\) — telt nog niet mee, slaap voldoende · ' + VANDAAG + '$').test(h.tech), 'F15 de hoofdregel zegt expliciet dat HRV nog niet meetelt; slaap is de actuele reden (kreeg ' + h.tech + ')');
+    // KORT = metingen op vandaag en de vier dagen ervoor: de eerste meting is 4 kalenderdagen oud,
+    // dus nog 14 - 4 = 10 dagen tot de baseline. Sinds de kalenderdag-fix (fHrvCalendarDay) is dat
+    // op elk tijdstip van de dag hetzelfde getal.
+    eq(h.tech, 'HRV: referentiefase (nog 10 dagen tot je eigen baseline) — telt nog niet mee, slaap voldoende · ' + VANDAAG, 'F15 de hoofdregel zegt expliciet dat HRV nog niet meetelt; slaap is de actuele reden');
     ok(/— telt nog niet mee/.test(h.tech) && /slaap voldoende/.test(h.tech) && !/HRV goed|HRV verlaagd/.test(h.tech), 'F15b geen HRV-oordeel in de hoofdregel');
     eq([k.hc.st, k.df.basis.hrv, h.detail.sig, h.detail.conf], ['ref', false, 1, 'Middel'], 'F15c zelfde toestand als de berekening: st ref, basis.hrv false, 1/3, Middel');
     // referentiefase zonder enige eerdere meting in de baseline-telling: zelfde toevoeging

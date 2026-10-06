@@ -13,6 +13,8 @@ v4.70.13
 - `healthSeries()` leest de bron per veld uit `<veld>_source`; de `[src:...]`-tag in `note` is alleen nog terugval voor
   historische rijen. Zelfde volgorde als `pickLatestMetric()`. GAP-P2-018 R6 opgelost.
 - Guard: `core/fHealthSeriesProvenance.test.js`.
+- De HRV-baseline telt kalenderdagen (`_calDay` in `core/calculation.js`): dagtelling, 14/28-dagengrens en het
+  7-daagse venster zijn niet meer afhankelijk van het tijdstip van de dag. Guard: `core/fHrvCalendarDay.test.js`.
 
 ## Wearable-ingest keurt vóór opslag (v4.70.12, 4 oktober 2026)
 

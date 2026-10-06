@@ -296,15 +296,57 @@
 
   function lnRmssd(v) { return (typeof v === 'number' && v > 0) ? Math.log(v) : null; }
 
-  function hrvBaseline(hdRows, refDate) {
-    var ref = refDate ? new Date(refDate) : new Date();
-    var rows = (hdRows || [])
+  // KALENDERDAG. hrv_log.date is een kalenderdatum (YYYY-MM-DD), geen tijdstip. De vensters
+  // hieronder (14 / 28 dagen, 7-daags gemiddelde) tellen daarom KALENDERDAGEN. Tot v4.70.12
+  // werd met tijdstippen gerekend (`Math.round((nu - eersteMeting) / 86400000)`), waardoor
+  // dezelfde dataset op dezelfde dag voor en na 12:00 UTC een andere dagtelling gaf en de
+  // baseline een halve dag te vroeg 'ready' werd.
+  //
+  // _calDay(x) -> geheel dagnummer, of null bij een onleesbare/onbestaande datum.
+  //   tekst 'YYYY-MM-DD...' : de GESCHREVEN kalenderdatum; een tijdstip of offset erachter telt niet
+  //   Date / tijdstempel    : de lokale kalenderdag (dezelfde dag die de app als vandaag hanteert). Een Date die
+  //                           exact op 00:00 UTC ligt is een datum-zonder-tijd
+  //                           (`new Date('YYYY-MM-DD')`) en telt als die kalenderdatum.
+  //   niets                 : vandaag, lokale kalenderdag.
+  // Het dagnummer komt uit Date.UTC(jaar, maand, dag): geen etmaal-rekenwerk, dus ongevoelig
+  // voor het tijdstip van de dag en voor klokwissels van 23 of 25 uur. Er wordt geen tijdzone
+  // afgeleid of omgerekend.
+  function _calDay(x) {
+    if (x === undefined || x === null || x === '') x = new Date();
+    if (typeof x === 'string') {
+      var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(x);
+      if (m) {
+        var t = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+        var c = new Date(t);
+        if (c.getUTCFullYear() !== +m[1] || c.getUTCMonth() !== +m[2] - 1 || c.getUTCDate() !== +m[3]) return null;
+        return t / 86400000;
+      }
+      x = new Date(x);
+    } else if (typeof x === 'number') {
+      x = new Date(x);
+    }
+    if (!x || typeof x.getTime !== 'function') return null;
+    var ms = x.getTime();
+    if (isNaN(ms)) return null;
+    if (ms % 86400000 === 0) return ms / 86400000;
+    return Date.UTC(x.getFullYear(), x.getMonth(), x.getDate()) / 86400000;
+  }
+  // HRV-rijen t/m de referentiedag, elk met haar kalenderdagnummer.
+  function _hrvRowsUpTo(hdRows, refDay) {
+    if (refDay == null) return [];
+    return (hdRows || [])
       .filter(function (r) { return r && r.hrv && r.date; })
-      .map(function (r) { return { date: new Date(r.date), hrv: r.hrv, ln: lnRmssd(r.hrv) }; })
-      .filter(function (r) { return r.ln != null && !isNaN(r.date.getTime()) && r.date <= ref; });
+      .map(function (r) { return { day: _calDay(r.date), hrv: r.hrv, ln: lnRmssd(r.hrv) }; })
+      .filter(function (r) { return r.ln != null && r.day != null && r.day <= refDay; });
+  }
+
+  function hrvBaseline(hdRows, refDate) {
+    var refDay = _calDay(refDate);
+    var rows = _hrvRowsUpTo(hdRows, refDay);
     if (!rows.length) return { ready: false, fase: 'referentie', n: 0, days: 0 };
-    rows.sort(function (a, b) { return a.date - b.date; });
-    var days = Math.max(0, Math.round((ref - rows[0].date) / 86400000));
+    rows.sort(function (a, b) { return a.day - b.day; });
+    // Kalenderdagen tussen de eerste meting en de referentiedag (zelfde dag = 0).
+    var days = Math.max(0, refDay - rows[0].day);
     var n = rows.length;
     if (days < HRV_BASELINE_MIN_DAYS || n < HRV_BASELINE_MIN_N) {
       return { ready: false, fase: 'referentie', n: n, days: days };
@@ -318,15 +360,13 @@
   }
 
   function hrvRollingRecent(hdRows, refDate) {
-    var ref = refDate ? new Date(refDate) : new Date();
-    var rows = (hdRows || [])
-      .filter(function (r) { return r && r.hrv && r.date; })
-      .map(function (r) { return { date: new Date(r.date), hrv: r.hrv, ln: lnRmssd(r.hrv) }; })
-      .filter(function (r) { return r.ln != null && !isNaN(r.date.getTime()) && r.date <= ref; });
+    var refDay = _calDay(refDate);
+    var rows = _hrvRowsUpTo(hdRows, refDay);
     if (!rows.length) return null;
-    rows.sort(function (a, b) { return b.date - a.date; });
-    var sevenDaysAgo = new Date(ref.getTime() - 7 * 86400000);
-    var last7 = rows.filter(function (r) { return r.date >= sevenDaysAgo; });
+    rows.sort(function (a, b) { return b.day - a.day; });
+    // Venster: t/m 7 kalenderdagen voor de referentiedag, grens inclusief (bestaand contract,
+    // vastgelegd in fHrvBaselineCanonicalization: "meting exact 7 dagen voor refDate telt mee").
+    var last7 = rows.filter(function (r) { return refDay - r.day <= 7; });
     if (last7.length >= HRV_BASELINE_MIN_N) {
       var meanLn = last7.reduce(function (s, r) { return s + r.ln; }, 0) / last7.length;
       var meanRaw = last7.reduce(function (s, r) { return s + r.hrv; }, 0) / last7.length;

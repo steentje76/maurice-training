@@ -106,7 +106,7 @@ function ctx(hd) {
 function rij(waarom, label) { return (new RegExp(label + '</span><span class="dfd-val">([^<]*)<').exec(waarom) || [null, null])[1]; }
 async function lichHero(hd) { const sb = runtime({ hd: hd }); return await sb.__lichHero(); }
 async function detail(hd) { const sb = runtime({ hd: hd }); await sb.openRecoveryDetail(); return sb.__els['recdetail-body'].innerHTML; }
-function tegel(html, naam) { const m = new RegExp('<div class="m"><div class="v">([^<]*)</div><div class="k">' + naam + '</div><div class="lich-src">([^<]*)</div>(?:<div class="w">([^<]*)</div>)?</div>').exec(html); return m ? [m[1], m[2], m[3] || null] : null; }
+function tegel(html, naam) { const m = new RegExp('<div class="m"><div class="v">([^<]*)</div><div class="k">' + naam + '</div>(?:<div class="lich-src">([^<]*)</div>)?(?:<div class="w">([^<]*)</div>)?</div>').exec(html); return m ? [m[1], m[2] || null, m[3] || null] : null; }
 
 function dag(n) { const d = new Date(); d.setDate(d.getDate() - n); const p = function (x) { return ('0' + x).slice(-2); }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
 function reeks(n, start) {
@@ -272,7 +272,7 @@ async function main() {
     eq([tegel(d, 'HRV'), tegel(d, 'Slaap')[2]], [['—', 'gemeten', null], 'Vandaag'], 'C5 ontbrekende waarde: bestaande lege weergave, geen meetmoment en geen 0');
     eq(tegel(nu, 'Dagfactor'), ['1.05', 'berekend', null], 'C6 de berekende dagfactor-tegel is ongewijzigd');
     const leeg = await lichHero([]);
-    eq([tegel(leeg, 'HRV'), tegel(leeg, 'Dagfactor')], [['—', 'gemeten', null], ['—', 'berekend', null]], 'C7 zonder data blijft de hero zoals hij was');
+    eq([tegel(leeg, 'HRV'), tegel(leeg, 'Dagfactor')], [['—', 'gemeten', null], ['—', null, 'Nog te weinig gegevens']], 'C7 zonder data: lege meettegel zoals hij was; de Dagfactor-tegel zegt dat er te weinig gegevens zijn en noemt zich niet "berekend"');
     ok(/tkMetingLabel\(lh\)/.test(LICH) && !/new Date|86400000/.test(tussen(LICH, 'const tile=', '</div>`;')), 'C8 het meetmoment komt uit de bestaande helper; geen tweede datumlogica in de hero');
     ok(/\.lich-rhero \.m \.w\{/.test(HTML), 'C9 het meetmoment heeft een eigen, ingetogen stijlregel');
     // Het dagoordeel in de hero volgt df.basis; 100% in de ring is spierherstel, geen readiness.
@@ -287,6 +287,19 @@ async function main() {
     eq(oordeel(await heroMet(zonderBasis)).slice(0, 2), ['Nog te weinig gegevens voor advies', 'Gedeeltelijke gegevens'], 'C14 check-in van vandaag zonder slaap en HRV: geen oordeel en geen tweede check-in-vraag');
     eq(oordeel(await heroMet([]))[0], 'Doe je check-in voor advies', 'C15 zonder enige rij: ongewijzigd');
     ok(/dfBasis=tkDagfactorHeeftBasis\(dfo\)/.test(LICH) && !/basis\.(hrv|slaap|cyclus)/.test(LICH), 'C16 de hero gebruikt de bestaande helper; geen eigen basisregel');
+    // Dagfactor-tegel: de neutrale 1.00 zonder basis is een invulling, geen uitkomst.
+    const oudCtx = ctx(kloon(ALLES_OUD));
+    eq([oudCtx.df.factor, oudCtx.sb.tkDagfactorHeeftBasis(oudCtx.df)], [1, false], 'C17 uitgangspunt: de berekening geeft zonder basis nog steeds de neutrale 1 (ongewijzigd) en meldt dat de basis ontbreekt');
+    const oudHero = await heroMet(kloon(ALLES_OUD));
+    eq(tegel(oudHero, 'Dagfactor'), ['—', null, 'Nog te weinig gegevens'], 'C18 zonder basis: geen "1.00", geen "berekend", wel "Nog te weinig gegevens"');
+    ok(!/>1\.00</.test(oudHero) && !/berekend/.test(oudHero), 'C19 nergens in de dagsamenvatting staat dan nog 1.00 of "berekend"');
+    eq(tegel(await heroMet(zonderBasis), 'Dagfactor'), ['—', null, 'Nog te weinig gegevens'], 'C20 ook met een check-in van vandaag zonder slaap en HRV-oordeel');
+    const actCtx = ctx(kloon(ACTUEEL));
+    eq([tegel(await heroMet(kloon(ACTUEEL)), 'Dagfactor'), actCtx.sb.tkDagfactorHeeftBasis(actCtx.df)], [[actCtx.df.factor.toFixed(2), 'berekend', null], true], 'C21 met basis: exact de berekende dagfactor, met "berekend", zoals voorheen');
+    const alleenSlaap = [{ date: VANDAAG, hrv: null, rhr: null, sleep: 5.5, sleep_source: 'manual', cyclus_fase: null, note: null }];
+    const slaapCtx = ctx(kloon(alleenSlaap));
+    eq([slaapCtx.df.basis, tegel(await heroMet(kloon(alleenSlaap)), 'Dagfactor')], [{ hrv: false, slaap: true, cyclus: false }, [slaapCtx.df.factor.toFixed(2), 'berekend', null]], 'C22 één echte meting van vandaag (slaap) is een basis: de berekende waarde blijft staan');
+    ok(/const dfToon=df!=null&&dfBasis;/.test(LICH) && /tile\(dfToon\?df\.toFixed\(2\):'—','Dagfactor',dfToon\?'berekend':'',dfToon\?'':'Nog te weinig gegevens'\)/.test(LICH), 'C23 de tegel volgt dezelfde bestaande basiscontrole als het dagoordeel; de factor zelf wordt niet aangepast');
   }
 
   /* ══ D. Hersteldetail ════════════════════════════════════════════════════ */

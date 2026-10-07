@@ -2656,3 +2656,27 @@ het oordeel zelf zijn niet gewijzigd.
   nog open besluit uit NUT-CANON-01.
 
 **Status.** Geïmplementeerd in v4.70.15. Guard: `core/fInzichtHerstelBelasting.test.js`.
+
+## DEC-IA-002 — Dagfactor zonder basis wordt niet als uitkomst getoond; één naam voor spierherstel (7 oktober 2026)
+
+**Context.** Twee punten stonden open in DEC-IA-001: de tegel Dagfactor toonde zonder basis "1.00 · berekend", en
+hetzelfde spierherstelpercentage stond op Inzicht onder twee namen (Spierherstel en Herstelstatus).
+
+**Besluit (PO, 7 oktober 2026).**
+1. De neutrale 1.00 blijft de interne invulling van `dagfactor()` wanneer niets de dagfactor voedt; de berekening
+   wijzigt niet. De presentatie toont die waarde niet als uitkomst: zonder basis staat er "—" en "Nog te weinig
+   gegevens", zonder "berekend". De basiscontrole is de bestaande `tkDagfactorHeeftBasis()`.
+2. Een waarde die het gemiddelde spierherstel uit `v43OverallRecovery()` is, of het herstel van één spiergroep uit
+   dezelfde keten, heet voor de gebruiker Spierherstel.
+3. "Herstelstatus" is voorbehouden aan een aantoonbaar andere, samengestelde metric. Nu is dat alleen de
+   herstelscore (`recovery_score.v1`) in de coachcontext.
+4. Interne namen, registry-ID's en contracten worden niet hernoemd om labels gelijk te trekken.
+
+**Niet besloten (open voor de PO).**
+- Home: zonder basis staan daar nog dagfactor 1, "Klaar om te trainen", gereedheid 75 en een positieve
+  coachregel. De teksten komen uit `DecisionCore.trainReadiness`, `readinessDay` en de coach; dit vraagt een besluit
+  over de Decision-laag en is hier niet aangeraakt (vastgelegd gedrag: `fStaleHealthPresentation` B15).
+- Home-kaart: het kengetal "Herstel" is hetzelfde spierherstel. "Spierherstel" past daar op smalle schermen niet in
+  de kolom.
+
+**Status.** Geïmplementeerd in v4.70.16.

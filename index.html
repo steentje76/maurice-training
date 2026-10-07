@@ -18973,14 +18973,16 @@ async function buildTrainIntro(t,list){
   (list||[]).forEach(e=>{try{(getExerciseMuscles(e.id)||[]).forEach(m=>m&&mset.add(m));}catch(_){}});
   const muscles=[...mset];
   const n=(list||[]).length;
-  let key='goed';
-  try{const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));const hd=hq.rows;if(hd&&hd[0]){const df=dagfactor(hrvDagFactorPersonal(hd),hd[0].sleep,tkCyclusFaseVandaag(hd[0]),hq.signalen);key=dayState(df.factor).key;}}catch(_){}
+  /* DEC-DQ-003: zonder bruikbare dagfactor (tkDagfactorVoorAdvies) is er geen dagoordeel. Dan
+     staat hier een neutrale zin: geen uitspraak over herstel, de training blijft zoals gepland. */
+  let key=null;
+  try{const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));const hd=hq.rows;if(hd&&hd[0]){const df=tkDagfactorVoorAdvies(dagfactor(hrvDagFactorPersonal(hd),hd[0].sleep,tkCyclusFaseVandaag(hd[0]),hq.signalen));if(df)key=dayState(df.factor).key;}}catch(_){}
   const focus={goed:'Je herstel is goed — focus op sterke, gecontroleerde sets.',
     normaal:'Prima dag — train op gevoel en houd je techniek scherp.',
     vermoeid:'Rustig opbouwen vandaag. Kwaliteit boven gewicht.',
     herstel:'Vandaag herstelgericht — houd het licht en luister naar je lijf.',
-    slecht:'Rustig aan vandaag. Kwaliteit boven gewicht.'}[key];
-  const col={goed:'#00B894',normaal:'#C8A84B',vermoeid:'#D98A3D',herstel:'#4A90C2',slecht:'#E0704A'}[key];
+    slecht:'Rustig aan vandaag. Kwaliteit boven gewicht.'}[key]||TK_TRAIN_INTRO_NEUTRAAL;
+  const col={goed:'#00B894',normaal:'#C8A84B',vermoeid:'#D98A3D',herstel:'#4A90C2',slecht:'#E0704A'}[key]||'#9FB4BD';
   const human=muscles.length?`Vandaag train je ${musclePhrase(muscles)}.`:'Vandaag zetten we een stap vooruit.';
   const meta=`${n} oefening${n===1?'':'en'}${muscles.length?` · ${muscles.length} spiergroep${muscles.length===1?'':'en'}`:''}`;
   return `<div class="train-intro" style="--tcol:${col}">
@@ -24418,7 +24420,7 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
       hrv: (lh&&lh.hrv!=null)?{waarde:lh.hrv,kwaliteit:kw('hrv')}:null,
       rhr: (lh&&lh.rhr!=null)?{waarde:lh.rhr,kwaliteit:kw('rhr')}:null,
       slaap: (lh&&lh.sleep!=null)?{waarde:tkSleepHours(lh.sleep),kwaliteit:kw('slaap')}:null,
-      spierherstel: (recRows&&recRows.length)?recRows:null,
+      spierherstel: (function(){ const ev=tkSpierherstelEvidence(recRows); return ev.length?ev:null; })(),
       gevoel: (lh&&lh.voelt)?String(lh.voelt):null,
       pijn: null,
       trainingsdagen7: dagen7
@@ -24928,6 +24930,43 @@ function tkDagfactorHeeftBasis(dfInfo){
   if(!b) return true;
   return !!(b.hrv||b.slaap||b.cyclus);
 }
+const TK_TRAIN_INTRO_NEUTRAAL='Train zoals gepland en let op hoe het vandaag voelt.';
+// NOOIT GETRAIND IS GEEN GEMETEN HERSTEL (DEC-DQ-003).
+// getRelevantMuscleRecovery() geeft voor een spier zonder sessie in het venster {pct:100,hours:null}.
+// Die 100 is een invulling voor de weergave. Als evidence voor de samengestelde herstelscore, de
+// signaaltelling en de readinesscontext telt een rij alleen wanneer er een sessie achter zit:
+// hours!==null, dezelfde herkomst die de spierherstelweergave zelf al gebruikt. Dit is de ENE
+// plek voor die regel. Het trainingsvoorschrift (computeProgAdjustment) krijgt de rijen ongefilterd.
+function tkSpierherstelEvidence(recRows){
+  return Array.isArray(recRows)?recRows.filter(function(r){ return !!r&&r.hours!==null; }):[];
+}
+// AI-CONTEXT: STALE IS NIET ACTUEEL (DEC-DQ-003).
+// De regel onder "HUIDIGE STATUS" in buildCtx(). Per signaal de nieuwste bruikbare meting met
+// haar eigen meetmoment (tkHealthVandaag). Een meting die volgens de Decision-lijst niet actueel
+// is (tkSignaalOnbetrouwbaar: stale) staat niet tussen de actuele waarden maar op een aparte,
+// als niet-actueel benoemde regel met datum en leeftijd. Geen meting blijft geen meting. Hier
+// staat geen drempel: versheid komt uit tkHealthQualified().
+//   hq   uitkomst van tkHealthQualified()      lh   nieuwste gekeurde rij (check-in-velden)
+//   avg7 7-daags HRV-gemiddelde of null        -> tekst
+function tkAiHealthStatus(hq, lh, avg7){
+  if(!lh) return 'Geen recente HRV';
+  const v=tkHealthVandaag(hq, null, null);
+  const oud=[];
+  const deel=function(naam, m, eenheid, fmt){
+    const w=(m&&m.waarde!=null&&m.waarde!=='')?(fmt?fmt(m.waarde):m.waarde):null;
+    if(w==null) return naam+' ?'+eenheid;
+    if(m.oud){ oud.push(naam+' '+w+eenheid+' ('+m.wanneer+', gemeten '+m.datum+')'); return naam+' geen actuele meting'; }
+    return naam+' '+w+eenheid+tkMetingNa(m);
+  };
+  const hrvOud=tkSignaalOnbetrouwbaar(hq&&hq.signalen&&hq.signalen.hrv);
+  let s=deel('HRV',v.hrv,' ms')+' | '+deel('RHR',v.rhr,' bpm')+' | '+deel('Slaap',v.slaap,'',fmtSleep);
+  if(avg7&&!hrvOud) s+=' | 7d gem: '+avg7+' ms';
+  const rijNa=tkMetingNa({wanneer:tkMetingWanneer(lh.date), isVandaag:tkCheckinVandaag(lh)}, 'check-in ');
+  if(lh.edema) s+=' | oedeem: '+lh.edema+rijNa;
+  if(lh.note) s+=' | '+lh.note+rijNa;
+  if(oud.length) s+='\nOudere metingen (NIET actueel, tellen vandaag niet mee; nooit als huidige status gebruiken): '+oud.join(' | ');
+  return s;
+}
 // P1 — ÉÉN zichtbare Recovery Score 0-100 via de deterministische CalcCore (recovery_score.v1).
 // Voedt uitsluitend met BESCHIKBARE data: dagfactor (HRV·slaap·cyclus) + gemiddeld spierherstel
 // (+ optioneel RHR-delta / gevoel indien aanwezig). Geen fabricage; ontbrekende inputs → lagere confidence.
@@ -24936,7 +24975,7 @@ function recoveryScoreFrom(dfInfo, recRows, extra){
   // GAP-P2-015: alleen een dagfactor met een werkelijke, betrouwbare basis is een component.
   if(dfInfo && typeof dfInfo.factor==='number' && tkDagfactorHeeftBasis(dfInfo)) input.dayFactor=dfInfo.factor;
   if(Array.isArray(recRows) && recRows.length){
-    const pcts=recRows.map(r=>r&&r.pct).filter(v=>typeof v==='number');
+    const pcts=tkSpierherstelEvidence(recRows).map(r=>r.pct).filter(v=>typeof v==='number');
     if(pcts.length) input.muscleRecoveryPct=Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length);
   }
   if(extra && typeof extra.rhrDelta==='number') input.rhrDelta=extra.rhrDelta;
@@ -29457,7 +29496,7 @@ async function buildCtx(ctx){
     ? sbGet('sessions','&exercise_id=in.('+[...relevantExIds].join(',')+')&order=exercise_id.asc,date.desc,created_at.desc')
     : sbGet('sessions','&date=gte.'+sinceStr+'&order=exercise_id.asc,date.desc,created_at.desc');
 
-  const [,hd,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult,womensCtxTekst,enduranceProfileRows,enduranceIntelTekst,inactivityAdherenceTekst] = await Promise.all([
+  const [,hdRuw,wd,bc,recentSessions,,blessureContext,conditionsContext,,trainingContextRows,dataBlok,hyroxCtxTekst,eventCtxTekst,progressionTrendResult,womensCtxTekst,enduranceProfileRows,enduranceIntelTekst,inactivityAdherenceTekst] = await Promise.all([
     ensureExercisesLoaded(),
     sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'),
     sbGet('weight_log','&order=date.desc,created_at.desc&limit=3'),
@@ -29547,19 +29586,26 @@ async function buildCtx(ctx){
     const ls=byEx[exId].slice(0,2);
     const s=ls[0];let str=s.date;if(s.weight&&s.reps)str+=' '+(s.sets||'?')+'×'+s.reps+' @ '+s.weight+'kg'+(s.rpe?' RPE'+s.rpe:'');else if(s.time_str)str+=' '+s.time_str+(s.watt?' @ '+s.watt+'W':'');if(ls[1]){const p=ls[1];str+=' | vorige: '+p.date+(p.weight?' '+p.weight+'kg':p.time_str?' '+p.time_str:'');}exCtx+='\n- '+ex.name+' [id:'+ex.id+']: '+str;
   }
+  /* DEC-DQ-003: de AI krijgt dezelfde gekeurde healthrijen als Home en de dagfactor.
+     hdRuw wordt hieronder nergens meer gelezen. */
+  const hq=tkHealthQualified(hdRuw);
+  const hd=hq.rows;
+  const hrvNietActueel=tkSignaalOnbetrouwbaar(hq.signalen&&hq.signalen.hrv);
   const lh=hd[0];
   const recent7=hrvRollingRecent(hd);
   const avg7=(recent7&&recent7.bron==='7d-gemiddelde')?Math.round(recent7.meanRaw):null;
   const hrvComponent=hrvDagFactorPersonal(hd);
   let hrvGuide;
-  if(hrvComponent.st==='ref'){
+  if(hrvNietActueel){
+    hrvGuide='Geen actuele HRV-meting: de laatste meting is te oud om vandaag mee te tellen. Er is vandaag geen HRV-oordeel. Baseer trainingsadvies op RPE en subjectief gevoel, niet op een HRV-waarde.';
+  }else if(hrvComponent.st==='ref'){
     hrvGuide='HRV-referentiefase: nog onvoldoende eigen data voor een persoonlijke baseline (minimaal 14 dagen nodig). Baseer trainingsadvies op RPE en subjectief gevoel, niet op een HRV-drempel.';
   }else{
     const faseTxt=hrvComponent.baseline.fase==='volledig'?'volledige':'voorlopige';
     const statusTxt=hrvComponent.st==='g'?'binnen/boven eigen baseline (goed)':hrvComponent.st==='o'?'onder eigen baseline (verlaagd)':'sterk onder eigen baseline (≥15% daling, sterk verlaagd)';
     hrvGuide=`HRV wordt beoordeeld t.o.v. de ${faseTxt} eigen baseline van deze gebruiker (nooit een vaste norm). Huidige status: ${statusTxt}.`;
   }
-  const hrvStr=lh?`HRV ${lh.hrv||'?'} ms | RHR ${lh.rhr||'?'} bpm | Slaap ${lh.sleep?fmtSleep(lh.sleep):'?'}`+(avg7?` | 7d gem: ${avg7} ms`:'')+(lh.edema?` | oedeem: ${lh.edema}`:'')+(lh.note?` | ${lh.note}`:''): 'Geen recente HRV';
+  const hrvStr=tkAiHealthStatus(hq, lh, avg7);
   const wLast=wd[0],wPrev=wd[1];
   const wStr=wLast?`\nGewicht: ${wLast.weight} kg (${wLast.date})`+(wPrev?` | vorige: ${wPrev.weight} kg`:''): '';
   const bcStr=bc[0]?`\nTanita (${bc[0].date}): vet% ${bc[0].fat_pct}% | spier ${bc[0].muscle_mass} kg | BMR ${bc[0].bmr} | visceraal ${bc[0].visceral_fat}`+(bc[0].edema?` | oedeem: ${bc[0].edema}`:''): '';
@@ -32431,7 +32477,7 @@ async function renderLichaamPremium(){
     // invulling en geen meting. Dan staat hier geen oordeel, ook niet naast 100% spierherstel.
     const beoordeeld=ger!=null&&dfBasis;
     const vandaagIngevuld=!!(lh&&String(lh.date).slice(0,10)===td());
-    const ready=beoordeeld?(ger>=70?'Klaar om te trainen':ger>=45?'Train op gevoel':'Houd het licht vandaag'):(vandaagIngevuld?TK_GEEN_ADVIES_TXT:'Doe je check-in voor advies');
+    const ready=beoordeeld?trainReadiness({factor:df}).txt:(vandaagIngevuld?TK_GEEN_ADVIES_TXT:'Doe je check-in voor advies');
     const badge=(beoordeeld&&ds)?ds.headline:(vandaagIngevuld?'Gedeeltelijke gegevens':'Check-in nodig');
     const R=42,C=2*Math.PI*R,off=C*(1-((ov!=null?ov:0)/100));
     const ringSvg=`<svg width="96" height="96" viewBox="0 0 96 96" style="transform:rotate(-90deg)"><circle cx="48" cy="48" r="${R}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/><circle cx="48" cy="48" r="${R}" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>`;
@@ -33597,7 +33643,8 @@ function tkDagfactorReeksen(hrvRows, dagen){
     try{
       const hc=hrvDagFactorPersonal(hrvRows, d);
       const df=dagfactor(hc, rij.sleep, rij.cyclus_fase);
-      if(df&&typeof df.factor==='number'&&isFinite(df.factor)){
+      /* DEC-DQ-003: een dag zonder basis levert een neutrale 1.00 op; dat is geen meetpunt. */
+      if(tkDagfactorVoorAdvies(df)){
         uit.dagfactor.push({date:d, value:df.factor});
         if(CC&&typeof CC.readinessPercent==='function'){
           const pct=CC.readinessPercent(df.factor);

@@ -45,7 +45,7 @@ function extractFn(src, name) {
 }
 const NAMEN = ['td', 'tkSleepHours', 'lnRmssd', 'hrvBaseline', 'hrvRollingRecent', 'hrvStPersonal', 'hrvDagFactorPersonal',
   'slaapDagFactor', 'cyclusDagFactor', 'tkCyclusFaseVandaag', 'tkHealthFailClosed', 'tkHealthQualified', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor',
-  'tkDagfactorHeeftBasis', 'tkDagfactorVoorAdvies', 'tkCheckinVandaag', 'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle', 'recoveryAdjustmentForToday',
+  'tkDagfactorHeeftBasis', 'tkDagfactorVoorAdvies', 'tkCheckinVandaag', 'tkSpierherstelEvidence', 'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle', 'recoveryAdjustmentForToday',
   'computeProgAdjustment', 'v43GereedheidScore', 'tkReadinessVandaag'];
 const PROD = NAMEN.map(function (n) { return extractFn(HTML, n); }).join('\n');
 

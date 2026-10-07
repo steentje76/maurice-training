@@ -505,9 +505,9 @@
    "blocker": true,
    "dependency": null,
    "evidence": [
-    "CODE VERIFIED: per-waarde keuring bij lezen bestaat sinds 2026-08-18 (dataquality.v1, observation.v1). R1-R3 opgelost in v4.70.12 (core/fWearableIngestQuality.test.js). R6 opgelost in v4.70.13 (core/fHealthSeriesProvenance.test.js): healthSeries leest de bron per veld uit <veld>_source. R4 en R5 open: zie docs/GAP_ANALYSIS_V2.md."
+    "CODE VERIFIED: per-waarde keuring bij lezen bestaat sinds 2026-08-18 (dataquality.v1, observation.v1). R1-R3 opgelost in v4.70.12 (core/fWearableIngestQuality.test.js). R6 opgelost in v4.70.13 (core/fHealthSeriesProvenance.test.js). R4 en R5: implementatie gereed in v4.70.14 (core/fHealthIngestProvenance.test.js, migratie_v580.sql); migratie niet op productie toegepast, dus niet live gesloten."
    ],
-   "intended_closure": "R4 (slaap-terugval op tijd in bed wordt niet als zodanig vastgelegd) en R5 (hrv_metric_type wordt niet gezet) blijven open. Geen opgeslagen quality-veld zonder concrete productbehoefte.",
+   "intended_closure": "R4 en R5: implementatie gereed (v4.70.14), migratie_v580 nog niet op productie toegepast. Sluiten na productie-apply en een live sync die het type aantoonbaar opslaat.",
    "capability_id": "PROVIDER-INTEGRATION-CONTRACT-001",
    "section": "OPEN",
    "offset": 10739,
@@ -540,6 +540,11 @@
      "date": "2026-10-05",
      "change_type": "AUDIT_METADATA_CORRECTION",
      "reason": "R6 (bronselectie in healthSeries) opgelost in v4.70.13, zonder databasewijziging. Gap versmald tot R4 en R5. Status ongewijzigd OPEN; geen gap closure en geen nieuwe gap-ID's."
+    },
+    {
+     "date": "2026-10-05",
+     "change_type": "AUDIT_METADATA_CORRECTION",
+     "reason": "R4 (sleep_metric_type) en R5 (hrv_metric_type via upsert_daily_health) geimplementeerd in v4.70.14 met migratie_v580 in de repo. Migratie niet op productie toegepast: R4 en R5 blijven open tot apply en live verificatie. Status ongewijzigd OPEN; geen gap closure en geen nieuwe gap-ID's."
     }
    ]
   },

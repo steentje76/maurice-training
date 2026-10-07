@@ -1,5 +1,21 @@
 # Trainingskompas — Changelog
 
+## v4.70.14 — Typed ingest-provenance voor slaap en HRV (GAP-P2-018 R4/R5; migratie nog niet toegepast) (5 oktober 2026)
+
+**Status: code en `migratie_v580.sql` in de repo. De migratie is NIET op productie toegepast.** Tot dat gebeurt werkt de sync zoals voorheen; alleen het type wordt nog niet opgeslagen.
+
+- **R5 — root cause.** `hrv_log.hrv_metric_type` bestaat sinds v542, maar geen writer zette hem: `upsert_daily_health` had er geen argument voor en `qualifyDayValues()` gaf `sourceMetric` uit de contractbron niet door. Alle 84 HRV-rijen op productie staan op `unknown`.
+- **R4 — root cause.** `parseSleepPoint()` valt bij een ontbrekende slaapduur terug op de duur van het slaapinterval van de sessie (starttijd tot eindtijd). Welke van de twee was opgeslagen lag nergens vast en is achteraf niet te reconstrueren.
+- **`migratie_v580.sql` (ontwerp).** Nieuwe kolom `hrv_log.sleep_metric_type` (`asleep` | `sleep_interval` | `unknown`, default `unknown`, naar het voorbeeld van `hrv_metric_type`). `upsert_daily_health` krijgt twee optionele argumenten aan het einde: `p_hrv_metric_type` en `p_sleep_metric_type`. De tien bestaande argumenten, de merge en de autorisatie zijn ongewijzigd; de oude overload wordt in dezelfde transactie verwijderd; rechten expliciet teruggezet (geen PUBLIC, geen anon); sluitende controles op signatuur, rechten, RLS en de single-writer-invariant. Geen backfill, geen datawijziging.
+- **Semantiek.** Het type hoort bij de waarde, net als `<veld>_source`: het verandert alleen wanneer de aanroep die waarde schrijft. Een slaap-only-update wist het HRV-type niet. Een handmatige HRV krijgt `unknown`.
+- **Ingest.** De parser meldt welk pad de slaapwaarde leverde: `summary.minutesAsleep` → `asleep`; terugval op het interval → `sleep_interval`; de overige, niet-gedocumenteerde duurvelden → `unknown`. Het HRV-type komt uit de contractbron (`GOOGLE_HEALTH_MAP`: `rmssd`). Eén vocabulaire: `DeviceCore.HEALTH_METRIC_TYPES`.
+- **Waarom `rmssd`.** De Google Health API-referentie documenteert `dailyHeartRateVariability.averageHeartRateVariabilityMilliseconds` als RMSSD; alleen een waarde uit dat veld krijgt het type. Het oudere veld `rmssdMillis` blijft `unknown`. De onzekerheid die v542 vastlegde (RMSSD of SDNN) geldt voor het sample-type `heartRateVariability`, dat deze integratie niet leest. Bron en citaten: DEC-HRV-003.
+- **Waarom `sleep_interval`.** De bron garandeert een "observed sleep interval", geen tijd in bed.
+- **Volgorde-veilig.** Zolang de database de nieuwe argumenten niet kent antwoordt PostgREST met 404/PGRST202; de handler schrijft dezelfde dag dan direct opnieuw met de tien bestaande argumenten. De respons meldt `provenance.rpc`: `typed` of `legacy`.
+- **Geen effect op berekeningen.** De numerieke slaapwaarde is per pad exact gelijk; Calculation, Decision en de app lezen het type niet. Geen penalty, geen confidencegewicht.
+- **Gate:** `core/fHealthIngestProvenance.test.js` (58 tests): de echte migratie op PostgreSQL bovenop de productietoestand, met de echte handler vóór en na de migratie.
+- sw-cache v470140, versionCode 47014.
+
 ## v4.70.13 — Bron per veld in de health-reeksen (GAP-P2-018 R6) (5 oktober 2026)
 
 - **Root cause.** `healthSeries()` bepaalde de bron uit de rij-brede `[src:...]`-tag in `note`. Een wearable-sync zet die tag op de hele rij, dus een handmatig ingevulde rusthartslag op een dag met een wearable-HRV kreeg de bron "Fitbit". `pickLatestMetric()` las de bron al uit de canonieke per-veld kolom.

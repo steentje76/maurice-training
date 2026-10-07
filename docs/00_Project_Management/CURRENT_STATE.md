@@ -6,12 +6,23 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.13
+v4.70.14
+
+## Typed ingest-provenance voor slaap en HRV (v4.70.14, 5 oktober 2026; migratie_v580 NIET toegepast)
+
+- Code: de wearable-ingest stuurt mee wat de HRV- en slaapwaarde meten. HRV: `rmssd`, alleen wanneer de waarde uit
+  het door Google als RMSSD gedocumenteerde veld `averageHeartRateVariabilityMilliseconds` komt (anders `unknown`).
+  Slaap: `asleep` of `sleep_interval`. Bron en besluit: DEC-HRV-003.
+- Database: `migratie_v580.sql` staat in de repo en is niet op productie toegepast. Tot dan valt de sync terug op de
+  bestaande tien RPC-argumenten en blijft het type `unknown`.
+- Geen effect op berekeningen of beslissingen. GAP-P2-018 R4/R5: implementatie gereed, migratie in afwachting.
+- Guard: `core/fHealthIngestProvenance.test.js`.
 
 ## Bron per veld in de health-reeksen (v4.70.13, 5 oktober 2026)
 
 - `healthSeries()` leest de bron per veld uit `<veld>_source`; de `[src:...]`-tag in `note` is alleen nog terugval voor
-  historische rijen. Zelfde volgorde als `pickLatestMetric()`. GAP-P2-018 R6 opgelost.
+  historische rijen. Zelfde volgorde als `pickLatestMetric()`. GAP-P2-018 R6 opgelost; live op
+  productie sinds 6 oktober 2026 (main `3e9b2a8d`, #519).
 - Guard: `core/fHealthSeriesProvenance.test.js`.
 - De HRV-baseline telt kalenderdagen (`_calDay` in `core/calculation.js`): dagtelling, 14/28-dagengrens en het
   7-daagse venster zijn niet meer afhankelijk van het tijdstip van de dag. Guard: `core/fHrvCalendarDay.test.js`.
@@ -23,7 +34,7 @@ v4.70.13
 - `GOOGLE_HEALTH_MAP` beschrijft het parsed-day-object van de providerparser en is de ene contractbron voor ingest en
   voor de keuring bij lezen. Stappen: niet-negatief geheel getal, geen bovengrens.
 - Zonder werkende keuringslaag schrijft de sync niets (`QUALITY_UNAVAILABLE`).
-- GAP-P2-018: R1–R3 opgelost en bewezen in de testketen; R4–R6 open. Niet geverifieerd tegen een live providersync.
+- GAP-P2-018: R1–R3 opgelost en bewezen in de testketen (R6 volgde in v4.70.13; R4/R5 zie boven). Niet geverifieerd tegen een live providersync.
 - Guard: `core/fWearableIngestQuality.test.js`.
 
 ## Presentatie van health-data volgt de berekening (v4.70.11, 4 oktober 2026)
@@ -279,7 +290,7 @@ v4.70.13
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.13 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.14 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

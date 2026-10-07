@@ -125,11 +125,11 @@ Geen enkel P0 is momenteel open. Zie sectie "CLOSED GAPS / HISTORICAL" voor de v
 - R2. GESLOTEN in v4.70.12 (bewezen in de testketen). `wearable-sync` keurt HRV, rusthartslag, slaap en stappen vóór de schrijfbeslissing; alleen geldige waarden gaan naar `upsert_daily_health`. Fail-closed zonder keuringslaag.
 - R3. GESLOTEN in v4.70.12 (bewezen in de testketen). `GOOGLE_HEALTH_MAP` beschrijft het parsed-day-object van de providerparser; `normalizeHealthDaily()` is aangesloten op de echte ingest. Eén contractbron voor ingest en lezen.
 - R1–R3 zijn bewezen met de echte parsers, de echte handler en de echte RPC op PostgreSQL (`core/fWearableIngestQuality.test.js`), nog niet tegen een live providersync.
-- R4. Slaap valt bij ontbrekende slaapduur terug op het interval (tijd in bed) zonder dat dit wordt vastgelegd.
-- R5. `hrv_metric_type` wordt nooit gezet (alle rijen `unknown`).
+- R4. OPEN — implementatie gereed in v4.70.14, `migratie_v580` nog niet op productie toegepast. De parser meldt het pad en de ingest stuurt `sleep_metric_type` mee (`asleep` | `sleep_interval` | `unknown`); bewezen in `core/fHealthIngestProvenance.test.js`. Geen effect op berekeningen.
+- R5. OPEN — implementatie gereed in v4.70.14, `migratie_v580` nog niet op productie toegepast. De ingest stuurt `rmssd` mee via het nieuwe RPC-argument; handmatige invoer en imports blijven `unknown`. Zie DEC-HRV-003.
 - R6. GESLOTEN in v4.70.13 (bewezen in `core/fHealthSeriesProvenance.test.js`). `healthSeries()` leest de bron per veld uit `<veld>_source`; de notitie-tag is alleen nog terugval voor historische rijen. Geen databasewijziging nodig.
 **Evidence:** CODE VERIFIED op main `9ef622d9`; de keten herstel/readiness gebruikt de bestaande lagen sinds v4.70.9 (`core/fRecoveryReadinessQualityWiring.test.js`).
-**Target:** R4 en R5 (provenance bij ingest) blijven open; R6 is gesloten. Geen opgeslagen quality-veld zonder concrete productbehoefte.
+**Target:** R4 en R5 sluiten na de productie-apply van `migratie_v580` en een live sync; R6 is gesloten. Geen opgeslagen quality-veld zonder concrete productbehoefte.
 **Priority:** P2 (niet-kritiek — geen dataverlies, geen silent-corruption-risico, puur een verfijningsmogelijkheid). **Complexity:** M.
 
 ### GAP-P2-019 (voorheen GAP-F5-002) — Geen geautomatiseerde retry-met-backoff in wearable-sync

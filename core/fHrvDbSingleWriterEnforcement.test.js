@@ -41,7 +41,11 @@ const VERIFY = rd('tools/verify-hrv-single-writer.sql');
 
 /* Echte repo-SQL */
 const migs = fs.readdirSync(ROOT).filter((f) => /^migratie_v\d+\.sql$/.test(f)).sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]));
-const defFile = migs.filter((f) => /CREATE OR REPLACE FUNCTION public\.upsert_daily_health\(/i.test(rd(f))).pop();
+// Deze suite bewijst migratie_v579 op de functie zoals die op dat moment bestond (migratie_v560).
+// Latere definities (migratie_v580 en verder) hebben hun eigen suite; de fixture hier blijft de
+// toestand waarop v579 is toegepast.
+const defFile = 'migratie_v560.sql';
+void migs;
 const defSrc = rd(defFile);
 const FN_SQL = defSrc.slice(defSrc.indexOf('CREATE OR REPLACE FUNCTION public.upsert_daily_health('), defSrc.indexOf('$function$;') + '$function$;'.length);
 const V570 = rd('migratie_v570.sql').split('\n').filter((l) => /on function public\.upsert_daily_health\(/.test(l)).join('\n');
@@ -120,7 +124,7 @@ async function verifyRegels(db) {
 }
 
 async function main() {
-  ok(defFile === 'migratie_v560.sql', 'S1 de functie komt uit de laatste definitie in de repo (migratie_v560.sql; kreeg ' + defFile + ')');
+  ok(defFile === 'migratie_v560.sql' && /CREATE OR REPLACE FUNCTION public\.upsert_daily_health\(/i.test(defSrc), 'S1 de functie komt uit migratie_v560.sql: de definitie waarop migratie_v579 is toegepast');
   ok(/revoke execute[^\n]*from public, anon;/.test(V570) && /grant\s+execute[^\n]*to authenticated, service_role;/.test(V570), 'S2 EXECUTE-rechten komen uit migratie_v570.sql');
 
   const db = await maakDb();

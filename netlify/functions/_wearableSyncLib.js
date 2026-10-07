@@ -100,16 +100,27 @@ var INGEST_STATUSSEN = ['valid', 'implausible', 'invalid', 'empty'];
 function _deviceCore() {
   try { return require('../../core/deviceIntegration.js'); } catch (_) { return null; }
 }
-// vals: { hrv (ms), rhr (bpm), sleep (uren), steps (aantal) } zoals de parsers opleveren.
+// vals: { hrv (ms), rhr (bpm), sleep (uren), steps (aantal), hrvBasis, sleepBasis } zoals de parsers opleveren.
 // core: optioneel, alleen voor tests; standaard de echte DeviceCore.
-// -> { ok, vals:{hrv,rhr,sleep,steps}, status:{...}, rejected:{veld:reden} }
+// -> { ok, vals:{hrv,rhr,sleep,steps}, status:{...}, rejected:{veld:reden},
+//      meta:{hrv_metric_type, sleep_metric_type} }
+//
+// META (GAP-P2-018 R4/R5): wat de geaccepteerde waarde MEET. Provenance, geen kwaliteit.
+//   hrv_metric_type   alleen wanneer de contractbron (sourceMetric in GOOGLE_HEALTH_MAP) en het
+//                     payloadpad van de parser (vals.hrvBasis) hetzelfde type noemen. Alleen bij
+//                     een geaccepteerde HRV.
+//   sleep_metric_type komt van de parser (welk payloadpad de waarde leverde). Alleen bij een
+//                     geaccepteerde slaapwaarde.
+//   Een waarde die niet in DeviceCore.HEALTH_METRIC_TYPES staat wordt null: er wordt geen type
+//   verzonnen en geen onbekende tekst doorgegeven.
 function qualifyDayValues(vals, core) {
   vals = vals || {};
   var velden = Object.keys(INGEST_VELDEN);
   var dicht = function (reden) {
     var rej = {};
     velden.forEach(function (k) { if (vals[k] != null) rej[k] = reden; });
-    return { ok: false, vals: { hrv: null, rhr: null, sleep: null, steps: null }, status: {}, rejected: rej };
+    return { ok: false, vals: { hrv: null, rhr: null, sleep: null, steps: null }, status: {}, rejected: rej,
+      meta: { hrv_metric_type: null, sleep_metric_type: null } };
   };
   try {
     var dc = (core === undefined) ? _deviceCore() : core;
@@ -133,7 +144,15 @@ function qualifyDayValues(vals, core) {
       if (m.quality === 'valid') uit[veld] = vals[veld];
       else if (vals[veld] != null) rejected[veld] = m.quality;
     }
-    return { ok: true, vals: uit, status: status, rejected: rejected };
+    var typen = dc.HEALTH_METRIC_TYPES || {};
+    var toegestaan = function (soort, t) { return (t && Array.isArray(typen[soort]) && typen[soort].indexOf(t) !== -1) ? t : null; };
+    var meta = {
+      // Twee bronnen moeten het eens zijn: de contractbron (sourceMetric) en het payloadpad dat de
+      // parser werkelijk gebruikte. Anders geen type.
+      hrv_metric_type: (uit.hrv != null && vals.hrvBasis && vals.hrvBasis === perKey[INGEST_VELDEN.hrv].sourceMetric) ? toegestaan('hrv', vals.hrvBasis) : null,
+      sleep_metric_type: uit.sleep != null ? toegestaan('sleep', vals.sleepBasis) : null
+    };
+    return { ok: true, vals: uit, status: status, rejected: rejected, meta: meta };
   } catch (_) {
     return dicht('quality_error');
   }
@@ -176,9 +195,16 @@ function _dateFrom(d) {
 function parseHrvPoint(point) {
   var rec = point && point.dailyHeartRateVariability; if (!rec) return null;
   var date = _dateFrom(rec.date) || _dateFrom(point && point.date);
-  // RMSSD in ms. Volgorde = prioriteit; toNum accepteert ook de int64-als-string-vorm.
+  // Volgorde = prioriteit; toNum accepteert ook de int64-als-string-vorm.
   var v = firstNum(rec, ['averageHeartRateVariabilityMilliseconds', 'rmssdMillis']);
-  return { date: date, value: v };
+  // GAP-P2-018 R5: welk veld leverde de waarde? Alleen
+  // dailyHeartRateVariability.averageHeartRateVariabilityMilliseconds is door de Google Health
+  // API gedocumenteerd als RMSSD ("calculated using the root mean square of successive
+  // differences (RMSSD)"). Het oudere, niet-gedocumenteerde veld rmssdMillis blijft als waarde
+  // ondersteund, maar krijgt geen metric-type: er wordt niet op een veldnaam afgegaan.
+  var basis = null;
+  if (v != null) basis = (toNum(rec.averageHeartRateVariabilityMilliseconds) != null) ? 'rmssd' : 'unknown';
+  return { date: date, value: v, basis: basis };
 }
 function parseRhrPoint(point) {
   var rec = point && point.dailyRestingHeartRate; if (!rec) return null;
@@ -197,13 +223,24 @@ function parseSleepPoint(point) {
   // Alle duurvelden kunnen int64-als-string zijn; firstNum coerceert veilig.
   var asleepMin = firstNum(sum, ['minutesAsleep', 'totalSleepMinutes']);
   var asleepMs  = firstNum(sum, ['totalSleepDurationMillis', 'totalDurationMillis']);
-  if (asleepMin != null) min = Math.round(asleepMin);
-  else if (asleepMs != null) min = Math.round(asleepMs / 60000);
+  // GAP-P2-018 R4: leg vast WELK pad de waarde leverde. De waarde zelf is ongewijzigd.
+  //   asleep       summary.minutesAsleep — het enige veld dat de Google Health API documenteert
+  //                als slaapduur ("Total number of minutes asleep").
+  //   sleep_interval terugval op de duur van sleep.interval. De API noemt dat het "observed sleep
+  //                interval" (start- en eindtijd van de sessie); het kan wakkere periodes bevatten.
+  //                Bewust niet "time in bed" genoemd: dat garandeert de bron niet (de API kent
+  //                daarnaast aparte outOfBedSegments).
+  //   unknown      een van de overige, defensief ondersteunde duurvelden: niet gedocumenteerd,
+  //                dus er wordt niet geraden wat het meet.
+  var basis = null;
+  if (asleepMin != null) { min = Math.round(asleepMin); basis = (toNum(sum && sum.minutesAsleep) != null) ? 'asleep' : 'unknown'; }
+  else if (asleepMs != null) { min = Math.round(asleepMs / 60000); basis = 'unknown'; }
   else if (iv && iv.startTime && iv.endTime) {
     var ms = Date.parse(iv.endTime) - Date.parse(iv.startTime);
-    if (isFinite(ms) && ms > 0) min = Math.round(ms / 60000);
+    if (isFinite(ms) && ms > 0) { min = Math.round(ms / 60000); basis = 'sleep_interval'; }
   }
-  return { date: date, value: minutesToHours(min) };
+  var uren = minutesToHours(min);
+  return { date: date, value: uren, basis: uren == null ? null : basis };
 }
 
 // Devices/Wearables Master Sprint — dailyRollUp-respons voor stappen
@@ -232,8 +269,8 @@ function pointShape(point) {
   return (point && typeof point === 'object') ? Object.keys(point) : [];
 }
 // Structurele diagnostiek van sleep.summary — alleen KEYS, nooit waarden. Maakt
-// zichtbaar of Google een echte "asleep"-duur levert of dat we op interval
-// (= tijd in bed) terugvallen.
+// zichtbaar of Google een echte "asleep"-duur levert of dat we op het
+// geobserveerde slaapinterval terugvallen.
 function sleepSummaryShape(point) {
   var sum = point && point.sleep && point.sleep.summary;
   return (sum && typeof sum === 'object') ? Object.keys(sum) : [];

@@ -181,9 +181,9 @@ exports.handler = async function (event) {
     // Datum + waarde komen uit het geneste record — niet top-level (dat was de parsed:0-bug).
     const byDate = {};
     let parsedHrv = 0, parsedRhr = 0, parsedSleep = 0, parsedSteps = 0;
-    hrvData.forEach(p => { const r = LIB.parseHrvPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).hrv = r.value; if (r.value != null) parsedHrv++; } });
+    hrvData.forEach(p => { const r = LIB.parseHrvPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).hrv = r.value; byDate[r.date].hrvBasis = r.basis || null; if (r.value != null) parsedHrv++; } });
     rhrData.forEach(p => { const r = LIB.parseRhrPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).rhr = r.value; if (r.value != null) parsedRhr++; } });
-    sleepData.forEach(p => { const r = LIB.parseSleepPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).sleep = r.value; if (r.value != null) parsedSleep++; } });
+    sleepData.forEach(p => { const r = LIB.parseSleepPoint(p); if (r && r.date) { (byDate[r.date] ||= {}).sleep = r.value; byDate[r.date].sleepBasis = r.basis || null; if (r.value != null) parsedSleep++; } });
     // UNKNOWN != ZERO (sectie 3): alleen schrijven als de rollup-entry een
     // daadwerkelijke countSum bevatte -- een dag zonder rollup-entry (of
     // zonder steps-veld daarin) krijgt HIER geen byDate[date].steps-key,
@@ -197,14 +197,26 @@ exports.handler = async function (event) {
     // geschreven. Faalt de keuringslaag, dan wordt er niets geschreven (fail-closed).
     const rejected = { hrv: 0, rhr: 0, sleep: 0, steps: 0 };
     const accepted = { hrv: 0, rhr: 0, sleep: 0, steps: 0 };
+    // GAP-P2-018 R4/R5: wat de geaccepteerde HRV- en slaapwaarde meten (provenance, geen kwaliteit).
+    const metaByDate = {};
     for (const date of Object.keys(byDate)) {
       const q = LIB.qualifyDayValues(byDate[date]);
       if (!q || q.ok !== true) throw tkError(ERR.QUALITY, 'quality layer unavailable');
       Object.keys(q.rejected).forEach(k => { if (k in rejected) rejected[k]++; });
       Object.keys(accepted).forEach(k => { if (q.vals[k] != null) accepted[k]++; });
       byDate[date] = q.vals;
+      metaByDate[date] = q.meta || {};
     }
     const rejectedMetrics = rejected.hrv + rejected.rhr + rejected.sleep + rejected.steps;
+
+    // Het metric-type gaat mee als extra RPC-argument (migratie_v580). Zolang die migratie niet op
+    // de database staat kent upsert_daily_health die argumenten niet en antwoordt PostgREST met
+    // 404/PGRST202; dan wordt dezelfde dag direct opnieuw geschreven met de bestaande tien
+    // argumenten en wordt het type voor de rest van deze sync niet meer meegestuurd. De waarden
+    // worden dus altijd geschreven; alleen het type wacht op de migratie.
+    let typedRpc = true;
+    const typed = { hrv: 0, sleep: 0 };
+    const concreet = t => (t && t !== 'unknown') ? t : null;
 
     let imported = 0, updated = 0, skipped = 0;
     let todayWrite = 'none'; // 'imported' | 'updated' | 'skipped' | 'none' — wat gebeurde er specifiek met VANDAAG
@@ -221,19 +233,35 @@ exports.handler = async function (event) {
       const existsRes = await fetch(`${supabaseUrl}/rest/v1/hrv_log?user_id=eq.${userId}&date=eq.${date}&select=id&limit=1`, { headers: sbHeaders });
       const bestondAl = (await sbRows(existsRes, 'hrv_log')).length > 0;
 
-      const rpcRes = await fetch(`${supabaseUrl}/rest/v1/rpc/upsert_daily_health`, {
+      const schrijf = args => fetch(`${supabaseUrl}/rest/v1/rpc/upsert_daily_health`, {
         method: 'POST', headers: sbHeaders,
-        body: JSON.stringify({
-          p_user_id: userId, p_date: date,
-          p_hrv: vals.hrv != null ? vals.hrv : null,
-          p_rhr: vals.rhr != null ? vals.rhr : null,
-          p_sleep: vals.sleep != null ? vals.sleep : null,
-          p_cyclus_fase: null, p_edema: null,
-          p_note: LIB.provenanceNote(null),
-          p_source: 'wearable',
-          p_steps: vals.steps != null ? vals.steps : null
-        })
+        body: JSON.stringify(args)
       });
+      const basisArgs = {
+        p_user_id: userId, p_date: date,
+        p_hrv: vals.hrv != null ? vals.hrv : null,
+        p_rhr: vals.rhr != null ? vals.rhr : null,
+        p_sleep: vals.sleep != null ? vals.sleep : null,
+        p_cyclus_fase: null, p_edema: null,
+        p_note: LIB.provenanceNote(null),
+        p_source: 'wearable',
+        p_steps: vals.steps != null ? vals.steps : null
+      };
+      const meta = metaByDate[date] || {};
+      const hrvType = vals.hrv != null ? concreet(meta.hrv_metric_type) : null;
+      const sleepType = vals.sleep != null ? concreet(meta.sleep_metric_type) : null;
+      const metType = typedRpc && (hrvType != null || sleepType != null);
+      let rpcRes = await schrijf(metType ? { ...basisArgs, p_hrv_metric_type: hrvType, p_sleep_metric_type: sleepType } : basisArgs);
+      let typeGeschreven = metType;
+      if (metType && !rpcRes.ok && rpcRes.status === 404) {
+        let fout = null;
+        try { fout = await rpcRes.json(); } catch (_) { fout = null; }
+        if (fout && fout.code === 'PGRST202') {
+          typedRpc = false; typeGeschreven = false;
+          rpcRes = await schrijf(basisArgs);
+        }
+      }
+      if (rpcRes.ok && typeGeschreven) { if (hrvType != null) typed.hrv++; if (sleepType != null) typed.sleep++; }
       if (rpcRes.ok) {
         if (bestondAl) { updated++; if (date === todayAms) todayWrite = 'updated'; }
         else { imported++; if (date === todayAms) todayWrite = 'imported'; }
@@ -258,12 +286,14 @@ exports.handler = async function (event) {
       parsed: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep, steps: parsedSteps },
       // Na de keuring: aantallen, nooit de afgewezen waarden zelf.
       accepted: accepted, rejected: rejected,
+      // Metric-type mee opgeslagen (typed) of nog niet door de database ondersteund (legacy).
+      provenance: { rpc: typedRpc ? 'typed' : 'legacy', typed: typed },
       // VANDAAG apart: onderscheidt A (upstream heeft vandaag niet: fetched=false) van B (veldnaam: fetched=true, parsed=false)
       todayDiag: { date: todayAms, fetched: today.fetched, parsed: today.metrics, written: today.written, available: today.available },
       shape: { hrv: LIB.pointShape(hrvData[0]), rhr: LIB.pointShape(rhrData[0]), sleep: LIB.pointShape(sleepData[0]), steps: LIB.pointShape(stepsData[0]) },
       recordShape: { hrv: LIB.recordShape(hrvData[0], 'dailyHeartRateVariability'), rhr: LIB.recordShape(rhrData[0], 'dailyRestingHeartRate'), sleep: LIB.recordShape(sleepData[0], 'sleep'), steps: LIB.recordShape(stepsData[0], 'steps') },
       // sleep.summary-keys: bewijst of we een echte slaapduur gebruiken of terugvallen op
-      // het interval (= tijd in bed). Alleen KEYS, nooit waarden.
+      // het geobserveerde slaapinterval. Alleen KEYS, nooit waarden.
       sleepSummaryShape: LIB.sleepSummaryShape(sleepData[0]),
       providerError: providerErr,
       written: { imported, updated, skipped }
@@ -292,6 +322,9 @@ exports.handler = async function (event) {
       metrics: accepted,
       // Aantal afgewezen providerwaarden per metric; nooit de waarde zelf.
       rejected: rejected, rejectedMetrics: rejectedMetrics,
+      // Is het metric-type (wat de HRV- en slaapwaarde meten) mee opgeslagen? 'legacy' = de database
+      // kent de argumenten van migratie_v580 nog niet; de waarden zelf zijn wel geschreven.
+      provenance: { rpc: typedRpc ? 'typed' : 'legacy', typed: typed },
       today: today });
   } catch (e) {
     const code = classifyException(e);

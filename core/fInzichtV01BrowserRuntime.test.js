@@ -225,7 +225,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.evaluate(() => {
       const grid = document.getElementById('inzicht-overview-grid');
       grid.innerHTML = '<div class="tk-overview-cell"><span class="ic-wrap">' + tkIcon('hartslag',{size:'standard'}) + '</span><div class="lbl">HRV (7d)</div><div class="val">62<span class="unit">ms</span></div></div>' +
-        '<div class="tk-overview-cell"><span class="ic-wrap">' + tkIcon('herstel',{size:'standard'}) + '</span><div class="lbl">Herstelstatus</div><div class="val">100<span class="unit">%</span></div></div>' +
+        '<div class="tk-overview-cell"><span class="ic-wrap">' + tkIcon('herstel',{size:'standard'}) + '</span><div class="lbl">Spierherstel</div><div class="val">100<span class="unit">%</span></div></div>' +
         '<div class="tk-overview-cell"><span class="ic-wrap">' + tkIcon('belasting',{size:'standard'}) + '</span><div class="lbl">Belasting (7d)</div><div class="val">5427<span class="unit">kg</span></div></div>';
     });
     await page.waitForTimeout(200);
@@ -240,7 +240,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     });
     ok(check.iconColors.every(c => c === 'rgb(0, 184, 148)'), '26: Snel overzicht-iconen zijn teal (--color-primary) bij beschikbare data, niet zwart (PO Round 2, root cause: ontbrekende stroke=currentColor op de oudere V43I-set, nu tkIcon() gebruikt)');
     ok(!check.hasVerticalBorders, '27: geen tabelachtige, verticale separators meer tussen Snel-overzicht-cellen');
-    ok(check.unitsPresent, '28: Belasting/Herstelstatus/HRV tonen expliciete eenheden (kg/%/ms) i.p.v. een kaal, contextloos getal');
+    ok(check.unitsPresent, '28: Belasting/Spierherstel/HRV tonen expliciete eenheden (kg/%/ms) i.p.v. een kaal, contextloos getal');
 
     for (const w of [320, 360, 375, 390, 412, 430]) {
       await page.setViewportSize({ width: w, height: 900 });
@@ -274,7 +274,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.evaluate(() => {
       const grid = document.getElementById('inzicht-overview-grid');
       const rR=13, rC=2*Math.PI*rR, rOff=rC*(1-0.78);
-      grid.innerHTML = '<div class="tk-overview-cell"><span class="ic-wrap" style="background:none;width:34px;height:34px"><svg class="tk-recovery-ring" viewBox="0 0 34 34"><circle class="rg" cx="17" cy="17" r="'+rR+'"/><circle class="rf" cx="17" cy="17" r="'+rR+'" style="stroke-dasharray:'+rC.toFixed(1)+';stroke-dashoffset:'+rOff.toFixed(1)+'"/></svg></span><div class="lbl">Herstelstatus</div><div class="val">78<span class="unit">%</span></div></div>';
+      grid.innerHTML = '<div class="tk-overview-cell"><span class="ic-wrap" style="background:none;width:34px;height:34px"><svg class="tk-recovery-ring" viewBox="0 0 34 34"><circle class="rg" cx="17" cy="17" r="'+rR+'"/><circle class="rf" cx="17" cy="17" r="'+rR+'" style="stroke-dasharray:'+rC.toFixed(1)+';stroke-dashoffset:'+rOff.toFixed(1)+'"/></svg></span><div class="lbl">Spierherstel</div><div class="val">78<span class="unit">%</span></div></div>';
     });
     const ringOk = await page.evaluate(() => {
       const rf = document.querySelector('.tk-recovery-ring .rf');
@@ -550,7 +550,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
 
     await page.evaluate(() => {
       const grid = document.getElementById('inzicht-overview-grid');
-      grid.innerHTML = ['HRV (7d)','Rusthartslag','Slaap (7d)','Herstelstatus','Kracht-volume'].map(function(lbl){
+      grid.innerHTML = ['HRV (7d)','Rusthartslag','Slaap (7d)','Spierherstel','Kracht-volume'].map(function(lbl){
         return '<div class="tk-overview-cell"><span class="ic-wrap">'+tkIcon('hartslag',{size:'standard'})+'</span><div class="lbl">'+lbl+'</div><div class="val">62<span class="unit">ms</span></div></div>';
       }).join('');
     });

@@ -5015,7 +5015,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div class="v43-lbl" style="margin:12px 0 10px">Herstel &middot; anatomie</div>
       <div class="lich-anat">
         <div class="v43-lich-fig" id="v43-lich-figbox"></div>
-        <div class="v43-lich-cap"><span id="lich-sp-figcap">Voorzijde</span> &middot; gemiddeld herstel <span id="v43-lich-overall">—</span> &middot; laatste 14 dagen</div>
+        <div class="v43-lich-cap"><span id="lich-sp-figcap">Voorzijde</span> &middot; gemiddeld spierherstel <span id="v43-lich-overall">—</span> &middot; laatste 14 dagen</div>
       </div>
     </div>
 
@@ -25918,7 +25918,7 @@ async function inzichtRenderOverview(){
       }catch(_){ cells.push(ovCell(icons[v.lbl],v.lbl,'<div class="unavailable">—</div>',true)); }
     });
   }
-  // Herstelstatus: bestaande, canonieke v43OverallRecovery() hergebruikt (dezelfde
+  // Spierherstel: bestaande, canonieke v43OverallRecovery() hergebruikt (dezelfde
   // functie als Home/Lichaam) -- bron: gemiddeld spierherstelpercentage over alle
   // spiergroepen (computeMuscleRecoveryPct), 0-100%, 100% = volledig hersteld.
   try{
@@ -25926,11 +25926,11 @@ async function inzichtRenderOverview(){
     if(rec && rec.hasData){
       var rR=10.5,rC=2*Math.PI*rR,rOff=rC*(1-Math.max(0,Math.min(100,rec.overall))/100);
       var ringHtml='<svg class="tk-recovery-ring" viewBox="0 0 28 28" aria-hidden="true"><circle class="rg" cx="14" cy="14" r="'+rR+'"/><circle class="rf" cx="14" cy="14" r="'+rR+'" style="stroke-dasharray:'+rC.toFixed(1)+';stroke-dashoffset:'+rOff.toFixed(1)+'"/></svg>';
-      cells.push('<div class="tk-overview-cell"><span class="ic-wrap" style="background:none;width:28px;height:28px">'+ringHtml+'</span><div class="lbl">Herstelstatus</div><div class="val">'+rec.overall+'<span class="unit">%</span></div></div>');
+      cells.push('<div class="tk-overview-cell"><span class="ic-wrap" style="background:none;width:28px;height:28px">'+ringHtml+'</span><div class="lbl">Spierherstel</div><div class="val">'+rec.overall+'<span class="unit">%</span></div></div>');
     } else {
-      cells.push(ovCell('herstel','Herstelstatus','<div class="unavailable">—</div>',true));
+      cells.push(ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true));
     }
-  }catch(_){ cells.push(ovCell('herstel','Herstelstatus','<div class="unavailable">—</div>',true)); }
+  }catch(_){ cells.push(ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true)); }
   // Belasting: bestaande, canonieke tkCoachBelasting() hergebruikt (zelfde functie
   // als Coach). Bron: rollend 7-daags krachtvolume (AC.rollingSum), eenheid 'kg'
   // (AC.MODALITEITEN.strength.eenheid) -- nu expliciet getoond, was eerder een
@@ -28554,7 +28554,7 @@ async function renderStatsHero(){
     <div class="vh-row">
       <div class="vh-m"><div class="v">${daysThis.size}</div><div class="k">trainingen</div></div>
       <div class="vh-m"><div class="v">${Math.round(volThis/1000)}k</div><div class="k">volume kg</div></div>
-      <div class="vh-m"><div class="v">${herstel!=null?herstel+'%':'—'}</div><div class="k">herstel</div></div>
+      <div class="vh-m"><div class="v">${herstel!=null?herstel+'%':'—'}</div><div class="k">spierherstel</div></div>
     </div>`;
 }
 
@@ -32866,7 +32866,7 @@ async function renderLichaamSpierDetail(){
     '<div class="card">'+
       '<div class="lich-dhero">'+
         '<div style="flex:1;min-width:0">'+
-          '<div class="muted" style="font-size:11px;color:var(--g4);font-weight:600">Herstelstatus</div>'+
+          '<div class="muted" style="font-size:11px;color:var(--g4);font-weight:600">Spierherstel</div>'+
           '<div class="big" style="color:'+st[1]+'">'+(rij.pct!=null?rij.pct+'%':'—')+'</div>'+
           '<div class="st" style="color:'+st[1]+'">'+st[0]+'</div>'+
           '<div class="sub">'+(rij.pct==null?'Nog geen trainingsgegevens voor deze groep.'

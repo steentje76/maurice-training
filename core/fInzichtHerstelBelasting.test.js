@@ -74,6 +74,17 @@ const INZ = tussen(HTML, '<div class="scr" id="s-inzicht">', '<div class="scr" i
   ok(/<div class="l">Spierherstel<\/div>/.test(PREM) && !/<div class="l">Herstel<\/div>/.test(PREM), 'D1 de ring is gelabeld als Spierherstel');
   ok(/dfBasis=tkDagfactorHeeftBasis\(dfo\)/.test(PREM) && /const beoordeeld=ger!=null&&dfBasis;/.test(PREM), 'D2 het dagoordeel volgt de bestaande df.basis');
 }
+{
+  // K. Eén naam voor één metric: het gemiddelde spierherstel heet overal Spierherstel.
+  ok(!/>Herstelstatus</.test(HTML), 'K1 geen enkel zichtbaar label heet nog Herstelstatus');
+  const OV = fn('inzichtRenderOverview');
+  ok(/var rec=\(typeof v43OverallRecovery==='function'\)\?await v43OverallRecovery\(\):null;/.test(OV) && /<div class="lbl">Spierherstel<\/div><div class="val">'\+rec\.overall\+'<span class="unit">%<\/span>/.test(OV), 'K2 Snel overzicht: het vak Spierherstel toont rec.overall uit v43OverallRecovery() — dezelfde bron als voorheen');
+  eq((OV.match(/ovCell\('herstel','Spierherstel',/g) || []).length, 2, 'K3 ook de lege toestand van dat vak heet Spierherstel');
+  ok(/const ov=rec\.hasData\?rec\.overall:null;/.test(fn('renderLichaamPremium')), 'K4 de ring Spierherstel leest dezelfde rec.overall');
+  ok(/font-weight:600">Spierherstel<\/div>'\+\s*'<div class="big" style="color:'\+st\[1\]\+'">'\+\(rij\.pct!=null\?rij\.pct\+'%':'—'\)/.test(fn('renderLichaamSpierDetail')), 'K5 spiergroepdetail: het percentage van die spiergroep (rec.rows) heet Spierherstel');
+  ok(/<div class="k">spierherstel<\/div>/.test(HTML) && /gemiddeld spierherstel <span id="v43-lich-overall">/.test(HTML), 'K6 Voortgang en het spiergroepenscherm gebruiken dezelfde naam voor hetzelfde gemiddelde');
+  ok(/herstelRegel='Herstelstatus vandaag: '\+herstel\.score\+'\/100 \('/.test(HTML) && /herstel=await recoveryAdjustmentForToday\(\);/.test(HTML), 'K7 de coachcontext houdt "Herstelstatus" voor de samengestelde herstelscore (recovery_score.v1): een andere metric, niet hernoemd');
+}
 
 /* ══ Deel 2 — echte pagina ════════════════════════════════════════════════════ */
 let chromium;
@@ -181,8 +192,54 @@ const FIXTURE = function () {
       await page.waitForFunction(function () { return document.querySelectorAll('#inzicht-domain-list .row').length > 0; }, null, { timeout: 30000 });
       const rest = await page.evaluate(function () { return [document.querySelectorAll('#inzicht-summary-grid .tk-summary-cell').length, document.querySelectorAll('#inzicht-overview-grid .tk-overview-cell').length, document.querySelectorAll('#inzicht-domain-list .row').length, document.querySelectorAll('#s-inzicht .tk-period-selector button[role="tab"]').length, !!document.getElementById('inzicht-recent-list')]; });
       eq(rest, [4, 5, 7, 3, true], w + 'px H1 Jouw ontwikkeling (4), Snel overzicht (5), Domeinen (7), periode (3) en Recente inzichten zijn ongewijzigd aanwezig');
+      // L. Hetzelfde spierherstel staat niet onder twee namen op Inzicht.
+      await page.waitForFunction(function () { return document.querySelectorAll('#inzicht-overview-grid .tk-overview-cell').length === 5; }, null, { timeout: 30000 });
+      const naam = await page.evaluate(async function () {
+        const rec = await v43OverallRecovery();
+        const cel = Array.from(document.querySelectorAll('#inzicht-overview-grid .tk-overview-cell')).filter(function (c) { return c.querySelector('.tk-recovery-ring'); })[0];
+        return { verwacht: rec.overall + '%', vak: cel ? [cel.querySelector('.lbl').textContent, cel.querySelector('.val').textContent] : null,
+          ring: [document.querySelector('#lich-hero .rring .l').textContent, document.querySelector('#lich-hero .rring .n').textContent],
+          scherm: document.getElementById('s-inzicht').innerText,
+          tegel: Array.from(document.querySelectorAll('#lich-hero .grid .m')).map(function (m) { return [m.querySelector('.k').textContent, m.querySelector('.v').textContent, (m.querySelector('.lich-src') || {}).textContent || null]; })[0] };
+      });
+      eq([naam.vak, naam.ring], [['Spierherstel', naam.verwacht], ['Spierherstel', naam.verwacht]], w + 'px L1 vak in Snel overzicht en ring tonen dezelfde waarde uit v43OverallRecovery() onder dezelfde naam');
+      ok(!/Herstelstatus/i.test(naam.scherm), w + 'px L2 het woord Herstelstatus komt niet meer voor op het Inzicht-scherm');
+      ok(naam.tegel[0] === 'Dagfactor' && /^\d\.\d\d$/.test(naam.tegel[1]) && naam.tegel[2] === 'berekend', w + 'px L3 met metingen van vandaag toont de tegel de berekende dagfactor: ' + JSON.stringify(naam.tegel));
       const fouten = errs.filter(function (e) { return !/fetch|CORS|NetworkError/i.test(e); });
       ok(fouten.length === 0, w + 'px H2 geen JavaScript-fouten: ' + JSON.stringify(fouten));
+      await page.close();
+    }
+
+    // M. Dagfactor zonder basis: geen 1.00, geen "berekend", geen positief dagoordeel.
+    for (const w of [320, 360, 412]) {
+      const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+      const errs = []; page.on('pageerror', function (e) { errs.push(e.message); });
+      await page.goto(url); await page.waitForTimeout(500);
+      await page.evaluate(FIXTURE);
+      await page.evaluate(function () {
+        const x = new Date(); x.setDate(x.getDate() - 10); const oud = x.toISOString().split('T')[0];
+        const echt = window.sbGet;
+        window.sbGet = async function (t, q) { return t === 'hrv_log' ? [{ date: oud, hrv: 48, rhr: 55, sleep: 7, note: null }] : echt(t, q); };
+        go('s-inzicht');
+      });
+      await page.waitForFunction(function () { return !!document.querySelector('#lich-hero .grid .m') && document.querySelectorAll('#lich-muslist .lich-mrow').length > 0; }, null, { timeout: 20000 });
+      const z = await page.evaluate(async function () {
+        const hq = tkHealthQualified(await v43SafeGet('hrv_log', '&order=date.desc,created_at.desc&limit=35'));
+        const dfo = dagfactor(hrvDagFactorPersonal(hq.rows), hq.rows[0].sleep, tkCyclusFaseVandaag(hq.rows[0]), hq.signalen);
+        const m = document.querySelector('#lich-hero .grid .m'), g = document.querySelector('#lich-hero .grid'), h = document.getElementById('lich-hero');
+        return { factor: dfo.factor, basis: tkDagfactorHeeftBasis(dfo), tegel: [m.querySelector('.k').textContent, m.querySelector('.v').textContent, !!m.querySelector('.lich-src'), (m.querySelector('.w') || {}).textContent || null],
+          oordeel: [h.querySelector('.rd').textContent, h.querySelector('.badge').textContent], hero: h.innerText, ring: h.querySelector('.rring .l').textContent,
+          lijst: document.querySelectorAll('#lich-muslist .lich-mrow').length, breedte: g.scrollWidth };
+      });
+      eq([z.factor, z.basis], [1, false], w + 'px M1 de berekening zelf geeft nog steeds de neutrale 1 zonder basis (ongewijzigd)');
+      eq(z.tegel, ['Dagfactor', '—', false, 'Nog te weinig gegevens'], w + 'px M2 de tegel toont geen getal en geen "berekend", maar "Nog te weinig gegevens"');
+      ok(!/1[.,]00/.test(z.hero) && !/berekend/i.test(z.hero), w + 'px M3 nergens in de dagsamenvatting staat 1.00 of "berekend"');
+      eq(z.oordeel, ['Doe je check-in voor advies', 'Check-in nodig'], w + 'px M4 er ontstaat geen positief dagoordeel uit de neutrale invulling');
+      ok(z.ring === 'Spierherstel' && z.lijst === 4, w + 'px M5 spierherstel en de spiergroeprijen blijven gewoon zichtbaar');
+      const basisBreedte = await page.evaluate(function () { const m = document.querySelectorAll('#lich-hero .grid .m'); return [Math.round(m[0].getBoundingClientRect().width), Math.round(m[1].getBoundingClientRect().width)]; });
+      ok(basisBreedte[0] <= basisBreedte[1] + 2, w + 'px M6 de tekst maakt de Dagfactor-tegel niet breder dan de andere tegels: ' + JSON.stringify(basisBreedte));
+      const fouten = errs.filter(function (e) { return !/fetch|CORS|NetworkError/i.test(e); });
+      ok(fouten.length === 0, w + 'px M7 geen JavaScript-fouten: ' + JSON.stringify(fouten));
       await page.close();
     }
 

@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## v4.70.16 — Dagfactor zonder basis is geen "1.00 berekend"; spierherstel heet overal Spierherstel (7 oktober 2026)
+
+- **Dagfactor — root cause.** `dagfactor()` geeft zonder bruikbare HRV, slaap of cyclusfase van vandaag een neutrale 1.00 terug en legt in `basis` vast dat niets die waarde heeft gevoed. De tegel in de dagsamenvatting op Inzicht las alleen `.factor` en toonde dus "1.00 · berekend", alsof het een uitkomst was.
+- **Oplossing (alleen presentatie).** De tegel volgt de bestaande basiscontrole `tkDagfactorHeeftBasis()`, dezelfde die het dagoordeel sinds v4.70.15 gebruikt. Zonder basis staat er "—" met "Nog te weinig gegevens", zonder het label "berekend". Met basis staat er exact de berekende waarde met "berekend", zoals voorheen. `dagfactor()`, de neutrale invulling en alle drempels zijn ongewijzigd.
+- **Terminologie — root cause.** Het gemiddelde spierherstel uit `v43OverallRecovery()` stond op Inzicht twee keer onder een andere naam: als ring "Spierherstel" en in Snel overzicht als "Herstelstatus". Dat las als twee verschillende metingen.
+- **Oplossing.** Dezelfde metric heet nu overal Spierherstel: het vak in Snel overzicht (ook de lege toestand), het percentage op het spiergroepdetail, het kengetal op Voortgang ("spierherstel") en het bijschrift op het spiergroepenscherm ("gemiddeld spierherstel"). Alleen labels; bron en waarde zijn gelijk gebleven.
+- **Bewust niet hernoemd.** "Herstelstatus vandaag" in de coachcontext is de samengestelde herstelscore (`recovery_score.v1`), een andere metric. Interne namen, registry-ID's en het aria-label van de Home-kaart zijn ongewijzigd. Het kengetal "Herstel" op de Home-kaart toont hetzelfde gemiddelde, maar "Spierherstel" past daar niet in de kolom op smalle schermen; dat is niet gewijzigd.
+- **Niet in deze release: Home.** Home toont zonder basis nog de dagfactor 1 met een positief dagoordeel. Dat oordeel komt uit de Decision Engine (`trainReadiness`, `readinessDay`) en de coach; aanpassen valt buiten presentatie.
+- **Ongewijzigd.** `core/` (Calculation, Decision, DeviceCore), `CORE_SIG`, database, Netlify-functies, coachlogica.
+- **Gate:** `core/fStaleHealthPresentation.test.js` C17–C23, `core/fInzichtHerstelBelasting.test.js` K, L en M (170 controles).
+- sw-cache v470160, versionCode 47016.
+
 ## v4.70.15 — Herstel & belasting staat onder Inzicht; Lichaam is geen eigen bestemming meer (7 oktober 2026)
 
 - **Aanleiding.** Het overzicht met de spierfiguren (`s-lichaam`) had geen eigen ingang meer in de navigatie. Het was alleen bereikbaar via terugknoppen van subschermen, de Profiel-rij Lichaamsgegevens en de omweg Profiel → Wearables & apparaten → "Beheren bij Lichaam" → terug. Het Inzicht-domein Herstel beloofde "Anatomie", maar opende de hersteltrends.

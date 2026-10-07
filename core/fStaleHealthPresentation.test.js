@@ -275,6 +275,18 @@ async function main() {
     eq([tegel(leeg, 'HRV'), tegel(leeg, 'Dagfactor')], [['—', 'gemeten', null], ['—', 'berekend', null]], 'C7 zonder data blijft de hero zoals hij was');
     ok(/tkMetingLabel\(lh\)/.test(LICH) && !/new Date|86400000/.test(tussen(LICH, 'const tile=', '</div>`;')), 'C8 het meetmoment komt uit de bestaande helper; geen tweede datumlogica in de hero');
     ok(/\.lich-rhero \.m \.w\{/.test(HTML), 'C9 het meetmoment heeft een eigen, ingetogen stijlregel');
+    // Het dagoordeel in de hero volgt df.basis; 100% in de ring is spierherstel, geen readiness.
+    const heroMet = async function (hd) { const sb = runtime({ hd: hd }); sb.window.v43LichRec = { overall: 100, rows: [], hasData: true }; return await sb.__lichHero(); };
+    const oordeel = function (h) { return [(/<div class="rd">([^<]*)<\/div>/.exec(h) || [])[1], (/<div class="badge">([^<]*)<\/div>/.exec(h) || [])[1], (/<div class="n">([^<]*)<\/div><div class="l">([^<]*)<\/div>/.exec(h) || []).slice(1, 3)]; };
+    eq(oordeel(await heroMet(kloon(ALLES_OUD))), ['Doe je check-in voor advies', 'Check-in nodig', ['100%', 'Spierherstel']], 'C10 100% spierherstel met alleen verouderde gegevens: geen "Klaar om te trainen", wel de bestaande check-in-vraag');
+    eq(ctx(kloon(ALLES_OUD)).df.basis, { hrv: false, slaap: false, cyclus: false }, 'C11 dat volgt uit de berekening zelf: de dagfactor heeft dan geen basis');
+    const act = oordeel(await heroMet(kloon(ACTUEEL)));
+    eq([act[0], act[2]], ['Klaar om te trainen', ['100%', 'Spierherstel']], 'C12 met een dagfactor die op metingen van vandaag rust blijft het oordeel zoals het was');
+    eq(act[1], runtime({ hd: [] }).dayState(ctx(kloon(ACTUEEL)).df.factor).headline, 'C13 de badge komt ongewijzigd uit DecisionCore.dayZone');
+    const zonderBasis = [{ date: VANDAAG, hrv: null, rhr: 55, sleep: null, cyclus_fase: null, note: null }];
+    eq(oordeel(await heroMet(zonderBasis)).slice(0, 2), ['Nog te weinig gegevens voor advies', 'Gedeeltelijke gegevens'], 'C14 check-in van vandaag zonder slaap en HRV: geen oordeel en geen tweede check-in-vraag');
+    eq(oordeel(await heroMet([]))[0], 'Doe je check-in voor advies', 'C15 zonder enige rij: ongewijzigd');
+    ok(/dfBasis=tkDagfactorHeeftBasis\(dfo\)/.test(LICH) && !/basis\.(hrv|slaap|cyclus)/.test(LICH), 'C16 de hero gebruikt de bestaande helper; geen eigen basisregel');
   }
 
   /* ══ D. Hersteldetail ════════════════════════════════════════════════════ */

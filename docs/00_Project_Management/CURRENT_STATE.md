@@ -6,7 +6,21 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.14
+v4.70.15
+
+## Herstel & belasting onder Inzicht (v4.70.15, 7 oktober 2026)
+
+- Het overzicht van het vroegere Lichaam-scherm staat op Inzicht, direct vóór Domeinen: dagsamenvatting, check-in,
+  datastatus, Herstel & belasting (spierherstel en spierbelasting, voor- en achterzijde), Hersteltrends, Verbanden.
+  Zelfde renderer (`renderLichaam`) en bronnen (`v43OverallRecovery`, `muscleLoadBySvgId`); geen tweede dataketen.
+- `s-lichaam` is geen scherm meer; `go('s-lichaam')` leidt om naar Inzicht. De subschermen `s-lich-*` bestaan
+  ongewijzigd en gaan bronbewust terug (`tkNavGoBack`), met Inzicht als terugval; Gegevens & koppelingen valt terug
+  op Profiel.
+- Cyclus, Gegevens & koppelingen en de vrije voedingsinvoer (`s-nutrition`) staan onder "Gegevens & context".
+- De ring in de dagsamenvatting heet Spierherstel; het dagoordeel ernaast volgt `df.basis` (DEC-IA-001).
+- Open: de tegel Dagfactor toont zonder basis nog steeds 1.00; het vak Herstelstatus in Snel overzicht is hetzelfde
+  spierherstelpercentage onder een andere naam. Beide vragen een productbesluit.
+- Guard: `core/fInzichtHerstelBelasting.test.js`.
 
 ## Typed ingest-provenance voor slaap en HRV (v4.70.14, 7 oktober 2026; migratie_v580 LIVE)
 
@@ -292,7 +306,7 @@ v4.70.14
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.14 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.15 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

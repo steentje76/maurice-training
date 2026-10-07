@@ -11,8 +11,9 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
 
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
-// Alle 13 legacy-schermen (routes) moeten nog exact bestaan in de DOM.
-const legacyScreens = ['s-lichaam','s-lich-spieren','s-lich-spier','s-lich-oefeningen','s-lich-verbanden','s-lich-verband','s-lich-gegevens','s-lich-health','s-lich-cyclus','s-lich-metingen','s-lich-metric','s-stats','s-hist'];
+// Alle legacy-schermen (routes) moeten nog exact bestaan in de DOM. Het Lichaam-overzicht
+// (s-lichaam) is geen scherm meer: de inhoud staat onder Inzicht en de route leidt daarheen om.
+const legacyScreens = ['s-lich-spieren','s-lich-spier','s-lich-oefeningen','s-lich-verbanden','s-lich-verband','s-lich-gegevens','s-lich-health','s-lich-cyclus','s-lich-metingen','s-lich-metric','s-stats','s-hist'];
 legacyScreens.forEach(function(id){
   ok(html.includes('id="' + id + '"'), '1.' + id + ': legacy-scherm-route bestaat nog exact, ongewijzigd');
 });
@@ -23,14 +24,15 @@ const inzichtSrc = html.slice(html.indexOf('function inzichtRenderDomains'), htm
   ok(inzichtSrc.includes("go:'" + dest + "'"), '2.' + dest + ': minstens 1 domain-card wijst naar dit bewezen, bestaande scherm');
 });
 
-// s-lichaam zelf (de hub) blijft het startpunt voor sub-routes die niet direct
-// vanaf Inzicht linken (Cyclus, Gegevens & koppelingen) -- nog steeds bereikbaar
-// via de bestaande, ongewijzigde s-lichaam-hub.
-const lichaamSrc = html.slice(html.indexOf('<div class="scr" id="s-lichaam">'), html.indexOf('<div class="scr" id="s-lich-spieren">'));
-ok(lichaamSrc.includes("go('s-lich-cyclus')"), '3: Cyclus blijft bereikbaar via de ongewijzigde s-lichaam-hub');
-ok(lichaamSrc.includes("go('s-lich-gegevens')"), '4: Gegevens & koppelingen blijft bereikbaar via de ongewijzigde s-lichaam-hub');
-ok(lichaamSrc.includes("go('s-lich-metingen')"), '5: Lichaamsmetingen blijft bereikbaar via de ongewijzigde s-lichaam-hub');
-ok(lichaamSrc.includes("go('s-lich-health')"), '6: Gezondheid & herstel blijft bereikbaar via de ongewijzigde s-lichaam-hub');
+// De hub s-lichaam bestaat niet meer als scherm. Alles wat daar alleen via de hub bereikbaar
+// was, staat nu rechtstreeks op Inzicht; de oude route komt op Inzicht uit (geen dead-end).
+const inzichtScherm = html.slice(html.indexOf('<div class="scr" id="s-inzicht">'), html.indexOf('<div class="scr" id="s-library">'));
+ok(!html.includes('<div class="scr" id="s-lichaam">') && html.includes("if(id==='s-lichaam'){id='s-inzicht';}"), '1.s-lichaam: geen eigen scherm meer; de oude route leidt om naar Inzicht');
+ok(inzichtScherm.includes("go('s-lich-cyclus')"), '3: Cyclus is rechtstreeks vanaf Inzicht bereikbaar');
+ok(inzichtScherm.includes("go('s-lich-gegevens')"), '4: Gegevens & koppelingen is rechtstreeks vanaf Inzicht bereikbaar');
+ok(inzichtSrc.includes("go:'s-lich-metingen'"), '5: Lichaamsmetingen is bereikbaar via het domein Lichaam');
+ok(inzichtSrc.includes("go:'s-lich-health'"), '6: Gezondheid & herstel is bereikbaar via het domein Herstel');
+ok(inzichtScherm.includes("go('s-lich-spieren')") && inzichtScherm.includes("go('s-nutrition')"), '6b: spiergroepen en de vrije voedingsinvoer (legacy) blijven bereikbaar vanaf Inzicht');
 
 // s-stats zelf blijft volledig ongewijzigd -- alle 13 sub-secties (Verbeterd,
 // Consistentie, Multisport, Doelen, Challenges, PR per herhaling, Recente

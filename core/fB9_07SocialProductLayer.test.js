@@ -41,7 +41,7 @@ ok(html.includes('id="s-social"') && html.includes(`onclick="go('s-social')"`),
   // UX App Shell Master Sprint: labels komen sindsdien uit TK_PRIMARY_NAV, niet meer
   // letterlijk in de HTML. Vervangen door: totaal aantal canonical nav-shells onveranderd.
   const aantalNavShells = (html.match(/<nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"><\/nav>/g) || []).length;
-  ok(aantalNavShells === 45, 'D2: geen enkel bottom-nav-blok is toegevoegd of verwijderd -- 45 canonical shells op de huidige main (post UX App Shell Master Sprint); het historische aantal losse labelkopieën (41 op het moment van deze test) is niet meer van toepassing sinds labels uit TK_PRIMARY_NAV komen');
+  ok(aantalNavShells === 44, 'D2: geen enkel bottom-nav-blok is toegevoegd of verwijderd -- 44 canonical shells op de huidige main (45 tot v4.70.15: het losse Lichaam-scherm is opgegaan in Inzicht) (post UX App Shell Master Sprint); het historische aantal losse labelkopieën (41 op het moment van deze test) is niet meer van toepassing sinds labels uit TK_PRIMARY_NAV komen');
 }
 
 // ---- E. Geen dubbele functie-definitie (zelf gevonden en gerepareerde fout tijdens het bouwen) ----

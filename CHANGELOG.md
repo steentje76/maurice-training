@@ -1,5 +1,17 @@
 # Trainingskompas — Changelog
 
+## v4.70.15 — Herstel & belasting staat onder Inzicht; Lichaam is geen eigen bestemming meer (7 oktober 2026)
+
+- **Aanleiding.** Het overzicht met de spierfiguren (`s-lichaam`) had geen eigen ingang meer in de navigatie. Het was alleen bereikbaar via terugknoppen van subschermen, de Profiel-rij Lichaamsgegevens en de omweg Profiel → Wearables & apparaten → "Beheren bij Lichaam" → terug. Het Inzicht-domein Herstel beloofde "Anatomie", maar opende de hersteltrends.
+- **Verplaatst, niet herbouwd.** De inhoud van dat scherm staat nu op Inzicht, direct vóór Domeinen: dagsamenvatting, check-in, datastatus, **Herstel & belasting** (Herstel | Spierbelasting, voor- en achterzijde, legenda, spiergroeprijen), Hersteltrends, Verbanden en de twee uitlegknoppen. Zelfde element-id's, dezelfde renderer (`renderLichaam` → `renderLichaamAnatomie`) en dezelfde bronnen (`v43OverallRecovery`, `muscleLoadBySvgId`). Geen nieuwe berekening en geen tweede dataketen.
+- **Gecontroleerd tegen de vorige versie.** Met dezelfde invoer zijn figuren, legenda, spiergroeprijen, voettekst, hersteltrends en datastatus byte-voor-byte gelijk aan wat het oude scherm tekende, in beide modi.
+- **Routes.** `go('s-lichaam')` leidt in de router om naar Inzicht, dus bewaarde terugkeerpunten lopen niet dood. "Beheren bij Lichaam" is de knop **Gegevens & koppelingen** geworden; die sluit de modal en opent het scherm rechtstreeks. Terug vanuit Gegevens & koppelingen is bronbewust (`tkNavGoBack`): naar Profiel als je daar vandaan kwam, naar Inzicht als je daar vandaan kwam. De terugknoppen van spiergroepen, spiergroepdetail, oefeningen per spiergroep, verbanddetail, cyclus, metricdetail en de vrije voedingsinvoer gaan op dezelfde manier terug (geen heen-en-weer tussen lijst en detail), met Inzicht als terugval. De Profiel-rij Lichaamsgegevens opent rechtstreeks Lichaamsmetingen.
+- **Niets onbereikbaar geworden.** Cyclus, Gegevens & koppelingen en de vrije voedingsinvoer (`s-nutrition`, bewust behouden legacy) hadden alleen een ingang via Lichaam; ze staan nu onder **Gegevens & context**, na Domeinen. Gezondheid & herstel en Lichaamsmetingen waren al domeinen.
+- **100% is spierherstel.** De ring in de dagsamenvatting toont het gemiddelde spierherstel en heet nu **Spierherstel** (was "Herstel"). Het dagoordeel ernaast volgt de bestaande `df.basis`: rust de dagfactor op geen enkele meting van vandaag, dan staat er geen "Klaar om te trainen" meer naast 100%, maar de bestaande vraag om een check-in (of, als de check-in van vandaag er al is, "Nog te weinig gegevens voor advies"). De berekening zelf is niet gewijzigd.
+- **Ongewijzigd.** `core/` (Calculation, Decision, DeviceCore), de database, de subschermen en de overige Inzicht-secties. `CORE_SIG` is gelijk gebleven.
+- **Gate:** `core/fInzichtHerstelBelasting.test.js` (130 controles; echte pagina op 320/360/390/412 px), `core/fStaleHealthPresentation.test.js` C10–C16.
+- sw-cache v470150, versionCode 47015.
+
 ## v4.70.14 — Typed ingest-provenance voor slaap en HRV (GAP-P2-018 R4/R5; migratie nog niet toegepast) (5 oktober 2026)
 
 **Status: code en `migratie_v580.sql` in de repo. De migratie is NIET op productie toegepast.** Tot dat gebeurt werkt de sync zoals voorheen; alleen het type wordt nog niet opgeslagen.

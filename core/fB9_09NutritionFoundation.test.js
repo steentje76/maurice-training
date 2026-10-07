@@ -93,7 +93,7 @@ ok(delAcct.includes("['nutrition_entries', ['user_id']]"),
   // het toenmalige experimentele 'Sociaal'-label op deze 4 schermen), niet meer letterlijk
   // in de HTML. Vervangen door: totaal aantal canonical nav-shells onveranderd.
   const aantalNavShells = (html.match(/<nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"><\/nav>/g) || []).length;
-  ok(aantalNavShells === 45, 'I1: geen brede bottom-nav-refactor buiten de App Shell-migratie -- 45 canonical shells op de huidige main; het historische "Sociaal"-experiment op 4 schermen is opgegaan in de canonical Samen-tab (TK_PRIMARY_NAV)');
+  ok(aantalNavShells === 44, 'I1: geen brede bottom-nav-refactor buiten de App Shell-migratie -- 44 canonical shells op de huidige main (45 tot v4.70.15: het losse Lichaam-scherm is opgegaan in Inzicht); het historische "Sociaal"-experiment op 4 schermen is opgegaan in de canonical Samen-tab (TK_PRIMARY_NAV)');
 }
 
 console.log('fB9_09NutritionFoundation: ' + pass + ' geslaagd, ' + fail + ' mislukt');

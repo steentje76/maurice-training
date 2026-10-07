@@ -37,11 +37,13 @@ ok(HTML.indexOf('TIJDELIJKE PREVIEW-ACCESS (PR #232)') === -1, 'B2: het bijbehor
 
 /* ══ C. Emoji -> lijniconen op Lichaam-hoofdscherm ══ */
 console.log('C. Canonical iconen (Lichaam-hoofdscherm)');
-var LICHAAM_BLOK = slice('<div class="scr" id="s-lichaam">', '<div class="scr" id="s-lich-spieren">');
+// Het Lichaam-overzicht staat onder Inzicht (blok Herstel & belasting t/m Gegevens & context).
+var LICHAAM_BLOK = slice('<div id="inzicht-herstel"', '>Recente inzichten</div>');
+LICHAAM_BLOK = LICHAAM_BLOK.replace(/<div class="tk-card[^>]*id="inzicht-domain-list"><\/div>/, '');
 ['🔗', '🤖', '🏋️', '📈', '⚖️', '＋'].forEach(function (em) {
   ok(LICHAAM_BLOK.indexOf(em) === -1, 'C: emoji "' + em + '" komt niet meer voor op het Lichaam-hoofdscherm');
 });
-ok((LICHAAM_BLOK.match(/<span class="ic"><svg/g) || []).length >= 6, 'C-svg: minstens 6 knoppen gebruiken nu een canonical inline-SVG-icoon i.p.v. emoji');
+ok((LICHAAM_BLOK.match(/<span class="ic"><svg/g) || []).length >= 4, 'C-svg: de vier knoppen met een canonical inline-SVG-icoon (Verbanden, Coach, Training, Gegevens) gebruiken geen emoji');
 // 🌙 (Cyclus) en 🍽️ (Voeding-snelkoppeling) hebben bewust geen canonical
 // equivalent in de icon-registry en zijn NIET aangepast (zie eindrapport) --
 // dit wordt hier bevestigd, niet verzwegen.

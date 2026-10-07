@@ -49,8 +49,8 @@ console.log('5. Legacy labels weg');
 });
 ok(!/🏠|🏋️|🧍|📈|🤖/.test(HTML.slice(HTML.indexOf('const TK_PRIMARY_NAV='), HTML.indexOf('function tkPaintBnav('))),
   '5b: geen emoji meer in de canonical nav-definitie');
-ok((HTML.match(/<nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"><\/nav>/g) || []).length === 45,
-  '5c: alle 45 bnav-instanties zijn lege canonical shells (geen hardcoded duplicaten meer)');
+ok((HTML.match(/<nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"><\/nav>/g) || []).length === 44,
+  '5c: alle 44 bnav-instanties zijn lege canonical shells (geen hardcoded duplicaten meer)');
 
 /* ══ 6-10. Elke tab opent de correcte bestaande root ══ */
 console.log('6-10. Tab-bestemmingen');
@@ -72,8 +72,8 @@ ok(HTML.indexOf('<div class="scr" id="s-profiel">') > -1, '11b: s-profiel bestaa
 
 /* ══ 12-13. Lichaam/Voortgang-functionaliteit blijft bereikbaar ══ */
 console.log('12-13. Lichaam/Voortgang reachability');
-ok(HTML.indexOf('<div class="scr" id="s-lichaam">') > -1, '12: s-lichaam bestaat nog als scherm');
-ok(/onclick="go\('s-lichaam'\)"/.test(HTML), '12b: s-lichaam is nog ergens vanuit de UI bereikbaar');
+ok(HTML.indexOf('<div class="scr" id="s-lichaam">') === -1 && HTML.indexOf('id="inzicht-herstel"') > -1, '12: het Lichaam-overzicht staat onder Inzicht; er is geen los, verborgen scherm meer');
+ok(HTML.indexOf("if(id==='s-lichaam'){id='s-inzicht';}") > -1 && !/onclick="go\('s-lichaam'\)"/.test(HTML), '12b: de oude route leidt om naar Inzicht en geen enkele knop verwijst er nog naar');
 ok(HTML.indexOf('<div class="scr" id="s-stats">') > -1, '13: s-stats (Voortgang-detail) bestaat nog als scherm');
 ok(/onclick="go\('s-stats'\)"/.test(HTML), '13b: s-stats is nog ergens vanuit de UI bereikbaar (o.a. vanuit s-inzicht)');
 

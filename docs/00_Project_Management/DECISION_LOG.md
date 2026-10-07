@@ -2720,3 +2720,31 @@ minimale basisdefinitie (één echte invoer: HRV-oordeel, slaap of cyclusfase).
 - De Home-kaart toont de laatst gemeten slaap zonder meetdatum, ook als die ouder is dan vandaag.
 
 **Status.** Geïmplementeerd in v4.70.17. Guard: `core/fHomeDagfactorBasisSafety.test.js`.
+
+## DEC-DQ-003 — Contextlekken readiness: stale is niet actueel, nooit getraind is geen herstel-evidence (7 oktober 2026)
+
+**Context.** De read-only Readiness Reliability Audit vond na DEC-DQ-002 dezelfde foutklasse op vijf andere plekken
+in de contextlaag (N1–N5): een invulling of een oude waarde die verderop als waarneming werd gelezen.
+
+**Besluit (PO, opdracht Readiness Reliability PR A).** Uitsluitend deze vijf bugs oplossen, in de contextlaag.
+1. **Fallback is geen evidence (N1, N5).** De trainingsintro en de dagfactorreeks gebruiken `tkDagfactorVoorAdvies()`.
+   Zonder bruikbare dagfactor: een neutrale intro, en geen punt in de reeks.
+2. **Nooit getraind is geen gemeten herstel (N2).** Een spierherstelrij telt als evidence voor de herstelscore, de
+   signaaltelling en de readinesscontext alleen met een sessie erachter: `hours !== null`. Eén helper,
+   `tkSpierherstelEvidence()`. De rij `{pct:100, hours:null}` blijft bestaan voor de weergave.
+3. **Stale is niet actueel (N3).** De AI-context gebruikt de gekeurde rijen van `tkHealthQualified()`. Een meting die
+   volgens `READINESS_ONBETROUWBARE_KWALITEIT` niet actueel is staat niet onder de actuele status; zij mag als oudere
+   meting genoemd worden, met datum en leeftijd. Geen nieuwe versheidsdrempel.
+4. **Presentatie gebruikt de Decision-uitkomst (N4).** Het dagoordeel op Inzicht komt uit
+   `DecisionCore.trainReadiness`. De UI heeft geen eigen grenzen.
+
+**Niet gewijzigd.** `core/` (Calculation, Decision, Coaching, DeviceCore), alle drempels, de minimale basisdefinitie,
+evidence-niveaus en `computeProgAdjustment` met zijn invoer: het voorschrift krijgt de rijen ongefilterd.
+
+**Bewust gevolg.** De samengestelde herstelscore daalt wanneer een training spieren bevat die nooit getraind zijn,
+omdat de ingevulde 100 niet meer meetelt. Zonder enige data is er geen score meer (was 100, "hoog").
+
+**Buiten deze wijziging, apart te beoordelen.** N6 (weergave van nooit getrainde spieren: groene figuur, "100%
+Hersteld"), N7 (trainingsbelasting in de signaaltelling), N8, N9 en de open punten van DEC-DQ-002.
+
+**Status.** Geïmplementeerd in v4.70.18. Guard: `core/fReadinessReliabilityContextLeaks.test.js`.

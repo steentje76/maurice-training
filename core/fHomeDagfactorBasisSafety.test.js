@@ -70,7 +70,7 @@ const kloon = function (x) { return JSON.parse(JSON.stringify(x)); };
 /* ══ Deel 1 — de contextgrens ═════════════════════════════════════════════════ */
 const NAMEN = ['td', 'tkSleepHours', 'lnRmssd', 'hrvBaseline', 'hrvRollingRecent', 'hrvStPersonal', 'hrvDagFactorPersonal', 'slaapDagFactor', 'cyclusDagFactor',
   'tkCyclusFaseVandaag', 'tkHealthFailClosed', 'tkHealthQualified', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor', 'tkDagfactorHeeftBasis',
-  'tkDagfactorVoorAdvies', 'tkCheckinVandaag', 'recoveryScoreFrom', 'rhrBaselineDelta', 'v43GereedheidScore', 'tkReadinessVandaag', 'computeProgAdjustment',
+  'tkDagfactorVoorAdvies', 'tkCheckinVandaag', 'tkSpierherstelEvidence', 'recoveryScoreFrom', 'rhrBaselineDelta', 'v43GereedheidScore', 'tkReadinessVandaag', 'computeProgAdjustment',
   'dagfactorUitleg', 'tkNietMeegeteldTxt', 'tkMetingNa', 'joinNl', 'buildCoachAdvice', 'buildCoachTraining', 'buildCoachIntro', 'buildMorningMessage',
   'dayState', 'trainReadiness'];
 const REFRESH = extractFn(HTML, 'refreshHome');

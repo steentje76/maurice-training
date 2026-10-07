@@ -96,6 +96,17 @@ positieve grens van DEC-READY-001 en `dayzone.v1`. De veiligheid hangt dus af va
 Tot v4.70.16 verloor `refreshHome()` de `basis`; het veilige pad werd op Home daardoor nooit bereikt. Guard:
 `core/fHomeDagfactorBasisSafety.test.js`.
 
+### Dezelfde voorwaarde voor spierherstel en voor de AI-context (DEC-DQ-003)
+
+- Een spierherstelrij zonder sessie (`hours === null`, `pct` 100) is een invulling voor de weergave. Als evidence telt
+  alleen een rij met een sessie erachter; `tkSpierherstelEvidence()` is de ene plek voor die regel. DEC-RECADJ-001
+  krijgt de rijen ongefilterd: 100% kan daar geen verlaging geven.
+- De AI-context krijgt gekeurde healthrijen. Een niet-actuele meting staat nooit onder de actuele status; zij wordt
+  hooguit als oudere meting genoemd, met datum en leeftijd (`tkAiHealthStatus()`).
+- De dagfactorreeks voor verbanden bevat alleen dagen met basis.
+
+Guard: `core/fReadinessReliabilityContextLeaks.test.js`.
+
 ## AI Quality Boundary — bevestigd op prompt-niveau, niet op technisch-afdwingbaar niveau (sectie 22, MS-F3-09-reconciliatie)
 De AI ontvangt uitsluitend reeds-besloten Decision-uitkomsten met expliciete promptinstructie deze niet te wijzigen. Bij onvoldoende data levert de Decision Engine zelf al `geen_advies`/`null`. **Precieze formulering (gecorrigeerd t.o.v. een eerdere, te sterke claim):** dit betekent dat de deterministische upstream-keten de AI geen gefabriceerde Decision-waarde aanreikt en het model instrueert deze grens te respecteren — het betekent NIET dat het technisch onmogelijk is voor een AI-modelantwoord om van deze instructie af te wijken. Er bestaat momenteel geen technische output-validator die elk afwijkend AI-antwoord afdwingbaar blokkeert; dat is expliciet **GAP-P1-003, met bestemming F4 (AI Output Contract)** — geen F3-capability. F3 claimt dus: "de AI krijgt nooit een gefabriceerde waarde aangereikt en wordt geïnstrueerd de grens te respecteren", niet: "de AI kan technisch onmogelijk fabriceren."
 

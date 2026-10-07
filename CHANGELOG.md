@@ -1,5 +1,20 @@
 # Trainingskompas — Changelog
 
+## v4.70.18 — Readiness-betrouwbaarheid: vijf lekken in de contextlaag gedicht (7 oktober 2026)
+
+Bugfix op de bevindingen N1–N5 uit de read-only Readiness Reliability Audit. `core/` is niet gewijzigd: geen formule, geen drempel, geen evidence-niveau, geen voorschriftregel (DEC-DQ-003).
+
+- **N1 — trainingsintro.** `buildTrainIntro()` begon op de toestand "goed" en zei zonder enige meting "Je herstel is goed — focus op sterke, gecontroleerde sets." De intro vraagt de dagfactor nu via `tkDagfactorVoorAdvies()`. Zonder bruikbare dagfactor staat er een neutrale zin ("Train zoals gepland en let op hoe het vandaag voelt.") in een neutrale kleur. Met basis zijn zin en kleur per dagzone gelijk aan voorheen.
+- **N2 — nooit getraind is geen gemeten herstel.** `getRelevantMuscleRecovery()` geeft voor een spier zonder sessie `{pct:100, hours:null}`. Die 100 telde mee in de herstelscore: een training starten zonder enige data gaf herstelscore 100, band "hoog", en dat ging naar de live coach en de AI. Eén helper, `tkSpierherstelEvidence()` (`hours !== null`), bepaalt welke rijen evidence zijn; `recoveryScoreFrom()` en het spierherstelsignaal naar `readinessDay()` gebruiken hem. De rij `{pct:100, hours:null}` zelf blijft bestaan voor de weergave.
+- **Gevolg voor de herstelscore.** Zonder data: was 100 / hoog, nu geen score. Alleen 8 uur slaap en twee nooit getrainde spieren: was 85 / hoog, nu 75 / gemiddeld. Dagfactor 0.97, één spier op 60% en twee nooit getraind: was 71, nu 60. Alle spieren met historie: ongewijzigd.
+- **N3 — AI-context.** `buildCtx()` las `hrv_log` rauw en zette een rij van tien dagen oud onder "HUIDIGE STATUS" zonder datum. De rijen gaan nu door `tkHealthQualified()`; de statusregel komt uit `tkAiHealthStatus()`. Een actuele waarde staat er zoals voorheen, met haar meetmoment als ze niet van vandaag is. Een meting die volgens de bestaande kwaliteitsstatus niet actueel is staat niet tussen de actuele waarden maar op een aparte regel "Oudere metingen (NIET actueel …)" met leeftijd en meetdatum. Het 7-daags gemiddelde en de HRV-toelichting vervallen bij een niet-actuele HRV. Geen nieuwe versheidsdrempel.
+- **N4 — één dagoordeel.** De dagsamenvatting op Inzicht gebruikte eigen gereedheidsgrenzen (70/45). Bij dagfactor 0.93 zei Home "Train op gevoel" en Inzicht "Houd het licht vandaag"; bij 0.99 zei Inzicht "Klaar om te trainen". Inzicht gebruikt nu `DecisionCore.trainReadiness`, net als Home.
+- **N5 — dagfactorreeks.** `tkDagfactorReeksen()` nam dagen zonder basis op als dagfactor 1 en gereedheid 75. Zo'n dag komt niet meer in de reeks (zelfde regel, `tkDagfactorVoorAdvies()`). Geen interpolatie; dagen met basis houden exact hun waarde.
+- **Trainingsvoorschrift ongewijzigd.** `computeProgAdjustment()` krijgt de spierherstelrijen ongefilterd, zoals voorheen. Een nooit getrainde rij heeft 100% en kan geen verlaging veroorzaken; voor 320 combinaties van dagfactor, rijen, gevoel en pijn is de uitkomst met en zonder die rijen gelijk. Sets, reps, gewicht en RPE/RIR worden door geen van de gewijzigde functies geraakt. Een training zonder readinessdata start gewoon.
+- **Bewust niet gewijzigd:** de weergave van een nooit getrainde spier (groene figuur, "100% Hersteld", "volledig hersteld"), de signaaltelling van trainingsbelasting, of één slaapmeting of alleen een cyclusfase genoeg basis is, en de sterkte van de positieve zinnen.
+- **Gate:** `core/fReadinessReliabilityContextLeaks.test.js` (133 controles met de echte functies en cores; faalt per teruggedraaide fix).
+- sw-cache v470180, versionCode 47018.
+
 ## v4.70.17 — Home: een numerieke fallback is geen evidence (7 oktober 2026)
 
 - **Bug.** Zonder actuele meting toonde Home toch een positief beeld: "Klaar om te trainen — je lichaam is goed hersteld en klaar voor optimale prestaties", Dagfactor 1, Gereedheid 75, "Goed hersteld", herstelscore 75/100 en "Je herstel is sterk". Dat gebeurde met alleen gegevens van een week of ouder, met een check-in zonder slaap en zonder HRV-oordeel, en bij elke nieuwe gebruiker die in de eerste 14 dagen alleen HRV invult.

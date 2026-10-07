@@ -48,7 +48,7 @@ function tussen(src, van, tot) {
 }
 const NAMEN = ['td', 'tkSleepHours', 'tkFmtSleepHours', 'fmtSleep', 'v43SlaapTxt', 'v43RecColor', 'lnRmssd', 'hrvBaseline', 'hrvRollingRecent',
   'hrvStPersonal', 'hrvDagFactorPersonal', 'slaapDagFactor', 'cyclusDagFactor', 'tkCyclusFaseVandaag', 'tkHealthFailClosed', 'tkHealthQualified',
-  'tkHealthVandaag', 'tkNietMeegeteldTxt', 'tkMetingNa', 'tkNietMeeHtml', 'tkStatusLabel', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor', 'tkDagfactorHeeftBasis', 'tkDagfactorVoorAdvies', 'tkCheckinVandaag',
+  'tkHealthVandaag', 'tkNietMeegeteldTxt', 'tkMetingNa', 'tkNietMeeHtml', 'tkStatusLabel', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor', 'tkDagfactorHeeftBasis', 'tkDagfactorVoorAdvies', 'tkCheckinVandaag', 'trainReadiness', 'tkSpierherstelEvidence',
   'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle', 'recoveryAdjustmentForToday', 'computeProgAdjustment', 'v43GereedheidScore',
   'tkReadinessVandaag', 'fmtDate', 'capitalize', 'tkMetingHerkomst', 'tkMetingWanneer', 'tkMetingLabel', 'openRecoveryDetail',
   'dagfactorStatus', 'dayState', 'dagfactorCoach', 'dagfactorUitleg', 'renderDagfactorDetail'];

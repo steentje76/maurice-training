@@ -1,5 +1,19 @@
 # Trainingskompas — Changelog
 
+## v4.70.17 — Home: een numerieke fallback is geen evidence (7 oktober 2026)
+
+- **Bug.** Zonder actuele meting toonde Home toch een positief beeld: "Klaar om te trainen — je lichaam is goed hersteld en klaar voor optimale prestaties", Dagfactor 1, Gereedheid 75, "Goed hersteld", herstelscore 75/100 en "Je herstel is sterk". Dat gebeurde met alleen gegevens van een week of ouder, met een check-in zonder slaap en zonder HRV-oordeel, en bij elke nieuwe gebruiker die in de eerste 14 dagen alleen HRV invult.
+- **Root cause.** `dagfactor()` geeft zonder HRV-oordeel, slaap en cyclusfase een neutrale 1.00 terug en meldt in `basis` dat niets die waarde heeft gevoed. `refreshHome()` maakte daarvan `dfInfo={factor, uitleg, hero, st}`, zonder `basis`. De 1.00 was daarna niet van een meting te onderscheiden en ligt precies op de positieve grens van elke regel (`trainReadiness` f ≥ 1.00, `dayZone` ≥ 1.00, `readinessPercent` = 75). Ook de herstelscore nam de invulling mee: DEC-DQ-001 punt 6 werd op Home niet afgedwongen.
+- **Oplossing: de contextgrens (DEC-DQ-002).** `dfInfo` draagt `basis` mee. Eén helper, `tkDagfactorVoorAdvies()`, bepaalt of een dagfactor bruikbaar is voor een oordeel: dagfactor aanwezig én basis aanwezig. Zonder basis geeft de contextlaag `null` door en volgt de Decision Engine haar bestaande pad zonder dagfactor: geen zone, geen advies. Een object zonder `basis` (een kaal getal) is niet bruikbaar.
+- **Wat de sporter nu ziet zonder basis.** Dagfactor "—", Gereedheid "—", geen herstelscore uit de invulling en de bestaande readinesstekst "Ik heb hiervoor vandaag niet genoeg gegevens". Zonder rij voor vandaag: "Doe je check-in". Met een rij voor vandaag maar zonder basis: "Nog te weinig gegevens voor advies — je check-in van vandaag is er, maar slaap of een HRV-oordeel ontbreekt nog". Gemeten slaap en spierherstel blijven staan.
+- **Ook gedekt.** `_tkReadiness` (geen positieve zone), de live coach en de consistentiebrug vóór een training (lezen alleen een bruikbaar besluit), de AI-payload (geen zone, geen score), de melding na een check-in (geen "Dagfactor 1" zonder basis) en de nu verborgen Home-blokken (ochtendgroet, dashboard, coachadvies, dagfactorkaart).
+- **Ongewijzigd met echte data.** Met een basis zijn dagfactor, gereedheid, zone, teksten en `_tkReadiness` gelijk aan voorheen; getest voor positief (1.05), negatief (0.85), voorzichtig (0.93) en alleen-slaap (1 met basis). `core/` is niet gewijzigd: Calculation, Decision Engine, CoachingCore, drempels en de minimale basisdefinitie.
+- **Home-kengetal heet Spierherstel** (was "Herstel"; zelfde `v43OverallRecovery()`). Op smalle schermen breekt het label op een zacht afbreekstreepje, net als "Gereedheid"; alle vier labels houden dezelfde hoogte.
+- **Dagsamenvatting onder 360 px.** De vier tegels pasten niet naast elkaar en liepen buiten de kaart; onder 360 px staan ze 2×2.
+- **Vastgelegd als follow-up, niet gewijzigd:** de sterkte van de positieve zinnen bij geldige data ("optimale prestaties", "grootste kans op progressie") en of alleen slaap genoeg basis is voor een positieve claim. Zie DEC-DQ-002.
+- **Gate:** `core/fHomeDagfactorBasisSafety.test.js` (186 controles: de contextgrens met de echte functies, en de echte Home-flow via `refreshHome()` voor S1–S8 en 320–412 px). `fStaleHealthPresentation` B15/B17 en `fRecoveryReadinessQualityWiring` G0 bijgewerkt.
+- sw-cache v470170, versionCode 47017.
+
 ## v4.70.16 — Dagfactor zonder basis is geen "1.00 berekend"; spierherstel heet overal Spierherstel (7 oktober 2026)
 
 - **Dagfactor — root cause.** `dagfactor()` geeft zonder bruikbare HRV, slaap of cyclusfase van vandaag een neutrale 1.00 terug en legt in `basis` vast dat niets die waarde heeft gevoed. De tegel in de dagsamenvatting op Inzicht las alleen `.factor` en toonde dus "1.00 · berekend", alsof het een uitkomst was.

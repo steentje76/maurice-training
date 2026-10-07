@@ -2680,3 +2680,43 @@ hetzelfde spierherstelpercentage stond op Inzicht onder twee namen (Spierherstel
   de kolom.
 
 **Status.** Geïmplementeerd in v4.70.16.
+
+## DEC-DQ-002 — Een numerieke fallback is geen evidence; de contextlaag behoudt de basis (7 oktober 2026)
+
+**Context.** `dagfactor()` geeft zonder HRV-oordeel, slaap en cyclusfase een neutrale 1.00 terug en legt in `basis`
+vast dat niets die waarde heeft gevoed. Home maakte daarvan `dfInfo={factor, uitleg, hero, st}`, zonder `basis`. De
+1.00 was daarna niet meer van een meting te onderscheiden en ligt precies op de positieve grens van elke regel
+(`trainReadiness` f ≥ 1.00, `dayZone` ≥ 1.00, `readinessPercent` = 75). Met alleen verouderde gegevens, of met een
+check-in zonder slaap en zonder HRV-oordeel, toonde Home daardoor "Klaar om te trainen", Dagfactor 1, Gereedheid 75,
+herstelscore 75/100, "Je herstel is sterk" en een positieve zone in `_tkReadiness`. DEC-DQ-001 punt 6 werd op Home
+niet afgedwongen.
+
+**Besluit (PO, 7 oktober 2026).**
+1. **Een numerieke fallback is geen evidence.** De interne uitkomst van de berekening mag 1.00 blijven; voor alles
+   wat een oordeel of advies is geldt: *bruikbaar voor advies = dagfactor aanwezig EN basis aanwezig*.
+2. **De contextlaag behoudt de basis.** `dfInfo` draagt `basis` mee en wordt nooit meer een kaal getal. Een object
+   zonder `basis` is niet bruikbaar voor advies (fail-closed).
+3. **Eén plek.** `tkDagfactorVoorAdvies()` bepaalt dit, met de bestaande `tkDagfactorHeeftBasis()`. Zonder bruikbare
+   dagfactor geeft de contextlaag `null` door; de Decision Engine volgt dan haar bestaande pad zonder dagfactor
+   (geen zone, geen advies). Er is geen nieuwe beslisregel.
+4. **Tekst zonder advies.** Geen rij voor vandaag: de bestaande check-in-vraag. Wel een rij voor vandaag maar geen
+   basis: "Nog te weinig gegevens voor advies". Er wordt nooit gezegd dat een check-in ontbreekt die er is.
+5. **Gemeten waarden blijven zichtbaar.** Slaap en spierherstel staan er nog; alleen het oordeel vervalt.
+6. Dezelfde regel geldt voor de melding na een check-in, voor `_tkReadiness`, de live coach en de AI-payload.
+
+**Niet gewijzigd.** `CalcCore.calculateDayFactor`, `dagfactor()`, de neutrale 1.00, `readinessPercent`,
+`recoveryScore`, `DecisionCore.trainReadiness`, `dayZone`, `readinessDay`, `CoachingCore`, alle drempels en de
+minimale basisdefinitie (één echte invoer: HRV-oordeel, slaap of cyclusfase).
+
+**Follow-up, apart te beoordelen (niet in deze wijziging).**
+- *Sterkte van de positieve claims bij geldige data.* Zinnen als "klaar voor optimale prestaties", "Je herstel is
+  sterk" en "grootste kans op progressie" volgen uit een dagfactor ≥ 1.00 (evidence C, "puur informatief"). De
+  readinesskaart kent hiervoor een lijst verboden formuleringen (`READINESS_VERBODEN_WOORDEN`); deze oudere Home-zinnen
+  vallen daarbuiten. Vraagt een evidence-/coachingreview.
+- *Minimale basis voor een positieve claim.* Alleen een geldige slaapduur van vandaag telt nu als basis en geeft
+  hetzelfde positieve beeld. Dat is het huidige contract; een hogere minimumbasis is een nieuw productbesluit.
+- De readinesskaart zegt zonder dagfactor "Vul je check-in in", ook wanneer de check-in van vandaag er al is
+  (tekst uit `CoachingCore`, niet gewijzigd).
+- De Home-kaart toont de laatst gemeten slaap zonder meetdatum, ook als die ouder is dan vandaag.
+
+**Status.** Geïmplementeerd in v4.70.17. Guard: `core/fHomeDagfactorBasisSafety.test.js`.

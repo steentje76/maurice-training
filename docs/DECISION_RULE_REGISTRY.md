@@ -81,3 +81,10 @@ inline threshold op een nutrition-waarde zelf (geen "protein < X"),
 en zijn expliciet geverifieerd via `core/fNutritionIntelligenceCore.test.js`
 (D1: repo-brede afwezigheid van waarde-vergelijkingen op
 protein/fluid/energy/carbohydrate-velden).
+
+## Voorwaarde aan de dagfactor-invoer (DEC-DQ-002)
+
+DEC-READY-001 en DEC-READYDAY-001 nemen de dagfactor als getal en kunnen een neutrale invulling (1.00 zonder basis)
+niet van een meting onderscheiden. De aanroeper geeft daarom alleen een dagfactor door die volgens
+`tkDagfactorVoorAdvies()` bruikbaar is (dagfactor aanwezig EN `basis` aanwezig); anders `null`. De regels zelf en hun
+drempels zijn ongewijzigd. Zie `docs/DATA_QUALITY_CONFIDENCE_CONTRACT.md` en DEC-DQ-002.

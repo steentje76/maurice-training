@@ -48,7 +48,7 @@ function tussen(src, van, tot) {
 }
 const NAMEN = ['td', 'tkSleepHours', 'tkFmtSleepHours', 'fmtSleep', 'v43SlaapTxt', 'v43RecColor', 'lnRmssd', 'hrvBaseline', 'hrvRollingRecent',
   'hrvStPersonal', 'hrvDagFactorPersonal', 'slaapDagFactor', 'cyclusDagFactor', 'tkCyclusFaseVandaag', 'tkHealthFailClosed', 'tkHealthQualified',
-  'tkHealthVandaag', 'tkNietMeegeteldTxt', 'tkMetingNa', 'tkNietMeeHtml', 'tkStatusLabel', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor', 'tkDagfactorHeeftBasis',
+  'tkHealthVandaag', 'tkNietMeegeteldTxt', 'tkMetingNa', 'tkNietMeeHtml', 'tkStatusLabel', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor', 'tkDagfactorHeeftBasis', 'tkDagfactorVoorAdvies', 'tkCheckinVandaag',
   'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle', 'recoveryAdjustmentForToday', 'computeProgAdjustment', 'v43GereedheidScore',
   'tkReadinessVandaag', 'fmtDate', 'capitalize', 'tkMetingHerkomst', 'tkMetingWanneer', 'tkMetingLabel', 'openRecoveryDetail',
   'dagfactorStatus', 'dayState', 'dagfactorCoach', 'dagfactorUitleg', 'renderDagfactorDetail'];
@@ -60,6 +60,7 @@ const HOME_BLOK = tussen(REFRESH, 'const hrvComponent=hrvDagFactorPersonal(hd);'
 const LICH_BLOK = tussen(LICH, 'let hd=[]; let lh=null; let hq=null;', '// Body/Health foundation + apparaatstatus');
 const PROD = NAMEN.map(function (n) { return extractFn(HTML, n); }).join('\n') +
   '\nconst HRV_BASELINE_MIN_DAYS = CalcCore.HRV_BASELINE_MIN_DAYS;' +
+  '\n' + (/const TK_GEEN_ADVIES_TXT='[^']*';/.exec(HTML) || [''])[0] + (/const TK_GEEN_ADVIES_SUB='[^']*';/.exec(HTML) || [''])[0] +
   '\nfunction __homeKaart(hdRuw){ const hq=tkHealthQualified(hdRuw); const hd=hq.rows; const lh=hd[0]; let dfInfo=null; if(!lh) return null;\n' + HOME_BLOK +
   '\n return {dfInfo:dfInfo, detail:window.homeDfDetail, kaart:document.getElementById(\'home-hrv-card\').innerHTML}; }' +
   '\nasync function __lichHero(){ const rec=window.v43LichRec||{overall:100,rows:[],hasData:false}; const rows=rec.rows||[];\n' + LICH_BLOK + '\n return document.getElementById(\'lich-hero\').innerHTML; }';
@@ -84,7 +85,7 @@ function home(hd) {
   const r = sb.__homeKaart(hd);
   sb.renderDagfactorDetail();
   const tech = (r.kaart.match(/<div class="df-tech">([^<]*)<\/div>/) || [null, null])[1];
-  return { sb: sb, dfInfo: r.dfInfo, detail: r.detail, tech: tech, waarom: sb.__els['dagfactor-detail'].innerHTML, ring: (r.kaart.match(/<div class="df-ring-val">([^<]*)<\/div>/) || [])[1] };
+  return { sb: sb, dfInfo: r.dfInfo, detail: r.detail, kaart: r.kaart, tech: tech, waarom: sb.__els['dagfactor-detail'].innerHTML, ring: (r.kaart.match(/<div class="df-ring-val">([^<]*)<\/div>/) || [])[1] };
 }
 async function keten(hd, recRows) {
   const sb = runtime({ hd: hd, recRows: recRows });
@@ -180,9 +181,12 @@ async function main() {
     const h = home(kloon(ALLES_OUD));
     eq(h.tech, 'HRV van 10 dagen geleden telt vandaag niet mee, slaap van 10 dagen geleden telt vandaag niet mee', 'B13 beide verouderd: de uitleg noemt geen van beide als reden en toont geen datum');
     ok(!/referentiefase|slaap voldoende|HRV goed/.test(h.tech + h.waarom), 'B14 nergens "referentiefase" of "slaap voldoende" voor verouderde data');
-    eq([h.ring, h.detail.hrv, h.detail.rhr, h.detail.sleep, h.detail.sig, h.detail.conf, h.detail.st, h.detail.date], ['1', null, null, null, 0, 'Laag', 'ref', ''], 'B15 dagfactor 1 (neutraal), 0/3 signalen, confidence Laag, geen gezamenlijke datum');
+    eq([h.ring, h.detail.hrv, h.detail.rhr, h.detail.sleep, h.detail.sig, h.detail.conf, h.detail.st, h.detail.date], ['—', null, null, null, 0, 'Laag', 'ref', ''], 'B15 zonder basis toont de kaart geen dagfactor (—); 0/3 signalen, confidence Laag, geen gezamenlijke datum');
+    eq([h.dfInfo.factor, h.dfInfo.basis, h.detail.heeftBasis, h.detail.factor, h.sb.tkDagfactorVoorAdvies(h.dfInfo)], [1, { hrv: false, slaap: false, cyclus: false }, false, 1, null], 'B15b de rekenwaarde blijft 1 en gaat MET haar basis door de contextlaag; voor advies is zij niet bruikbaar');
+    ok(/<div class="df-headline geen">Doe je check-in voor advies<\/div>/.test(h.kaart) && !/Goede dag|uitstekende dag/.test(h.kaart + h.waarom), 'B15c geen positieve dagkop uit de neutrale invulling');
+    eq(rij(h.waarom, 'Dagfactor'), '— · nog te weinig gegevens', 'B15d "Waarom vandaag?": de regel Dagfactor toont geen getal');
     ok(rij(h.waarom, 'Herstelsignalen') === '—' && /^HRV \d+ ms \(10 dagen geleden\) · RHR \d+ \(10 dagen geleden\) · slaap [^(]* \(10 dagen geleden\)$/.test(rij(h.waarom, 'Telt vandaag niet mee')), 'B16 "Waarom vandaag?": geen herstelsignalen; de drie laatste metingen staan apart met hun meetmoment');
-    ok(/Confidence: Laag \(0\/3 signalen\)/.test(h.waarom) && /1 = HRV 1\.00 × slaap 1\.00/.test(h.waarom), 'B17 de formuleregel toont de werkelijk gebruikte (neutrale) factoren');
+    ok(/Confidence: Laag \(0\/3 signalen\)/.test(h.waarom) && /Geen dagfactor voor vandaag: geen van de signalen voedt hem\. De rekenwaarde 1 \(HRV 1\.00 × slaap 1\.00\) is een neutrale invulling, geen meting\./.test(h.waarom) && !/1 = HRV/.test(h.waarom), 'B17 de formuleregel blijft controleerbaar (de neutrale factoren staan er), maar presenteert de 1 als invulling en niet als uitkomst');
     const cyc = kloon(ALLES_OUD); cyc.unshift({ date: VANDAAG, hrv: null, rhr: null, sleep: null, cyclus_fase: 'luteaal' });
     const c = home(cyc);
     eq(c.tech, 'cyclus: luteaal, HRV van 10 dagen geleden telt vandaag niet mee, slaap van 10 dagen geleden telt vandaag niet mee · ' + VANDAAG, 'B18 een ander actueel onderdeel (cyclusfase van vandaag) wordt wel als reden uitgelegd');

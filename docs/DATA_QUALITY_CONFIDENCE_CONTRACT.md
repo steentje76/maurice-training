@@ -79,6 +79,23 @@ Repo-brede zoekactie naar `||0`/`??0`-patronen op RPE/HRV/gewicht/reps leverde g
 
 **Alle 9 regels bevestigd veilig: geen enkele produceert een harde aanbeveling bij onvoldoende data.**
 
+### Voorwaarde aan de aanroeper: een numerieke fallback is geen evidence (DEC-DQ-002)
+
+De regels hierboven zijn veilig bij een ONTBREKENDE invoer (`null`). Ze kunnen een neutrale invulling niet van een
+meting onderscheiden: `dagfactor()` geeft zonder HRV-oordeel, slaap en cyclusfase 1.00 terug, en 1.00 ligt op de
+positieve grens van DEC-READY-001 en `dayzone.v1`. De veiligheid hangt dus af van de contextlaag:
+
+- `dagfactor()` meldt in `basis` welke invoer de factor werkelijk heeft gevoed. Die `basis` moet de contextlaag
+  behouden; een dagfactor zonder `basis` is een kaal getal.
+- `tkDagfactorVoorAdvies()` (index.html) is de ene plek die bepaalt of een dagfactor bruikbaar is voor een oordeel of
+  advies: dagfactor aanwezig EN basis aanwezig. Anders geeft de contextlaag `null` door.
+- Geldt voor DEC-READY-001, DEC-READYDAY-001, `dayzone.v1`, de gereedheid (`readinessPercent`), de herstelscore
+  (dagfactorcomponent) en elke tekst die daaruit volgt, inclusief `_tkReadiness`, de live coach en de AI-payload.
+- DEC-RECADJ-001 krijgt de factor ongewijzigd: 1.00 betekent daar "geen aanpassing", wat geen positieve claim is.
+
+Tot v4.70.16 verloor `refreshHome()` de `basis`; het veilige pad werd op Home daardoor nooit bereikt. Guard:
+`core/fHomeDagfactorBasisSafety.test.js`.
+
 ## AI Quality Boundary — bevestigd op prompt-niveau, niet op technisch-afdwingbaar niveau (sectie 22, MS-F3-09-reconciliatie)
 De AI ontvangt uitsluitend reeds-besloten Decision-uitkomsten met expliciete promptinstructie deze niet te wijzigen. Bij onvoldoende data levert de Decision Engine zelf al `geen_advies`/`null`. **Precieze formulering (gecorrigeerd t.o.v. een eerdere, te sterke claim):** dit betekent dat de deterministische upstream-keten de AI geen gefabriceerde Decision-waarde aanreikt en het model instrueert deze grens te respecteren — het betekent NIET dat het technisch onmogelijk is voor een AI-modelantwoord om van deze instructie af te wijken. Er bestaat momenteel geen technische output-validator die elk afwijkend AI-antwoord afdwingbaar blokkeert; dat is expliciet **GAP-P1-003, met bestemming F4 (AI Output Contract)** — geen F3-capability. F3 claimt dus: "de AI krijgt nooit een gefabriceerde waarde aangereikt en wordt geïnstrueerd de grens te respecteren", niet: "de AI kan technisch onmogelijk fabriceren."
 

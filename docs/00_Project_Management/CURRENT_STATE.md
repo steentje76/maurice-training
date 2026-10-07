@@ -6,7 +6,23 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.16
+v4.70.17
+
+## Home: een numerieke fallback is geen evidence (v4.70.17, 7 oktober 2026)
+
+- `dfInfo` op Home draagt `basis` mee. `tkDagfactorVoorAdvies()` is de ene plek die bepaalt of een dagfactor
+  bruikbaar is voor een oordeel of advies (dagfactor aanwezig én basis aanwezig); anders gaat `null` de
+  Decision Engine in. De berekening, de neutrale 1.00 en alle drempels zijn ongewijzigd (DEC-DQ-002).
+- Zonder basis toont Home geen dagfactor, geen gereedheid, geen positieve zone en geen positieve coachregel.
+  Tekst: "Doe je check-in" zonder rij voor vandaag, "Nog te weinig gegevens voor advies" met een rij voor vandaag.
+  Gemeten slaap en spierherstel blijven zichtbaar. Geldt ook voor `_tkReadiness`, de live coach, de AI-payload en
+  de melding na een check-in.
+- Het Home-kengetal voor `v43OverallRecovery()` heet Spierherstel. De dagsamenvatting op Inzicht staat onder
+  360 px in 2×2.
+- Open (follow-up, zie DEC-DQ-002): sterkte van de positieve claims bij geldige data; of alleen slaap genoeg
+  basis is; de readinesskaart zegt zonder dagfactor "Vul je check-in in" ook als die er is; de Home-kaart toont
+  de laatst gemeten slaap zonder meetdatum.
+- Guard: `core/fHomeDagfactorBasisSafety.test.js`.
 
 ## Dagfactor-presentatie en herstelterminologie (v4.70.16, 7 oktober 2026)
 
@@ -15,9 +31,8 @@ v4.70.16
 - Het gemiddelde spierherstel (`v43OverallRecovery().overall`) heet overal Spierherstel: ring, Snel overzicht,
   spiergroepdetail, Voortgang en het spiergroepenscherm. "Herstelstatus" bestaat alleen nog in de coachcontext,
   voor de samengestelde herstelscore.
-- Open: Home toont zonder basis nog dagfactor 1 met een positief dagoordeel (Decision Engine en coach); het kengetal
-  "Herstel" op de Home-kaart is hetzelfde spierherstel. De tegels van de dagsamenvatting lopen onder 350 px breedte
-  buiten de kaart (bestond al). Zie DEC-IA-002.
+- De drie open punten uit deze release (Home zonder basis, Home-label, smalle dagsamenvatting) zijn opgelost in
+  v4.70.17.
 - Guard: `core/fStaleHealthPresentation.test.js` C17–C23, `core/fInzichtHerstelBelasting.test.js` K/L/M.
 
 ## Herstel & belasting onder Inzicht (v4.70.15, 7 oktober 2026)
@@ -317,7 +332,7 @@ v4.70.16
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.16 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.17 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

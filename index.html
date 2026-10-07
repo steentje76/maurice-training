@@ -2324,6 +2324,9 @@ html[data-theme="dark"]{--v45-slate:#9db4c0}
 /* Hero — dagfactor-cirkel als status + 4 kolommen */
 #home-hero .v43-stats{gap:5px}
 #home-hero .v43-stat-v{font-size:18px}
+/* Smalle schermen: Spierherstel en Gereedheid breken op het zachte afbreekstreepje i.p.v. over het
+   kengetal ernaast te lopen. Alle vier labels houden dezelfde hoogte, zodat de rij uitgelijnd blijft. */
+@media(max-width:400px){#home-hero .v43-stat-k{min-height:36px}}
 .v43-stat-df{display:flex;flex-direction:column}
 .v43-df-circle{width:38px;height:38px;border-radius:50%;border:2.5px solid;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;margin-bottom:10px;background:rgba(0,184,148,.06)}
 html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
@@ -2952,6 +2955,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .rd{font-size:19px;font-weight:800;color:#fff;letter-spacing:-.3px;margin-top:3px;line-height:1.1}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#0b2a35;background:var(--accent);padding:4px 11px;border-radius:20px;margin-top:8px}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .grid{display:flex;gap:8px;margin-top:16px}
+/* Onder 360 px passen vier tegels niet naast elkaar (minimaal 64 px per tegel): dan 2×2. */
+@media(max-width:359px){:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .grid{display:grid;grid-template-columns:1fr 1fr}}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m{flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 6px;text-align:center}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .v{font-size:15px;font-weight:800;color:#fff}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .w{font-size:9px;font-weight:600;color:rgba(230,240,243,.62);margin-top:5px;line-height:1.2}
@@ -31987,8 +31992,8 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
       </div>
       <div class="v43-stats">
         <div class="v43-stat v43-stat-df"><div class="v43-df-circle" style="border-color:${dfCol};color:${dfCol}">${dfVal}</div><div class="v43-stat-k">Dagfactor</div></div>
-        <div class="v43-stat"><div class="v43-stat-ic">${V43I.heart}</div><div class="v43-stat-v">${rec.hasData?rec.overall+'%':'—'}</div><div class="v43-stat-k">Herstel</div></div>
-        <div class="v43-stat"><div class="v43-stat-ic">${V43I.bolt}</div><div class="v43-stat-v">${gereed!=null?gereed:'—'}</div><div class="v43-stat-k">Gereedheid</div></div>
+        <div class="v43-stat"><div class="v43-stat-ic">${V43I.heart}</div><div class="v43-stat-v">${rec.hasData?rec.overall+'%':'—'}</div><div class="v43-stat-k">Spier&shy;herstel</div></div>
+        <div class="v43-stat"><div class="v43-stat-ic">${V43I.bolt}</div><div class="v43-stat-v">${gereed!=null?gereed:'—'}</div><div class="v43-stat-k">Gereed&shy;heid</div></div>
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.moon}</div><div class="v43-stat-v">${slaap}</div><div class="v43-stat-k">Slaap</div></div>
       </div>
       <div class="v43-legend">

@@ -56,10 +56,10 @@ ok(migratie.includes('check (char_length(body) between 1 and 500)'),
   // UX App Shell Master Sprint: bottom-nav-labels komen sindsdien uit één gedeelde bron
   // (TK_PRIMARY_NAV) en staan niet meer letterlijk in de HTML ("Voortgang" komt nergens
   // meer voor). De historische telling (36 -> 38 -> 39 -> 41 losse label-kopieën) is
-  // vervangen door: het totaal aantal canonical nav-shells in het bestand bleef 45 tijdens
+  // vervangen door: het totaal aantal canonical nav-shells in het bestand bleef gelijk tijdens
   // de migratie (alleen de inhoud werd geleegd, geen posities toegevoegd/verwijderd).
   const aantalNavShells = (html.match(/<nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"><\/nav>/g) || []).length;
-  ok(aantalNavShells === 45, 'F1: geen enkel bottom-nav-blok is toegevoegd of verwijderd -- 45 canonical shells op de huidige main (post UX App Shell Master Sprint); het historische aantal losse labelkopieën (41 op het moment van deze test) is niet meer van toepassing sinds labels uit TK_PRIMARY_NAV komen');
+  ok(aantalNavShells === 44, 'F1: geen enkel bottom-nav-blok is toegevoegd of verwijderd -- 44 canonical shells op de huidige main (45 tot v4.70.15: het losse Lichaam-scherm is opgegaan in Inzicht) (post UX App Shell Master Sprint); het historische aantal losse labelkopieën (41 op het moment van deze test) is niet meer van toepassing sinds labels uit TK_PRIMARY_NAV komen');
 }
 
 // ---- G. Moderatie: gebruikt de bestaande social_reports-tabel ----

@@ -187,8 +187,10 @@ const TRAINING_ONDERDELEN = [
 ];
 TRAINING_ONDERDELEN.forEach(function(p){ ok(html.indexOf(p[0]) >= 0, 'D2: Training bevat nog steeds ' + p[1]); });
 // De vijf bestemmingen in de bottom navigation blijven vijf.
-const NAV = ['s-home', 's-train-mgr', 's-lichaam', 's-coach', 's-stats'];
+// Lichaam is geen eigen bestemming meer (overzicht staat onder Inzicht); de oude route leidt daarheen om.
+const NAV = ['s-home', 's-train-mgr', 's-coach', 's-stats'];
 NAV.forEach(function(id){ ok(html.indexOf("go('" + id + "')") >= 0, 'D3: bottom navigation bevat ' + id); });
+ok(html.indexOf("target:'s-inzicht'") >= 0 && html.indexOf("if(id==='s-lichaam'){id='s-inzicht';}") >= 0, 'D3: Inzicht is een hoofdbestemming en de oude Lichaam-route komt daar uit');
 ok((html.match(/class="bnav"/g) || []).length >= 10, 'D4: de bottom navigation staat op alle schermen');
 // De actieve trainingsweergave: bestaande onderdelen uit de screenshots.
 ['Coach cues', 'Veelgemaakte fouten', 'Terug naar training', 'exfocus-today', 'exfocus-setwrap']

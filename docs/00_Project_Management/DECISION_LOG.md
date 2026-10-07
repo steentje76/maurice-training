@@ -2625,3 +2625,34 @@ een gerapporteerde slaapduur was of een terugval op de duur van het sessie-inter
 **Status.** Code gemerged via PR #520 als main `982e23fd`; `migratie_v580` is op 07-10-2026 op productie toegepast
 (ledger `20261007053921`) en de schema-, RPC-, rechten-, RLS- en single-writer-invarianten zijn post-apply geverifieerd.
 R4/R5 blijven OPEN tot een echte providersync een concreet metric-type opslaat. Daarna kan de terugval op de tien-argumenten-aanroep in `wearable-sync.js` vervallen.
+
+## DEC-IA-001 — Lichaam is geen eigen bestemming; het overzicht hoort bij Inzicht (7 oktober 2026)
+
+**Context.** Sinds de vijf hoofdtabs (Vandaag, Trainen, Inzicht, Coach, Samen) is Lichaam geen tab meer. Het
+overzichtsscherm `s-lichaam` bleef bestaan zonder ingang in de navigatie en was alleen via omwegen bereikbaar. De
+spierfiguren voor herstel en belasting waren daardoor in de praktijk onvindbaar.
+
+**Besluit (PO, 7 oktober 2026).**
+1. Lichaam is geen zelfstandige of verborgen bestemming. De inhoud van het overzicht staat op Inzicht, vóór Domeinen,
+   in deze volgorde: dagsamenvatting, datastatus, Herstel & belasting, Hersteltrends, Verbanden, uitleg.
+2. Verplaatsen, niet herbouwen: dezelfde element-id's, dezelfde renderer en dezelfde bronfuncties. De weergave
+   rekent niets zelf.
+3. De oude route blijft werken als omleiding naar Inzicht. Er blijft geen tweede weergave van dezelfde informatie.
+4. Apparaatbeheer leidt rechtstreeks naar Gegevens & koppelingen. Terugnavigatie vanuit de subschermen is
+   bronbewust en eindigt nooit op een scherm waar de gebruiker niet vandaan kwam.
+5. Het percentage in de ring van de dagsamenvatting is gemiddeld spierherstel en wordt zo genoemd; het mag niet als
+   volledige readiness gelezen worden. Een bestaande degraded-state wordt hergebruikt, geen nieuwe herstelberekening.
+
+**Uitwerking van punt 5 (ter bevestiging door de PO).** Het dagoordeel naast de ring ("Klaar om te trainen"
+enzovoort) wordt alleen getoond wanneer de dagfactor volgens de bestaande `df.basis` op minstens één meting van
+vandaag rust (zelfde regel als GAP-P2-015 en DEC-DQ-001). Zonder basis staat er de bestaande check-in-vraag, of
+"Nog te weinig gegevens voor advies" als de check-in van vandaag er al is. Drempels, factoren en de teksten van
+het oordeel zelf zijn niet gewijzigd.
+
+**Niet besloten (open voor de PO).**
+- De tegel Dagfactor toont zonder basis de neutrale 1.00 met het label "berekend".
+- Het vak Herstelstatus in Snel overzicht is hetzelfde spierherstelpercentage als de ring, onder een andere naam.
+- De vrije voedingsinvoer `s-nutrition` heeft nu een zichtbare rij op Inzicht; of die daar hoort hangt af van het
+  nog open besluit uit NUT-CANON-01.
+
+**Status.** Geïmplementeerd in v4.70.15. Guard: `core/fInzichtHerstelBelasting.test.js`.

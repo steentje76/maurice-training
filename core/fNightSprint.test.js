@@ -210,7 +210,7 @@ console.log('\nC. Bestaande schermen ongemoeid');
 var UI_MOET_BESTAAN = [
   ['id="s-home"', 'Home'], ['id="home-readiness"', 'readinesskaart'],
   ['id="home-coach-vandaag"', 'coachkaart'], ['id="home-plan"', 'planblok'],
-  ['id="s-lichaam"', 'Lichaam'], ['id="s-coach"', 'Coach'], ['id="s-stats"', 'Voortgang'],
+  ['id="inzicht-herstel"', 'Herstel & belasting onder Inzicht'], ['id="s-coach"', 'Coach'], ['id="s-stats"', 'Voortgang'],
   ['id="s-lich-verband"', 'verbanddetail'], ['id="lich-relations"', 'verbandensectie'],
   ['function tkLiveCoachUpdate', 'live coach'], ['function tkReadinessVandaag', 'readiness'],
   ['function tkSetEvidence', 'evidence'], ['function buildStrengthSessionRow', 'sessieopbouw'],
@@ -232,10 +232,10 @@ t('C: de onderste navigatie heeft nog steeds vijf items', function () {
   assert.strictEqual((navArr.match(/\{id:'/g) || []).length, 5, 'navigatie gewijzigd (TK_PRIMARY_NAV heeft geen 5 items meer)');
 });
 
-t('C: de nieuwe schermen hangen onder Lichaam, niet naast de hoofdnavigatie', function () {
+t('C: de nieuwe schermen hangen onder Inzicht, niet naast de hoofdnavigatie', function () {
   var i = HTML.indexOf('id="s-lich-verbanden"');
   var blok = HTML.slice(i, i + 4000);
-  assert.ok(blok.indexOf("go('s-lichaam')") > 0, 'terugknop wijst niet naar Lichaam');
+  assert.ok(blok.indexOf("tkNavGoBack('s-inzicht')") > 0 && blok.indexOf("go('s-lichaam')") < 0, 'terugknop is niet bronbewust naar Inzicht');
   // UX App Shell Master Sprint: Lichaam is geen eigen bottom-nav-tab meer (PO-besluit) --
   // s-lich-* hoort nu bij de Inzicht-tab-context. Controleer de canonical mapping i.p.v.
   // een statisch 'Lichaam actief'-label dat niet meer bestaat.

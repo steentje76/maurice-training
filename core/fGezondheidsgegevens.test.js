@@ -36,15 +36,15 @@ eq((html.match(/<div class="scr" id="s-lich-gegevens">/g) || []).length, 1, 'A1:
 ok(html.indexOf('id="lich-geg-body"') >= 0, 'A2: de rendercontainer bestaat');
 ok(html.indexOf("if(id==='s-lich-gegevens')renderLichaamGegevens();") >= 0, 'A3: route hangt in de BESTAANDE go()-router');
 eq((html.match(/go\('s-lich-gegevens'\)/g) || []).length, 2,
-   'A4: twee verwijzingen — de route vanaf Lichaam en de doorverwijzing vanaf Profiel');
+   'A4: twee verwijzingen — de route vanaf Inzicht en de doorverwijzing vanaf Profiel');
 ok(/onclick="go\('s-lich-gegevens'\)"><span class="ic"><svg[\s\S]{0,300}<\/span><span class="b"><b>Gezondheidsgegevens/.test(html),
-   'A5: de ingang staat in de bestaande sectie "Lichaam & gegevens" (canonical lijnicoon, UX Polish Sprint 01)');
-ok(/<div class="v43-lbl"[^>]*>Lichaam &amp; gegevens<\/div>[\s\S]{0,1400}s-lich-gegevens/.test(html),
-   'A6: de vier routes staan bij elkaar: Gezondheid & herstel, Lichaamsmetingen, Cyclus (v4.95.0), Gezondheidsgegevens (venster verruimd na canonical lijnicoon-conversie, UX Polish Sprint 01)');
-ok(html.indexOf(':is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens)') >= 0,
+   'A5: de ingang staat in de sectie "Gegevens & context" onder Inzicht (canonical lijnicoon, UX Polish Sprint 01)');
+ok(/<div class="v43-lbl"[^>]*>Gegevens &amp; context<\/div>[\s\S]{0,1400}s-lich-gegevens/.test(html),
+   'A6: de routes zonder eigen domein staan bij elkaar onder Inzicht: Cyclus en Gezondheidsgegevens (Gezondheid & herstel en Lichaamsmetingen zijn domeinen)');
+ok(html.indexOf(':is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens)') >= 0,
    'A7: het scherm erft de bestaande Lichaam-cascade — geen eigen design system');
 ok(/<div class="scr" id="s-lich-gegevens">[\s\S]{0,2400}<nav class="bnav"/.test(html), 'A8: bestaande bottom navigation');
-ok(/id="s-lich-gegevens"[\s\S]{0,600}class="ibtn" onclick="go\('s-lichaam'\)"/.test(html), 'A9: bestaande terugknop naar Lichaam');
+ok(/id="s-lich-gegevens"[\s\S]{0,600}class="ibtn" onclick="tkNavGoBack\('s-profiel'\)"/.test(html), 'A9: bronbewuste terugknop (tkNavGoBack); zonder voorgeschiedenis naar Profiel, nooit naar Lichaam');
 eq((html.match(/async function renderLichaamGegevens\(/g) || []).length, 1, 'A10: precies één renderer');
 ok(html.indexOf('async function _renderLichaamGegevens') >= 0, 'A11: met een foutgrens, zoals de andere Lichaam-schermen');
 

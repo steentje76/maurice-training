@@ -163,7 +163,10 @@ ok(_queries[0].indexOf('hrv_log') === 0, 'er wordt uit de bestaande tabel hrv_lo
 // ── Fase 1 — overzicht en navigatiestructuur ─────────────────────────────────
 console.log('  Fase 1 — Lichaam-overzicht en navigatie');
 
-const LICH_SCREENS = ['s-lichaam', 's-lich-spieren', 's-lich-health', 's-lich-metingen'];
+// Het overzicht staat onder Inzicht; s-lichaam is geen eigen scherm meer.
+const LICH_SCREENS = ['s-inzicht', 's-lich-spieren', 's-lich-health', 's-lich-metingen'];
+eq((html.match(/<div class="scr" id="s-lichaam">/g) || []).length, 0, 'het losse Lichaam-scherm bestaat niet meer');
+ok(html.indexOf("if(id==='s-lichaam'){id='s-inzicht';}") >= 0, 'de oude Lichaam-route leidt om naar Inzicht');
 LICH_SCREENS.forEach(id => {
   eq((html.match(new RegExp('<div class="scr" id="' + id + '">', 'g')) || []).length, 1,
     'scherm ' + id + ' bestaat precies één keer');
@@ -178,11 +181,11 @@ LICH_SCREENS.forEach(id => {
 });
 
 // De router bedient alle vier de schermen via dezelfde renderer.
-const mRoute = html.match(/if\(id==='s-lichaam'\|\|id==='s-lich-spieren'\|\|id==='s-lich-health'\|\|id==='s-lich-metingen'\)renderLichaam\(\);/);
-ok(!!mRoute, 'go() routeert Lichaam en de drie subschermen naar renderLichaam()');
+const mRoute = html.match(/if\(id==='s-inzicht'\|\|id==='s-lich-spieren'\|\|id==='s-lich-health'\|\|id==='s-lich-metingen'\)renderLichaam\(\);/);
+ok(!!mRoute, 'go() routeert Inzicht en de drie subschermen naar renderLichaam()');
 
 // De CSS van Lichaam geldt ook op de subschermen (anders vallen verplaatste blokken kaal terug).
-ok(html.indexOf(':is(#s-lichaam,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-mus') >= 0,
+ok(html.indexOf(':is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-mus') >= 0,
   'de Lichaam-stijlen zijn verbreed naar alle subschermen, inclusief het spierdetail');
 eq((html.match(/^#s-lichaam /gm) || []).length, 0, 'geen enkele Lichaam-stijl staat nog alleen op #s-lichaam');
 

@@ -83,7 +83,7 @@ ok(P.indexOf('account-identities-lbl') === -1 && modalBlok('m-account').indexOf(
   'A-Inlogmethoden: verplaatst naar de accountdetail, niet verdwenen');
 ok(P.indexOf('profiel-atleet-card') !== -1 && P.indexOf('openAtleetModal()') !== -1,
   'A-Sportprofiel: ingang naar bestaande modal + render-target behouden');
-ok(P.indexOf("go('s-lichaam')") !== -1, 'A-Lichaamsgegevens: canonical rij aanwezig');
+ok(P.indexOf("go('s-lich-metingen')") !== -1 && P.indexOf("go('s-lichaam')") === -1, 'A-Lichaamsgegevens: canonical rij aanwezig, rechtstreeks naar Lichaamsmetingen');
 ok(P.indexOf('plan-huidig-naam') !== -1 && P.indexOf('openPlanOverzicht()') !== -1,
   'A-Abonnement: planstatus-target en plannen vergelijken behouden');
 ok(P.indexOf('tenant-brand-card') !== -1 && P.indexOf('openTeamPinModal()') !== -1,

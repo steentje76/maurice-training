@@ -45,7 +45,7 @@ function extractFn(src, name) {
 }
 const NAMEN = ['td', 'tkSleepHours', 'lnRmssd', 'hrvBaseline', 'hrvRollingRecent', 'hrvStPersonal', 'hrvDagFactorPersonal',
   'slaapDagFactor', 'cyclusDagFactor', 'tkCyclusFaseVandaag', 'tkHealthFailClosed', 'tkHealthQualified', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor',
-  'tkDagfactorHeeftBasis', 'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle', 'recoveryAdjustmentForToday',
+  'tkDagfactorHeeftBasis', 'tkDagfactorVoorAdvies', 'tkCheckinVandaag', 'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle', 'recoveryAdjustmentForToday',
   'computeProgAdjustment', 'v43GereedheidScore', 'tkReadinessVandaag'];
 const PROD = NAMEN.map(function (n) { return extractFn(HTML, n); }).join('\n');
 
@@ -66,7 +66,9 @@ function runtime(state, opts) {
   sb.__calls = calls;
   return sb;
 }
-// De Home-orkestratie, letterlijk zoals refreshHome hem uitvoert (zie sectie G voor de bronbinding).
+// De dagfactor zoals refreshHome hem berekent (zie sectie G voor de bronbinding). refreshHome geeft hem
+// door als dfInfo MET `basis`; dat de basis onderweg behouden blijft bewaakt sectie G hieronder en, op de
+// echte Home-flow, core/fHomeDagfactorBasisSafety.test.js (DEC-DQ-002).
 function homeDf(sb, hdRuw) {
   const hq = sb.tkHealthQualified(hdRuw); const hd = hq.rows; const lh = hd[0];
   return lh ? sb.dagfactor(sb.hrvDagFactorPersonal(hd), lh.sleep, sb.tkCyclusFaseVandaag(lh), hq.signalen) : null;
@@ -315,6 +317,7 @@ async function main() {
     ok(/tkHealthQualified\(/.test(src) && !/(?:const|let)\s+hd\s*=\s*await\s+(?:sbGet|v43SafeGet)\('hrv_log'/.test(src), 'G1 ' + naam + ' rekent op gekeurde rijen (geen rauwe hrv_log naar de keten)');
   });
   const home = extractFn(HTML, 'refreshHome');
+  ok(/dfInfo=\{factor:df\.factor,basis:df\.basis,/.test(home) && /tkReadinessVandaag\(dfInfo,recRows,nextT\)/.test(home) && /const dfAdvies=tkDagfactorVoorAdvies\(dfInfo\);/.test(extractFn(HTML, 'tkReadinessVandaag')), 'G0 refreshHome geeft de dagfactor met `basis` door en tkReadinessVandaag keurt hem aan de grens (DEC-DQ-002); de tests hierboven modelleren dus de echte aanroep');
   ok(/const hq=tkHealthQualified\(await v43SafeGet\('hrv_log'[^)]*\)\);\s*const hd=hq\.rows;\s*const lh=hd\[0\];/.test(home) && /const cyclusVandaag=tkCyclusFaseVandaag\(lh\);/.test(home) && /dagfactor\(hrvComponent,lh\.sleep,cyclusVandaag,hq\.signalen\)/.test(home), 'G2 refreshHome voert exact de orkestratie uit die deze suite gebruikt');
   const rv = extractFn(HTML, 'tkReadinessVandaag');
   ok((rv.match(/DecisionCore\.readinessDay\(/g) || []).length === 1 && /kwaliteit:kw\('hrv'\)/.test(rv) && /kwaliteit:kw\('rhr'\)/.test(rv) && /kwaliteit:kw\('slaap'\)/.test(rv), 'G3 één Decision-aanroep, met kwaliteit voor hrv, rhr en slaap');

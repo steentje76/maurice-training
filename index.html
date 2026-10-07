@@ -16963,7 +16963,8 @@ async function saveHRV(btnEl){
     let hrvComponent={factor:1.00,st:'ref',baseline:null};
     if(hrv){try{const hd=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35')).rows;hrvComponent=hrvDagFactorPersonal(hd);}catch(e){}}
     const df=dagfactor(hrvComponent,slp,cyclus);
-    toast('Dagfactor '+df.factor+' — '+dagfactorUitleg(hrv,slp,cyclus,df));
+    // DEC-DQ-002: zonder basis is de 1.00 geen uitkomst; dan staat er geen getal in de melding.
+    toast((tkDagfactorVoorAdvies(df)?('Dagfactor '+df.factor):TK_GEEN_ADVIES_TXT)+' — '+dagfactorUitleg(hrv,slp,cyclus,df));
   }
   const parts=[];
   if(hrv)parts.push('HRV '+hrv+' ms');
@@ -24148,9 +24149,12 @@ async function refreshHome(){
     // v3.3.36 Batch 2 #1: dagfactor gepromoveerd tot dominant, tikbaar dag-element (H8 explainable AI).
     const heroKleur='var(--day)'; // v3.3.50 P6 — dagfactor-ring volgt het dag-thema (dayState)
     const dfStat=dagfactorStatus(df.factor);
-    const ringPct=Math.max(0,Math.min(1,(df.factor-0.85)/0.20));const RC=Math.round(2*Math.PI*24);
+    const ringPct0=Math.max(0,Math.min(1,(df.factor-0.85)/0.20));const RC=Math.round(2*Math.PI*24);
     const uitleg=dagfactorUitleg(hv.hrv.gebruikt||hv.hrv.referentie,hv.slaap.gebruikt?hv.slaap.waarde:null,hv.cyclus.gebruikt?cyclusVandaag:null,df,hv);
-    dfInfo={factor:df.factor,uitleg,hero:heroKleur,st};
+    // `basis` gaat mee: zonder is dfInfo een kaal getal en is de 1.00-invulling niet van een meting
+    // te onderscheiden (DEC-DQ-001 punt 6, DEC-DQ-002).
+    dfInfo={factor:df.factor,basis:df.basis,uitleg,hero:heroKleur,st};
+    const dfBruikbaar=!!tkDagfactorVoorAdvies(dfInfo), checkinNu=tkCheckinVandaag(lh);
     const sig=[hv.hrv.gebruikt,hv.slaap.gebruikt,hv.cyclus.gebruikt].filter(Boolean).length;
     const conf=(hv.hrv.gebruikt&&hv.slaap.gebruikt)?'Hoog':(hv.hrv.gebruikt||hv.slaap.gebruikt)?'Middel':'Laag';
     // Eén datum achter de uitleg alleen wanneer alle gebruikte onderdelen dezelfde datum hebben.
@@ -24158,10 +24162,11 @@ async function refreshHome(){
     const eenDatum=(datums.length&&datums.every(function(x){return x===datums[0];}))?datums[0]:'';
     const rijDatum=eenDatum?` · ${eenDatum}`:'';
     const cyc=hv.cyclus.gebruikt?` × cyclus ${df.cyclusFactor.toFixed(2)}`:'';
-    const dc=dagfactorCoach(df.factor);
+    const ringPct=dfBruikbaar?ringPct0:0;
+    const dc=dfBruikbaar?dagfactorCoach(df.factor):{headline:checkinNu?TK_GEEN_ADVIES_TXT:'Doe je check-in voor advies',meaning:'',cls:'geen'};
     // v3.3.48 — betekenis-eerst + premium "Waarom?": rauwe cijfers/pills verhuizen naar de
     // uitklap (renderDagfactorDetail), zodat de kaart als coach voelt i.p.v. dashboard.
-    window.homeDfDetail={factor:df.factor,uitleg,hrv:hv.hrv.gebruikt?hv.hrv.waarde:null,rhr:hv.rhr.gebruikt?hv.rhr.waarde:null,sleep:hv.slaap.gebruikt?hv.slaap.waarde:null,ctx:hv,cyclus:hv.cyclus.gebruikt?cyclusVandaag:null,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:eenDatum,statusTxt:dfStat.txt,hrvBaseline:df.hrvBaseline};
+    window.homeDfDetail={factor:df.factor,uitleg,hrv:hv.hrv.gebruikt?hv.hrv.waarde:null,rhr:hv.rhr.gebruikt?hv.rhr.waarde:null,sleep:hv.slaap.gebruikt?hv.slaap.waarde:null,ctx:hv,cyclus:hv.cyclus.gebruikt?cyclusVandaag:null,hrvF:df.hrvFactor,slaapF:df.slaapFactor,cycTxt:cyc,conf,sig,st,date:eenDatum,statusTxt:dfStat.txt,hrvBaseline:df.hrvBaseline,heeftBasis:dfBruikbaar,checkinVandaag:checkinNu};
     document.getElementById('home-hrv-card').innerHTML=`<div class="card"><div class="card-body" style="padding-top:14px">
       <button onclick="toggleDagfactorDetail()" aria-expanded="false" aria-controls="dagfactor-detail" class="df-head">
         <div class="df-ring">
@@ -24169,7 +24174,7 @@ async function refreshHome(){
             <circle cx="30" cy="30" r="24" fill="none" stroke="var(--g2)" stroke-width="4.5"/>
             <circle class="df-prog" cx="30" cy="30" r="24" fill="none" stroke="${heroKleur}" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="${RC}" style="--rc:${RC};--tgt:${Math.round(RC*(1-ringPct))};stroke-dashoffset:${Math.round(RC*(1-ringPct))}"/>
           </svg>
-          <div class="df-ring-val">${df.factor}</div>
+          <div class="df-ring-val">${dfBruikbaar?df.factor:'—'}</div>
         </div>
         <div style="flex:1;min-width:0">
           <div class="df-headline ${dc.cls}">${dc.headline}</div>
@@ -24237,18 +24242,20 @@ async function refreshHome(){
   window.homeMuscleRec=recRows;
   // v3.3.50 P6 — één dag-thema over het hele coachverhaal (kleur volgt de dagstatus).
   const themeEl=document.getElementById('home-theme');
-  if(themeEl)themeEl.setAttribute('data-day',dfInfo?dayState(dfInfo.factor).key:'goed');
+  // Vanaf hier: alleen een dagfactor mét basis telt als dagfactor (DEC-DQ-002).
+  const dfAdvies=tkDagfactorVoorAdvies(dfInfo), checkinVandaag=tkCheckinVandaag(lh);
+  if(themeEl)themeEl.setAttribute('data-day',dfAdvies?dayState(dfAdvies.factor).key:'goed');
   // Waarom?-conclusie deelt dezelfde bron als de coaching (buildCoachAdvice); geen extra query.
-  try{window.homeCoachText=await buildCoachAdvice(dfInfo,nextT,recRows);}catch(e){window.homeCoachText='';}
-  await renderMorning(dfInfo,nextT);
-  renderTodayCta(nextT,dfInfo);
+  try{window.homeCoachText=await buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag);}catch(e){window.homeCoachText='';}
+  await renderMorning(dfAdvies,nextT,checkinVandaag);
+  renderTodayCta(nextT,dfAdvies);
   /* Sprint 14 — readiness van de dag: één beslissing, opgehaald vóór het tekenen. */
   try{
     const _rc=await tkReadinessVandaag(dfInfo,recRows,nextT);
     const _re=document.getElementById('home-readiness');
     if(_re) _re.innerHTML=tkReadinessHtml(_rc);
   }catch(_){ const _re=document.getElementById('home-readiness'); if(_re)_re.innerHTML=''; }
-  renderCoachAdvies(dfInfo,recRows);
+  renderCoachAdvies(dfAdvies,recRows);
   await renderWeekStats();
   renderMotivatie();
   refreshHomeImprove(); // S1 — guarded, niet-blokkerend: vult de "Recente vooruitgang"-kaart async
@@ -24264,19 +24271,20 @@ async function refreshHome(){
   refreshHomeGoalsCard();
   window.homeNextT=nextT;
   if(window.DASHUI)DASHUI.render();
-  try{await renderV43Home(dfInfo,lh,nextT,recRows);}catch(e){console.warn('v43 home',e);}
+  try{await renderV43Home(dfAdvies,lh,nextT,recRows);}catch(e){console.warn('v43 home',e);}
 }
 
 // v3.3.44 Epic 1 — Morning Report. Persoonlijke ochtendtekst, uitsluitend uit bestaande
 // data (dagfactor-motor + volgende vaste training + atleetnaam). Geen nieuwe AI/API-call:
 // regelgebaseerd, instant en offline-veilig; "persoonlijk" via de echte cijfers.
-function buildMorningMessage(dfInfo,nextT){
+function buildMorningMessage(dfInfo,nextT,checkinVandaag){
+  dfInfo=tkDagfactorVoorAdvies(dfInfo);
   const naam=(typeof atleet!=='undefined'&&atleet&&atleet.naam)?String(atleet.naam).trim().split(' ')[0]:'';
   const h=new Date().getHours();
   const groet=(h<12?'Goedemorgen':h<18?'Goedemiddag':'Goedenavond')+(naam?', '+naam:'');
   let regel;
   if(!dfInfo){
-    regel='Nog geen check-in vandaag — vul je HRV in voor je dagfactor.';
+    regel=checkinVandaag?(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Nog geen check-in vandaag — vul je HRV in voor je dagfactor.';
   }else{
     const f=dfInfo.factor;
     const toon=f>=1?'Sterke dag — je lichaam staat op groen.'
@@ -24292,8 +24300,9 @@ function buildMorningMessage(dfInfo,nextT){
 function joinNl(arr){arr=arr.filter(Boolean);if(arr.length<=1)return arr[0]||'';return arr.slice(0,-1).join(', ')+' en '+arr[arr.length-1];}
 // v3.3.48 — warmere coach-toon. Accepteert optioneel voorberekende recRows (uit één
 // getRelevantMuscleRecovery-call) zodat hero, coach-advies én "Waarom?" dezelfde data delen.
-async function buildCoachAdvice(dfInfo,nextT,recRows){
-  if(!dfInfo)return 'Nog geen check-in vandaag — vul je HRV in en ik vertel je precies wat vandaag slim is.';
+async function buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag){
+  dfInfo=tkDagfactorVoorAdvies(dfInfo);
+  if(!dfInfo)return checkinVandaag?(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Nog geen check-in vandaag — vul je HRV in en ik vertel je precies wat vandaag slim is.';
   const f=dfInfo.factor;
   const tnaam=(nextT&&nextT.naam)?nextT.naam:'je training';
   let loaded=[],ready=[];
@@ -24326,8 +24335,9 @@ async function buildCoachAdvice(dfInfo,nextT,recRows){
   return `Je lichaam vraagt vandaag om rust. Houd ${tnaam} licht of kies voor actief herstel.`;
 }
 // v3.3.49/50 P4 — Welkom + motiverende coachintro (hoort bij de begroeting). Kort, uit dayState.
-function buildCoachIntro(dfInfo){
-  if(!dfInfo)return 'Vul je HRV in, dan vertel ik je hoe je ervoor staat.';
+function buildCoachIntro(dfInfo,checkinVandaag){
+  dfInfo=tkDagfactorVoorAdvies(dfInfo);
+  if(!dfInfo)return checkinVandaag?(TK_GEEN_ADVIES_TXT+'.'):'Vul je HRV in, dan vertel ik je hoe je ervoor staat.';
   const k=dayState(dfInfo.factor).key;
   return {goed:'Je bent klaar voor een sterke trainingsdag.',
     normaal:'Er ligt een mooie training op je te wachten.',
@@ -24335,10 +24345,10 @@ function buildCoachIntro(dfInfo){
     herstel:'Vandaag draait om herstel en opladen.',
     slecht:'Luister naar je lijf — herstel gaat vandaag voor.'}[k];
 }
-async function renderMorning(dfInfo,nextT){
+async function renderMorning(dfInfo,nextT,checkinVandaag){
   const el=document.getElementById('home-morning');if(!el)return;
-  const m=buildMorningMessage(dfInfo,nextT);
-  const intro=buildCoachIntro(dfInfo);
+  const m=buildMorningMessage(dfInfo,nextT,checkinVandaag);
+  const intro=buildCoachIntro(dfInfo,checkinVandaag);
   el.innerHTML=`<div style="padding:0 2px">
     <div class="home-groet">${escHtml(m.groet)}</div>
     ${intro?`<div class="home-coach">${escHtml(intro)}</div>`:''}
@@ -24353,6 +24363,7 @@ function musclePhrase(muscles){
 // v3.3.50 P3/P7 — de coach spreekt (eerste persoon), korter. Advies uit de BESTAANDE
 // regel computeProgAdjustment; de kaartkleur volgt het dag-thema (geen eigen tone-kleur).
 function buildCoachTraining(dfInfo,recRows){
+  dfInfo=tkDagfactorVoorAdvies(dfInfo);
   if(!dfInfo)return null;
   const adj=computeProgAdjustment(dfInfo.factor,recRows||[],null,null);
   const laag=(recRows||[]).filter(r=>r.pct<70).sort((a,b)=>a.pct-b.pct);
@@ -24391,14 +24402,17 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
     const uniek={}; (ses||[]).forEach(function(x){ const d=String(x&&x.date||'').slice(0,10); if(d)uniek[d]=1; });
     dagen7=Object.keys(uniek).length;
   }catch(_){ dagen7=null; }
+  /* DEC-DQ-002: een dagfactor zonder basis gaat als null naar de Decision Engine. Dan volgt
+     readinessDay() zijn bestaande pad zonder dagfactor: geen zone, geen advies. */
+  const dfAdvies=tkDagfactorVoorAdvies(dfInfo);
   let herstel=null;
   try{
     const rhrDelta=tkRhrDeltaHerstel(hq);
-    herstel=recoveryScoreFrom(dfInfo, recRows||[], {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
+    herstel=recoveryScoreFrom(dfAdvies, recRows||[], {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
   }catch(_){ herstel=null; }
   const besluit=DecisionCore.readinessDay({
-    dagfactor: dfInfo?dfInfo.factor:null,
-    gereedheid: dfInfo?v43GereedheidScore(dfInfo.factor):null,
+    dagfactor: dfAdvies?dfAdvies.factor:null,
+    gereedheid: dfAdvies?v43GereedheidScore(dfAdvies.factor):null,
     herstel: herstel,
     signalen: {
       hrv: (lh&&lh.hrv!=null)?{waarde:lh.hrv,kwaliteit:kw('hrv')}:null,
@@ -24540,7 +24554,7 @@ function renderTodayCta(nextT,dfInfo){
   const n=nextT._exCount||0,muscles=Array.isArray(nextT._muscles)?nextT._muscles:[];
   const human=buildHeroFocus(muscles);
   const meta=n?`${n} oefening${n===1?'':'en'}`:'';
-  const rd=trainReadiness(dfInfo);
+  const rd=trainReadiness(tkDagfactorVoorAdvies(dfInfo));
   const ready=rd?`<div class="today-ready"><span class="today-dot"></span>${escHtml(rd.txt)}</div>`:'';
   el.innerHTML=`<div class="today-card">
     <div class="today-cta-lbl">Training van vandaag</div>
@@ -24890,6 +24904,25 @@ function dagfactor(hrvComponent,slaapInvoer,cyclusFase,signalen){
 }
 // Een dagfactor zonder basis is geen aanwezige herstelcomponent. Ontbreekt `basis` (object
 // dat niet uit dagfactor() komt), dan geldt het oude gedrag.
+// EEN NUMERIEKE FALLBACK IS GEEN EVIDENCE (DEC-DQ-002).
+// dagfactor() geeft zonder HRV-oordeel, slaap en cyclusfase een neutrale 1.00 terug en legt in
+// `basis` vast dat niets die waarde heeft gevoed. Die 1.00 is een rekenwaarde. Voor alles wat
+// een oordeel of advies is (zone, gereedheid, readiness, coachtekst) geldt:
+//     bruikbaar voor advies = dagfactor aanwezig EN basis aanwezig.
+// Dit is de ENE plek waar dat wordt bepaald. De contextlaag geeft het resultaat door: het
+// object zelf wanneer het bruikbaar is, anders null. De Decision Engine heeft voor null al een
+// veilig pad (geen zone, geen advies). Een object zonder `basis` (een kaal getal) is niet
+// bruikbaar: de herkomst is dan onbekend.
+function tkDagfactorVoorAdvies(dfInfo){
+  if(!dfInfo||typeof dfInfo.factor!=='number'||!isFinite(dfInfo.factor)) return null;
+  if(!dfInfo.basis) return null;
+  return tkDagfactorHeeftBasis(dfInfo)?dfInfo:null;
+}
+// Staat er voor vandaag een rij (check-in of meting)? Zonder advies bepaalt dit de tekst:
+// "doe je check-in" of "nog te weinig gegevens". Nooit zeggen dat een check-in ontbreekt die er is.
+function tkCheckinVandaag(rij){ return !!(rij&&rij.date!=null&&String(rij.date).slice(0,10)===td()); }
+const TK_GEEN_ADVIES_TXT='Nog te weinig gegevens voor advies';
+const TK_GEEN_ADVIES_SUB='Je check-in van vandaag is er, maar slaap of een HRV-oordeel ontbreekt nog.';
 function tkDagfactorHeeftBasis(dfInfo){
   const b=dfInfo&&dfInfo.basis;
   if(!b) return true;
@@ -25138,7 +25171,7 @@ function renderDagfactorDetail(){
   const wk=window.homeWeekSummary;
   const row=(lbl,val)=>`<div class="dfd-row"><span class="dfd-lbl">${lbl}</span><span class="dfd-val">${val}</span></div>`;
   let html='<div class="dfd-title">Waarom vandaag?</div>';
-  html+=row('Dagfactor',`${d.factor} · ${escHtml(d.statusTxt)}`);
+  html+=row('Dagfactor',d.heeftBasis===false?'— · nog te weinig gegevens':`${d.factor} · ${escHtml(d.statusTxt)}`);
   // Per signaal de eigen meetdatum; alleen wat de dagfactor voedde staat bij de herstelsignalen.
   const c=d.ctx||{hrv:{},rhr:{},slaap:{},cyclus:{}};
   const sig=[d.hrv?`HRV ${d.hrv} ms${tkMetingNa(c.hrv)}`:'',d.rhr?`RHR ${d.rhr}${tkMetingNa(c.rhr)}`:'',d.sleep?`slaap ${fmtSleep(d.sleep)}${tkMetingNa(c.slaap)}`:'',d.cyclus?`cyclus ${d.cyclus}`:''].filter(Boolean).join(' · ')||'—';
@@ -25168,7 +25201,10 @@ function renderDagfactorDetail(){
   // geen gemeten fysiologische waarde. Alleen tonen als er daadwerkelijk spiergroepen
   // met data in dit paneel staan.
   const spierBronTxt = rec.length ? ' Spierherstel: vuistregel (48-72u, RPE-afhankelijk), geen gemeten fysiologische waarde.' : '';
-  html+=`<div class="dfd-note">${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05. Informatief — past nooit automatisch je gewicht aan. Confidence: ${d.conf} (${d.sig}/3 signalen).${hrvBronTxt}${spierBronTxt}</div>`;
+  const formule=d.heeftBasis===false
+    ? `Geen dagfactor voor vandaag: geen van de signalen voedt hem. De rekenwaarde ${d.factor} (HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}) is een neutrale invulling, geen meting.`
+    : `${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05.`;
+  html+=`<div class="dfd-note">${formule} Informatief — past nooit automatisch je gewicht aan. Confidence: ${d.conf} (${d.sig}/3 signalen).${hrvBronTxt}${spierBronTxt}</div>`;
   el.innerHTML=html;
 }
 function toggleDagfactorDetail(){
@@ -31927,7 +31963,7 @@ async function v43OverallRecovery(){
   });
   return {overall,rows,pctBySvgId,hasData:withData.length>0};
 }
-function v43HomeHeader(dfInfo){
+function v43HomeHeader(dfInfo,checkinVandaag){
   const gEl=document.getElementById('v43-home-head');if(!gEl)return;
   const naam=(typeof atleet!=='undefined'&&atleet&&atleet.naam)?String(atleet.naam).trim().split(' ')[0]:'';
   const h=new Date().getHours();
@@ -31935,7 +31971,7 @@ function v43HomeHeader(dfInfo){
   let dstr='';try{dstr=new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});dstr=dstr.charAt(0).toUpperCase()+dstr.slice(1);}catch(e){}
   const foto=(typeof atleet!=='undefined'&&atleet&&atleet.foto)?atleet.foto:'';
   const avatarInner=tkAvatarHtml({avatarPath:(typeof atleet!=='undefined'&&atleet&&atleet.avatar_path)||null,naam:(typeof atleet!=='undefined'&&atleet&&atleet.naam)||'',size:40,ring:false});
-  const needCheckin=!dfInfo;
+  const needCheckin=!dfInfo&&!checkinVandaag;
   gEl.innerHTML=`<div class="v43-hh">
     <div style="min-width:0">
       <div class="v43-hh-greet">${escHtml(groet)},</div>
@@ -31949,7 +31985,11 @@ function v43HomeHeader(dfInfo){
   </div>`;
 }
 async function renderV43Home(dfInfo,lh,nextT,recRows){
-  v43HomeHeader(dfInfo);
+  // Alleen een dagfactor mét basis is hier een dagfactor (DEC-DQ-002). Gemeten waarden (slaap,
+  // spierherstel) blijven staan; alleen het oordeel vervalt.
+  dfInfo=tkDagfactorVoorAdvies(dfInfo);
+  const checkinVandaag=tkCheckinVandaag(lh);
+  v43HomeHeader(dfInfo,checkinVandaag);
   let rec={overall:100,pctBySvgId:{},rows:[],hasData:false};
   try{rec=await v43OverallRecovery();}catch(e){}
   window.v43LichRec=rec;
@@ -31957,8 +31997,8 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   const heroEl=document.getElementById('home-hero');
   if(heroEl){
     const rd=(typeof trainReadiness==='function')?trainReadiness(dfInfo):null;
-    const title=dfInfo?(rd?rd.txt:'Klaar om te trainen'):'Doe je check-in';
-    const sub=dfInfo?(dfInfo.factor>=1?'Je lichaam is goed hersteld en klaar voor optimale prestaties.':dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.'):'Vul je HRV in voor je dagfactor en herstelbeeld.';
+    const title=dfInfo?(rd?rd.txt:'Klaar om te trainen'):(checkinVandaag?TK_GEEN_ADVIES_TXT:'Doe je check-in');
+    const sub=dfInfo?(dfInfo.factor>=1?'Je lichaam is goed hersteld en klaar voor optimale prestaties.':dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.'):(checkinVandaag?TK_GEEN_ADVIES_SUB:'Vul je HRV in voor je dagfactor en herstelbeeld.');
     const gereed=v43GereedheidScore(dfInfo?dfInfo.factor:null);
     const slaap=(lh&&(lh.sleep||lh.sleep===0))?v43SlaapTxt(lh.sleep):'—';
     // v4.6.0 — status-indicator = dagfactor-cirkel (vervangt het losse groene vinkje)
@@ -31972,7 +32012,7 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
     const wLow=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct<70).sort((a,b)=>a.pct-b.pct);
     const wUit=(dfInfo&&dfInfo.uitleg)?dfInfo.uitleg:'';
     let wTxt=window.homeCoachText||'';
-    if(!wTxt){try{wTxt=await buildCoachAdvice(dfInfo,nextT,recRows);}catch(e){wTxt='';}}
+    if(!wTxt){try{wTxt=await buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag);}catch(e){wTxt='';}}
     const wRow=(l,v)=>`<div class="v43-why-row"><span>${l}</span><b>${escHtml(v)}</b></div>`;
     const whyBody=dfInfo?(
       (wReady.length?wRow('Volledig hersteld',wReady.slice(0,3).join(', ')):'')+
@@ -31980,7 +32020,7 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
       (factor!=null?wRow('Dagfactor',dfVal+(wUit?' · '+wUit:'')):'')+
       (wTxt?`<div class="v43-why-p">${escHtml(wTxt)}</div>`:'')+
       ((wReady.length||wLow.length)?`<div class="v43-why-p" style="opacity:.7;font-size:11px">Spierherstel: vuistregel (48–72u, RPE-afhankelijk), geen gemeten fysiologische waarde.</div>`:'')
-    ):'<div class="v43-why-p">Doe je check-in (HRV + slaap) om je dagfactor en herstelbeeld te zien.</div>';
+    ):('<div class="v43-why-p">'+(checkinVandaag?escHtml(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Doe je check-in (HRV + slaap) om je dagfactor en herstelbeeld te zien.')+'</div>');
     heroEl.innerHTML=`<div class="v43-hero" onclick="v43ToggleWhy()" style="cursor:pointer" role="button" aria-expanded="false" aria-label="Herstelstatus — tik voor waarom vandaag">
       <div class="v43-hero-top">
         <div class="v43-hero-l">
@@ -32010,7 +32050,7 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   const coachEl=document.getElementById('home-coach-vandaag');
   if(coachEl){
     let txt=window.homeCoachText||'';
-    if(!txt){try{txt=await buildCoachAdvice(dfInfo,nextT,recRows);}catch(e){txt='';}}
+    if(!txt){try{txt=await buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag);}catch(e){txt='';}}
     // F21-F: coachstijl licht doortrekken naar Home. Presentatie-only: alleen een korte opener
     // volgens tk_coach_style; de feiten in de tekst blijven identiek. Geen nieuwe coachinglogica.
     if(txt) txt=homeCoachStyleOpener()+txt;
@@ -32391,7 +32431,7 @@ async function renderLichaamPremium(){
     // invulling en geen meting. Dan staat hier geen oordeel, ook niet naast 100% spierherstel.
     const beoordeeld=ger!=null&&dfBasis;
     const vandaagIngevuld=!!(lh&&String(lh.date).slice(0,10)===td());
-    const ready=beoordeeld?(ger>=70?'Klaar om te trainen':ger>=45?'Train op gevoel':'Houd het licht vandaag'):(vandaagIngevuld?'Nog te weinig gegevens voor advies':'Doe je check-in voor advies');
+    const ready=beoordeeld?(ger>=70?'Klaar om te trainen':ger>=45?'Train op gevoel':'Houd het licht vandaag'):(vandaagIngevuld?TK_GEEN_ADVIES_TXT:'Doe je check-in voor advies');
     const badge=(beoordeeld&&ds)?ds.headline:(vandaagIngevuld?'Gedeeltelijke gegevens':'Check-in nodig');
     const R=42,C=2*Math.PI*R,off=C*(1-((ov!=null?ov:0)/100));
     const ringSvg=`<svg width="96" height="96" viewBox="0 0 96 96" style="transform:rotate(-90deg)"><circle cx="48" cy="48" r="${R}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="7"/><circle cx="48" cy="48" r="${R}" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/></svg>`;
@@ -37781,7 +37821,7 @@ var DASH=(function(){
   }
   function df(){return window.homeDfDetail||null;}
   function dayInfo(){
-    var d=df();if(!d)return null;
+    var d=df();if(!d||d.heeftBasis===false)return null;   // DEC-DQ-002: zonder basis geen dagstatus
     var k=safe(function(){return window.dayState?window.dayState(d.factor).key:null;},null);
     return {factor:d.factor,status:d.statusTxt||'',st:d.st||'y',date:d.date||'',key:k};
   }
@@ -37852,7 +37892,7 @@ var DASHUI=(function(){
     if(!d){
       return '<div class="dash-status" onclick="openModal(\'m-hrv\')" role="button" tabindex="0" aria-label="Check-in invoeren">'+
         '<div class="dash-status-ring"><svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="19" fill="none" stroke="var(--g2)" stroke-width="4"/></svg><div class="dash-status-val">?</div></div>'+
-        '<div class="dash-status-tx"><div class="dash-status-h">Nog geen check-in</div><div class="dash-status-s">Vul je herstel in voor persoonlijk dagadvies.</div></div>'+
+        '<div class="dash-status-tx"><div class="dash-status-h">'+((DASH.df()&&DASH.df().checkinVandaag)?TK_GEEN_ADVIES_TXT:'Nog geen check-in')+'</div><div class="dash-status-s">Vul je herstel in voor persoonlijk dagadvies.</div></div>'+
         '<div class="dash-status-ar">›</div></div>';
     }
     var rec=DASH.recovery();

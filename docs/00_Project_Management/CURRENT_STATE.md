@@ -8,14 +8,16 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.14
 
-## Typed ingest-provenance voor slaap en HRV (v4.70.14, 5 oktober 2026; migratie_v580 NIET toegepast)
+## Typed ingest-provenance voor slaap en HRV (v4.70.14, 7 oktober 2026; migratie_v580 LIVE)
 
 - Code: de wearable-ingest stuurt mee wat de HRV- en slaapwaarde meten. HRV: `rmssd`, alleen wanneer de waarde uit
   het door Google als RMSSD gedocumenteerde veld `averageHeartRateVariabilityMilliseconds` komt (anders `unknown`).
   Slaap: `asleep` of `sleep_interval`. Bron en besluit: DEC-HRV-003.
-- Database: `migratie_v580.sql` staat in de repo en is niet op productie toegepast. Tot dan valt de sync terug op de
-  bestaande tien RPC-argumenten en blijft het type `unknown`.
-- Geen effect op berekeningen of beslissingen. GAP-P2-018 R4/R5: implementatie gereed, migratie in afwachting.
+- Database: `migratie_v580` is op 7 oktober 2026 op productie toegepast (ledger `20261007053921`). Post-apply is
+  exact één 12-argument `upsert_daily_health` aanwezig; `sleep_metric_type` bestaat; anon/PUBLIC hebben geen EXECUTE,
+  authenticated/service_role wel; RLS, 2 policies en de single-writer-invariant zijn intact.
+- Geen effect op berekeningen of beslissingen. GAP-P2-018 R4/R5: code + migratie live; gap blijft OPEN tot een echte
+  productie-wearable-sync aantoonbaar `rmssd` en/of `asleep`/`sleep_interval` opslaat.
 - Guard: `core/fHealthIngestProvenance.test.js`.
 
 ## Bron per veld in de health-reeksen (v4.70.13, 5 oktober 2026)

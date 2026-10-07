@@ -2622,5 +2622,6 @@ een gerapporteerde slaapduur was of een terugval op de duur van het sessie-inter
    `time_in_bed`: de bron garandeert een geobserveerd slaapinterval, geen tijd in bed.
 5. Dit is provenance, geen kwaliteit: geen effect op Calculation, Decision of AI.
 
-**Status.** Code klaar voor review; `migratie_v580` niet op productie toegepast. Productie-apply is een aparte, expliciet
-goed te keuren stap. Daarna kan de terugval op de tien-argumenten-aanroep in `wearable-sync.js` vervallen.
+**Status.** Code gemerged via PR #520 als main `982e23fd`; `migratie_v580` is op 07-10-2026 op productie toegepast
+(ledger `20261007053921`) en de schema-, RPC-, rechten-, RLS- en single-writer-invarianten zijn post-apply geverifieerd.
+R4/R5 blijven OPEN tot een echte providersync een concreet metric-type opslaat. Daarna kan de terugval op de tien-argumenten-aanroep in `wearable-sync.js` vervallen.

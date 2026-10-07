@@ -505,9 +505,9 @@
    "blocker": true,
    "dependency": null,
    "evidence": [
-    "CODE VERIFIED: per-waarde keuring bij lezen bestaat sinds 2026-08-18 (dataquality.v1, observation.v1). R1-R3 opgelost in v4.70.12 (core/fWearableIngestQuality.test.js). R6 opgelost in v4.70.13 (core/fHealthSeriesProvenance.test.js). R4 en R5: implementatie gereed in v4.70.14 (core/fHealthIngestProvenance.test.js, migratie_v580.sql); migratie niet op productie toegepast, dus niet live gesloten."
+    "CODE + PRODUCTION VERIFIED: R1-R3 opgelost in v4.70.12; R6 opgelost in v4.70.13; R4/R5-code gemerged in v4.70.14 (#520, main 982e23fd). migratie_v580 is op 07-10-2026 op productie toegepast als ledger-versie 20261007053921. Post-apply: precies één 12-argument upsert_daily_health, sleep_metric_type aanwezig, anon/PUBLIC geen EXECUTE, authenticated/service_role wel, RLS en 2 policies intact. Live provider-write met concreet metric-type nog niet bewezen; alle 86 bestaande rijen staan bewust op unknown."
    ],
-   "intended_closure": "R4 en R5: implementatie gereed (v4.70.14), migratie_v580 nog niet op productie toegepast. Sluiten na productie-apply en een live sync die het type aantoonbaar opslaat.",
+   "intended_closure": "R4 en R5: code en migratie_v580 zijn live. Sluiten pas na een echte productie-wearable-sync die aantoonbaar een concreet hrv_metric_type (rmssd) en/of sleep_metric_type (asleep/sleep_interval) opslaat.",
    "capability_id": "PROVIDER-INTEGRATION-CONTRACT-001",
    "section": "OPEN",
    "offset": 10739,
@@ -545,6 +545,11 @@
      "date": "2026-10-05",
      "change_type": "AUDIT_METADATA_CORRECTION",
      "reason": "R4 (sleep_metric_type) en R5 (hrv_metric_type via upsert_daily_health) geimplementeerd in v4.70.14 met migratie_v580 in de repo. Migratie niet op productie toegepast: R4 en R5 blijven open tot apply en live verificatie. Status ongewijzigd OPEN; geen gap closure en geen nieuwe gap-ID's."
+    },
+    {
+     "date": "2026-10-07",
+     "change_type": "PRODUCTION_MIGRATION_APPLIED",
+     "reason": "PR #520 squash-gemerged als 982e23fd; exact-head en post-merge Quality Gate SUCCESS; Netlify production READY op dezelfde SHA. migratie_v580 toegepast als 20261007053921 en post-apply invarianten geverifieerd. Gap blijft OPEN omdat nog geen echte providersync na v580 een concreet metric-type heeft opgeslagen."
     }
    ]
   },

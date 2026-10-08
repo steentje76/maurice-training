@@ -1,5 +1,37 @@
 # Trainingskompas — Changelog
 
+## v4.70.21 — Integratie #527 + #528: vermeden oefeningen en FK-compat in de begeleide opslag (8 oktober 2026)
+
+Integratiebranch met PR #527 (v4.70.19) en PR #528 (v4.70.20), plus twee correcties uit de gezamenlijke integratietest.
+
+- **Vermeden oefeningen bij automatische keuze (DEC-AVOID-001).** De AthleteConstraints-core valt terug op de volledige lijst als filteren alles zou uitsluiten (regel 5, "nooit leeg"). Daardoor koos de knop "Alternatief" in de begeleide workout, en de Builder-swap, alsnog een expliciet vermeden oefening wanneer alle alternatieven vermeden waren of het materiaal ontbrak. Een pad dat zelf één alternatief kiest, haalt nu met de exacte matchregel van de core (`avoidMatch`) de vermeden oefeningen eruit; blijft er niets over, dan volgt het bestaande "Geen geschikt alternatief". De core, de handmatige pickers en Autobuild zijn ongewijzigd (zie PO-besluit in DECISION_LOG).
+- **FK-compat in de begeleide opslag (aanvulling op DEC-SAVE-001).** `sessions.exercise_id` verwijst naar `exercises.id`. In productie staan 20 van de 226 catalogusoefeningen in die tabel. `finishSession` maakt vooraf een FK-compat-rij (`ensureSessionExerciseRows` → `ensureExerciseRow`); de begeleide workout deed dat niet, waardoor de server elke sessie met een andere catalogusoefening weigerde (23503 → 409). Op main ging zo'n training stil verloren; met alleen #528 bleef hij voor altijd "niet opgeslagen". Guided roept nu vóór elke write dezelfde `ensureExerciseRow()` aan.
+- **Gate:** `core/fGuidedIntegrationAvoidSave.test.js` (40 controles; echte pagina, echte catalogus, echte wachtrij en flush, gesimuleerde server met upsert op id en het FK-schema).
+- sw-cache v470210, versionCode 47021.
+
+## v4.70.20 — Begeleide workout: opslag pas "opgeslagen" na bevestiging (8 oktober 2026)
+
+- **Bug (dataverlies).** Bij een geweigerde server-write (400/403/409/422) of een mislukte offline-wachtrij telde de begeleide workout de rij toch als geschreven. De training-instance werd afgerond, de lokale kopie (`tk_gw_active`) gewist, het scherm zei "Voltooid" zonder melding en een nieuwe poging was geblokkeerd. De training was weg. Ook werd het PR-record bijgewerkt voor een sessie die nooit was opgeslagen, en logde een dubbele tik de samenvatting twee keer.
+- **Root cause.** `persistToSessions()` negeerde de uitkomst van `writeSessionRow()` (`written++` na elke aanroep), zette `sessionsLogged` vóór de eerste write, en `finish()` wiste de lokale kopie direct, vóór de opslag klaar was. `sbPostQ()` gaf bovendien `true` terug, ook als queuen zelf mislukte.
+- **Oplossing.** `sbPostQ()` kent een optionele `{detail:true}` (zelfde opts-patroon als `sbPatchQ`) die `confirmed`, `queued`, `rejected` of `failed` teruggeeft; zonder opts zijn de booleans exact gelijk. De begeleide workout:
+  - geeft elke rij één stabiel client-id, vastgelegd vóór de eerste poging; een nieuwe poging is via de bestaande idempotente upsert nooit een tweede rij;
+  - telt alleen `confirmed` of `queued` als opgeslagen, en werkt pas dan het PR-record bij;
+  - rondt de instance af en wist de lokale kopie pas als alle rijen opgeslagen zijn;
+  - laat één opslagronde tegelijk lopen.
+- **Wat de sporter ziet.** "Training opgeslagen" (server), "Offline opgeslagen — wordt gesynchroniseerd zodra je weer online bent" (wachtrij), of "Opslaan mislukt — je training blijft op dit toestel bewaard" met de knop "Opnieuw opslaan". Een niet-opgeslagen training staat na een herstart op Vandaag ("Begeleide training opslaan"). "Klaar" gooit hem niet weg, en een nieuwe begeleide training start pas als de vorige is opgeslagen.
+- **Niet gewijzigd.** De retry-statuscodes, de offline-wachtrij en de flush, het idempotentiecontract, de rijopbouw (`buildStrengthSessionRow`), het evidencespoor, de recordregel, het voorschrift en de database.
+- **Gate:** `core/fGuidedSaveReliability.test.js` (77 controles; echte pagina, gesimuleerde server met upsert op id; 201, 400/403/409/422, 401/429/500/503, netwerk, offline, wachtrij faalt, hangend verzoek, herstart, gedeeltelijke fout, dubbel tikken, Klaar, nieuwe start, sbPostQ zonder opts).
+- sw-cache v470200, versionCode 47020. v4.70.19 is gereserveerd voor PR #527.
+## v4.70.19 — Trainingscontext op alle vervangpaden: begeleide workout en Preview (8 oktober 2026)
+
+- **Bug 1 — begeleide workout.** De knop "Alternatief" (`GWUI.alt()`) koos het eerste canonieke alternatief zonder de trainingscontext. Gereproduceerd in de echte pagina op main `fde8b5de`: een thuisatleet met alleen dumbbells kreeg bij Band Curl "Barbell Curl", en een expliciet vermeden oefening werd gewoon gekozen. Preview, Execution, Builder-swap (#340) en Autobuild filterden wel.
+- **Bug 2 — Preview-swap-picker.** De picker gaf catalogusentries door met `naam:a.name`. Een catalogusentry heeft alleen `identity.name`, dus de naam was leeg: een te vermijden oefening werd nooit herkend en stond gewoon in de lijst, en de picker toonde opties zonder naam. Het materiaalfilter werkte wel (dat leest het id).
+- **Root cause.** Eén foutklasse: catalogusentries (`WB.altList`) werden niet, of zonder canonieke naam, aan de bestaande `applyAthleteConstraints()` gegeven. `GWUI.alt()` dateert van vóór F23 en ontbrak in de inventaris van #340.
+- **Oplossing.** Eén helper, `applyAthleteConstraintsCatalog()`, geeft catalogusentries met `identity.name` aan de bestaande `applyAthleteConstraints()`. `GWUI.alt()` en de Preview-picker gebruiken hem; de picker toont de naam via `previewExerciseName()`. Geen nieuwe filterregel; de "nooit leeg"-fallback van de core blijft. Zonder trainingscontext verandert er niets.
+- **Niet gewijzigd.** `core/athleteConstraints.js`, de keuze-volgorde (eerste toegestane alternatief), gewicht/sets/reps/RPE van de vervangende oefening (`replaceEx`), opslag en persistentie.
+- **Gate:** `core/fGuidedPreviewAthleteConstraints.test.js` (29 controles: echte functies met de echte core, en de echte pagina met de echte catalogus). `fBuilderSwapAthleteConstraints` B2 accepteert de helper.
+- sw-cache v470190, versionCode 47019.
+
 ## v4.70.18 — Readiness-betrouwbaarheid: vijf lekken in de contextlaag gedicht (7 oktober 2026)
 
 Bugfix op de bevindingen N1–N5 uit de read-only Readiness Reliability Audit. `core/` is niet gewijzigd: geen formule, geen drempel, geen evidence-niveau, geen voorschriftregel (DEC-DQ-003).

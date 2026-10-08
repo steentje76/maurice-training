@@ -2748,3 +2748,81 @@ omdat de ingevulde 100 niet meer meetelt. Zonder enige data is er geen score mee
 Hersteld"), N7 (trainingsbelasting in de signaaltelling), N8, N9 en de open punten van DEC-DQ-002.
 
 **Status.** Geïmplementeerd in v4.70.18. Guard: `core/fReadinessReliabilityContextLeaks.test.js`.
+
+## Trainingscontext op alle vervangpaden — begeleide workout en Preview (8 oktober 2026)
+
+**Context.** De onafhankelijke PR-audit van 8 oktober (`claude/AUDIT_OpenPRs_339_265_383_v4.70.18.md`) vond een vijfde
+vervangpad buiten de inventaris van "Builder + AthleteConstraints Completion" (#340): `GWUI.alt()` in de begeleide
+workout. Bij runtime-verificatie op main `fde8b5de` bleek ook de Preview-picker (F23) een te vermijden oefening niet
+te herkennen: hij gaf `a.name` door, een veld dat een catalogusentry niet heeft.
+
+**Besluit.** Geen productbesluit nodig: dezelfde classificatie als #340 (DEFECT, CONNECTION GAP). Beide paden gebruiken
+de bestaande `applyAthleteConstraints()` via één helper voor catalogusentries, `applyAthleteConstraintsCatalog()`.
+
+**Niet gewijzigd.** De AthleteConstraints-core en haar "nooit leeg"-fallback, de keuzevolgorde, het voorschrift van
+de vervangende oefening en de opslag.
+
+**Open, niet in deze wijziging.** Of de "nooit leeg"-fallback een expliciet vermeden oefening mag teruggeven, is een
+productvraag. Doelsortering in de begeleide workout (zoals `swapAlternative()` met goalScore) is een UX-keuze.
+
+**Status.** Geïmplementeerd in v4.70.19. Guard: `core/fGuidedPreviewAthleteConstraints.test.js`.
+## DEC-SAVE-001 — Begeleide workout: "opgeslagen" betekent bevestigd of gequeued (8 oktober 2026)
+
+**Context.** Sprint 3 (Guided Workout Save Reliability). Op main `fde8b5de` gereproduceerd: een geweigerde write
+(400/403/409/422) of een mislukte offline-queue werd in `persistToSessions()` als geschreven geteld; de instance werd
+afgerond, `tk_gw_active` gewist en een nieuwe poging geblokkeerd. Stil dataverlies.
+
+**Besluit.** Binnen de bestaande contracten, geen nieuw opslagcontract:
+1. Opgeslagen = server bevestigd (`confirmed`) of veilig in de bestaande offline-wachtrij (`queued`). Die twee
+   blijven zichtbaar verschillend. Al het andere is niet opgeslagen.
+2. `sbPostQ(t,d,opts)` krijgt het `opts`-patroon van `sbPatchQ`: met `{detail:true}` de werkelijke uitkomst
+   (`confirmed`/`queued`/`rejected`/`failed`). Zonder opts exact het oude gedrag.
+3. Idempotentie via het bestaande `IDEMPOTENT_TABELLEN_MET_CLIENT_ID`: elke Guided-rij krijgt één stabiel client-id
+   vóór de eerste poging; een nieuwe poging is een upsert, nooit een tweede rij.
+4. Lokale kopie, instance-afronding en PR-record pas na opslag van alle rijen. Een afgeronde, niet-opgeslagen
+   training wordt nooit stil verwijderd of overschreven.
+
+**Niet gewijzigd.** Retry-statuscodes (`SB_RETRY_STATUS`), wachtrij en flush, rijopbouw, evidence, recordregel,
+voorschrift, database.
+
+**Open, apart te beslissen.** (a) Verwijderen van een definitief geweigerde begeleide training (productbesluit:
+nu blijft hij staan tot opslaan lukt). (b) De overige aanroepers van `sbPostQ` zonder opts melden een mislukte
+queue nog als succes. (c) Geen client-time-out op writes (`sbFetch`).
+
+**Status.** Geïmplementeerd in v4.70.20. Guard: `core/fGuidedSaveReliability.test.js`. Niet CLOSED_PROVEN: vereist
+toestelbewijs.
+
+## DEC-AVOID-001 — Automatische keuze: nooit een expliciet vermeden oefening (8 oktober 2026)
+
+**Context.** Sprint 4 (integratie #527 + #528). De AthleteConstraints-core heeft als harde regel 5: filteren mag
+nooit een lege set opleveren; dan valt hij terug op de oorspronkelijke set. Voor een pad dat zelf één alternatief
+kiest betekende dat: zijn alle alternatieven vermeden (of valt het materiaal weg), dan werd alsnog een expliciet
+vermeden oefening gekozen. Gereproduceerd in de echte pagina (begeleide workout "Alternatief" en Builder-swap).
+
+**Besluit (binnen de bestaande contracten).** Productprincipe van de PO: een expliciet vermeden oefening mag nooit
+automatisch als geschikt alternatief worden geselecteerd. Toegepast waar dat zonder contractwijziging kan: de twee
+paden die zelf één alternatief kiezen en al een "geen geschikt alternatief"-uitkomst hebben. `tkZonderVermeden()`
+gebruikt de exacte matchregel van de core (`AthleteConstraints.avoidMatch`, alleen `exact`). Geen nieuwe blessure-,
+medische of trainingsregel; materiaal-fallback ongewijzigd.
+
+**Niet gewijzigd.** De core (regel 5), de handmatige pickers (Preview, Execution) en Autobuild (`generate`).
+
+**PO_DECISION_REQUIRED.**
+1. *Autobuild:* als de "nooit leeg"-fallback alleen vermeden oefeningen oplevert, kan een gegenereerde training
+   een vermeden oefening bevatten. Ze weglaten kan een slot leeg laten; dat raakt regel 5.
+2. *Handmatige pickers:* tonen bij fallback ook vermeden oefeningen (de sporter kiest zelf). Weglaten of markeren?
+
+**Status.** Geïmplementeerd in v4.70.21. Guard: `core/fGuidedIntegrationAvoidSave.test.js`.
+
+## DEC-SAVE-001 — aanvulling: FK-compat-rij in de begeleide opslag (8 oktober 2026)
+
+`sessions.exercise_id` heeft een foreign key naar `exercises.id` (productieschema, read-only geverifieerd). Van de
+226 catalogusoefeningen staan er 20 in die tabel. `finishSession` maakt vooraf een FK-compat-rij via
+`ensureSessionExerciseRows()`/`ensureExerciseRow()` (F91/Optie B); de begeleide opslag niet. Daardoor weigerde de
+server elke Guided-sessie met een andere catalogusoefening (23503 → 409, geen tijdelijke fout). Op main ging de
+training stil verloren (productie: 0 Guided-sessies ooit); met alleen #528 bleef hij permanent "niet opgeslagen".
+De begeleide opslag roept nu vóór elke write dezelfde `ensureExerciseRow()` aan. Geen nieuwe schrijfweg.
+
+**Open (R4-OFFLINE-FK, bestaand, ook in finishSession).** `ensureExerciseRow()` schrijft niet via de wachtrij. Een
+offline gelogde nieuwe catalogusoefening wordt bij sync door de FK geweigerd; het item blijft zichtbaar in de
+wachtrij (niet verloren, niet dubbel) tot de exercises-rij er bij een latere online opslag wel is.

@@ -28,12 +28,16 @@ let _posted = [];          // sbPost-oproepen (t, row)
 let _postResult = true;    // laat sbPost slagen/falen
 let _invalidated = 0;
 async function sbPost(t, row){ _posted.push({ t, row }); return _postResult; }
+// Sinds v4.70.22 (DEC-SYNC-001) gaat de FK-compat-rij via sbPostQ (wachtrij, ignore-duplicates).
+let _opts = [];
+async function sbPostQ(t, row, opts){ _posted.push({ t, row }); _opts.push(opts); return { ok: _postResult, status: _postResult ? 'confirmed' : 'rejected' }; }
 function invalidateExPickerPool(){ _invalidated++; }
 const CAT = {
   'TK-000105': { catalog_id:'TK-000105', identity:{ name:'Dumbbell Goblet Squat', primary:['Quadriceps'], secondary:['Billen'], equipment:['dumbbell'] } }
 };
 let ExerciseCatalogService = { byId:(id)=>CAT[id]||null };
 
+eval(extractFn('ensureExerciseRowStatus'));
 eval(extractFn('ensureExerciseRow'));
 
 let pass=0, fail=0;
@@ -53,6 +57,7 @@ function eq(a,b,m){ ok(a===b, m+' (verwacht '+JSON.stringify(b)+', kreeg '+JSON.
   eq(JSON.stringify(_posted[0].row.muscle_primary), JSON.stringify(['Quadriceps']), 'muscle_primary uit catalogus');
   ok(exercises.some(e=>e.id==='TK-000105'), 'na succes: toegevoegd aan exercises-array');
   eq(_invalidated, 1, 'pool-cache geïnvalideerd');
+  ok(_opts[0] && _opts[0].ignoreDuplicates === true && _opts[0].detail === true, 'via sbPostQ met ignoreDuplicates (wachtrij-veilig, overschrijft niets)');
 
   // 2. id al aanwezig in exercises → GEEN insert
   exercises = [{ id:'TK-000105', name:'x' }]; _posted = []; _ensureRowInflight = {};

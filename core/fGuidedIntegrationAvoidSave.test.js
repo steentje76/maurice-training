@@ -34,7 +34,7 @@ ok(GW_ALT.indexOf('applyAthleteConstraintsCatalog(alts)') < GW_ALT.indexOf('tkZo
 ok(SWAP.indexOf('AthleteConstraints.applyConstraints') < SWAP.indexOf('tkZonderVermeden(alts') && SWAP.indexOf('tkZonderVermeden(alts') < SWAP.indexOf('if(!alts.length)return null;'), 'bron: Builder-swap — constraints, dan vermeden eruit, dan "geen alternatief"');
 ok(!/tkZonderVermeden/.test(extractFn(HTML, 'previewRenderSwapPicker')) && !/tkZonderVermeden/.test(extractFn(HTML, 'openSwapExercise')), 'bron: handmatige pickers ongewijzigd (sporter kiest zelf; PO_DECISION_REQUIRED)');
 ok(!/tkZonderVermeden/.test(extractFn(HTML, 'generate')), 'bron: Autobuild ongewijzigd ("nooit lege training"; PO_DECISION_REQUIRED)');
-ok(/if\(typeof ensureExerciseRow==='function'\)\{ try\{ await ensureExerciseRow\(it\.id\); \}catch\(_\)\{\} \}/.test(extractFn(HTML, 'doPersist')) && extractFn(HTML, 'doPersist').indexOf('ensureExerciseRow(it.id)') < extractFn(HTML, 'doPersist').indexOf('writeSessionRow('), 'bron: Guided maakt vóór de write de FK-compat-rij (zelfde helper als finishSession)');
+ok(/await ensureExerciseRowStatus\(it\.id\)/.test(extractFn(HTML, 'doPersist')) && extractFn(HTML, 'doPersist').indexOf('ensureExerciseRowStatus(it.id)') < extractFn(HTML, 'doPersist').indexOf('writeSessionRow('), 'bron: Guided maakt vóór de write de FK-compat-rij (zelfde helper als finishSession)');
 ok(/Filtering mag nooit een lege set opleveren/.test(fs.readFileSync(path.join(__dirname, 'athleteConstraints.js'), 'utf8')), 'bron: core-contract (regel 5) ongewijzigd');
 
 // ══ DEEL 2 — ECHTE PAGINA ══
@@ -206,10 +206,8 @@ function installeer(cfg) {
       eq([c5.s0.status, c5.s0.rijen.length, c5.s0.lokaal], ['confirmed', 2, false], 'C5 FK-schema: catalogusoefeningen krijgen eerst een exercises-rij, sessies bevestigd');
       const c5b = await combi({ status: 201, ctx: ctxVermijd, fk: true, offline: true }, [{ naam: 'sync', flush: true, cfg: { status: 201, offline: false, fk: true } }]);
       eq(c5b.s0.status, 'queued', 'C5 offline met FK-schema: in de wachtrij');
-      // BEKEND, BESTAAND GEDRAG (ook finishSession): ensureExerciseRow() schrijft niet via de wachtrij.
-      // Offline gelogd met een nieuwe catalogusoefening → bij sync weigert de FK de rij; het item blijft
-      // zichtbaar in de wachtrij (niet verloren, niet dubbel). Vastgelegd als restrisico R4-OFFLINE-FK.
-      eq([c5b.sync.rijen.length, c5b.sync.queue.length], [0, 2], 'C5 offline → sync met FK-schema: rijen blijven in de wachtrij (niet verloren, niet dubbel) — restrisico R4-OFFLINE-FK');
+      // R4-OFFLINE-FK opgelost in v4.70.22 (DEC-SYNC-001): de FK-compat-rij gaat via de wachtrij vóór de sessie.
+      eq([c5b.sync.rijen.length, c5b.sync.queue.length], [2, 0], 'C5 offline → sync met FK-schema: oefening en sessies gesynchroniseerd, wachtrij leeg (R4-OFFLINE-FK opgelost)');
     } catch (e) { ok(false, 'deel 2 onverwachte fout: ' + (e && e.stack || e)); }
     await browser.close();
   }

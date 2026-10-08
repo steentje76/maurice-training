@@ -30,14 +30,14 @@ function constSrc(html, decl) {
   const s = html.indexOf(decl); let d = 0; const b = html.indexOf('{', s);
   for (let k = b; k < html.length; k++) { if (html[k] === '{') d++; else if (html[k] === '}') { d--; if (d === 0) return html.slice(s, k + 1) + ';'; } }
 }
-const FNS = ['finishSession', 'saveLosOefening', 'clearLosSessionState', 'losHasUnsavedData', 'tkErgStartProtocol',
+const FNS = ['finishSession', 'tkSessieOptsVoor', 'tkSessieSchrijfOpts', 'tkSessieUitkomst', 'saveLosOefening', 'clearLosSessionState', 'losHasUnsavedData', 'tkErgStartProtocol',
   'tkErgOnCanonicalMeasurement', 'tkC2IsLoggableSummary', 'tkC2Converter', 'tkC2SessionRowFromLog', 'tkC2ExecutionCleanup',
   'tkErgDisconnect', 'tkErgDisconnectAll', '_c2rtTeardown', '_c2rtSet', '_c2rtGet', '_c2repaint', '_c2idleInner', '_c2note', '_c2btn',
   'cardioDataToRow', 'resolveCardioType', 'tkErgProtocolSection', 'tkErgProtocolProjectionFor', 'tkErgProtocolInstanceId',
   'tkIsErgCardioType', 'execLeaveDiscard', 'resetLosAllState', 'resetLosExerciseSelection', 'buildStrengthSessionRow', 'tkC2TrainingExecIds',
   '_c2completionTracker', 'tkC2PacketMeta', 'tkC2NoteMeta', 'tkC2CompletionObserve', 'tkC2CompletionIgnored', 'tkC2FrozenFor'];
 const UNDEF = Symbol('undef');
-const PERSIST_FNS = ['writeSessionRow', 'sbPostQ', 'sbRetryable', 'tkNormalizeSessionsRow', 'newClientRowId'];
+const PERSIST_FNS = ['writeSessionRow', 'sbPostQ', 'tkSchrijfUitkomst', 'sbRetryable', 'tkNormalizeSessionsRow', 'newClientRowId'];
 function deepNoop() {
   const f = function () { return deepNoop(); };
   return new Proxy(f, { get: (t, k) => (k === 'then' || k === Symbol.toPrimitive) ? undefined : deepNoop(), apply: () => deepNoop() });

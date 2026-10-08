@@ -1,5 +1,19 @@
 # Trainingskompas — Changelog
 
+## v4.70.22 — Offline oefening- en sessiesynchronisatie: eerst de oefening, dan de sessie (8 oktober 2026)
+
+- **Bug (R4-OFFLINE-FK).** `sessions.exercise_id` verwijst naar `exercises.id`; een catalogusoefening heeft eerst een FK-compat-rij nodig. `ensureExerciseRow()` schreef die rij met een directe `sbPost`: offline of bij een netwerkfout viel hij stil weg, terwijl de sessie wél in de wachtrij kwam. Bij de sync weigerde de FK de sessie (23503 → 409) en bleef zij voor altijd in de wachtrij hangen. Gold voor de gewone training én de begeleide workout. Gereproduceerd in de echte pagina: offline nieuwe oefening → na sync 0 sessies op de server, de sessie vast in de wachtrij.
+- **Ook gevonden.** Bij "netwerkuitval tussen oefening en sessie" ging de sessie los naar de server en liep stuk op de FK. Een oefening die de server weigerde leidde toch tot een sessie-write. De gewone training meldde "N oefeningen opgeslagen" ook als de sessie alleen in de wachtrij stond, en ook als queuen zelf mislukte (de training werd dan gewist).
+- **Oplossing (DEC-SYNC-001), binnen de bestaande wachtrij.**
+  - De FK-compat-rij gaat via `sbPostQ` met `ignoreDuplicates`: online direct; anders in de wachtrij, vóór de sessie (FIFO). Een al bestaande rij wordt niet overschreven.
+  - Is de oefening gequeued, dan gaat ook de sessie in de wachtrij (`queueOnly`), nooit los naar de server.
+  - Een geweigerde of nergens vastgelegde oefening krijgt geen sessie-write; de training blijft lokaal.
+  - `flushOfflineQueue()` gebruikt bij replay dezelfde resolutie, en stuurt geen sessie waarvan de oefening in dezelfde ronde mislukte; die twee blijven samen in de wachtrij.
+  - De gewone training meldt "offline opgeslagen — worden gesynchroniseerd" bij gequeuede sessies, en een mislukte queue is een fout.
+- **Niet gewijzigd.** Trainingsberekeningen, sportlogica, evidence, AI, retry-statuscodes, de idempotentie van sessies, RLS en database. `sbPostQ` zonder opties geeft exact dezelfde booleans.
+- **Gate:** `core/fOfflineExerciseSessionSync.test.js` (73 controles; echte pagina, `finishSession()` en de begeleide workout, echte IndexedDB-wachtrij en flush, historie, gesimuleerde PostgREST met FK, ignore-/merge-duplicates en herstart). `f91ShadowRow`, `fConcept2FinalizeLifecycle`, `fGuidedSaveReliability` en `fGuidedIntegrationAvoidSave` bijgewerkt.
+- sw-cache v470220, versionCode 47022.
+
 ## v4.70.21 — Integratie #527 + #528: vermeden oefeningen en FK-compat in de begeleide opslag (8 oktober 2026)
 
 Integratiebranch met PR #527 (v4.70.19) en PR #528 (v4.70.20), plus twee correcties uit de gezamenlijke integratietest.

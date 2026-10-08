@@ -2826,3 +2826,27 @@ De begeleide opslag roept nu vóór elke write dezelfde `ensureExerciseRow()` aa
 **Open (R4-OFFLINE-FK, bestaand, ook in finishSession).** `ensureExerciseRow()` schrijft niet via de wachtrij. Een
 offline gelogde nieuwe catalogusoefening wordt bij sync door de FK geweigerd; het item blijft zichtbaar in de
 wachtrij (niet verloren, niet dubbel) tot de exercises-rij er bij een latere online opslag wel is.
+
+## DEC-SYNC-001 — Afhankelijkheid oefening → sessie in de offline-synchronisatie (8 oktober 2026)
+
+**Context.** Sprint 5. `sessions.exercise_id` heeft een FK naar `exercises.id`. `ensureExerciseRow()` (F91/Optie B)
+schreef de FK-compat-rij van een catalogusoefening direct (`sbPost`), niet via de wachtrij. Offline of bij een
+netwerkfout ontbrak die rij, terwijl de sessie wel werd gequeued; de sync liep dan blijvend vast op de FK
+(R4-OFFLINE-FK). Gereproduceerd in de echte pagina, voor de gewone training en de begeleide workout.
+
+**Besluit (binnen de bestaande wachtrij, geen nieuwe sync-engine).**
+1. Volgorde: oefening → sessie → training-afronding → historie/records. De wachtrij is FIFO; een rij die afhangt
+   van een gequeuede rij wordt zelf ook gequeued (`sbPostQ` `queueOnly`), nooit los verstuurd.
+2. De FK-compat-rij gaat via `sbPostQ` met `ignoreDuplicates` (ON CONFLICT DO NOTHING), ook bij replay
+   (`item.resolution`). Een al bestaande rij, ook van een ander account, voldoet aan de FK en wordt niet overschreven.
+3. Geen sessie-write zonder geldige oefeningreferentie: een geweigerde (`rejected`) of nergens vastgelegde
+   (`failed`) oefening geeft een mislukte sessie die lokaal blijft.
+4. De flush stuurt in een ronde geen sessie waarvan de oefening in die ronde mislukte; beide blijven in de wachtrij.
+5. Statussen in beide routes: `confirmed`, `queued`, `rejected`, `failed`. Alleen `confirmed` en `queued` zijn
+   opgeslagen; de gebruiker ziet het verschil.
+
+**Niet gewijzigd.** `sbPostQ` zonder opties (exact dezelfde booleans voor de overige aanroepers), retry-statuscodes,
+idempotentie van sessies (client-id + merge-duplicates), RLS, database, berekeningen, evidence, AI.
+
+**Status.** Geïmplementeerd in v4.70.22. Guard: `core/fOfflineExerciseSessionSync.test.js`. Niet CLOSED_PROVEN:
+vereist toestelbewijs.

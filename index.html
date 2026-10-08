@@ -7638,7 +7638,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.21';
+const APP_VER = 'v4.70.22';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -8975,23 +8975,35 @@ async function sbPostQ(t,d,opts){
   const detail=!!(opts&&opts.detail);
   if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);
   if(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]&&d&&d.id==null){ d={...d,id:newClientRowId()}; }
-  const prefer=IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation';
-  if(!navigator.onLine){const q=await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return detail?tkSchrijfUitkomst(q===true?'queued':'failed'):true;}
+  // Sprint 5 (DEC-SYNC-001), beide optioneel:
+  //   opts.queueOnly        — niet direct versturen maar achter in de bestaande wachtrij. Voor een rij
+  //                           die afhangt van een eerder gequeuede rij (sessie na haar oefening): de
+  //                           FIFO-volgorde van de wachtrij garandeert dan de volgorde op de server.
+  //   opts.ignoreDuplicates — ON CONFLICT DO NOTHING (PostgREST resolution=ignore-duplicates), ook bij
+  //                           de latere replay. Voor een rij die al kan bestaan en niet overschreven
+  //                           mag worden (FK-compat-rij van een catalogusoefening).
+  // Uitkomst: opts.status krijgt altijd de werkelijke status. Zonder detail blijft de boolean exact
+  // als voorheen: true behalve bij 'rejected' (ook bij een mislukte queue, het oude gedrag).
+  const queueOnly=!!(opts&&opts.queueOnly), ignoreDup=!!(opts&&opts.ignoreDuplicates);
+  const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation');
+  const item=ignoreDup?{table:t,method:'POST',body:d,resolution:'ignore-duplicates'}:{table:t,method:'POST',body:d};
+  const uit=function(status,http){ if(opts&&typeof opts==='object')opts.status=status; return detail?tkSchrijfUitkomst(status,http):(status!=='rejected'); };
+  if(!navigator.onLine||queueOnly){const q=await offlineQueueAdd(item);updateOfflineBadge();return uit(q===true?'queued':'failed');}
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:prefer,body:d});
     if(!r.ok){
       const err=await r.text();console.error('sbPostQ',t,r.status,err);
       // Tijdelijke serverfout (401 na mislukte refresh, 429, 5xx): NIET verliezen — dezelfde
       // wachtrij als bij een netwerkfout. Validatiefouten (400/409/422) blijven false.
-      if(sbRetryable(r.status)){const q=await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return detail?tkSchrijfUitkomst(q===true?'queued':'failed',r.status):true;}
-      return detail?tkSchrijfUitkomst('rejected',r.status):false;
+      if(sbRetryable(r.status)){const q=await offlineQueueAdd(item);updateOfflineBadge();return uit(q===true?'queued':'failed',r.status);}
+      return uit('rejected',r.status);
     }
-    return detail?tkSchrijfUitkomst('confirmed',r.status):true;
+    return uit('confirmed',r.status);
   }catch(e){
     console.warn('sbPostQ offline, queued',t,e);
-    const q=await offlineQueueAdd({table:t,method:'POST',body:d});
+    const q=await offlineQueueAdd(item);
     updateOfflineBadge();
-    return detail?tkSchrijfUitkomst(q===true?'queued':'failed'):true;
+    return uit(q===true?'queued':'failed');
   }
 }
 // sbPatchQ(t,f,d,opts) — opts is optioneel en 100% backward compatible: alle
@@ -9134,6 +9146,10 @@ async function flushOfflineQueue(){
     console.warn('flushOfflineQueue: '+vanAndereGebruiker+' item(s) van een andere gebruiker overgeslagen (blijven geisoleerd in de wachtrij)');
   }
   let syncedAny=false, skippedAny=false;
+  // Sprint 5 (DEC-SYNC-001): een sessie wordt in deze ronde niet verstuurd als de FK-compat-rij van
+  // haar oefening in dezelfde ronde mislukte. Ze blijven samen in de wachtrij en gaan in de volgende
+  // ronde weer in dezelfde volgorde (oefening eerst, FIFO).
+  const _exNietGelukt={};
   for(const item of teVerwerken){
     try{
       // SPRINT C2-D: item.method==='RPC' -- generieke muterende-RPC-replay
@@ -9141,6 +9157,7 @@ async function flushOfflineQueue(){
       // de idempotency zit in de RPC-body zelf (bv. p_occurrence_id) en wordt
       // hier ongewijzigd meegestuurd -- exact dezelfde args als de eerste,
       // gefaalde poging, nooit opnieuw gegenereerd.
+      if(item.method==='POST'&&item.table==='sessions'&&item.body&&_exNietGelukt[item.body.exercise_id]){skippedAny=true;continue;}
       const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:(item.method==='RPC'?`${SB_URL}/rest/v1/rpc/${item.function}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`);
       // F13 Post-Audit Remediation (P1-04): dezelfde idempotente upsert-header
       // als sbPostQ() zelf gebruikt. Zonder dit zou een item dat vóór het
@@ -9152,7 +9169,7 @@ async function flushOfflineQueue(){
         ?{method:'DELETE'}
         :(item.method==='RPC'
           ?{method:'POST',body:item.args}
-          :{method:item.method,prefer:(item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation',body:item.body});
+          :{method:item.method,prefer:(item.method==='POST'&&item.resolution==='ignore-duplicates')?'return=representation,resolution=ignore-duplicates':((item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation'),body:item.body});
       const r=await sbFetch(url,opts);
       if(!r.ok){
         // v5.9.5: serverfout op dit ene item (bv. validatie, verwijzing naar inmiddels
@@ -9162,6 +9179,7 @@ async function flushOfflineQueue(){
         // bestaande wachtrij-scherm), maar de rest wordt gewoon geprobeerd.
         console.error('flushOfflineQueue: item mislukt, wordt overgeslagen (blijft in wachtrij)',item.table,r.status,await r.text());
         if(item.method==='RPC')tkLogRpcOffline(sbRetryable(r.status)?'rpc_replay_retryable_failure':'rpc_replay_permanent_failure',item.function,{status:r.status});
+        if(item.method==='POST'&&item.table==='exercises'&&item.body)_exNietGelukt[item.body.id]=1;
         skippedAny=true;
         continue;
       }
@@ -17351,12 +17369,19 @@ function resolvePickerEx(id){
 // in-flight-gededupliceerd. scope:'personal' = de bewezen client-schrijfbare zichtbaarheid (zoals
 // saveLosOefening); 'global' is owner-only. exPickerPool dedupliceert op id → geen dubbele weergave.
 let _ensureRowInflight={};
-async function ensureExerciseRow(exId){
+// Sprint 5 (DEC-SYNC-001) — de FK-compat-rij gaat via de BESTAANDE wachtrij. Voorheen een directe
+// sbPost: offline of bij een netwerkfout viel hij stil weg, terwijl de sessie wél werd gequeued; bij
+// de sync weigerde de FK die sessie (23503 → 409) en bleef zij voor altijd in de wachtrij hangen.
+// Nu: online direct (ignore-duplicates: een al bestaande rij, ook van een ander account, is goed en
+// wordt niet overschreven); anders in de wachtrij, vóór de sessie (FIFO). Uitkomst:
+//   'exists' (bekend of geen catalogusoefening) | 'confirmed' | 'queued' | 'rejected' | 'failed'
+// Een gequeuede rij komt NIET in de lokale exercises-lijst: hij bestaat pas op de server na de sync.
+async function ensureExerciseRowStatus(exId){
   try{
-    if(!exId) return true;
-    if(typeof exercises!=='undefined' && Array.isArray(exercises) && exercises.some(e=>e.id===exId)) return true;
+    if(!exId) return 'exists';
+    if(typeof exercises!=='undefined' && Array.isArray(exercises) && exercises.some(e=>e.id===exId)) return 'exists';
     const c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(exId):null;
-    if(!c||!c.identity) return true; // geen catalogus-id → legacy/custom hoort al te bestaan
+    if(!c||!c.identity) return 'exists'; // geen catalogus-id → legacy/custom hoort al te bestaan
     if(_ensureRowInflight[exId]) return _ensureRowInflight[exId];
     const Id=c.identity;
     const row={ id:exId, name:Id.name||exId, category:'Overig', type:'strength', wod_format:null,
@@ -17364,25 +17389,45 @@ async function ensureExerciseRow(exId){
       muscle_primary:Array.isArray(Id.primary)?Id.primary.slice():[],
       muscle_secondary:Array.isArray(Id.secondary)?Id.secondary.slice():[], scope:'personal' };
     _ensureRowInflight[exId]=(async()=>{
-      let ok=false;
-      try{ ok=await sbPost('exercises',row); }catch(_){ ok=false; }
-      if(ok && typeof exercises!=='undefined' && Array.isArray(exercises) && !exercises.some(e=>e.id===exId)){
+      let status='failed';
+      try{ const u=await sbPostQ('exercises',row,{detail:true,ignoreDuplicates:true}); status=(u&&u.status)||'failed'; }catch(_){ status='failed'; }
+      if(status==='confirmed' && typeof exercises!=='undefined' && Array.isArray(exercises) && !exercises.some(e=>e.id===exId)){
         exercises.push(row);
         if(typeof invalidateExPickerPool==='function')invalidateExPickerPool();
       }
       delete _ensureRowInflight[exId];
-      return ok;
+      return status;
     })();
     return _ensureRowInflight[exId];
-  }catch(e){ return false; }
+  }catch(e){ return 'failed'; }
 }
+// Bestaande boolean-interface (F91): true als de rij bestaat, bevestigd of veilig gequeued is.
+async function ensureExerciseRow(exId){
+  const s=await ensureExerciseRowStatus(exId);
+  return s==='exists'||s==='confirmed'||s==='queued';
+}
+// Opties voor de sessie-write op basis van de status van haar oefening: na een gequeuede
+// oefening gaat de sessie ook in de wachtrij (erachter), nooit los naar de server.
+function tkSessieSchrijfOpts(exStatus){ return {queueOnly:exStatus==='queued'}; }
+// finishSession: een oefening die de server weigerde of die nergens is vastgelegd, krijgt geen
+// sessie-write (die zou op de FK stuklopen); de oefening telt als mislukt en de sessie blijft lokaal.
+function tkSessieOptsVoor(statussen, exId){
+  const s=statussen?statussen[exId]:undefined;
+  if(s==='rejected'||s==='failed') throw new Error('exercise_row_'+s);
+  return tkSessieSchrijfOpts(s);
+}
+// Een sessie die niet bevestigd én niet gequeued is (queuen zelf mislukte) is niet opgeslagen.
+function tkSessieUitkomst(opts){ if(opts&&opts.status==='failed') throw new Error('session_write_not_persisted'); }
 // Zorg dat alle daadwerkelijk gelogde catalogus-only oefeningen een FK-compat rij hebben, vóór
 // de (frozen) sessions-writes. Alleen oefeningen met een sessionLog-entry (die geschreven worden).
 async function ensureSessionExerciseRows(list){
+  const statussen={};
   try{
     const ids=[...new Set((list||[]).filter(ex=>ex&&ex.id&&(typeof sessionLog!=='undefined')&&sessionLog[ex.id]).map(ex=>ex.id))];
-    if(ids.length) await Promise.all(ids.map(id=>ensureExerciseRow(id)));
+    // Na elkaar, niet parallel: de wachtrij-volgorde is dan deterministisch (oefeningen in lijstvolgorde).
+    for(const id of ids){ statussen[id]=await ensureExerciseRowStatus(id); }
   }catch(_){}
+  return statussen;
 }
 
 async function getRecentExerciseIds(){
@@ -23866,7 +23911,8 @@ async function finishSession(){
   // F91/Optie B — FK-compat: garandeer dat elke gelogde catalogus-only oefening een exercises-rij
   // heeft VÓÓR de writes (anders faalt sessions_exercise_id_fkey). Raakt de write-semantiek niet aan
   // (buildStrengthSessionRow/writeSessionRow ongewijzigd) — alleen een veilige pre-conditie.
-  await ensureSessionExerciseRows(list);
+  const _exStatus=await ensureSessionExerciseRows(list);
+  let queued=0; // Sprint 5: sessies die veilig in de wachtrij staan (nog niet door de server bevestigd)
   const summaryData=[]; // v306 #10: input voor AI-samenvatting
   // v3.3.52 P7 — premium afronding: aggregeer bestaande cijfers voor de samenvatting-kaart.
   const sessStats={vol:0,sets:0,reps:0,pr:0,heavy:0,muscles:new Set(),compare:[]};
@@ -23912,7 +23958,8 @@ async function finishSession(){
       const _protoCols=_ergProj?{protocol_type:_ergProj.protocol_type,protocol_value:_ergProj.protocol_value}:{};
       // v4.70.4: alleen een AANTOONBAAR geslaagde write telt (sbPostQ geeft bij een PostgREST-400 false).
       // Retry schrijft een al gepersisteerde oefening niet opnieuw (geen dubbele rij).
-      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow}); if(_wOk!==true) throw new Error('session_write_rejected'); l._sessionRowPersistedAt=Date.now(); }
+      const _so=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
       saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -23929,7 +23976,8 @@ async function finishSession(){
       row.weather=_weerData; // ROADMAP POST-V1 #3 — zie de berekening bovenaan finishSession()
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
-      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row); if(_wOkS!==true) throw new Error('session_write_rejected'); l._sessionRowPersistedAt=Date.now(); } // v4.70.4
+      const _soS=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
+      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
@@ -24006,7 +24054,7 @@ async function finishSession(){
   // MS-TELEMETRY-01: canonieke success-boundary -- alleen bereikt na volledig geslaagde writes (failed>0 en
   // exceptions zijn hierboven al afgehandeld) en na de saved===0-guard. Fail-open, geen await.
   try{tkProductTelemetry('training.workout.completed',{source_type:(String(t||'').indexOf('prog_')===0)?'program':'my_training'});}catch(_pt){}
-  toast(saved+' oefeningen opgeslagen');
+  toast(queued>0?(saved+' oefeningen offline opgeslagen — worden gesynchroniseerd zodra je weer online bent'):(saved+' oefeningen opgeslagen'));
   document.getElementById('ai-summary-body').textContent='Coach terugblik laden...';
   // v3.3.52 P7 — premium afrondingskaart met bestaande cijfers.
   try{
@@ -37644,7 +37692,9 @@ var GW=(function(){
       // oefening heeft daar nog geen rij; zonder die rij weigert de server de write (23503 → 409) en
       // dat is geen tijdelijke fout. finishSession doet dit via ensureSessionExerciseRows(); Guided
       // deed het niet. Zelfde idempotente helper, geen nieuwe schrijfweg (DEC-SAVE-001, Sprint 4).
-      if(typeof ensureExerciseRow==='function'){ try{ await ensureExerciseRow(it.id); }catch(_){} }
+      var exStatus=(typeof ensureExerciseRowStatus==='function')?await ensureExerciseRowStatus(it.id):'exists';
+      // Sprint 5 (DEC-SYNC-001): geen sessie-write zonder geldige oefeningreferentie.
+      if(exStatus==='rejected'||exStatus==='failed'){ it._save='failed'; n.failed++; persist(); continue; }
       var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
       var uitkomst=null;
       try{
@@ -37658,7 +37708,7 @@ var GW=(function(){
           at:it._rowAt,
           voorschrift:{kg:(it.weight!=null?it.weight:null), reps:(it.reps!=null?it.reps:null), rpe:(it.rpe!=null?it.rpe:null)}});
         built.row.id=it._rowId;
-        uitkomst=await writeSessionRow(built.row,{detail:true});
+        uitkomst=await writeSessionRow(built.row,{detail:true,queueOnly:exStatus==='queued'});
         var st8=(uitkomst&&(uitkomst.status==='confirmed'||uitkomst.status==='queued'))?uitkomst.status:'failed';
         it._save=st8; n[st8]++;
         if(st8!=='failed'){

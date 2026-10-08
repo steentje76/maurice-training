@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "classifications": [
+    "CANONICAL_REUSE",
+    "REUSE_WITH_FIX",
+    "LEGACY_DO_NOT_COPY",
+    "TARGET_NOT_IMPLEMENTED",
+    "PO_REVIEW_REQUIRED"
+  ],
+  "items": [
+    {
+      "id": "UX-GAP-001",
+      "surface": "Primary navigation/screens",
+      "classification": "REUSE_WITH_FIX",
+      "status": "OPEN",
+      "sources": [
+        "docs/UX_CURRENT_TARGET_GAP_MATRIX.md",
+        "docs/ux/baseline/v1/README.md"
+      ]
+    },
+    {
+      "id": "UX-GAP-002",
+      "surface": "Current screens as generator input",
+      "classification": "LEGACY_DO_NOT_COPY",
+      "status": "OPEN",
+      "sources": [
+        "docs/BENCHMARK_9_PLUS_SCREEN_SCORECARD.md",
+        "docs/DESIGN_SYSTEM_CURRENT_IMPLEMENTATION_AUDIT.md"
+      ]
+    },
+    {
+      "id": "UX-GAP-003",
+      "surface": "Handbook coverage",
+      "classification": "PO_REVIEW_REQUIRED",
+      "status": "OPEN",
+      "sources": [
+        "docs/Handbook/Trainingskompas_Development_Handbook_H4_UX_Interaction_Design.md",
+        "docs/Handbook/Trainingskompas_Development_Handbook_H6_Screen_Library.md",
+        "docs/Handbook/Trainingskompas_Development_Handbook_H10_Navigation_Architecture.md"
+      ]
+    }
+  ]
+}

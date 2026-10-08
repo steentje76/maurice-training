@@ -1971,6 +1971,8 @@ html[data-theme="dark"] .lib-cmp-btn{color:#b3a6ff}
 .g2-done-h{font-size:30px;font-weight:800;color:var(--dark);margin:0 0 26px;letter-spacing:-.6px}
 .g2-done-nums{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
 .g2-done-coach{text-align:left;margin-bottom:12px}
+.gw-save{font-size:13px;font-weight:700;line-height:1.5;text-align:left;color:var(--gwk);background:var(--gwi);border-left:3px solid var(--gwa);border-radius:11px;padding:10px 12px;margin:0 0 12px}
+.gw-save-queued{border-left-color:#C8A84B}.gw-save-failed,.gw-save-unsaved{border-left-color:#E0704A}
 .g2-empty{text-align:center;color:var(--g4);font-size:14px;padding:70px 20px}
 
 @keyframes g2fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -8958,26 +8960,38 @@ function tkNormalizeSessionsRow(row){
   if(typeof row.watt==='number'&&Math.round(n)===n) return row;
   var out=Object.assign({},row); out.watt=Math.round(n); return out;
 }
-async function sbPostQ(t,d){
+// sbPostQ(t,d,opts) — opts is optioneel en 100% backward compatible, zelfde patroon als
+// sbPatchQ: zonder opts EXACT het oude gedrag (boolean; true ook bij queuen). Met
+// opts.detail:true geeft de functie {ok, status, http} terug zodat een aanroeper die moet
+// weten WAAR de data staat het verschil kan tonen (Sprint 3, Guided save reliability):
+//   'confirmed' — de server bevestigde de write (2xx)
+//   'queued'    — veilig in de offline-wachtrij (IndexedDB), wordt later verstuurd
+//   'rejected'  — de server weigerde de write en hij is NIET gequeued (400/403/409/422)
+//   'failed'    — queuen zelf mislukte (IndexedDB niet beschikbaar): de data staat nergens
+// ok is alleen true bij confirmed of queued. De wachtrij-, retry- en idempotentieregels zijn
+// ongewijzigd; dit maakt alleen de bestaande uitkomst zichtbaar.
+function tkSchrijfUitkomst(status, http){ return {ok:(status==='confirmed'||status==='queued'), status:status, http:(http!=null?http:null)}; }
+async function sbPostQ(t,d,opts){
+  const detail=!!(opts&&opts.detail);
   if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);
   if(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]&&d&&d.id==null){ d={...d,id:newClientRowId()}; }
   const prefer=IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation';
-  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return true;}
+  if(!navigator.onLine){const q=await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return detail?tkSchrijfUitkomst(q===true?'queued':'failed'):true;}
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:prefer,body:d});
     if(!r.ok){
       const err=await r.text();console.error('sbPostQ',t,r.status,err);
       // Tijdelijke serverfout (401 na mislukte refresh, 429, 5xx): NIET verliezen — dezelfde
       // wachtrij als bij een netwerkfout. Validatiefouten (400/409/422) blijven false.
-      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return true;}
-      return false;
+      if(sbRetryable(r.status)){const q=await offlineQueueAdd({table:t,method:'POST',body:d});updateOfflineBadge();return detail?tkSchrijfUitkomst(q===true?'queued':'failed',r.status):true;}
+      return detail?tkSchrijfUitkomst('rejected',r.status):false;
     }
-    return true;
+    return detail?tkSchrijfUitkomst('confirmed',r.status):true;
   }catch(e){
     console.warn('sbPostQ offline, queued',t,e);
-    await offlineQueueAdd({table:t,method:'POST',body:d});
+    const q=await offlineQueueAdd({table:t,method:'POST',body:d});
     updateOfflineBadge();
-    return true;
+    return detail?tkSchrijfUitkomst(q===true?'queued':'failed'):true;
   }
 }
 // sbPatchQ(t,f,d,opts) — opts is optioneel en 100% backward compatible: alle
@@ -10120,9 +10134,17 @@ function buildGuidedWorkoutPlan(list){
 }
 // mode: 'normal' (standaard Execution) | 'guided' (begeleide execution-mode) — beide op
 // dezelfde training-instance/snapshot; alleen de execution-ervaring verschilt (H3).
+// Sprint 3: GW.start() overschrijft tk_gw_active. Een afgeronde begeleide training die nog niet is
+// opgeslagen mag daar niet onder verdwijnen: eerst opslaan via Vandaag (tkGuidedStartGeblokkeerd).
+function tkGuidedStartGeblokkeerd(mode){
+  if(mode!=='guided'||!window.GW||!GW.hasUnsaved||!GW.hasUnsaved())return false;
+  toast('Je vorige begeleide training is nog niet opgeslagen — open hem op Vandaag om opnieuw op te slaan');
+  return true;
+}
 async function previewStartTraining(mode){
   if(!previewCtx||previewStarting)return;
   mode=mode||'normal';
+  if(tkGuidedStartGeblokkeerd(mode))return;
   previewStarting=true;
   const {def,source,id}=previewCtx;
   const workingList=previewWorkingList();
@@ -23632,7 +23654,7 @@ function renderSessionSummaryContent(t){
 // Training (H2) te gebruiken zodat er één centrale trainingshistorie is. Geen
 // gedragswijziging voor de normale Execution: finishSession() bouwt/schrijft via deze
 // helpers en levert byte-equivalente rijen.
-async function writeSessionRow(row){ return await sbPostQ('sessions', row); }
+async function writeSessionRow(row, opts){ return await sbPostQ('sessions', row, opts); }
 // ARCHITECTUUR-HARDENING (v4.91.0) — dedicated schrijfpad voor race_segments
 // (HYROX/Triathlon-brick), i.p.v. de gedeelde sessions-tabel.
 async function writeRaceSegmentRow(row){ return await sbPostQ('race_segments', row); }
@@ -37351,11 +37373,23 @@ var GW=(function(){
   function active(){return st.active;}
   function cur(){return st.active?st.active.items[st.active.gi]:null;}
   function phase(){return st.active?st.active.phase:null;}
-  function persist(){if(st.active&&st.active.phase!=='done')lsSet('tk_gw_active',st.active);}
+  /* Sprint 3 — OPSLAGSTATUS. Een afgeronde training blijft in tk_gw_active staan totdat elke
+     gelogde rij BEVESTIGD (server) of GEQUEUED (offline-wachtrij) is. Pas dan is hij veilig en
+     verdwijnt de lokale kopie. Een geweigerde of onbekende write laat de training staan, zodat
+     hij na een herstart via Hervatten opnieuw kan worden opgeslagen.
+       a.save.status: 'saving' | 'confirmed' | 'queued' | 'empty' (niets te loggen) | 'failed' |
+                      'unsaved' (een 'saving' die een herstart niet overleefde: uitkomst onbekend) */
+  var GW_OPGESLAGEN={confirmed:1,queued:1,empty:1};
+  function saveDone(a){return !!(a&&(a.sessionsLogged||(a.save&&GW_OPGESLAGEN[a.save.status])));}
+  function unsaved(a){return !!(a&&a.items&&a.items.length&&a.phase==='done'&&!saveDone(a));}
+  function persist(){if(st.active&&(st.active.phase!=='done'||unsaved(st.active)))lsSet('tk_gw_active',st.active);}
   function clearActive(){try{localStorage.removeItem('tk_gw_active');}catch(e){}}
-  function resume(){var a=lsGet('tk_gw_active',null);if(a&&a.items&&a.items.length&&a.phase!=='done'){st.active=a;return true;}return false;}
-  function hasActive(){var a=lsGet('tk_gw_active',null);return !!(a&&a.items&&a.items.length&&a.phase!=='done');}
-  function abort(){st.active=null;clearActive();}
+  function resume(){var a=lsGet('tk_gw_active',null);if(a&&a.items&&a.items.length&&(a.phase!=='done'||unsaved(a))){if(a.save&&a.save.status==='saving')a.save.status='unsaved';st.active=a;return true;}return false;}
+  function hasActive(){var a=lsGet('tk_gw_active',null);return !!(a&&a.items&&a.items.length&&(a.phase!=='done'||unsaved(a)));}
+  function hasUnsaved(){return unsaved(lsGet('tk_gw_active',null));}
+  // Een afgeronde maar nog niet opgeslagen training wordt nooit stil weggegooid.
+  function abort(){if(unsaved(st.active))return false;st.active=null;clearActive();return true;}
+  function saveStatus(){var a=st.active;return (a&&a.save)?a.save:null;}
 
   /* ── Faseovergangen ── */
   function begin(){if(!st.active)return;st.active.phase='exercise';persist();}
@@ -37537,20 +37571,48 @@ var GW=(function(){
   //   reps   = F0.7K — werkelijke reps uit setsDone.reps ALS de sporter die per set heeft
   //            ingevuld; anders NULL. Doel-reps (PLANNED) worden NOOIT als actual
   //            weggeschreven (data-integriteit).
-  // Warm-up/cooldown-items tellen niet als werksets (worden niet gelogd). Idempotent via
-  // sessionsLogged-guard, zodat finish/resume/dubbele aanroep nooit dubbel logt.
-  async function persistToSessions(){
+  // Warm-up/cooldown-items tellen niet als werksets (worden niet gelogd).
+  // Sprint 3 — BETROUWBARE OPSLAG. Voorheen telde een geweigerde write (400/403/409/422) of een
+  // mislukte queue als "geschreven", werd de instance afgerond, de lokale kopie gewist en een
+  // nieuwe poging geblokkeerd: stil dataverlies. Nu:
+  //   - elke rij krijgt één stabiel client-id (it._rowId) dat vóór de eerste poging wordt
+  //     vastgelegd; een nieuwe poging is via de bestaande idempotente upsert (sessions in
+  //     IDEMPOTENT_TABELLEN_MET_CLIENT_ID) nooit een tweede rij;
+  //   - per rij de echte uitkomst (writeSessionRow met {detail:true}); alleen confirmed of
+  //     queued telt als opgeslagen, en alleen dan volgt het PR-record;
+  //   - instance afronden en de lokale kopie wissen pas als ALLE rijen opgeslagen zijn;
+  //   - één poging tegelijk (dubbel tikken start geen tweede ronde).
+  var _saving=null;
+  function persistToSessions(){
     var a=st.active;
-    if(!a||a.sessionsLogged)return {written:0,skipped:true};
-    a.sessionsLogged=true;
-    var today=(typeof td==='function')?td():new Date().toISOString().slice(0,10);
-    var instId=a.instanceId||null, tt=a.trainingType||'guided', written=0;
-    if(typeof buildStrengthSessionRow!=='function'||typeof writeSessionRow!=='function')return {written:0,skipped:'no-helper'};
+    if(!a)return Promise.resolve({status:'none',written:0,skipped:true});
+    if(saveDone(a))return Promise.resolve({status:(a.save&&a.save.status)||'confirmed',written:0,skipped:true});
+    if(_saving)return _saving;
+    _saving=doPersist(a).then(function(r){_saving=null;return r;},function(){_saving=null;return {status:'failed',written:0};});
+    return _saving;
+  }
+  function pendingSave(){return _saving;}
+  async function doPersist(a){
+    if(typeof buildStrengthSessionRow!=='function'||typeof writeSessionRow!=='function'){
+      a.save={status:'failed',reden:'no-helper',at:Date.now()};persist();return {status:'failed',written:0,skipped:'no-helper'};
+    }
+    var vorige=a.save||{};
+    // De datum van de training ligt vast bij de eerste poging; een nieuwe poging op een latere
+    // dag verschuift hem niet.
+    var datum=vorige.datum||((typeof td==='function')?td():new Date().toISOString().slice(0,10));
+    a.save={status:'saving',datum:datum,at:Date.now()};
+    var instId=a.instanceId||null, tt=a.trainingType||'guided';
+    var n={confirmed:0,queued:0,failed:0};
     for(var i=0;i<a.items.length;i++){
       var it=a.items[i];
       if(!it.setsDone||!it.setsDone.length)continue;             // alleen werkelijk uitgevoerde sets
       if(it.pick==='warmup'||it.pick==='cooldown')continue;      // geen warm-up/cooldown als werkset
+      if(it._save==='confirmed'||it._save==='queued'){n[it._save]++;continue;}   // al veilig
+      if(!it._rowId)it._rowId=(typeof newClientRowId==='function')?newClientRowId():('gw-'+Date.now()+'-'+i);
+      if(!it._rowAt)it._rowAt=new Date().toISOString();
+      persist();                                                 // id en tijdstip vóór de write vastleggen
       var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
+      var uitkomst=null;
       try{
         /* Sprint 26 — EVIDENCE-AANSLUITING. Dit Guided-pad gaf geen `at` en geen
            `voorschrift` mee. buildDecisionEvidence markeert een snapshot zonder tijdstempel
@@ -37558,35 +37620,53 @@ var GW=(function(){
            verdween. Zichtbaar effect: nul rijen met evidence in productie, terwijl het
            finishSession-pad ze wél schrijft. Dezelfde velden als daar, uit de al aanwezige
            item-gegevens — geen nieuwe berekening. */
-        var built=buildStrengthSessionRow(it.id,ws,{date:today,training_type:tt,note:'',instanceId:instId,
-          at:new Date().toISOString(),
+        var built=buildStrengthSessionRow(it.id,ws,{date:datum,training_type:tt,note:'',instanceId:instId,
+          at:it._rowAt,
           voorschrift:{kg:(it.weight!=null?it.weight:null), reps:(it.reps!=null?it.reps:null), rpe:(it.rpe!=null?it.rpe:null)}});
-        await writeSessionRow(built.row); written++;
-        // F0.7J: PR-cache consistent bijwerken (zelfde regel als finishSession) — geen nieuwe berekening.
-        var w=built.row.weight;
-        // Sprint 12: zelfde recordregel als de rest van de app (DecisionCore, record.v1).
-        if(typeof upsertExerciseGoalField==='function'&&typeof DecisionCore!=='undefined'){
-          var _gr=DecisionCore.releaseRecord(w, (typeof prFor==='function'?prFor(it.id):null));
-          if(_gr.isRecord){ await upsertExerciseGoalField(it.id,'pr',_gr.waarde); }
+        built.row.id=it._rowId;
+        uitkomst=await writeSessionRow(built.row,{detail:true});
+        var st8=(uitkomst&&(uitkomst.status==='confirmed'||uitkomst.status==='queued'))?uitkomst.status:'failed';
+        it._save=st8; n[st8]++;
+        if(st8!=='failed'){
+          // F0.7J: PR-cache consistent bijwerken (zelfde regel als finishSession) — geen nieuwe berekening.
+          // Sprint 3: alleen voor een opgeslagen rij; een record bij een geweigerde sessie klopt niet.
+          var w=built.row.weight;
+          // Sprint 12: zelfde recordregel als de rest van de app (DecisionCore, record.v1).
+          if(typeof upsertExerciseGoalField==='function'&&typeof DecisionCore!=='undefined'){
+            try{
+              var _gr=DecisionCore.releaseRecord(w, (typeof prFor==='function'?prFor(it.id):null));
+              if(_gr.isRecord){ await upsertExerciseGoalField(it.id,'pr',_gr.waarde); }
+            }catch(_){}
+          }
         }
-      }catch(e){}
+      }catch(e){ it._save='failed'; n.failed++; }
+      persist();
     }
+    var opgeslagen=n.confirmed+n.queued;
+    var status=n.failed?'failed':(n.queued?'queued':(n.confirmed?'confirmed':'empty'));
     /* Fase 2 — dezelfde afronding als in finishSession. Een via Guided uitgevoerde
        training moet net zo goed zijn instance sluiten; anders blijft precies dit pad
        verweesde 'active'-rijen produceren. Alleen afronden als er ook werkelijk iets
-       is gelogd: een afgebroken Guided-sessie hoort 'active' te blijven. */
-    if(instId && written>0 && typeof completeTrainingInstance==='function'){
+       is gelogd: een afgebroken Guided-sessie hoort 'active' te blijven.
+       Sprint 3: en alleen als ALLES opgeslagen is — bij een fout blijft de instance open. */
+    if(instId && opgeslagen>0 && !n.failed && typeof completeTrainingInstance==='function'){
       try{ await completeTrainingInstance(instId); }
       catch(e){ try{ console.warn('completeTrainingInstance (guided) mislukt',e&&e.message); }catch(_){ } }
     }
-    return {written:written};
+    a.save={status:status,datum:datum,confirmed:n.confirmed,queued:n.queued,failed:n.failed,at:Date.now()};
+    if(status==='failed'){ persist(); }
+    else { a.sessionsLogged=true; clearActive(); }
+    return {status:status,written:opgeslagen,confirmed:n.confirmed,queued:n.queued,failed:n.failed};
   }
+  function retrySave(){return persistToSessions();}
   function finish(){
-    if(!st.active)return;
-    st.active.phase='done';st.active.endedAt=Date.now();
-    var log=lsGet('tk_gw_log',[]);log.unshift(summaryData());lsSet('tk_gw_log',log.slice(0,50));
-    try{persistToSessions();}catch(e){}   // H2: centrale sessions-logging (idempotent, fire-and-forget)
-    clearActive();
+    if(!st.active)return Promise.resolve(null);
+    var a=st.active;
+    if(a.phase!=='done'){a.phase='done';a.endedAt=Date.now();}
+    // Eén samenvatting per training, ook bij dubbel tikken.
+    if(!a._gelogd){a._gelogd=true;var log=lsGet('tk_gw_log',[]);log.unshift(summaryData());lsSet('tk_gw_log',log.slice(0,50));}
+    persist();                       // afgerond maar nog niet opgeslagen: lokale kopie blijft
+    return persistToSessions();      // H2: centrale sessions-logging; wist de kopie pas na opslag
   }
 
   return {
@@ -37595,7 +37675,7 @@ var GW=(function(){
     start:start, resume:resume, hasActive:hasActive, abort:abort,
     begin:begin, finishSet:finishSet, rateSet:rateSet, continueAfter:continueAfter,
     startRest:startRest, skipRest:skipRest, restTick:restTick, adjustRest:adjustRest,
-    nextExercise:nextExercise, finish:finish, persistToSessions:persistToSessions,
+    nextExercise:nextExercise, finish:finish, persistToSessions:persistToSessions, retrySave:retrySave, pendingSave:pendingSave, saveStatus:saveStatus, hasUnsaved:hasUnsaved,
     adjustWeight:adjustWeight, setWeight:setWeight, adjustSets:adjustSets,
     altList:altList, replaceEx:replaceEx, replaceExAsync:replaceExAsync, prevOf:prevOf, fatW:fatW,
     setAdvice:setAdvice, coachText:coachText, restTip:restTip, estRPE:estRPE,
@@ -37766,10 +37846,36 @@ var GWUI=(function(){
       '<button class="g2-more" onclick="GWUI.detail()">'+(_detail?'Verberg details':'Details & herstel')+'</button>'+
       (_detail?'<div class="g2-detail">'+(dist?'<div class="g2-why"><b>Spierverdeling:</b> '+dist+'</div>':'')+
         '<div class="gw-coach">'+esc(GW.recoveryAdvice(d))+'</div></div>':'')+
+      saveView()+
       '<button class="g2-primary" onclick="GWUI.finishHome()">Klaar</button>'+
-      '<button class="g2-quit" onclick="GWUI.again()">Nieuwe training</button>'+
+      (GW.hasUnsaved()?'':'<button class="g2-quit" onclick="GWUI.again()">Nieuwe training</button>')+
     '</div>';
   }
+  // Sprint 3: waar staat de training? Bevestigd, in de offline-wachtrij of nog niet opgeslagen.
+  // Alleen bestaande teksten en klassen; geen nieuwe status zonder bron.
+  var SAVE_TXT={
+    saving:'Opslaan…',
+    confirmed:'Training opgeslagen',
+    queued:'Offline opgeslagen — wordt gesynchroniseerd zodra je weer online bent',
+    failed:'Opslaan mislukt — je training blijft op dit toestel bewaard',
+    unsaved:'Nog niet bevestigd opgeslagen — je training blijft op dit toestel bewaard'
+  };
+  function saveView(){
+    var s=GW.saveStatus(); var k=s&&s.status;
+    if(!k||k==='empty')return '';
+    var fout=(k==='failed'||k==='unsaved');
+    return '<div class="gw-save gw-save-'+k+'" role="status" aria-live="polite">'+esc(SAVE_TXT[k]||'')+'</div>'+
+      (fout?'<button class="g2-primary" onclick="GWUI.retrySave()">Opnieuw opslaan</button>':'');
+  }
+  function saveToast(r){
+    if(!r||!window.toast)return;
+    if(r.status==='confirmed')toast('Training opgeslagen');
+    else if(r.status==='queued')toast('Training wordt gesynchroniseerd zodra je weer online bent');
+    else if(r.status==='failed')toast('Opslaan mislukt — probeer opnieuw (training blijft bewaard)');
+  }
+  // Rendert opnieuw zodra een lopende opslag klaar is (afronden gebeurt vanuit next/skip).
+  function afterSave(){var p=GW.pendingSave();if(p)p.then(function(r){saveToast(r);render();});}
+  function retrySave(){var p=GW.retrySave();render();if(p&&p.then)p.then(function(r){saveToast(r);render();});}
 
   function emptyView(){
     return '<div class="g2-empty">Geen actieve training.<button class="g2-primary" onclick="go(\'s-builder\')">Naar Workout Builder</button></div>';
@@ -37818,12 +37924,12 @@ var GWUI=(function(){
   function begin(){GW.begin();render();}
   function setDone(){GW.finishSet();render();}
   function rate(k){var el=document.getElementById('gw-reps-in');var reps=el?el.value:null;GW.rateSet(k,reps);render();}
-  function next(){GW.continueAfter();render();}
+  function next(){GW.continueAfter();render();afterSave();}
   function skipRest(){GW.skipRest();render();}
   function rest(d){GW.adjustRest(d);var n=document.getElementById('gw-rest-num');if(n)n.textContent=fmt(GW.active().restLeft);}
   function wt(d){GW.adjustWeight(d);render();}
   function sets(d){GW.adjustSets(d);render();}
-  function skip(){GW.nextExercise();render();}
+  function skip(){GW.nextExercise();render();afterSave();}
   function detail(){_detail=!_detail;render();}
   function alt(){
     var it=GW.cur();if(!it)return;
@@ -37832,11 +37938,14 @@ var GWUI=(function(){
     GW.replaceExAsync(alts[0].catalog_id).then(function(ok){ if(ok){render();if(window.toast)toast('Alternatief gekozen');} });
   }
   function quit(){go('s-builder');if(window.WBUI)WBUI.render();if(window.toast)toast('Training gepauzeerd — je kunt later hervatten');}
-  function finishHome(){GW.abort();go('s-home');}
-  function again(){GW.abort();go('s-builder');if(window.WBUI)WBUI.render();}
+  function finishHome(){
+    if(!GW.abort()&&window.toast)toast('Je training is nog niet opgeslagen — open hem op Vandaag om opnieuw op te slaan');
+    go('s-home');
+  }
+  function again(){if(!GW.abort()){finishHome();return;}go('s-builder');if(window.WBUI)WBUI.render();}
 
   return {render:render,launch:launch,begin:begin,setDone:setDone,rate:rate,next:next,skipRest:skipRest,
-    rest:rest,wt:wt,sets:sets,skip:skip,detail:detail,details:detail,alt:alt,quit:quit,finishHome:finishHome,again:again};
+    rest:rest,wt:wt,sets:sets,skip:skip,detail:detail,details:detail,alt:alt,quit:quit,finishHome:finishHome,again:again,retrySave:retrySave};
 })();
 </script>
 <script>
@@ -37962,6 +38071,12 @@ var DASHUI=(function(){
   /* ── Vandaag / volgende stap ── */
   function todayCard(){
     if(DASH.guidedActive()){
+      if(window.GW&&GW.hasUnsaved&&GW.hasUnsaved()){
+        return '<div class="dash-today"><div class="dash-today-k">Nog niet opgeslagen</div>'+
+          '<div class="dash-today-h">Begeleide training opslaan</div>'+
+          '<div class="dash-today-s">Je training is afgerond, maar nog niet opgeslagen. Open hem om opnieuw op te slaan.</div>'+
+          '<button class="dash-today-btn" onclick="GWUI.launch()">Openen</button></div>';
+      }
       return '<div class="dash-today"><div class="dash-today-k">Openstaande sessie</div>'+
         '<div class="dash-today-h">Begeleide training hervatten</div>'+
         '<div class="dash-today-s">Je hebt een begeleide training openstaan — pak hem op waar je was gebleven.</div>'+

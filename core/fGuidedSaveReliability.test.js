@@ -37,10 +37,11 @@ const DOPERSIST = extractFn(HTML, 'doPersist');
 const FINISH = (function () { const i = HTML.indexOf('  function finish(){\n    if(!st.active)return Promise.resolve(null);'); return i < 0 ? '' : HTML.slice(i, HTML.indexOf('\n  }\n', i)); })();
 ok(/async function writeSessionRow\(row, opts\)\{ return await sbPostQ\('sessions', row, opts\); \}/.test(HTML), 'bron: writeSessionRow geeft opts door');
 ok(/const detail=!!\(opts&&opts\.detail\);/.test(POSTQ), 'bron: sbPostQ kent een optionele detail-uitkomst');
-eq((POSTQ.match(/return detail\?tkSchrijfUitkomst\(/g) || []).length, 5, 'bron: elke uitgang van sbPostQ heeft een detail-uitkomst');
+eq((POSTQ.match(/return uit\(/g) || []).length, 5, 'bron: elke uitgang van sbPostQ loopt via één uitkomst (sinds v4.70.22: uit())');
+ok(/return detail\?tkSchrijfUitkomst\(status,http\)/.test(POSTQ), 'bron: detail geeft tkSchrijfUitkomst');
 ok(/q===true\?'queued':'failed'/.test(POSTQ), 'bron: queued alleen als queuen zelf lukte');
-ok(/:true;\}/.test(POSTQ) && /'rejected',r\.status\):false;/.test(POSTQ), 'bron: zonder opts blijven de oude booleans');
-ok(/writeSessionRow\(built\.row,\{detail:true\}\)/.test(DOPERSIST), 'bron: Guided vraagt de echte uitkomst op');
+ok(/:\(status!=='rejected'\)/.test(POSTQ), 'bron: zonder detail blijven de oude booleans (true behalve bij rejected)');
+ok(/writeSessionRow\(built\.row,\{detail:true[,}]/.test(DOPERSIST), 'bron: Guided vraagt de echte uitkomst op');
 ok(/built\.row\.id=it\._rowId;/.test(DOPERSIST), 'bron: stabiel client-id per rij');
 ok(DOPERSIST.indexOf('if(!it._rowId)') < DOPERSIST.indexOf('writeSessionRow('), 'bron: id vastgelegd vóór de write');
 ok(!/written\+\+/.test(DOPERSIST), 'bron: geen blinde teller meer');
@@ -66,7 +67,7 @@ function installeer(cfg) {
   window.go = function () {}; window.updateOfflineBadge = function () {};
   window.completeTrainingInstance = async function () { window.__inst++; schrijf('__inst', window.__inst); };
   window.upsertExerciseGoalField = async function () { window.__pr++; };
-  window.offlineQueueAdd = async function (it) { if (window.__cfg.queueFaalt) return false; const q = lees('__queue', []); q.push(it.body && it.body.id); schrijf('__queue', q); return true; };
+  window.offlineQueueAdd = async function (it) { if (window.__cfg.queueFaalt) return false; if (it.table !== 'sessions') return true; const q = lees('__queue', []); q.push(it.body && it.body.id); schrijf('__queue', q); return true; };   // telt alleen sessies (sinds v4.70.22 gaat ook de FK-compat-rij via de wachtrij)
   Object.defineProperty(navigator, 'onLine', { get: function () { return !window.__cfg.offline; }, configurable: true });
   window.sbFetch = async function (url, o) {
     if (url.indexOf('/rest/v1/sessions') < 0) return { ok: true, status: 200, text: async function () { return ''; }, json: async function () { return []; } };

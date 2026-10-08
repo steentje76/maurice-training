@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## v4.70.21 — Integratie #527 + #528: vermeden oefeningen en FK-compat in de begeleide opslag (8 oktober 2026)
+
+Integratiebranch met PR #527 (v4.70.19) en PR #528 (v4.70.20), plus twee correcties uit de gezamenlijke integratietest.
+
+- **Vermeden oefeningen bij automatische keuze (DEC-AVOID-001).** De AthleteConstraints-core valt terug op de volledige lijst als filteren alles zou uitsluiten (regel 5, "nooit leeg"). Daardoor koos de knop "Alternatief" in de begeleide workout, en de Builder-swap, alsnog een expliciet vermeden oefening wanneer alle alternatieven vermeden waren of het materiaal ontbrak. Een pad dat zelf één alternatief kiest, haalt nu met de exacte matchregel van de core (`avoidMatch`) de vermeden oefeningen eruit; blijft er niets over, dan volgt het bestaande "Geen geschikt alternatief". De core, de handmatige pickers en Autobuild zijn ongewijzigd (zie PO-besluit in DECISION_LOG).
+- **FK-compat in de begeleide opslag (aanvulling op DEC-SAVE-001).** `sessions.exercise_id` verwijst naar `exercises.id`. In productie staan 20 van de 226 catalogusoefeningen in die tabel. `finishSession` maakt vooraf een FK-compat-rij (`ensureSessionExerciseRows` → `ensureExerciseRow`); de begeleide workout deed dat niet, waardoor de server elke sessie met een andere catalogusoefening weigerde (23503 → 409). Op main ging zo'n training stil verloren; met alleen #528 bleef hij voor altijd "niet opgeslagen". Guided roept nu vóór elke write dezelfde `ensureExerciseRow()` aan.
+- **Gate:** `core/fGuidedIntegrationAvoidSave.test.js` (40 controles; echte pagina, echte catalogus, echte wachtrij en flush, gesimuleerde server met upsert op id en het FK-schema).
+- sw-cache v470210, versionCode 47021.
+
 ## v4.70.20 — Begeleide workout: opslag pas "opgeslagen" na bevestiging (8 oktober 2026)
 
 - **Bug (dataverlies).** Bij een geweigerde server-write (400/403/409/422) of een mislukte offline-wachtrij telde de begeleide workout de rij toch als geschreven. De training-instance werd afgerond, de lokale kopie (`tk_gw_active`) gewist, het scherm zei "Voltooid" zonder melding en een nieuwe poging was geblokkeerd. De training was weg. Ook werd het PR-record bijgewerkt voor een sessie die nooit was opgeslagen, en logde een dubbele tik de samenvatting twee keer.

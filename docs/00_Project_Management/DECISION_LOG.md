@@ -2791,3 +2791,38 @@ queue nog als succes. (c) Geen client-time-out op writes (`sbFetch`).
 
 **Status.** Geïmplementeerd in v4.70.20. Guard: `core/fGuidedSaveReliability.test.js`. Niet CLOSED_PROVEN: vereist
 toestelbewijs.
+
+## DEC-AVOID-001 — Automatische keuze: nooit een expliciet vermeden oefening (8 oktober 2026)
+
+**Context.** Sprint 4 (integratie #527 + #528). De AthleteConstraints-core heeft als harde regel 5: filteren mag
+nooit een lege set opleveren; dan valt hij terug op de oorspronkelijke set. Voor een pad dat zelf één alternatief
+kiest betekende dat: zijn alle alternatieven vermeden (of valt het materiaal weg), dan werd alsnog een expliciet
+vermeden oefening gekozen. Gereproduceerd in de echte pagina (begeleide workout "Alternatief" en Builder-swap).
+
+**Besluit (binnen de bestaande contracten).** Productprincipe van de PO: een expliciet vermeden oefening mag nooit
+automatisch als geschikt alternatief worden geselecteerd. Toegepast waar dat zonder contractwijziging kan: de twee
+paden die zelf één alternatief kiezen en al een "geen geschikt alternatief"-uitkomst hebben. `tkZonderVermeden()`
+gebruikt de exacte matchregel van de core (`AthleteConstraints.avoidMatch`, alleen `exact`). Geen nieuwe blessure-,
+medische of trainingsregel; materiaal-fallback ongewijzigd.
+
+**Niet gewijzigd.** De core (regel 5), de handmatige pickers (Preview, Execution) en Autobuild (`generate`).
+
+**PO_DECISION_REQUIRED.**
+1. *Autobuild:* als de "nooit leeg"-fallback alleen vermeden oefeningen oplevert, kan een gegenereerde training
+   een vermeden oefening bevatten. Ze weglaten kan een slot leeg laten; dat raakt regel 5.
+2. *Handmatige pickers:* tonen bij fallback ook vermeden oefeningen (de sporter kiest zelf). Weglaten of markeren?
+
+**Status.** Geïmplementeerd in v4.70.21. Guard: `core/fGuidedIntegrationAvoidSave.test.js`.
+
+## DEC-SAVE-001 — aanvulling: FK-compat-rij in de begeleide opslag (8 oktober 2026)
+
+`sessions.exercise_id` heeft een foreign key naar `exercises.id` (productieschema, read-only geverifieerd). Van de
+226 catalogusoefeningen staan er 20 in die tabel. `finishSession` maakt vooraf een FK-compat-rij via
+`ensureSessionExerciseRows()`/`ensureExerciseRow()` (F91/Optie B); de begeleide opslag niet. Daardoor weigerde de
+server elke Guided-sessie met een andere catalogusoefening (23503 → 409, geen tijdelijke fout). Op main ging de
+training stil verloren (productie: 0 Guided-sessies ooit); met alleen #528 bleef hij permanent "niet opgeslagen".
+De begeleide opslag roept nu vóór elke write dezelfde `ensureExerciseRow()` aan. Geen nieuwe schrijfweg.
+
+**Open (R4-OFFLINE-FK, bestaand, ook in finishSession).** `ensureExerciseRow()` schrijft niet via de wachtrij. Een
+offline gelogde nieuwe catalogusoefening wordt bij sync door de FK geweigerd; het item blijft zichtbaar in de
+wachtrij (niet verloren, niet dubbel) tot de exercises-rij er bij een latere online opslag wel is.

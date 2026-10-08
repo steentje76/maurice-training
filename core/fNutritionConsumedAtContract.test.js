@@ -63,7 +63,7 @@ ok((html.match(/consumed_at=gte\.'\+b\.startIso/g) || []).length >= 3,
   'F2: alle drie de dag-fetch-functies (meals/hydration/supplements) zijn omgezet');
 
 // ---- App: meal-aanmaak schrijft consumed_at ----
-ok(/sbPostQ\('nutrition_meals',\{user_id:uid,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed'/.test(html.replace(/\r/g, '')),
+ok(/sbPostQ(?:Opgeslagen)?\('nutrition_meals',\{user_id:uid,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed'/.test(html.replace(/\r/g, '')),
   'G1: nieuwe meal krijgt consumed_at + consumed_at_source=user_confirmed naast het ongewijzigde occurred_at');
 
 // ---- App: nutrition_entries-formulier heeft een editbaar tijdstip-veld, voorgevuld bij edit ----

@@ -87,7 +87,7 @@ t('15-16. Geen UI-nutrient-calculation of UI-unit-conversion in de NUT-PORTION-0
         if (tbl === 'nutrition_nutrient_values') return m.nv || [];
         if (tbl === 'nutrition_product_identifiers') return [];
         return []; };
-      sbPostQ = async (tbl, d) => { window.__posted.push({ tbl, d }); if (tbl === 'nutrition_products') { window.__db.products = window.__db.products || []; window.__db.products.push(Object.assign({ id: 'newp1', created_by: 'u1', created_at: new Date().toISOString() }, d)); } if (tbl === 'nutrition_nutrient_values') { window.__db.nv = window.__db.nv || []; window.__db.nv.push(d); } return true; };
+      sbPostQ = async (tbl, d, o) => { window.__posted.push({ tbl, d }); if (tbl === 'nutrition_products') { window.__db.products = window.__db.products || []; window.__db.products.push(Object.assign({ id: 'newp1', created_by: 'u1', created_at: new Date().toISOString() }, d)); } if (tbl === 'nutrition_nutrient_values') { window.__db.nv = window.__db.nv || []; window.__db.nv.push(d); } return (o && o.detail) ? { ok: true, status: 'confirmed', http: 201 } : true; };   // Sprint 6: sbPostQOpgeslagen vraagt detail
     }, db); return p;
   }
   // ---- 11. custom product persistence/read-back: serving_size_g wordt daadwerkelijk opgeslagen en gebruikt ----

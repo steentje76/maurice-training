@@ -314,7 +314,7 @@ t('Targets: UI rekent remaining/progress NIET zelf -- alles via NutritionTargetS
 });
 t('Targets: opslaan is altijd een NIEUWE rij (sbPostQ), nooit UPDATE-in-place -- historie/effective_from (Fase 9)', () => {
   const b=fnBodyOf('async function voedingSaveTargets','function voedingProgressRow');
-  assert.strictEqual(b.includes("sbPostQ('nutrition_targets'"), true); assert.strictEqual(b.includes('sbPatchQ'), false);
+  assert.strictEqual(/sbPostQ(?:Opgeslagen)?\('nutrition_targets'/.test(b), true); assert.strictEqual(b.includes('sbPatchQ'), false);
   assert.strictEqual(b.includes('NutritionTargetService.toCanonicalRow'), true);
 });
 t('Targets: no-target empty state met actie "Doelen instellen", geen nep-progress', () => {

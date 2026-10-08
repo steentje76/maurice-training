@@ -1,5 +1,21 @@
 # Trainingskompas — Changelog
 
+## v4.70.23 — Eerlijke opslagstatus: geen "opgeslagen" als de write nergens staat (R4-QUEUE-FAIL, 8 oktober 2026)
+
+- **Bug (R4-QUEUE-FAIL).** `sbPostQ()` zonder opties gaf `true` als queuen zelf mislukte (IndexedDB niet beschikbaar): de app meldde succes terwijl de data nergens stond. Daarnaast negeerden de voedingsschermen de uitkomst helemaal: ook een definitieve weigering van de server (400/403/409/422) gaf "Water toegevoegd", "Voedingsdoelen opgeslagen", "Toegevoegd aan maaltijd", "Correctie opgeslagen", een geleegd supplementformulier of een doorstap naar de hoeveelheid. Onderzoeksdeelname bevestigde altijd. Gereproduceerd in de echte pagina.
+- **Ook gevonden.**
+  - Mijn trainingen: `syncCustomTrainingsFromSupabase()` verving bij elke start de lokale lijst door de serverlijst, vóór `flushOfflineQueue()`. Een nieuwe Builder-training waarvan de server-write nog in de wachtrij stond, geweigerd werd of nergens vastlag, verdween uit Mijn trainingen (bij geweigerd/mislukt definitief).
+  - `exercise_goals`: na een mislukte INSERT werd de entry als "op de server" gemarkeerd; de volgende wijziging deed een PATCH op een niet-bestaande rij en verdween stil.
+- **Oplossing (DEC-QUEUE-001).**
+  - `sbPostQ()` zonder opties: `true` alleen bij `confirmed` of `queued`. Volledige impactanalyse van alle 52 aanroepen in DECISION_LOG; alle aanroepers die de boolean lezen hebben een niet-destructief foutpad.
+  - `sbPostQOpgeslagen()`: gooit bij `rejected`/`failed`, zodat het bestaande catch-pad (foutmelding, formulier blijft staan) wordt gebruikt. Gebruikt in voedingsdoelen, water, maaltijd(-item), supplement, correctie, eigen product, product van etiket en handmatig product.
+  - Onderzoeksdeelname: bevestiging alleen na een opgeslagen of gequeuede write.
+  - Mijn trainingen: nog niet door de server bevestigde ids staan in `tk_trainings_onbevestigd` (persoonsgebonden, gewist bij eigenaarwissel) en blijven bij de sync behouden; bij geweigerd/mislukt de melding "Training staat alleen op dit toestel".
+  - `exercise_goals`: blijft alleen-geheugen tot de INSERT bevestigd of gequeued is.
+- **Niet gewijzigd.** `sbPostQ(…,{detail:true})`, retry-statuscodes, de wachtrij en de flush, idempotentie (client-id + merge-duplicates), cross-account-isolatie van de wachtrij, RLS, database, berekeningen, evidence, AI.
+- **Gate:** `core/fQueueFailHonestStatus.test.js` (212 controles; echte pagina, 11 aanroepers × confirmed/queued/rejected/failed, retry zonder dubbele rij, herstart + dubbele flush, cross-account, `exercise_goals`, Mijn trainingen na herstart). Pins op de oude code bewust bijgewerkt in `fGuidedSaveReliability`, `fOfflineExerciseSessionSync`, `fNutritionConsumedAtContract`, `fVoedingUXSetB`, `fWorkoutBuilder`, `fPrPersistentie` en `fStructuredIntervalsCanonical`; stubs voor de nieuwe helpers in `fNutritionPortionServingConversion`, `fStructuredIntervalsB2` en `fStructuredIntervalsB3Erg`; `tk_trainings_onbevestigd` in de sleutellijst van `fTrainingExecutionFinalClosure`.
+- sw-cache v470230, versionCode 47023.
+
 ## v4.70.22 — Offline oefening- en sessiesynchronisatie: eerst de oefening, dan de sessie (8 oktober 2026)
 
 - **Bug (R4-OFFLINE-FK).** `sessions.exercise_id` verwijst naar `exercises.id`; een catalogusoefening heeft eerst een FK-compat-rij nodig. `ensureExerciseRow()` schreef die rij met een directe `sbPost`: offline of bij een netwerkfout viel hij stil weg, terwijl de sessie wél in de wachtrij kwam. Bij de sync weigerde de FK de sessie (23503 → 409) en bleef zij voor altijd in de wachtrij hangen. Gold voor de gewone training én de begeleide workout. Gereproduceerd in de echte pagina: offline nieuwe oefening → na sync 0 sessies op de server, de sessie vast in de wachtrij.

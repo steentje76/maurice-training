@@ -2850,3 +2850,41 @@ idempotentie van sessies (client-id + merge-duplicates), RLS, database, berekeni
 
 **Status.** Geïmplementeerd in v4.70.22. Guard: `core/fOfflineExerciseSessionSync.test.js`. Niet CLOSED_PROVEN:
 vereist toestelbewijs.
+
+## DEC-QUEUE-001 — Betekenis van sbPostQ zonder opties: alleen bevestigd of gequeued is opgeslagen (8 oktober 2026)
+
+**Context.** Sprint 6 (R4-QUEUE-FAIL). `sbPostQ(t,d)` zonder opties gaf `true` behalve bij `rejected`, dus ook als
+queuen zelf mislukte (`failed`, IndexedDB niet beschikbaar): de aanroeper meldde succes terwijl de data nergens stond.
+Een deel van de aanroepers negeerde de uitkomst volledig en meldde ook bij een definitieve weigering succes.
+
+**Impactanalyse (main 28b6aef7, alle aanroepen van sbPostQ).** De wijziging raakt uitsluitend het geval `failed`
+(boolean `true` → `false`). `{detail:true}`-aanroepers zijn ongewijzigd.
+
+| Groep | Aanroepers (tabel) | Gedrag vóór | Na |
+|---|---|---|---|
+| A. Leest de boolean, niet-destructief foutpad | cyclusStartMenstruatie (cycle_periods), cyclusSlaSymptoomOp (cycle_symptom_logs), saveNewGoal (goals), calendarFeedGenerate, saveAvailabilityPeriod, createTrainingInstance, running/cycling/swimming finish (activity_laps), afrondenRunningActivity (activities), sendDirectMessage (messages), nutritionSaveEntry (nutrition_entries), saveLosOefening (exercises, sessions), saveEditSession (sessions), savePeakGoal (exercise_goals), writeRaceSegmentRow, writeSessionRow/finishSession | `failed` gaf succes | foutmelding, invoer blijft (centrale wijziging) |
+| B. Negeerde de uitkomst, meldde succes | voedingSaveTargets, voedingConfirmWaterEntry, voedingConfirmAddToMeal (meals, meal_items), voedingSaveSupplement (definitions, logs), voedingSubmitCorrection, voedingPersistCustomProduct, voedingPersistNewProductFromLabel, voedingSaveManualEntry (products, identifiers, nutrient_values) | ook `rejected` gaf succes | `sbPostQOpgeslagen()`: bestaand catch-pad, invoer blijft |
+| B. Negeerde de uitkomst | toggleResearchConsent (research_consents) | altijd "Bedankt…" | bevestiging alleen bij ok |
+| C. Geheugenstatus | upsertExerciseGoalField (exercise_goals) | entry na mislukte INSERT als serverrij gemarkeerd → latere PATCH raakte 0 rijen | `_alleenGeheugen` blijft tot ok |
+| C. Lokaal-eerst | Builder saveWorkout, saveIntervalWorkout, duplicateWorkout, migrateLegacyWbSaved (custom_trainings) | sync bij start verving de lokale lijst vóór de flush → training weg | `tkCustomTrainingPost()` + `tk_trainings_onbevestigd`; sync behoudt onbevestigde ids |
+| Ongewijzigd, gedocumenteerd | pushCustomTrainingExercisesRich, intakeConfirm (goals-lus, geen idempotente id's), voedingIngestOffCandidate (OFF-ingest, UNIQUE-conflict), flushOfflineQueue (replay), ensureExerciseRowStatus (detail) | — | — |
+
+**Besluit.**
+1. `sbPostQ` zonder opties: `true` alleen bij `confirmed` of `queued`; `false` bij `rejected` en `failed`.
+2. Aanroepers die de uitkomst negeerden krijgen expliciete statusafhandeling (`sbPostQOpgeslagen`, of een controle op de
+   boolean), via hun bestaande foutpad. Geen nieuwe meldingsteksten behalve "Training staat alleen op dit toestel —
+   opslaan op de server is mislukt" en de twee teksten bij onderzoeksdeelname.
+3. Een niet door de server bevestigde Builder-training blijft lokaal behouden tot de server hem heeft. De markering is
+   persoonsgebonden (`PERSONAL_CACHE_KEYS`).
+
+**Niet gewijzigd.** Retry-statuscodes, wachtrij en flush, idempotentie, cross-account-isolatie (`owner_uid`), RLS,
+database, berekeningen, evidence, AI.
+
+**Restrisico's.** (a) Offline een nieuw supplement of eigen product: de definitie/het product wordt gequeued, maar de
+directe id-opzoeking faalt; de gebruiker ziet een fout en een nieuwe poging queuet een tweede definitie/product
+(bestaand, niet idempotent). (b) De oefeningen van een Builder-training (`custom_training_exercises`) zijn niet apart
+beschermd; als alleen die write mislukt, neemt de sync de lege serverlijst over. (c) Een geweigerde Builder-training
+blijft lokaal zonder automatische nieuwe poging. (d) Intake-doelen en de OFF-ingest ongewijzigd. (e) Geen toestelbewijs.
+
+**Status.** Geïmplementeerd in v4.70.23. Guard: `core/fQueueFailHonestStatus.test.js`. Niet CLOSED_PROVEN: vereist
+toestelbewijs.

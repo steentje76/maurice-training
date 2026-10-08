@@ -6,7 +6,17 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.21
+v4.70.22
+
+## Offline oefening- en sessiesynchronisatie (v4.70.22, 8 oktober 2026)
+
+- Invariant (DEC-SYNC-001): een sessie gaat pas naar de server als haar oefening daar bestaat. De FK-compat-rij
+  van een catalogusoefening gaat via de bestaande wachtrij (`ignoreDuplicates`) vóór de sessie; na een gequeuede
+  oefening wordt de sessie ook gequeued. Geldt voor `finishSession` én de begeleide workout.
+- De flush stuurt geen sessie waarvan de oefening in dezelfde ronde mislukte. Gequeued en bevestigd zijn in beide
+  routes zichtbaar verschillend; een mislukte queue is een fout.
+- Open: een door de server definitief geweigerde oefeningrij blijft met haar sessie zichtbaar in de wachtrij
+  (beheerbaar via het wachtrijscherm); toesteltest nog niet gedaan.
 
 ## Integratie #527 + #528 (v4.70.21, 8 oktober 2026)
 
@@ -371,7 +381,7 @@ v4.70.21
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.21 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.22 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

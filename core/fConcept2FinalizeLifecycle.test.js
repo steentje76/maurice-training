@@ -474,7 +474,7 @@ process.on('exit', function (code) { if (!finished && code === 0) { console.log(
     ['losse completion vóór de write (H5 2A.1)', h => h.replace("  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)", "  if(row.training_instance_id){ try{ await completeTrainingInstance(row.training_instance_id); }catch(_s){} }\r\n  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)"), R2 => R2.c2a.completes.length > 0],
     ['false telt weer als opgeslagen (training)', h => h.replace(" if(_wOk!==true) throw new Error('session_write_rejected');", ""), R2 => R2.p2a.completes > 0 || R2.p2a.okToast],
     ['retry-marker weg (kracht)', h => h.replace("if(!l._sessionRowPersistedAt){ const _wOkS=", "if(true){ const _wOkS="), R2 => R2.p3b.rows.filter(x => x === 'squat').length > 1],
-    ['watt-normalisatie weg', h => h.replace("async function sbPostQ(t,d){\r\n  if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);", "async function sbPostQ(t,d){\r\n"), R2 => R2.p1.rows !== 1 || R2.p1.watt !== 167],
+    ['watt-normalisatie weg', h => h.replace("async function sbPostQ(t,d,opts){\r\n  const detail=!!(opts&&opts.detail);\r\n  if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);", "async function sbPostQ(t,d,opts){\r\n  const detail=!!(opts&&opts.detail);\r\n"), R2 => R2.p1.rows !== 1 || R2.p1.watt !== 167],
     ['eligibility te ruim (0 m / 0 s)', h => h.replace("return (isFinite(dn)&&dn>0)||(isFinite(en)&&en>0);", "return true;"), R2 => R2.t4zero > 0]
   ];
   for (const [name, mut, detects] of sab) {

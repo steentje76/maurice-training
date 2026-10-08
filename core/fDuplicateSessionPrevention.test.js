@@ -19,7 +19,7 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
 // ---- A. sbPostQ genereert een client-id voor idempotente tabellen ----
 {
-  const fnBlok = html.split('async function sbPostQ(t,d){')[1].split('async function sbPatchQ')[0];
+  const fnBlok = html.split(/async function sbPostQ\(t,d(?:,opts)?\)\{/)[1].split('async function sbPatchQ')[0];
   ok(fnBlok.includes('newClientRowId()'), 'A1: sbPostQ() genereert een client-side, stabiel id voor de idempotente tabellen vóórdat de POST/queue-toevoeging plaatsvindt');
   ok(fnBlok.includes("resolution=merge-duplicates"), 'A2: sbPostQ() gebruikt de idempotente upsert-header voor die tabellen');
 }

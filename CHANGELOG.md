@@ -1,5 +1,18 @@
 # Trainingskompas — Changelog
 
+## v4.70.20 — Begeleide workout: opslag pas "opgeslagen" na bevestiging (8 oktober 2026)
+
+- **Bug (dataverlies).** Bij een geweigerde server-write (400/403/409/422) of een mislukte offline-wachtrij telde de begeleide workout de rij toch als geschreven. De training-instance werd afgerond, de lokale kopie (`tk_gw_active`) gewist, het scherm zei "Voltooid" zonder melding en een nieuwe poging was geblokkeerd. De training was weg. Ook werd het PR-record bijgewerkt voor een sessie die nooit was opgeslagen, en logde een dubbele tik de samenvatting twee keer.
+- **Root cause.** `persistToSessions()` negeerde de uitkomst van `writeSessionRow()` (`written++` na elke aanroep), zette `sessionsLogged` vóór de eerste write, en `finish()` wiste de lokale kopie direct, vóór de opslag klaar was. `sbPostQ()` gaf bovendien `true` terug, ook als queuen zelf mislukte.
+- **Oplossing.** `sbPostQ()` kent een optionele `{detail:true}` (zelfde opts-patroon als `sbPatchQ`) die `confirmed`, `queued`, `rejected` of `failed` teruggeeft; zonder opts zijn de booleans exact gelijk. De begeleide workout:
+  - geeft elke rij één stabiel client-id, vastgelegd vóór de eerste poging; een nieuwe poging is via de bestaande idempotente upsert nooit een tweede rij;
+  - telt alleen `confirmed` of `queued` als opgeslagen, en werkt pas dan het PR-record bij;
+  - rondt de instance af en wist de lokale kopie pas als alle rijen opgeslagen zijn;
+  - laat één opslagronde tegelijk lopen.
+- **Wat de sporter ziet.** "Training opgeslagen" (server), "Offline opgeslagen — wordt gesynchroniseerd zodra je weer online bent" (wachtrij), of "Opslaan mislukt — je training blijft op dit toestel bewaard" met de knop "Opnieuw opslaan". Een niet-opgeslagen training staat na een herstart op Vandaag ("Begeleide training opslaan"). "Klaar" gooit hem niet weg, en een nieuwe begeleide training start pas als de vorige is opgeslagen.
+- **Niet gewijzigd.** De retry-statuscodes, de offline-wachtrij en de flush, het idempotentiecontract, de rijopbouw (`buildStrengthSessionRow`), het evidencespoor, de recordregel, het voorschrift en de database.
+- **Gate:** `core/fGuidedSaveReliability.test.js` (77 controles; echte pagina, gesimuleerde server met upsert op id; 201, 400/403/409/422, 401/429/500/503, netwerk, offline, wachtrij faalt, hangend verzoek, herstart, gedeeltelijke fout, dubbel tikken, Klaar, nieuwe start, sbPostQ zonder opts).
+- sw-cache v470200, versionCode 47020. v4.70.19 is gereserveerd voor PR #527.
 ## v4.70.19 — Trainingscontext op alle vervangpaden: begeleide workout en Preview (8 oktober 2026)
 
 - **Bug 1 — begeleide workout.** De knop "Alternatief" (`GWUI.alt()`) koos het eerste canonieke alternatief zonder de trainingscontext. Gereproduceerd in de echte pagina op main `fde8b5de`: een thuisatleet met alleen dumbbells kreeg bij Band Curl "Barbell Curl", en een expliciet vermeden oefening werd gewoon gekozen. Preview, Execution, Builder-swap (#340) en Autobuild filterden wel.

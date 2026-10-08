@@ -2748,3 +2748,29 @@ omdat de ingevulde 100 niet meer meetelt. Zonder enige data is er geen score mee
 Hersteld"), N7 (trainingsbelasting in de signaaltelling), N8, N9 en de open punten van DEC-DQ-002.
 
 **Status.** Geïmplementeerd in v4.70.18. Guard: `core/fReadinessReliabilityContextLeaks.test.js`.
+
+## DEC-SAVE-001 — Begeleide workout: "opgeslagen" betekent bevestigd of gequeued (8 oktober 2026)
+
+**Context.** Sprint 3 (Guided Workout Save Reliability). Op main `fde8b5de` gereproduceerd: een geweigerde write
+(400/403/409/422) of een mislukte offline-queue werd in `persistToSessions()` als geschreven geteld; de instance werd
+afgerond, `tk_gw_active` gewist en een nieuwe poging geblokkeerd. Stil dataverlies.
+
+**Besluit.** Binnen de bestaande contracten, geen nieuw opslagcontract:
+1. Opgeslagen = server bevestigd (`confirmed`) of veilig in de bestaande offline-wachtrij (`queued`). Die twee
+   blijven zichtbaar verschillend. Al het andere is niet opgeslagen.
+2. `sbPostQ(t,d,opts)` krijgt het `opts`-patroon van `sbPatchQ`: met `{detail:true}` de werkelijke uitkomst
+   (`confirmed`/`queued`/`rejected`/`failed`). Zonder opts exact het oude gedrag.
+3. Idempotentie via het bestaande `IDEMPOTENT_TABELLEN_MET_CLIENT_ID`: elke Guided-rij krijgt één stabiel client-id
+   vóór de eerste poging; een nieuwe poging is een upsert, nooit een tweede rij.
+4. Lokale kopie, instance-afronding en PR-record pas na opslag van alle rijen. Een afgeronde, niet-opgeslagen
+   training wordt nooit stil verwijderd of overschreven.
+
+**Niet gewijzigd.** Retry-statuscodes (`SB_RETRY_STATUS`), wachtrij en flush, rijopbouw, evidence, recordregel,
+voorschrift, database.
+
+**Open, apart te beslissen.** (a) Verwijderen van een definitief geweigerde begeleide training (productbesluit:
+nu blijft hij staan tot opslaan lukt). (b) De overige aanroepers van `sbPostQ` zonder opts melden een mislukte
+queue nog als succes. (c) Geen client-time-out op writes (`sbFetch`).
+
+**Status.** Geïmplementeerd in v4.70.20. Guard: `core/fGuidedSaveReliability.test.js`. Niet CLOSED_PROVEN: vereist
+toestelbewijs.

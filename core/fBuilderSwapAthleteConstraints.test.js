@@ -45,7 +45,7 @@ ok(/\{name:\(ex\.identity&&ex\.identity\.name\)\|\|'', equipment:\(ex\.identity&
 /* ══ B. Patroon-consistentie met F23 (Preview) en F24 (autobuild) ══ */
 console.log('B. Consistentie met bestaande, reeds aangesloten surfaces');
 ok(GENERATE_FN.indexOf('AthleteConstraints.applyConstraints(') > -1, 'B1: autobuild generate() blijft AthleteConstraints toepassen (F24, ongewijzigd)');
-ok(PREVIEW_FN.indexOf('applyAthleteConstraints(') > -1, 'B2: Preview-swap-picker blijft AthleteConstraints toepassen (F23, ongewijzigd)');
+ok(/applyAthleteConstraints(Catalog)?\(/.test(PREVIEW_FN), 'B2: Preview-swap-picker blijft AthleteConstraints toepassen (F23; sinds v4.70.19 via applyAthleteConstraintsCatalog)');
 ok(SWAP_FN.indexOf('AthleteConstraints') > -1, 'B3: Builder-edit swapAlternative() is nu de vierde surface met dezelfde core -- geen surface meer zonder');
 
 /* ══ C. Canonical bron ongewijzigd (relations) -- geen shadow source ══ */

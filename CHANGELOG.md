@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## v4.70.19 — Trainingscontext op alle vervangpaden: begeleide workout en Preview (8 oktober 2026)
+
+- **Bug 1 — begeleide workout.** De knop "Alternatief" (`GWUI.alt()`) koos het eerste canonieke alternatief zonder de trainingscontext. Gereproduceerd in de echte pagina op main `fde8b5de`: een thuisatleet met alleen dumbbells kreeg bij Band Curl "Barbell Curl", en een expliciet vermeden oefening werd gewoon gekozen. Preview, Execution, Builder-swap (#340) en Autobuild filterden wel.
+- **Bug 2 — Preview-swap-picker.** De picker gaf catalogusentries door met `naam:a.name`. Een catalogusentry heeft alleen `identity.name`, dus de naam was leeg: een te vermijden oefening werd nooit herkend en stond gewoon in de lijst, en de picker toonde opties zonder naam. Het materiaalfilter werkte wel (dat leest het id).
+- **Root cause.** Eén foutklasse: catalogusentries (`WB.altList`) werden niet, of zonder canonieke naam, aan de bestaande `applyAthleteConstraints()` gegeven. `GWUI.alt()` dateert van vóór F23 en ontbrak in de inventaris van #340.
+- **Oplossing.** Eén helper, `applyAthleteConstraintsCatalog()`, geeft catalogusentries met `identity.name` aan de bestaande `applyAthleteConstraints()`. `GWUI.alt()` en de Preview-picker gebruiken hem; de picker toont de naam via `previewExerciseName()`. Geen nieuwe filterregel; de "nooit leeg"-fallback van de core blijft. Zonder trainingscontext verandert er niets.
+- **Niet gewijzigd.** `core/athleteConstraints.js`, de keuze-volgorde (eerste toegestane alternatief), gewicht/sets/reps/RPE van de vervangende oefening (`replaceEx`), opslag en persistentie.
+- **Gate:** `core/fGuidedPreviewAthleteConstraints.test.js` (29 controles: echte functies met de echte core, en de echte pagina met de echte catalogus). `fBuilderSwapAthleteConstraints` B2 accepteert de helper.
+- sw-cache v470190, versionCode 47019.
+
 ## v4.70.18 — Readiness-betrouwbaarheid: vijf lekken in de contextlaag gedicht (7 oktober 2026)
 
 Bugfix op de bevindingen N1–N5 uit de read-only Readiness Reliability Audit. `core/` is niet gewijzigd: geen formule, geen drempel, geen evidence-niveau, geen voorschriftregel (DEC-DQ-003).

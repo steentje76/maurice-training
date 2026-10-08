@@ -20895,6 +20895,22 @@ function applyAthleteConstraintsCatalog(entries){
     return applyAthleteConstraints(wrapped).map(w=>w._c);
   }catch(e){ return entries; }
 }
+// AUTOMATISCHE KEUZE: NOOIT EEN EXPLICIET VERMEDEN OEFENING (DEC-AVOID-001).
+// De AthleteConstraints-core valt terug op de oorspronkelijke set als filteren alles zou uitsluiten
+// (regel 5, "nooit leeg"). Voor een lijst waaruit de sporter zelf kiest of voor een hele training is
+// dat het bestaande contract. Maar een pad dat ZELF één alternatief kiest (begeleide workout
+// "Alternatief", Builder-swap) mag daaruit nooit een oefening nemen die de sporter expliciet wil
+// vermijden. Zelfde matchregel als de core (AthleteConstraints.avoidMatch, alleen 'exact'); geen
+// nieuwe regel. Blijft er niets over, dan volgt het bestaande "geen geschikt alternatief".
+// Zonder avoid-termen (of zonder context) verandert er niets.
+function tkZonderVermeden(entries, naamVan){
+  try{
+    if(!Array.isArray(entries)||!entries.length||!window.AthleteConstraints) return entries;
+    const avoid=athleteAvoidTerms();
+    if(!avoid||!avoid.length) return entries;
+    return entries.filter(c=>!avoid.some(t=>AthleteConstraints.avoidMatch(t,naamVan(c)||'')==='exact'));
+  }catch(e){ return entries; }
+}
 // F22-E: resolve MoveKit technische intelligentie (cues + veelgemaakte fouten) voor een oefening.
 // Read-only, ge-guard; geeft alleen bestaande catalogus-data terug (geen fake content).
 function movekitIntelFor(ex){
@@ -36851,6 +36867,7 @@ var WB=(function(){
         }
       }
     }catch(e){}
+    alts=tkZonderVermeden(alts,function(c){return c&&c.identity&&c.identity.name;}); // DEC-AVOID-001: ook na de "nooit leeg"-fallback
     if(!alts.length)return null;
     // kies best passend alternatief voor het doel
     alts.sort(function(a,b){return goalScore(b,st.sel.goal)-goalScore(a,st.sel.goal);});
@@ -37623,6 +37640,11 @@ var GW=(function(){
       if(!it._rowId)it._rowId=(typeof newClientRowId==='function')?newClientRowId():('gw-'+Date.now()+'-'+i);
       if(!it._rowAt)it._rowAt=new Date().toISOString();
       persist();                                                 // id en tijdstip vóór de write vastleggen
+      // F91/Optie B — FK-compat: sessions.exercise_id verwijst naar exercises.id. Een catalogus-only
+      // oefening heeft daar nog geen rij; zonder die rij weigert de server de write (23503 → 409) en
+      // dat is geen tijdelijke fout. finishSession doet dit via ensureSessionExerciseRows(); Guided
+      // deed het niet. Zelfde idempotente helper, geen nieuwe schrijfweg (DEC-SAVE-001, Sprint 4).
+      if(typeof ensureExerciseRow==='function'){ try{ await ensureExerciseRow(it.id); }catch(_){} }
       var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
       var uitkomst=null;
       try{
@@ -37949,6 +37971,7 @@ var GWUI=(function(){
     // Zelfde trainingscontext (materiaal + te vermijden oefeningen) als Preview, Execution, Builder en
     // Autobuild. Zonder deze stap koos de begeleide workout soms een vermeden oefening.
     alts=applyAthleteConstraintsCatalog(alts);
+    alts=tkZonderVermeden(alts,function(c){return c&&c.identity&&c.identity.name;}); // DEC-AVOID-001: nooit automatisch een vermeden oefening
     if(!alts.length){if(window.toast)toast('Geen geschikt alternatief');return;}
     GW.replaceExAsync(alts[0].catalog_id).then(function(ok){ if(ok){render();if(window.toast)toast('Alternatief gekozen');} });
   }

@@ -7636,7 +7636,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.18';
+const APP_VER = 'v4.70.19';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -10063,8 +10063,8 @@ function previewRenderSwapPicker(){
   alts=alts.filter(a=>a&&!currentIds.has(a.catalog_id));
   // F23: bied alleen alternatieven aan die passen bij het beschikbare materiaal en niet vermeden zijn.
   // Veilige laag (AthleteConstraints): onbekende equipment blijft beschikbaar, valt nooit terug op leeg.
-  try{ if(typeof applyAthleteConstraints==='function'){ const wrapped=alts.map(a=>({id:a.catalog_id,naam:a.name,_a:a})); alts=applyAthleteConstraints(wrapped).map(w=>w._a); } }catch(e){}
-  const opts=alts.length?alts.map(a=>`<div class="lrow" style="align-items:center"><div style="flex:1;font-size:13px">${escHtml(a.name)}</div><button class="btn btn-o btn-sm" onclick="previewApplySwap('${escHtml(exId)}','${escHtml(a.catalog_id)}')">Kies</button></div>`).join('')
+  alts=applyAthleteConstraintsCatalog(alts); // catalogusentries: naam uit identity.name (avoid-term)
+  const opts=alts.length?alts.map(a=>`<div class="lrow" style="align-items:center"><div style="flex:1;font-size:13px">${escHtml(previewExerciseName(a.catalog_id))}</div><button class="btn btn-o btn-sm" onclick="previewApplySwap('${escHtml(exId)}','${escHtml(a.catalog_id)}')">Kies</button></div>`).join('')
     :'<div style="font-size:12px;color:var(--g4)">Geen alternatieven gevonden</div>';
   return `<div style="margin-top:10px;border-top:1px solid var(--g1);padding-top:10px">
     <div style="font-size:11px;font-weight:800;color:var(--g4);text-transform:uppercase;margin-bottom:6px">Vervangen: ${escHtml(previewExerciseName(exId))}</div>
@@ -20860,6 +20860,18 @@ function applyAthleteConstraints(list){
     const r=AthleteConstraints.applyConstraints(cands,{availableSet:set,avoidTerms:avoid});
     return r.kept.map(c=>c._ref);
   }catch(e){ return list; }
+}
+// Dezelfde constraints-laag voor kandidaten die rechtstreeks uit de catalogus komen
+// (WB.altList / ExerciseCatalogService.byId). Zo'n entry heeft geen top-level .name of .naam,
+// alleen identity.name. Zonder naam kan een avoid-term nooit matchen; daarom geeft deze
+// helper de canonieke naam door. Geen eigen filterregel: applyAthleteConstraints() beslist,
+// inclusief de bestaande "nooit leeg"-fallback. Geeft de oorspronkelijke entries terug.
+function applyAthleteConstraintsCatalog(entries){
+  try{
+    if(!Array.isArray(entries)||!entries.length) return entries;
+    const wrapped=entries.map(c=>({id:c&&c.catalog_id, naam:(c&&c.identity&&c.identity.name)||'', _c:c}));
+    return applyAthleteConstraints(wrapped).map(w=>w._c);
+  }catch(e){ return entries; }
 }
 // F22-E: resolve MoveKit technische intelligentie (cues + veelgemaakte fouten) voor een oefening.
 // Read-only, ge-guard; geeft alleen bestaande catalogus-data terug (geen fake content).
@@ -37828,6 +37840,9 @@ var GWUI=(function(){
   function alt(){
     var it=GW.cur();if(!it)return;
     var alts=GW.altList(it.id).filter(function(e){return e&&e.catalog_id!==it.id;});
+    // Zelfde trainingscontext (materiaal + te vermijden oefeningen) als Preview, Execution, Builder en
+    // Autobuild. Zonder deze stap koos de begeleide workout soms een vermeden oefening.
+    alts=applyAthleteConstraintsCatalog(alts);
     if(!alts.length){if(window.toast)toast('Geen geschikt alternatief');return;}
     GW.replaceExAsync(alts[0].catalog_id).then(function(ok){ if(ok){render();if(window.toast)toast('Alternatief gekozen');} });
   }

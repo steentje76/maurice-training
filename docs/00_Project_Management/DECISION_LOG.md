@@ -2748,3 +2748,21 @@ omdat de ingevulde 100 niet meer meetelt. Zonder enige data is er geen score mee
 Hersteld"), N7 (trainingsbelasting in de signaaltelling), N8, N9 en de open punten van DEC-DQ-002.
 
 **Status.** Geïmplementeerd in v4.70.18. Guard: `core/fReadinessReliabilityContextLeaks.test.js`.
+
+## Trainingscontext op alle vervangpaden — begeleide workout en Preview (8 oktober 2026)
+
+**Context.** De onafhankelijke PR-audit van 8 oktober (`claude/AUDIT_OpenPRs_339_265_383_v4.70.18.md`) vond een vijfde
+vervangpad buiten de inventaris van "Builder + AthleteConstraints Completion" (#340): `GWUI.alt()` in de begeleide
+workout. Bij runtime-verificatie op main `fde8b5de` bleek ook de Preview-picker (F23) een te vermijden oefening niet
+te herkennen: hij gaf `a.name` door, een veld dat een catalogusentry niet heeft.
+
+**Besluit.** Geen productbesluit nodig: dezelfde classificatie als #340 (DEFECT, CONNECTION GAP). Beide paden gebruiken
+de bestaande `applyAthleteConstraints()` via één helper voor catalogusentries, `applyAthleteConstraintsCatalog()`.
+
+**Niet gewijzigd.** De AthleteConstraints-core en haar "nooit leeg"-fallback, de keuzevolgorde, het voorschrift van
+de vervangende oefening en de opslag.
+
+**Open, niet in deze wijziging.** Of de "nooit leeg"-fallback een expliciet vermeden oefening mag teruggeven, is een
+productvraag. Doelsortering in de begeleide workout (zoals `swapAlternative()` met goalScore) is een UX-keuze.
+
+**Status.** Geïmplementeerd in v4.70.19. Guard: `core/fGuidedPreviewAthleteConstraints.test.js`.

@@ -1,0 +1,762 @@
+From 05b5f86e57ef0f10f64b57992162129d3b077d51 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 18 Aug 2026 07:51:44 +0000
+Subject: [PATCH] fix(fitbit): rusthartslag synchroniseert weer + check-in wist
+ geen wearable-data meer
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+INCIDENT-SPRINT v4.29.1. Twee onafhankelijke defecten in de wearable-dataketen,
+beide met live bewijs uit de productie-function (geen tokens/waarden gelogd).
+
+DEFECT 1 — parsed.rhr = 0 terwijl fetched.rhr = 8
+Live diag 18-08 09:39: http {hrv:200,rhr:200,sleep:200} · fetched {8,8,8} ·
+parsed {hrv:8, rhr:0, sleep:8} · recordShape.rhr
+["date","beatsPerMinute","dailyRestingHeartRateMetadata"].
+`beatsPerMinute` is int64 en wordt volgens de proto3-JSON-mapping als STRING
+geserialiseerd ("57"); de guard `typeof v === 'number'` gooide die waarde weg.
+HRV (double) en slaap (uit tijdstempels) zijn wél getallen — vandaar dat alleen
+RHR faalde. Pure toNum/firstNum accepteert getal én numerieke string, geeft
+anders null (nooit 0, nooit fabriceren). Toegepast op HRV, RHR en slaapduur.
+RHR wordt afgerond: hrv_log.rhr is een integer-kolom.
+
+DEFECT 2 — check-in overschaduwde gesynchroniseerde data
+saveHRV()/pchkSubmit() deden een blinde INSERT in hrv_log. Alleen RHR invullen
+gaf een TWEEDE rij voor dezelfde dag met hrv=null en sleep=null; alle schermen
+lezen order=date.desc,created_at.desc&limit=1 en pakten die half-lege rij.
+Beide paden gebruiken nu upsertHrvLog() met de pure tkMergeHealthRow() —
+dezelfde vorm als upsertWeightLog(). Leeg veld = "niet ingevuld", nooit
+"wissen". [src:fitbit]-provenance blijft behouden.
+Server: bestaande-rij-lookup kreeg zonder `order` een willekeurige rij van
+PostgREST terug; nu expliciet order=created_at.desc, zodat de sync exact de rij
+bijwerkt die de app toont.
+
+FOUTAFHANDELING
+Interne codes AUTH_ERROR / TOKEN_REFRESH_ERROR / FITBIT_API_ERROR / RATE_LIMIT /
+NETWORK_ERROR / SUPABASE_ERROR / INVALID_RESPONSE / NOT_CONNECTED, vastgelegd op
+de connectie én in de serverlog; de gebruiker ziet altijd dezelfde veilige tekst.
+markSyncStatus kreeg in de catch `undefined` mee en deed dus niets — last_sync_status
+bleef op de vorige 'ok' staan; userId staat nu in de buitenste scope.
+PostgREST-foutobject gaf via `const [x] = obj` een TypeError → generieke 500;
+sbRows() maakt daar een getypeerde SUPABASE_ERROR van en toont een storing niet
+langer als "niet gekoppeld". Het antwoord bevat nu de HTTP-status per datatype.
+
+TESTS
+Nieuw core/fHrvUpsertMerge.test.js (11) — extraheert tkMergeHealthRow uit
+index.html en meet dus de echte productiecode.
+core/fWearableSync.test.js 54 → 79, core/fWearableSyncHandler.test.js 29 → 43.
+Volledige Quality Gate lokaal groen.
+
+Geen wijziging aan Home of Training. Geen DB-migratie.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01691Xk9mqbg2JD82efQjHLR
+---
+ .gitignore                            |   3 +
+ CHANGELOG.md                          |  44 +++++++++++
+ core/fHrvUpsertMerge.test.js          |  74 +++++++++++++++++
+ core/fWearableSync.test.js            |  42 ++++++++++
+ core/fWearableSyncHandler.test.js     |  51 ++++++++++++
+ index.html                            |  63 ++++++++++++---
+ netlify/functions/_wearableSyncLib.js |  71 +++++++++++++----
+ netlify/functions/wearable-sync.js    | 109 ++++++++++++++++++++++----
+ sw.js                                 |   4 +-
+ 9 files changed, 418 insertions(+), 43 deletions(-)
+ create mode 100644 .gitignore
+ create mode 100644 core/fHrvUpsertMerge.test.js
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..7df8b84
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,3 @@
++node_modules/
++www/
++package-lock.json
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3b398a9..ecbd5cf 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,49 @@
+ # Trainingskompas — Changelog
+ 
++## v4.29.1 — 18 augustus 2026 (INCIDENT — Fitbit-synchronisatie hersteld)
++
++Incident-sprint. Geen roadmapwerk, geen redesign, geen wijziging aan Home of Training. Twee onafhankelijke defecten in de wearable-dataketen opgelost, beide met live bewijs uit productie.
++
++### Defect 1 — rusthartslag synchroniseerde nooit (`parsed.rhr = 0`)
++
++Live diagnostiek uit de productie-function (18-08-2026, 09:39): `http {hrv:200, rhr:200, sleep:200}` · `fetched {hrv:8, rhr:8, sleep:8}` · `parsed {hrv:8, rhr:0, sleep:8}` · `recordShape.rhr ["date","beatsPerMinute","dailyRestingHeartRateMetadata"]`.
++
++Google Health léverde de rusthartslag dus wel — de parser gooide hem weg. `beatsPerMinute` is in de Google Health API een **int64**, en de proto3-JSON-mapping serialiseert int64 als **string** (`"57"`). De guard `typeof v === 'number'` verwierp die waarde. HRV (`averageHeartRateVariabilityMilliseconds`, een double) en slaap (afgeleid uit tijdstempels) zijn wél getallen — daarom faalde uitsluitend RHR.
++
++`_wearableSyncLib.js` krijgt een pure `toNum`/`firstNum` die getal én numerieke string accepteert en bij alles wat geen eindig getal is `null` teruggeeft — nooit 0, nooit een verzonnen waarde. Toegepast op HRV, RHR en alle slaapduurvelden, want daar kan dezelfde klasse fout ontstaan. `hrv_log.rhr` is een integer-kolom, dus RHR wordt afgerond vóór opslag.
++
++### Defect 2 — check-in overschaduwde gesynchroniseerde wearable-data
++
++`saveHRV()` en `pchkSubmit()` deden een blinde `INSERT` in `hrv_log`. Vulde je in de check-in alléén je rusthartslag in, dan ontstond een **tweede rij voor dezelfde dag** met `hrv = null` en `sleep = null`. Elk scherm leest `order=date.desc,created_at.desc&limit=1` en pakte dus die nieuwste, half-lege rij: de al gesynchroniseerde HRV en slaap leken gewist en de dagfactor werd op onvolledige data berekend. Er ging geen data verloren, maar ze werd onbereikbaar.
++
++Beide schrijfpaden gebruiken nu `upsertHrvLog()` — dezelfde bewezen vorm als `upsertWeightLog()`: rij van vandaag lezen, mergen via de pure `tkMergeHealthRow()`, PATCHen; alleen zonder bestaande rij nog een INSERT. Een leeg check-inveld betekent "niet ingevuld", nooit "wissen" (de velden worden nooit voorgevuld). De `[src:fitbit]`-provenance blijft behouden als je er een notitie bij typt.
++
++Server-kant: de bestaande-rij-lookup in `wearable-sync.js` had geen `order` en kreeg van PostgREST dus een willekeurige rij terug. Zolang `hrv_log` geen `UNIQUE(user_id, date)` heeft, kon de sync daardoor een rij bijwerken die de app niet toont. Nu expliciet `order=created_at.desc` — de sync raakt exact de rij die de gebruiker ziet.
++
++### Bruikbare foutafhandeling
++
++`wearable-sync` gaf bij elke uitzondering dezelfde `500 "Serverfout"` terug, en legde de mislukking niet vast (`markSyncStatus` werd met `undefined` aangeroepen, waardoor `last_sync_status` op de vorige `ok` bleef staan — een storing was nergens zichtbaar).
++
++Nu: interne foutcodes `AUTH_ERROR · TOKEN_REFRESH_ERROR · FITBIT_API_ERROR · RATE_LIMIT · NETWORK_ERROR · SUPABASE_ERROR · INVALID_RESPONSE · NOT_CONNECTED`, vastgelegd op de connectie én in de serverlog. De gebruiker ziet altijd dezelfde veilige tekst: "Synchroniseren met Fitbit is momenteel niet gelukt. Probeer het later opnieuw." Geen foutcodes, reasons of HTTP-statussen meer in de UI.
++
++Een PostgREST-foutobject werd voorheen met `const [x] = obj` uitgepakt en gaf een `TypeError` → generieke 500. `sbRows()` maakt daar een getypeerde `SUPABASE_ERROR` van, en een storing wordt niet langer als "niet gekoppeld" getoond. Het antwoord bevat nu ook de HTTP-status per datatype, zodat een volgend incident te plaatsen is zónder toegang tot de Netlify-logs: `200 + fetched>0 + metrics=0` = parserfout, `4xx` = provider/permissie, `429` = rate limit.
++
++Diagnostiek blijft strikt structureel — tellingen, statussen en veldnamen. Nooit tokens, secrets, payloads of gezondheidswaarden.
++
++### Getest
++- Nieuw `core/fHrvUpsertMerge.test.js` — extraheert `tkMergeHealthRow` uit `index.html` en meet dus de echte productiecode: het incidentscenario (RHR-only check-in na een sync) mag HRV en slaap niet verliezen, `0` blijft een geldige meting, lege invoer wist niets, provenance blijft staan.
++- `core/fWearableSync.test.js` uitgebreid van 54 naar 79 controles: `toNum` op alle randgevallen, de exacte live RHR-shape met int64-string, afronding naar de integer-kolom, `sleepSummaryShape` (alleen keys) en `asArray`.
++- `core/fWearableSyncHandler.test.js` uitgebreid van 29 naar 43 controles: de exacte live productie-shape end-to-end, de deterministische `order=created_at.desc`-lookup, een Supabase-fout die geen technische details lekt, en een 429 die geen valse "success" oplevert.
++- Volledige Quality Gate lokaal gedraaid zoals de workflow hem draait: `coaching.test.js`, alle `core/*.test.js`, `npm run test:native`, `npm run build:www` en de bestandscontroles. Alles groen.
++
++### Bekende beperkingen
++- `hrv_log` heeft nog geen `UNIQUE(user_id, date)`. De code maakt geen nieuwe duplicaten meer, maar bestaande dubbele rijen (18-08 en 09-08) blijven staan tot ze expliciet worden opgeschoond — dat is een datawijziging en gebeurt niet zonder opdracht.
++- Gewicht wordt (nog) niet uit Google Health gesynchroniseerd; alleen HRV, rusthartslag en slaap. De scope `health_metrics_and_measurements.readonly` dekt gewicht wel — bewust buiten deze incident-sprint gehouden.
++- Of de slaapduur "werkelijk geslapen" of "tijd in bed" is, is nog niet hard bewezen: `sleep.summary` was in de live diagnostiek leeg, dus de sync valt terug op het interval. De nieuwe `sleepSummaryShape`-diagnostiek maakt dit na deze deploy zichtbaar.
++
++### Gewijzigd
++`netlify/functions/_wearableSyncLib.js`, `netlify/functions/wearable-sync.js`, `index.html`, `sw.js`, `CHANGELOG.md`, nieuw `core/fHrvUpsertMerge.test.js`, uitgebreid `core/fWearableSync.test.js` en `core/fWearableSyncHandler.test.js`, plus de `.gitignore` die in v4.29.0 wel beschreven maar niet meegeleverd was.
++
+ ## v4.29.0 — 17 augustus 2026 (Lichaam Data Depth 1.0 — observatielaag)
+ 
+ Van de Lichaam-sectie een betrouwbare **observatielaag** gemaakt: elke getoonde waarde draagt nu zijn herkomst, meetmoment, versheid en dekking met zich mee. Geen redesign, geen nieuwe mock-up, geen correlatie- of verbandenmotor.
+diff --git a/core/fHrvUpsertMerge.test.js b/core/fHrvUpsertMerge.test.js
+new file mode 100644
+index 0000000..7c58592
+--- /dev/null
++++ b/core/fHrvUpsertMerge.test.js
+@@ -0,0 +1,74 @@
++/* fHrvUpsertMerge — REGRESSIETEST voor de dataverlies-bug van 18-08-2026.
++ *
++ * SYMPTOOM: na een geslaagde Fitbit-sync (hrv+slaap gevuld) vulde de gebruiker in de
++ * check-in ALLEEN de rusthartslag in. Er ontstond een TWEEDE hrv_log-rij voor dezelfde
++ * dag met hrv=null en sleep=null. Alle schermen lezen
++ * `order=date.desc,created_at.desc&limit=1` en pakten die nieuwste, half-lege rij →
++ * HRV en slaap leken gewist en de dagfactor werd op onvolledige data berekend.
++ *
++ * BEWAAKT: tkMergeHealthRow (in index.html) mag NOOIT een bestaande waarde met null
++ * overschrijven, en moet de [src:fitbit]-provenance behouden.
++ * De functie wordt uit index.html geëxtraheerd zodat de test de ECHTE productiecode
++ * meet en niet een kopie die uit de pas kan lopen.
++ * Draai: node core/fHrvUpsertMerge.test.js
++ */
++'use strict';
++const fs = require('fs');
++const path = require('path');
++
++let pass = 0, fail = 0;
++const eq = (a, b, m) => { if (JSON.stringify(a) === JSON.stringify(b)) pass++; else { fail++; console.log('  ✗ ' + m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')'); } };
++const ok = (c, m) => { if (c) pass++; else { fail++; console.log('  ✗ ' + m); } };
++
++const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
++const start = html.indexOf('function tkMergeHealthRow(');
++if (start === -1) { console.log('  ✗ tkMergeHealthRow niet gevonden in index.html'); process.exit(1); }
++// Balanceer de accolades vanaf de eerste '{' zodat we exact één functie pakken.
++const open = html.indexOf('{', start);
++let depth = 0, end = -1;
++for (let i = open; i < html.length; i++) {
++  if (html[i] === '{') depth++;
++  else if (html[i] === '}') { depth--; if (depth === 0) { end = i + 1; break; } }
++}
++const src = html.slice(start, end);
++const tkMergeHealthRow = new Function(src + '; return tkMergeHealthRow;')();
++
++console.log('\n[fHrvUpsertMerge] check-in mag gesynchroniseerde wearable-data niet wissen');
++
++// 1) HET INCIDENT: Fitbit-rij bestaat, gebruiker vult alleen RHR in.
++const fitbitRow = { id: 'x', date: '2026-08-18', hrv: 28.5, rhr: null, sleep: 6.07, cyclus_fase: null, edema: null, note: '[src:fitbit]' };
++let m = tkMergeHealthRow(fitbitRow, { hrv: null, rhr: 57, sleep: null, cyclus_fase: null, edema: null, note: null });
++eq(m.hrv, 28.5, 'HRV van de sync blijft staan bij een RHR-only check-in');
++eq(m.sleep, 6.07, 'Slaap van de sync blijft staan bij een RHR-only check-in');
++eq(m.rhr, 57, 'Handmatige RHR wordt overgenomen');
++eq(m.note, '[src:fitbit]', 'Provenance-tag blijft behouden');
++
++// 2) Omgekeerd: handmatige rij bestaat, sync vult later aan (geen verlies andersom).
++m = tkMergeHealthRow({ hrv: null, rhr: 57, sleep: null, note: null }, { hrv: 28.5, sleep: 6.07, rhr: null, note: null });
++eq([m.hrv, m.rhr, m.sleep], [28.5, 57, 6.07], 'Aanvullen in beide richtingen zonder verlies');
++
++// 3) Notitie + provenance: handmatige tekst wist de wearable-herkomst niet.
++m = tkMergeHealthRow({ hrv: 28.5, note: 'iets [src:fitbit]' }, { note: 'Moe' });
++ok(/\[src:fitbit\]/.test(m.note), 'Nieuwe notitie behoudt [src:fitbit]');
++ok(/Moe/.test(m.note), 'Nieuwe notitie-tekst blijft leesbaar');
++
++// 4) Geen bestaande rij → incoming is leidend, ontbrekend blijft null (niets verzinnen).
++m = tkMergeHealthRow(null, { rhr: 57 });
++eq([m.hrv, m.rhr, m.sleep], [null, 57, null], 'Zonder bestaande rij alleen het ingevulde veld');
++
++// 5) Lege string telt als "niet ingevuld" (inputvelden leveren '' bij leeg).
++m = tkMergeHealthRow({ hrv: 30 }, { hrv: '' });
++eq(m.hrv, 30, "Lege invoer ('') wist een bestaande waarde niet");
++
++// 6) 0 is een geldige meting en mag niet als "leeg" gelden.
++m = tkMergeHealthRow({ rhr: 57 }, { rhr: 0 });
++eq(m.rhr, 0, 'Waarde 0 wordt wel overgenomen (geen falsy-val)');
++
++// 7) Cyclus/edema volgen dezelfde regel.
++m = tkMergeHealthRow({ cyclus_fase: 'luteaal', edema: 'Knie: licht' }, { hrv: 25 });
++eq([m.cyclus_fase, m.edema], ['luteaal', 'Knie: licht'], 'Cyclus en condities blijven behouden');
++
++console.log('\n========================================================');
++console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
++if (fail) process.exit(1);
++console.log('✅ Check-in kan gesynchroniseerde wearable-data niet meer overschaduwen.');
+diff --git a/core/fWearableSync.test.js b/core/fWearableSync.test.js
+index ef929be..5887a92 100644
+--- a/core/fWearableSync.test.js
++++ b/core/fWearableSync.test.js
+@@ -102,5 +102,47 @@ eq(L.parseHrvPoint({ dailyHeartRateVariability:{ date:'2026-08-15T00:00:00Z', av
+ eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).value, 38, 'PS9: legacy rmssdMillis-fallback behouden');
+ eq(L.parseHrvPoint({ date:'2026-08-14', dailyHeartRateVariability:{ rmssdMillis:38 } }).date, '2026-08-14', 'PS9: legacy top-level date-fallback behouden');
+ 
++
++// ── INCIDENT 18-08-2026 — int64-als-JSON-string (proto3-mapping) ──────────────
++// De Google Health API gaf 8 daily-resting-heart-rate-datapunten (http 200,
++// fetched.rhr=8) maar parsed.rhr bleef 0. Oorzaak: `beatsPerMinute` is int64 en
++// wordt volgens de proto3-JSON-mapping als STRING geserialiseerd ("57"); de oude
++// `typeof v === 'number'`-guard gooide die waarde weg. HRV (double) en slaap
++// (afgeleid uit tijdstempels) waren wél getallen — vandaar dat alléén RHR faalde.
++eq(L.toNum(57), 57, 'N1: getal blijft getal');
++eq(L.toNum('57'), 57, 'N2: int64-als-string wordt getal');
++eq(L.toNum(' 57 '), 57, 'N3: spaties rond de string');
++eq(L.toNum('28.5'), 28.5, 'N4: decimale string');
++eq(L.toNum('abc'), null, 'N5: niet-numerieke string → null (nooit fabriceren)');
++eq(L.toNum('12px'), null, 'N6: half-numerieke string → null');
++eq(L.toNum(''), null, 'N7: lege string → null');
++eq(L.toNum(null), null, 'N8: null blijft null');
++eq(L.toNum(NaN), null, 'N9: NaN → null');
++eq(L.toNum(Infinity), null, 'N10: Infinity → null');
++eq(L.toNum({}), null, 'N11: object → null');
++
++// EXACTE productie-shape uit de live diag: ["date","beatsPerMinute","dailyRestingHeartRateMetadata"]
++const rhrLive = L.parseRhrPoint({ dataSource:'d', dailyRestingHeartRate:{ date:{year:2026,month:8,day:18}, beatsPerMinute:'57', dailyRestingHeartRateMetadata:{ calculationMethod:'WITH_SLEEP' } } });
++eq(rhrLive.value, 57, 'R1: RHR uit int64-string "57" wordt 57 (dit was de parsed.rhr=0-bug)');
++eq(rhrLive.date, '2026-08-18', 'R1: RHR-datum uit het geneste date-object');
++eq(L.parseRhrPoint({ dailyRestingHeartRate:{ date:'2026-08-18', beatsPerMinute:57 } }).value, 57, 'R2: numerieke vorm blijft werken');
++eq(L.parseRhrPoint({ dailyRestingHeartRate:{ date:'2026-08-18', beatsPerMinute:56.6 } }).value, 57, 'R3: hrv_log.rhr is integer → afgerond');
++eq(L.parseRhrPoint({ dailyRestingHeartRate:{ date:'2026-08-18', beatsPerMinute:'onzin' } }).value, null, 'R4: onbruikbare waarde → null (skipped, niet 0)');
++eq(L.parseRhrPoint({ dailyRestingHeartRate:{ date:'2026-08-18' } }).value, null, 'R5: geen waarde → null');
++
++// HRV en slaap moeten dezelfde coercie krijgen (dezelfde klasse fout kan daar ontstaan)
++eq(L.parseHrvPoint({ dailyHeartRateVariability:{ date:'2026-08-18', averageHeartRateVariabilityMilliseconds:'28.5' } }).value, 28.5, 'H1: HRV als string wordt getal');
++eq(L.parseSleepPoint({ sleep:{ interval:{ endTime:'2026-08-18T06:30:00Z' }, summary:{ minutesAsleep:'415' } } }).value, 6.92, 'S1: minutesAsleep als string → 6,92 uur');
++eq(L.parseSleepPoint({ sleep:{ interval:{ endTime:'2026-08-18T06:30:00Z' }, summary:{ totalSleepDurationMillis:'27000000' } } }).value, 7.5, 'S2: totalSleepDurationMillis (int64-string) → 7,5 uur');
++
++// Structurele diagnostiek: alleen KEYS, nooit waarden
++eq(L.sleepSummaryShape({ sleep:{ summary:{ minutesAsleep:415, stages:{} } } }), ['minutesAsleep','stages'], 'D1: sleepSummaryShape geeft uitsluitend keys');
++eq(L.sleepSummaryShape({ sleep:{} }), [], 'D2: geen summary → lege lijst');
++
++// asArray: PostgREST-foutobject mag geen TypeError (→ generieke 500 "Serverfout") geven
++eq(L.asArray([{a:1}]).length, 1, 'A1: array blijft array');
++eq(L.asArray({ code:'PGRST301', message:'x' }), [], 'A2: PostgREST-foutobject → lege array i.p.v. crash');
++eq(L.asArray(null), [], 'A3: null → lege array');
++
+ console.log('\nwearable-sync PURE helpers: RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
+ process.exit(fail ? 1 : 0);
+diff --git a/core/fWearableSyncHandler.test.js b/core/fWearableSyncHandler.test.js
+index a217727..ca9e819 100644
+--- a/core/fWearableSyncHandler.test.js
++++ b/core/fWearableSyncHandler.test.js
+@@ -122,6 +122,57 @@ const event = { httpMethod: 'POST', headers: { authorization: 'Bearer session' }
+   eq(body.imported, 0, 'S6: tweede sync → 0 nieuw (geen duplicaat)');
+   eq(body.updated, 1, 'S6: bestaande datum → update (upsert per datum, idempotent)');
+ 
++
++  // ── SCENARIO 7: INCIDENT 18-08-2026 — EXACTE live productie-shape ───────────
++  // Live diag bewees: http 200, fetched {hrv:8,rhr:8,sleep:8}, parsed {hrv:8,rhr:0,sleep:8}
++  // met recordShape.rhr = ["date","beatsPerMinute","dailyRestingHeartRateMetadata"].
++  // `beatsPerMinute` is int64 → JSON-string. Deze test faalt op de oude parser.
++  writtenRows = []; let seenHrvLogQuery = null;
++  global.fetch = (function(base){ return async function(url, opts){
++    if (String(url).indexOf('/rest/v1/hrv_log') !== -1 && !(opts && opts.method && opts.method !== 'GET')) seenHrvLogQuery = String(url);
++    return base(url, opts);
++  }; })(makeFetch({
++    hrv:   [{ dataSource:'d', dailyHeartRateVariability:{ date:{year:2026,month:8,day:17}, averageHeartRateVariabilityMilliseconds: 28.5, nonRemHeartRateBeatsPerMinute:'52', entropy: 3.1 } }],
++    rhr:   [{ dataSource:'d', dailyRestingHeartRate:{ date:{year:2026,month:8,day:17}, beatsPerMinute: '57', dailyRestingHeartRateMetadata:{ calculationMethod:'WITH_SLEEP' } } }],
++    sleep: [{ name:'n', dataSource:'d', sleep:{ interval:{ startTime:'2026-08-16T23:12:00Z', endTime:'2026-08-17T06:16:00Z' }, type:'x', stages:[], metadata:{}, summary:{}, shortAwakenings:[] } }]
++  }));
++  res = await handlerMod.handler(event); body = JSON.parse(res.body);
++  eq(body.metrics && body.metrics.rhr, 1, 'S7: RHR wordt nu WEL geparsed uit int64-string (was parsed.rhr=0)');
++  eq(writtenRows.length, 1, 'S7: exact één write');
++  eq(writtenRows[0].rhr, 57, 'S7: rusthartslag 57 komt in hrv_log terecht');
++  eq(writtenRows[0].hrv, 28.5, 'S7: HRV blijft correct');
++  ok(writtenRows[0].sleep > 7 && writtenRows[0].sleep < 7.2, 'S7: slaap uit interval (~7,07 uur)');
++  eq(body.http && body.http.rhr, 200, 'S7: HTTP-status per datatype in het antwoord (diagnose zonder logtoegang)');
++  ok(seenHrvLogQuery && seenHrvLogQuery.indexOf('order=created_at.desc') !== -1,
++     'S7: bestaande-rij-lookup is deterministisch (order=created_at.desc) — patcht de rij die de app toont');
++
++  // ── SCENARIO 8: PostgREST-foutobject → getypeerde SUPABASE_ERROR, geen lek ───
++  // Voorheen gaf `const [conn] = <object>` een TypeError → generieke 500 "Serverfout".
++  writtenRows = [];
++  global.fetch = async function(url, opts){
++    url = String(url);
++    if (url.indexOf('/auth/v1/user') !== -1) return { ok:true, status:200, json: async()=>({ id:'u1' }) };
++    if (url.indexOf('wearable_connections') !== -1 && (!opts || !opts.method || opts.method === 'GET'))
++      return { ok:false, status:500, json: async()=>({ code:'PGRST301', message:'db down' }), text: async()=>'x' };
++    return { ok:true, status:200, json: async()=>({}), text: async()=>'{}' };
++  };
++  res = await handlerMod.handler(event); body = JSON.parse(res.body);
++  eq(res.statusCode, 500, 'S8: Supabase-fout → 500');
++  ok(body.code && body.code.length > 0, 'S8: machineleesbare foutcode aanwezig');
++  ok(!/db down|PGRST301/.test(JSON.stringify(body)), 'S8: geen technische/DB-details richting client');
++  ok(/Probeer het later opnieuw/.test(body.error.message), 'S8: veilige gebruikersmelding i.p.v. "Serverfout"');
++
++  // ── SCENARIO 9: provider rate limit (429) → RATE_LIMIT in het antwoord ───────
++  writtenRows = [];
++  global.fetch = (function(base){ return async function(url, opts){
++    if (String(url).indexOf('health.googleapis.com') !== -1) return { ok:false, status:429, json: async()=>({}), text: async()=>'' };
++    return base(url, opts);
++  }; })(makeFetch({ hrv:[], rhr:[], sleep:[] }));
++  res = await handlerMod.handler(event); body = JSON.parse(res.body);
++  eq(res.statusCode, 200, 'S9: rate limit is geen serverfout');
++  eq(body.code, 'RATE_LIMIT', 'S9: RATE_LIMIT expliciet gerapporteerd');
++  eq(body.status, 'no_new_data', 'S9: geen valse "success" bij een geblokkeerde provider');
++
+   console.log('\nwearable-sync HANDLER (mocked transport): RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');
+   process.exit(fail ? 1 : 0);
+ })().catch(e => { console.error('HANDLER TEST FAIL:', e); process.exit(2); });
+diff --git a/index.html b/index.html
+index c71ed5b..0e9a4d8 100644
+--- a/index.html
++++ b/index.html
+@@ -5485,7 +5485,7 @@ async function tkFitbitSync(){
+ // ══════════════════════════════════════════════════════════
+ // CONSTANTS & CONFIG
+ // ══════════════════════════════════════════════════════════
+-const APP_VER = 'v4.29.0';
++const APP_VER = 'v4.29.1';
+ const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
+ const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
+ const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
+@@ -6381,6 +6381,40 @@ async function sbPostReturning(t,d){
+   }catch(e){console.error('sbPostReturning catch',t,e);return null;}
+ }
+ async function sbPatch(t,f,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',headers:{...SB_H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)console.error('sbPatch',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbPatch catch',t,e);return false;}}
++/* ── ÉÉN CANONIEKE hrv_log-RIJ PER DAG (v4.29.1 — dataverlies-fix) ─────────────
++ * PROBLEEM: saveHRV()/pchkSubmit() deden een blinde INSERT in hrv_log. Vulde je in
++ * de check-in alléén je rusthartslag in, dan ontstond een TWEEDE rij voor vandaag met
++ * hrv=null en sleep=null. Elk scherm leest `order=date.desc,created_at.desc&limit=1`
++ * en pakte dus die nieuwste, half-lege rij — de al gesynchroniseerde Fitbit-waarden
++ * leken gewist en de dagfactor werd op onvolledige data berekend.
++ * OPLOSSING: dezelfde bewezen upsert-vorm als upsertWeightLog — bestaande rij van
++ * vandaag lezen, mergen, PATCHen; alleen als er nog geen rij is, INSERTen.
++ * REGEL: een leeg check-in-veld betekent "niet ingevuld", NOOIT "wissen" (de velden
++ * worden nooit voorgevuld, dus leeg kan geen bewuste wisactie zijn).
++ * ────────────────────────────────────────────────────────────────────────────*/
++function tkMergeHealthRow(existing,incoming){
++  existing=existing||{}; incoming=incoming||{};
++  const keep=(k)=>(incoming[k]!==null&&incoming[k]!==undefined&&incoming[k]!=='')?incoming[k]
++                  :(existing[k]!==undefined?existing[k]:null);
++  const out={
++    hrv:keep('hrv'), rhr:keep('rhr'), sleep:keep('sleep'),
++    cyclus_fase:keep('cyclus_fase'), edema:keep('edema'), note:keep('note')
++  };
++  // Provenance-tag van de wearable mag nooit verdwijnen door een handmatige notitie.
++  const hadTag=/\[src:fitbit\]/i.test(String(existing.note||''));
++  if(hadTag&&!/\[src:fitbit\]/i.test(String(out.note||''))){
++    out.note=out.note?(String(out.note).trim()+' [src:fitbit]'):'[src:fitbit]';
++  }
++  return out;
++}
++async function upsertHrvLog(fields){
++  const d=td();
++  const existing=await sbGet('hrv_log','&date=eq.'+d+'&order=created_at.desc&limit=1');
++  const cur=existing.length?existing[0]:null;
++  const merged=tkMergeHealthRow(cur,fields);
++  if(cur)return await sbPatch('hrv_log','id=eq.'+cur.id,merged);
++  return await sbPost('hrv_log',Object.assign({date:d},merged));
++}
+ // Eén canoniek gewichtsrecord per dag: overschrijft bestaand record i.p.v. dupliceren
+ // (voorheen schreven saveHRV/saveWeight/saveBC alle drie los naar weight_log)
+ async function upsertWeightLog(weight,scale){
+@@ -7592,6 +7626,14 @@ async function wearableDisconnect(){
+     renderWearableCard();
+   }catch(e){toast('Verbindingsfout bij loskoppelen');}
+ }
++// Vertaalt het (canonieke) serverantwoord naar één veilige gebruikerstekst.
++function tkWearableFailMsg(d){
++  const st=d&&(d.status||d.reason);
++  if(st==='not_connected')return 'Fitbit is nog niet gekoppeld';
++  if(st==='token_expired'||st==='authorization_required')return 'Opnieuw koppelen met Fitbit nodig';
++  if((d&&d.code)==='RATE_LIMIT')return 'Te veel verzoeken bij Fitbit — probeer het straks opnieuw';
++  return 'Synchroniseren met Fitbit is momenteel niet gelukt. Probeer het later opnieuw.';
++}
+ async function wearableSyncNow(){
+   const h=wearableAuthHeaders();
+   if(!h){toast('Geen actieve sessie');return;}
+@@ -7599,7 +7641,9 @@ async function wearableSyncNow(){
+   try{
+     const r=await fetch('/.netlify/functions/wearable-sync',{method:'POST',headers:h});
+     const d=await r.json();
+-    if(!r.ok||!d.synced){toast('Synchronisatie mislukt: '+(d.reason||d.error?.message||r.status));renderWearableCard();return;}
++    // v4.29.1: geen technische foutcode/reason meer in de UI. De server logt de code
++    // (AUTH_ERROR/TOKEN_REFRESH_ERROR/FITBIT_API_ERROR/RATE_LIMIT/...) veilig server-side.
++    if(!r.ok||!d.synced){toast(tkWearableFailMsg(d));renderWearableCard();return;}
+     // Eerlijke, PER-METRIC microcopy: OAuth/API-succes ≠ nieuwe data. RHR=0 → "geen nieuwe data"
+     // (nooit suggereren dat alles gesynct is). d.metrics = parsed dagen per metric.
+     const _days=Number(d.daysWritten)||0, mm=d.metrics||null;
+@@ -8717,7 +8761,9 @@ async function saveHRV(btnEl){
+   const edm=loggedConditions.length?loggedConditions.map(c=>c.label+': '+c.severity).join(', '):null;
+   const note=document.getElementById('i-note').value||null;
+   const ops=[];
+-  if(hrv||rhr||slp)ops.push(sbPost('hrv_log',{date:td(),hrv,rhr,sleep:slp,cyclus_fase:cyclus,edema:edm,note}));
++  // v4.29.1: upsert i.p.v. insert — voorkomt een tweede, half-lege rij voor vandaag
++  // die de al gesynchroniseerde Fitbit-waarden zou overschaduwen (dataverlies-fix).
++  if(hrv||rhr||slp)ops.push(upsertHrvLog({hrv,rhr,sleep:slp,cyclus_fase:cyclus,edema:edm,note}));
+   if(wgt)ops.push(upsertWeightLog(wgt,'Tanita'));
+   for(const c of loggedConditions)ops.push(sbPost('checkin_conditions',{date:td(),condition_label:c.label,severity:c.severity}));
+   await Promise.all(ops);
+@@ -17521,12 +17567,11 @@ async function pchkSubmit(){
+   // recente hrv_log-rij altijd het volledigste beeld heeft — anders verliest de
+   // dagfactor-berekening bv. de al gelogde slaap zodra alleen HRV wordt aangevuld.
+   if(hrvVal||rhrVal||slpVal){
+-    await sbPost('hrv_log',{
+-      date:td(),
+-      hrv:hrvVal||th?.hrv||null,
+-      rhr:rhrVal||th?.rhr||null,
+-      sleep:slpVal||th?.sleep||null,
+-      cyclus_fase:th?.cyclus_fase||null,
++    // v4.29.1: upsertHrvLog leest zelf de nieuwste rij van vandaag en merget — dat
++    // vervangt de oude "lees th + POST nieuwe rij"-constructie die per training een
++    // extra hrv_log-rij voor dezelfde dag aanmaakte.
++    await upsertHrvLog({
++      hrv:hrvVal, rhr:rhrVal, sleep:slpVal,
+       note:'Check-in bij programmatraining'
+     });
+   }
+diff --git a/netlify/functions/_wearableSyncLib.js b/netlify/functions/_wearableSyncLib.js
+index f820212..88e8e2d 100644
+--- a/netlify/functions/_wearableSyncLib.js
++++ b/netlify/functions/_wearableSyncLib.js
+@@ -8,6 +8,38 @@
+  * ==========================================================================*/
+ 'use strict';
+ 
++/* ── NUMERIEKE COERCIE (proto3 int64 → JSON-string) ───────────────────────────
++ * De Google Health API serialiseert int64/uint64-velden volgens de proto3-JSON-
++ * mapping als STRING ("57"), niet als getal. `beatsPerMinute` (daily-resting-heart-
++ * rate) is int64 → kwam binnen als "57" en werd door een strikte `typeof === number`-
++ * check weggegooid (RHR parsed:0 terwijl fetched:8). HRV (double) en slaap (afgeleid
++ * uit tijdstempels) zijn wél getallen, vandaar dat alleen RHR faalde.
++ * toNum accepteert getal én numerieke string en geeft anders null (nooit fabriceren).
++ * ────────────────────────────────────────────────────────────────────────────*/
++function toNum(v) {
++  if (typeof v === 'number') return isFinite(v) ? v : null;
++  if (typeof v === 'string') {
++    var s = v.trim();
++    if (!s) return null;
++    if (!/^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/.test(s)) return null;
++    var n = Number(s);
++    return isFinite(n) ? n : null;
++  }
++  return null;
++}
++// Eerste veld uit `keys` dat naar een eindig getal coerceert (volgorde = prioriteit).
++function firstNum(rec, keys) {
++  if (!rec) return null;
++  for (var i = 0; i < keys.length; i++) {
++    var n = toNum(rec[keys[i]]);
++    if (n != null) return n;
++  }
++  return null;
++}
++// Defensief: PostgREST geeft bij een fout een OBJECT i.p.v. een array. `const [x] = obj`
++// gooit dan een TypeError → generieke 500 "Serverfout". asArray voorkomt die klasse fouten.
++function asArray(x) { return Array.isArray(x) ? x : []; }
++
+ function provenanceNote(existingNote) {
+   var base = (existingNote == null ? '' : String(existingNote)).trim();
+   if (/\[src:fitbit\]/i.test(base)) return base;
+@@ -54,11 +86,11 @@ function sessionDateOf(point) {
+ }
+ function sleepMinutesOf(point) {
+   var s = point && point.sleep;
+-  var ms = (s && s.summary && s.summary.totalDurationMillis) != null ? s.summary.totalDurationMillis
+-         : (s && s.totalDurationMillis);
++  var ms = firstNum(s && s.summary, ['totalDurationMillis']);
++  if (ms == null) ms = firstNum(s, ['totalDurationMillis']);
+   if (ms) return Math.round(ms / 60000);
+-  var sec = (s && s.summary && s.summary.totalDurationSeconds) != null ? s.summary.totalDurationSeconds
+-          : (s && s.totalDurationSeconds);
++  var sec = firstNum(s && s.summary, ['totalDurationSeconds']);
++  if (sec == null) sec = firstNum(s, ['totalDurationSeconds']);
+   if (sec) return Math.round(sec / 60);
+   return null;
+ }
+@@ -72,18 +104,17 @@ function _dateFrom(d) {
+ function parseHrvPoint(point) {
+   var rec = point && point.dailyHeartRateVariability; if (!rec) return null;
+   var date = _dateFrom(rec.date) || _dateFrom(point && point.date);
+-  var v = (rec.averageHeartRateVariabilityMilliseconds != null) ? rec.averageHeartRateVariabilityMilliseconds
+-        : (rec.rmssdMillis != null ? rec.rmssdMillis : null);
+-  return { date: date, value: (typeof v === 'number' && isFinite(v)) ? v : null };
++  // RMSSD in ms. Volgorde = prioriteit; toNum accepteert ook de int64-als-string-vorm.
++  var v = firstNum(rec, ['averageHeartRateVariabilityMilliseconds', 'rmssdMillis']);
++  return { date: date, value: v };
+ }
+ function parseRhrPoint(point) {
+   var rec = point && point.dailyRestingHeartRate; if (!rec) return null;
+   var date = _dateFrom(rec.date) || _dateFrom(point && point.date);
+-  var v = (rec.averageBeatsPerMinute != null) ? rec.averageBeatsPerMinute
+-        : (rec.beatsPerMinute != null ? rec.beatsPerMinute
+-        : (rec.restingHeartRateBpm != null ? rec.restingHeartRateBpm
+-        : (rec.bpm != null ? rec.bpm : null)));
+-  return { date: date, value: (typeof v === 'number' && isFinite(v)) ? v : null };
++  // `beatsPerMinute` is int64 → komt als STRING binnen (proto3-JSON). firstNum/toNum
++  // vangt beide vormen. hrv_log.rhr is een integer-kolom → afronden vóór opslag.
++  var v = firstNum(rec, ['averageBeatsPerMinute', 'beatsPerMinute', 'restingHeartRateBpm', 'bpm']);
++  return { date: date, value: v == null ? null : Math.round(v) };
+ }
+ function parseSleepPoint(point) {
+   var s = point && point.sleep; if (!s) return null;
+@@ -91,9 +122,11 @@ function parseSleepPoint(point) {
+   var date = _dateFrom(iv && (iv.endTime || iv.civilEndTime)) || _dateFrom(s.date) || _dateFrom(point && point.endTime);
+   var min = null;
+   var sum = s.summary;
+-  if (sum && sum.minutesAsleep != null) min = Math.round(sum.minutesAsleep);
+-  else if (sum && sum.totalSleepMinutes != null) min = Math.round(sum.totalSleepMinutes);
+-  else if (sum && sum.totalDurationMillis != null) min = Math.round(sum.totalDurationMillis / 60000);
++  // Alle duurvelden kunnen int64-als-string zijn; firstNum coerceert veilig.
++  var asleepMin = firstNum(sum, ['minutesAsleep', 'totalSleepMinutes']);
++  var asleepMs  = firstNum(sum, ['totalSleepDurationMillis', 'totalDurationMillis']);
++  if (asleepMin != null) min = Math.round(asleepMin);
++  else if (asleepMs != null) min = Math.round(asleepMs / 60000);
+   else if (iv && iv.startTime && iv.endTime) {
+     var ms = Date.parse(iv.endTime) - Date.parse(iv.startTime);
+     if (isFinite(ms) && ms > 0) min = Math.round(ms / 60000);
+@@ -109,6 +142,13 @@ function minutesToHours(min) {
+ function pointShape(point) {
+   return (point && typeof point === 'object') ? Object.keys(point) : [];
+ }
++// Structurele diagnostiek van sleep.summary — alleen KEYS, nooit waarden. Maakt
++// zichtbaar of Google een echte "asleep"-duur levert of dat we op interval
++// (= tijd in bed) terugvallen.
++function sleepSummaryShape(point) {
++  var sum = point && point.sleep && point.sleep.summary;
++  return (sum && typeof sum === 'object') ? Object.keys(sum) : [];
++}
+ function recordShape(point, recordKey) {
+   var rec = point && point[recordKey];
+   return (rec && typeof rec === 'object') ? Object.keys(rec) : [];
+@@ -160,6 +200,7 @@ function syncResult(counts) {
+ }
+ 
+ module.exports = {
++  toNum: toNum, firstNum: firstNum, asArray: asArray, sleepSummaryShape: sleepSummaryShape,
+   provenanceNote: provenanceNote, contributed: contributed, buildRow: buildRow,
+   classifyWrite: classifyWrite, dailyDateOf: dailyDateOf, sessionDateOf: sessionDateOf,
+   sleepMinutesOf: sleepMinutesOf, minutesToHours: minutesToHours, pointShape: pointShape, recordShape: recordShape,
+diff --git a/netlify/functions/wearable-sync.js b/netlify/functions/wearable-sync.js
+index 1497ce7..2c57e25 100644
+--- a/netlify/functions/wearable-sync.js
++++ b/netlify/functions/wearable-sync.js
+@@ -33,6 +33,50 @@ const GOOGLE_HEALTH_BASE = 'https://health.googleapis.com/v4';
+ 
+ function jsonBody(obj) { return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) }; }
+ 
++/* ── FOUTCODE-TAXONOMIE (v4) ──────────────────────────────────────────────────
++ * Intern onderscheiden we foutsoorten zodat een incident in één oogopslag te
++ * plaatsen is; de GEBRUIKER krijgt altijd dezelfde veilige tekst. Er gaan nooit
++ * tokens, secrets, payloads of gezondheidswaarden naar de client of naar de log.
++ * ────────────────────────────────────────────────────────────────────────────*/
++const ERR = {
++  AUTH: 'AUTH_ERROR',                    // geen/ongeldige Supabase-sessie
++  TOKEN_REFRESH: 'TOKEN_REFRESH_ERROR',  // refresh_token ontbreekt of Google weigert
++  PROVIDER_API: 'FITBIT_API_ERROR',      // Google Health gaf 4xx/5xx
++  RATE_LIMIT: 'RATE_LIMIT',              // Google Health gaf 429
++  NETWORK: 'NETWORK_ERROR',              // transportfout richting Google/Supabase
++  SUPABASE: 'SUPABASE_ERROR',            // PostgREST gaf een fout of onverwachte vorm
++  INVALID_RESPONSE: 'INVALID_RESPONSE',  // niet-JSON of onverwachte structuur
++  NOT_CONNECTED: 'NOT_CONNECTED',
++  UNKNOWN: 'UNKNOWN_ERROR'
++};
++const USER_MSG = 'Synchroniseren met Fitbit is momenteel niet gelukt. Probeer het later opnieuw.';
++
++// Mapt een opgevangen exception naar een foutcode zonder de boodschap door te geven.
++function classifyException(e) {
++  if (e && e.tkCode) return e.tkCode;
++  const m = String((e && e.message) || '');
++  if (/fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|network|socket/i.test(m)) return ERR.NETWORK;
++  if (/JSON|Unexpected token|is not iterable|undefined is not/i.test(m)) return ERR.INVALID_RESPONSE;
++  return ERR.UNKNOWN;
++}
++// HTTP-status van de provider → foutcode.
++function providerCode(status) {
++  if (status === 429) return ERR.RATE_LIMIT;
++  if (status === 401 || status === 403) return ERR.AUTH;
++  return ERR.PROVIDER_API;
++}
++function tkError(code, message) { const e = new Error(message || code); e.tkCode = code; return e; }
++
++// Leest een PostgREST-respons als ARRAY. Bij een fout-object of niet-ok status →
++// getypeerde SUPABASE_ERROR i.p.v. een TypeError verderop.
++async function sbRows(res, what) {
++  let body;
++  try { body = await res.json(); }
++  catch (_) { throw tkError(ERR.SUPABASE, 'supabase non-json: ' + what); }
++  if (!res.ok || !Array.isArray(body)) throw tkError(ERR.SUPABASE, 'supabase ' + what + ' status ' + res.status);
++  return body;
++}
++
+ exports.handler = async function (event) {
+   if (event.httpMethod !== 'POST') {
+     return { statusCode: 405, body: JSON.stringify({ error: { message: 'Method not allowed' } }) };
+@@ -48,16 +92,23 @@ exports.handler = async function (event) {
+   if (!authHeader) return { statusCode: 401, body: JSON.stringify({ error: { message: 'Geen sessie meegegeven' } }) };
+ 
+   const sbHeaders = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' };
++  // Buiten de try: de catch moet de mislukking bij de JUISTE gebruiker kunnen vastleggen.
++  // Voorheen stond hier `undefined`, waardoor markSyncStatus stilletjes niets deed en
++  // last_sync_status op de vorige 'ok' bleef staan — een fout werd dus nergens zichtbaar.
++  let userId = null;
+ 
+   try {
+     const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, { headers: { apikey: anonKey, Authorization: authHeader } });
+-    if (!userRes.ok) return { statusCode: 401, body: JSON.stringify({ error: { message: 'Ongeldige of verlopen sessie' } }) };
+-    const { id: userId } = await userRes.json();
+-    if (!userId) return { statusCode: 401, body: JSON.stringify({ error: { message: 'Kon gebruiker niet vaststellen' } }) };
++    if (!userRes.ok) return { statusCode: 401, body: JSON.stringify({ code: ERR.AUTH, error: { message: 'Ongeldige of verlopen sessie' } }) };
++    const userJson = await userRes.json();
++    userId = userJson && userJson.id;
++    if (!userId) return { statusCode: 401, body: JSON.stringify({ code: ERR.AUTH, error: { message: 'Kon gebruiker niet vaststellen' } }) };
+ 
+     const connRes = await fetch(`${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.google_health&limit=1`, { headers: sbHeaders });
+-    const [conn] = await connRes.json();
+-    if (!conn) return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'not_connected', reason: 'not_connected' });
++    // sbRows: een échte Supabase-fout wordt een getypeerde SUPABASE_ERROR i.p.v.
++    // stilzwijgend "not_connected" (dat zou een storing als "niet gekoppeld" tonen).
++    const [conn] = await sbRows(connRes, 'wearable_connections');
++    if (!conn) return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'not_connected', code: ERR.NOT_CONNECTED, reason: 'not_connected' });
+ 
+     let accessToken = conn.access_token;
+ 
+@@ -66,18 +117,19 @@ exports.handler = async function (event) {
+     if (expiresAt - Date.now() < 5 * 60 * 1000) {
+       if (!conn.refresh_token || !clientId || !clientSecret) {
+         await markSyncStatus(supabaseUrl, sbHeaders, userId, 'token_expired_no_refresh');
+-        return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'token_expired', reason: 'token_expired_no_refresh' });
++        return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'token_expired_no_refresh' });
+       }
+       const refreshRes = await fetch('https://oauth2.googleapis.com/token', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+         body: new URLSearchParams({ refresh_token: conn.refresh_token, client_id: clientId, client_secret: clientSecret, grant_type: 'refresh_token' })
+       });
+-      const refreshed = await refreshRes.json();
+-      if (!refreshRes.ok || !refreshed.access_token) {
++      let refreshed = null;
++      try { refreshed = await refreshRes.json(); } catch (_) { refreshed = null; }
++      if (!refreshRes.ok || !refreshed || !refreshed.access_token) {
+         await markSyncStatus(supabaseUrl, sbHeaders, userId, 'refresh_failed');
+         // refresh mislukt = koppeling verlopen → client toont "Opnieuw koppelen nodig"
+-        return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'token_expired', reason: 'refresh_failed' });
++        return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'refresh_failed' });
+       }
+       accessToken = refreshed.access_token;
+       const newExpiresAt = new Date(Date.now() + (refreshed.expires_in || 3600) * 1000).toISOString();
+@@ -115,8 +167,13 @@ exports.handler = async function (event) {
+     for (const [date, vals] of Object.entries(byDate)) {
+       const cls = LIB.classifyWrite(vals, false); // voorlopige klasse; existing bepaalt update vs import
+       if (cls === 'skipped') { skipped++; if (date === todayAms) todayWrite = 'skipped'; continue; }
+-      const existingRes = await fetch(`${supabaseUrl}/rest/v1/hrv_log?user_id=eq.${userId}&date=eq.${date}&limit=1`, { headers: sbHeaders });
+-      const [existing] = await existingRes.json();
++      // DETERMINISTISCH: zonder expliciete order geeft PostgREST een willekeurige rij terug.
++      // Zolang er (nog) geen UNIQUE(user_id,date) op hrv_log staat, kan er meer dan één rij
++      // per datum bestaan; de app toont overal de NIEUWSTE (order=date.desc,created_at.desc).
++      // Wij moeten dus exact die rij bijwerken, anders schrijft de sync naar een rij die
++      // niemand ziet en lijkt Fitbit "niet te synchroniseren".
++      const existingRes = await fetch(`${supabaseUrl}/rest/v1/hrv_log?user_id=eq.${userId}&date=eq.${date}&order=created_at.desc&limit=1`, { headers: sbHeaders });
++      const [existing] = await sbRows(existingRes, 'hrv_log');
+       const built = LIB.buildRow(date, userId, vals, existing);
+       if (existing) {
+         await fetch(`${supabaseUrl}/rest/v1/hrv_log?id=eq.${existing.id}`, { method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' }, body: JSON.stringify(built.row) });
+@@ -133,6 +190,11 @@ exports.handler = async function (event) {
+     // DIAGNOSTIEK — uitsluitend tellingen/statussen/structuur (nooit tokens/waarden/PII).
+     // `recordShape` toont de GENESTE leaf-keys (bv. van dailyRestingHeartRate) zodat een afwijkend
+     // RHR-veld direct zichtbaar is zonder ooit een waarde te loggen.
++    // Providerfouten per datatype (429/4xx/5xx) — voor de log én voor het antwoord.
++    const httpStatuses = { hrv: hrvR.status, rhr: rhrR.status, sleep: sleepR.status };
++    const failed = [hrvR, rhrR, sleepR].filter(r => !r.ok);
++    const providerErr = failed.length ? providerCode(failed[0].status) : null;
++
+     console.log('wearable-sync diag', JSON.stringify({
+       provider: 'google_health', dateFrom: sinceDate, dateTo, today: todayAms,
+       http: { hrv: hrvR.status, rhr: rhrR.status, sleep: sleepR.status },
+@@ -142,6 +204,10 @@ exports.handler = async function (event) {
+       todayDiag: { date: todayAms, fetched: today.fetched, parsed: today.metrics, written: today.written, available: today.available },
+       shape: { hrv: LIB.pointShape(hrvData[0]), rhr: LIB.pointShape(rhrData[0]), sleep: LIB.pointShape(sleepData[0]) },
+       recordShape: { hrv: LIB.recordShape(hrvData[0], 'dailyHeartRateVariability'), rhr: LIB.recordShape(rhrData[0], 'dailyRestingHeartRate'), sleep: LIB.recordShape(sleepData[0], 'sleep') },
++      // sleep.summary-keys: bewijst of we een echte slaapduur gebruiken of terugvallen op
++      // het interval (= tijd in bed). Alleen KEYS, nooit waarden.
++      sleepSummaryShape: LIB.sleepSummaryShape(sleepData[0]),
++      providerError: providerErr,
+       written: { imported, updated, skipped }
+     }));
+ 
+@@ -153,13 +219,21 @@ exports.handler = async function (event) {
+     // geschreven) mag niet verward worden met "vandaag is binnen". available/metrics komen UITSLUITEND
+     // uit echt geparste Google-Health-data voor de Amsterdamse datum van vandaag.
+     return jsonBody({ ...result, syncedAt: new Date().toISOString(),
++      // http = HTTP-status per datatype (geen payload) zodat een incident zonder toegang
++      // tot de Netlify-logs al te plaatsen is: 200 + fetched>0 + metrics=0 = parserfout,
++      // 4xx = provider/permissie, 429 = rate limit.
++      http: httpStatuses,
++      code: providerErr,
+       fetched: { hrv: hrvData.length, rhr: rhrData.length, sleep: sleepData.length },
+       metrics: { hrv: parsedHrv, rhr: parsedRhr, sleep: parsedSleep },
+       today: today });
+   } catch (e) {
+-    console.error('wearable-sync exception', e && e.message);
+-    try { await markSyncStatus(supabaseUrl, sbHeaders, undefined, 'error: ' + (e && e.message)); } catch (_) {}
+-    return { statusCode: 500, body: JSON.stringify({ synced: false, provider: 'fitbit', status: 'sync_failed', error: { message: 'Serverfout' } }) };
++    const code = classifyException(e);
++    // Alleen de CODE in de log — geen stacktrace met URLs/tokens, geen gezondheidsdata.
++    console.error('wearable-sync error', JSON.stringify({ code, at: 'handler' }));
++    try { await markSyncStatus(supabaseUrl, sbHeaders, userId, 'error:' + code); } catch (_) {}
++    return { statusCode: 500, headers: { 'Content-Type': 'application/json' },
++      body: JSON.stringify({ synced: false, provider: 'fitbit', status: 'sync_failed', code, error: { message: USER_MSG } }) };
+   }
+ };
+ 
+@@ -171,11 +245,12 @@ async function fetchDataPoints(authFetch, dataType, sinceDate) {
+       : `${dataType.filterField}.interval.end_time >= "${sinceDate}T00:00:00Z"`;
+     const url = `${GOOGLE_HEALTH_BASE}/users/me/dataTypes/${dataType.id}/dataPoints?filter=${encodeURIComponent(filter)}&pageSize=1000`;
+     const r = await authFetch(url);
+-    if (!r.ok) { console.warn('wearable-sync fetchDataPoints niet ok', dataType.id, r.status); return { points: [], status: r.status, ok: false }; }
++    if (!r.ok) { console.warn('wearable-sync provider niet ok', JSON.stringify({ type: dataType.id, status: r.status, code: providerCode(r.status) })); return { points: [], status: r.status, ok: false }; }
+     const d = await r.json();
+-    return { points: d.dataPoints || d.data_points || [], status: r.status, ok: true };
++    // asArray: bij een onverwachte responsvorm liever 0 punten dan een crash verderop.
++    return { points: LIB.asArray(d.dataPoints || d.data_points), status: r.status, ok: true };
+   } catch (e) {
+-    console.warn('wearable-sync fetchDataPoints exception', dataType.id, e && e.message);
++    console.warn('wearable-sync provider exception', JSON.stringify({ type: dataType.id, code: classifyException(e) }));
+     return { points: [], status: 'exception', ok: false };
+   }
+ }
+diff --git a/sw.js b/sw.js
+index af704cf..411ebf0 100644
+--- a/sw.js
++++ b/sw.js
+@@ -5,8 +5,8 @@
+ // Reden: de static-fetch is cache-first over ALLE caches; een oude core-entry in de niet-gebumpte
+ // dynamische cache kon de nieuwe precache overschaduwen (stale serve na deploy). Door CACHE_NAME mee te
+ // bumpen ruimt de activate-handler de oude dynamische cache op. REGEL: core wijzigt -> bump CACHE_NAME + CACHE_STATIC.
+-const CACHE_NAME = 'trainingskompas-v42900';
+-const CACHE_STATIC = 'trainingskompas-static-v42900';
++const CACHE_NAME = 'trainingskompas-v42901';
++const CACHE_STATIC = 'trainingskompas-static-v42901';
+ // F1.9 SW-GUARD: hash (CRLF-agnostisch) van core/calculation.js + core/decision.js.
+ // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
+ // Bij een core-wijziging: draai `node core/sw-guard.test.js` -> die print de nieuwe CORE_SIG; werk hem
+-- 
+2.43.0
+

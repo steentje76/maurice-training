@@ -39,7 +39,7 @@ const DOPERSIST = extractFn(HTML, 'doPersist');
 ok(!!ENSURE, 'bron: ensureExerciseRowStatus() bestaat');
 ok(/sbPostQ\('exercises',row,\{detail:true,ignoreDuplicates:true\}\)/.test(ENSURE), 'bron: de FK-compat-rij gaat via sbPostQ (wachtrij) met ignore-duplicates');
 ok(!/sbPost\('exercises'/.test(ENSURE), 'bron: geen directe sbPost meer (die viel offline stil weg)');
-ok(/const queueOnly=!!\(opts&&opts\.queueOnly\), ignoreDup=!!\(opts&&opts\.ignoreDuplicates\)/.test(POSTQ), 'bron: sbPostQ kent queueOnly en ignoreDuplicates');
+ok(/let queueOnly=!!\(opts&&opts\.queueOnly\); const ignoreDup=!!\(opts&&opts\.ignoreDuplicates\)/.test(POSTQ), 'bron: sbPostQ kent queueOnly en ignoreDuplicates');
 ok(/status==='confirmed'\|\|status==='queued'/.test(POSTQ), 'bron: zonder detail true alleen bij confirmed of queued (Sprint 6, DEC-QUEUE-001)');
 ok(/item\.resolution==='ignore-duplicates'/.test(FLUSH), 'bron: flush gebruikt de opgeslagen resolutie');
 ok(/_exNietGelukt\[item\.body\.exercise_id\]/.test(FLUSH), 'bron: flush stuurt geen sessie waarvan de oefening in dezelfde ronde mislukte');
@@ -265,6 +265,7 @@ async function staat() {
       // 14. sbPostQ zonder opties: de oude booleans, behalve queue faalt → false (Sprint 6)
       const ctx2 = await browser.newContext(); const p2 = await ctx2.newPage(); await p2.goto(URL); await p2.waitForTimeout(500);
       const legacy = await p2.evaluate(async function () {
+        authSession = { user: { id: 'u-test' } }; // Sprint 7: een write heeft een eigenaar nodig
         const uit = {}; window.updateOfflineBadge = function () {};
         for (const st of [201, 400, 403, 409, 422, 401, 429, 503]) {
           window.offlineQueueAdd = async function () { return true; };

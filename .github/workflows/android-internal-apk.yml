@@ -1,0 +1,231 @@
+name: Android Internal APK (stabiele sleutel)
+
+# ADR-ANDROID-SIGNING-001 — interne test-APK met één stabiele, vastgelegde sleutel, zodat een
+# nieuwe versie een bestaande installatie kan BIJWERKEN (geen verwijderen, geen dataverlies).
+#
+# - preflight: draait op elke PR die deze keten raakt; gebruikt geen secrets.
+# - build-internal: alleen handmatig, alleen via de beschermde environment `android-internal`
+#   (secrets TK_INTERNAL_KEYSTORE_B64, TK_INTERNAL_KEYSTORE_PASSWORD, TK_INTERNAL_KEY_ALIAS,
+#   TK_INTERNAL_KEY_PASSWORD). Zolang die secrets of de vastgelegde vingerafdruk ontbreken,
+#   stopt de job met een duidelijke melding: dat is een PO-besluit, geen fout in de code.
+# De keystore staat alleen tijdens de signingstap in $RUNNER_TEMP en wordt altijd verwijderd.
+# Hij komt nooit in de repository, de log of een artefact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 'Exacte commit-SHA om te bouwen (40-hex, verplicht)'
+        required: true
+  pull_request:
+    paths:
+      - '.github/workflows/android-internal-apk.yml'
+      - '.github/workflows/android-debug-apk.yml'
+      - 'android/signing/**'
+      - 'android/app/build.gradle'
+      - 'tools/android-signing-preflight.sh'
+      - 'tools/android-verify-cert.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Signing preflight (geen sleutelmateriaal in repo, workflows of artefacten)
+        run: bash tools/android-signing-preflight.sh
+
+  # Bewijst de keten (ongesigneerde release-build → zipalign → apksigner → vingerafdruk) zonder echte
+  # secrets: tekent met een WEGWERPSLEUTEL die alleen in deze run bestaat, net als de huidige debugbuilds.
+  # Er wordt niets geüpload; de APK uit deze job is niet bedoeld om te installeren.
+  pipeline-dryrun:
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - name: Install dependencies
+        run: npm ci
+      - name: Sync Capacitor Android assets
+        run: npm run cap:sync
+      - name: Build unsigned release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          test -f app/build/outputs/apk/release/app-release-unsigned.apk
+      - name: Sign with a throwaway key (dry run)
+        run: |
+          umask 077
+          PW="$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 20)"
+          echo "::add-mask::$PW"
+          keytool -genkeypair -keystore "$RUNNER_TEMP/tk-internal.jks" -alias dryrun -keyalg RSA -keysize 2048 \
+            -validity 1 -storepass "$PW" -keypass "$PW" -dname "CN=Trainingskompas dry run" >/dev/null 2>&1
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n1)"
+          "${BT}zipalign" -f -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          mkdir -p dist
+          KS_PASS="$PW" "${BT}apksigner" sign --ks "$RUNNER_TEMP/tk-internal.jks" --ks-pass env:KS_PASS \
+            --ks-key-alias dryrun --key-pass env:KS_PASS --out dist/app-internal.apk "$RUNNER_TEMP/aligned.apk"
+          rm -f "$RUNNER_TEMP/tk-internal.jks" "$RUNNER_TEMP/aligned.apk"
+      - name: Verify signature and record fingerprint
+        run: |
+          bash tools/android-verify-cert.sh dist/app-internal.apk
+          set +e; bash tools/android-verify-cert.sh dist/app-internal.apk android/signing/INTERNAL_CERT_SHA256; rc=$?; set -e
+          # Verwacht: 2 zolang de vingerafdruk niet is vastgesteld, 1 bij een andere sleutel. Nooit 0 met een wegwerpsleutel.
+          test "$rc" -ne 0
+      - name: Remove throwaway key (always)
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/tk-internal.jks" "$RUNNER_TEMP/aligned.apk"
+
+  build-internal:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: android-internal
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+
+      - name: Verify exact source SHA
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          echo "$SOURCE_SHA" | grep -Eq '^[0-9a-f]{40}$' || { echo "source_sha moet een volledige 40-hex commit-SHA zijn"; exit 1; }
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+
+      - name: Check signing prerequisites (PO-besluit)
+        env:
+          KS_B64: ${{ secrets.TK_INTERNAL_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.TK_INTERNAL_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.TK_INTERNAL_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.TK_INTERNAL_KEY_PASSWORD }}
+        run: |
+          ontbreekt=""
+          [ -n "$KS_B64" ] || ontbreekt="$ontbreekt TK_INTERNAL_KEYSTORE_B64"
+          [ -n "$KS_PASS" ] || ontbreekt="$ontbreekt TK_INTERNAL_KEYSTORE_PASSWORD"
+          [ -n "$KEY_ALIAS" ] || ontbreekt="$ontbreekt TK_INTERNAL_KEY_ALIAS"
+          [ -n "$KEY_PASS" ] || ontbreekt="$ontbreekt TK_INTERNAL_KEY_PASSWORD"
+          if [ -n "$ontbreekt" ]; then
+            echo "::error::Signing-secrets ontbreken in environment android-internal:${ontbreekt}. Zie ADR-ANDROID-SIGNING-001 (PO-besluit). Er wordt niets gebouwd."
+            exit 1
+          fi
+          grep -vE '^\s*(#|$)' android/signing/INTERNAL_CERT_SHA256 | head -n1 | grep -qE '^[0-9a-f]{64}$' \
+            || { echo "::error::android/signing/INTERNAL_CERT_SHA256 is nog niet vastgesteld (PO-besluit)."; exit 1; }
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Capacitor Android assets
+        run: npm run cap:sync
+
+      # Ongesigneerde release-build (niet debuggable). In deze job staan bewust geen variabelen voor
+      # de Play-upload-sleutel: die sleutel blijft buiten deze keten.
+      - name: Build unsigned release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          test -f app/build/outputs/apk/release/app-release-unsigned.apk
+
+      - name: Sign with the internal key
+        env:
+          KS_B64: ${{ secrets.TK_INTERNAL_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.TK_INTERNAL_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.TK_INTERNAL_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.TK_INTERNAL_KEY_PASSWORD }}
+        run: |
+          umask 077
+          printf '%s' "$KS_B64" | base64 -d > "$RUNNER_TEMP/tk-internal.jks"
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n1)"
+          "${BT}zipalign" -f -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          mkdir -p dist
+          "${BT}apksigner" sign --ks "$RUNNER_TEMP/tk-internal.jks" --ks-pass env:KS_PASS \
+            --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASS \
+            --out dist/app-internal.apk "$RUNNER_TEMP/aligned.apk"
+          rm -f "$RUNNER_TEMP/tk-internal.jks" "$RUNNER_TEMP/aligned.apk"
+
+      - name: Remove keystore (always)
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/tk-internal.jks" "$RUNNER_TEMP/aligned.apk"
+
+      - name: Verify certificate against the committed fingerprint
+        id: signing
+        run: bash tools/android-verify-cert.sh dist/app-internal.apk android/signing/INTERNAL_CERT_SHA256
+
+      - name: Record provenance
+        id: provenance
+        run: |
+          BUILD_SHA="$(git rev-parse HEAD)"
+          APP_VER="$(grep -oE "const APP_VER = 'v[0-9.]+'" index.html | grep -oE "v[0-9.]+" | head -n1)"
+          test -n "$APP_VER"
+          APK_NAME="Trainingskompas-${APP_VER}-${BUILD_SHA:0:9}-internal.apk"
+          mv dist/app-internal.apk "dist/${APK_NAME}"
+          mv dist/app-internal.apk.signing.txt "dist/${APK_NAME}.signing.txt"
+          (cd dist && sha256sum "${APK_NAME}" > "${APK_NAME}.sha256")
+          echo "$BUILD_SHA" > dist/commit.txt
+          echo "build_sha=${BUILD_SHA}" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Interne APK ${APP_VER}"
+            echo "- Commit: ${BUILD_SHA}"
+            echo "- Certificaat SHA-256: ${{ steps.signing.outputs.cert_sha256 }} (gelijk aan android/signing/INTERNAL_CERT_SHA256 → updatebaar)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload internal APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trainingskompas-android-internal-${{ steps.provenance.outputs.build_sha }}
+          path: |
+            dist/
+          if-no-files-found: error
+          retention-days: 14

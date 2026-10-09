@@ -44,7 +44,7 @@ function extractFunctionBody(source, name) {
       'saveWorkout() onderscheidt expliciet update (existingId aanwezig) van een nieuwe training');
     ok(/if\s*\(isUpdate\)\s*{[\s\S]*sbPatchQ\(/.test(body),
       'saveWorkout() gebruikt PATCH (geen nieuwe rij) bij het bijwerken van een bestaande training');
-    ok(/}\s*else\s*{[\s\S]*sbPostQ\(/.test(body),
+    ok(/}\s*else\s*{[\s\S]*(?:sbPostQ|tkCustomTrainingPost)\(/.test(body), // Sprint 6: POST via tkCustomTrainingPost (= sbPostQ + onbevestigd-markering)
       'saveWorkout() gebruikt POST alleen bij een daadwerkelijk nieuwe training');
     ok(/customTrainings\[idx\]\s*=\s*t/.test(body),
       'saveWorkout() vervangt het bestaande item in de lokale lijst i.p.v. het te dupliceren');
@@ -58,7 +58,7 @@ function extractFunctionBody(source, name) {
   if (body) {
     ok(/id\s*=\s*'custom_'\s*\+\s*Date\.now\(\)/.test(body),
       'duplicateWorkout() genereert een nieuw, uniek ID (geen ID-hergebruik van het origineel)');
-    ok(/sbPostQ\(/.test(body),
+    ok(/(?:sbPostQ|tkCustomTrainingPost)\(/.test(body),
       'duplicateWorkout() gebruikt POST (nieuwe rij), passend bij een bewuste kopie');
   }
 }

@@ -129,12 +129,12 @@ console.log('\nF. Eerste record van een oefening zonder rij in exercise_goals');
 // PATCH raakte nul rijen. Het allereerste record van elke oefening verdween zonder melding.
 ok(/_alleenGeheugen:true/.test(logSetBron), 'F1: logSet markeert een alleen-in-geheugen aangemaakte doelrij');
 const upsertBron = html.slice(html.indexOf('async function upsertExerciseGoalField'),
-                              html.indexOf('async function upsertExerciseGoalField') + 1200);
+                              html.indexOf('async function upsertExerciseGoalField') + 1600);
 ok(/if\(existing && !existing\._alleenGeheugen\)/.test(upsertBron),
    'F2: upsertExerciseGoalField PATCHt alleen bij een echte rij');
 ok(upsertBron.indexOf('sbPostQ') > 0 && upsertBron.indexOf('sbPatchQ') > 0,
    'F3: beide schrijfwegen bestaan nog');
-ok(/_alleenGeheugen:false/.test(upsertBron), 'F4: na het invoegen is de markering opgeheven');
+ok(/_alleenGeheugen:!_okW/.test(upsertBron), 'F4: na een opgeslagen (bevestigde of gequeuede) INSERT is de markering opgeheven, anders niet (Sprint 6, DEC-QUEUE-001)');
 
 function upsertPad(entryBestaat, alleenGeheugen){
   const existing = entryBestaat ? { pr: 100, _alleenGeheugen: alleenGeheugen } : undefined;

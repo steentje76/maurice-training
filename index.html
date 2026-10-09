@@ -7638,7 +7638,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.22';
+const APP_VER = 'v4.70.23';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7949,8 +7949,11 @@ async function upsertExerciseGoalField(exId,field,value){
     Object.assign(existing,patch);
   }else{
     const row=Object.assign({user_id:authSession?.user?.id,exercise_id:exId},patch);
-    await sbPostQ('exercise_goals',row);
-    exerciseGoals.set(exId,Object.assign({peak_goal:null,pr:null,one_rm:null,updated_at:null},existing||{},patch,{_alleenGeheugen:false}));
+    // Sprint 6 (DEC-QUEUE-001): alleen als de rij bevestigd of gequeued is, bestaat hij (straks) op de
+    // server. Bij failed/rejected blijft de entry _alleenGeheugen, zodat de volgende wijziging opnieuw
+    // een INSERT doet in plaats van een PATCH die nul rijen raakt (stil verlies).
+    const _okW=await sbPostQ('exercise_goals',row);
+    exerciseGoals.set(exId,Object.assign({peak_goal:null,pr:null,one_rm:null,updated_at:null},existing||{},patch,{_alleenGeheugen:!_okW}));
   }
 }
 
@@ -8482,12 +8485,35 @@ let customTrainings=JSON.parse(localStorage.getItem('tk_trainings')||'[]');
 // bron van waarheid voor multi-device. Bestaande gebruikers (vóór v322) hebben hun
 // Workouts nog alleen lokaal staan; die worden bij de eerste sync eenmalig omhoog
 // gepusht naar de nieuwe custom_trainings/custom_training_exercises-tabellen.
+// Sprint 6 (DEC-QUEUE-001, R4-QUEUE-FAIL): een nieuwe Builder-training staat eerst alleen lokaal
+// (tk_trainings). syncCustomTrainingsFromSupabase() vervangt die lijst bij elke start door de
+// serverlijst, en draait vóór flushOfflineQueue(). Een training waarvan de server-write nog in de
+// wachtrij stond, mislukte of geweigerd werd, verdween daardoor uit Mijn trainingen (bij failed en
+// rejected definitief). Ids die de server nog niet bevestigd heeft staan in tk_trainings_onbevestigd
+// (persoonsgebonden, PERSONAL_CACHE_KEYS) en blijven bij de sync behouden tot de server ze heeft.
+const TK_TRAININGEN_ONBEVESTIGD='tk_trainings_onbevestigd';
+function tkTrainingenOnbevestigd(){ try{ const v=JSON.parse(localStorage.getItem(TK_TRAININGEN_ONBEVESTIGD)||'[]'); return Array.isArray(v)?v:[]; }catch(_){ return []; } }
+function tkMarkeerTrainingOnbevestigd(id,aan){
+  if(!id)return; const l=tkTrainingenOnbevestigd().filter(x=>x!==id); if(aan)l.push(id);
+  try{ if(l.length)localStorage.setItem(TK_TRAININGEN_ONBEVESTIGD,JSON.stringify(l)); else localStorage.removeItem(TK_TRAININGEN_ONBEVESTIGD); }catch(_){}
+}
+async function tkCustomTrainingPost(row){
+  tkMarkeerTrainingOnbevestigd(row.id,true);
+  const u=await sbPostQ('custom_trainings',row,{detail:true});
+  if(u&&u.status==='confirmed') tkMarkeerTrainingOnbevestigd(row.id,false);
+  else if(!u||!u.ok){ if(typeof toast==='function') toast('Training staat alleen op dit toestel — opslaan op de server is mislukt'); }
+  return u;
+}
 async function syncCustomTrainingsFromSupabase(){
   try{
     const rows=await sbGet('custom_trainings','&order=sort_order.asc');
     if(rows.length){
+      // Sprint 6: lokaal nog niet door de server bevestigde trainingen niet weggooien.
+      const _opServer=new Set(rows.map(r=>r.id)), _onbevestigd=tkTrainingenOnbevestigd();
+      const _behouden=customTrainings.filter(t=>t&&_onbevestigd.indexOf(t.id)>=0&&!_opServer.has(t.id));
+      _onbevestigd.filter(id=>_opServer.has(id)).forEach(id=>tkMarkeerTrainingOnbevestigd(id,false));
       const exRows=await sbGet('custom_training_exercises','&order=sort_order.asc');
-      customTrainings=rows.map(r=>({
+      customTrainings=_behouden.concat(rows.map(r=>({
         id:r.id, name:r.naam, color:r.kleur||'#111111', note:r.notitie||'',
         exercises: exRows.filter(e=>e.custom_training_id===r.id).map(e=>e.exercise_id),
         // Werkblok B — additief, bestaande "exercises"-vorm hierboven blijft ongewijzigd
@@ -8495,7 +8521,7 @@ async function syncCustomTrainingsFromSupabase(){
         source:r.source||null,
         metadata:r.metadata||null,
         exercise_targets: exRows.filter(e=>e.custom_training_id===r.id).map(e=>({exercise_id:e.exercise_id,sets:e.sets,reps:e.reps,rpe:e.rpe,rest:e.rest,pick:e.pick}))
-      }));
+      })));
       localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
       renderCustomTrainBtns(); renderCustomTrainList();
     } else if(customTrainings.length){
@@ -8554,7 +8580,7 @@ async function migrateLegacyWbSaved(){
           exercise_targets:items.map(it=>({exercise_id:it.id,sets:it.sets,reps:it.reps,rest:it.rest,rpe:it.rpe||null,pick:it.pick||null}))
         };
         customTrainings.push(t);
-        await sbPostQ('custom_trainings',{id:t.id,naam:t.name,kleur:t.color,notitie:null,sort_order:customTrainings.length-1,scope:'personal',source:'builder',metadata:t.metadata});
+        await tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:null,sort_order:customTrainings.length-1,scope:'personal',source:'builder',metadata:t.metadata});
         await pushCustomTrainingExercisesRich(t);
         if(w.fav)favs[w.id]=true;
       }
@@ -8960,8 +8986,8 @@ function tkNormalizeSessionsRow(row){
   if(typeof row.watt==='number'&&Math.round(n)===n) return row;
   var out=Object.assign({},row); out.watt=Math.round(n); return out;
 }
-// sbPostQ(t,d,opts) — opts is optioneel en 100% backward compatible, zelfde patroon als
-// sbPatchQ: zonder opts EXACT het oude gedrag (boolean; true ook bij queuen). Met
+// sbPostQ(t,d,opts) — opts is optioneel, zelfde patroon als
+// sbPatchQ: zonder opts een boolean (true bij bevestigd of gequeued, zie DEC-QUEUE-001). Met
 // opts.detail:true geeft de functie {ok, status, http} terug zodat een aanroeper die moet
 // weten WAAR de data staat het verschil kan tonen (Sprint 3, Guided save reliability):
 //   'confirmed' — de server bevestigde de write (2xx)
@@ -8982,12 +9008,14 @@ async function sbPostQ(t,d,opts){
   //   opts.ignoreDuplicates — ON CONFLICT DO NOTHING (PostgREST resolution=ignore-duplicates), ook bij
   //                           de latere replay. Voor een rij die al kan bestaan en niet overschreven
   //                           mag worden (FK-compat-rij van een catalogusoefening).
-  // Uitkomst: opts.status krijgt altijd de werkelijke status. Zonder detail blijft de boolean exact
-  // als voorheen: true behalve bij 'rejected' (ook bij een mislukte queue, het oude gedrag).
+  // Uitkomst: opts.status krijgt altijd de werkelijke status. Zonder detail een boolean: true alleen als
+  // de rij bevestigd OF veilig gequeued is. Sprint 6 (DEC-QUEUE-001, R4-QUEUE-FAIL): een mislukte
+  // queue ('failed', IndexedDB niet beschikbaar) gaf hier tot v4.70.22 true — een valse succesmelding
+  // terwijl de data nergens stond. Impactanalyse van alle aanroepers: DECISION_LOG DEC-QUEUE-001.
   const queueOnly=!!(opts&&opts.queueOnly), ignoreDup=!!(opts&&opts.ignoreDuplicates);
   const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation');
   const item=ignoreDup?{table:t,method:'POST',body:d,resolution:'ignore-duplicates'}:{table:t,method:'POST',body:d};
-  const uit=function(status,http){ if(opts&&typeof opts==='object')opts.status=status; return detail?tkSchrijfUitkomst(status,http):(status!=='rejected'); };
+  const uit=function(status,http){ if(opts&&typeof opts==='object')opts.status=status; return detail?tkSchrijfUitkomst(status,http):(status==='confirmed'||status==='queued'); };
   if(!navigator.onLine||queueOnly){const q=await offlineQueueAdd(item);updateOfflineBadge();return uit(q===true?'queued':'failed');}
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:prefer,body:d});
@@ -9005,6 +9033,14 @@ async function sbPostQ(t,d,opts){
     updateOfflineBadge();
     return uit(q===true?'queued':'failed');
   }
+}
+// Sprint 6 (DEC-QUEUE-001): voor aanroepers die de uitkomst van sbPostQ negeerden en daarna een
+// succesmelding toonden. Gooit bij 'rejected' of 'failed', zodat het bestaande catch-pad van die
+// aanroeper (foutmelding, formulier blijft staan) wordt gebruikt. 'queued' telt als opgeslagen.
+async function sbPostQOpgeslagen(t,d){
+  const u=await sbPostQ(t,d,{detail:true});
+  if(!u||!u.ok){ const err=new Error('write_'+((u&&u.status)||'failed')+'_'+t); err.status=(u&&u.status)||'failed'; throw err; }
+  return u;
 }
 // sbPatchQ(t,f,d,opts) — opts is optioneel en 100% backward compatible: alle
 // bestaande aanroepen zonder 4e argument gedragen zich EXACT als voorheen
@@ -13405,10 +13441,11 @@ async function toggleResearchConsent(){
   const heeftNu=await getResearchConsentStatus();
   if(heeftNu){
     if(!confirm('Onderzoeksdeelname intrekken? Je normale gebruik van Trainingskompas verandert hierdoor niet.'))return;
-    await withdrawResearchConsent();
+    // Sprint 6 (DEC-QUEUE-001): alleen bevestigen wat bevestigd of veilig gequeued is.
+    if(!(await withdrawResearchConsent())){ toast('Intrekken is niet opgeslagen — probeer het opnieuw'); renderResearchConsentCard(); return; }
     toast('Onderzoeksdeelname ingetrokken');
   }else{
-    await grantResearchConsent();
+    if(!(await grantResearchConsent())){ toast('Deelname is niet opgeslagen — probeer het opnieuw'); renderResearchConsentCard(); return; }
     toast('Bedankt voor je deelname aan onderzoek');
   }
   renderResearchConsentCard();
@@ -26329,7 +26366,7 @@ async function voedingSaveTargets(){
   var row=NutritionTargetService.toCanonicalRow(input, voedingDateStr(new Date()));
   row.user_id=uid;
   try{
-    await sbPostQ('nutrition_targets',row); // historie: altijd NIEUWE rij, nooit UPDATE-in-place
+    await sbPostQOpgeslagen('nutrition_targets',row); // historie: altijd NIEUWE rij, nooit UPDATE-in-place
     _done(); toast('Voedingsdoelen opgeslagen');
     go('s-voeding');
   }catch(e){ _done(); errEl.textContent='Opslaan mislukt. Controleer je verbinding.'; errEl.style.display='block'; }
@@ -26435,7 +26472,7 @@ async function voedingConfirmWaterEntry(){
   var uid=voedingUid(); if(!uid){ _done(); return; }
   try{
     var nu=new Date().toISOString();
-    await sbPostQ('nutrition_hydration_entries',{user_id:uid,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',amount_ml:norm.amount_ml,source:'manual'});
+    await sbPostQOpgeslagen('nutrition_hydration_entries',{user_id:uid,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',amount_ml:norm.amount_ml,source:'manual'});
   }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   closeModal('m-voeding-water');
   _done(); toast('Water toegevoegd');
@@ -26971,13 +27008,13 @@ async function voedingConfirmAddToMeal(){
   if(meals&&meals.length){ mealId=meals[0].id; }
   else {
     var nu=new Date().toISOString();
-    var created=await sbPostQ('nutrition_meals',{user_id:uid,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',meal_type:mealType});
+    var created=await sbPostQOpgeslagen('nutrition_meals',{user_id:uid,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',meal_type:mealType});
     var freshMeals=await sbGet('nutrition_meals','&consumed_at=gte.'+b.startIso+'&consumed_at=lt.'+b.eindIso+'&meal_type=eq.'+mealType+'&order=created_at.desc&limit=1');
     mealId=freshMeals&&freshMeals[0]&&freshMeals[0].id;
   }
   if(!mealId){ voedingShowAddMealError(errEl,_done); return; }
   var snapshot=NutritionIngestService.buildNutrientSnapshot(result,null);
-  await sbPostQ('nutrition_meal_items',{id:voedingPendingAddItemId,meal_id:mealId,product_id:voedingSelectedProduct.id,quantity:qty,quantity_unit:unit,nutrient_snapshot:snapshot});
+  await sbPostQOpgeslagen('nutrition_meal_items',{id:voedingPendingAddItemId,meal_id:mealId,product_id:voedingSelectedProduct.id,quantity:qty,quantity_unit:unit,nutrient_snapshot:snapshot});
   }catch(e){ voedingShowAddMealError(errEl,_done); return; }
   voedingPendingAddItemId=null;
   voedingCurrentMealTypeForAdd=null; voedingSelectedProduct=null;
@@ -27175,16 +27212,16 @@ async function voedingSaveSupplement(){
     var defId;
     if(existingDefs&&existingDefs.length){ defId=existingDefs[0].id; }
     else{
-      await sbPostQ('nutrition_supplement_definitions',{name:name.trim(),source_type:'USER',created_by:uid});
+      await sbPostQOpgeslagen('nutrition_supplement_definitions',{name:name.trim(),source_type:'USER',created_by:uid});
       var fresh=await sbGet('nutrition_supplement_definitions','&name=eq.'+encodeURIComponent(name.trim())+'&created_by=eq.'+uid+'&order=created_at.desc&limit=1');
       defId=fresh&&fresh[0]&&fresh[0].id;
     }
-    if(!defId){ _done(); return; }
+    if(!defId){ _done(); errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; return; }
     var logCheck=NutritionSupplementService.validateSupplementLog({supplement_id:defId,dose:dose||null});
     if(!logCheck.valid){ errEl.textContent='Ongeldige dosering.'; errEl.style.display='block'; return; }
     errEl.style.display='none';
     var nu=new Date().toISOString();
-    await sbPostQ('nutrition_supplement_logs',{user_id:uid,supplement_id:defId,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',dose:dose||null,unit:unit,source:'manual'});
+    await sbPostQOpgeslagen('nutrition_supplement_logs',{user_id:uid,supplement_id:defId,occurred_at:nu,consumed_at:nu,consumed_at_source:'user_confirmed',dose:dose||null,unit:unit,source:'manual'});
     document.getElementById('voeding-supp-name').value=''; document.getElementById('voeding-supp-name').setAttribute('data-supplement-id','');
     document.getElementById('voeding-supp-dose').value='';
     voedingSuppInfoButtonUpdate(); voedingSuppHideSuggestions();
@@ -27937,17 +27974,17 @@ async function voedingPersistCustomProduct(name,brand,basis,barcode,normalizedBa
   var validation=NutritionCustomProductService.validateCustomProduct({name:name,brand:brand,basis:basis});
   var productId;
   try{
-  await sbPostQ('nutrition_products',{name:validation.canonicalFields.name,brand:validation.canonicalFields.brand,source_type:validation.canonicalFields.source_type,verification_state:validation.canonicalFields.verification_state,created_by:uid});
+  await sbPostQOpgeslagen('nutrition_products',{name:validation.canonicalFields.name,brand:validation.canonicalFields.brand,source_type:validation.canonicalFields.source_type,verification_state:validation.canonicalFields.verification_state,created_by:uid});
   var fresh=await sbGet('nutrition_products','&name=eq.'+encodeURIComponent(validation.canonicalFields.name)+'&created_by=eq.'+uid+'&order=created_at.desc&limit=1');
   productId=fresh&&fresh[0]&&fresh[0].id;
   if(!productId){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   if(normalizedBarcode && normalizedBarcode.status==='valid'){
-    await sbPostQ('nutrition_product_identifiers',{product_id:productId,identifier_type:normalizedBarcode.identifier_type,value:normalizedBarcode.value});
+    await sbPostQOpgeslagen('nutrition_product_identifiers',{product_id:productId,identifier_type:normalizedBarcode.identifier_type,value:normalizedBarcode.value});
   }
   var servingFields={};
   if(servingValue!=null && basis==='PER_100G') servingFields.serving_size_g=servingValue;
   if(servingValue!=null && basis==='PER_100ML') servingFields.serving_size_ml=servingValue;
-  await sbPostQ('nutrition_nutrient_values',Object.assign({product_id:productId,basis:basis,energy_kcal:kcal?Number(kcal):null,protein_g:protein?Number(protein):null,carbohydrate_g:carbs?Number(carbs):null,fat_g:fat?Number(fat):null},servingFields));
+  await sbPostQOpgeslagen('nutrition_nutrient_values',Object.assign({product_id:productId,basis:basis,energy_kcal:kcal?Number(kcal):null,protein_g:protein?Number(protein):null,carbohydrate_g:carbs?Number(carbs):null,fat_g:fat?Number(fat):null},servingFields));
   }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   // Blocker 3-fix: direct door naar de Portion Engine, geen tussenliggende
   // bevestiging vóór de daadwerkelijke intake-registratie.
@@ -28018,7 +28055,7 @@ async function voedingSubmitCorrection(productId,verifiedProtected,basis){
   // UPDATE-in-place -- spiegelt exact de Wave 3/4 ingest-precedence. Al
   // gelogde meal-item snapshots blijven ongewijzigd (geen retroactieve
   // mutatie); de eerstvolgende Hoeveelheid-render leest deze nieuwe rij.
-  await sbPostQ('nutrition_nutrient_values',Object.assign({product_id:productId,basis:'PER_100G',energy_kcal:val,source_type:'USER_LABEL_SCAN'},servingFields));
+  await sbPostQOpgeslagen('nutrition_nutrient_values',Object.assign({product_id:productId,basis:'PER_100G',energy_kcal:val,source_type:'USER_LABEL_SCAN'},servingFields));
   }catch(e){ if(errEl){errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.';errEl.style.display='block';} _done(); return; }
   _done();
   toast(verifiedProtected?'Bedankt, je melding is opgeslagen. De geverifieerde gegevens zijn niet gewijzigd.':'Correctie opgeslagen.');
@@ -28331,11 +28368,11 @@ async function voedingPersistNewProductFromLabel(name){
   var _done=voedingWithBusy(document.querySelector('#voeding-new-product-body .tk-btn-primary'),'Opslaan…');
   try{
   var obs=voedingLastRecognition.observations;
-  await sbPostQ('nutrition_products',{name:name.trim(),source_type:'USER',verification_state:'USER_PRIVATE',created_by:uid});
+  await sbPostQOpgeslagen('nutrition_products',{name:name.trim(),source_type:'USER',verification_state:'USER_PRIVATE',created_by:uid});
   var fresh=await sbGet('nutrition_products','&name=eq.'+encodeURIComponent(name.trim())+'&created_by=eq.'+uid+'&order=created_at.desc&limit=1');
   var productId=fresh&&fresh[0]&&fresh[0].id;
-  if(!productId) return;
-  await sbPostQ('nutrition_nutrient_values',{product_id:productId,basis:voedingLastRecognition.basis||'PER_100G',
+  if(!productId){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; return; }
+  await sbPostQOpgeslagen('nutrition_nutrient_values',{product_id:productId,basis:voedingLastRecognition.basis||'PER_100G',
     energy_kcal:obs.energy_kcal?obs.energy_kcal.normalized_value:null, protein_g:obs.protein_g?obs.protein_g.normalized_value:null,
     carbohydrate_g:obs.carbohydrate_g?obs.carbohydrate_g.normalized_value:null, fat_g:obs.fat_g?obs.fat_g.normalized_value:null,
     fiber_g:obs.fiber_g?obs.fiber_g.normalized_value:null, sugar_g:obs.sugar_g?obs.sugar_g.normalized_value:null,
@@ -28400,12 +28437,14 @@ async function voedingSaveManualEntry(skipDuplicateCheck){
     }
   }
 
-  await sbPostQ('nutrition_products',{name:validation.canonicalFields.name,brand:validation.canonicalFields.brand,source_type:'USER_LABEL_SCAN',verification_state:'USER_PRIVATE',created_by:uid});
+  // Sprint 6 (DEC-QUEUE-001): geen doorstap naar de hoeveelheid als het product niet is opgeslagen.
+  try{
+  await sbPostQOpgeslagen('nutrition_products',{name:validation.canonicalFields.name,brand:validation.canonicalFields.brand,source_type:'USER_LABEL_SCAN',verification_state:'USER_PRIVATE',created_by:uid});
   var fresh=await sbGet('nutrition_products','&name=eq.'+encodeURIComponent(validation.canonicalFields.name)+'&created_by=eq.'+uid+'&order=created_at.desc&limit=1');
   var productId=fresh&&fresh[0]&&fresh[0].id;
-  if(!productId){ _done(); return; }
+  if(!productId){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   if(normalizedBarcode && normalizedBarcode.status==='valid'){
-    await sbPostQ('nutrition_product_identifiers',{product_id:productId,identifier_type:normalizedBarcode.identifier_type,value:normalizedBarcode.value});
+    await sbPostQOpgeslagen('nutrition_product_identifiers',{product_id:productId,identifier_type:normalizedBarcode.identifier_type,value:normalizedBarcode.value});
   }
   function numOrNull(id){ var v=document.getElementById(id).value; return v?Number(v):null; } // UNKNOWN != 0: leeg veld blijft null, nooit 0
   var kcal=numOrNull('voeding-manual-kcal');
@@ -28418,7 +28457,8 @@ async function voedingSaveManualEntry(skipDuplicateCheck){
     saturated_fat_g:numOrNull('voeding-manual-satfat'), fiber_g:numOrNull('voeding-manual-fiber')
   };
   var saltVal=numOrNull('voeding-manual-salt'); // salt != sodium: apart bewaard, geen conversie
-  await sbPostQ('nutrition_nutrient_values',Object.assign({product_id:productId},nutrientRow,{source_type:'USER_LABEL_SCAN'}));
+  await sbPostQOpgeslagen('nutrition_nutrient_values',Object.assign({product_id:productId},nutrientRow,{source_type:'USER_LABEL_SCAN'}));
+  }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; _done(); return; }
   voedingSelectedProduct={id:productId, name:validation.canonicalFields.name, nutrientRow:nutrientRow};
   _done(); go('s-voeding-hoeveelheid');
 }
@@ -30739,6 +30779,7 @@ async function deleteCustomTraining(id){
   if(!await confirmModal('Deze training verwijderen?',{title:'Training verwijderen',okLabel:'Verwijderen',danger:true})) return;
   customTrainings=customTrainings.filter(t=>t.id!==id);
   localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
+  tkMarkeerTrainingOnbevestigd(id,false);
   sbDel('custom_trainings','id=eq.'+id); // cascade ruimt custom_training_exercises vanzelf op
   renderCustomTrainList();
   renderCustomTrainBtns();
@@ -34953,7 +34994,7 @@ const CACHE_OWNER_KEY='tk_cache_owner_uid';
 // Bewust NIET in deze lijst: 'tk_theme' (weergavevoorkeur van het toestel, geen
 // persoonsgegeven) en 'tk_ns_migrated' (eenmalige namespace-migratie van het toestel zelf).
 const PERSONAL_CACHE_KEYS=[
-  'tk_atleet','tk_trainings','tk_active_sport','tk_draft_training','tk_last_training',
+  'tk_atleet','tk_trainings','tk_trainings_onbevestigd','tk_active_sport','tk_draft_training','tk_last_training',
   'tk_ai_consent','tk_gw_active','tk_gw_hist','tk_gw_log',
   'tk_product_telemetry_consent', // MS-TELEMETRY-01: toestemming geldt per gebruiker, nooit geerfd op een gedeeld toestel
   'tk_wb_draft','tk_wb_saved','tk_wb_favs','tk_wb_migrated_v1','tk_vt_meta',
@@ -36988,7 +37029,7 @@ var WB=(function(){
     if(isUpdate){
       sbPatchQ('custom_trainings','id=eq.'+id,{naam:t.name,kleur:t.color,notitie:t.note||null,metadata:t.metadata});
     }else{
-      sbPostQ('custom_trainings',{id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:(typeof customTrainings!=='undefined'?customTrainings.length:1)-1,scope:'personal',source:'builder',metadata:t.metadata});
+      tkCustomTrainingPost({id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:(typeof customTrainings!=='undefined'?customTrainings.length:1)-1,scope:'personal',source:'builder',metadata:t.metadata});
     }
     pushCustomTrainingExercisesRich(t); // 0 oefeningen: verwijdert eventuele oude exercise-rijen bij update
     return id;
@@ -37019,7 +37060,7 @@ var WB=(function(){
       // F0.7C: bestaand sbPatchQ-patroon (al 5x elders gebruikt) — update in plaats van insert, geen dubbele rij.
       sbPatchQ('custom_trainings','id=eq.'+id,{naam:t.name,kleur:t.color,notitie:t.note||null,metadata:t.metadata});
     }else{
-      sbPostQ('custom_trainings',{id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:(typeof customTrainings!=='undefined'?customTrainings.length:1)-1,scope:'personal',source:'builder',metadata:t.metadata});
+      tkCustomTrainingPost({id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:(typeof customTrainings!=='undefined'?customTrainings.length:1)-1,scope:'personal',source:'builder',metadata:t.metadata});
     }
     pushCustomTrainingExercisesRich(t); // ongewijzigd — al update-safe (delete+reinsert op custom_training_id)
     return id;
@@ -37033,7 +37074,7 @@ var WB=(function(){
     t.metadata=clone(src.metadata||{});t.metadata.created=Date.now();
     customTrainings.unshift(t);
     lsSet('tk_trainings',customTrainings);
-    sbPostQ('custom_trainings',{id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:customTrainings.length-1,scope:'personal',source:'builder',metadata:t.metadata});
+    tkCustomTrainingPost({id:id,naam:t.name,kleur:t.color,notitie:null,sort_order:customTrainings.length-1,scope:'personal',source:'builder',metadata:t.metadata});
     pushCustomTrainingExercisesRich(t);
     return id;
   }
@@ -37042,6 +37083,7 @@ var WB=(function(){
     if(typeof customTrainings==='undefined')return;
     customTrainings=customTrainings.filter(function(t){return t.id!==wid;});
     lsSet('tk_trainings',customTrainings);
+    tkMarkeerTrainingOnbevestigd(wid,false);
     sbDelQ('custom_trainings','id=eq.'+wid);
   }
   function resumeWorkout(wid){

@@ -91,7 +91,7 @@ function makeSandbox(opts) {
   const WB_SAVE = html.slice(html.indexOf('function saveIntervalWorkout('), html.indexOf('function saveWorkout('));
   ok(/metadata:\{sel:\{sport:raw\.sport\|\|'running',goal:'conditie'\},intervalPrescription:raw/.test(WB_SAVE), 'B: Builder schrijft metadata.intervalPrescription = raw prescriptie');
   ok(/IntervalEngineCore\.normalizePrescription\(raw\)/.test(WB_SAVE) && /if\(!norm\.geldig\)return null/.test(WB_SAVE), 'B: Builder valideert via IntervalEngineCore vóór opslaan');
-  ok(/sbPostQ\('custom_trainings'/.test(WB_SAVE) && /source:'builder'/.test(WB_SAVE) && !/exercise_targets:\[[^\]]/.test(WB_SAVE), 'B: opslag in custom_trainings (source builder), geen oefeningen');
+  ok(/tkCustomTrainingPost\(\{id:id,naam:t\.name/.test(WB_SAVE) && /source:'builder'/.test(WB_SAVE) && !/exercise_targets:\[[^\]]/.test(WB_SAVE), 'B: opslag in custom_trainings (source builder), geen oefeningen');
   ok(/intervalPrescription:\(local\.metadata&&local\.metadata\.intervalPrescription\)\|\|null/.test(GET_DEF) && /intervalPrescription:\(def\.metadata&&def\.metadata\.intervalPrescription\)\|\|null/.test(GET_DEF), 'C: getTrainingDefinition levert intervalPrescription (lokaal + DB) — geen reconstructie');
   ok(/interval:\(t\.metadata&&t\.metadata\.intervalPrescription\)\|\|null/.test(html), 'C: savedList exposeert de opgeslagen prescriptie voor bewerken');
 

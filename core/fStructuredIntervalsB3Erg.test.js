@@ -48,6 +48,7 @@ function sandbox() {
     clearInterval: () => {}, setInterval: () => 1, document: { getElementById: () => null },
     renderIntervalExecBlock: () => {}, scheduleAutosave: () => {}, fmtMmSs: (s) => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'), onCardioFieldInput: () => {},
     sbPostQ: async (t, row) => { (db[t] = db[t] || []).push(row); return true; },
+    tkCustomTrainingPost: async (row) => { (db.custom_trainings = db.custom_trainings || []).push(row); return { ok: true, status: 'confirmed', http: 201 }; }, // Sprint 6
     sbPatchQ: async (t, q, patch) => { const id = /id=eq\.(.+)/.exec(q)[1]; const r = db.custom_trainings.find((x) => x.id === id); if (r) Object.assign(r, patch); return true; },
     sbGet: async (t, q) => { if (t === 'training_instances') { const m = /id=eq\.([^&]+)/.exec(q); return db.training_instances.filter((r) => r.id === decodeURIComponent(m[1])); } return []; },
     createTrainingInstance: async ({ customTrainingId, snapshot }) => { const id = 'inst-' + (db.training_instances.length + 1); db.training_instances.push({ id, custom_training_id: customTrainingId, snapshot: JSON.parse(JSON.stringify(snapshot)) }); return id; },

@@ -40,7 +40,7 @@ ok(!!ENSURE, 'bron: ensureExerciseRowStatus() bestaat');
 ok(/sbPostQ\('exercises',row,\{detail:true,ignoreDuplicates:true\}\)/.test(ENSURE), 'bron: de FK-compat-rij gaat via sbPostQ (wachtrij) met ignore-duplicates');
 ok(!/sbPost\('exercises'/.test(ENSURE), 'bron: geen directe sbPost meer (die viel offline stil weg)');
 ok(/const queueOnly=!!\(opts&&opts\.queueOnly\), ignoreDup=!!\(opts&&opts\.ignoreDuplicates\)/.test(POSTQ), 'bron: sbPostQ kent queueOnly en ignoreDuplicates');
-ok(/status!=='rejected'/.test(POSTQ), 'bron: zonder detail exact de oude booleans (true behalve bij rejected)');
+ok(/status==='confirmed'\|\|status==='queued'/.test(POSTQ), 'bron: zonder detail true alleen bij confirmed of queued (Sprint 6, DEC-QUEUE-001)');
 ok(/item\.resolution==='ignore-duplicates'/.test(FLUSH), 'bron: flush gebruikt de opgeslagen resolutie');
 ok(/_exNietGelukt\[item\.body\.exercise_id\]/.test(FLUSH), 'bron: flush stuurt geen sessie waarvan de oefening in dezelfde ronde mislukte');
 ok(/const _exStatus=await ensureSessionExerciseRows\(list\)/.test(FINISH) && (FINISH.match(/tkSessieOptsVoor\(_exStatus,ex\.id\)/g) || []).length === 2, 'bron: finishSession gebruikt de oefeningstatus bij de sessie-write');
@@ -262,7 +262,7 @@ async function staat() {
       eq([rest.serverSessies.length, rest.wachtrij.length, rest.fk], [2, 0, 0], '12b: volgende sync rondt af, geen dubbele');
       await ctx.close();
 
-      // 14. sbPostQ zonder opties: exact de oude booleans
+      // 14. sbPostQ zonder opties: de oude booleans, behalve queue faalt → false (Sprint 6)
       const ctx2 = await browser.newContext(); const p2 = await ctx2.newPage(); await p2.goto(URL); await p2.waitForTimeout(500);
       const legacy = await p2.evaluate(async function () {
         const uit = {}; window.updateOfflineBadge = function () {};
@@ -276,7 +276,7 @@ async function staat() {
         uit.queueFaalt = await sbPostQ('sessions', { date: '2026-10-08', exercise_id: 'x' });
         return uit;
       });
-      eq(legacy, { 201: true, 400: false, 403: false, 409: false, 422: false, 401: true, 429: true, 503: true, queueFaalt: true }, '14 sbPostQ zonder opties: ongewijzigde booleans voor de overige aanroepers');
+      eq(legacy, { 201: true, 400: false, 403: false, 409: false, 422: false, 401: true, 429: true, 503: true, queueFaalt: false }, '14 sbPostQ zonder opties: oude booleans, behalve een mislukte queue (Sprint 6, DEC-QUEUE-001)');
       await ctx2.close();
     } catch (e) { ok(false, 'deel 2 onverwachte fout: ' + (e && e.stack || e)); }
     console.log('SCENARIO_JSON ' + JSON.stringify(SAMENVATTING));

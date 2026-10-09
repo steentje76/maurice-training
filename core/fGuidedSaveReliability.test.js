@@ -40,7 +40,7 @@ ok(/const detail=!!\(opts&&opts\.detail\);/.test(POSTQ), 'bron: sbPostQ kent een
 eq((POSTQ.match(/return uit\(/g) || []).length, 5, 'bron: elke uitgang van sbPostQ loopt via één uitkomst (sinds v4.70.22: uit())');
 ok(/return detail\?tkSchrijfUitkomst\(status,http\)/.test(POSTQ), 'bron: detail geeft tkSchrijfUitkomst');
 ok(/q===true\?'queued':'failed'/.test(POSTQ), 'bron: queued alleen als queuen zelf lukte');
-ok(/:\(status!=='rejected'\)/.test(POSTQ), 'bron: zonder detail blijven de oude booleans (true behalve bij rejected)');
+ok(/:\(status==='confirmed'\|\|status==='queued'\)/.test(POSTQ), 'bron: zonder detail true alleen bij confirmed of queued (Sprint 6, DEC-QUEUE-001)');
 ok(/writeSessionRow\(built\.row,\{detail:true[,}]/.test(DOPERSIST), 'bron: Guided vraagt de echte uitkomst op');
 ok(/built\.row\.id=it\._rowId;/.test(DOPERSIST), 'bron: stabiel client-id per rij');
 ok(DOPERSIST.indexOf('if(!it._rowId)') < DOPERSIST.indexOf('writeSessionRow('), 'bron: id vastgelegd vóór de write');
@@ -219,7 +219,7 @@ async function startEnAfronden(dubbel) {
         uit.detailQueueFaalt = (await sbPostQ('sessions', { date: '2026-10-08', exercise_id: 'x' }, { detail: true })).status;
         return uit;
       });
-      eq(legacy, { 201: true, 400: false, 422: false, 403: false, 401: true, 429: true, 503: true, netwerk: true, netwerkQueueFaalt: true, detailQueueFaalt: 'failed' }, 'sbPostQ zonder opts: exact de oude booleans (49 aanroepers ongewijzigd)');
+      eq(legacy, { 201: true, 400: false, 422: false, 403: false, 401: true, 429: true, 503: true, netwerk: true, netwerkQueueFaalt: false, detailQueueFaalt: 'failed' }, 'sbPostQ zonder opts: oude booleans, behalve een mislukte queue (Sprint 6, DEC-QUEUE-001: geen valse succesmelding meer)');
       await ctx.close();
     } catch (e) { ok(false, 'deel 2 onverwachte fout: ' + (e && e.stack || e)); }
     await browser.close();

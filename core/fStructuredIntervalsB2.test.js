@@ -133,6 +133,7 @@ const T0 = 1_800_000_000_000;
       console, Date, Math, JSON, Object, Array, String, Number, isFinite, isNaN, parseFloat, parseInt, encodeURIComponent,
       customTrainings: [], lsSet: () => {}, pushCustomTrainingExercisesRich: () => {}, escHtml: (x) => String(x), Promise, decodeURIComponent,
       sbPostQ: async (t, row) => { db[t] = db[t] || []; db[t].push(row); return true; },
+      tkCustomTrainingPost: async (row) => { db.custom_trainings = db.custom_trainings || []; db.custom_trainings.push(row); return { ok: true, status: 'confirmed', http: 201 }; }, // Sprint 6
       sbPatchQ: async (t, q, patch) => { db.patched.push({ t, q, patch }); const id = /id=eq\.(.+)/.exec(q)[1]; const r = db.custom_trainings.find((x) => x.id === id); if (r) Object.assign(r, patch); return true; },
       sbGet: async (t, q) => { if (t === 'training_instances') { const m = /id=eq\.([^&]+)/.exec(q); return db.training_instances.filter((r) => r.id === decodeURIComponent(m[1])); } return []; },
       decodeURIComponent,

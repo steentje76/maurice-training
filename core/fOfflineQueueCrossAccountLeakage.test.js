@@ -77,7 +77,7 @@ function nepIndexedDB() {
 // en verhelpt dit mechanisch -- geen enkele assertie of geteste waarde verandert.
 var _sandboxScript = new vm.Script([konstVar('OFFLINE_DB_NAME'), konstVar('SB_RETRY_STATUS'),
                  konstVar('_sbRefreshInFlight'), konstVar('_sbSessieVerlopenGemeld'),
-                 konstVar('_flushBezig'), konstVar('IDEMPOTENT_TABELLEN_MET_CLIENT_ID'),
+                 konstVar('_flushBezig'), konstVar('IDEMPOTENT_TABELLEN_MET_CLIENT_ID'), konstVar('TK_IDEMPOTENT_ZONDER_UPDATE'), konstVar('TK_WACHTRIJ_OUDERS'), konstVar('TK_SCHRIJF_TIMEOUT_MS'), pak('tkOuderSleutels'), pak('tkHuidigeUid'), pak('tkEigenaarUid'), pak('tkWachtrijHeeftOuder'), pak('tkFoutcode'), pak('tkLogSchrijf'), pak('tkMetTimeout'), pak('tkSchrijfUitkomst'), pak('sbSchrijfQDetail'), /* Sprint 7: helpers van de schrijflaag */
                  pak('newClientRowId'),
                  pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'),
                  pak('sbFetch'), pak('offlineDb'), pak('offlineQueueAdd'),

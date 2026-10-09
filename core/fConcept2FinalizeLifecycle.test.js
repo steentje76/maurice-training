@@ -37,7 +37,9 @@ const FNS = ['finishSession', 'tkSessieOptsVoor', 'tkSessieSchrijfOpts', 'tkSess
   'tkIsErgCardioType', 'execLeaveDiscard', 'resetLosAllState', 'resetLosExerciseSelection', 'buildStrengthSessionRow', 'tkC2TrainingExecIds',
   '_c2completionTracker', 'tkC2PacketMeta', 'tkC2NoteMeta', 'tkC2CompletionObserve', 'tkC2CompletionIgnored', 'tkC2FrozenFor'];
 const UNDEF = Symbol('undef');
-const PERSIST_FNS = ['writeSessionRow', 'sbPostQ', 'tkSchrijfUitkomst', 'sbRetryable', 'tkNormalizeSessionsRow', 'newClientRowId'];
+const PERSIST_FNS = ['writeSessionRow', 'sbPostQ', 'tkSchrijfUitkomst', 'sbRetryable', 'tkNormalizeSessionsRow', 'newClientRowId',
+  // Sprint 7: helpers van de schrijflaag (eigenaar, afhankelijkheden, privacy, observability, time-out)
+  'tkEigenaarUid', 'tkHuidigeUid', 'tkWachtrijHeeftOuder', 'tkOuderSleutels', 'tkFoutcode', 'tkLogSchrijf', 'tkMetTimeout'];
 function deepNoop() {
   const f = function () { return deepNoop(); };
   return new Proxy(f, { get: (t, k) => (k === 'then' || k === Symbol.toPrimitive) ? undefined : deepNoop(), apply: () => deepNoop() });
@@ -99,7 +101,8 @@ function makeWorld(html, over) {
   if (over.pgrst) {        // ECHTE writeSessionRow -> sbPostQ -> tkNormalizeSessionsRow tegen de nep-PostgREST
     const pg = over.pgrst;
     Object.assign(env, { writeSessionRow: UNDEF, sbPostQ: UNDEF, SB_URL: 'https://x.supabase.co', navigator: { onLine: true },
-      SB_RETRY_STATUS: JSON.parse((html.match(/SB_RETRY_STATUS\s*=\s*(\[[^\]]*\])/) || [0, '[]'])[1]), sbFetch: (u, i) => pg.fetch(u, i), offlineQueueAdd: async (it) => { pg.queued.push(it); }, updateOfflineBadge: () => {} });
+      SB_RETRY_STATUS: JSON.parse((html.match(/SB_RETRY_STATUS\s*=\s*(\[[^\]]*\])/) || [0, '[]'])[1]), sbFetch: (u, i) => pg.fetch(u, i), offlineQueueAdd: async (it) => { pg.queued.push(it); }, updateOfflineBadge: () => {},
+      authSession: { user: { id: 'u-test' } }, offlineQueueAll: async () => [], TK_IDEMPOTENT_ZONDER_UPDATE: null, TK_WACHTRIJ_OUDERS: null, TK_SCHRIJF_TIMEOUT_MS: null });
   }
   Object.assign(env, over.env || {});
   const proxy = new Proxy(env, {
@@ -109,7 +112,9 @@ function makeWorld(html, over) {
   });
   const src = constSrc(html, 'const CARDIO_TYPES = {').replace('const CARDIO_TYPES', 'CARDIO_TYPES') + '\n' +
     constSrc(html, 'const CARDIO_TYPE_BY_ID').replace('const CARDIO_TYPE_BY_ID', 'CARDIO_TYPE_BY_ID') + '\n' +
-    (over.pgrst ? constSrc(html, 'const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = {').replace('const IDEMPOTENT_TABELLEN_MET_CLIENT_ID', 'IDEMPOTENT_TABELLEN_MET_CLIENT_ID') + '\n' : '') +
+    (over.pgrst ? constSrc(html, 'const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = {').replace('const IDEMPOTENT_TABELLEN_MET_CLIENT_ID', 'IDEMPOTENT_TABELLEN_MET_CLIENT_ID') + '\n' +
+      constSrc(html, 'const TK_IDEMPOTENT_ZONDER_UPDATE = {').replace('const TK_IDEMPOTENT_ZONDER_UPDATE', 'TK_IDEMPOTENT_ZONDER_UPDATE') + '\n' +
+      constSrc(html, 'const TK_WACHTRIJ_OUDERS = {').replace('const TK_WACHTRIJ_OUDERS', 'TK_WACHTRIJ_OUDERS') + '\nTK_SCHRIJF_TIMEOUT_MS=20000;\n' : '') +
     FNS.concat(over.pgrst ? PERSIST_FNS : []).map(n => fnSrc(html, n)).join('\n') + '\nreturn {' + FNS.concat(over.pgrst ? PERSIST_FNS : []).join(',') + '};';
   const api = new Function('__env', 'with(__env){\n' + src + '\n}')(proxy);
   return { env, api, events, writes, creates, disconnects, toasts, completes, transport };

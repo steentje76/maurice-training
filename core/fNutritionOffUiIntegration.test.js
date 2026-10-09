@@ -74,7 +74,7 @@ ok(existingLookupIdx >= 0 && (createIdx < 0 || existingLookupIdx < createIdx),
   'C1: de her-lookup van een bestaande identifier staat structureel vóór de CREATE_NEW-tak');
 ok(!!ingestBody && /existingIdentifiers=await sbGet\('nutrition_product_identifiers'/.test(ingestBody),
   'C2: opnieuw opzoeken op exacte barcode-identity vóór schrijven (dekt de "response verloren, actie wel gelukt"-retry)');
-ok(!!ingestBody && /catch\(e\)\{[\s\S]{0,300}raceWinner=await sbGet\('nutrition_product_identifiers'/.test(ingestBody),
+ok(!!ingestBody && /_wi\.status==='rejected'&&_wi\.http===409\)\{[\s\S]{0,400}raceWinner=await sbGet\('nutrition_product_identifiers'/.test(ingestBody), // Sprint 7: expliciete 409-uitkomst i.p.v. een catch die nooit vuurde
   'C3: een unique-constraint-conflict op de identifier (gelijktijdige eerste scan) hergebruikt de winnaar i.p.v. een weesrij te laten hangen');
 
 // ---- UNKNOWN BLIJFT UNKNOWN ----

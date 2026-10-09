@@ -35,7 +35,7 @@ const POSTQ = extractFn(HTML, 'sbPostQ');
 const OPGESLAGEN = extractFn(HTML, 'sbPostQOpgeslagen');
 ok(/:\(status==='confirmed'\|\|status==='queued'\)/.test(POSTQ), 'bron: sbPostQ zonder detail is alleen true bij confirmed of queued');
 ok(!/status!=='rejected'/.test(POSTQ), 'bron: de oude boolean (true ook bij failed) is weg');
-ok(!!OPGESLAGEN && /sbPostQ\(t,d,\{detail:true\}\)/.test(OPGESLAGEN) && /if\(!u\|\|!u\.ok\)\{[^}]*throw err;/.test(OPGESLAGEN), 'bron: sbPostQOpgeslagen gooit bij een niet-ok uitkomst');
+ok(!!OPGESLAGEN && /sbPostQ\(t,d,Object\.assign\(\{\},opts\|\|\{\},\{detail:true\}\)\)/.test(OPGESLAGEN) && /if\(!u\|\|!u\.ok\)\{[^}]*throw err;/.test(OPGESLAGEN), 'bron: sbPostQOpgeslagen gooit bij een niet-ok uitkomst');
 const KLASSE_B = ['voedingSaveTargets', 'voedingConfirmWaterEntry', 'voedingConfirmAddToMeal', 'voedingSaveSupplement', 'voedingSubmitCorrection', 'voedingPersistCustomProduct', 'voedingPersistNewProductFromLabel', 'voedingSaveManualEntry'];
 KLASSE_B.forEach(function (f) {
   const b = extractFn(HTML, f);
@@ -43,7 +43,7 @@ KLASSE_B.forEach(function (f) {
 });
 ok(/if\(!\(await withdrawResearchConsent\(\)\)\)/.test(extractFn(HTML, 'toggleResearchConsent')) && /if\(!\(await grantResearchConsent\(\)\)\)/.test(extractFn(HTML, 'toggleResearchConsent')), 'bron: onderzoeksdeelname controleert de uitkomst');
 ok(/_alleenGeheugen:!_okW/.test(extractFn(HTML, 'upsertExerciseGoalField')), 'bron: exercise_goals blijft alleen-geheugen als de INSERT niet lukte');
-ok(!/sbPostQ\('custom_trainings',\{/.test(HTML) && (HTML.match(/tkCustomTrainingPost\(\{id:/g) || []).length === 4, 'bron: alle 4 custom_trainings-INSERTs lopen via tkCustomTrainingPost');
+ok(!/sbPostQ\('custom_trainings',\{/.test(HTML) && (HTML.match(/tkCustomTrainingPost\(\{id:/g) || []).length === 5, 'bron: alle custom_trainings-INSERTs (4 aanroepers + herstel, Sprint 7) lopen via tkCustomTrainingPost');
 ok(/_behouden=customTrainings\.filter/.test(extractFn(HTML, 'syncCustomTrainingsFromSupabase')), 'bron: de sync behoudt nog niet bevestigde trainingen');
 ok(/'tk_trainings_onbevestigd'/.test(HTML.slice(HTML.indexOf('const PERSONAL_CACHE_KEYS'), HTML.indexOf('const PERSONAL_CACHE_KEYS') + 600)), 'bron: tk_trainings_onbevestigd is persoonsgebonden (gewist bij eigenaarwissel)');
 
@@ -300,10 +300,13 @@ async function voerUit(naam) {
         await p2.evaluate(installeer, {});
         const naSync = await p2.evaluate(async function () {
           await syncCustomTrainingsFromSupabase();
-          return { lijst: customTrainings.map(function (t) { return t.id; }).sort(), opslag: JSON.parse(localStorage.getItem('tk_trainings')).map(function (t) { return t.id; }).sort(), onbevestigd: tkTrainingenOnbevestigd() };
+          return { lijst: customTrainings.map(function (t) { return t.id; }).sort(), opslag: JSON.parse(localStorage.getItem('tk_trainings')).map(function (t) { return t.id; }).sort(), onbevestigd: tkTrainingenOnbevestigd(), server: Object.keys(JSON.parse(localStorage.getItem('__srv') || '{}').custom_trainings || {}).sort() };
         });
         eq([naSync.lijst, naSync.opslag], [['custom_X', 'custom_Y'], ['custom_X', 'custom_Y']], 'Mijn trainingen ' + st + ': na herstart + sync staat de training er nog (geen verlies)');
-        eq(naSync.onbevestigd, st === 'confirmed' ? [] : ['custom_X'], 'Mijn trainingen ' + st + ': markering onbevestigd');
+        // Sprint 7 (DEC-SYNC-002): queued blijft gemarkeerd tot de flush; een geweigerde of nergens vastgelegde
+        // training wordt bij de sync stil opnieuw opgeslagen (herstel) en is daarna bevestigd.
+        eq(naSync.onbevestigd, st === 'queued' ? ['custom_X'] : [], 'Mijn trainingen ' + st + ': markering onbevestigd');
+        if (st === 'rejected' || st === 'failed') eq(naSync.server, ['custom_X', 'custom_Y'], 'Mijn trainingen ' + st + ': herstel bij de sync zet de training alsnog op de server');
         if (st === 'queued') {
           const eind = await p2.evaluate(async function () { await flushOfflineQueue(); await syncCustomTrainingsFromSupabase(); return { lijst: customTrainings.map(function (t) { return t.id; }).sort(), onbevestigd: tkTrainingenOnbevestigd(), server: Object.keys(JSON.parse(localStorage.getItem('__srv')).custom_trainings).sort() }; });
           eq(eind, { lijst: ['custom_X', 'custom_Y'], onbevestigd: [], server: ['custom_X', 'custom_Y'] }, 'Mijn trainingen queued → flush → sync: op de server, markering opgeruimd, geen dubbele');
@@ -327,6 +330,7 @@ async function voerUit(naam) {
       {
         const { ctx, p } = await nieuw();
         const b = await p.evaluate(async function () {
+          authSession = { user: { id: 'u-test' } }; // Sprint 7: een write heeft een eigenaar nodig
           window.updateOfflineBadge = function () {}; const uit = {};
           for (const st of [201, 400, 403, 409, 422, 401, 429, 503]) {
             window.offlineQueueAdd = async function () { return true; };

@@ -1,5 +1,34 @@
 # Trainingskompas — Changelog
 
+## v4.70.24 — Offline data-integriteit: Builder-trainingen, voeding en eerlijke status (Sprint 7, 9 oktober 2026)
+
+- **Builder (Track B).**
+  - De oefeningen van een Builder-training waren niet beschermd. `saveWorkout()` startte de training-write en de oefeningen-writes tegelijk, zonder op elkaar te wachten. Oefeningen konden dus de server bereiken vóór hun training (RLS weigert die).
+  - Een oefening zonder client-id kon na een replay een tweede rij geven.
+  - De sync bij het opstarten verving een nog niet verstuurde bewerking door de oudere serverversie.
+  - Nu: de training-write wordt eerst afgewacht. Mislukt die, dan gaan er geen oefeningen. Oefeningenrijen krijgen een client-id (idempotent).
+  - Een training telt pas als opgeslagen als de server de training én alle oefeningen heeft bevestigd. Tot dan wint de lokale versie, en bij de sync volgt een stille, idempotente herstelpoging.
+  - Bewerken loopt via dezelfde weg (`tkCustomTrainingPatch`).
+- **Afhankelijkheden in de wachtrij (DEC-SYNC-002).** Een kindrij gaat nooit los naar de server zolang haar ouder nog in de wachtrij staat. Dit geldt voor oefeningen van een training, supplementlog → definitie, voedingswaarden/barcode → product en maaltijdregel → maaltijd/product. De flush stuurt geen kind waarvan de ouder in dezelfde ronde mislukte.
+- **Voeding (Track C).**
+  - Producten, supplement-definities en lege maaltijden kregen hun id van de database en werden daarna op naam teruggezocht. Offline faalde dat. Een nieuwe poging gaf dan een dubbele definitie of een dubbel product, en online kon een ouder product met dezelfde naam worden teruggevonden.
+  - Nu kiest de client het id vooraf en schrijft met ignore-duplicates:
+    - per supplementnaam onthouden (`tk_supp_defs`);
+    - per dag en maaltijdtype (`tk_voeding_shells`), dus een tweede product voor hetzelfde ontbijt komt in dezelfde maaltijd;
+    - per productinvoer.
+  - Offline loggen van een nieuw supplement of een eigen product werkt nu volledig.
+  - OFF-import: de barcode-race (409) wordt nu echt herkend. Intake-doelen worden bij een nieuwe poging niet dubbel opgeslagen, en een niet-opgeslagen doel wordt gemeld.
+- **Status en privacy (Track D).**
+  - `sbPostQ` meldt een reden: offline, netwerk, timeout, auth, server, afhankelijk, validatie, toegang, opslag of account.
+  - Zonder bekende eigenaar ontstaat geen wachtrij-item. Bij een offline verlopen sessie geldt de laatst bekende eigenaar van het toestel.
+  - Een write die blijft hangen, wordt na 20 s gequeued. Dat geldt alleen voor idempotente rijen met een client-id.
+  - De console bevat geen serverfouttekst meer (kan rij-inhoud bevatten), alleen de foutcode. Niet-bevestigde writes worden gelogd via ObservabilityCore, zonder inhoud.
+  - Berichten gebruiken ignore-duplicates (geen UPDATE-policy).
+  - De oranje melding en het wachtrijscherm tonen trainingen die alleen op dit toestel staan.
+- **Niet gewijzigd.** Database, RLS, retry-statuscodes, trainingsberekeningen, evidence, AI. De AI-coach leest geen wachtrij- of opslagstatus.
+- **Gate:** `core/fOfflineDataIntegrity.test.js` (45 controles; echte pagina met `WB.saveWorkout()`, sync, flush en voedingsflows tegen een gesimuleerde PostgREST met de productieconstraints). Sandbox-guards en pins op de oude code bewust bijgewerkt.
+- sw-cache v470240, versionCode 47024.
+
 ## v4.70.23 — Eerlijke opslagstatus: geen "opgeslagen" als de write nergens staat (R4-QUEUE-FAIL, 8 oktober 2026)
 
 - **Bug (R4-QUEUE-FAIL).** `sbPostQ()` zonder opties gaf `true` als queuen zelf mislukte (IndexedDB niet beschikbaar): de app meldde succes terwijl de data nergens stond. Daarnaast negeerden de voedingsschermen de uitkomst helemaal: ook een definitieve weigering van de server (400/403/409/422) gaf "Water toegevoegd", "Voedingsdoelen opgeslagen", "Toegevoegd aan maaltijd", "Correctie opgeslagen", een geleegd supplementformulier of een doorstap naar de hoeveelheid. Onderzoeksdeelname bevestigde altijd. Gereproduceerd in de echte pagina.

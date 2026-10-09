@@ -2888,3 +2888,48 @@ blijft lokaal zonder automatische nieuwe poging. (d) Intake-doelen en de OFF-ing
 
 **Status.** Geïmplementeerd in v4.70.23. Guard: `core/fQueueFailHonestStatus.test.js`. Niet CLOSED_PROVEN: vereist
 toestelbewijs.
+
+## DEC-SYNC-002 — Afhankelijkheden, client-ids en volledige opslag van samengestelde gegevens (9 oktober 2026)
+
+**Context.** Sprint 7 (Track B, C, D). Drie gevallen gebruikten nog de database-id, of schreven een kindrij zonder
+naar de ouder te kijken:
+- Builder-trainingen (training + oefeningen);
+- supplementen (definitie + log);
+- eigen producten (product + waarden + barcode + maaltijdregel).
+
+Dat gaf offline fouten, dubbele definities en producten bij een nieuwe poging, en oefeningen die vóór hun training bij
+de server aankwamen. Productieschema read-only geverifieerd:
+- geen unieke naam-constraints;
+- FK's en RLS-EXISTS op de ouder;
+- geen UPDATE-policy op supplement-definities, voedingswaarden, barcodes en berichten.
+
+**Besluit.**
+1. **Afhankelijkheden.** `TK_WACHTRIJ_OUDERS` legt per kindtabel de oudertabel vast. Staat de ouder nog in de wachtrij
+   (zelfde eigenaar), dan gaat het kind er ook in (FIFO). De flush slaat een kind over als de ouder in dezelfde ronde
+   mislukte. Dit vervangt niets van DEC-SYNC-001 maar generaliseert het.
+2. **Client-ids.** Product, supplement-definitie, lege maaltijd, voedingswaarden, barcode en oefeningenrij krijgen een
+   client-id. Ze worden geschreven met ignore-duplicates (bij tabellen zonder UPDATE-policy is merge-duplicates bij een
+   replay een RLS-fout). Na het schrijven wordt niets meer op naam teruggezocht.
+3. **Volledige opslag.** Een Builder-training telt pas als opgeslagen als de server de training én alle oefeningen
+   heeft bevestigd (`tk_trainings_onbevestigd`). Tot dan wint bij de sync de lokale versie. Als de wachtrij niets voor
+   de training bevat, volgt een stille herstelpoging. Gelijkheid wordt bepaald op naam en oefeningen (volgorde, sets,
+   herhalingen, RPE, rust, keuze).
+4. **Eigenaar.** Geen write en geen wachtrij-item zonder bekende eigenaar. Bij een offline verlopen sessie is dat de
+   laatst bekende eigenaar van het toestel (`tk_cache_owner_uid`).
+5. **Status en privacy.**
+   - `tkSchrijfUitkomst` krijgt een `reden`.
+   - Time-out (20 s) alleen voor idempotente rijen met client-id.
+   - In de console alleen de foutcode, geen serverfouttekst.
+   - ObservabilityCore-log zonder inhoud.
+
+**Niet gewijzigd.** `sbPostQ`-booleans (DEC-QUEUE-001), retry-codes, database, RLS, berekeningen, AI.
+
+**Restrisico's.**
+- (a) Handmatige (niet-Builder) trainingen gebruiken `sbPost`/`sbDel` zonder wachtrij.
+- (b) `sbPatchQ`/`sbDelQ` zonder `detail` geven bij een mislukte queue `true` (zelfde klasse als DEC-QUEUE-001; impactanalyse nodig).
+- (c) Intake-doelen hebben geen client-id (`goals.id` bigint); een tweede poging slaat alleen de al opgeslagen doelen over.
+- (d) Een supplementnaam die op de server al bestaat maar offline voor het eerst op dit toestel wordt gebruikt, kan een
+  tweede definitie met dezelfde naam geven: geen verlies, wel dubbel in de keuzelijst.
+- (e) Geen toestelbewijs.
+
+**Status.** Geïmplementeerd in v4.70.24. Guard: `core/fOfflineDataIntegrity.test.js`. Niet CLOSED_PROVEN.

@@ -46,7 +46,7 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 // ═══ Bevinding 3 (bewijs van bestaande volwassenheid, GEEN wijziging): het
 // offline-schrijf-wachtrij-mechanisme zelf is grondig geverifieerd en blijkt
 // al goed ontworpen (F13 Post-Audit Remediation P1-04/P1-05). ═══
-const flushSrc = html.slice(html.indexOf('if(_flushBezig)return;') - 50, html.indexOf('if(_flushBezig)return;') + 4000);
+const flushSrc = html.slice(html.indexOf('if(_flushBezig)return;') - 50, html.indexOf('if(_flushBezig)return;') + 7000); // Sprint 7: flush is langer geworden (afhankelijkheden)
 ok(flushSrc.indexOf('owner_uid') > 0, 'bewijs: de flush-functie isoleert queue-items per gebruiker (owner_uid-check) -- voorkomt dat op een gedeeld toestel de data van gebruiker A onder account B wordt weggeschreven');
 ok(flushSrc.indexOf('resolution=merge-duplicates') > 0, 'bewijs: idempotente tabellen gebruiken merge-duplicates bij flush, geen dubbele rij bij een retry na een onbevestigde eerdere succesvolle write');
 ok(flushSrc.indexOf('continue') > 0 && flushSrc.indexOf('skippedAny') > 0, 'bewijs: één mislukt wachtrij-item blokkeert niet alle latere items (per-item-isolatie)');

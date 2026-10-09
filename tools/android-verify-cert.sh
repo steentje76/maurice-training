@@ -8,12 +8,22 @@ set -euo pipefail
 APK="$1"; VERWACHT_BESTAND="${2:-}"
 test -f "$APK" || { echo "APK niet gevonden: $APK"; exit 1; }
 if [ -z "${APKSIGNER:-}" ]; then
-  BT="$(ls -d "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"/build-tools/*/ 2>/dev/null | sort -V | tail -n1 || true)"
-  APKSIGNER="${BT}apksigner"
+  SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+  APKSIGNER="$(find "$SDK/build-tools" -maxdepth 2 -name apksigner -type f 2>/dev/null | sort -V | tail -n1 || true)"
+  [ -n "$APKSIGNER" ] || APKSIGNER="$(command -v apksigner || true)"
 fi
-"$APKSIGNER" verify --verbose --print-certs "$APK" > "${APK}.signing.txt"
-CERT="$(grep -m1 -E 'Signer #1 certificate SHA-256 digest' "${APK}.signing.txt" | awk -F': ' '{print $2}' | tr -d '[:space:]:' | tr 'A-F' 'a-f')"
-echo "$CERT" | grep -qE '^[0-9a-f]{64}$' || { echo "Geen geldige certificaatvingerafdruk gevonden"; exit 1; }
+[ -n "$APKSIGNER" ] || { echo "::error::apksigner niet gevonden (ANDROID_HOME=${ANDROID_HOME:-leeg})"; exit 1; }
+set +e
+"$APKSIGNER" verify --verbose --print-certs "$APK" > "${APK}.signing.txt" 2> "${APK}.signing.err"
+rc=$?
+set -e
+# Alleen publieke certificaatgegevens; de vingerafdruk staat op een regel "... certificate SHA-256 digest: <hex>".
+CERT="$(grep -m1 -iE 'certificate SHA-256 digest' "${APK}.signing.txt" | sed -E 's/.*digest:[[:space:]]*//' | tr -d '[:space:]:' | tr 'A-F' 'a-f')"
+if [ "$rc" -ne 0 ] || ! echo "$CERT" | grep -qE '^[0-9a-f]{64}$'; then
+  echo "::error::apksigner verify gaf exitcode ${rc}; geen geldige certificaatvingerafdruk. Uitvoer: $(head -c 400 "${APK}.signing.txt" | tr '\n' ' ') $(grep -v -i 'warning' "${APK}.signing.err" | head -c 300 | tr '\n' ' ')"
+  exit 1
+fi
+rm -f "${APK}.signing.err"
 echo "cert_sha256=$CERT"
 if [ -n "${GITHUB_OUTPUT:-}" ]; then echo "cert_sha256=$CERT" >> "$GITHUB_OUTPUT"; fi
 [ -n "$VERWACHT_BESTAND" ] || exit 0

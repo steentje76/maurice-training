@@ -27,6 +27,7 @@ jobs:
       build_sha: ${{ steps.provenance.outputs.build_sha }}
       apk_name: ${{ steps.provenance.outputs.apk_name }}
       app_ver: ${{ steps.provenance.outputs.app_ver }}
+      cert_sha256: ${{ steps.signing.outputs.cert_sha256 }}
 
     steps:
       - name: Checkout
@@ -101,6 +102,21 @@ jobs:
             echo "::warning::tools/verify-ocr-packaging.js ontbreekt in deze source; OCR-packaging van de APK is NIET gecontroleerd"
           fi
 
+      # ADR-ANDROID-SIGNING-001: deze debug-APK wordt ondertekend met een TIJDELIJKE debugsleutel die
+      # per CI-run nieuw wordt aangemaakt. Leg de publieke certificaatvingerafdruk vast, zodat zichtbaar
+      # is dat hij een eerder geïnstalleerde APK NIET kan bijwerken. Geen sleutelmateriaal.
+      - name: Record signing certificate (public fingerprint)
+        id: signing
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          bash tools/android-verify-cert.sh "$APK"
+          CERT="$(grep -m1 -E 'Signer #1 certificate SHA-256 digest' "${APK}.signing.txt" | awk -F': ' '{print $2}')"
+          {
+            echo "### Ondertekening"
+            echo "- Certificaat SHA-256: \`${CERT}\`"
+            echo "- Sleutel: tijdelijke CI-debugsleutel, per run nieuw. Deze APK kan een eerder geïnstalleerde Trainingskompas-APK **niet** bijwerken. Niet bedoeld voor het dagelijkse toestel (ADR-ANDROID-SIGNING-001)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Record provenance and SHA-256
         id: provenance
         run: |
@@ -119,6 +135,7 @@ jobs:
           cp "$APK" "dist/${APK_NAME}"
           (cd dist && sha256sum "${APK_NAME}" > "${APK_NAME}.sha256")
           cp android-debug-apk-commit.txt dist/
+          cp "${APK}.signing.txt" "dist/${APK_NAME}.signing.txt"
           echo "build_sha=${BUILD_SHA}" >> "$GITHUB_OUTPUT"
           echo "apk_name=${APK_NAME}" >> "$GITHUB_OUTPUT"
           echo "app_ver=${APP_VER}" >> "$GITHUB_OUTPUT"
@@ -159,6 +176,7 @@ jobs:
           BUILD_SHA: ${{ needs.build-debug-apk.outputs.build_sha }}
           APK_NAME: ${{ needs.build-debug-apk.outputs.apk_name }}
           APP_VER: ${{ needs.build-debug-apk.outputs.app_ver }}
+          CERT_SHA256: ${{ needs.build-debug-apk.outputs.cert_sha256 }}
         run: |
           TAG="apk-debug-${APP_VER}-${BUILD_SHA:0:9}-run${GITHUB_RUN_NUMBER}"
           test -f "artifact/dist/${APK_NAME}"
@@ -166,8 +184,9 @@ jobs:
             "artifact/dist/${APK_NAME}" \
             "artifact/dist/${APK_NAME}.sha256" \
             "artifact/dist/android-debug-apk-commit.txt" \
+            "artifact/dist/${APK_NAME}.signing.txt" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$BUILD_SHA" \
             --prerelease \
             --title "Android debug APK ${APP_VER} (${BUILD_SHA:0:9})" \
-            --notes "Debug-APK (niet voor Google Play). Bron-commit: ${BUILD_SHA}. Workflow-run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            --notes "Debug-APK (niet voor Google Play). Bron-commit: ${BUILD_SHA}. Workflow-run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Certificaat SHA-256: ${CERT_SHA256}. Ondertekend met een tijdelijke CI-debugsleutel: kan een eerder geïnstalleerde Trainingskompas-APK NIET bijwerken; installeer alleen op een toestel zonder de app (ADR-ANDROID-SIGNING-001)."

@@ -1,0 +1,13 @@
+# Publieke SHA-256-vingerafdruk van het certificaat waarmee interne APK's van
+# com.trainingskompas.app worden ondertekend (ADR-ANDROID-SIGNING-001).
+#
+# Dit is GEEN geheim: het is dezelfde waarde die `apksigner verify --print-certs`
+# voor elke geïnstalleerde APK toont. De private sleutel staat hier nooit.
+#
+# Zolang hieronder NOG_NIET_VASTGESTELD staat, weigert de workflow
+# android-internal-apk.yml te bouwen: er is dan nog geen PO-besluit over de
+# interne sleutel. Een sleutelwissel (rotatie) gaat uitsluitend via een
+# reviewbare PR die deze regel wijzigt.
+#
+# Formaat: 64 hexadecimale tekens, kleine letters, zonder dubbele punten.
+NOG_NIET_VASTGESTELD

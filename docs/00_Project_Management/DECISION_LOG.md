@@ -2888,3 +2888,24 @@ blijft lokaal zonder automatische nieuwe poging. (d) Intake-doelen en de OFF-ing
 
 **Status.** Geïmplementeerd in v4.70.23. Guard: `core/fQueueFailHonestStatus.test.js`. Niet CLOSED_PROVEN: vereist
 toestelbewijs.
+
+## DEC-SIGN-001 — Android-signing: één stabiele identiteit (VOORGESTELD, 9 oktober 2026)
+
+**Context.** Sprint 7, Track A. Elke CI-debugbuild wordt ondertekend met een nieuwe, tijdelijke debugsleutel: drie gepubliceerde APK's, drie certificaten. Een nieuwe APK kan een geïnstalleerde app daardoor niet bijwerken. Verwijderen wist de lokale data (`allowBackup=false`). De oude sleutels bestaan niet meer, dus hergebruik of rotatie (v3-lineage) is onmogelijk.
+
+**Voorstel.** Zie `docs/ADR-ANDROID-SIGNING-001.md`:
+- productie via Play App Signing (Internal Testing);
+- tot dan, of in plaats daarvan, een aparte interne sleutel via `android-internal-apk.yml` in de beschermde environment `android-internal`;
+- debugbuilds alleen voor testtoestellen, met de vingerafdruk zichtbaar;
+- één gecontroleerde migratie van het dagelijkse toestel, met een controle op niet-gesynchroniseerde data.
+
+**Geïmplementeerd zonder secrets.**
+- Vingerafdruk-rapportage in de debug-workflow.
+- Interne workflow (preflight, dry run, build met environment).
+- `android/signing/INTERNAL_CERT_SHA256` (`NOG_NIET_VASTGESTELD`).
+- Preflight- en verify-scripts.
+- Guard `core/fAndroidSigningFoundation.test.js`.
+
+Er is geen sleutel aangemaakt en geen secret gewijzigd.
+
+**Open PO-besluiten.** D1–D4 in het ADR: route, Play-sleutelkeuze, sleutels aanmaken en het moment van migratie.

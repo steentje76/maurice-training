@@ -8,6 +8,14 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.23
 
+## Android-ondertekening (Sprint 7, Track A, 9 oktober 2026)
+
+- CI-debug-APK's worden per run met een nieuwe, tijdelijke sleutel ondertekend. Ze kunnen een geïnstalleerde app niet
+  bijwerken. De debug-workflow toont nu de certificaatvingerafdruk en meldt dat.
+- Een stabiele interne of Play-identiteit is voorbereid (`android-internal-apk.yml`,
+  `android/signing/INTERNAL_CERT_SHA256` = `NOG_NIET_VASTGESTELD`), maar nog niet actief: daarvoor is een PO-besluit nodig
+  (`docs/ADR-ANDROID-SIGNING-001.md`, DEC-SIGN-001).
+
 ## Eerlijke opslagstatus (v4.70.23, 8 oktober 2026)
 
 - Invariant (DEC-QUEUE-001): de app meldt alleen "opgeslagen" als de server de write bevestigde of als hij duurzaam in

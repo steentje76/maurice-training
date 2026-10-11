@@ -52,8 +52,9 @@ function uit(s) { echteLog(s + '\n'); }
 const GEHEIMEN = []; // elke tokenwaarde die in deze test voorkomt
 function token(soort) { const t = (soort === 'refresh' ? '1//REFRESH-' : 'ya29.ACCESS-') + crypto.randomBytes(9).toString('hex'); GEHEIMEN.push(t); return t; }
 
-const UID = '9b534bd1-0070-4e15-aa01-3ca3695bc9eb';
-const UID2 = 'd8116e6c-d5ca-47c9-ac8a-5a1f89ed4dcb';
+// Vaste synthetische id's -- nooit echte accounts in een test.
+const UID = '11111111-aaaa-4aaa-8aaa-111111111111';
+const UID2 = '22222222-bbbb-4bbb-8bbb-222222222222';
 const KWARTIER = 15 * 60 * 1000;
 
 function J(obj, status) {

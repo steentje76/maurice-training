@@ -20,8 +20,9 @@ let pass = 0, fail = 0; const msgs = [];
 function ok(c, m) { if (c) pass++; else { fail++; msgs.push('MISLUKT: ' + m); } }
 function eq(a, b, m) { ok(JSON.stringify(a) === JSON.stringify(b), m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')'); }
 
-const U1 = '9b534bd1-0070-4e15-aa01-3ca3695bc9eb';
-const U2 = 'd8116e6c-d5ca-47c9-ac8a-5a1f89ed4dcb';
+// Vaste synthetische id's -- nooit echte accounts of echte secret-id's in een test.
+const U1 = '11111111-aaaa-4aaa-8aaa-111111111111';
+const U2 = '22222222-bbbb-4bbb-8bbb-222222222222';
 const N = (i) => '00000000-0000-4000-8000-' + String(i).padStart(12, '0');
 
 const FIXTURE = `
@@ -104,12 +105,12 @@ async function main() {
   r = await als(db, 'service_role', 'select public.cleanup_orphan_wearable_token_secrets() n');
   ok(r.ok && r.rows[0].n === 0, 'D4 de parameter is optioneel (default null)');
 
-  /* ══ E. De productiestand van 11 oktober, exact nagebouwd ═══════════════════════════ */
+  /* ══ E. De productiestand van 11 oktober nagebouwd (zelfde vorm, synthetische id's) ══ */
   db = await db0();
-  await secret(db, '98dbde69-72d7-4768-8524-b788fef150e0', 'wearable_access_' + U1, 60 * 24 * 31);
-  await secret(db, '474b6f78-09dc-4853-ac07-b575f4a81248', 'wearable_refresh_' + U1, 60 * 24 * 31);
-  await secret(db, 'bcc2f624-c8cf-4ab9-90d5-e120f0da641f', 'wearable_access_' + U2, 60 * 24 * 41);
-  await secret(db, '445ca5d1-a785-4a64-95db-25725b301510', 'wearable_refresh_' + U2, 60 * 24 * 41);
+  await secret(db, N(201), 'wearable_access_' + U1, 60 * 24 * 31);
+  await secret(db, N(202), 'wearable_refresh_' + U1, 60 * 24 * 31);
+  await secret(db, N(203), 'wearable_access_' + U2, 60 * 24 * 41);
+  await secret(db, N(204), 'wearable_refresh_' + U2, 60 * 24 * 41);
   // De oorzaak: dezelfde naam opnieuw aanmaken botst op de unieke index.
   let botst = null; try { await db.query("insert into vault.secrets (name, secret) values ($1, 'nieuw')", ['wearable_access_' + U1]); } catch (e) { botst = e.code; }
   eq(botst, '23505', 'E1 (oorzaak gereproduceerd) dezelfde secretnaam opnieuw aanmaken geeft SQLSTATE 23505');

@@ -134,3 +134,6 @@ exports.handler = async function (event) {
     data_quality: dataQuality
   });
 };
+
+// v4.70.25 (DEC-API-001): bereikbaar vanuit de Android-app (zie _cors.js). Web ongewijzigd.
+exports.handler = require('./_cors.js').withCors(exports.handler);

@@ -32,7 +32,7 @@ ok(html.includes('sendTelemetryBestEffort') && html.match(/window\.addEventListe
   'B1: window.onerror stuurt het genormaliseerde event ook naar het telemetry-endpoint');
 ok(html.match(/window\.addEventListener\('unhandledrejection'[\s\S]{0,400}sendTelemetryBestEffort/),
   'B2: unhandledrejection stuurt het genormaliseerde event ook naar het telemetry-endpoint');
-ok(html.includes("fetch('/.netlify/functions/telemetry',") && html.includes(".catch(function () {});"),
+ok(html.includes("fetch(tkApiUrl('/.netlify/functions/telemetry'),") && html.includes(".catch(function () {});"),
   'B3: de telemetry-fetch is expliciet non-blocking (geen await) en heeft een lege .catch() -- kan de app nooit beinvloeden');
 ok(!html.match(/sendTelemetryBestEffort[\s\S]{0,50}stack/i),
   'B4: de rauwe stack trace wordt nooit meegestuurd, uitsluitend het al genormaliseerde message_safe/error_code');

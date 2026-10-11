@@ -11,7 +11,7 @@
 // Supabase user_id als 'member-id' (Polar's eigen koppel-sleutel, geen
 // gevoelige data). Een 409 Conflict betekent 'al geregistreerd' -- dat is
 // geen fout (bv. bij opnieuw koppelen na eerder loskoppelen).
-const { storeWearableTokenSecret } = require('./wearableTokenVault.js');
+const { vervangWearableTokens } = require('./wearableTokenVault.js');
 
 exports.handler = async function (event) {
   const supabaseUrl = process.env.SUPABASE_URL || 'https://mhfxhzkdmgkaplicdszg.supabase.co';
@@ -76,21 +76,18 @@ exports.handler = async function (event) {
     // langdurig geldig zolang de gebruiker de koppeling niet intrekt) --
     // vandaar refresh_token_secret_id hier bewust null, in tegenstelling
     // tot Google Health.
-    const accessTokenSecretId = await storeWearableTokenSecret(supabaseUrl, serviceKey, accessToken, 'polar_access_' + userId);
-    if (!accessTokenSecretId) { console.error('polar-auth-callback: kon token niet veilig opslaan'); return redirectToApp('save_error'); }
-
-    const upsertRes = await fetch(`${supabaseUrl}/rest/v1/wearable_connections`, {
-      method: 'POST',
-      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({
-        user_id: userId, provider: 'polar',
-        access_token_secret_id: accessTokenSecretId, refresh_token_secret_id: null,
+    // v4.70.25 (DEC-VAULT-001): unieke secretnaam per autorisatie; de koppeling wijst pas
+    // naar het nieuwe secret als het veilig is opgeslagen, daarna wordt het oude opgeruimd.
+    const resultaat = await vervangWearableTokens({
+      supabaseUrl, serviceKey, userId, provider: 'polar', prefix: 'polar',
+      accessToken: accessToken, refreshToken: null,
+      velden: {
         token_expires_at: null, // geen vervaldatum-semantiek bij Polar AccessLink-tokens
         provider_user_id: String(polarUserId), scope: 'accesslink.read_all',
         connected_at: new Date().toISOString()
-      })
+      }
     });
-    if (!upsertRes.ok) { console.error('polar-auth-callback: opslaan connectie mislukt', upsertRes.status); return redirectToApp('save_error'); }
+    if (!resultaat.ok) { console.error('polar-auth-callback: koppeling niet opgeslagen, fase', resultaat.fase); return redirectToApp('save_error'); }
 
     return redirectToApp('connected');
   } catch (e) {

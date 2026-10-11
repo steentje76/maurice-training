@@ -24,6 +24,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- v4.70.25 (DEC-API-001): terugkeer vanuit de systeembrowser na het koppelen van
+                 een wearable. De link brengt de app alleen naar de voorgrond; hij draagt geen
+                 token of gebruikersgegeven (hooguit een statuswoord) en de app leest hem niet
+                 uit. De koppelstand komt altijd van de server (wearable-status). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="trainingskompas" android:host="wearable" />
+            </intent-filter>
+
         </activity>
 
         <provider

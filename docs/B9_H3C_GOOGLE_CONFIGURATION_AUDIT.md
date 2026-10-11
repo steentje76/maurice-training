@@ -72,3 +72,13 @@ kunnen worden bevestigd/ontkend zonder Console-toegang:
 
 Zie `docs/B9_H3C_PRODUCT_OWNER_EXTERNAL_ACTION.md` voor de exacte,
 benodigde actie.
+
+## Aanvulling 11 oktober 2026 (v4.70.25, DEC-OAUTH-001)
+
+De toets uit punt 2 hierboven is nu met productiegegevens uitgevoerd, voor één koppeling. Refresh-token van
+10 september: laatste geslaagde verversing op 15 september, daarna geen enkele meer; op 11 oktober `refresh_failed`
+(gebruikerstest, S8-REFRESH-FAILED). Het token werkte aantoonbaar 5 dagen en aantoonbaar niet meer na 9 dagen. Dat is
+geen "langer dan 7 dagen zonder klacht blijven synchroniseren" en past dus bij testmodus, zonder het te bewijzen.
+De publicatiestatus blijft **NIET VASTSTELBAAR** zonder Console-toegang; de benodigde handeling staat in DEC-OAUTH-001.
+Vanaf v4.70.25 logt de server Googles foutcode bij een mislukte refresh, zodat een volgende keer wel te zien is of
+Google het token afwees (`invalid_grant`) of zelf een storing had.

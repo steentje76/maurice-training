@@ -112,7 +112,7 @@ async function run() {
   ok(cbBad.statusCode === 302, '3a: ook bij een providerfout blijft de callback een nette redirect geven (geen 500/crash naar de browser)');
 
   // ── 4. status ──
-  storedConnection = { user_id: 'u1', provider: 'garmin', connected_at: '2026-01-01T00:00:00Z', last_sync_at: null, last_sync_status: null, access_token_secret_id: 'secret-0' };
+  storedConnection = { user_id: 'u1', provider: 'garmin', connected_at: '2026-01-01T00:00:00Z', last_sync_at: null, last_sync_status: null, access_token_secret_id: Object.keys(storedSecrets).find(function (k) { return storedSecrets[k] === 'AT_xyz'; }) };
   const statusFn = require('../netlify/functions/garmin-status.js');
   const statusRes = await statusFn.handler({ httpMethod: 'POST', headers: { authorization: 'Bearer sess' } });
   const statusBody = JSON.parse(statusRes.body);

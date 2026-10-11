@@ -6575,6 +6575,39 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/productTelemetry.js"></script>
 <script src="core/betaFeedback.js"></script>
 <script>
+/* ═══ CANONIEKE API URL RESOLVER (v4.70.25, DEC-API-001) ════════════════════════════════
+   Waarom: in de Android-app (Capacitor) is de app-origin https://localhost. Een relatief
+   pad '/.netlify/functions/<naam>' resolveert daar naar https://localhost/.netlify/... — de
+   serverfuncties staan daar niet, dus elke aanroep (koppelen, sync, coach) faalde direct.
+   Dezelfde oorzaak als bij de video's (MediaUrlResolver, MEDIA-0C), nu voor de API.
+
+   Eén plek bepaalt het adres. Op het web blijft alles relatief en dus same-origin: productie,
+   deploy-previews en lokale ontwikkeling gedragen zich exact als voorheen. Alleen in een
+   native Capacitor-runtime wordt de vaste publieke oorsprong ervoor gezet.
+
+   Veilig: alleen paden van de vorm /.netlify/functions/<naam>[?query] worden geaccepteerd,
+   de oorsprong is een vaste constante (geen invoer, geen override). Een sessietoken kan
+   hierdoor nooit naar een ander adres worden gestuurd. Onbekend/misvormd -> fout (fail closed). */
+var TkApi=(function(){
+  var API_ORIGIN='https://maurice-art.netlify.app';
+  var RE_FN=/^\/\.netlify\/functions\/[a-z0-9][a-z0-9-]*(\?[A-Za-z0-9_.~%=&+-]*)?$/;
+  function isNative(ctx){
+    try{
+      var C=(ctx&&('capacitor' in ctx))?ctx.capacitor:((typeof window!=='undefined')?window.Capacitor:null);
+      if(!C)return false;
+      if(typeof C.isNativePlatform==='function')return C.isNativePlatform()===true;
+      if(typeof C.getPlatform==='function'){ var p=C.getPlatform(); return p==='android'||p==='ios'; }
+      return false;
+    }catch(_){ return false; }
+  }
+  function origin(ctx){ return isNative(ctx)?API_ORIGIN:''; }
+  function url(path,ctx){
+    if(typeof path!=='string'||!RE_FN.test(path))throw new Error('TkApi: ongeldig functiepad');
+    return origin(ctx)+path;
+  }
+  return { API_ORIGIN:API_ORIGIN, isNative:isNative, origin:origin, url:url };
+})();
+function tkApiUrl(path){ return TkApi.url(path); }
 // MS-TELEMETRY-01 Slice C — product-telemetry emitter (canonical: core/productTelemetry.js +
 // netlify/functions/product-telemetry -> public.product_telemetry_events). Drie harde regels:
 //  1. FAIL-OPEN: telemetry kan nooit een productpad blokkeren of veranderen (alles in try/catch,
@@ -6613,7 +6646,7 @@ function tkProductTelemetry(eventId, properties){
     if(typeof SB_H==='undefined'||!SB_H||!SB_H.Authorization)return false; // ingestion is authenticated-only
     var body=JSON.stringify({ event:built.event.event, properties:props, app_version:built.event.app_version,
       environment:built.event.environment, platform:built.event.platform });
-    fetch('/.netlify/functions/product-telemetry',{ method:'POST', keepalive:true,
+    fetch(tkApiUrl('/.netlify/functions/product-telemetry'),{ method:'POST', keepalive:true,
       headers:{ 'Content-Type':'application/json', Authorization:SB_H.Authorization }, body:body }).catch(function(){});
     return true;
   }catch(_){ return false; }
@@ -6690,7 +6723,7 @@ async function tkFeedbackSubmit(){
   tkFeedbackSetStatus('Bezig met versturen…','info');
   var ok=false;
   try{
-    var res=await fetch('/.netlify/functions/beta-feedback',{ method:'POST', headers:{ 'Content-Type':'application/json', Authorization:SB_H.Authorization }, body:JSON.stringify(payload) });
+    var res=await fetch(tkApiUrl('/.netlify/functions/beta-feedback'),{ method:'POST', headers:{ 'Content-Type':'application/json', Authorization:SB_H.Authorization }, body:JSON.stringify(payload) });
     var data=null; try{ data=await res.json(); }catch(_){ data=null; }
     if(res&&res.status===201&&data&&data.ok===true){
       ok=true; tkFeedbackSetStatus('Bedankt! Je feedback is ontvangen.','ok');
@@ -6727,7 +6760,7 @@ async function tkFeedbackRenderTriageEntry(){
 }
 async function tkFeedbackTriageCall(body){
   if(typeof SB_H==='undefined'||!SB_H||!SB_H.Authorization)return { ok:false, error:'UNAUTHENTICATED' };
-  try{ var r=await fetch('/.netlify/functions/beta-feedback-triage',{ method:'POST', headers:{ 'Content-Type':'application/json', Authorization:SB_H.Authorization }, body:JSON.stringify(body) });
+  try{ var r=await fetch(tkApiUrl('/.netlify/functions/beta-feedback-triage'),{ method:'POST', headers:{ 'Content-Type':'application/json', Authorization:SB_H.Authorization }, body:JSON.stringify(body) });
     var d=null; try{ d=await r.json(); }catch(_){ d=null; }
     if(r&&r.ok&&d&&d.ok===true)return d; return { ok:false, error:(d&&d.error)||('HTTP_'+(r?r.status:0)) };
   }catch(e){ return { ok:false, error:'NETWORK' }; }
@@ -7507,7 +7540,7 @@ async function tkProviderRequest(fnPath, body){
     if(!h){ return DeviceCore.parseSyncResponse({ status:'authorization_required' }); }
     var r;
     try{
-      r = await fetch('/.netlify/functions/'+fnPath, { method:'POST', headers:Object.assign({'Content-Type':'application/json'},h), body:JSON.stringify(body||{}) });
+      r = await fetch(tkApiUrl('/.netlify/functions/'+fnPath), { method:'POST', headers:Object.assign({'Content-Type':'application/json'},h), body:JSON.stringify(body||{}) });
     }catch(netErr){ return DeviceCore.parseSyncResponse({ status:'provider_unavailable', error:'network' }); }
     if(r.status===401||r.status===403){ return DeviceCore.parseSyncResponse({ status:'authorization_required' }); }
     if(r.status===429){ return DeviceCore.parseSyncResponse({ status:'rate_limited' }); }
@@ -7563,7 +7596,7 @@ async function tkFitbitSync(){
   try{
     var h=(typeof wearableAuthHeaders==='function')?wearableAuthHeaders():null;
     if(!h){ _tkImportMsg('Opnieuw koppelen nodig'); return; }
-    var r=await fetch('/.netlify/functions/wearable-sync',{method:'POST',headers:h});
+    var r=await fetch(tkApiUrl('/.netlify/functions/wearable-sync'),{method:'POST',headers:h});
     var d=null; try{ d=await r.json(); }catch(_){}
     // map bestaand {synced,daysWritten,reason} → canoniek contract
     if(r.status===401||r.status===403) raw={status:'authorization_required'};
@@ -7609,7 +7642,7 @@ async function tkFitbitSync(){
         platform: 'browser',
         route: (typeof location !== 'undefined' && location.pathname) ? location.pathname : null
       };
-      fetch('/.netlify/functions/telemetry', { method: 'POST', headers: headers, body: JSON.stringify(payload) }).catch(function () {});
+      fetch(tkApiUrl('/.netlify/functions/telemetry'), { method: 'POST', headers: headers, body: JSON.stringify(payload) }).catch(function () {});
     } catch (e) { /* telemetrie mag nooit de app beinvloeden, ook niet bij een eigen fout */ }
   }
 
@@ -7638,7 +7671,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.23';
+const APP_VER = 'v4.70.25';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -7824,7 +7857,7 @@ async function deleteAccount(){
   if(!await confirmModal('Al je trainingsdata, profiel en geschiedenis gaan permanent verloren. Dit kan niet ongedaan worden gemaakt.',{title:'Account verwijderen',okLabel:'Verwijderen',danger:true}))return;
   if(!await confirmModal('Er is geen manier om dit terug te draaien. Definitief verwijderen?',{title:'Weet je het zeker?',okLabel:'Definitief verwijderen',danger:true}))return;
   try{
-    const r=await fetch('/.netlify/functions/delete-account',{
+    const r=await fetch(tkApiUrl('/.netlify/functions/delete-account'),{
       method:'POST',
       headers:{Authorization:'Bearer '+authSession.access_token}
     });
@@ -10899,13 +10932,28 @@ async function fetchWearableStatus(){
   const h=wearableAuthHeaders();
   if(!h)return {connected:false};
   try{
-    const r=await fetch('/.netlify/functions/wearable-status',{method:'POST',headers:h});
-    if(!r.ok)return {connected:false};
+    const r=await fetch(tkApiUrl('/.netlify/functions/wearable-status'),{method:'POST',headers:h});
+    // v4.70.25: een storing is geen "niet gekoppeld". statusUnavailable laat de schermen
+    // "Status onbekend" tonen in plaats van een koppelknop die niets oplost.
+    if(!r.ok)return {connected:false,statusUnavailable:true};
     return await r.json();
-  }catch(e){console.warn('wearable-status fout',e);return {connected:false};}
+  }catch(e){console.warn('wearable-status fout',e&&e.message);return {connected:false,statusUnavailable:true};}
+}
+// Eén vertaling van de serverstatus naar de invoer van DeviceCore.deviceConnectionState.
+// - refresh_failed en token_expired_no_refresh betekenen beide: opnieuw koppelen nodig.
+//   Voorheen telde alleen de tweede, waardoor een verlopen koppeling groen "Gekoppeld" bleef.
+// - 'error:<code>' van de server is voor de status simpelweg 'error' (laatste sync mislukt).
+// - statusUnavailable -> null: de bron is onbekend, geen aanname.
+function tkWearableConnInput(st){
+  if(!st||st.statusUnavailable)return null;
+  var s=st.lastSyncStatus||null;
+  var needsReconnect=(st.needsReconnect===true)||s==='token_expired_no_refresh'||s==='refresh_failed';
+  return { connected:!!st.connected, connectedAt:st.connectedAt||null, lastSyncAt:st.lastSyncAt||null,
+    lastSyncStatus:(typeof s==='string'&&s.indexOf('error:')===0)?'error':s,
+    tokenExpired:needsReconnect, syncing:!!st.syncing };
 }
 function fmtWearableSyncStatus(s){
-  const map={ok:'gelukt',token_expired_no_refresh:'moet opnieuw gekoppeld worden',refresh_failed:'token vernieuwen mislukt — opnieuw koppelen nodig',not_connected:'niet gekoppeld'};
+  const map={ok:'gelukt',no_new_data:'geen nieuwe gegevens',error:'fout bij sync',token_expired_no_refresh:'moet opnieuw gekoppeld worden',refresh_failed:'token vernieuwen mislukt — opnieuw koppelen nodig',not_connected:'niet gekoppeld'};
   if(!s)return '';
   if(map[s])return map[s];
   return s.startsWith('error:')?'fout bij sync':s;
@@ -10920,7 +10968,9 @@ async function renderWearableCard(){
   if(!detailEl||!actionsEl)return;
   detailEl.textContent='Laden...';actionsEl.innerHTML='';
   const st=await fetchWearableStatus();
-  if(st.connected){
+  if(st.statusUnavailable){
+    detailEl.textContent='De koppelstatus is nu niet op te halen. Probeer het later opnieuw.';
+  }else if(st.connected){
     detailEl.innerHTML=`Gekoppeld sinds ${st.connectedAt?fmtDate(st.connectedAt.split('T')[0]):'onbekend'}.<br>Laatste sync: ${st.lastSyncAt?fmtDate(st.lastSyncAt.split('T')[0]):'nog niet gesynchroniseerd'}${st.lastSyncStatus?' ('+fmtWearableSyncStatus(st.lastSyncStatus)+')':''}`;
   }else{
     detailEl.textContent='Nog niet gekoppeld.';
@@ -10931,18 +10981,49 @@ async function wearableConnect(){
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
-    const r=await fetch('/.netlify/functions/wearable-auth-start',{method:'POST',headers:h});
+    const native=TkApi.isNative();
+    // Stand vóór vertrek onthouden: bij terugkeer is een gewijzigde connectedAt het bewijs
+    // dat er een nieuwe koppeling is vastgelegd (geen afhankelijkheid van de toestelklok).
+    let vooraf=null;
+    if(native){ const st0=await fetchWearableStatus(); vooraf=st0.statusUnavailable?undefined:(st0.connectedAt||null); }
+    const r=await fetch(tkApiUrl('/.netlify/functions/wearable-auth-start'),{method:'POST',
+      headers:Object.assign({'Content-Type':'application/json'},h),body:JSON.stringify(native?{client:'android'}:{})});
     const d=await r.json();
     if(!r.ok||!d.authUrl){toast('Koppelen mislukt: '+(d.error?.message||r.status));return;}
-    window.location.href=d.authUrl; // volledige redirect — komt terug via wearable-auth-callback
+    if(native){
+      // Android: Google staat geen aanmelding in een ingebedde webview toe. De toestemming
+      // loopt via de systeembrowser; de app blijft op de achtergrond open en haalt bij
+      // terugkeer zelf de nieuwe stand op (tkWearableCheckReturn, visibilitychange).
+      _tkWearablePending={startedAt:Date.now(),vooraf:vooraf};
+      toast('Geef toestemming in de browser en kom daarna terug naar de app');
+    }
+    window.location.href=d.authUrl; // web: volledige redirect — komt terug via wearable-auth-callback
   }catch(e){toast('Verbindingsfout bij koppelen');}
+}
+// Terugkeer vanuit de systeembrowser (Android). Alleen actief na een zelf gestarte koppeling
+// en hooguit 15 minuten (de koppelpoging zelf verloopt server-side na 10).
+var _tkWearablePending=null;
+var TK_WEARABLE_RETURN_MS=15*60*1000;
+async function tkWearableCheckReturn(){
+  const p=_tkWearablePending;
+  if(!p)return false;
+  if(Date.now()-p.startedAt>TK_WEARABLE_RETURN_MS){ _tkWearablePending=null; return false; }
+  const st=await fetchWearableStatus();
+  if(st.statusUnavailable)return false;            // later opnieuw, de vlag blijft staan
+  const nieuw=!!st.connected && !st.needsReconnect && p.vooraf!==undefined && (st.connectedAt||null)!==p.vooraf;
+  try{ renderWearableCard(); tkVerversGegevensScherm(); }catch(_){}
+  if(!nieuw)return false;
+  _tkWearablePending=null;
+  toast('Wearable gekoppeld!');
+  wearableSyncNow();
+  return true;
 }
 async function wearableDisconnect(){
   if(!await confirmModal('Automatische sync van HRV/RHR/slaap stopt dan.',{title:'Wearable loskoppelen',okLabel:'Loskoppelen',danger:true}))return;
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
-    const r=await fetch('/.netlify/functions/wearable-disconnect',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/wearable-disconnect'),{method:'POST',headers:h});
     if(!r.ok){toast('Loskoppelen mislukt');return;}
     toast('Losgekoppeld');
     renderWearableCard();
@@ -10969,7 +11050,7 @@ async function wearableSyncNow(){
   if(!h){toast('Geen actieve sessie');return;}
   toast('Synchroniseren...');
   try{
-    const r=await fetch('/.netlify/functions/wearable-sync',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/wearable-sync'),{method:'POST',headers:h});
     const d=await r.json();
     // v4.29.1: geen technische foutcode/reason meer in de UI. De server logt de code
     // (AUTH_ERROR/TOKEN_REFRESH_ERROR/FITBIT_API_ERROR/RATE_LIMIT/...) veilig server-side.
@@ -10994,7 +11075,7 @@ async function wearableSyncNow(){
     // afgeronde, succesvolle HRV/RHR/slaap/stappen-sync niet verstoren of
     // overschrijven met een foutmelding.
     try{
-      const ar=await fetch('/.netlify/functions/wearable-sync-activities',{method:'POST',headers:h});
+      const ar=await fetch(tkApiUrl('/.netlify/functions/wearable-sync-activities'),{method:'POST',headers:h});
       const ad=await ar.json();
       if(ad&&ad.synced&&ad.imported>0){
         toast(ad.imported+' training'+(ad.imported===1?'':'en')+' bijgewerkt vanaf Google Health');
@@ -11048,7 +11129,7 @@ async function fetchPolarStatus(){
   const h=wearableAuthHeaders();
   if(!h)return {connected:false};
   try{
-    const r=await fetch('/.netlify/functions/polar-status',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/polar-status'),{method:'POST',headers:h});
     if(!r.ok)return {connected:false};
     return await r.json();
   }catch(e){console.warn('polar-status fout',e);return {connected:false};}
@@ -11057,7 +11138,7 @@ async function polarConnect(){
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
-    const r=await fetch('/.netlify/functions/polar-auth-start',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/polar-auth-start'),{method:'POST',headers:h});
     const d=await r.json();
     if(!r.ok||!d.authUrl){toast('Koppelen mislukt: '+(d.error?.message||r.status));return;}
     window.location.href=d.authUrl;
@@ -11068,7 +11149,7 @@ async function polarDisconnect(){
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
-    const r=await fetch('/.netlify/functions/polar-disconnect',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/polar-disconnect'),{method:'POST',headers:h});
     if(!r.ok){toast('Loskoppelen mislukt');return;}
     toast('Losgekoppeld');
     tkVerversGegevensScherm();
@@ -11079,7 +11160,7 @@ async function polarSyncNow(){
   if(!h){toast('Geen actieve sessie');return;}
   toast('Synchroniseren met Polar...');
   try{
-    const r=await fetch('/.netlify/functions/polar-sync',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/polar-sync'),{method:'POST',headers:h});
     const d=await r.json();
     if(!r.ok||!d.synced){toast('Synchroniseren met Polar mislukt — probeer het later opnieuw');tkVerversGegevensScherm();return;}
     toast(d.imported>0?(d.imported+' training'+(d.imported===1?'':'en')+' bijgewerkt vanaf Polar'):'Verbonden met Polar — geen nieuwe trainingen gevonden');
@@ -11099,7 +11180,7 @@ async function fetchGarminStatus(){
   const h=wearableAuthHeaders();
   if(!h)return {connected:false};
   try{
-    const r=await fetch('/.netlify/functions/garmin-status',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/garmin-status'),{method:'POST',headers:h});
     if(!r.ok)return {connected:false};
     return await r.json();
   }catch(e){console.warn('garmin-status fout',e);return {connected:false};}
@@ -11109,7 +11190,7 @@ async function garminDisconnect(){
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
-    const r=await fetch('/.netlify/functions/garmin-disconnect',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/garmin-disconnect'),{method:'POST',headers:h});
     if(!r.ok){toast('Loskoppelen mislukt');return;}
     toast('Losgekoppeld');
     tkVerversGegevensScherm();
@@ -11123,7 +11204,7 @@ async function fetchWhoopStatus(){
   const h=wearableAuthHeaders();
   if(!h)return {connected:false};
   try{
-    const r=await fetch('/.netlify/functions/whoop-status',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/whoop-status'),{method:'POST',headers:h});
     if(!r.ok)return {connected:false};
     return await r.json();
   }catch(e){console.warn('whoop-status fout',e);return {connected:false};}
@@ -11132,7 +11213,7 @@ async function whoopConnect(){
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
-    const r=await fetch('/.netlify/functions/whoop-auth-start',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/whoop-auth-start'),{method:'POST',headers:h});
     const d=await r.json();
     if(!r.ok||!d.authUrl){toast('Koppelen mislukt: '+(d.error?.message||r.status));return;}
     window.location.href=d.authUrl;
@@ -11143,7 +11224,7 @@ async function whoopDisconnect(){
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
-    const r=await fetch('/.netlify/functions/whoop-disconnect',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/whoop-disconnect'),{method:'POST',headers:h});
     if(!r.ok){toast('Loskoppelen mislukt');return;}
     toast('Losgekoppeld');
     tkVerversGegevensScherm();
@@ -11154,7 +11235,7 @@ async function whoopSyncNow(){
   if(!h){toast('Geen actieve sessie');return;}
   toast('Synchroniseren met WHOOP...');
   try{
-    const r=await fetch('/.netlify/functions/whoop-sync',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/whoop-sync'),{method:'POST',headers:h});
     const d=await r.json();
     if(!r.ok||!d.synced){toast('Synchroniseren met WHOOP mislukt — probeer het later opnieuw');tkVerversGegevensScherm();return;}
     toast(d.imported>0?(d.imported+' training'+(d.imported===1?'':'en')+' bijgewerkt vanaf WHOOP'):'Verbonden met WHOOP — geen nieuwe trainingen gevonden');
@@ -11170,7 +11251,7 @@ async function fetchOuraStatus(){
   const h=wearableAuthHeaders();
   if(!h)return {connected:false};
   try{
-    const r=await fetch('/.netlify/functions/oura-status',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/oura-status'),{method:'POST',headers:h});
     if(!r.ok)return {connected:false};
     return await r.json();
   }catch(e){console.warn('oura-status fout',e);return {connected:false};}
@@ -11179,7 +11260,7 @@ async function ouraConnect(){
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
-    const r=await fetch('/.netlify/functions/oura-auth-start',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/oura-auth-start'),{method:'POST',headers:h});
     const d=await r.json();
     if(!r.ok||!d.authUrl){toast('Koppelen mislukt: '+(d.error?.message||r.status));return;}
     window.location.href=d.authUrl;
@@ -11190,7 +11271,7 @@ async function ouraDisconnect(){
   const h=wearableAuthHeaders();
   if(!h){toast('Geen actieve sessie');return;}
   try{
-    const r=await fetch('/.netlify/functions/oura-disconnect',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/oura-disconnect'),{method:'POST',headers:h});
     if(!r.ok){toast('Loskoppelen mislukt');return;}
     toast('Losgekoppeld');
     tkVerversGegevensScherm();
@@ -11201,7 +11282,7 @@ async function ouraSyncNow(){
   if(!h){toast('Geen actieve sessie');return;}
   toast('Synchroniseren met Oura...');
   try{
-    const r=await fetch('/.netlify/functions/oura-sync',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/oura-sync'),{method:'POST',headers:h});
     const d=await r.json();
     if(!r.ok||!d.synced){toast('Synchroniseren met Oura mislukt — probeer het later opnieuw');tkVerversGegevensScherm();return;}
     toast(d.imported>0?(d.imported+' training'+(d.imported===1?'':'en')+' bijgewerkt vanaf Oura'):'Verbonden met Oura — geen nieuwe trainingen gevonden');
@@ -11235,7 +11316,7 @@ async function checkTeamAccess(){
   const h=wearableAuthHeaders();
   if(!h)return; // geen sessie -- blijft UNRESOLVED, fail closed
   try{
-    const r=await fetch('/.netlify/functions/gym-team',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'whoami'})});
+    const r=await fetch(tkApiUrl('/.netlify/functions/gym-team'),{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'whoami'})});
     if(!r.ok)return; // whoami-fout -- blijft UNRESOLVED, NIET als solo behandelen
     const d=await r.json();
     teamRoleLevel=d.gymRoleLevel ?? -1;
@@ -11272,7 +11353,7 @@ async function resetForgottenPin(btnEl){
     if(!/^\d{4,8}$/.test(newPin)){errEl.textContent='Pincode moet 4-8 cijfers zijn';return;}
     const h=wearableAuthHeaders();
     if(!h){errEl.textContent='Geen sessie — log opnieuw in';return;}
-    const r=await fetch('/.netlify/functions/gym-team-set-pin',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({newPin})});
+    const r=await fetch(tkApiUrl('/.netlify/functions/gym-team-set-pin'),{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({newPin})});
     const d=await r.json();
     if(!r.ok){errEl.textContent=d.error?.message||'Instellen mislukt';return;}
     teamPin=newPin;
@@ -11321,7 +11402,7 @@ async function loadTeamMembers(){
   const h=wearableAuthHeaders();
   const listEl=document.getElementById('team-members-list');
   try{
-    const r=await fetch('/.netlify/functions/gym-team',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'list',pin:teamPin})});
+    const r=await fetch(tkApiUrl('/.netlify/functions/gym-team'),{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'list',pin:teamPin})});
     const d=await r.json();
     if(!r.ok){document.getElementById('team-pin-err').textContent=d.error?.message||'Mislukt';return false;}
     listEl.innerHTML=(d.members||[]).map(m=>`
@@ -11340,7 +11421,7 @@ async function loadTeamMembers(){
 async function changeTeamRole(userId,newRole,selectEl){
   const h=wearableAuthHeaders();
   try{
-    const r=await fetch('/.netlify/functions/gym-team',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'update_role',pin:teamPin,targetUserId:userId,newRole})});
+    const r=await fetch(tkApiUrl('/.netlify/functions/gym-team'),{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'update_role',pin:teamPin,targetUserId:userId,newRole})});
     const d=await r.json();
     if(!r.ok){toast('Mislukt: '+(d.error?.message||r.status));loadTeamMembers();return;}
     toast('Rol bijgewerkt');
@@ -11351,7 +11432,7 @@ async function loadTeamAuditLog(){
   const logEl=document.getElementById('team-log-tab');
   logEl.textContent='Laden...';
   try{
-    const r=await fetch('/.netlify/functions/gym-team',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'audit_log',pin:teamPin})});
+    const r=await fetch(tkApiUrl('/.netlify/functions/gym-team'),{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'audit_log',pin:teamPin})});
     const d=await r.json();
     if(!r.ok){logEl.textContent='Mislukt: '+(d.error?.message||r.status);return;}
     const actionLabels={role_changed:'Rol gewijzigd',coach_pin_changed:'Coach-pincode gewijzigd'};
@@ -11368,7 +11449,7 @@ async function submitNewTeamPin(){
   if(!/^\d{4,8}$/.test(newPin)){toast('Pincode moet 4-8 cijfers zijn');return;}
   const h=wearableAuthHeaders();
   try{
-    const r=await fetch('/.netlify/functions/gym-team-set-pin',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({newPin})});
+    const r=await fetch(tkApiUrl('/.netlify/functions/gym-team-set-pin'),{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({newPin})});
     const d=await r.json();
     if(!r.ok){toast('Mislukt: '+(d.error?.message||r.status));return;}
     toast('Coach-pincode gewijzigd');
@@ -11396,6 +11477,8 @@ document.addEventListener('visibilitychange',async()=>{
     _sbSessieVerlopenGemeld=false;
   }
   flushOfflineQueue();
+  // v4.70.25: terug uit de browser na het koppelen van een wearable (Android) -> stand verversen.
+  try{ if(typeof tkWearableCheckReturn==='function') tkWearableCheckReturn(); }catch(_){}
 });
 
 // ══════════════════════════════════════════════════════════
@@ -11905,7 +11988,7 @@ function intakeApplyCorrection(mutations){
 async function intakeAiExtract(q,txt){
   try{
     const sys=ocore().buildExtractionPrompt(q);
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'intake_extract',model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:txt}]})});
+    const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'intake_extract',model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:txt}]})});
     const d=await res.json();
     if(d.error||!d.content||!d.content[0])return null;
     const m=String(d.content[0].text||'').match(/\{[\s\S]*\}/);
@@ -12380,7 +12463,7 @@ async function calendarFeedGenerate(){
 }
 function calendarFeedShowLink(){
   if(!calendarFeedPlaintextCache){ toast('Link niet meer beschikbaar in dit scherm — maak indien nodig een nieuwe aan (intrekken + opnieuw aanmaken).'); return; }
-  const url=window.location.origin+'/.netlify/functions/calendar-feed?token='+calendarFeedPlaintextCache;
+  const url=(TkApi.origin()||window.location.origin)+'/.netlify/functions/calendar-feed?token='+calendarFeedPlaintextCache; // Android: de publieke oorsprong, niet https://localhost
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).catch(function(){}); }
   toast('Link gekopieerd. Voeg toe via "Abonneren op agenda" in je agenda-app.');
 }
@@ -13473,7 +13556,7 @@ async function renderResearchConsentCard(){
 // sessie -- kan nooit andermans data ophalen (zie migratie_v531.sql).
 async function downloadResearchExport(){
   try{
-    const res=await fetch('/.netlify/functions/research-export',{method:'POST',headers:{Authorization:SB_H.Authorization,'Content-Type':'application/json'}});
+    const res=await fetch(tkApiUrl('/.netlify/functions/research-export'),{method:'POST',headers:{Authorization:SB_H.Authorization,'Content-Type':'application/json'}});
     if(!res.ok){toast('Export mislukt');return;}
     const data=await res.json();
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
@@ -18227,7 +18310,7 @@ async function genereerProgramma(){
     const varietyTekst=buildVarietyTekst(gebruiktIds,recentIds,exercises);
     const sys=buildWeekPrompt(wk,weken,dagDuren,doel,sportLabel,sportBlockTekst,profielTekst,bibliotheek,faseNaam,varietyTekst,blessureContext);
     try{
-const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'program_generation',model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
+const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'program_generation',model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
       const d=await res.json();
       if(d.error){statusEl.textContent='Fout in week '+wk+': '+d.error.message+(allBlocks.length?' — eerdere weken blijven staan.':'');break;}
       const parsed=parseProgrammaJSON(d.content[0].text,exercises);
@@ -18613,7 +18696,7 @@ async function heergenereerResterendeWeken(progId,btnEl){
     const varietyTekst=buildVarietyTekst(gebruiktIds,recentIds,exercises);
     const sys=buildWeekPrompt(wk,maxWeek,dagDuren,prog.doel,sportLabel,sportBlockTekst,profielTekst,bibliotheek,faseNaam,varietyTekst,voortgangContext);
     try{
-const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'program_generation',model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
+const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'program_generation',model:'claude-sonnet-4-5',max_tokens:1500,system:sys,messages:[{role:'user',content:'Genereer week '+wk+'.'}]})});
       const d=await res.json();
       if(d.error){toast('Fout bij week '+wk+': '+d.error.message);break;}
       const parsed=parseProgrammaJSON(d.content[0].text,exercises);
@@ -24216,7 +24299,7 @@ Coaching-context (JSON): ${JSON.stringify(_ctx)}`;
   const sys=`Je bent de persoonlijke krachtcoach van deze sporter. Geef een korte, persoonlijke terugblik op de zojuist afgeronde Training ${t}, in het Nederlands, alsof je naast hem staat. Spreek de sporter direct aan ("je"). Max 3-4 zinnen. Verbind de cijfers aan betekenis: benoem concrete progressie (bv. "je verhoogde je bankdrukken met 2,5 kg terwijl je RPE beheerst bleef"), koppel het volume en de gemiddelde RPE aan hoe gecontroleerd de sessie was, en sluit af met één concrete focus voor de volgende keer (meestal techniek of een kleine progressie-stap). Geen opsomming van elke set, geen bulletlijst, geen opvulling, geen bevestigingszinnen zoals "Goed gedaan!". Warm en concreet.${coachBlock}
 Sessiedata (JSON): ${JSON.stringify(summaryData)}`;
   try{
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'session_summary',model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:'Geef de samenvatting.'}]})});
+    const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'session_summary',model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:'Geef de samenvatting.'}]})});
     const d=await res.json();
     if(d.error)return detConclusion||null;
     const tekst=(d.content&&d.content[0]&&d.content[0].text)||null;
@@ -26665,7 +26748,7 @@ async function voedingOffLookup(barcode){
   if(!authSession?.access_token) return {status:'AUTH_REQUIRED'};
   var r;
   try{
-    r=await fetch('/.netlify/functions/nutrition-off-lookup',{
+    r=await fetch(tkApiUrl('/.netlify/functions/nutrition-off-lookup'),{
       method:'POST',
       headers:{'Content-Type':'application/json',Authorization:'Bearer '+authSession.access_token},
       body:JSON.stringify({barcode:barcode})
@@ -27774,7 +27857,7 @@ async function voedingKennisAiSubmit(topicId){
     // vervolgvraag samengevoegde) vrije vraag + het begrensde evidence-
     // pakket worden verstuurd -- GEEN trainingshistorie, GEEN lichaamsdata,
     // GEEN volledige knowledge base, GEEN onbeperkte chatgeschiedenis.
-    var res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'knowledge_chat',model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:vraag}]})});
+    var res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'knowledge_chat',model:'claude-sonnet-4-5',max_tokens:500,system:sys,messages:[{role:'user',content:vraag}]})});
     var d=await res.json();
     if(d.error){
       if(answerArea) answerArea.innerHTML='<div class="nk-ai-answer-card">'+escHtml(commercialErrorMessage(d.error,'de Kennis-AI'))+'</div>';
@@ -29938,7 +30021,7 @@ async function sendMsg(txt){
   const tid=addMsg('coach','<span class="tk-typing"><span></span><span></span><span></span></span>',true,true);
   try{
     const sys=await buildCtx(activeSessionCtx);
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
+    const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
     const d=await res.json();
     if(d.error){removeMsg(tid);console.warn('coach error',d.error);addMsg('coach',commercialErrorMessage(d.error,'de Trainingskompas Coach'));}
     else{
@@ -30765,7 +30848,7 @@ async function submitShare(btnEl){
     if(!email){errEl.textContent='Vul een e-mailadres in';return;}
     const h=wearableAuthHeaders();
     if(!h){errEl.textContent='Geen sessie — log opnieuw in';return;}
-    const lr=await fetch('/.netlify/functions/gym-team',{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'lookup_teammate',email})});
+    const lr=await fetch(tkApiUrl('/.netlify/functions/gym-team'),{method:'POST',headers:{...h,'Content-Type':'application/json'},body:JSON.stringify({action:'lookup_teammate',email})});
     const ld=await lr.json();
     if(!lr.ok){errEl.textContent=ld.error?.message||'Niet gevonden';return;}
     const ok=await sbPost('content_shares',{content_type:shareCtx.contentType,content_id:shareCtx.contentId,shared_with:ld.id});
@@ -31183,7 +31266,7 @@ function buildSessionIntroTekst(faseNaam,weekNr,progDoel,oefeningNamen){
 async function generateProgAdviesAI(adj){
   const sys=`Je bent een trainingscoach die in 1-2 korte zinnen mondeling uitlegt waarom je een lichtere training voorstelt vandaag. Baseer je op deze data (JSON), maar noem niet elk cijfer letterlijk op: ${JSON.stringify(adj.redenen)}. Warme, directe coach-toon. Geen aanhef, geen afsluiting, geen opsomming.`;
   try{
-    const res=await fetch('/.netlify/functions/coach',{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:'Leg het kort uit.'}]})});
+    const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:200,system:sys,messages:[{role:'user',content:'Leg het kort uit.'}]})});
     const d=await res.json();
     if(d.error)return null;
     const tekst=d.content[0].text.trim();
@@ -32859,11 +32942,8 @@ async function renderLichaamDataStatus(OBS){
   let sync = null;
   try{
     const st = await fetchWearableStatus();
-    sync = dc.deviceConnectionState({
-      connected: !!st.connected, connectedAt: st.connectedAt || null,
-      lastSyncAt: st.lastSyncAt || null, lastSyncStatus: st.lastSyncStatus || null,
-      tokenExpired: st.lastSyncStatus === 'token_expired_no_refresh', syncing: !!st.syncing
-    }, { now: new Date().toISOString() });
+    const inp = tkWearableConnInput(st);
+    sync = inp ? dc.deviceConnectionState(inp, { now: new Date().toISOString() }) : null;
   }catch(_){ sync = null; }
   // Lichaam 2.0: het metric-detailscherm leest exact dezelfde bronstand — geen tweede
   // statusafleiding en geen extra netwerkverzoek per detailscherm.
@@ -33254,11 +33334,8 @@ async function _renderLichaamGegevens(el){
   let sync=null;
   try{
     const st=await fetchWearableStatus();
-    sync=dc.deviceConnectionState({
-      connected:!!st.connected, connectedAt:st.connectedAt||null,
-      lastSyncAt:st.lastSyncAt||null, lastSyncStatus:st.lastSyncStatus||null,
-      tokenExpired:st.lastSyncStatus==='token_expired_no_refresh', syncing:!!st.syncing
-    },{now:new Date().toISOString()});
+    const inp=tkWearableConnInput(st);
+    sync=inp?dc.deviceConnectionState(inp,{now:new Date().toISOString()}):null;
   }catch(_){ sync=null; }
 
   // Devices/Wearables V1 MUST-vervolg — Polar (self-serve, geen
@@ -33373,6 +33450,12 @@ async function _renderLichaamGegevens(el){
   };
 
   const gekoppeld = !!(sync && sync.connected);
+  // Eén koppelknop: bij een verlopen koppeling heet hij "Opnieuw koppelen". De server vervangt
+  // de koppeling veilig (DEC-VAULT-001), dus eerst loskoppelen is niet nodig.
+  const herkoppelen = !!(sync && sync.status==='token_expired');
+  // Groen alleen bij een werkende koppeling; verlopen of mislukt krijgt de waarschuwingskleur.
+  const koppelKleur = !gekoppeld ? 'var(--g4)' : ((sync.status==='token_expired'||sync.status==='sync_failed') ? 'var(--status-warn)' : 'var(--status-good)');
+  const koppelKnop = '<button class="btn btn-r btn-sm" style="flex:1" onclick="wearableConnect()">'+(herkoppelen?'Opnieuw koppelen':'Fitbit koppelen')+'</button>';
   const koppelStatus = !sync ? 'Status onbekend'
     : (sync.status==='not_connected' ? 'Niet gekoppeld'
     : (sync.status==='token_expired' ? 'Opnieuw koppelen nodig'
@@ -33427,19 +33510,22 @@ async function _renderLichaamGegevens(el){
     '<div class="card" style="padding:13px 14px">'+
       '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">'+
         '<div style="font-size:13px;font-weight:800;color:var(--dark)">Fitbit</div>'+
-        '<div style="font-size:11px;font-weight:800;color:'+(gekoppeld?'var(--status-good)':'var(--g4)')+'">'+escHtml(koppelStatus)+'</div></div>'+
+        '<div style="font-size:11px;font-weight:800;color:'+koppelKleur+'">'+escHtml(koppelStatus)+'</div></div>'+
       (koppelRegels.length?'<div style="font-size:11.5px;color:var(--g4);font-weight:600;margin-top:5px;line-height:1.5">'+escHtml(koppelRegels.join(' · '))+'</div>':'')+
       '<div style="font-size:11px;color:var(--g3);font-weight:600;margin-top:6px;line-height:1.5">'+
         (viaWearable.length
           ? 'Levert nu: '+escHtml(viaWearable.join(', '))+'.'
+          : (!sync ? 'De koppelstatus is nu niet op te halen. Je gegevens zijn ongewijzigd.'
           : (gekoppeld ? 'Er zijn nog geen metingen binnengekomen via deze koppeling.'
-                       : 'Koppel je Fitbit om HRV, rusthartslag en slaap automatisch aan te vullen.'))+
+                       : 'Koppel je Fitbit om HRV, rusthartslag en slaap automatisch aan te vullen.')))+
       '</div>'+
       '<div style="display:flex;gap:8px;margin-top:11px">'+
-        (gekoppeld
-          ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="wearableSyncNow()">Sync nu</button>'+
-            '<button class="btn btn-o btn-sm" style="flex:1" onclick="wearableDisconnect()">Loskoppelen</button>'
-          : '<button class="btn btn-r btn-sm" style="flex:1" onclick="wearableConnect()">Fitbit koppelen</button>')+
+        (!sync
+          ? '<button class="btn btn-o btn-sm" style="flex:1" onclick="renderLichaamGegevens()">Opnieuw proberen</button>'
+          : (gekoppeld
+            ? (herkoppelen ? koppelKnop : '<button class="btn btn-o btn-sm" style="flex:1" onclick="wearableSyncNow()">Sync nu</button>')+
+              '<button class="btn btn-o btn-sm" style="flex:1" onclick="wearableDisconnect()">Loskoppelen</button>'
+            : koppelKnop))+
       '</div>'+
     '</div>'+
 
@@ -35112,7 +35198,7 @@ async function startAppAfterAuth(){
   updateOfflineBadge();
   flushOfflineQueue();
   handleWearableRedirect();
-  fetchWearableStatus().then(st=>{if(st.connected)wearableSyncSilent();});
+  fetchWearableStatus().then(st=>{if(st.connected&&!st.needsReconnect)wearableSyncSilent();});
 }
 // Stille variant van wearableSyncNow — geen toasts, voor automatische sync bij opstart.
 // Faalt geluidloos (status is zichtbaar in het Wearable-beheerscherm als er iets misgaat).
@@ -35120,7 +35206,7 @@ async function wearableSyncSilent(){
   const h=wearableAuthHeaders();
   if(!h)return;
   try{
-    const r=await fetch('/.netlify/functions/wearable-sync',{method:'POST',headers:h});
+    const r=await fetch(tkApiUrl('/.netlify/functions/wearable-sync'),{method:'POST',headers:h});
     if(r.ok){const d=await r.json();if(d.synced)refreshHome();}
   }catch(e){/* stil falen, zie last_sync_status in beheerscherm */}
 }

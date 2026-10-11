@@ -71,6 +71,7 @@ function zandbak(opts) {
     authSession: opts.loggedIn === false ? null : { access_token: 'tok-123' },
     fetch: opts.fetchImpl || function () { return Promise.reject(new Error('geen fetchImpl in test-opzet')); },
     toast: function (m) { toasts.push(m); },
+    tkApiUrl: function (p) { return p; }, // web: relatief pad (TkApi, DEC-API-001)
     go: function (id) { gos.push(id); }
   };
   vm.createContext(ctx);

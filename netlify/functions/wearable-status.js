@@ -22,14 +22,19 @@ exports.handler = async function (event) {
       `${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.google_health&select=connected_at,last_sync_at,last_sync_status&limit=1`,
       { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
     );
-    const rows = await r.json();
+    // Een storing is geen "niet gekoppeld": bij een mislukte lookup een fout teruggeven,
+    // zodat de app "status onbekend" toont in plaats van een koppelknop.
+    const rows = r.ok ? await r.json() : null;
+    if (!Array.isArray(rows)) return { statusCode: 502, body: JSON.stringify({ error: { message: 'Koppelstatus niet beschikbaar' } }) };
     const row = rows[0];
+    // Opnieuw koppelen is nodig wanneer het token niet meer te vernieuwen is.
+    const needsReconnect = !!row && (row.last_sync_status === 'refresh_failed' || row.last_sync_status === 'token_expired_no_refresh');
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(row
-        ? { connected: true, provider: 'google_health', connectedAt: row.connected_at, lastSyncAt: row.last_sync_at, lastSyncStatus: row.last_sync_status }
+        ? { connected: true, provider: 'google_health', connectedAt: row.connected_at, lastSyncAt: row.last_sync_at, lastSyncStatus: row.last_sync_status, needsReconnect }
         : { connected: false }
       )
     };
@@ -37,3 +42,6 @@ exports.handler = async function (event) {
     return { statusCode: 500, body: JSON.stringify({ error: { message: 'Serverfout: ' + e.message } }) };
   }
 };
+
+// v4.70.25 (DEC-API-001): bereikbaar vanuit de Android-app (zie _cors.js). Web ongewijzigd.
+exports.handler = require('./_cors.js').withCors(exports.handler);

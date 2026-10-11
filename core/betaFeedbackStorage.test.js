@@ -17,7 +17,7 @@ let pass = 0, fail = 0, finished = false, mute = false;
 process.on('exit', c => { if (!finished && c === 0) { console.log('MISLUKT: test eindigde zonder samenvatting'); process.exitCode = 1; } });
 const ok = (c, m) => { if (c) pass++; else { fail++; if (!mute) console.log('MISLUKT: ' + m); } };
 const eq = (a, b, m) => ok(a === b, m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')');
-function load(src) { const m = { exports: {} }; new Function('module', 'exports', 'require', 'process', 'Buffer', src)(m, m.exports, p => (/betaFeedback\.js$/.test(p) ? BF : require(p)), { env: {} }, Buffer); return m.exports._internal; }
+function load(src) { const m = { exports: {} }; new Function('module', 'exports', 'require', 'process', 'Buffer', src)(m, m.exports, p => (/betaFeedback\.js$/.test(p) ? BF : (/_cors\.js$/.test(p) ? require(path.join(ROOT, 'netlify/functions/_cors.js')) : require(p))), { env: {} }, Buffer); return m.exports._internal; }
 
 const UA = '11111111-1111-4111-8111-111111111111', UB = '22222222-2222-4222-8222-222222222222';
 const ENV = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'svc-key', SUPABASE_ANON_KEY: 'anon-key' };

@@ -121,3 +121,6 @@ async function markSyncStatus(supabaseUrl, sbHeaders, userId, status) {
     body: JSON.stringify({ last_sync_at: new Date().toISOString(), last_sync_status: status })
   });
 }
+
+// v4.70.25 (DEC-API-001): bereikbaar vanuit de Android-app (zie _cors.js). Web ongewijzigd.
+exports.handler = require('./_cors.js').withCors(exports.handler);

@@ -34,6 +34,9 @@ eq(withPlan.trainingsadvies.soort,'aangepast','B9 unchanged muscle-specific deci
 const insufficient=D.readinessDay({...base,trainingGepland:true,signalen:{...base.signalen,spierherstel:null}});
 eq(insufficient.herstel,null,'B10 no score when plan exists but muscle evidence missing');
 ok(insufficient.ontbreekt.includes('herstelscore'),'B11 score unavailable reason');
+eq(insufficient.trainingsadvies.soort,'geen_advies','B11a incomplete plan must not issue ungrounded unchanged-training advice');
+eq(insufficient.aanpassing,null,'B11b no adaptation decision with incomplete muscle evidence');
+eq(C.readinessAiPayload(C.buildReadinessContext({besluit:insufficient})).trainingsadvies.soort,'geen_advies','B11c AI payload inherits fail-closed Decision advice');
 const badDay=D.readinessDay({...base,trainingGepland:false,dagfactor:null});
 eq(badDay.zone,null,'B12 no day-readiness claim without dayfactor');
 const idx=fs.readFileSync(path.join(root,'index.html'),'utf8');

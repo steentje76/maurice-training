@@ -397,7 +397,10 @@
     var zone = zoneRuw.cls === 'g' ? 'ready' : (zoneRuw.cls === 'y' ? 'caution' : 'reduce');
     var tekst = READINESS_ZONE_TEKST[zone];
 
-    var aanpassing = heeftPlan ? computeProgAdjustment(factor, sig.spierherstel || [], sig.gevoel || null, sig.pijn || null) : null;
+    // Nieuwe expliciete planscope: zonder bewezen herstelscore mag ook 'ongewijzigd'
+    // niet als trainingsadvies naar scherm of AI lekken. Legacy-aanroepers blijven compatible.
+    var adviesMogelijk = heeftPlan && (i.trainingGepland !== true || !!herstel);
+    var aanpassing = adviesMogelijk ? computeProgAdjustment(factor, sig.spierherstel || [], sig.gevoel || null, sig.pijn || null) : null;
     var betekenis = heeftPlan ? tekst.betekenis :
       (zone === 'ready' ? 'De dagfactor is gunstig; zonder geplande training volgt geen trainingsspecifiek hersteloordeel.' :
        zone === 'caution' ? 'De dagfactor vraagt om aandacht; er is geen training geselecteerd.' :
@@ -412,7 +415,7 @@
       dagthema: dayZone(factor),                               // dayzone.v1 — bestaand
       zone: zone, zoneLabel: tekst.label, zoneBetekenis: betekenis,
       aanpassing: aanpassing,
-      trainingsadvies: !heeftPlan
+      trainingsadvies: !adviesMogelijk
         ? { soort: 'geen_advies', setsDelta: 0, rpeDelta: 0 }
         : aanpassing
           ? { soort: 'aangepast', setsDelta: aanpassing.setsDelta || 0, rpeDelta: aanpassing.rpeDelta || 0 }

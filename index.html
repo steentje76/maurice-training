@@ -8525,11 +8525,30 @@ function tkCustomTrainingPatch(id,body,opts){
   _tkTrainingOuder[id]=p;
   return p;
 }
-// Vergelijkt de inhoud die voor de sporter telt: naam en oefeningen (volgorde, sets, herhalingen, RPE,
-// rust, keuze). Metadata (jsonb, sleutelvolgorde kan wijzigen) bewust niet.
+// Legacy trainingen slaan oefeningen alleen op in 'exercises'; Builder gebruikt exercise_targets.
+// Herstel en inhoudsvergelijking moeten dezelfde canonieke oefenlijst gebruiken.
+function tkTrainingOefendoelen(t){
+  if(t&&Array.isArray(t.exercise_targets))return t.exercise_targets;
+  return ((t&&t.exercises)||[]).map(function(exercise_id){return {exercise_id:exercise_id};});
+}
+// Vergelijk alle bewerkbare traininggegevens voordat de lokale pending-status wordt opgeheven.
+// JSONB-sleutelvolgorde kan op de server veranderen: canoniseer metadata recursief.
 function tkTrainingInhoud(t){
   const n=function(v){ return v==null?null:String(v); };
-  return JSON.stringify([n(t&&t.name),((t&&t.exercise_targets)||[]).map(function(e){ return [n(e.exercise_id),n(e.sets),n(e.reps),n(e.rpe),n(e.rest),n(e.pick)]; })]);
+  const canonical=function(v){
+    if(v==null)return null;
+    if(Array.isArray(v))return v.map(canonical);
+    if(typeof v==='object'){
+      const out={};
+      Object.keys(v).sort().forEach(function(k){ if(v[k]!==undefined)out[k]=canonical(v[k]); });
+      return out;
+    }
+    return v;
+  };
+  return JSON.stringify([
+    n(t&&t.name), n((t&&t.color)||'#111111'), n((t&&t.note)||''), canonical(t&&t.metadata),
+    tkTrainingOefendoelen(t).map(function(e){ return [n(e.exercise_id),n(e.sets),n(e.reps),n(e.rpe),n(e.rest),n(e.pick)]; })
+  ]);
 }
 function tkWachtrijRaaktTraining(items,id){
   const uid=tkHuidigeUid();
@@ -8543,8 +8562,10 @@ function tkWachtrijRaaktTraining(items,id){
 // Herstel na herstart of gedeeltelijke opslag: dezelfde, idempotente opslag nog een keer (stil).
 async function tkCustomTrainingHerstel(t,bestaatOpServer){
   if(bestaatOpServer) tkCustomTrainingPatch(t.id,{naam:t.name,kleur:t.color,notitie:t.note||null,metadata:t.metadata},{stil:true});
-  else tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:null,sort_order:0,scope:'personal',source:'builder',metadata:t.metadata},{stil:true});
-  return pushCustomTrainingExercisesRich(t,{stil:true});
+  else tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:t.note||null,sort_order:0,scope:'personal',source:t.source||'builder',metadata:t.metadata},{stil:true});
+  // Een legacy training heeft vaak alleen 'exercises'. Zonder normalisatie zou rich-recovery
+  // eerst alle serveroefeningen verwijderen en daarna nul rijen terugschrijven.
+  return pushCustomTrainingExercisesRich(Object.assign({},t,{exercise_targets:tkTrainingOefendoelen(t)}),{stil:true});
 }
 async function syncCustomTrainingsFromSupabase(){
   try{
@@ -8583,8 +8604,18 @@ async function syncCustomTrainingsFromSupabase(){
         for(const h of _herstel){ if(!tkWachtrijRaaktTraining(_q,h.t.id)) await tkCustomTrainingHerstel(h.t,h.opServer); }
       }
     } else if(customTrainings.length){
+      // Eerste upload bij lege server: onbevestigde trainingen MOETEN via de idempotente
+      // ouder-kind queue verlopen. De oude sbPost-route omzeilde die garanties juist
+      // wanneer dit de allereerste Builder-training van de sporter was.
+      const pending=new Set(tkTrainingenOnbevestigd());
+      let wachtend=[];try{wachtend=await offlineQueueAll();}catch(_){}
       for(let i=0;i<customTrainings.length;i++){
         const t=customTrainings[i];
+        if(pending.has(t.id)){
+          if(navigator.onLine&&!tkWachtrijRaaktTraining(wachtend,t.id)) await tkCustomTrainingHerstel(t,false);
+          continue;
+        }
+        // Bestaande legacy-migratieroute alleen voor niet-pending trainingen.
         await sbPost('custom_trainings',{id:t.id, naam:t.name, kleur:t.color, notitie:t.note||null, sort_order:i});
         let so=0;
         for(const exId of (t.exercises||[])){

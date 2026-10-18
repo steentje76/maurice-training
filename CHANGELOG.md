@@ -1,5 +1,12 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — UX-LOG-01 Setregistratie mobiel bruikbaar, bewerkingen blijven staan (18 oktober 2026)
+
+- **Bevindingen (gereproduceerd).** kg/reps 6 px breed op 320/360 px zodra de 1RM-schatting verscheen; een afgevinkte AMRAP-set verloor `done`/`isAmrap` bij een bewerking; na oefening toevoegen/verwijderen/vervangen leken ingevulde sets leeg en werden ze bij de volgende bewerking overschreven; Guided bewaarde elke set met het laatste gewicht; de Logboek-editor schreef de RPE van set 2..n leeg weg; setadvies na RPE-wijziging gaf een NotFoundError; tabbalk en terugveeg verlieten de training zonder vraag en de klok liep daarna niet door; inconsistente profielknop en een overlappende 👥-knop op Home.
+- **Oplossing (DEC-LOG-001).** 1RM-regel onder de invoer (`.setr-e1rm`), smaller kader op ≤ 374 px, groter RPE-raakvlak; `logSet()` behoudt setvlaggen; `rerenderTrainScreenKeepLog()` voor de vier herbouwpaden; Guided `setsDone[].kg`; editor RPE per set + horizontale rij + passende knoppen; `showPostSetAdvice()` voegt in naast `.add-row`; `tkPrimaryNavGo()` + popstate-regel 2b vragen "Training verlaten?"; klok hervat in `go()`; `tkPaintHeaderAvatar()`; 👥-knop verwijderd.
+- **Niet gewijzigd.** `core/`, rekenlogica (Epley, effectief gewicht, normalisatie, PR), RPE-cascade, opslag en wachtrij.
+- **Gate.** `core/fSetLoggingUx.test.js` (deel 1 altijd; deel 2 Chromium op 320/360/390/412 px met de echte trainingsflow). Sabotage: op main 16 mislukt.
+
 ## Kandidaat (nog geen versie) — UX-REC-02 Herstelcommunicatie consistent op Vandaag, Inzicht en Coach (18 oktober 2026)
 
 - **Bevinding.** Bij dagfactor 1,02 / gereedheid 85 / slaap 6u01 / spierherstel laag zei de coachzin nog "Je herstel is sterk" of "Je lichaam is klaar voor belasting", en zette Inzicht "Klaar om te trainen" naast de spierherstelring zonder herkomst. PR #540 (UX-REC-01) loste alleen de hero-subtitel op.

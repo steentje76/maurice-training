@@ -8,6 +8,15 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Setregistratie (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — UX-LOG-01)
+
+- Invariant (DEC-LOG-001): een setbewerking vervangt alleen kg/reps/RPE/effKg; opnieuw opbouwen tijdens een training
+  herstelt de ingevulde sets; Guided bewaart het gewicht per set; de Logboek-editor bewaart de RPE per set.
+- Een lopende training verlaat je via tabbalk of terugveeg pas na "Training verlaten?"; terug op de training loopt
+  de klok door. De 1RM-schatting staat onder de invoer.
+- Open: gewichtsmodus niet hersteld bij hervatten; set-id na verwijderen; geen toestelbewijs.
+- Status: pas waar op main na merge.
+
 ## Herstelcommunicatie Vandaag/Inzicht (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — PR #540 + vervolg-PR)
 
 - Invariant (DEC-REC-001): een dagoordeel noemt de dagfactor als bron; spierherstel heet een schatting. "Waarom

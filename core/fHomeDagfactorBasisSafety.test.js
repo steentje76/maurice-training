@@ -283,7 +283,12 @@ async function deel2() {
     eq([u.titel, u.sub], [z.txt, subNu], s + '.1 hoofdstatus volgt Decision-zone, met eerlijke bronuitleg');
     ok(u.waarom.includes('Afgeleid van je dagfactor; spierherstel is een aparte schatting.'), s + '.1b gereedheid los van spierherstel verklaard');
     eq([u.stats.Dagfactor, u.stats.Gereedheid], [String(f), String(CalcCore.readinessPercent(f))], s + '.2 Dagfactor en Gereedheid zijn de berekende waarden');
-    eq(u.coach, COACH[z.cls], s + '.3 coachzin woordelijk zoals voorheen');
+    // DEC-REC-001-B: een automatische rotatie is geen expliciet ingeplande training.
+    // De Home-coach mag dan uitsluitend dagfactorcontext geven, geen workoutvoorschrift.
+    const zonderPlanTekst = {g:'Je dagfactor is gunstig. Er is geen training gepland; spierherstel wordt apart beoordeeld.',
+      y:'Je dagfactor vraagt om aandacht. Er is geen training gepland.',
+      r:'Je dagfactor is lager. Er is geen training gepland.'};
+    eq(u.coach, zonderPlanTekst[z.cls], s + '.3 zonder expliciete planning geen trainingsadvies, alleen dagfactorcontext');
     const zone = z.cls === 'g' ? 'ready' : (z.cls === 'y' ? 'caution' : 'reduce');
     eq([u.besluit.bruikbaar, u.besluit.zone, u.besluit.dagfactor, u.besluit.gereedheid, u.besluit.dagthema], [true, zone, f, CalcCore.readinessPercent(f), DecisionCore.dayZone(f).key], s + '.4 _tkReadiness: zone, dagfactor, gereedheid en dagthema ongewijzigd');
     eq(u.readinessKop, { ready: 'Gunstige dag', caution: 'Voorzichtig vandaag', reduce: 'Belasting aanpassen' }[zone], s + '.5 readinesskaart toont het bestaande zonelabel');

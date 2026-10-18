@@ -51,7 +51,7 @@ const NAMEN = ['td', 'tkSleepHours', 'tkFmtSleepHours', 'fmtSleep', 'v43SlaapTxt
   'tkHealthVandaag', 'tkNietMeegeteldTxt', 'tkMetingNa', 'tkNietMeeHtml', 'tkStatusLabel', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor', 'tkDagfactorHeeftBasis', 'tkDagfactorVoorAdvies', 'tkCheckinVandaag', 'trainReadiness', 'tkSpierherstelEvidence',
   'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle', 'recoveryAdjustmentForToday', 'computeProgAdjustment', 'v43GereedheidScore',
   'tkReadinessVandaag', 'fmtDate', 'capitalize', 'tkMetingHerkomst', 'tkMetingWanneer', 'tkMetingLabel', 'openRecoveryDetail',
-  'dagfactorStatus', 'dayState', 'dagfactorCoach', 'dagfactorUitleg', 'renderDagfactorDetail'];
+  'dagfactorStatus', 'dayState', 'dagfactorCoach', 'dagfactorUitleg', 'tkDagfactorHerkomst', 'renderDagfactorDetail'];
 const REFRESH = extractFn(HTML, 'refreshHome');
 const LICH = extractFn(HTML, 'renderLichaamPremium');
 // De echte Home-kaart: het blok van refreshHome dat de dagfactorkaart opbouwt.
@@ -210,7 +210,7 @@ async function main() {
     ok(/HRV-beoordeling t\.o\.v\. je volledige eigen baseline/.test(h.waarom) && /Vergeleken met je gemiddelde van 5 metingen in de laatste 7 dagen \(\d+ ms\)\./.test(h.waarom), 'F6 de HRV-basis van de berekening (7-daags gemiddelde) staat apart van de laatste meting');
     eq(Math.round(g.hv.hrv.basis.waarde), Number((h.waarom.match(/laatste 7 dagen \((\d+) ms\)/) || [])[1]), 'F7 het getoonde gemiddelde is hrvComponent.recent.meanRaw, alleen afgerond');
     eq([g.hv.hrv.basis.n, g.hv.hrv.basis.bron, g.hv.hrv.basis.waarde], [g.hc.recent.n, g.hc.recent.bron, g.hc.recent.meanRaw], 'F8 de context geeft hrvComponent.recent ongewijzigd door');
-    const uiCode = extractFn(HTML, 'tkHealthVandaag') + extractFn(HTML, 'renderDagfactorDetail') + extractFn(HTML, 'dagfactorUitleg');
+    const uiCode = extractFn(HTML, 'tkHealthVandaag') + extractFn(HTML, 'renderDagfactorDetail') + extractFn(HTML, 'dagfactorUitleg') + extractFn(HTML, 'tkDagfactorHerkomst'); // UX-REC-02: gedeelde herkomsthelper hoort bij dezelfde UI-grens
     ok(!/reduce\(|lnRmssd|hrvRollingRecent|hrvBaseline\(|meanLn/.test(uiCode), 'F9 de UI-code berekent zelf geen HRV-gemiddelde of baseline');
   }
   {

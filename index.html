@@ -2328,7 +2328,7 @@ html[data-theme="dark"]{--v45-slate:#9db4c0}
 #home-hero .v43-stat-v{font-size:18px}
 /* Smalle schermen: Spierherstel en Gereedheid breken op het zachte afbreekstreepje i.p.v. over het
    kengetal ernaast te lopen. Alle vier labels houden dezelfde hoogte, zodat de rij uitgelijnd blijft. */
-@media(max-width:400px){#home-hero .v43-stat-k{min-height:36px}}
+@media(max-width:400px){#home-hero .v43-stat-k{min-height:36px;font-size:11px;line-height:1.35;letter-spacing:-.15px;overflow-wrap:anywhere}}
 .v43-stat-df{display:flex;flex-direction:column}
 .v43-df-circle{width:38px;height:38px;border-radius:50%;border:2.5px solid;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;margin-bottom:10px;background:rgba(0,184,148,.06)}
 html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
@@ -2959,7 +2959,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .grid{display:flex;gap:8px;margin-top:16px}
 /* Onder 360 px passen vier tegels niet naast elkaar (minimaal 64 px per tegel): dan 2×2. */
 @media(max-width:359px){:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .grid{display:grid;grid-template-columns:1fr 1fr}}
-:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m{flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 6px;text-align:center}
+:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m{flex:1;min-width:0;overflow-wrap:anywhere;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 6px;text-align:center}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .v{font-size:15px;font-weight:800;color:#fff}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .w{font-size:9px;font-weight:600;color:rgba(230,240,243,.62);margin-top:5px;line-height:1.2}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .k{font-size:8px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
@@ -24854,6 +24854,8 @@ async function refreshHome(){
   renderHomeProgramCard();
   await renderVasteTrainingBtns();
   const nextLblEl=document.getElementById('home-next-lbl');
+  // DEC-REC-001-B: rotatie toont een suggestie, geen expliciet geplande training.
+  let heeftExplicietPlan=false;
   if(vasteTrainingen.length){
     // SPRINT C2-C — expliciete planning krijgt voorrang boven de automatische
     // rotatie (PO-richting sectie 24): computeNextVasteTraining() blijft
@@ -24876,7 +24878,7 @@ async function refreshHome(){
         if(assR&&assR.length){
           const eersteOcc=occR.find(function(o){return o.id===assR[0].occurrence_id;});
           const def=vasteTrainingen.find(function(v){return v.id===(eersteOcc&&eersteOcc.workout_definition_id);});
-          if(def) next=def;
+          if(def){ next=def; heeftExplicietPlan=true; }
         }
       }
     }catch(e){ console.warn('explicit-planning precedence check mislukt, val terug op rotatie',e); }
@@ -24908,16 +24910,24 @@ async function refreshHome(){
   const dfAdvies=tkDagfactorVoorAdvies(dfInfo), checkinVandaag=tkCheckinVandaag(lh);
   if(themeEl)themeEl.setAttribute('data-day',dfAdvies?dayState(dfAdvies.factor).key:'goed');
   // Waarom?-conclusie deelt dezelfde bron als de coaching (buildCoachAdvice); geen extra query.
-  try{window.homeCoachText=await buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag);}catch(e){window.homeCoachText='';}
+  // Oude coachingcontext eerst wissen; pas na de Decision-run nieuwe tekst genereren.
+  window.homeCoachText='';
   await renderMorning(dfAdvies,nextT,checkinVandaag);
   renderTodayCta(nextT,dfAdvies);
   /* Sprint 14 — readiness van de dag: één beslissing, opgehaald vóór het tekenen. */
+  // Een mislukte of afgebroken refresh mag geen oude readiness aan Coach/AI laten zien.
+  window._tkReadiness=null;
+  let readinessCtx=null;
   try{
-    const _rc=await tkReadinessVandaag(dfInfo,recRows,nextT);
+    const _rc=await tkReadinessVandaag(dfInfo,recRows,nextT,heeftExplicietPlan);
+    readinessCtx=_rc;
     const _re=document.getElementById('home-readiness');
     if(_re) _re.innerHTML=tkReadinessHtml(_rc);
   }catch(_){ const _re=document.getElementById('home-readiness'); if(_re)_re.innerHTML=''; }
-  renderCoachAdvies(dfAdvies,recRows);
+  // Coach Advies krijgt uitsluitend het besluit van DEZE Home-refresh mee.
+  // Geen globale vorige score gebruiken na een mislukte/onderbroken readiness-run.
+  try{window.homeCoachText=await buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag,heeftExplicietPlan,readinessCtx);}catch(e){window.homeCoachText='';}
+  renderCoachAdvies(dfAdvies,recRows,readinessCtx);
   await renderWeekStats();
   renderMotivatie();
   refreshHomeImprove(); // S1 — guarded, niet-blokkerend: vult de "Recente vooruitgang"-kaart async
@@ -24962,9 +24972,28 @@ function buildMorningMessage(dfInfo,nextT,checkinVandaag){
 function joinNl(arr){arr=arr.filter(Boolean);if(arr.length<=1)return arr[0]||'';return arr.slice(0,-1).join(', ')+' en '+arr[arr.length-1];}
 // v3.3.48 — warmere coach-toon. Accepteert optioneel voorberekende recRows (uit één
 // getRelevantMuscleRecovery-call) zodat hero, coach-advies én "Waarom?" dezelfde data delen.
-async function buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag){
+async function buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag,heeftExplicietPlan,readinessCtx){
   dfInfo=tkDagfactorVoorAdvies(dfInfo);
   if(!dfInfo)return checkinVandaag?(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Nog geen check-in vandaag — vul je HRV in en ik vertel je precies wat vandaag slim is.';
+  // Een roterende workout-suggestie is GEEN expliciet plan: hier geen workoutadvies.
+  // De zone komt ook in deze kopie uitsluitend uit de bestaande Decision-regel.
+  if(heeftExplicietPlan===false){
+    const z=(typeof DecisionCore!=='undefined'&&DecisionCore.trainReadiness)?(DecisionCore.trainReadiness(dfInfo)||{}).cls:null;
+    return z==='g'?'Je dagfactor is gunstig. Er is geen training gepland; spierherstel wordt apart beoordeeld.':
+      z==='y'?'Je dagfactor vraagt om aandacht. Er is geen training gepland.':
+      z==='r'?'Je dagfactor is lager. Er is geen training gepland.':
+      'Er is onvoldoende basis voor een trainingsadvies.';
+  }
+  // De Home-route mag pas trainingsspecifiek formuleren na een bruikbaar Decision-besluit.
+  // Incomplete spierdekking, mislukte readiness of ontbrekende plan-evidence zijn nooit groen licht.
+  if(heeftExplicietPlan===true){
+    const b=readinessCtx&&readinessCtx.besluit;
+    if(!b||b.trainingGepland!==true||!b.bruikbaar||!b.herstel||
+       !b.trainingsadvies||b.trainingsadvies.soort==='geen_advies'){
+      return (b&&b.zoneBetekenis?b.zoneBetekenis+' ':'')+
+        'Voor deze geplande training zijn onvoldoende herstelgegevens beschikbaar.';
+    }
+  }
   const f=dfInfo.factor;
   const tnaam=(nextT&&nextT.naam)?nextT.naam:'je training';
   let loaded=[],ready=[];
@@ -25042,13 +25071,13 @@ function buildCoachTraining(dfInfo,recRows){
  *
  * Hier wordt NIETS berekend en NIETS besloten. De keten is:
  *   reeds berekende dagfactor + herstelscore + signalen
- *     -> DecisionCore.readinessDay      (readiness_day.v1)
+ *     -> DecisionCore.readinessDay      (readiness_day.v1.1)
  *     -> CoachingCore.buildReadinessContext / readinessCoachMessage
  *     -> deze functie plaatst tekst.
  * Het besluit wordt bewaard in window._tkReadiness zodat de live coach uit Sprint 13 en de
  * AI het kunnen LEZEN — nooit opnieuw berekenen.
  * ══════════════════════════════════════════════════════════════════════════ */
-async function tkReadinessVandaag(dfInfo,recRows,nextT){
+async function tkReadinessVandaag(dfInfo,recRows,nextT,heeftExplicietPlan){
   if(typeof DecisionCore==='undefined'||typeof DecisionCore.readinessDay!=='function') return null;
   /* Offline-first, zoals de rest van Home: begrens elke query zodat Home nooit blijft hangen
      op een trage verbinding. Zonder deze grens stopt refreshHome halverwege en blijven de
@@ -25070,12 +25099,26 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
   /* DEC-DQ-002: een dagfactor zonder basis gaat als null naar de Decision Engine. Dan volgt
      readinessDay() zijn bestaande pad zonder dagfactor: geen zone, geen advies. */
   const dfAdvies=tkDagfactorVoorAdvies(dfInfo);
+  // Alleen een expliciete planning MET bruikbare historie voor alle relevante spiergroepen
+  // mag een trainingsspecifieke herstelscore opleveren. Anders: null, nooit 89/100 op lege lijst.
+  const geldigeSpieren=Array.isArray(recRows)&&recRows.length>0 &&
+    tkSpierherstelEvidence(recRows).length===recRows.length;
+  // Fail-closed: een geldige subset is niet voldoende. Ook ontbrekende/onbekende
+  // spiergroepen en dubbele resultaatrijen verhinderen een trainingsscore.
+  const volledigeSpierdekking=!!(nextT&&Array.isArray(nextT._muscles)&&Array.isArray(recRows)&&
+    nextT._muscles.length>0&&nextT._muscles.length===recRows.length&&
+    new Set(recRows.map(r=>r&&r.muscle)).size===recRows.length&&
+    nextT._muscles.every(m=>recRows.some(r=>r&&r.muscle===m)));
+  const planBasis=!!(heeftExplicietPlan&&nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length&&geldigeSpieren&&volledigeSpierdekking);
   let herstel=null;
-  try{
-    const rhrDelta=tkRhrDeltaHerstel(hq);
-    herstel=recoveryScoreFrom(dfAdvies, recRows||[], {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
-  }catch(_){ herstel=null; }
+  if(planBasis){
+    try{
+      const rhrDelta=tkRhrDeltaHerstel(hq);
+      herstel=recoveryScoreFrom(dfAdvies, recRows, {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
+    }catch(_){ herstel=null; }
+  }
   const besluit=DecisionCore.readinessDay({
+    trainingGepland: !!heeftExplicietPlan,
     dagfactor: dfAdvies?dfAdvies.factor:null,
     gereedheid: dfAdvies?v43GereedheidScore(dfAdvies.factor):null,
     herstel: herstel,
@@ -25083,7 +25126,7 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
       hrv: (lh&&lh.hrv!=null)?{waarde:lh.hrv,kwaliteit:kw('hrv')}:null,
       rhr: (lh&&lh.rhr!=null)?{waarde:lh.rhr,kwaliteit:kw('rhr')}:null,
       slaap: (lh&&lh.sleep!=null)?{waarde:tkSleepHours(lh.sleep),kwaliteit:kw('slaap')}:null,
-      spierherstel: (function(){ const ev=tkSpierherstelEvidence(recRows); return ev.length?ev:null; })(),
+      spierherstel: planBasis?tkSpierherstelEvidence(recRows):null,
       gevoel: (lh&&lh.voelt)?String(lh.voelt):null,
       pijn: null,
       trainingsdagen7: dagen7
@@ -25091,7 +25134,7 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
   });
   window._tkReadiness=besluit;                       // alleen LEZEN door live coach en AI
   return CoachingCore.buildReadinessContext({besluit:besluit,
-    geplandeTraining:(nextT&&nextT.naam)?{naam:nextT.naam}:null});
+    geplandeTraining:(heeftExplicietPlan&&nextT&&nextT.naam)?{naam:nextT.naam}:null});
 }
 function tkReadinessHtml(ctx){
   if(!ctx||typeof CoachingCore.readinessCoachMessage!=='function') return '';
@@ -25175,18 +25218,25 @@ async function openRecoveryDetail(){
     el.innerHTML='<div style="color:var(--g4);font-size:13px">Herstelgegevens konden niet worden geladen.</div>';
   }
 }
-function renderCoachAdvies(dfInfo,recRows){
+function renderCoachAdvies(dfInfo,recRows,readinessCtx){
   const el=document.getElementById('home-coach-advies');if(!el)return;
-  const a=buildCoachTraining(dfInfo,recRows);
-  if(!a){el.innerHTML='';return;}
+  const b=readinessCtx&&readinessCtx.besluit;
+  // De Coach-kaart doet geen eigen trainingsbesluit en hergebruikt NOOIT een oude globale score.
+  if(!b||b.trainingGepland!==true||!b.bruikbaar||!b.herstel||
+     !b.trainingsadvies||b.trainingsadvies.soort==='geen_advies'){
+    el.innerHTML='';return;
+  }
+  const m=CoachingCore.readinessCoachMessage(readinessCtx);
+  const a={title:m.kop||'Trainingadvies',line:m.aanpassing||m.betekenis||'',reden:m.onzekerheid||null};
   // P1 — zichtbare Recovery Score in de coach-kaart (deterministisch, echte data).
   let recLine='';
   try{
-    const rs=recoveryScoreFrom(dfInfo,recRows);
+    // De kaart gebruikt de al door Decision Core geverifieerde scope; niet nogmaals rekenen.
+    const rs=b.herstel;
     if(rs && rs.score!=null){
       const bandTxt={hoog:'Hoog',gemiddeld:'Gemiddeld',laag:'Laag'}[rs.band]||rs.band;
       const bandCls=rs.band==='hoog'?'g':rs.band==='gemiddeld'?'y':'r';
-      recLine=`<div class="coach-advies-recovery status-${bandCls}" style="font-size:12px;font-weight:700;margin-bottom:4px">Herstel ${rs.score}/100 · ${bandTxt}${rs.confidence==='laag'?' (indicatief)':''}</div>`;
+      recLine=`<div class="coach-advies-recovery status-${bandCls}" style="font-size:12px;font-weight:700;margin-bottom:4px">Herstel voor ${escHtml(readinessCtx.geplandeTraining&&readinessCtx.geplandeTraining.naam||'je geplande training')}: ${rs.score}/100 · ${bandTxt}${rs.betrouwbaarheid==='laag'?' (indicatief)':''}</div>`;
     }
   }catch(_){}
   el.innerHTML=`<div class="coach-advies">
@@ -25601,7 +25651,7 @@ const TK_TRAIN_INTRO_NEUTRAAL='Train zoals gepland en let op hoe het vandaag voe
 // hours!==null, dezelfde herkomst die de spierherstelweergave zelf al gebruikt. Dit is de ENE
 // plek voor die regel. Het trainingsvoorschrift (computeProgAdjustment) krijgt de rijen ongefilterd.
 function tkSpierherstelEvidence(recRows){
-  return Array.isArray(recRows)?recRows.filter(function(r){ return !!r&&r.hours!==null; }):[];
+  return Array.isArray(recRows)?recRows.filter(function(r){ return !!r&&typeof r.hours==='number'&&isFinite(r.hours)&&r.hours>=0&&typeof r.pct==='number'&&isFinite(r.pct)&&r.pct>=0&&r.pct<=100; }):[];
 }
 // AI-CONTEXT: STALE IS NIET ACTUEEL (DEC-DQ-003).
 // De regel onder "HUIDIGE STATUS" in buildCtx(). Per signaal de nieuwste bruikbare meting met
@@ -32627,8 +32677,8 @@ function renderMuscleRecoveryHeatmap(containerId, pctBySvgId, opts){
     const path = g.querySelector('path');
     if(!path) return;
     const heeftModel = !neutraal || SVG_ID_RECOVERY_HOURS[g.id] != null;
-    // geen trainingsdata voor deze svg-id = volledig hersteld (zelfde aanname als lijst-kaart)
-    path.style.fill = heeftModel ? colorFn(100) : 'var(--load-0)';
+    // DEC-REC-001: geen historie is onbekend, niet '100% hersteld'.
+    path.style.fill = 'var(--load-0)';
     path.style.opacity = '1';
   });
   Object.entries(pctBySvgId).forEach(([svgId, pct])=>{
@@ -32637,7 +32687,7 @@ function renderMuscleRecoveryHeatmap(containerId, pctBySvgId, opts){
     const path = g.querySelector('path');
     if(!path) return;
     // zelfde drempels als de Spierherstel-lijst hierboven; herstel = stoplicht
-    const color = colorFn(pct);
+    const color = (typeof pct==='number'&&isFinite(pct)) ? colorFn(pct) : 'var(--load-0)';
     path.style.fill = color;
     path.style.opacity = '1';
   });
@@ -32744,7 +32794,7 @@ async function v43OverallRecovery(){
   const pctBySvgId={};
   Object.keys(SVG_ID_RECOVERY_HOURS).forEach(id=>{
     const hit=lastHitSvg[id];
-    if(!hit){pctBySvgId[id]=100;return;}
+    if(!hit){pctBySvgId[id]=null;return;}
     const hoursSince=(now-new Date(hit.date))/3600000;
     pctBySvgId[id]=computeMuscleRecoveryPct(hoursSince,SVG_ID_RECOVERY_HOURS[id],hit.rpe);
   });
@@ -33206,12 +33256,12 @@ async function renderLichaam(){
   if(list){
     // v4.22.0 (Sprint 5.3) — premium 2-koloms herstelkaarten per spiergroep.
     list.innerHTML=(rec.rows||[]).map(r=>{
-      const c=v43RecColor(r.pct);
+      const c=r.hours===null?'var(--g4)':v43RecColor(r.pct);
       const st=r.hours===null?'Geen recente training':(r.pct>=85?'Volledig hersteld':r.pct>=50?'Herstellend':'Vermoeid');
       // UX-REC-02: zonder trainingsdata is er geen schatting, dus ook geen belastbaarheidsclaim.
       const cm=r.hours===null?'Geen trainingsdata':(r.pct>=85?'Volgens schatting belastbaar':r.pct>=50?'Nog wat rust ideaal':'Vermijd zware belasting');
       // Elke kaart opent het spiergroep-detail — zelfde route als vanaf het overzicht.
-      return `<button class="lich-mcard" onclick="openSpierDetail(&quot;${escHtml(r.muscle)}&quot;)" style="text-align:left;border:0;font-family:var(--f);width:100%;cursor:pointer"><div class="top"><span class="nm">${escHtml(r.muscle)}</span><span class="pct" style="color:${c}">${r.pct}%</span></div><div class="bar"><i style="width:${r.pct}%;background:${c}"></i></div><div class="stt" style="color:${c}">${st}</div><div class="cm">${cm}</div></button>`;
+      return `<button class="lich-mcard" onclick="openSpierDetail(&quot;${escHtml(r.muscle)}&quot;)" style="text-align:left;border:0;font-family:var(--f);width:100%;cursor:pointer"><div class="top"><span class="nm">${escHtml(r.muscle)}</span><span class="pct" style="color:${c}">${r.hours===null?'—':r.pct+'%'}</span></div><div class="bar"><i style="width:${r.hours===null?0:r.pct}%;background:${c}"></i></div><div class="stt" style="color:${c}">${st}</div><div class="cm">${cm}</div></button>`;
     }).join('');
   }
   // v4.19.0 (Sprint 5.2) — lichaamsmetingen (verplaatst vanuit Profiel) op dit tabblad renderen.

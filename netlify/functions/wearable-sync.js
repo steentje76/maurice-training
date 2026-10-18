@@ -23,7 +23,8 @@
 // plausibele paden met fallback + structurele key-logging (diagnostiek #2) bevestigt het live pad.
 
 const LIB = require('./_wearableSyncLib.js');
-const { getWearableTokenSecret, updateWearableTokenSecret } = require('./wearableTokenVault.js');
+const { getWearableTokenSecret } = require('./wearableTokenVault.js');
+const { vernieuwGoogleHealthToken } = require('./_wearableAuthLib.js');
 
 const GOOGLE_HEALTH_DATA_TYPES = {
   hrv:   { id: 'daily-heart-rate-variability', filterField: 'daily_heart_rate_variability', kind: 'daily' },
@@ -136,29 +137,24 @@ exports.handler = async function (event) {
         await markSyncStatus(supabaseUrl, sbHeaders, userId, 'token_expired_no_refresh');
         return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'token_expired_no_refresh' });
       }
-      const refreshRes = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ refresh_token: refreshTokenValue, client_id: clientId, client_secret: clientSecret, grant_type: 'refresh_token' })
-      });
-      let refreshed = null;
-      try { refreshed = await refreshRes.json(); } catch (_) { refreshed = null; }
-      if (!refreshRes.ok || !refreshed || !refreshed.access_token) {
+      // v4.70.25 (DEC-VAULT-001): gedeelde refresh met rotation strategy (hetzelfde
+      // Vault-secret wordt bijgewerkt via update_wearable_token_secret, geen nieuwe
+      // secret-rij per refresh) -- zie vernieuwGoogleHealthToken in _wearableAuthLib.js.
+      const ververst = await vernieuwGoogleHealthToken({ supabaseUrl, serviceKey, sbHeaders, userId, conn, refreshTokenValue, clientId, clientSecret });
+      if (!ververst.ok) {
+        // Alleen Googles foutcode en de HTTP-status; nooit een token of de respons.
+        Observability.tkLog('WARN', 'wearable.token.refresh_failed', 'wearable', 'wearable-sync',
+          { provider: 'google_health', oauth_error: ververst.oauthError, http_status: ververst.httpStatus, permanent: ververst.permanent }, logCtx);
+        if (!ververst.permanent) {
+          // Storing bij Google: de koppeling is niet verlopen. Geen "opnieuw koppelen".
+          await markSyncStatus(supabaseUrl, sbHeaders, userId, 'error:' + ERR.TOKEN_REFRESH);
+          return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'provider_unavailable', code: ERR.TOKEN_REFRESH, reason: 'refresh_unavailable', userMessage: USER_MSG });
+        }
         await markSyncStatus(supabaseUrl, sbHeaders, userId, 'refresh_failed');
-        // refresh mislukt = koppeling verlopen → client toont "Opnieuw koppelen nodig"
+        // refresh definitief afgewezen = koppeling verlopen → client toont "Opnieuw koppelen nodig"
         return jsonBody({ synced: false, daysWritten: 0, provider: 'fitbit', status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'refresh_failed' });
       }
-      accessToken = refreshed.access_token;
-      const newExpiresAt = new Date(Date.now() + (refreshed.expires_in || 3600) * 1000).toISOString();
-      // F13 Post-Audit Remediation (P1-09): de vernieuwde token wordt in
-      // hetzelfde Vault-secret bijgewerkt (rotation strategy) -- geen
-      // nieuwe secret-rij per refresh, en nooit meer plaintext in
-      // wearable_connections zelf.
-      await updateWearableTokenSecret(supabaseUrl, serviceKey, conn.access_token_secret_id, accessToken);
-      await fetch(`${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.google_health`, {
-        method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' },
-        body: JSON.stringify({ token_expires_at: newExpiresAt })
-      });
+      accessToken = ververst.accessToken;
     }
 
     // Laatste 7 dagen ophalen (vangt gemiste syncs op zonder overdreven veel data per keer).
@@ -384,3 +380,6 @@ async function markSyncStatus(supabaseUrl, sbHeaders, userId, status) {
     body: JSON.stringify({ last_sync_at: new Date().toISOString(), last_sync_status: status })
   });
 }
+
+// v4.70.25 (DEC-API-001): bereikbaar vanuit de Android-app (zie _cors.js). Web ongewijzigd.
+exports.handler = require('./_cors.js').withCors(exports.handler);

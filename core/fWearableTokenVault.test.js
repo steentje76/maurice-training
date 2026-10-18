@@ -48,7 +48,8 @@ ok(migratie.includes('store_wearable_token_secret(access_token'),
 });
 
 // ---- D. wearable-sync.js gebruikt de rotation-strategy (update, geen nieuwe secret per refresh) ----
-ok(sync.includes('updateWearableTokenSecret'), 'D1: wearable-sync.js gebruikt updateWearableTokenSecret() bij een token-refresh (rotation strategy, geen nieuwe secret-rij per refresh)');
+// v4.70.25: de refresh is gedeeld (vernieuwGoogleHealthToken in _wearableAuthLib.js); de rotation strategy zelf is ongewijzigd.
+ok(sync.includes('vernieuwGoogleHealthToken') && fs.readFileSync(path.join(ROOT, 'netlify/functions/_wearableAuthLib.js'), 'utf8').includes('updateWearableTokenSecret(supabaseUrl, serviceKey, conn.access_token_secret_id, accessToken)'), 'D1: wearable-sync.js gebruikt updateWearableTokenSecret() bij een token-refresh (rotation strategy, geen nieuwe secret-rij per refresh)');
 ok(!sync.match(/body:\s*JSON\.stringify\(\{\s*access_token:\s*accessToken/),
   'D2: de PATCH naar wearable_connections bevat niet langer een plaintext access_token-veld');
 {

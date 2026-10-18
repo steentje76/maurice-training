@@ -20,3 +20,6 @@ exports.handler=async function(event){
  }catch(e){/* telemetry must never affect the product flow */}
  return response();
 };
+
+// v4.70.25 (DEC-API-001): bereikbaar vanuit de Android-app (zie _cors.js). Web ongewijzigd.
+exports.handler = require('./_cors.js').withCors(exports.handler);

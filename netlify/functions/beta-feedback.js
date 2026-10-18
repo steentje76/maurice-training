@@ -53,3 +53,6 @@ exports.handler = async function (event) {
   return handle(event, { env: process.env, fetch: (typeof fetch === 'function') ? fetch : null, now: Date.now });
 };
 exports._internal = { handle, MAX_BYTES, MAX_PER_WINDOW, WINDOW_MS, _resetRate: () => { for (const k in rate) delete rate[k]; } };
+
+// v4.70.25 (DEC-API-001): bereikbaar vanuit de Android-app (zie _cors.js). Web ongewijzigd.
+exports.handler = require('./_cors.js').withCors(exports.handler);

@@ -67,7 +67,9 @@ exports.handler = async function (event) {
       access_type: 'offline', // nodig voor een refresh_token
       prompt: 'consent',      // dwingt refresh_token af, ook bij herkoppelen
       scope,
-      state: stateRow.state
+      // Android-app: de terugkeer na toestemming loopt via de systeembrowser. De hint zegt
+      // de callback alleen waarheen hij terugstuurt (zie parseState in wearable-auth-callback.js).
+      state: stateRow.state + (clientHint(event) === 'android' ? '~android' : '')
     });
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
@@ -76,3 +78,12 @@ exports.handler = async function (event) {
     return { statusCode: 500, body: JSON.stringify({ error: { message: 'Serverfout: ' + e.message } }) };
   }
 };
+
+// Alleen de exacte waarde 'android' telt; al het andere is web (bestaand gedrag).
+function clientHint(event) {
+  try { const b = event && event.body ? JSON.parse(event.body) : null; return b && b.client === 'android' ? 'android' : 'web'; }
+  catch (_) { return 'web'; }
+}
+
+// v4.70.25 (DEC-API-001): bereikbaar vanuit de Android-app (zie _cors.js). Web ongewijzigd.
+exports.handler = require('./_cors.js').withCors(exports.handler);

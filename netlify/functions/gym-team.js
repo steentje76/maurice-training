@@ -240,3 +240,6 @@ async function sha256Hex(str) {
   const crypto = require('crypto');
   return crypto.createHash('sha256').update(str, 'utf8').digest('hex');
 }
+
+// v4.70.25 (DEC-API-001): bereikbaar vanuit de Android-app (zie _cors.js). Web ongewijzigd.
+exports.handler = require('./_cors.js').withCors(exports.handler);

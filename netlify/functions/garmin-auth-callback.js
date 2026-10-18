@@ -11,7 +11,7 @@
 //   code_verifier (PKCE, RFC 7636), redirect_uri
 //   Respons bevat: access_token, expires_in (86400s), token_type=bearer,
 //   refresh_token, scope.
-const { storeWearableTokenSecret } = require('./wearableTokenVault.js');
+const { vervangWearableTokens } = require('./wearableTokenVault.js');
 
 exports.handler = async function (event) {
   const supabaseUrl = process.env.SUPABASE_URL || 'https://mhfxhzkdmgkaplicdszg.supabase.co';
@@ -74,29 +74,17 @@ exports.handler = async function (event) {
 
     // Stap 3: tokens veilig opslaan (Vault, zelfde patroon als Google Health --
     // nooit plaintext in wearable_connections).
-    const accessSecretId = await storeWearableTokenSecret(supabaseUrl, serviceKey, tokens.access_token, `garmin_access_${userId}`);
-    const refreshSecretId = tokens.refresh_token
-      ? await storeWearableTokenSecret(supabaseUrl, serviceKey, tokens.refresh_token, `garmin_refresh_${userId}`)
-      : null;
-    if (!accessSecretId) return redirectToApp('save_error');
-
+    // v4.70.25 (DEC-VAULT-001): unieke secretnaam per autorisatie; eerst de nieuwe secrets,
+    // dan de koppeling, dan pas de oude secrets opruimen. Voorheen werd de bestaande
+    // koppeling verwijderd vóórdat de nieuwe was opgeslagen, onder een vaste secretnaam.
     const expiresAt = new Date(Date.now() + (Number(tokens.expires_in) || 86400) * 1000).toISOString();
-
-    // upsert: een gebruiker heeft maximaal één actieve Garmin-connectie.
-    await fetch(`${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.garmin`, {
-      method: 'DELETE', headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
+    const resultaat = await vervangWearableTokens({
+      supabaseUrl, serviceKey, userId, provider: 'garmin', prefix: 'garmin',
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token || null,
+      velden: { token_expires_at: expiresAt, scope: tokens.scope || null, connected_at: new Date().toISOString() }
     });
-    const insertRes = await fetch(`${supabaseUrl}/rest/v1/wearable_connections`, {
-      method: 'POST',
-      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        user_id: userId, provider: 'garmin',
-        access_token_secret_id: accessSecretId, refresh_token_secret_id: refreshSecretId,
-        token_expires_at: expiresAt, scope: tokens.scope || null,
-        connected_at: new Date().toISOString()
-      })
-    });
-    if (!insertRes.ok) return redirectToApp('save_error');
+    if (!resultaat.ok) { console.error('garmin-auth-callback: koppeling niet opgeslagen, fase', resultaat.fase); return redirectToApp('save_error'); }
 
     return redirectToApp('connected');
   } catch (e) {

@@ -150,3 +150,8 @@ Server-afhankelijke features (Fitbit/Google Health/coach) gebruiken relatieve
 `/.netlify/functions/`-paden. In de native app resolven die niet zonder absolute
 basis-URL. Dat is bewust niet in deze sprint opgelost (focus: PM5 end-to-end);
 het is het integratiepunt voor een volgende sprint (config `TK_API_BASE`).
+
+> **Aanvulling 11 oktober 2026 (v4.70.25, DEC-API-001).** Deze beperking is in de gebruikerstest van
+> 11 oktober 2026 als fout vastgesteld (S8-ANDROID-API) en opgelost: alle aanroepen lopen via `tkApiUrl()` in
+> `index.html`, en de functies staan de oorsprong van de app toe (`netlify/functions/_cors.js`). De bovenstaande
+> tekst beschrijft de stand van destijds. Toestelbewijs ontbreekt nog.

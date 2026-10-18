@@ -50,26 +50,84 @@ async function getValidGoogleHealthAccessToken(supabaseUrl, serviceKey, sbHeader
     if (!refreshTokenValue || !clientId || !clientSecret) {
       return { ok: false, status: 200, body: { status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'token_expired_no_refresh' } };
     }
-    const refreshRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ refresh_token: refreshTokenValue, client_id: clientId, client_secret: clientSecret, grant_type: 'refresh_token' })
-    });
-    let refreshed = null;
-    try { refreshed = await refreshRes.json(); } catch (_) { refreshed = null; }
-    if (!refreshRes.ok || !refreshed || !refreshed.access_token) {
-      return { ok: false, status: 200, body: { status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'refresh_failed' } };
+    const ververst = await vernieuwGoogleHealthToken({ supabaseUrl, serviceKey, sbHeaders, userId, conn, refreshTokenValue, clientId, clientSecret });
+    if (!ververst.ok) {
+      return ververst.permanent
+        ? { ok: false, status: 200, body: { status: 'token_expired', code: ERR.TOKEN_REFRESH, reason: 'refresh_failed' } }
+        : { ok: false, status: 200, body: { status: 'provider_unavailable', code: ERR.TOKEN_REFRESH, reason: 'refresh_unavailable' } };
     }
-    accessToken = refreshed.access_token;
-    const newExpiresAt = new Date(Date.now() + (refreshed.expires_in || 3600) * 1000).toISOString();
-    await updateWearableTokenSecret(supabaseUrl, serviceKey, conn.access_token_secret_id, accessToken);
-    await fetch(`${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.google_health`, {
-      method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' },
-      body: JSON.stringify({ token_expires_at: newExpiresAt })
-    });
+    accessToken = ververst.accessToken;
   }
 
   return { ok: true, accessToken, conn };
 }
 
-module.exports = { getValidGoogleHealthAccessToken, ERR };
+/* ── TOKEN-REFRESH (v4.70.25, DEC-VAULT-001) ─────────────────────────────────────────────
+ * Eén gedeelde implementatie voor wearable-sync.js en getValidGoogleHealthAccessToken().
+ *
+ *  - PERMANENT vs TIJDELIJK. Alleen wanneer Google het refresh-token zelf afwijst
+ *    (invalid_grant: verlopen, ingetrokken, of het 7-dagenplafond van een OAuth-app in
+ *    testmodus) is opnieuw koppelen nodig. Een storing bij Google (5xx, 429, netwerk) is
+ *    tijdelijk: de koppeling blijft geldig en mag NIET als "opnieuw koppelen" eindigen.
+ *  - ROTATIE. Geeft Google bij het vernieuwen een nieuw refresh-token mee, dan vervangt dat
+ *    het oude in hetzelfde Vault-secret. Het oude is vanaf dat moment mogelijk ongeldig.
+ *  - VERVALTIJD. token_expires_at wordt alleen vooruitgezet als het nieuwe access-token ook
+ *    echt in Vault staat. Anders zou een verlopen token een uur lang als geldig doorgaan.
+ *  - DIAGNOSE. Alleen Googles foutcode (bv. invalid_grant) wordt teruggegeven voor de log;
+ *    nooit een token, nooit de respons zelf.
+ *
+ * @returns {{ok:true, accessToken:string, rotated:boolean, stored:boolean}
+ *          |{ok:false, permanent:boolean, oauthError:string, httpStatus:number}}
+ */
+const PERMANENTE_OAUTH_FOUTEN = { invalid_grant: true, invalid_client: true, unauthorized_client: true };
+function veiligeOAuthFout(body) {
+  const c = body && typeof body.error === 'string' ? body.error : '';
+  return /^[a-z_]{1,40}$/.test(c) ? c : 'onbekend';
+}
+async function vernieuwGoogleHealthToken(o) {
+  const { supabaseUrl, serviceKey, sbHeaders, userId, conn, refreshTokenValue, clientId, clientSecret } = o;
+  let refreshRes;
+  try {
+    refreshRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ refresh_token: refreshTokenValue, client_id: clientId, client_secret: clientSecret, grant_type: 'refresh_token' })
+    });
+  } catch (_) {
+    return { ok: false, permanent: false, oauthError: 'netwerk', httpStatus: 0 };
+  }
+  let refreshed = null;
+  try { refreshed = await refreshRes.json(); } catch (_) { refreshed = null; }
+  if (!refreshRes.ok || !refreshed || !refreshed.access_token) {
+    const oauthError = veiligeOAuthFout(refreshed);
+    // Permanent: Google wijst de toestemming zelf af (4xx met een bekende code). Al het
+    // andere -- 5xx, 429, onleesbaar antwoord -- is tijdelijk.
+    const permanent = refreshRes.status >= 400 && refreshRes.status < 500 && refreshRes.status !== 429 && PERMANENTE_OAUTH_FOUTEN[oauthError] === true;
+    return { ok: false, permanent, oauthError, httpStatus: refreshRes.status };
+  }
+  const accessToken = refreshed.access_token;
+  const stored = await updateWearableTokenSecret(supabaseUrl, serviceKey, conn.access_token_secret_id, accessToken);
+  let rotated = false;
+  // Bij refresh-tokenrotatie kan de provider het oude token ongeldig maken. Een succesvolle
+  // OAuth-respons is dus GEEN succesvolle verversing als het nieuwe refresh-token niet
+  // duurzaam kan worden opgeslagen. Voorkom ook een vooruitgezette vervaltijd in dat geval.
+  if (refreshed.refresh_token && refreshed.refresh_token !== refreshTokenValue) {
+    if (!conn.refresh_token_secret_id) {
+      return { ok: false, permanent: false, oauthError: 'vault_refresh_id_missing', httpStatus: 0 };
+    }
+    rotated = await updateWearableTokenSecret(supabaseUrl, serviceKey, conn.refresh_token_secret_id, refreshed.refresh_token);
+    if (!rotated) {
+      return { ok: false, permanent: false, oauthError: 'vault_refresh_store_failed', httpStatus: 0 };
+    }
+  }
+  if (stored) {
+    const newExpiresAt = new Date(Date.now() + (refreshed.expires_in || 3600) * 1000).toISOString();
+    await fetch(`${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.google_health`, {
+      method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' },
+      body: JSON.stringify({ token_expires_at: newExpiresAt })
+    });
+  }
+  return { ok: true, accessToken, rotated, stored };
+}
+
+module.exports = { getValidGoogleHealthAccessToken, vernieuwGoogleHealthToken, veiligeOAuthFout, ERR };

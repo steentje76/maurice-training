@@ -31,7 +31,7 @@ function device(html) {
   function el(id) { if (!els[id]) { const attrs = {}; els[id] = { id, setAttribute: (k, v) => { attrs[k] = String(v); }, getAttribute: k => (k in attrs ? attrs[k] : null), onclick: null }; } return els[id]; }
   const env = {
     window: { ProductTelemetryCore: PTC }, localStorage: lsProxy, location: { hostname: 'maurice-art.netlify.app' }, APP_VER: 'v4.70.6',
-    SB_H: { Authorization: 'Bearer user-jwt' }, document: { getElementById: id => el(id) },
+    SB_H: { Authorization: 'Bearer user-jwt' }, document: { getElementById: id => el(id) }, tkApiUrl: p => p,
     fetch: (u, init) => { calls.push({ u, init }); return Promise.resolve({ ok: true }); }
   };
   const src = emitterSrc(html) + '\n' + fnSrc(html, 'initSwitch') + '\n' + fnSrc(html, 'refreshPrivacyScreen') + '\n' +

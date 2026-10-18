@@ -47,6 +47,7 @@ function emitter(html, o) {
     localStorage: { getItem: k => (k in store ? store[k] : null) },
     location: { hostname: o.host || 'maurice-art.netlify.app' },
     APP_VER: 'v4.70.5',
+    tkApiUrl: p => p, // web: relatief pad (TkApi, DEC-API-001)
     SB_H: o.noAuth ? undefined : { Authorization: 'Bearer user-jwt' },
     fetch: o.fetchThrows ? () => { throw new Error('boom'); } : (u, init) => { calls.push({ u, init }); return o.reject ? Promise.reject(new Error('net')) : Promise.resolve({ ok: true }); }
   };

@@ -20,10 +20,10 @@ console.log('B9-H3B afronding — UI-koppeling wearable-sync-activities.js');
 
 const fnBlock = html.split('async function wearableSyncNow(){')[1].split('\n// Verwerkt de terugkeer van Google')[0];
 
-ok(fnBlock.includes("fetch('/.netlify/functions/wearable-sync-activities'"),
+ok(fnBlock.includes("fetch(tkApiUrl('/.netlify/functions/wearable-sync-activities')"),
   'A1: wearableSyncNow() roept nu daadwerkelijk wearable-sync-activities.js aan (voorheen server-side klaar maar nergens client-side gebruikt)');
 
-ok(fnBlock.includes("fetch('/.netlify/functions/wearable-sync'") && fnBlock.indexOf("fetch('/.netlify/functions/wearable-sync'") < fnBlock.indexOf("fetch('/.netlify/functions/wearable-sync-activities'"),
+ok(fnBlock.includes("fetch(tkApiUrl('/.netlify/functions/wearable-sync')") && fnBlock.indexOf("fetch(tkApiUrl('/.netlify/functions/wearable-sync')") < fnBlock.indexOf("fetch(tkApiUrl('/.netlify/functions/wearable-sync-activities')"),
   'A2: de hoofd-sync (wearable-sync.js, HRV/RHR/slaap/stappen) wordt eerst aangeroepen en afgehandeld, de activity-sync komt daarna, als aanvulling');
 
 {

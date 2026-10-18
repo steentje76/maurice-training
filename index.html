@@ -10534,22 +10534,24 @@ function tkGuidedStartGeblokkeerd(mode){
   toast('Je vorige begeleide training is nog niet opgeslagen — open hem op Vandaag om opnieuw op te slaan');
   return true;
 }
+// UX-EXEC-01 (B7): loopt precies deze training al, dan terug naar de lopende uitvoering. Geen nieuwe
+// training_instance en geen nieuwe oefeningenlijst over de lopende sessie heen (die werd anders stil
+// aan een nieuwe instance gekoppeld en de oude bleef 'active').
+function tkPreviewNaarLopendeTraining(source,id,mode){
+  const lopend=(source==='vast')?id:('custom_'+id);
+  if(mode==='guided'||typeof curT==='undefined'||!curT||curT!==lopend)return false;
+  closeModal('m-training-preview'); previewCtx=null; previewStarting=false;
+  toast('Deze training loopt al — je gaat verder waar je was');
+  if(source==='vast')startT(id); else startCustomTraining(id);
+  return true;
+}
 async function previewStartTraining(mode){
   if(!previewCtx||previewStarting)return;
   mode=mode||'normal';
   if(tkGuidedStartGeblokkeerd(mode))return;
   previewStarting=true;
   const {def,source,id}=previewCtx;
-  // UX-EXEC-01 (B7): loopt precies deze training al, dan terug naar de lopende uitvoering. Geen nieuwe
-  // training_instance en geen nieuwe oefeningenlijst over de lopende sessie heen (die werd anders stil
-  // aan een nieuwe instance gekoppeld en de oude bleef 'active').
-  const _lopend=(source==='vast')?id:('custom_'+id);
-  if(mode!=='guided'&&typeof curT!=='undefined'&&curT&&curT===_lopend){
-    closeModal('m-training-preview'); previewCtx=null; previewStarting=false;
-    toast('Deze training loopt al — je gaat verder waar je was');
-    if(source==='vast')startT(id); else startCustomTraining(id);
-    return;
-  }
+  if(tkPreviewNaarLopendeTraining(source,id,mode))return; // UX-EXEC-01 (B7)
   const workingList=previewWorkingList();
   const modifications=previewBuildModifications();
   const resolvedItems=buildResolvedExecutionItems(workingList);

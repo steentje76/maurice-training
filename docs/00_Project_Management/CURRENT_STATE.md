@@ -8,6 +8,13 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Updategereedheid en Android-test (18 oktober 2026 — DEV-UPDATE-01)
+
+- Help toont of het veilig is de app te verwijderen/opnieuw te installeren (wachtrij, concept, lopende/begeleide
+  training, onbevestigde eigen trainingen; fail-closed).
+- Laatste testbuild-release: v4.70.23 (`apk-debug-v4.70.23-7c33f7797-run48`); v4.70.25 en de kandidaat-PR's hebben nog
+  geen APK. Debug-signing wisselt per build (PR #532 open). Checklist: `docs/ANDROID_PRAKTIJKTEST_V1_BETA.md`.
+
 ## Bibliotheken (18 oktober 2026 — LIB-VALIDATE-01)
 
 - Oefeningen: 226 MoveKit-oefeningen, 0 fouten; 0/226 met Nederlandse naam; Batch 002 (186) BLOCKED en bronbestanden

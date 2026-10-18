@@ -64,7 +64,7 @@ function deel1() {
   ok(/await sbDelQ\('custom_trainings','id=eq\.'\+id,\{detail:true\}\)/.test(del) && /customTrainings=_vorige/.test(del), 'B2a verwijderen via de wachtrij; lukt ook dat niet, dan komt de training lokaal terug');
   ok(/i\.table==='custom_trainings'&&i\.method==='DELETE'/.test(extractFn(HTML, 'syncCustomTrainingsFromSupabase')), 'B2b de sync slaat een wachtende verwijdering over');
   /* B7/B10 */
-  ok(/if\(mode!=='guided'&&typeof curT!=='undefined'&&curT&&curT===_lopend\)\{/.test(extractFn(HTML, 'previewStartTraining')), 'B7 Preview van een lopende training: terug naar die training, geen nieuwe instance');
+  ok(/if\(tkPreviewNaarLopendeTraining\(source,id,mode\)\)return;/.test(extractFn(HTML, 'previewStartTraining')) && /if\(mode==='guided'\|\|typeof curT==='undefined'\|\|!curT\|\|curT!==lopend\)return false;/.test(extractFn(HTML, 'tkPreviewNaarLopendeTraining')), 'B7 Preview van een lopende training: terug naar die training, geen nieuwe instance');
   const sc = extractFn(HTML, 'startCustomTraining');
   ok(/trainPaused=false;pausedAccumMs=0;lastSetDoneAt=\{\};/.test(sc), 'B10 startCustomTraining zet de pauzestand terug');
   ok(/if\(curT===ctxT&&document\.getElementById\('s-train-custom-'\+id\)\)\{/.test(sc) && /if\(!resolvedItems&&curT!=='custom_'\+id\)activeInstanceId=null;/.test(sc), 'B10b een lopende eigen training wordt niet geleegd en houdt haar instance');

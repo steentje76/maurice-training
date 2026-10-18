@@ -24,18 +24,34 @@ geen toestelbewijs.
 - Een stabiele testsleutel vraagt de PO-besluiten D1–D4 uit PR #532. Tot dat besluit is elke nieuwe
   testbuild een herinstallatie. Er is in deze sprint niets aan signing, secrets of de applicationId gewijzigd.
 
-## 3. Installatieprocedure (één telefoonhandeling per stap)
+## 3. Installatieprocedure — voorbereiding, installatie nog GEBLOKKEERD
+
+**HARD STOP — NIET UITVOEREN op het huidige toestel.** Er is nog geen aantoonbaar veilige
+herinstallatie. Vóór enige verwijdering zijn alle vier afzonderlijk vereist: (1) een
+geaccepteerd signing-/installatiepad conform D1–D4 uit PR #532, (2) serverzijdige bevestiging
+van alle relevante traininggegevens, (3) een aantoonbaar herstel-/overdrachtspad voor
+uitsluitend lokale gegevens en (4) expliciete toestelacceptatie en PO-vrijgave. Een groen CI-
+resultaat, het ontbreken van een wachtrij of een gedownloade APK vervangt deze gates niet.
+
+De stappen hieronder beschrijven de voorbereiding; stap 5 en 6 zijn geen actuele handelingen.
 
 1. Open op de telefoon de huidige app → **Instellingen → Help & over de app → Klaar voor een update?**
    en tik **Synchroniseren en controleren**.
-2. Alleen bij **"Veilig om bij te werken"** verder. Staat er iets open: rond de training af of maak
-   verbinding en herhaal stap 1. *(Staat deze kaart nog niet in de geïnstalleerde versie: open Logboek
-   en controleer dat de laatste training er met een vinkje zonder klokje staat; geen oranje
-   "Wachtend op sync"-badge op Home.)*
+2. **Stop: verwijder de huidige app niet uitsluitend op basis van deze kaart.** De status
+   "Geen lokale blokkades gevonden" bevestigt alleen wat lokaal is gecontroleerd; hij bewijst
+   niet dat alle trainingsgegevens op de server staan. Controleer de serverregistratie en zorg
+   voor een aantoonbaar veilig overdrachts- of herstelpad. Staat er iets open of zijn gegevens
+   beschadigd/onbekend: rond de training af of herstel de gegevens en controleer opnieuw.
+   **Ontbreekt de updatekaart in de geïnstalleerde versie, dan is er geen veilige lokale
+   inventarisatie mogelijk; het ontbreken van een offline-badge is geen bewijs.**
+   Zonder bewezen veilige overdracht blijft herinstallatie GEBLOKKEERD.
 3. Download de APK uit de GitHub-pre-release (naam `Trainingskompas-<versie>-<sha>-debug.apk`).
 4. Vergelijk de SHA-256 in de release-notes met het bestand (optioneel, via een bestandsbeheerder met hash).
-5. Verwijder de oude app. Installeer de nieuwe APK (toestaan: "installeren uit onbekende bron").
-6. Log in. Controleer **Help → Versie** tegen de releasenaam.
+5. **NIET UITVOEREN — HARD STOP.** De huidige app blijft geïnstalleerd. Een eventuele
+   toekomstige installatie wordt pas afzonderlijk begeleid na alle vier bovenstaande gates;
+   gebruik dus nu niet de optie om de huidige app te verwijderen.
+6. **ALLEEN NA APARTE VRIJGAVE:** log na een aantoonbaar veilige installatie in en controleer
+   **Help → Versie** tegen de geautoriseerde release. Dit is nog geen geaccepteerde toesteltest.
 
 ## 4. Praktijktestchecklist sportschool
 
@@ -72,7 +88,10 @@ Noteer per regel: OK / NIET OK + korte omschrijving + tijd. Bij NIET OK: scherma
 - [ ] D4 PM5 tijdens de sessie uitzetten: nette melding, geen app-crash, ingevulde data blijft.
 
 ### E. Afsluiten
-- [ ] E1 Help → Klaar voor een update? → "Veilig om bij te werken" aan het eind van de test.
+- [ ] E1 Help → Klaar voor een update? → controleer of de werkelijke melding
+      "Geen lokale blokkades gevonden" verschijnt, alleen als alle gecontroleerde lokale bronnen
+      leesbaar en leeg zijn. **Ook dan niet verwijderen:** deze status bewijst geen serverregistratie
+      en is uitdrukkelijk geen installatie- of herinstallatietoestemming.
 
 ## 5. Wat bewust niet in deze test zit
 - Play Store-distributie, release-signing en sleutelbeheer (PO-besluit, PR #532).

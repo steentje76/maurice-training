@@ -3228,3 +3228,14 @@ Installatieprocedure en praktijktestchecklist: `docs/ANDROID_PRAKTIJKTEST_V1_BET
 
 **Open (PO).** Stabiele testsleutel (D1–D4 in PR #532). Testbuild bouwen: workflow `Android Debug APK` met de exacte
 SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDATION REQUIRED.
+
+
+## DEC-UPDATE-002 — Android update-inventarisatie zonder valse servergarantie (18 oktober 2026)
+
+**Context.** Onafhankelijke review van PR #545, DEV-UPDATE-01: de updatekaart gaf ten onrechte `veilig:true` bij beschadigde `tk_draft_training` en een onverwacht niet-arrayformaat van `tk_trainings_onbevestigd`. De opslag van een lopende Guided-sessie (`tk_gw_active`) was bovendien niet afgedekt door alleen `GW.hasUnsaved()`. Een succesvol IndexedDB `getAll()`-request bewijst niet dat de hele transactie ook slaagt.
+
+**Technisch herstel op afzonderlijke gestapelde Draft-PR.** Lees de ruwe keys en valideer vorm vóór oordeel; elke aanwezige lokale trainingsdraft telt als mogelijk verliesrisico, óók zonder ingevulde werksets. Beschadigde of onverwachte opslag is `onbekend`, nooit `veilig`. Controleer ook de actieve Guided-key. Wacht bij de wachtrij tot de readonly-transactie succesvol voltooid is (`oncomplete`), en blokkeer bij `onabort`/`onerror`.
+
+**Communicatiecontract.** `veilig:true` betekent uitsluitend dat de onderzochte lokale bronnen geen blokkade opleverden. Het is **geen bewijs van serverregistratie en geen toestemming tot de-installatie**. De Help-kaart en Android-praktijktestprocedure zeggen dit nu expliciet. Geen signing-, migratie- of serverwijzigingen uitgevoerd.
+
+**Nog open.** Volledige serverzijde bevestiging/export van alle potentieel uitsluitend lokale gegevens; betrouwbare ondertekening/upgrade zonder de-installatie (ADR-ANDROID-SIGNING-001); echte Android-acceptatie. Zonder die gegevens blijft installatie met verwijdering **NO-GO**.

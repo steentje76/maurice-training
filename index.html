@@ -9437,21 +9437,54 @@ async function tkLeesWachtrijStrikt(){
   return await new Promise((resolve,reject)=>{
     const tx=db.transaction(OFFLINE_STORE,'readonly');
     const req=tx.objectStore(OFFLINE_STORE).getAll();
-    req.onsuccess=()=>resolve(req.result||[]);
-    req.onerror=()=>reject(req.error);
+    let rows=null;
+    // req.onsuccess kan afgaan vóór een latere transaction abort.
+    // Pas de voltooide transactie bewijst dat het lezen werkelijk geslaagd is.
+    req.onsuccess=()=>{rows=req.result;};
+    req.onerror=()=>reject(req.error||new Error('queue_read_failed'));
+    tx.oncomplete=()=>resolve(rows||[]);
+    tx.onerror=()=>reject(tx.error||new Error('queue_transaction_failed'));
+    tx.onabort=()=>reject(tx.error||new Error('queue_transaction_aborted'));
   });
 }
 async function tkUpdateGereedheid(){
   const open=[], onbekend=[];
-  try{ const q=await tkLeesWachtrijStrikt(); if(q.length)open.push(q.length+(q.length===1?' wijziging wacht':' wijzigingen wachten')+' nog op de server'); }
+  try{ const q=await tkLeesWachtrijStrikt(); if(!Array.isArray(q))throw new Error('invalid_queue'); if(q.length)open.push(q.length+(q.length===1?' wijziging wacht':' wijzigingen wachten')+' nog op de server'); }
   catch(_){ onbekend.push('de offline-wachtrij kon niet worden gelezen'); }
-  try{ const d=restoreTrainingDraft(); if(d&&draftHasData(d))open.push('er staat een niet-afgeronde training'); }
-  catch(_){ onbekend.push('het trainingsconcept kon niet worden gelezen'); }
+  // DEV-UPDATE-02: restoreTrainingDraft() maskeert JSON-fouten als null; een lokale
+  // draft is nooit bewijs voor bevestigde serveropslag, ook zonder werksets.
+  try{
+    const raw=localStorage.getItem('tk_draft_training');
+    if(raw!==null){
+      if(!raw.trim())throw new Error('empty_draft');
+      const draft=JSON.parse(raw);
+      if(!draft||typeof draft!=='object'||Array.isArray(draft))throw new Error('invalid_draft');
+      open.push(draftHasData(draft)?'er staat een niet-afgeronde training':'er staat een lokaal trainingsconcept; serverstatus onbekend');
+    }
+  }catch(_){ onbekend.push('het trainingsconcept is beschadigd of onleesbaar'); }
   try{ if(typeof curT!=='undefined'&&curT)open.push('er loopt nu een training'); }catch(_){}
-  try{ if(window.GW&&typeof GW.hasUnsaved==='function'&&GW.hasUnsaved())open.push('een begeleide training is nog niet opgeslagen'); }
-  catch(_){ onbekend.push('de begeleide training kon niet worden gelezen'); }
-  try{ const raw=localStorage.getItem(TK_TRAININGEN_ONBEVESTIGD); const ids=raw?JSON.parse(raw):[]; if(Array.isArray(ids)&&ids.length)open.push(ids.length+(ids.length===1?' eigen training is':' eigen trainingen zijn')+' nog niet door de server bevestigd'); }
-  catch(_){ onbekend.push('de lijst met eigen trainingen kon niet worden gelezen'); }
+  try{
+    // GW.hasUnsaved() detecteert alleen afgeronde onbewaarde sessies. Ook een lopende
+    // Guided-sessie staat in tk_gw_active en moet voor een uninstall worden bewaard.
+    const raw=localStorage.getItem('tk_gw_active');
+    if(raw!==null){
+      if(!raw.trim())throw new Error('empty_guided');
+      const a=JSON.parse(raw);
+      if(!a||typeof a!=='object'||!Array.isArray(a.items))throw new Error('invalid_guided');
+      open.push('er staat een begeleide training op dit toestel');
+    }else if(window.GW&&typeof GW.hasUnsaved==='function'&&GW.hasUnsaved()){
+      open.push('een begeleide training is nog niet opgeslagen');
+    }
+  }catch(_){ onbekend.push('de begeleide training is beschadigd of onleesbaar'); }
+  try{
+    const raw=localStorage.getItem(TK_TRAININGEN_ONBEVESTIGD);
+    if(raw!==null){
+      if(!raw.trim())throw new Error('empty_pending');
+      const ids=JSON.parse(raw);
+      if(!Array.isArray(ids)||!ids.every(id=>typeof id==='string'&&id.trim()))throw new Error('invalid_pending');
+      if(ids.length)open.push(ids.length+(ids.length===1?' eigen training is':' eigen trainingen zijn')+' nog niet door de server bevestigd');
+    }
+  }catch(_){ onbekend.push('de lijst met eigen trainingen is beschadigd of onleesbaar'); }
   return {veilig:!open.length&&!onbekend.length, open:open, onbekend:onbekend, online:navigator.onLine!==false, versie:(typeof APP_VER!=='undefined'?APP_VER:null)};
 }
 async function tkUpdateGereedheidToon(eerstSync){
@@ -9461,7 +9494,7 @@ async function tkUpdateGereedheidToon(eerstSync){
   let u=null; try{ u=await tkUpdateGereedheid(); }catch(_){ u={veilig:false,open:[],onbekend:['de controle zelf mislukte'],online:navigator.onLine!==false,versie:null}; }
   const lijst=function(a){ return '<ul style="margin:6px 0 0 18px;padding:0">'+a.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ul>'; };
   if(u.veilig){
-    el.innerHTML='<b style="color:var(--accent)">Veilig om bij te werken.</b> Alles staat op de server'+(u.versie?' (versie '+escHtml(u.versie)+')':'')+'.';
+    el.innerHTML='<b style="color:var(--accent)">Geen lokale blokkades gevonden.</b> Controleer apart of je trainingen op de server zijn opgeslagen. Deze controle is geen toestemming om de huidige app te verwijderen'+(u.versie?' (versie '+escHtml(u.versie)+')':'')+'.';
   }else{
     el.innerHTML='<b style="color:var(--red)">Nog niet verwijderen of opnieuw installeren.</b>'+
       (u.open.length?lijst(u.open):'')+(u.onbekend.length?lijst(u.onbekend.map(function(x){return 'Onbekend: '+x;})):'')+

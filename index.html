@@ -25432,7 +25432,7 @@ const TK_TRAIN_INTRO_NEUTRAAL='Train zoals gepland en let op hoe het vandaag voe
 // hours!==null, dezelfde herkomst die de spierherstelweergave zelf al gebruikt. Dit is de ENE
 // plek voor die regel. Het trainingsvoorschrift (computeProgAdjustment) krijgt de rijen ongefilterd.
 function tkSpierherstelEvidence(recRows){
-  return Array.isArray(recRows)?recRows.filter(function(r){ return !!r&&typeof r.hours==='number'&&isFinite(r.hours)&&r.hours>=0&&typeof r.pct==='number'&&isFinite(r.pct); }):[];
+  return Array.isArray(recRows)?recRows.filter(function(r){ return !!r&&typeof r.hours==='number'&&isFinite(r.hours)&&r.hours>=0&&typeof r.pct==='number'&&isFinite(r.pct)&&r.pct>=0&&r.pct<=100; }):[];
 }
 // AI-CONTEXT: STALE IS NIET ACTUEEL (DEC-DQ-003).
 // De regel onder "HUIDIGE STATUS" in buildCtx(). Per signaal de nieuwste bruikbare meting met

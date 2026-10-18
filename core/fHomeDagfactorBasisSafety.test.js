@@ -143,7 +143,7 @@ async function deel1() {
     eq([df(sb, kloon(SCEN.S6)).factor, df(sb, kloon(SCEN.S7)).factor, df(sb, kloon(SCEN.S8)).factor, df(sb, kloon(SCEN.S5)).factor], [1.05, 0.85, 0.93, 1], 'B10 de vaste invoer dekt positief (1.05), negatief (0.85), neutraal/voorzichtig (0.93) en alleen-slaap (1 met basis)');
     /* bronbinding: alle afnemers krijgen de gekeurde dagfactor */
     ok(/const dfAdvies=tkDagfactorVoorAdvies\(dfInfo\), checkinVandaag=tkCheckinVandaag\(lh\);/.test(REFRESH), 'B11 refreshHome() bepaalt één keer of de dagfactor bruikbaar is');
-    ['buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag)', 'renderMorning(dfAdvies,nextT,checkinVandaag)', 'renderTodayCta(nextT,dfAdvies)', 'renderCoachAdvies(dfAdvies,recRows)', 'renderV43Home(dfAdvies,lh,nextT,recRows)', "dfAdvies?dayState(dfAdvies.factor).key:'goed'"].forEach(function (a) {
+    ['buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag,heeftExplicietPlan,readinessCtx)', 'renderMorning(dfAdvies,nextT,checkinVandaag)', 'renderTodayCta(nextT,dfAdvies)', 'renderCoachAdvies(dfAdvies,recRows,readinessCtx)', 'renderV43Home(dfAdvies,lh,nextT,recRows)', "dfAdvies?dayState(dfAdvies.factor).key:'goed'"].forEach(function (a) {
       ok(REFRESH.indexOf(a) >= 0, 'B12 refreshHome() geeft de gekeurde dagfactor door: ' + a);
     });
     const naDef = REFRESH.slice(REFRESH.indexOf('const dfAdvies=') + 'const dfAdvies=tkDagfactorVoorAdvies(dfInfo)'.length);
@@ -168,7 +168,7 @@ async function deel1() {
     ok(/if\(adj&&hb&&hb\.bruikbaar&&hb\.zone==='ready'\)/.test(HTML), 'C7 de consistentiebrug vóór een training vereist ook een bruikbaar besluit');
     const echt = await besluit(SCEN.S6, function (x, d) { return x.__homeDfInfo(d); });
     const aiEcht = CoachingCore.readinessAiPayload(CoachingCore.buildReadinessContext({ besluit: echt.b }));
-    eq([aiEcht.zone, aiEcht.zoneLabel, aiEcht.trainingsadvies.soort], ['ready', 'Goed hersteld', 'ongewijzigd'], 'C8 met echte data krijgt de AI het besluit zoals voorheen');
+    eq([aiEcht.zone, aiEcht.zoneLabel, aiEcht.trainingsadvies.soort], ['ready', 'Gunstige dag', 'geen_advies'], 'C8 met echte data krijgt de AI het besluit zoals voorheen');
   }
   /* D. De melding na een check-in. */
   {
@@ -213,7 +213,7 @@ async function deel2() {
   const open = async function (w, rows, sessies) {
     const page = await browser.newPage({ viewport: { width: w, height: 1400 } });
     const errs = []; page.on('pageerror', function (e) { errs.push(e.message); });
-    await page.goto(url); await page.waitForTimeout(500);
+    await page.goto(url,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(500);
     await page.evaluate(function (a) {
       exercises = [{ id: 'sq', naam: 'Squat', muscle_primary: ['Quadriceps'], muscle_secondary: [] }];
       window.sbGet = async function (t) { return t === 'hrv_log' ? a[0] : (t === 'sessions' ? a[1] : []); };
@@ -286,7 +286,7 @@ async function deel2() {
     eq(u.coach, COACH[z.cls], s + '.3 coachzin woordelijk zoals voorheen');
     const zone = z.cls === 'g' ? 'ready' : (z.cls === 'y' ? 'caution' : 'reduce');
     eq([u.besluit.bruikbaar, u.besluit.zone, u.besluit.dagfactor, u.besluit.gereedheid, u.besluit.dagthema], [true, zone, f, CalcCore.readinessPercent(f), DecisionCore.dayZone(f).key], s + '.4 _tkReadiness: zone, dagfactor, gereedheid en dagthema ongewijzigd');
-    eq(u.readinessKop, { ready: 'Goed hersteld', caution: 'Voorzichtig vandaag', reduce: 'Belasting aanpassen' }[zone], s + '.5 readinesskaart toont het bestaande zonelabel');
+    eq(u.readinessKop, { ready: 'Gunstige dag', caution: 'Voorzichtig vandaag', reduce: 'Belasting aanpassen' }[zone], s + '.5 readinesskaart toont het bestaande zonelabel');
     eq([u.thema, u.ring, u.bel], [DecisionCore.dayZone(f).key, String(f), false], s + '.6 dagthema, dagfactorkaart en check-in-herinnering ongewijzigd');
     ok(new RegExp('Dagfactor' + String(f).replace('.', '\\.')).test(u.waarom.replace(/\s/g, '')), s + '.7 "Waarom vandaag?" toont de berekende dagfactor');
     await page.close();

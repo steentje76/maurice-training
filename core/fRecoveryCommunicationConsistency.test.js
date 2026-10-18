@@ -126,7 +126,7 @@ async function deel2() {
   const open = async function (w) {
     const page = await browser.newPage({ viewport: { width: w, height: 1400 } });
     const errs = []; page.on('pageerror', function (e) { errs.push(e.message); });
-    await page.goto(url); await page.waitForTimeout(500);
+    await page.goto(url,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(500);
     await page.evaluate(function (a) {
       exercises = [{ id: 'sq', naam: 'Squat', muscle_primary: ['Quadriceps'], muscle_secondary: [] }];
       window.sbGet = async function (t) { return t === 'hrv_log' ? a[0] : (t === 'sessions' ? a[1] : []); };

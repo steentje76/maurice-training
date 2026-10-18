@@ -41,10 +41,12 @@ function tussen(src, van, tot) { const i = src.indexOf(van); if (i < 0) throw ne
 const GEEN_TXT = 'Nog te weinig gegevens voor advies';
 const GEEN_SUB = 'Je check-in van vandaag is er, maar slaap of een HRV-oordeel ontbreekt nog.';
 const GEEN_CHECKIN = 'Nog geen check-in vandaag — vul je HRV in en ik vertel je precies wat vandaag slim is.';
+/* UX-REC-02 (v4.70.25+): de coachzin schrijft het oordeel toe aan de dagfactor en claimt geen
+ * herstel meer. Zone en filters zijn ongewijzigd; alleen de verwoording veranderde. */
 const COACH = {
-  g: 'Je herstel is sterk. Vandaag heb je de grootste kans op progressie.',
-  y: 'Je herstel is oké. Train je training vandaag op gevoel en houd je RPE in de gaten.',
-  r: 'Je lichaam vraagt vandaag om rust. Houd je training licht of kies voor actief herstel.'
+  g: 'Je dagfactor is gunstig. Spierherstel is een aparte schatting.',
+  y: 'Je dagfactor is gemiddeld. Train je training vandaag op gevoel en houd je RPE in de gaten.',
+  r: 'Je dagfactor is laag. Houd je training vandaag licht of kies voor actief herstel.'
 };
 const SUB = {
   g: 'Je lichaam is goed hersteld en klaar voor optimale prestaties.',

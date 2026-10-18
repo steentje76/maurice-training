@@ -153,12 +153,12 @@ const FIXTURE = function () {
         const tmp = document.createElement('div'); tmp.id = '__tmpfig'; tmp.style.display = 'none'; document.body.appendChild(tmp);
         renderMuscleRecoveryHeatmap('__tmpfig', rec.pctBySvgId, { side: 'front', neutralUnknown: true }); const f = tmp.innerHTML;
         renderMuscleRecoveryHeatmap('__tmpfig', rec.pctBySvgId, { side: 'back', neutralUnknown: true }); const b = tmp.innerHTML; tmp.remove();
-        return { verwacht: lichTop4Herstel(rec.rows).map(function (r) { const st = lichRecStatus(r.pct); return [r.muscle, r.pct + '%', st[0], st[1]]; }), rijen: rec.rows.length, overall: rec.overall,
+        return { verwacht: lichTop4Herstel(rec.rows).map(function (r) { if (r.hours === null) return [r.muscle, '—', 'Geen data', 'var(--g4)']; /* UX-REC-02 */ const st = lichRecStatus(r.pct); return [r.muscle, r.pct + '%', st[0], st[1]]; }), rijen: rec.rows.length, overall: rec.overall,
           front: f === document.getElementById('lich-fig-front').innerHTML, back: b === document.getElementById('lich-fig-back').innerHTML,
           legenda: Array.from(document.querySelectorAll('#lich-legend span')).map(function (s) { return [s.textContent, s.querySelector('i').style.background]; }), voet: document.getElementById('lich-anatfoot-t').textContent };
       });
       eq(await lijst(page), her.verwacht, w + 'px F1 spiergroeprijen tonen exact het herstel uit v43OverallRecovery() met de bestaande status en kleur');
-      ok(her.verwacht.length === 4 && her.verwacht.some(function (r) { return r[2] === 'Vermoeid'; }) && her.verwacht.some(function (r) { return r[2] === 'Hersteld'; }), w + 'px F2 de vaste invoer geeft herstelde en vermoeide groepen (de test is niet leeg)');
+      ok(her.verwacht.length === 4 && her.verwacht.some(function (r) { return r[2] === 'Vermoeid'; }) && her.verwacht.some(function (r) { return r[2] === 'Hersteld' || r[2] === 'Geen data'; }), w + 'px F2 de vaste invoer geeft vermoeide groepen en een best herstelde of datavrije groep (de test is niet leeg)');
       ok(her.front && her.back, w + 'px F3 beide figuren zijn identiek aan de bestaande renderer met rec.pctBySvgId');
       eq(her.legenda, [['Hersteld', 'var(--status-good)'], ['Aandacht', 'var(--status-warn)'], ['Vermoeid', 'var(--status-bad)']], w + 'px F4 legenda herstel: groen hersteld, geel aandacht, rood vermoeid');
       eq(her.voet, '4 van ' + her.rijen + ' groepen · gem. ' + her.overall + '% · 14 dagen', w + 'px F5 voettekst komt uit dezelfde uitkomst');
@@ -185,7 +185,7 @@ const FIXTURE = function () {
       eq([bel.legenda, bel.tabs], [['Hoog', 'Gemiddeld', 'Laag', 'Rustdag'], ['false', 'true']], w + 'px G4 legenda en schakelaar volgen de modus');
       ok(bel.nieuw.length === 1 && /^sessions&date=gte\.[0-9-]+&weight=not\.is\.null&sets=not\.is\.null&reps=not\.is\.null$/.test(bel.nieuw[0]), w + 'px G5 omschakelen doet precies één bestaand verzoek (muscleLoadBySvgId), geen tweede dataketen: ' + JSON.stringify(bel.nieuw));
       await page.evaluate(function () { lichSetMode('rec'); });
-      await page.waitForFunction(function () { const p = document.querySelector('#lich-muslist .pc'); return p && /%$/.test(p.textContent); }, null, { timeout: 10000 });
+      await page.waitForFunction(function () { const p = document.querySelector('#lich-muslist .pc'); return p && /%$|^—$/.test(p.textContent); /* UX-REC-02: rij zonder data toont — */ }, null, { timeout: 10000 });
       eq(await lijst(page), her.verwacht, w + 'px G6 terugschakelen toont weer exact dezelfde herstelrijen');
 
       // H. De overige Inzicht-secties zijn er nog.

@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — UX-REC-02 Herstelcommunicatie consistent op Vandaag, Inzicht en Coach (18 oktober 2026)
+
+- **Bevinding.** Bij dagfactor 1,02 / gereedheid 85 / slaap 6u01 / spierherstel laag zei de coachzin nog "Je herstel is sterk" of "Je lichaam is klaar voor belasting", en zette Inzicht "Klaar om te trainen" naast de spierherstelring zonder herkomst. PR #540 (UX-REC-01) loste alleen de hero-subtitel op.
+- **Oplossing (DEC-REC-001).** `buildCoachAdvice()`, `buildCoachIntro()` en `buildMorningMessage()` schrijven het oordeel toe aan de dagfactor; zelfde zone en filters. "Waarom vandaag?" in de hero toont gebaseerd-op met meetmoment, telt-niet-mee, berekening en betrouwbaarheid via de nieuwe helper `tkDagfactorHerkomst()` (ook gebruikt door `renderDagfactorDetail`, geen dubbele formuletekst). Spierherstel als gemiddelde schatting met aantal spiergroepen. Hero-label "Herstel nu" → "Vandaag"; legenda benoemt de spierfiguur. Inzicht: herkomstregel onder het oordeel; spierkaart zonder data "Geen trainingsdata" i.p.v. "Klaar voor belasting". Inzicht-spierlijst: een groep zonder trainingsdata toont "—" / "Geen data" i.p.v. "100% Hersteld".
+- **Niet gewijzigd.** `core/` (0 bestanden), drempels, Decision-titel, readiness-zone, AI-payload.
+- **Open.** Kop "Goed hersteld" op de readinesskaart (DEC-REC-001-A) en herstelscore/readiness die alleen de spiergroepen van de geplande training wegen (DEC-REC-001-B): beide PO-besluit.
+- **Gate.** `core/fRecoveryCommunicationConsistency.test.js` (deel 1 altijd; deel 2 Chromium op 320/360/390/412 px, praktijkscenario 1,02 / 85 / 6u01). `core/fHomeDagfactorBasisSafety.test.js` (verwachte coachzinnen) en `core/fInzichtHerstelBelasting.test.js` (rij zonder data) bewust bijgewerkt.
+
 ## v4.70.25 — Wearable-koppeling hersteld: veilige tokenopslag, Android-app bereikt de server, eerlijke koppelstatus (gebruikerstest 11 oktober 2026)
 
 - **Bug (S8-VAULT-NAME, S8-VAULT-ORPHAN).** Koppelen eindigde op "Koppelen mislukt (opslaan)". Supabase registreerde op 11 oktober tussen 06:28 en 06:29 UTC zes keer HTTP 409 op `store_wearable_token_secret`, PostgreSQL zes keer SQLSTATE 23505 op `secrets_name_idx`.

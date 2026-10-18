@@ -143,7 +143,7 @@ async function deel1() {
     eq([df(sb, kloon(SCEN.S6)).factor, df(sb, kloon(SCEN.S7)).factor, df(sb, kloon(SCEN.S8)).factor, df(sb, kloon(SCEN.S5)).factor], [1.05, 0.85, 0.93, 1], 'B10 de vaste invoer dekt positief (1.05), negatief (0.85), neutraal/voorzichtig (0.93) en alleen-slaap (1 met basis)');
     /* bronbinding: alle afnemers krijgen de gekeurde dagfactor */
     ok(/const dfAdvies=tkDagfactorVoorAdvies\(dfInfo\), checkinVandaag=tkCheckinVandaag\(lh\);/.test(REFRESH), 'B11 refreshHome() bepaalt één keer of de dagfactor bruikbaar is');
-    ['buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag,heeftExplicietPlan)', 'renderMorning(dfAdvies,nextT,checkinVandaag)', 'renderTodayCta(nextT,dfAdvies)', 'renderCoachAdvies(dfAdvies,recRows,readinessCtx)', 'renderV43Home(dfAdvies,lh,nextT,recRows)', "dfAdvies?dayState(dfAdvies.factor).key:'goed'"].forEach(function (a) {
+    ['buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag,heeftExplicietPlan,readinessCtx)', 'renderMorning(dfAdvies,nextT,checkinVandaag)', 'renderTodayCta(nextT,dfAdvies)', 'renderCoachAdvies(dfAdvies,recRows,readinessCtx)', 'renderV43Home(dfAdvies,lh,nextT,recRows)', "dfAdvies?dayState(dfAdvies.factor).key:'goed'"].forEach(function (a) {
       ok(REFRESH.indexOf(a) >= 0, 'B12 refreshHome() geeft de gekeurde dagfactor door: ' + a);
     });
     const naDef = REFRESH.slice(REFRESH.indexOf('const dfAdvies=') + 'const dfAdvies=tkDagfactorVoorAdvies(dfInfo)'.length);

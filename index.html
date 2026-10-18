@@ -4122,6 +4122,15 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
         <button class="btn btn-o btn-sm" id="help-feedback-triage-btn" style="display:none" onclick="openFeedbackTriage()">Feedback-triage</button>
       </div>
     </div></div>
+    <!-- DEV-UPDATE-01: vóór verwijderen/opnieuw installeren van de app (testbuild met een andere
+         ondertekening) controleren dat er niets lokaal staat dat de server nog niet heeft. -->
+    <div class="card" id="help-update-card"><div class="card-hd"><div class="card-title">Klaar voor een update?</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
+      <div id="help-update-body" aria-live="polite" style="color:var(--g4)">Nog niet gecontroleerd.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+        <button class="btn btn-o btn-sm" id="help-update-check" onclick="tkUpdateGereedheidToon(false)">Controleren</button>
+        <button class="btn btn-r btn-sm" id="help-update-sync" onclick="tkUpdateGereedheidToon(true)">Synchroniseren en controleren</button>
+      </div>
+    </div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Over de app</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
       <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Versie</div><div class="set-row-sub" id="help-app-ver">—</div></div></div>
       <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Privacyverklaring</div><div class="set-row-sub"><a href="/privacy.html" target="_blank" rel="noopener">Openen</a></div></div></div>
@@ -9417,6 +9426,49 @@ async function sbRpcQ(fn,args){
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
 // blijft.
 let _flushBezig=false;
+// DEV-UPDATE-01 — UPDATEGEREEDHEID. Een Android-testbuild met een andere ondertekening kan alleen
+// na verwijderen worden geïnstalleerd, en allowBackup=false betekent dat verwijderen ALLE lokale
+// data wist: de offline-wachtrij (IndexedDB), een lopend trainingsconcept, een niet-opgeslagen
+// begeleide training en nog niet door de server bevestigde Builder-trainingen. Deze controle
+// leest uitsluitend die bestaande bronnen; ze wijzigt niets en verwijdert niets. Kan een bron
+// niet worden gelezen, dan is de uitkomst "niet veilig" (fail-closed), nooit "veilig".
+async function tkLeesWachtrijStrikt(){
+  const db=await offlineDb();
+  return await new Promise((resolve,reject)=>{
+    const tx=db.transaction(OFFLINE_STORE,'readonly');
+    const req=tx.objectStore(OFFLINE_STORE).getAll();
+    req.onsuccess=()=>resolve(req.result||[]);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function tkUpdateGereedheid(){
+  const open=[], onbekend=[];
+  try{ const q=await tkLeesWachtrijStrikt(); if(q.length)open.push(q.length+(q.length===1?' wijziging wacht':' wijzigingen wachten')+' nog op de server'); }
+  catch(_){ onbekend.push('de offline-wachtrij kon niet worden gelezen'); }
+  try{ const d=restoreTrainingDraft(); if(d&&draftHasData(d))open.push('er staat een niet-afgeronde training'); }
+  catch(_){ onbekend.push('het trainingsconcept kon niet worden gelezen'); }
+  try{ if(typeof curT!=='undefined'&&curT)open.push('er loopt nu een training'); }catch(_){}
+  try{ if(window.GW&&typeof GW.hasUnsaved==='function'&&GW.hasUnsaved())open.push('een begeleide training is nog niet opgeslagen'); }
+  catch(_){ onbekend.push('de begeleide training kon niet worden gelezen'); }
+  try{ const raw=localStorage.getItem(TK_TRAININGEN_ONBEVESTIGD); const ids=raw?JSON.parse(raw):[]; if(Array.isArray(ids)&&ids.length)open.push(ids.length+(ids.length===1?' eigen training is':' eigen trainingen zijn')+' nog niet door de server bevestigd'); }
+  catch(_){ onbekend.push('de lijst met eigen trainingen kon niet worden gelezen'); }
+  return {veilig:!open.length&&!onbekend.length, open:open, onbekend:onbekend, online:navigator.onLine!==false, versie:(typeof APP_VER!=='undefined'?APP_VER:null)};
+}
+async function tkUpdateGereedheidToon(eerstSync){
+  const el=document.getElementById('help-update-body'); if(!el)return;
+  el.textContent=eerstSync?'Synchroniseren…':'Controleren…';
+  if(eerstSync){ try{ await flushOfflineQueue(); }catch(_){} }
+  let u=null; try{ u=await tkUpdateGereedheid(); }catch(_){ u={veilig:false,open:[],onbekend:['de controle zelf mislukte'],online:navigator.onLine!==false,versie:null}; }
+  const lijst=function(a){ return '<ul style="margin:6px 0 0 18px;padding:0">'+a.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ul>'; };
+  if(u.veilig){
+    el.innerHTML='<b style="color:var(--accent)">Veilig om bij te werken.</b> Alles staat op de server'+(u.versie?' (versie '+escHtml(u.versie)+')':'')+'.';
+  }else{
+    el.innerHTML='<b style="color:var(--red)">Nog niet verwijderen of opnieuw installeren.</b>'+
+      (u.open.length?lijst(u.open):'')+(u.onbekend.length?lijst(u.onbekend.map(function(x){return 'Onbekend: '+x;})):'')+
+      '<div style="margin-top:6px">'+(u.online?'Rond open trainingen af en kies "Synchroniseren en controleren".':'Je bent offline. Maak verbinding en kies "Synchroniseren en controleren".')+'</div>';
+  }
+  return u;
+}
 async function flushOfflineQueue(){
   if(!navigator.onLine)return;
   // Her-entree-slot. flushOfflineQueue() wordt door DRIE onafhankelijke bronnen aangeroepen

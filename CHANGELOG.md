@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — DEV-UPDATE-01 Updategereedheid en Android-praktijktest (18 oktober 2026)
+
+- **Nieuw.** Help → "Klaar voor een update?": controleert alleen-lezen de offline-wachtrij, een niet-afgeronde of lopende training, een niet-opgeslagen begeleide training en onbevestigde eigen trainingen. Een onleesbare bron = niet veilig. Met "Synchroniseren en controleren" (bestaande flush).
+- **Waarom.** Een nieuwe debug-testbuild kan alleen na verwijderen worden geïnstalleerd (andere sleutel), en verwijderen wist alle lokale data (`allowBackup=false`).
+- **Doc.** `docs/ANDROID_PRAKTIJKTEST_V1_BETA.md`: installatieprocedure en checklist sportschool; device-items OPEN.
+- **Niet gewijzigd.** Signing, secrets, workflows, applicationId, versionCode.
+- **Gate.** `core/fUpdateReadiness.test.js`.
+
 ## Kandidaat (nog geen versie) — LIB-VALIDATE-01 Bibliotheekvalidatie en importgereedheid (18 oktober 2026)
 
 - **Nieuw.** `tools/library-validate.js` (alleen-lezen): oefeningencatalogus (id's, slugs, namen, metadata, relaties, kennislaag, video's, manifest + sha256, posters, Batch 002-poort), supplementen (enums, synoniemen, claims met bron, geen claimtaal) en de voedingsstatus; `--movekit-source` geeft een reproduceerbare droogloop voor een volgende batch.

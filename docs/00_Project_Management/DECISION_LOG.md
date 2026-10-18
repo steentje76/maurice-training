@@ -3212,3 +3212,19 @@ kennisrecords, voedingswaarden) wordt door de AI ingevuld zonder bron.
 
 **Open (PO).** Batch 002-poort; redactie van Nederlandse oefeningnamen; `Kuiten`/`Adductoren` in `MUSCLE_OPTIONS`;
 20 ontbrekende kennisrecords en posters; bron en licentie voor een centrale voedingsbibliotheek.
+
+## DEC-UPDATE-001 — Vóór een herinstallatie: eerst bewijzen dat er niets lokaal staat (18 oktober 2026)
+
+**Context.** Elke CI-debugbuild heeft een eigen debug-sleutel (ADR-ANDROID-SIGNING-001, PR #532); een nieuwe testbuild
+gaat dus alleen na verwijderen op het toestel. `allowBackup=false`: verwijderen wist de offline-wachtrij, een lopend
+concept, een niet-opgeslagen begeleide training en onbevestigde eigen trainingen. De laatste testbuild-release is
+v4.70.23; v4.70.25 heeft nog geen APK.
+
+**Besluit.** Help → "Klaar voor een update?" (`tkUpdateGereedheid()`): alleen-lezen controle van die vier bronnen;
+een onleesbare bron is "niet veilig" (fail-closed). "Synchroniseren en controleren" hergebruikt `flushOfflineQueue()`.
+Installatieprocedure en praktijktestchecklist: `docs/ANDROID_PRAKTIJKTEST_V1_BETA.md`.
+
+**Niet gewijzigd.** Signing, secrets, applicationId, versionCode, workflows, Vault, OAuth-configuratie.
+
+**Open (PO).** Stabiele testsleutel (D1–D4 in PR #532). Testbuild bouwen: workflow `Android Debug APK` met de exacte
+SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDATION REQUIRED.

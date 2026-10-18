@@ -6,7 +6,38 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.23
+v4.70.25
+
+## Wearable-koppeling: tokenopslag, Android-bereikbaarheid, koppelstatus (v4.70.25, 11 oktober 2026)
+
+- Invariant (DEC-VAULT-001): elke autorisatie krijgt een unieke Vault-secretnaam. Bij (her)koppelen worden eerst de
+  nieuwe secrets opgeslagen, dan wijst de koppeling ernaar, dan pas worden de oude opgeruimd. Een mislukte stap laat een
+  bestaande koppeling ongewijzigd. Loskoppelen verwijdert de koppelrij en daarna de secrets.
+- Invariant (DEC-API-001): geen enkele aanroep van een serverfunctie gebruikt een kaal relatief pad; alles loopt via
+  `tkApiUrl()`. Web is same-origin, de Android-app gebruikt `https://maurice-art.netlify.app`. De functies staan
+  cross-origin alleen `https://localhost` en `capacitor://localhost` toe.
+- Koppelstatus: `refresh_failed` en `token_expired_no_refresh` betekenen "opnieuw koppelen nodig"; een storing bij
+  Google of bij het ophalen van de status is geen verlopen of ontbrekende koppeling.
+- Productie (alleen-lezen vastgesteld, 11 oktober 2026): `wearable_connections` is leeg; `vault.secrets` bevat vier
+  wees-secrets (twee van een inmiddels verwijderd account). `migratie_v581.sql` is NIET toegepast; er is niets verwijderd.
+- Open: geen toestelbewijs voor de Android-koppeling, de terugkeer uit de browser en de deep link. Publicatiestatus van
+  de Google OAuth-app niet vastgesteld (zie DEC-OAUTH-001). Opruimen van de vier wees-secrets wacht op een afzonderlijk
+  akkoord. `state`-validatie bij Polar, WHOOP, Oura en Garmin ongewijzigd.
+
+## Offline data-integriteit (v4.70.24, 9 oktober 2026)
+
+- Builder-training: telt pas als opgeslagen als de server de training én alle oefeningen heeft (DEC-SYNC-002). Tot dan
+  wint de lokale versie, ook na een herstart, en volgt bij de sync een stille herstelpoging.
+- De wachtrij kent afhankelijkheden (`TK_WACHTRIJ_OUDERS`). Een kindrij gaat nooit vóór haar ouder naar de server.
+- Voeding gebruikt client-ids voor producten, supplement-definities en maaltijden. Offline loggen werkt zonder dubbele
+  definities of producten.
+- Writes zonder bekende eigenaar worden niet gequeued. Een write die blijft hangen, wordt na 20 s gequeued, alleen bij
+  idempotente rijen. In de console staat geen rij-inhoud.
+- Open:
+  - geen toestelbewijs;
+  - handmatige (niet-Builder) trainingen gebruiken nog `sbPost` zonder wachtrij;
+  - `sbPatchQ`/`sbDelQ` zonder `detail` geven bij een mislukte queue nog `true`;
+  - intake-doelen hebben geen client-id (bigint uit de database).
 
 ## Eerlijke opslagstatus (v4.70.23, 8 oktober 2026)
 
@@ -393,7 +424,7 @@ v4.70.23
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.23 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.25 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

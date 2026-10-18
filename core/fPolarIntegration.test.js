@@ -28,7 +28,7 @@ console.log('DEVICES/WEARABLES MASTER SPRINT — Polar AccessLink integratie');
   ok(!src.match(/access_token\s*:\s*accessToken(?!Secret)|INSERT INTO.*access_token[^_]/i) || src.includes('storeWearableTokenSecret') || src.includes('getWearableTokenSecret'),
     `A${i + 1}: ${namen[i]} gebruikt de Vault-helpers, geen directe plaintext access_token-kolom`);
 });
-ok(authCallback.includes("require('./wearableTokenVault.js')") && authCallback.includes('storeWearableTokenSecret'),
+ok(authCallback.includes("require('./wearableTokenVault.js')") && authCallback.includes('vervangWearableTokens'),
   'A4: polar-auth-callback.js slaat de token uitsluitend via de bestaande Vault-RPC op (geen nieuwe, aparte tokenopslag)');
 ok(sync.includes("require('./wearableTokenVault.js')") && sync.includes('getWearableTokenSecret'),
   'A5: polar-sync.js haalt de token uitsluitend via de bestaande Vault-RPC op');

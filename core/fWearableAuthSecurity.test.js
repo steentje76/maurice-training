@@ -35,7 +35,7 @@ function baseFetch(callerId) {
       return J({}, true, 204);
     }
     if (url.indexOf('/rest/v1/wearable_oauth_state') !== -1 && method === 'POST') {
-      const state = 'state-' + Math.random().toString(36).slice(2);
+      const state = require('crypto').randomUUID(); // de database geeft een uuid uit (gen_random_uuid)
       const row = { state, user_id: callerId, created_at: new Date().toISOString() };
       stateStore[state] = row;
       return J([row]);
@@ -98,8 +98,11 @@ function authReq(callerId, extra) { return Object.assign({ httpMethod: 'POST', h
   ok(res.headers.Location.indexOf('invalid_request') !== -1, 'CALLBACK 6: ontbrekende state -> invalid_request-redirect');
 
   // 7: ongeldige/onbekende state -> reject (expired)
-  res = await callbackMod.handler({ queryStringParameters: { code: 'abc', state: 'nonexistent-state' } });
+  res = await callbackMod.handler({ queryStringParameters: { code: 'abc', state: '00000000-0000-4000-8000-000000000000' } });
   ok(res.headers.Location.indexOf('expired') !== -1, 'CALLBACK 7: onbekende state -> expired-redirect (fail closed)');
+  // 7b (v4.70.25): een state die geen uuid is bereikt de database niet eens (geen filter-injectie)
+  res = await callbackMod.handler({ queryStringParameters: { code: 'abc', state: 'x&select=*' } });
+  ok(res.headers.Location.indexOf('invalid_request') !== -1, 'CALLBACK 7b: misvormde state -> invalid_request, zonder databaseverzoek');
 
   // 8: state van een ANDERE gebruiker mag alleen aan diens eigen user_id gekoppeld worden
   //    (geen cross-user hijack: de callback heeft geen Authorization-header en vertrouwt

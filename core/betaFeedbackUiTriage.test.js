@@ -35,7 +35,7 @@ function ui(html, o) {
     document: { getElementById: id => els[id] || null, querySelector: sel => (sel === '.scr.active' ? active : null) },
     navigator: { userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/129.0 Mobile Safari/537.36' },
     BetaFeedbackCore: BF, APP_VER: 'v4.70.7', SB_H: o.noAuth ? undefined : { Authorization: 'Bearer user-jwt' },
-    tkProductTelemetryEnvironment: () => 'production', tkProductTelemetryPlatform: () => 'android',
+    tkProductTelemetryEnvironment: () => 'production', tkProductTelemetryPlatform: () => 'android', tkApiUrl: p => p,
     openModal: () => {}, escHtml: s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
     authSession: { user: { id: '11111111-1111-1111-1111-111111111111' } }, sbGet: async () => (o.role ? [{ system_role: o.role }] : []),
     fetch: (u, init) => { calls.push({ u, init }); if (o.fetchThrows) return Promise.reject(new Error('net'));
@@ -72,7 +72,7 @@ async function suiteUi(html) {
 const U = { user: 'aaaaaaaa-0000-4000-8000-000000000001', tester: 'aaaaaaaa-0000-4000-8000-000000000002', support: 'aaaaaaaa-0000-4000-8000-000000000003', dev: 'aaaaaaaa-0000-4000-8000-000000000004' };
 const ROLES = { [U.user]: null, [U.tester]: 'tester', [U.support]: 'support', [U.dev]: 'developer' };
 const F1 = 'bbbbbbbb-0000-4000-8000-000000000001', F2 = 'bbbbbbbb-0000-4000-8000-000000000002';
-function loadTriage(src) { const m = { exports: {} }; new Function('module', 'exports', 'require', 'process', 'Buffer', src)(m, m.exports, p => (/betaFeedback\.js$/.test(p) ? BF : require(p)), { env: {} }, Buffer); return m.exports._internal; }
+function loadTriage(src) { const m = { exports: {} }; new Function('module', 'exports', 'require', 'process', 'Buffer', src)(m, m.exports, p => (/betaFeedback\.js$/.test(p) ? BF : (/_cors\.js$/.test(p) ? require(path.join(ROOT, 'netlify/functions/_cors.js')) : require(p))), { env: {} }, Buffer); return m.exports._internal; }
 function fakeSb(o) {
   o = o || {};
   const rows = { [F1]: { id: F1, user_id: U.user, created_at: '2026-09-29T08:00:00Z', category: 'problem', status: 'SUBMITTED', description: 'tekst', reproduction_steps: null, redactions: [], technical_context: { os_family: 'android' }, duplicate_of: null },

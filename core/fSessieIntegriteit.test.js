@@ -117,7 +117,7 @@ function zandbak(opts) {
   vm.runInContext([
     konstVar('OFFLINE_DB_NAME'), konstVar('SB_RETRY_STATUS'),
     konstVar('_sbRefreshInFlight'), konstVar('_sbSessieVerlopenGemeld'), konstVar('_flushBezig'),
-    konstVar('IDEMPOTENT_TABELLEN_MET_CLIENT_ID'), pak('newClientRowId'),
+    konstVar('IDEMPOTENT_TABELLEN_MET_CLIENT_ID'), konstVar('TK_IDEMPOTENT_ZONDER_UPDATE'), konstVar('TK_WACHTRIJ_OUDERS'), konstVar('TK_SCHRIJF_TIMEOUT_MS'), pak('tkOuderSleutels'), pak('tkHuidigeUid'), pak('tkEigenaarUid'), pak('tkWachtrijHeeftOuder'), pak('tkFoutcode'), pak('tkLogSchrijf'), pak('tkMetTimeout'), pak('tkSchrijfUitkomst'), pak('sbSchrijfQDetail'), /* Sprint 7: helpers van de schrijflaag */ pak('newClientRowId'),
     pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'), pak('sbFetch'),
     pak('offlineDb'), pak('offlineQueueAdd'), pak('offlineQueueAll'), pak('offlineQueueRemove'),
     pak('sbGet'), pak('sbPostQ'), pak('sbPatchQ'), pak('sbDelQ'), pak('flushOfflineQueue')
@@ -292,9 +292,15 @@ tAsync('C1: twee gelijktijdige doorlopen versturen elk item maar één keer', fu
     .then(function (items) { assert.strictEqual(items.length, 0); });
 });
 
+// Sprint 7 (Track D, ACCOUNT_MISMATCH, bewust gewijzigd): zonder sessie EN zonder bekende eigenaar van het
+// toestel ontstaat geen wachtrij-item meer (zo'n item zonder eigenaar zou later onder de volgende gebruiker
+// kunnen worden verstuurd); de aanroeper krijgt 'failed' en houdt de invoer lokaal. Met een bekende
+// eigenaar wordt wél gequeued (zie fOfflineDataIntegrity D1). Een bestaand item wordt zonder sessie niet verstuurd.
 tAsync('C2: zonder sessie wordt er niets verstuurd en blijft de wachtrij intact', function () {
   var ctx = zandbak({ sessie: null, online: false, antwoord: function () { return { status: 201 }; } });
-  return ctx.sbPostQ('sessions', { date: 'a' })
+  return ctx.offlineQueueAdd({ table: 'sessions', method: 'POST', body: { date: 'a' } })
+    .then(function () { return ctx.sbPostQ('sessions', { date: 'b' }, { detail: true }); })
+    .then(function (u) { assert.strictEqual(u.status + '/' + u.reden, 'failed/account', 'write zonder eigenaar mag niet als opgeslagen gelden'); })
     .then(function () { ctx.navigator.onLine = true; return ctx.flushOfflineQueue(); })
     .then(function () { return ctx.offlineQueueAll(); })
     .then(function (items) {

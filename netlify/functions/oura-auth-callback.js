@@ -2,7 +2,7 @@
 // Devices/Wearables V1 MUST — Oura. Ontvangt de browser-redirect na
 // toestemming. Token-endpoint officieel bevestigd (cloud.ouraring.com/
 // docs/authentication): POST https://api.ouraring.com/oauth/token.
-const { storeWearableTokenSecret } = require('./wearableTokenVault.js');
+const { vervangWearableTokens } = require('./wearableTokenVault.js');
 
 exports.handler = async function (event) {
   const supabaseUrl = process.env.SUPABASE_URL || 'https://mhfxhzkdmgkaplicdszg.supabase.co';
@@ -58,33 +58,17 @@ exports.handler = async function (event) {
       return redirectToApp('token_error');
     }
 
-    const accessSecretId = await storeWearableTokenSecret(supabaseUrl, serviceKey, tokens.access_token, `oura_access_${userId}`);
-    const refreshSecretId = tokens.refresh_token
-      ? await storeWearableTokenSecret(supabaseUrl, serviceKey, tokens.refresh_token, `oura_refresh_${userId}`)
-      : null;
-    if (!accessSecretId) return redirectToApp('save_error');
-
-    // Vervaltijd: gebruik het door Oura teruggegeven expires_in-veld. Als
-    // dat ontbreekt, een conservatieve fallback van 1 uur (niet met
-    // dezelfde zekerheid bevestigd als de endpoint-URL's zelf) -- een te
-    // korte fallback leidt hooguit tot een onnodig vroege refresh-poging,
-    // nooit tot een stille, onopgemerkte tokenveroudering.
+    // v4.70.25 (DEC-VAULT-001): unieke secretnaam per autorisatie; eerst de nieuwe secrets,
+    // dan de koppeling, dan pas de oude secrets opruimen. Voorheen werd de bestaande
+    // koppeling verwijderd vóórdat de nieuwe was opgeslagen, onder een vaste secretnaam.
     const expiresAt = new Date(Date.now() + (Number(tokens.expires_in) || 3600) * 1000).toISOString();
-
-    await fetch(`${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.oura`, {
-      method: 'DELETE', headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' }
+    const resultaat = await vervangWearableTokens({
+      supabaseUrl, serviceKey, userId, provider: 'oura', prefix: 'oura',
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token || null,
+      velden: { token_expires_at: expiresAt, scope: tokens.scope || null, connected_at: new Date().toISOString() }
     });
-    const insertRes = await fetch(`${supabaseUrl}/rest/v1/wearable_connections`, {
-      method: 'POST',
-      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        user_id: userId, provider: 'oura',
-        access_token_secret_id: accessSecretId, refresh_token_secret_id: refreshSecretId,
-        token_expires_at: expiresAt, scope: tokens.scope || null,
-        connected_at: new Date().toISOString()
-      })
-    });
-    if (!insertRes.ok) return redirectToApp('save_error');
+    if (!resultaat.ok) { console.error('oura-auth-callback: koppeling niet opgeslagen, fase', resultaat.fase); return redirectToApp('save_error'); }
 
     return redirectToApp('connected');
   } catch (e) {

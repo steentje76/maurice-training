@@ -42,7 +42,7 @@ function extractFunctionBody(source, name) {
   if (body) {
     ok(/isUpdate\s*=\s*!!existingId/.test(body),
       'saveWorkout() onderscheidt expliciet update (existingId aanwezig) van een nieuwe training');
-    ok(/if\s*\(isUpdate\)\s*{[\s\S]*sbPatchQ\(/.test(body),
+    ok(/if\s*\(isUpdate\)\s*{[\s\S]*(?:sbPatchQ|tkCustomTrainingPatch)\(/.test(body), // Sprint 7: PATCH via tkCustomTrainingPatch (= sbPatchQ met detail + markering)
       'saveWorkout() gebruikt PATCH (geen nieuwe rij) bij het bijwerken van een bestaande training');
     ok(/}\s*else\s*{[\s\S]*(?:sbPostQ|tkCustomTrainingPost)\(/.test(body), // Sprint 6: POST via tkCustomTrainingPost (= sbPostQ + onbevestigd-markering)
       'saveWorkout() gebruikt POST alleen bij een daadwerkelijk nieuwe training');

@@ -59,3 +59,6 @@ const callerRes = await fetch(`${supabaseUrl}/rest/v1/users?id=eq.${callerId}&se
     return { statusCode: 500, body: JSON.stringify({ error: { message: 'Serverfout: ' + e.message } }) };
   }
 };
+
+// v4.70.25 (DEC-API-001): bereikbaar vanuit de Android-app (zie _cors.js). Web ongewijzigd.
+exports.handler = require('./_cors.js').withCors(exports.handler);

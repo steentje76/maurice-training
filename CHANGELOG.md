@@ -1,5 +1,62 @@
 # Trainingskompas — Changelog
 
+## v4.70.25 — Wearable-koppeling hersteld: veilige tokenopslag, Android-app bereikt de server, eerlijke koppelstatus (gebruikerstest 11 oktober 2026)
+
+- **Bug (S8-VAULT-NAME, S8-VAULT-ORPHAN).** Koppelen eindigde op "Koppelen mislukt (opslaan)". Supabase registreerde op 11 oktober tussen 06:28 en 06:29 UTC zes keer HTTP 409 op `store_wearable_token_secret`, PostgreSQL zes keer SQLSTATE 23505 op `secrets_name_idx`.
+- **Root cause.** Tokens stonden in Vault onder een vaste naam per gebruiker (`wearable_access_<userId>`), en `vault.secrets` heeft een unieke index op `name`. `wearable-disconnect.js` verwijderde de koppeling maar niet de secrets. Elke volgende koppeling botste daardoor op de achtergebleven naam. Op ongewijzigde main gereproduceerd: twee keer 409 per poging, drie pogingen.
+- **Ook gevonden.**
+  - Herkoppelen over een bestaande koppeling kon evenmin: de upsert noemde geen `on_conflict`, waardoor PostgREST alleen een conflict op de primaire sleutel oplost en `UNIQUE(user_id, provider)` faalt (S8-RECONNECT-UPSERT; uit code-analyse, op main verborgen achter het naamconflict).
+  - Polar, WHOOP, Oura en Garmin gebruikten dezelfde vaste naam; WHOOP, Oura en Garmin verwijderden bovendien de bestaande koppeling vóórdat de nieuwe was opgeslagen (S8-PROVIDER-SAME).
+  - Android-app: alle serverfuncties werden aangeroepen op een relatief pad. In de app is de oorsprong `https://localhost`, dus koppelen, sync, coach en telemetry faalden direct (S8-ANDROID-API). Na de toestemming in de browser kwam de gebruiker in de webapp terecht en ververste de app niets (S8-ANDROID-RETURN).
+  - Een koppeling met status `refresh_failed` bleef groen "Gekoppeld"; een storing bij het ophalen van de status werd getoond als "niet gekoppeld" (S8-STATUS-GREEN).
+  - Een storing bij Google tijdens het vernieuwen (5xx, 429, netwerk) werd behandeld als verlopen koppeling. Een door Google meegegeven nieuw refresh-token werd genegeerd. De vervaltijd werd ook vooruitgezet als het nieuwe token niet was opgeslagen (S8-REFRESH-FAILED).
+  - De callback zette de `state`-parameter onbewerkt in een databasefilter (S8-STATE-FILTER). Bij een mislukte code-uitwisseling werd het antwoord van Google gelogd, de Vault-module logde de volledige databasefouttekst met secretnaam en user-id, en loskoppelen zette het token in de revoke-URL (S8-LOG-TOKEN).
+  - `delete_wearable_token_secret` staat op productie maar in geen enkel migratiebestand (S8-REPO-DRIFT).
+- **Oplossing (DEC-VAULT-001).**
+  - `vervangWearableTokens()` in `wearableTokenVault.js`: unieke secretnaam per autorisatie; eerst de nieuwe secrets, dan de koppeling (`on_conflict=user_id,provider`), dan pas de oude secrets. Mislukt een stap, dan worden de nieuwe secrets teruggedraaid en blijft de bestaande koppeling ongewijzigd. Alle vijf de callbacks gebruiken dit.
+  - `verwijderWearableKoppeling()`: eerst de koppelrij, dan de secrets. `wearable-disconnect.js` trekt de toestemming bij Google in met het refresh-token, in de body.
+  - `vernieuwGoogleHealthToken()` in `_wearableAuthLib.js`, gedeeld door `wearable-sync.js` en de activiteiten-sync: alleen een afwijzing door Google (`invalid_grant` e.d.) geeft `refresh_failed`; een storing geeft `error:TOKEN_REFRESH_ERROR`. Rotatie wordt opgeslagen. De log krijgt Googles foutcode en de HTTP-status.
+  - `migratie_v581.sql` (niet toegepast): `cleanup_orphan_wearable_token_secrets()` voor achtergebleven secrets, en de bestaande `delete_wearable_token_secret` vastgelegd. De app werkt zonder deze migratie.
+- **Oplossing (DEC-API-001).**
+  - `TkApi` / `tkApiUrl()` in `index.html`: één plek bepaalt het adres van een serverfunctie. Web blijft relatief; alleen een native Capacitor-runtime krijgt de vaste oorsprong `https://maurice-art.netlify.app`. Alle 42 aanroepen en de agenda-link lopen hierlangs.
+  - `netlify/functions/_cors.js`: de 29 door de app aangeroepen functies beantwoorden de preflight, uitsluitend voor `https://localhost` en `capacitor://localhost`. Geen wildcard, geen credentials. Callbacks, webhooks en geplande taken niet.
+  - Terugkeer: `wearable-auth-start` geeft bij de Android-app een hint mee in `state`; de callback stuurt dan naar `wearable-return.html`, die via `trainingskompas://wearable` naar de app verwijst. De app haalt bij terugkeer zelf de koppelstand op (`tkWearableCheckReturn`, bestaande `visibilitychange`-handler).
+- **Wat de sporter ziet.** Koppelen en opnieuw koppelen werken, ook na loskoppelen. Een verlopen koppeling toont "Opnieuw koppelen nodig" met de knop "Opnieuw koppelen"; eerst loskoppelen hoeft niet. Is de status niet op te halen, dan staat er "Status onbekend" met "Opnieuw proberen".
+- **Niet gewijzigd.** De vier bestaande Vault-RPC's, service-role-only toegang, RLS, het databaseschema, de OAuth-scopes, de webflow (`?wearable=`), sync-parsing, berekeningen, evidence, AI, de protected core-bestanden (`CORE_SIG` ongewijzigd), Android-signing (PR #532).
+- **Niet uitgevoerd.** Geen productiemigratie, geen secret verwijderd, geen merge. De vier wees-secrets op productie staan er nog; zij blokkeren na deploy niets meer.
+- **Open.** Geen toestelbewijs (Android-koppeling, terugkeer, deep link). Of de Google OAuth-app in testmodus staat is niet vastgesteld: de gegevens passen bij het 7-dagenplafond (refresh-token van 10 september, laatste geslaagde verversing 15 september), maar alleen de Google Cloud Console geeft uitsluitsel. `state`-validatie bij Polar, WHOOP, Oura en Garmin is niet aangepast.
+- **Gate:** `core/fWearableTokenLifecycle.test.js` (208 controles: echte serverfuncties tegen een nagebouwde Supabase met de unieke naamindex) en `core/fWearableOrphanCleanupSql.test.js` (27 controles: de migratie uitgevoerd in PGlite). Pins op de oude code bewust bijgewerkt in `fWearableAuthSecurity`, `fWearableTokenVault`, `fPolarIntegration`, `fGarminOAuthFoundation`, `fWearableSyncActivitiesUIWiring`, `fClientTelemetry`, `fGezondheidsgegevens`, `fLichaam21Tabs`, `fLichaamMetricDetail`, `fVerbandenV1`, `fTeamAccessRoleGateHotfix`, `betaFeedbackStorage`, `betaFeedbackUiTriage`, `productTelemetryLifecycle`, `productTelemetryConsentRetention`.
+- sw-cache v470250, versionCode 47025. Versie 4.70.24 is gereserveerd voor PR #533.
+
+## v4.70.24 — Offline data-integriteit: Builder-trainingen, voeding en eerlijke status (Sprint 7, 9 oktober 2026)
+
+- **Builder (Track B).**
+  - De oefeningen van een Builder-training waren niet beschermd. `saveWorkout()` startte de training-write en de oefeningen-writes tegelijk, zonder op elkaar te wachten. Oefeningen konden dus de server bereiken vóór hun training (RLS weigert die).
+  - Een oefening zonder client-id kon na een replay een tweede rij geven.
+  - De sync bij het opstarten verving een nog niet verstuurde bewerking door de oudere serverversie.
+  - Nu: de training-write wordt eerst afgewacht. Mislukt die, dan gaan er geen oefeningen. Oefeningenrijen krijgen een client-id (idempotent).
+  - Een training telt pas als opgeslagen als de server de training én alle oefeningen heeft bevestigd. Tot dan wint de lokale versie, en bij de sync volgt een stille, idempotente herstelpoging.
+  - Bewerken loopt via dezelfde weg (`tkCustomTrainingPatch`).
+- **Afhankelijkheden in de wachtrij (DEC-SYNC-002).** Een kindrij gaat nooit los naar de server zolang haar ouder nog in de wachtrij staat. Dit geldt voor oefeningen van een training, supplementlog → definitie, voedingswaarden/barcode → product en maaltijdregel → maaltijd/product. De flush stuurt geen kind waarvan de ouder in dezelfde ronde mislukte.
+- **Voeding (Track C).**
+  - Producten, supplement-definities en lege maaltijden kregen hun id van de database en werden daarna op naam teruggezocht. Offline faalde dat. Een nieuwe poging gaf dan een dubbele definitie of een dubbel product, en online kon een ouder product met dezelfde naam worden teruggevonden.
+  - Nu kiest de client het id vooraf en schrijft met ignore-duplicates:
+    - per supplementnaam onthouden (`tk_supp_defs`);
+    - per dag en maaltijdtype (`tk_voeding_shells`), dus een tweede product voor hetzelfde ontbijt komt in dezelfde maaltijd;
+    - per productinvoer.
+  - Offline loggen van een nieuw supplement of een eigen product werkt nu volledig.
+  - OFF-import: de barcode-race (409) wordt nu echt herkend. Intake-doelen worden bij een nieuwe poging niet dubbel opgeslagen, en een niet-opgeslagen doel wordt gemeld.
+- **Status en privacy (Track D).**
+  - `sbPostQ` meldt een reden: offline, netwerk, timeout, auth, server, afhankelijk, validatie, toegang, opslag of account.
+  - Zonder bekende eigenaar ontstaat geen wachtrij-item. Bij een offline verlopen sessie geldt de laatst bekende eigenaar van het toestel.
+  - Een write die blijft hangen, wordt na 20 s gequeued. Dat geldt alleen voor idempotente rijen met een client-id.
+  - De console bevat geen serverfouttekst meer (kan rij-inhoud bevatten), alleen de foutcode. Niet-bevestigde writes worden gelogd via ObservabilityCore, zonder inhoud.
+  - Berichten gebruiken ignore-duplicates (geen UPDATE-policy).
+  - De oranje melding en het wachtrijscherm tonen trainingen die alleen op dit toestel staan.
+- **Niet gewijzigd.** Database, RLS, retry-statuscodes, trainingsberekeningen, evidence, AI. De AI-coach leest geen wachtrij- of opslagstatus.
+- **Gate:** `core/fOfflineDataIntegrity.test.js` (45 controles; echte pagina met `WB.saveWorkout()`, sync, flush en voedingsflows tegen een gesimuleerde PostgREST met de productieconstraints). Sandbox-guards en pins op de oude code bewust bijgewerkt.
+- sw-cache v470240, versionCode 47024.
+
 ## v4.70.23 — Eerlijke opslagstatus: geen "opgeslagen" als de write nergens staat (R4-QUEUE-FAIL, 8 oktober 2026)
 
 - **Bug (R4-QUEUE-FAIL).** `sbPostQ()` zonder opties gaf `true` als queuen zelf mislukte (IndexedDB niet beschikbaar): de app meldde succes terwijl de data nergens stond. Daarnaast negeerden de voedingsschermen de uitkomst helemaal: ook een definitieve weigering van de server (400/403/409/422) gaf "Water toegevoegd", "Voedingsdoelen opgeslagen", "Toegevoegd aan maaltijd", "Correctie opgeslagen", een geleegd supplementformulier of een doorstap naar de hoeveelheid. Onderzoeksdeelname bevestigde altijd. Gereproduceerd in de echte pagina.

@@ -177,7 +177,7 @@ ok(html.indexOf("if(draft){clearTrainingDraft()}") === -1, 'sanity: clearTrainin
 
 // ═══ CROSS-USER ACTIVE STATE -- LOGOUT DAADWERKELIJK GESIMULEERD ═══
 {
-  const PERSONAL_CACHE_KEYS = ['tk_atleet', 'tk_trainings', 'tk_trainings_onbevestigd', 'tk_active_sport', 'tk_draft_training', 'tk_last_training',
+  const PERSONAL_CACHE_KEYS = ['tk_atleet', 'tk_trainings', 'tk_trainings_onbevestigd', 'tk_supp_defs', 'tk_voeding_shells', 'tk_active_sport', 'tk_draft_training', 'tk_last_training',
     'tk_ai_consent', 'tk_product_telemetry_consent', 'tk_gw_active', 'tk_gw_hist', 'tk_gw_log', 'tk_wb_draft', 'tk_wb_saved', 'tk_wb_favs',
     'tk_wb_migrated_v1', 'tk_vt_meta', 'tk_lib_favs', 'tk_lib_recent', 'tk_lib_recentq', 'tk_plates', 'tk_rower',
     'tk_rowers', 'tk_rest_default', 'tk_onboarding_done', 'tk_coach_style', 'tk_coach_voice', 'tk_coach_detail',

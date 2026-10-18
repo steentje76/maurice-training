@@ -2888,3 +2888,174 @@ blijft lokaal zonder automatische nieuwe poging. (d) Intake-doelen en de OFF-ing
 
 **Status.** Geïmplementeerd in v4.70.23. Guard: `core/fQueueFailHonestStatus.test.js`. Niet CLOSED_PROVEN: vereist
 toestelbewijs.
+
+## DEC-SYNC-002 — Afhankelijkheden, client-ids en volledige opslag van samengestelde gegevens (9 oktober 2026)
+
+**Context.** Sprint 7 (Track B, C, D). Drie gevallen gebruikten nog de database-id, of schreven een kindrij zonder
+naar de ouder te kijken:
+- Builder-trainingen (training + oefeningen);
+- supplementen (definitie + log);
+- eigen producten (product + waarden + barcode + maaltijdregel).
+
+Dat gaf offline fouten, dubbele definities en producten bij een nieuwe poging, en oefeningen die vóór hun training bij
+de server aankwamen. Productieschema read-only geverifieerd:
+- geen unieke naam-constraints;
+- FK's en RLS-EXISTS op de ouder;
+- geen UPDATE-policy op supplement-definities, voedingswaarden, barcodes en berichten.
+
+**Besluit.**
+1. **Afhankelijkheden.** `TK_WACHTRIJ_OUDERS` legt per kindtabel de oudertabel vast. Staat de ouder nog in de wachtrij
+   (zelfde eigenaar), dan gaat het kind er ook in (FIFO). De flush slaat een kind over als de ouder in dezelfde ronde
+   mislukte. Dit vervangt niets van DEC-SYNC-001 maar generaliseert het.
+2. **Client-ids.** Product, supplement-definitie, lege maaltijd, voedingswaarden, barcode en oefeningenrij krijgen een
+   client-id. Ze worden geschreven met ignore-duplicates (bij tabellen zonder UPDATE-policy is merge-duplicates bij een
+   replay een RLS-fout). Na het schrijven wordt niets meer op naam teruggezocht.
+3. **Volledige opslag.** Een Builder-training telt pas als opgeslagen als de server de training én alle oefeningen
+   heeft bevestigd (`tk_trainings_onbevestigd`). Tot dan wint bij de sync de lokale versie. Als de wachtrij niets voor
+   de training bevat, volgt een stille herstelpoging. Gelijkheid wordt bepaald op naam en oefeningen (volgorde, sets,
+   herhalingen, RPE, rust, keuze).
+4. **Eigenaar.** Geen write en geen wachtrij-item zonder bekende eigenaar. Bij een offline verlopen sessie is dat de
+   laatst bekende eigenaar van het toestel (`tk_cache_owner_uid`).
+5. **Status en privacy.**
+   - `tkSchrijfUitkomst` krijgt een `reden`.
+   - Time-out (20 s) alleen voor idempotente rijen met client-id.
+   - In de console alleen de foutcode, geen serverfouttekst.
+   - ObservabilityCore-log zonder inhoud.
+
+**Niet gewijzigd.** `sbPostQ`-booleans (DEC-QUEUE-001), retry-codes, database, RLS, berekeningen, AI.
+
+**Restrisico's.**
+- (a) Handmatige (niet-Builder) trainingen gebruiken `sbPost`/`sbDel` zonder wachtrij.
+- (b) `sbPatchQ`/`sbDelQ` zonder `detail` geven bij een mislukte queue `true` (zelfde klasse als DEC-QUEUE-001; impactanalyse nodig).
+- (c) Intake-doelen hebben geen client-id (`goals.id` bigint); een tweede poging slaat alleen de al opgeslagen doelen over.
+- (d) Een supplementnaam die op de server al bestaat maar offline voor het eerst op dit toestel wordt gebruikt, kan een
+  tweede definitie met dezelfde naam geven: geen verlies, wel dubbel in de keuzelijst.
+- (e) Geen toestelbewijs.
+
+**Status.** Geïmplementeerd in v4.70.24. Guard: `core/fOfflineDataIntegrity.test.js`. Niet CLOSED_PROVEN.
+
+## DEC-VAULT-001 — Lifecycle van wearable-tokens in Vault: unieke naam, eerst opslaan dan vervangen (11 oktober 2026)
+
+**Context.** Gebruikerstest 11 oktober 2026 (S8-VAULT-NAME, S8-VAULT-ORPHAN). Koppelen eindigde op "Koppelen mislukt
+(opslaan)". Onafhankelijk geverifieerd op productie (alleen-lezen):
+- Edge-log: zes keer `POST | 409 | /rest/v1/rpc/store_wearable_token_secret` tussen 06:28:06 en 06:29:45 UTC, telkens
+  twee per koppelpoging; Postgres-log: zes keer `duplicate key value violates unique constraint "secrets_name_idx"`.
+- `vault.secrets` heeft `CREATE UNIQUE INDEX secrets_name_idx ... (name) WHERE (name IS NOT NULL)`.
+- Volgorde in de log: 06:18–06:27 vier sync-pogingen (token ophalen gelukt, daarna statusupdate = refresh bij Google
+  mislukt); 06:27:27 loskoppelen (`DELETE wearable_connections`, géén `delete_wearable_token_secret`); 06:28–06:29 drie
+  koppelpogingen, alle op 409.
+- Stand daarna: `wearable_connections` leeg; `vault.secrets` bevat vier secrets met de vaste naam
+  (`wearable_access_<userId>`, `wearable_refresh_<userId>`) van twee gebruikers, waarvan één account niet meer bestaat.
+- Op ongewijzigde main (7c33f779) gereproduceerd met een nagebouwde Supabase die de naamindex afdwingt: `save_error`
+  met twee keer 409 per poging, ook na een geslaagde eerste koppeling gevolgd door loskoppelen.
+
+**Besluit.**
+1. Elke autorisatie krijgt een unieke secretnaam: `<provider>_(access|refresh)_<userId>_<uuid>`. Een achtergebleven
+   secret kan een nieuwe koppeling niet meer blokkeren.
+2. Volgorde bij (her)koppelen (`vervangWearableTokens`): bestaande koppeling lezen → nieuwe secrets opslaan → koppeling
+   laten wijzen naar de nieuwe secrets (`on_conflict=user_id,provider`) → oude secrets opruimen. Mislukt een stap, dan
+   worden de zojuist aangemaakte secrets verwijderd en blijft de bestaande koppeling ongewijzigd.
+3. Ontbreekt een nieuw refresh-token, dan blijft het bestaande refresh-secret gekoppeld.
+4. Loskoppelen (`verwijderWearableKoppeling`): eerst de koppelrij, dan de secrets. Mislukt het verwijderen van de rij,
+   dan blijft alles staan. De toestemming bij Google wordt ingetrokken met het refresh-token (trekt de hele toestemming
+   in, ook als het access-token al verlopen is), in de body van het verzoek.
+5. Opruimen gebeurt op secret-id. Wat door een afgebroken aanroep of door de oude code is achtergebleven, ruimt
+   `cleanup_orphan_wearable_token_secrets()` op (`migratie_v581.sql`): alleen secrets met het vaste wearable-naampatroon,
+   zonder verwijzing vanuit `wearable_connections`, ouder dan 15 minuten. De app roept hem per gebruiker aan na een
+   geslaagde koppeling of ontkoppeling; bestaat de functie niet, dan is dat geen fout.
+6. Alle vijf de callbacks (Google Health, Polar, WHOOP, Oura, Garmin) gebruiken dezelfde lifecycle.
+7. Token-refresh (`vernieuwGoogleHealthToken`, gedeeld): alleen een afwijzing door Google zelf (4xx met `invalid_grant`,
+   `invalid_client` of `unauthorized_client`) geeft `refresh_failed`. Een storing (5xx, 429, netwerk, onleesbaar
+   antwoord) geeft `error:TOKEN_REFRESH_ERROR` en vraagt niet om opnieuw koppelen. Een geroteerd refresh-token wordt in
+   hetzelfde secret opgeslagen. `token_expires_at` gaat alleen vooruit als het nieuwe access-token is opgeslagen.
+8. Logging: van een mislukte database- of Google-aanroep alleen de HTTP-status en de foutcode. Geen fouttekst, geen
+   respons, geen token.
+
+**Niet gewijzigd.** De vier Vault-RPC's op productie, hun service-role-only rechten, RLS op `wearable_connections` en
+`wearable_oauth_state`, het schema, de OAuth-scopes, de bestaande statuswaarden (`refresh_failed`,
+`token_expired_no_refresh`, `error:<code>`), de sync-parsing en de keuringslaag.
+
+**Migratie.** `migratie_v581.sql` is NIET toegepast. De app is er niet van afhankelijk: punt 1–4 en 6–8 werken met de
+RPC's die al op productie staan. De migratie legt ook `delete_wearable_token_secret` vast, die op productie bestaat maar
+in geen migratiebestand stond (S8-REPO-DRIFT).
+
+**PO_DECISION_REQUIRED.**
+- Toepassen van `migratie_v581.sql` (na merge, afzonderlijke opdracht).
+- Eenmalig opruimen van de vier bestaande wees-secrets: `select public.cleanup_orphan_wearable_token_secrets(null);`.
+  De droogloop staat in de migratie. Tot dan blijven ze staan; ze zijn versleuteld en blokkeren niets meer.
+
+**Restrisico's.** (a) Tussen "secrets opgeslagen" en "koppeling omgezet" kan een aanroep worden afgebroken; dan blijft
+een wees-secret achter tot de opruimfunctie draait. Zonder de migratie groeit dat aantal alleen bij zulke afbrekingen.
+(b) De upsert met `on_conflict` is tegen een nagebouwde PostgREST getoetst, niet tegen productie. (c) De disconnects van
+Polar, WHOOP, Oura en Garmin verwijderen nog eerst de secrets en dan de rij. (d) De `state`-parameter wordt bij die vier
+providers nog onbewerkt in een filter gezet (S8-STATE-FILTER; bij Google Health opgelost). (e) Geen bewijs tegen de
+echte Vault of de echte Google-API.
+
+**Status.** Geïmplementeerd in v4.70.25. Guards: `core/fWearableTokenLifecycle.test.js`,
+`core/fWearableOrphanCleanupSql.test.js`. Niet CLOSED_PROVEN: vereist een echte koppeling op productie na deploy.
+
+## DEC-API-001 — Eén adres voor serverfuncties: web relatief, Android-app absoluut (11 oktober 2026)
+
+**Context.** Gebruikerstest 11 oktober 2026 (S8-ANDROID-API, S8-ANDROID-RETURN). Koppelen vanuit de Android-APK faalde
+direct, terwijl dezelfde stap in de webversie werkte. In de Capacitor-app is de oorsprong `https://localhost`
+(`androidScheme: https`). `index.html` riep alle serverfuncties aan op een relatief pad (42 aanroepen plus de
+agenda-link); in de app wees dat naar `https://localhost/.netlify/functions/...`, waar niets staat. Dit was als
+beperking beschreven in `docs/concept2-native-android.md` en voor video's al opgelost in MEDIA-0C (DEC-MEDIA-004). Na de
+toestemming stuurde de callback naar de webapp in de browser; de app zelf ververste niet.
+
+**Besluit.**
+1. `TkApi.url()` / `tkApiUrl()` is de enige plek die het adres van een serverfunctie bepaalt. Op het web is dat het
+   ongewijzigde relatieve pad. In een native Capacitor-runtime komt de vaste oorsprong
+   `https://maurice-art.netlify.app` ervoor. De oorsprong is een constante: geen invoer, geen override. Alleen paden van
+   de vorm `/.netlify/functions/<naam>[?query]` worden geaccepteerd; al het andere geeft een fout.
+2. De door de app aangeroepen functies beantwoorden de preflight en geven `Access-Control-Allow-Origin` uitsluitend voor
+   `https://localhost` en `capacitor://localhost` (`netlify/functions/_cors.js`). Geen wildcard, geen credentials. Voor
+   elk ander verzoek is het gedrag byte-voor-byte als voorheen. CORS is geen authenticatie: elke functie blijft de
+   Supabase-sessie verifiëren. Callbacks, webhooks en geplande taken krijgen geen CORS.
+3. Terugkeer na toestemming. De app geeft bij het starten `{client:'android'}` mee; `wearable-auth-start` zet dan
+   `~android` achter de state. De callback accepteert uitsluitend `<uuid>` of `<uuid>~android` en stuurt een
+   app-gebruiker naar `wearable-return.html`. Die pagina toont de uitkomst en verwijst via `trainingskompas://wearable`
+   naar de app. De hint bepaalt alleen de bestemming van de redirect; zij is geen autorisatiegegeven.
+4. De app leest de deep link niet uit. Zij onthoudt vóór vertrek de `connectedAt` van de koppeling en haalt bij terugkeer
+   (bestaande `visibilitychange`-handler, na de sessievalidatie) de stand op. Een gewijzigde `connectedAt` geldt als
+   geslaagde koppeling; daarna volgt de eerste sync. De bewaking vervalt na 15 minuten.
+5. Koppelstatus: `tkWearableConnInput()` vertaalt de serverstatus naar `DeviceCore.deviceConnectionState`.
+   `refresh_failed` telt net als `token_expired_no_refresh` als "opnieuw koppelen nodig", `error:<code>` als mislukte
+   sync, en een niet op te halen status als onbekend. De ene koppelknop heet dan "Opnieuw koppelen".
+
+**Niet gewijzigd.** De webflow (`handleWearableRedirect`, `?wearable=`), de protected core-bestanden en
+`core/deviceIntegration.js` (`CORE_SIG` ongewijzigd), de service worker-logica, de package-identiteit en de signing
+(PR #532 staat hier los van).
+
+**Restrisico's.** (a) Geen toestelbewijs. In een echte browser is bewezen dat de gebouwde app op `https://localhost` de
+functie op de publieke oorsprong bereikt via een echte preflight, en dat de browser zonder de CORS-wrapper blokkeert.
+Dat de Android-webview de toestemmingspagina in de systeembrowser opent en dat de deep link de app naar voren haalt, is
+niet op een toestel getoetst. (b) Een ander geïnstalleerde app kan hetzelfde URL-schema claimen; de link draagt alleen
+een statuswoord. (c) De terugkeerbewaking geldt alleen voor Google Health; Polar, WHOOP en Oura openen de toestemming
+wel in de browser maar verversen de app niet automatisch. (d) Een nieuwe APK is nodig; die kan door de signing
+(S6-APK-SIGN) nog niet als update over een bestaande installatie.
+
+**Status.** Geïmplementeerd in v4.70.25. Guard: `core/fWearableTokenLifecycle.test.js` (secties H, I, J). Niet
+CLOSED_PROVEN: vereist toestelbewijs.
+
+## DEC-OAUTH-001 — Publicatiestatus van de Google OAuth-app: vaststellen in de Console (11 oktober 2026)
+
+**Context.** Gebruikerstest 11 oktober 2026 (S8-REFRESH-FAILED): de Google Health-koppeling toonde `refresh_failed`.
+`docs/B9_H3C_GOOGLE_CONFIGURATION_AUDIT.md` noemde de publicatiestatus al "niet vaststelbaar, maar kritiek relevant":
+in testmodus verlopen refresh-tokens na 7 dagen.
+
+**Waarneming (productie, alleen-lezen).** Refresh-token opgeslagen op 10 september 15:09 UTC. Laatste geslaagde
+verversing van het access-token: 15 september 20:54 UTC. Laatste dag met wearable-data: 15 september. Eerstvolgende
+aantoonbare app-gebruik: 19 september. Op 11 oktober vier sync-pogingen waarbij het token uit Vault kwam en de refresh
+bij Google mislukte. Het refresh-token werkte dus aantoonbaar 5 dagen en aantoonbaar niet meer na 9 dagen. Dat past bij
+het 7-dagenplafond, maar bewijst het niet: intrekken door de gebruiker of een wachtwoordwijziging geven hetzelfde beeld.
+De oude code logde Googles foutcode niet; die is daardoor niet meer te achterhalen.
+
+**Besluit.** De oorzaak wordt niet aangenomen. Vanaf v4.70.25 staat Googles foutcode (`invalid_grant` e.d.) met de
+HTTP-status in de serverlog (`wearable.token.refresh_failed`). De publicatiestatus zelf is een externe handeling.
+
+**EXTERNAL ACTION REQUIRED (Product Owner).** Google Cloud Console → Google Auth Platform → Audience: staat de
+publicatiestatus op "Testing", dan publiceren ("In production"). Zie `docs/B9_H3C_PRODUCT_OWNER_EXTERNAL_ACTION.md`.
+Zolang de status "Testing" is, moet elke koppeling na 7 dagen opnieuw worden gelegd.
+
+**Status.** NOT VERIFIED. Niet vast te stellen zonder Console-toegang.

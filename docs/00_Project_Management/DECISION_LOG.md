@@ -3059,3 +3059,49 @@ publicatiestatus op "Testing", dan publiceren ("In production"). Zie `docs/B9_H3
 Zolang de status "Testing" is, moet elke koppeling na 7 dagen opnieuw worden gelegd.
 
 **Status.** NOT VERIFIED. Niet vast te stellen zonder Console-toegang.
+
+## DEC-REC-001 — Herstelcommunicatie: een oordeel noemt zijn bron (18 oktober 2026)
+
+**Context.** Praktijkbevinding van de Product Owner op v4.70.25: dagfactor 1,02, gereedheid 85, slaap 6u01 en tegelijk
+spierherstel 40%, met "Klaar om te trainen" op het dashboard. PR #540 (UX-REC-01) maakte de hero-subtitel voorzichtig.
+Daarna bleef staan:
+- de coachzin uit `buildCoachAdvice()` (coachkaart Vandaag én "Waarom vandaag?") zei bij zone g "Je herstel is sterk",
+  "Je algehele herstel is sterk" of "Je lichaam is klaar voor belasting". De zone komt uitsluitend uit de dagfactor
+  (HRV × slaap × cyclus); de spiergroepen in die functie zijn alleen die van de volgende training. Bij een gunstige
+  dagfactor zonder geplande training stond er dus "Je herstel is sterk" naast een spierherstel van 40%;
+- "Waarom vandaag?" in de hero noemde niet welke metingen de dagfactor voedden, met welk meetmoment en welke
+  betrouwbaarheid. Die uitleg bestond wel (`renderDagfactorDetail`), maar in een kaart die op Home verborgen is;
+- Inzicht zette "Klaar om te trainen" naast de spierherstelring zonder herkomst, en spierkaarten zonder trainingsdata
+  zeiden "Klaar voor belasting";
+- het hero-label heette "Herstel nu" boven een oordeel dat niet over herstel gaat.
+
+**Besluit (technische uitvoering binnen het mandaat van 18 oktober 2026).**
+1. Een dagoordeel wordt toegeschreven aan de dagfactor ("Je dagfactor is gunstig/gemiddeld/laag"). Spierherstel
+   heet overal een schatting (vuistregel 48–72 u, RPE-afhankelijk).
+2. "Waarom vandaag?" toont: dagfactor, *gebaseerd op* (alleen de signalen die de dagfactor voedden, elk met
+   meetmoment), *telt vandaag niet mee*, de berekening, de betrouwbaarheid (bestaande `conf`/`sig`) en het
+   spierherstel als gemiddelde schatting over de getrainde spiergroepen. Eén helper (`tkDagfactorHerkomst`) voor beide
+   panelen; geen nieuwe berekening.
+3. Geen herstel- of belastbaarheidsclaim zonder trainingsdata: spierkaart "Geen trainingsdata", Inzicht-spierlijst
+   "—" / "Geen data" in plaats van "100% Hersteld" (selectie `lichTop4Herstel` ongewijzigd).
+
+**Niet gewijzigd.** `core/` volledig ongewijzigd: `CalcCore`, `DecisionCore` (`trainReadiness`, `dayZone`,
+`readinessDay`, `computeProgAdjustment`), `CoachingCore`, alle drempels (0,93 / 1,00; spierfilters < 70 % en ≥ 90 %;
+kaartlabels ≥ 85 % / ≥ 50 %), de hero-titel uit de Decision Engine en de AI-payload.
+
+**OPEN — PRODUCT OWNER-BESLUIT NODIG (DEC-REC-001-A).** `READINESS_ZONE_TEKST.ready.label` in `core/decision.js`
+(readiness_day.v1) is "Goed hersteld". Die tekst staat als kop op de readinesskaart van Vandaag en gaat als `zoneLabel`
+naar de live coach en de AI. De zone `ready` volgt alleen de dagfactor; bij spierherstel 40% staat er dus "Goed
+hersteld", met eronder "Meegewogen: laag spierherstel". Een herlabeling is een wijziging van het Decision-contract
+(versie, CORE_SIG, AI-payload) en wordt daarom niet zelfstandig uitgevoerd. Voorstel: label `ready` → "Gunstige dag"
+in een readiness_day.v1.1, met bijgewerkte pins. Tot dat besluit blijft de kop ongewijzigd.
+
+**OPEN — PRODUCT OWNER-BESLUIT NODIG (DEC-REC-001-B).** `tkReadinessVandaag()` geeft `recoveryScoreFrom()` en
+`readinessDay().signalen.spierherstel` alleen de spiergroepen van de *volgende geplande training* mee (`recRows` uit
+`getRelevantMuscleRecovery`). Zonder geplande training is die lijst leeg. In het nagebouwde praktijkscenario (dagfactor
+1,02, slaap 6u01, quadriceps 13%) toont de readinesskaart daardoor "herstelscore 89/100 (hoog)" en "je spierherstel
+ontbreekt", terwijl de hero 13% spierherstel toont. Of de herstelscore en `computeProgAdjustment` het algemene
+spierherstel (alle getrainde spiergroepen) of alleen de geplande spiergroepen moeten wegen, is een sportinhoudelijke
+keuze met invloed op de uitkomst. Niet zelfstandig gewijzigd. Opties: (a) zo laten en de kaart vermelden dat de score
+alleen de geplande spiergroepen weegt; (b) zonder geplande training het algemene spierherstel doorgeven; (c) altijd
+het algemene spierherstel doorgeven.

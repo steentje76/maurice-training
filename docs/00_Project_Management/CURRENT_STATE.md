@@ -8,6 +8,16 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Herstelcommunicatie Vandaag/Inzicht (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — PR #540 + vervolg-PR)
+
+- Invariant (DEC-REC-001): een dagoordeel noemt de dagfactor als bron; spierherstel heet een schatting. "Waarom
+  vandaag?" in de hero toont wat de dagfactor voedde (met meetmoment), wat niet meetelde, de berekening en de
+  betrouwbaarheid, via `tkDagfactorHerkomst()`. Inzicht vermeldt de herkomst van "Klaar om te trainen".
+- Berekeningen, drempels, Decision- en Coaching-core ongewijzigd.
+- Open (PO-besluit): kop "Goed hersteld" op de readinesskaart (DEC-REC-001-A); herstelscore en readiness wegen alleen
+  de spiergroepen van de geplande training (DEC-REC-001-B). Geen toestelbewijs.
+- Status: pas waar op main na merge van PR #540 en de vervolg-PR.
+
 ## Wearable-koppeling: tokenopslag, Android-bereikbaarheid, koppelstatus (v4.70.25, 11 oktober 2026)
 
 - Invariant (DEC-VAULT-001): elke autorisatie krijgt een unieke Vault-secretnaam. Bij (her)koppelen worden eerst de

@@ -24730,7 +24730,7 @@ function buildMorningMessage(dfInfo,nextT,checkinVandaag){
     regel=checkinVandaag?(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Nog geen check-in vandaag — vul je HRV in voor je dagfactor.';
   }else{
     const f=dfInfo.factor;
-    const toon=f>=1?'Sterke dag — je lichaam staat op groen.'
+    const toon=f>=1?'Gunstige dagfactor vandaag.'
       :f>=0.93?'Prima dag. Houd je RPE in de gaten.'
       :'Herstel-dag. Houd het licht en luister naar je lijf.';
     regel=toon+(nextT?` Vandaag staat ${nextT.naam} klaar.`:'');
@@ -24769,20 +24769,23 @@ async function buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag){
   // groeien als DEC-READY-001's drempels ooit wijzigen zonder dat deze tekstfunctie het
   // merkt. Zelfde output-teksten, nu structureel gebonden aan één bron van waarheid.
   const zoneCls=(typeof DecisionCore!=='undefined'&&DecisionCore.trainReadiness)?(DecisionCore.trainReadiness(dfInfo)||{}).cls:(f>=1?'g':(f>=0.93?'y':'r'));
+  // UX-REC-02: de zone komt uit de dagfactor (HRV x slaap x cyclus), niet uit spierherstel. De tekst
+  // schrijft het oordeel daarom toe aan de dagfactor en noemt spierherstel een schatting. Zelfde
+  // zone, zelfde spiergroepfilters (pct<70 / pct>=90): alleen de verwoording is eerlijker.
   if(zoneCls==='g'){
-    if(loaded.length)return `Je algehele herstel is sterk. Let op: ${joinNl(loaded.slice(0,2))} ${loaded.length>1?'zijn':'is'} nog niet volledig hersteld — houd daar rekening mee bij ${tnaam}.`;
-    if(ready.length)return `Je lichaam is klaar voor belasting. ${joinNl(ready.slice(0,2)).replace(/^./,c=>c.toUpperCase())} ${ready.length>1?'zijn':'is'} volledig hersteld — vandaag is een uitstekend moment voor ${tnaam}.`;
-    return `Je herstel is sterk. Vandaag heb je de grootste kans op progressie${nextT?` met ${tnaam}`:''}.`;
+    if(loaded.length)return `Je dagfactor is gunstig. Let op: ${joinNl(loaded.slice(0,2))} ${loaded.length>1?'zijn':'is'} volgens de inschatting nog niet hersteld — houd daar rekening mee bij ${tnaam}.`;
+    if(ready.length)return `Je dagfactor is gunstig en ${joinNl(ready.slice(0,2))} ${ready.length>1?'zijn':'is'} volgens de inschatting hersteld. Een goed moment voor ${tnaam}.`;
+    return `Je dagfactor is gunstig${nextT?` voor ${tnaam}`:''}. Spierherstel is een aparte schatting.`;
   }
-  if(zoneCls==='y')return `Je herstel is oké. Train ${tnaam} vandaag op gevoel en houd je RPE in de gaten.`;
-  return `Je lichaam vraagt vandaag om rust. Houd ${tnaam} licht of kies voor actief herstel.`;
+  if(zoneCls==='y')return `Je dagfactor is gemiddeld. Train ${tnaam} vandaag op gevoel en houd je RPE in de gaten.`;
+  return `Je dagfactor is laag. Houd ${tnaam} vandaag licht of kies voor actief herstel.`;
 }
 // v3.3.49/50 P4 — Welkom + motiverende coachintro (hoort bij de begroeting). Kort, uit dayState.
 function buildCoachIntro(dfInfo,checkinVandaag){
   dfInfo=tkDagfactorVoorAdvies(dfInfo);
   if(!dfInfo)return checkinVandaag?(TK_GEEN_ADVIES_TXT+'.'):'Vul je HRV in, dan vertel ik je hoe je ervoor staat.';
   const k=dayState(dfInfo.factor).key;
-  return {goed:'Je bent klaar voor een sterke trainingsdag.',
+  return {goed:'Je dagfactor is gunstig vandaag.',
     normaal:'Er ligt een mooie training op je te wachten.',
     vermoeid:'Rustig aan vandaag — kwaliteit boven kwantiteit.',
     herstel:'Vandaag draait om herstel en opladen.',
@@ -25640,6 +25643,25 @@ function dagfactorUitleg(hrv,slaapUren,cyclusFase,df,vandaag){
   }
   return parts.join(', ')||'onvoldoende data';
 }
+// UX-REC-02 — herkomst van de dagfactor, één bron voor beide "Waarom vandaag?"-panelen.
+// Leest uitsluitend window.homeDfDetail (refreshHome); rekent niets opnieuw uit. `gebruikt` noemt
+// alleen de signalen die de dagfactor werkelijk voedden (HRV, slaap, cyclus), elk met zijn eigen
+// meetmoment; RHR voedt de dagfactor niet en staat hier dus bewust niet.
+function tkDagfactorHerkomst(d){
+  if(!d)return null;
+  const c=d.ctx||{hrv:{},rhr:{},slaap:{},cyclus:{}};
+  const gebruikt=[d.hrv?`HRV ${d.hrv} ms${tkMetingNa(c.hrv)}`:'',d.sleep?`slaap ${fmtSleep(d.sleep)}${tkMetingNa(c.slaap)}`:'',d.cyclus?`cyclus ${d.cyclus}`:''].filter(Boolean);
+  // Metingen die er wel zijn maar de dagfactor van vandaag niet voedden: apart, met de reden.
+  const nietMee=[
+    (!c.hrv.gebruikt&&c.hrv.waarde!=null)?`HRV ${c.hrv.waarde} ms (${[c.hrv.wanneer,c.hrv.referentie?'persoonlijke baseline wordt nog opgebouwd':''].filter(Boolean).join(', ')})`:'',
+    (c.rhr.waarde!=null&&c.rhr.oud)?`RHR ${c.rhr.waarde} (${c.rhr.wanneer})`:'',
+    (!c.slaap.gebruikt&&c.slaap.waarde!=null)?`slaap ${fmtSleep(c.slaap.waarde)} (${c.slaap.wanneer})`:''
+  ].filter(Boolean).join(' · ');
+  const formule=d.heeftBasis===false
+    ? `Geen dagfactor voor vandaag: geen van de signalen voedt hem. De rekenwaarde ${d.factor} (HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}) is een neutrale invulling, geen meting.`
+    : `${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05.`;
+  return {gebruikt,nietMee,formule,betrouwbaarheid:`${d.conf} (${d.sig}/3 signalen)`};
+}
 // v3.3.48 P4 — premium "Waarom vandaag?": composeert de uitleg lui (bij eerste opening)
 // uit reeds bestaande, gecachte data (dagfactor, herstelsignalen, spiergroep-herstel,
 // weekvolume, coachconclusie). Geen nieuwe berekening; alleen inzichtelijk maken.
@@ -25656,12 +25678,8 @@ function renderDagfactorDetail(){
   const c=d.ctx||{hrv:{},rhr:{},slaap:{},cyclus:{}};
   const sig=[d.hrv?`HRV ${d.hrv} ms${tkMetingNa(c.hrv)}`:'',d.rhr?`RHR ${d.rhr}${tkMetingNa(c.rhr)}`:'',d.sleep?`slaap ${fmtSleep(d.sleep)}${tkMetingNa(c.slaap)}`:'',d.cyclus?`cyclus ${d.cyclus}`:''].filter(Boolean).join(' · ')||'—';
   html+=row('Herstelsignalen',escHtml(sig));
-  // Metingen die er wel zijn maar de dagfactor van vandaag niet voedden: apart, met de reden.
-  const nietMee=[
-    (!c.hrv.gebruikt&&c.hrv.waarde!=null)?`HRV ${c.hrv.waarde} ms (${[c.hrv.wanneer,c.hrv.referentie?'persoonlijke baseline wordt nog opgebouwd':''].filter(Boolean).join(', ')})`:'',
-    (c.rhr.waarde!=null&&c.rhr.oud)?`RHR ${c.rhr.waarde} (${c.rhr.wanneer})`:'',
-    (!c.slaap.gebruikt&&c.slaap.waarde!=null)?`slaap ${fmtSleep(c.slaap.waarde)} (${c.slaap.wanneer})`:''
-  ].filter(Boolean).join(' · ');
+  const herkomst=tkDagfactorHerkomst(d);
+  const nietMee=herkomst.nietMee;
   if(nietMee)html+=row('Telt vandaag niet mee',escHtml(nietMee));
   if(rec.length)html+=row('Spiergroepen',rec.slice(0,4).map(r=>`${escHtml(r.muscle)} ${r.pct}%`).join(' · '));
   if(wk&&wk.volKg)html+=row('Weekvolume',`${wk.volKg} kg · ${wk.pctStr} vs vorige week`);
@@ -25681,9 +25699,7 @@ function renderDagfactorDetail(){
   // geen gemeten fysiologische waarde. Alleen tonen als er daadwerkelijk spiergroepen
   // met data in dit paneel staan.
   const spierBronTxt = rec.length ? ' Spierherstel: vuistregel (48-72u, RPE-afhankelijk), geen gemeten fysiologische waarde.' : '';
-  const formule=d.heeftBasis===false
-    ? `Geen dagfactor voor vandaag: geen van de signalen voedt hem. De rekenwaarde ${d.factor} (HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}) is een neutrale invulling, geen meting.`
-    : `${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05.`;
+  const formule=herkomst.formule;
   html+=`<div class="dfd-note">${formule} Informatief — past nooit automatisch je gewicht aan. Confidence: ${d.conf} (${d.sig}/3 signalen).${hrvBronTxt}${spierBronTxt}</div>`;
   el.innerHTML=html;
 }
@@ -32521,9 +32537,11 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
     const title=dfInfo?(rd?rd.txt:'Klaar om te trainen'):(checkinVandaag?TK_GEEN_ADVIES_TXT:'Doe je check-in');
     // UX-REC-01: een gunstige dagfactor betekent niet dat elke spiergroep is hersteld.
     // Het spierherstel blijft de BESTAANDE afzonderlijke schatting, geen nieuwe Decision-regel.
-    const lageSpiergroepen=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct<70);
+    // UX-REC-02: één lijst voor hero-subtitel én "Waarom vandaag?" (was twee identieke filters).
+    const wReady=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct>=90).map(r=>r.muscle);
+    const wLow=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct<70).sort((a,b)=>a.pct-b.pct);
     const sub=dfInfo?(dfInfo.factor>=1
-      ? (lageSpiergroepen.length
+      ? (wLow.length
         ? 'Je dagfactor is gunstig, maar sommige spiergroepen herstellen volgens de inschatting nog. Bekijk Waarom vandaag?'
         : 'Je dagfactor is gunstig; spierherstel is een afzonderlijke schatting.')
       : dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.')
@@ -32537,24 +32555,30 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
     const dfCol=dfCls==='g'?'var(--green)':dfCls==='r'?'var(--red)':'var(--y)';
     const dfVal=factor==null?'—':String(factor);
     // v4.6.0 — "Waarom vandaag?" inline in de hero (zelfde databron; de losse kaart vervalt)
-    const wReady=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct>=90).map(r=>r.muscle);
-    const wLow=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct<70).sort((a,b)=>a.pct-b.pct);
     const wUit=(dfInfo&&dfInfo.uitleg)?dfInfo.uitleg:'';
     let wTxt=window.homeCoachText||'';
     if(!wTxt){try{wTxt=await buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag);}catch(e){wTxt='';}}
     const wRow=(l,v)=>`<div class="v43-why-row"><span>${l}</span><b>${escHtml(v)}</b></div>`;
+    // UX-REC-02: eerst wat de dagfactor voedde (met meetmoment en betrouwbaarheid), dan de
+    // aparte spierherstel-schatting. Alles uit window.homeDfDetail en rec; geen herberekening.
+    const herk=(typeof tkDagfactorHerkomst==='function')?tkDagfactorHerkomst(window.homeDfDetail):null;
+    const nGetraind=(rec.rows||[]).filter(r=>r.hours!==null).length;
     const whyBody=dfInfo?(
-      (wReady.length?wRow('Volledig hersteld',wReady.slice(0,3).join(', ')):'')+
-      (wLow.length?wRow('Nog herstellend',wLow.slice(0,2).map(r=>r.muscle+' '+r.pct+'%').join(', ')):'')+
       (factor!=null?wRow('Dagfactor',dfVal+(wUit?' · '+wUit:'')):'')+
+      ((herk&&herk.gebruikt.length)?wRow('Gebaseerd op',herk.gebruikt.join(' · ')):'')+
+      ((herk&&herk.nietMee)?wRow('Telt vandaag niet mee',herk.nietMee):'')+
       (factor!=null?wRow('Gereedheid','Afgeleid van je dagfactor; spierherstel is een aparte schatting.'):'')+
+      (rec.hasData?wRow('Spierherstel',rec.overall+'% · schatting, gemiddelde van '+nGetraind+' getrainde spiergroep'+(nGetraind===1?'':'en')):'')+
+      (wReady.length?wRow('Hersteld (schatting)',wReady.slice(0,3).join(', ')):'')+
+      (wLow.length?wRow('Nog herstellend',wLow.slice(0,2).map(r=>r.muscle+' '+r.pct+'%').join(', ')):'')+
       (wTxt?`<div class="v43-why-p">${escHtml(wTxt)}</div>`:'')+
+      (herk?`<div class="v43-why-p" style="opacity:.7;font-size:11px">${escHtml(herk.formule)} Betrouwbaarheid: ${escHtml(herk.betrouwbaarheid)}.</div>`:'')+
       ((wReady.length||wLow.length)?`<div class="v43-why-p" style="opacity:.7;font-size:11px">Spierherstel: vuistregel (48–72u, RPE-afhankelijk), geen gemeten fysiologische waarde.</div>`:'')
     ):('<div class="v43-why-p">'+(checkinVandaag?escHtml(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Doe je check-in (HRV + slaap) om je dagfactor en herstelbeeld te zien.')+'</div>');
     heroEl.innerHTML=`<div class="v43-hero" onclick="v43ToggleWhy()" style="cursor:pointer" role="button" aria-expanded="false" aria-label="Herstelstatus — tik voor waarom vandaag">
       <div class="v43-hero-top">
         <div class="v43-hero-l">
-          <div class="v43-lbl">Herstel nu</div>
+          <div class="v43-lbl">Vandaag</div>
           <div class="v43-hero-title">${escHtml(title)}</div>
           <div class="v43-hero-sub">${escHtml(sub)}</div>
         </div>
@@ -32566,7 +32590,8 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.bolt}</div><div class="v43-stat-v">${gereed!=null?gereed:'—'}</div><div class="v43-stat-k">Gereed&shy;heid</div></div>
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.moon}</div><div class="v43-stat-v">${slaap}</div><div class="v43-stat-k">Slaap</div></div>
       </div>
-      <div class="v43-legend">
+      <div class="v43-legend" aria-label="Kleuren van de spierfiguur">
+        <div class="d">Spierfiguur:</div>
         <div class="d"><span class="dot" style="background:var(--green)"></span>Goed hersteld</div>
         <div class="d"><span class="dot" style="background:var(--y)"></span>Matig hersteld</div>
         <div class="d"><span class="dot" style="background:var(--red)"></span>Weinig hersteld</div>
@@ -32933,7 +32958,8 @@ async function renderLichaam(){
     list.innerHTML=(rec.rows||[]).map(r=>{
       const c=v43RecColor(r.pct);
       const st=r.hours===null?'Geen recente training':(r.pct>=85?'Volledig hersteld':r.pct>=50?'Herstellend':'Vermoeid');
-      const cm=r.hours===null?'Klaar voor belasting':(r.pct>=85?'Klaar voor zware belasting':r.pct>=50?'Nog wat rust ideaal':'Vermijd zware belasting');
+      // UX-REC-02: zonder trainingsdata is er geen schatting, dus ook geen belastbaarheidsclaim.
+      const cm=r.hours===null?'Geen trainingsdata':(r.pct>=85?'Volgens schatting belastbaar':r.pct>=50?'Nog wat rust ideaal':'Vermijd zware belasting');
       // Elke kaart opent het spiergroep-detail — zelfde route als vanaf het overzicht.
       return `<button class="lich-mcard" onclick="openSpierDetail(&quot;${escHtml(r.muscle)}&quot;)" style="text-align:left;border:0;font-family:var(--f);width:100%;cursor:pointer"><div class="top"><span class="nm">${escHtml(r.muscle)}</span><span class="pct" style="color:${c}">${r.pct}%</span></div><div class="bar"><i style="width:${r.pct}%;background:${c}"></i></div><div class="stt" style="color:${c}">${st}</div><div class="cm">${cm}</div></button>`;
     }).join('');
@@ -32975,7 +33001,7 @@ async function renderLichaamPremium(){
     hero.innerHTML=`<div class="lich-rhero">
       <div class="top">
         <div class="rring">${ringSvg}<div class="c"><div class="n">${ov!=null?ov+'%':'—'}</div><div class="l">Spierherstel</div></div></div>
-        <div class="st"><div class="eye">Vandaag</div><div class="rd">${escHtml(ready)}</div><div class="badge">${escHtml(badge)}</div></div>
+        <div class="st"><div class="eye">Vandaag</div><div class="rd">${escHtml(ready)}</div><div class="badge">${escHtml(badge)}</div>${beoordeeld?'<div class="lich-herk" style="font-size:11px;line-height:1.35;color:rgba(230,240,243,.78);margin-top:6px">Op basis van je dagfactor · spierherstel is een aparte schatting</div>':''}</div>
       </div>
       <div class="grid">${tile(dfToon?df.toFixed(2):'—','Dagfactor',dfToon?'berekend':'',dfToon?'':'Nog te weinig gegevens')}${tile(lh&&lh.sleep!=null?v43SlaapTxt(lh.sleep):'—','Slaap','gemeten',(lh&&lh.sleep!=null)?wanneer:'')}${tile(lh&&lh.hrv!=null?lh.hrv:'—','HRV','gemeten',(lh&&lh.hrv!=null)?wanneer:'')}${tile(lh&&lh.rhr!=null?lh.rhr:'—','Rust HR','gemeten',(lh&&lh.rhr!=null)?wanneer:'')}</div>
     </div>`;
@@ -33171,7 +33197,11 @@ async function renderLichaamAnatomie(rec){
       // niets; het contrast tussen beste en slechtste is de informatie. Puur een selectie
       // over de al berekende rec.rows — geen nieuwe berekening, geen nieuwe drempel.
       rows=lichTop4Herstel(rec.rows)
-        .map(r=>{ const st=lichRecStatus(r.pct); return {nm:r.muscle,pctBar:r.pct,val:r.pct+'%',st:st[0],col:st[1]}; });
+        .map(r=>{
+          // UX-REC-02: zonder trainingsdata (hours null) is 100% een aanname, geen schatting.
+          // Selectie en drempels ongewijzigd; alleen de weergave zegt dat er geen data is.
+          if(r.hours===null) return {nm:r.muscle,pctBar:0,val:'—',st:'Geen data',col:'var(--g4)'};
+          const st=lichRecStatus(r.pct); return {nm:r.muscle,pctBar:r.pct,val:r.pct+'%',st:st[0],col:st[1]}; });
     }
     list.innerHTML=rows.length
       ? rows.map(r=>'<button class="lich-mrow" onclick="openSpierDetail(\''+r.nm.replace(/'/g,"\\'")+'\')">'+

@@ -8525,6 +8525,12 @@ function tkCustomTrainingPatch(id,body,opts){
   _tkTrainingOuder[id]=p;
   return p;
 }
+// Legacy trainingen slaan oefeningen alleen op in 'exercises'; Builder gebruikt exercise_targets.
+// Herstel en inhoudsvergelijking moeten dezelfde canonieke oefenlijst gebruiken.
+function tkTrainingOefendoelen(t){
+  if(t&&Array.isArray(t.exercise_targets))return t.exercise_targets;
+  return ((t&&t.exercises)||[]).map(function(exercise_id){return {exercise_id:exercise_id};});
+}
 // Vergelijk alle bewerkbare traininggegevens voordat de lokale pending-status wordt opgeheven.
 // JSONB-sleutelvolgorde kan op de server veranderen: canoniseer metadata recursief.
 function tkTrainingInhoud(t){
@@ -8541,7 +8547,7 @@ function tkTrainingInhoud(t){
   };
   return JSON.stringify([
     n(t&&t.name), n((t&&t.color)||'#111111'), n((t&&t.note)||''), canonical(t&&t.metadata),
-    ((t&&t.exercise_targets)||[]).map(function(e){ return [n(e.exercise_id),n(e.sets),n(e.reps),n(e.rpe),n(e.rest),n(e.pick)]; })
+    tkTrainingOefendoelen(t).map(function(e){ return [n(e.exercise_id),n(e.sets),n(e.reps),n(e.rpe),n(e.rest),n(e.pick)]; })
   ]);
 }
 function tkWachtrijRaaktTraining(items,id){
@@ -8557,7 +8563,9 @@ function tkWachtrijRaaktTraining(items,id){
 async function tkCustomTrainingHerstel(t,bestaatOpServer){
   if(bestaatOpServer) tkCustomTrainingPatch(t.id,{naam:t.name,kleur:t.color,notitie:t.note||null,metadata:t.metadata},{stil:true});
   else tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:null,sort_order:0,scope:'personal',source:'builder',metadata:t.metadata},{stil:true});
-  return pushCustomTrainingExercisesRich(t,{stil:true});
+  // Een legacy training heeft vaak alleen 'exercises'. Zonder normalisatie zou rich-recovery
+  // eerst alle serveroefeningen verwijderen en daarna nul rijen terugschrijven.
+  return pushCustomTrainingExercisesRich(Object.assign({},t,{exercise_targets:tkTrainingOefendoelen(t)}),{stil:true});
 }
 async function syncCustomTrainingsFromSupabase(){
   try{

@@ -55,7 +55,7 @@ function deel1() {
   /* B4 */
   ok(/custom_trainings: true \};/.test(HTML) && !/TK_IDEMPOTENT_ZONDER_UPDATE = \{[^}]*custom_trainings/.test(HTML), 'B4 custom_trainings is idempotent met merge-duplicates (UPDATE-policy v333)');
   /* B1/B3 */
-  ok(/async function pushCustomTrainingExercises\(t,opts\)\{\s*return pushCustomTrainingExercisesRich\(Object\.assign\(\{\},t,\{exercise_targets:tkTrainingOefendoelen\(t\)\}\),opts\);\s*\}/.test(HTML), 'B1a de handmatige oefeningenroute gebruikt de wachtrij-veilige Builder-route');
+  ok(/async function pushCustomTrainingExercises\(t\)\{\s*return pushCustomTrainingExercisesRich\(Object\.assign\(\{\},t,\{exercise_targets:tkTrainingOefendoelen\(t\)\}\)\);\s*\}/.test(HTML), 'B1a de handmatige oefeningenroute gebruikt de wachtrij-veilige Builder-route');
   ok(/tkCustomTrainingPost\(\{id,naam:name/.test(extractFn(HTML, 'saveNewTraining')) && !/sbPost\('custom_trainings'/.test(extractFn(HTML, 'saveNewTraining')), 'B1b nieuwe training via tkCustomTrainingPost (markering + wachtrij)');
   ok(/tkCustomTrainingPost\(\{id:t\.id/.test(extractFn(HTML, 'saveAsTrainingAndFinish')), 'B1c "opslaan als training" ook');
   ok(/ct\.exercise_targets\.push\(\{exercise_id:e\.id/.test(extractFn(HTML, 'permanentlyAddExtras')), 'B3 permanent toevoegen vult ook exercise_targets aan');

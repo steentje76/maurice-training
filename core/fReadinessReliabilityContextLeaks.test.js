@@ -125,7 +125,7 @@ function kleurVan(html) { return (/--tcol:([^"]*)"/.exec(html) || [null, null])[
   const iRef = await intro([{ date: VANDAAG, hrv: 48 }]);
   eq(focusVan(iRef), NEUTRAAL, 'N1 HRV in referentiefase zonder slaap: neutrale intro');
   // Met basis: de bestaande uitkomst per dagzone blijft.
-  const TEKST = { goed: 'Je herstel is goed — focus op sterke, gecontroleerde sets.', normaal: 'Prima dag — train op gevoel en houd je techniek scherp.',
+  const TEKST = { goed: 'Je dagfactor is gunstig — focus op sterke, gecontroleerde sets.' /* DEC-REC-001 */, normaal: 'Prima dag — train op gevoel en houd je techniek scherp.',
     vermoeid: 'Rustig opbouwen vandaag. Kwaliteit boven gewicht.', herstel: 'Vandaag herstelgericht — houd het licht en luister naar je lijf.', slecht: 'Rustig aan vandaag. Kwaliteit boven gewicht.' };
   const KLEUR = { goed: '#00B894', normaal: '#C8A84B', vermoeid: '#D98A3D', herstel: '#4A90C2', slecht: '#E0704A' };
   const gevallen = [[{ date: VANDAAG, sleep: 8 }], [{ date: VANDAAG, sleep: 6.5 }], [{ date: VANDAAG, sleep: 5 }], hrvReeks(50), hrvReeks(30, { sleep: 5 })];

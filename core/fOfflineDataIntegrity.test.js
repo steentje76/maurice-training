@@ -41,7 +41,7 @@ ok(/TK_WACHTRIJ_OUDERS\[t\]&&await tkWachtrijHeeftOuder\(t,d\)/.test(POSTQ), 'br
 ok(/magTimeout=!!\(d&&d\.id!=null&&\(IDEMPOTENT_TABELLEN_MET_CLIENT_ID\[t\]\|\|ignoreDup\)\)/.test(POSTQ), 'bron: time-out alleen bij idempotente rijen met client-id');
 ok(/tkFoutcode\(err\)/.test(POSTQ) && !/console\.error\('sbPostQ',t,r\.status,err\)/.test(POSTQ), 'bron: geen serverfouttekst (rij-inhoud) in de console');
 ok(/_ouderMislukt/.test(extractFn(HTML, 'flushOfflineQueue')), 'bron: flush slaat kinderen van een mislukte ouder over');
-ok(/custom_training_exercises: true \};/.test(HTML), 'bron: oefeningenrijen zijn idempotent (client-id)');
+ok(/custom_training_exercises: true[,\s]/.test(HTML), /* UX-EXEC-01: custom_trainings volgt erna */ 'bron: oefeningenrijen zijn idempotent (client-id)');
 ok(/const TK_IDEMPOTENT_ZONDER_UPDATE = \{ messages: true \};/.test(HTML), 'bron: berichten gebruiken ignore-duplicates (geen UPDATE-policy)');
 ok(!/sbGet\('nutrition_products','&name=eq\./.test(HTML), 'bron: geen product meer terugzoeken op naam na het schrijven');
 ok(!/sbGet\('nutrition_supplement_definitions','&name=eq\.'\+encodeURIComponent\(name\.trim\(\)\)\+'&created_by=eq\.'\+uid\+'&order=created_at\.desc/.test(HTML), 'bron: geen supplement-definitie terugzoeken na het schrijven');

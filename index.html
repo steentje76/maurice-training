@@ -8694,8 +8694,8 @@ async function syncCustomTrainingsFromSupabase(){
 // UX-EXEC-01 (B1/B3): handmatige trainingen gebruiken nu dezelfde, wachtrij-veilige oefeningenroute
 // als de Builder (client-id per rij, ouder eerst, markering pas weg na bevestiging). Voorheen: sbDel +
 // sbPost zonder wachtrij, en bij een Builder-training gingen sets/reps/rpe/rust/pick verloren.
-async function pushCustomTrainingExercises(t,opts){
-  return pushCustomTrainingExercisesRich(Object.assign({},t,{exercise_targets:tkTrainingOefendoelen(t)}),opts);
+async function pushCustomTrainingExercises(t){
+  return pushCustomTrainingExercisesRich(Object.assign({},t,{exercise_targets:tkTrainingOefendoelen(t)}));
 }
 // pushCustomTrainingExercisesRich — Werkblok B, alleen gebruikt door Builder-afkomstige
 // custom trainingen (t.source==='builder'): schrijft óók sets/reps/rpe/rest/pick per

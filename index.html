@@ -3386,6 +3386,33 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .setr-ring.done::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800}
 .setr-toolbtn{width:30px;height:24px;border:none;background:none;color:var(--g3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .setr-toolbtn svg{width:18px;height:18px}
+/* UX-LOG-01 — de 1RM-schatting staat op een eigen regel onder de invoer. Zij stond als vierde
+   flex-item IN de rij (inline grid-column werkte niet in flex) en kneep kg/reps tot ~6px op
+   320-360px. Leeg = geen ruimte; gevuld = volle breedte onder de cellen. */
+.tks-setcard .set-row.setr{flex-wrap:wrap}
+.setr-e1rm{flex:0 0 100%;order:9;font-size:11px;color:var(--g4);padding:2px 0 0 33px;line-height:1.3}
+.setr-e1rm:empty{display:none}
+.ibtn.ibtn-avatar{padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+/* UX-LOG-01 — Logboek-editor: dezelfde horizontale setrij als tijdens de training (stond gestapeld:
+   nummer, invoer, AMRAP, ring en menu elk op een eigen regel). Afvinken en AMRAP worden door de
+   editor niet opgeslagen (collectWorkSets leest kg/reps/RPE), dus die bediening staat hier niet. */
+#es-sets-wrap .set-row.setr{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:10px 2px;border-bottom:1px solid var(--g1)}
+#es-sets-wrap .setr-ring,#es-sets-wrap .amrap-chip{display:none}
+.es-acties .btn{min-width:0;padding-left:8px;padding-right:8px}
+/* UX-LOG-01 — RPE-knoppen: zelfde look, groter raakvlak (onzichtbaar, naar buiten). */
+.setr-cell-rpe .rpe-btn{position:relative}
+.setr-cell-rpe .rpe-btn::after{content:'';position:absolute;left:-9px;right:-9px}
+.setr-cell-rpe .rpe-up::after{top:-10px;bottom:0}
+.setr-cell-rpe .rpe-down::after{top:0;bottom:-10px}
+/* UX-LOG-01 — smalle toestellen (320-374px): minder kader rond de setkaarten zodat kg en reps
+   leesbaar blijven (was 42px bij 320px, "62.5" afgekapt). Alleen marges/afstanden. */
+@media (max-width:374px){
+  .ex-card .tks-card{margin-left:4px;margin-right:4px}
+  .tks-setcard .set-row.setr{margin:6px 2px;padding:9px 6px;gap:5px}
+  .tks-setcard .set-row.setr .setr-cells{gap:4px}
+  .tks-wu-card .set-row.wur{margin:6px 2px;padding:8px 6px;gap:5px}
+  .es-acties .btn{font-size:14px;padding-left:6px;padding-right:6px}
+}
 /* VOLTOOIDE set: mint-tint; ingevoerde waarden blijven zichtbaar */
 .tks-setcard .set-row.setr.done{background:var(--v43-mint);border-color:transparent}
 .tks-setcard .set-row.setr.done .setr-cell .set-field{background:rgba(255,255,255,.55)}
@@ -3749,7 +3776,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div id="v43-home-head"></div>
     <div id="offline-badge" style="display:none;margin-top:8px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
-    <button class="ibtn" onclick="go('s-social')" aria-label="Naar Sociaal" style="position:absolute;top:12px;right:12px">👥</button>
+    <!-- UX-LOG-01: de losse 👥-knop (dubbel met de tab Samen) lag over de avatar/check-in-knoppen; verwijderd. -->
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
     <div id="home-dash" style="display:none"></div>
@@ -3800,7 +3827,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Samen</div><div class="hdr-sub">Samen sporten, motiveren en groeien</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+      <button class="ibtn" data-tk-avatar onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     </div>
   </div>
   <div class="scroll" id="social-scroll" style="padding:16px"></div>
@@ -4470,7 +4497,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Inzicht</div><div class="hdr-sub">Jouw ontwikkeling en herstel</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+      <button class="ibtn" data-tk-avatar onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -4558,7 +4585,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Voeding</div><div class="hdr-sub">Wat je vandaag hebt gegeten</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" data-icon="profiel" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+      <button class="ibtn" data-tk-avatar onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" data-icon="profiel" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     </div>
   </div>
   <div class="scroll" style="flex:1;overflow-y:auto">
@@ -4911,7 +4938,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Trainen</div><div class="hdr-sub">Plan, start en beheer je trainingen</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" data-icon="profiel" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Profiel"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+      <button class="ibtn" data-tk-avatar onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" data-icon="profiel" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Profiel"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -6472,7 +6499,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="modal-handle"></div>
     <div class="modal-title" id="edit-sess-title">Bewerken</div>
     <div id="edit-sess-fields"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
+    <div class="es-acties" style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-o" style="flex:1;background:#ffebee;color:var(--red);border-color:#ffcdd2" onclick="deleteSessionEntry()">Verwijder</button>
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-session')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveEditSession(this)">Opslaan</button>
@@ -10911,6 +10938,17 @@ async function tkAvatarSignedUrl(pad){
    vult de foto asynchroon aan zodra de signed URL er is. onerror valt terug
    op initialen: een verlopen of verwijderde URL mag nooit een gebroken
    beeldicoon tonen. */
+// UX-LOG-01 — één avatar overal: de profielknop in schermkoppen (Samen, Inzicht, Trainen, …) toont
+// dezelfde foto/initialen als Home (AvatarCore via tkAvatarHtml). Zonder bekend profiel blijft het
+// bestaande profiel-icoon staan (geen lege knop).
+function tkPaintHeaderAvatar(scr){
+  try{
+    const btn=scr&&scr.querySelector('button[data-tk-avatar]');
+    if(!btn||typeof atleet==='undefined'||!atleet||!(atleet.naam||atleet.avatar_path))return;
+    btn.innerHTML=tkAvatarHtml({avatarPath:atleet.avatar_path||null,naam:atleet.naam||'',size:32,ring:false});
+    btn.classList.add('ibtn-avatar');
+  }catch(_){ }
+}
 function tkAvatarHtml(opts){
   const o=opts||{};
   const res=AvatarCore.resolve({
@@ -13259,8 +13297,11 @@ function go(id){
   // blijft werken (bewaarde terugkeerpunten, oude links) en komt daar uit.
   if(id==='s-lichaam'){id='s-inzicht';}
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById(id);if(el){el.classList.add('active');focusScreenForA11y(el);}
+  const el=document.getElementById(id);if(el){el.classList.add('active');focusScreenForA11y(el);tkPaintHeaderAvatar(el);}
   stopTrainTimer();
+  // UX-LOG-01: terug op het scherm van de lopende training (bv. via Trainen) loopt de klok en de
+  // wakelock weer door. De tijd zelf komt uit trainStart/pausedAccumMs en ging nooit verloren.
+  if(typeof curT!=='undefined'&&curT&&!trainPaused&&trainStart&&id==='s-train-'+String(curT).toLowerCase())startTrainTimer(curT);
   if(id==='s-home')refreshHome();
   if(id==='s-home'&&window.DASHUI)DASHUI.render();
   if(id==='s-builder'&&window.WBUI)WBUI.render();
@@ -13391,8 +13432,26 @@ function tkPrimaryNavHtml(activeTab){
   return TK_PRIMARY_NAV.map(t=>{
     const actief=t.id===activeTab;
     const doel=typeof t.target==='function'?t.target():t.target;
-    return '<button class="ni'+(actief?' active':'')+'"'+(actief?' aria-current="page"':'')+' onclick="go(\''+doel+'\')"><span class="ni-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+t.icon+'</svg></span><span class="ni-label">'+t.label+'</span>'+(t.id==='trainen'?'<div class="ni-dot" id="nav-train-dot"></div>':'')+'</button>';
+    return '<button class="ni'+(actief?' active':'')+'"'+(actief?' aria-current="page"':'')+' onclick="tkPrimaryNavGo(\''+doel+'\')"><span class="ni-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+t.icon+'</svg></span><span class="ni-label">'+t.label+'</span>'+(t.id==='trainen'?'<div class="ni-dot" id="nav-train-dot"></div>':'')+'</button>';
   }).join('');
+}
+// UX-LOG-01 — de hoofdnavigatie blijft zichtbaar tijdens een training, maar een tik op een andere
+// tab mag de sporter niet onbedoeld uit een lopende training halen (en de klok/wakelock stoppen).
+// Er gaat niets verloren (sessionLog + concept blijven staan); de vraag voorkomt alleen het
+// per-ongeluk-verlaten. Trainen zelf, en navigatie zonder lopende training, gaan direct.
+function tkTrainingLooptOp(scherm){
+  if(!scherm)return false;
+  if(typeof curT!=='undefined'&&curT&&scherm==='s-train-'+String(curT).toLowerCase())return true;
+  return scherm==='s-guided'&&!!(window.GW&&typeof GW.hasActive==='function'&&GW.hasActive());
+}
+async function tkPrimaryNavGo(doel){
+  const huidig=tkNavHuidig();
+  if(doel!==huidig&&tkTrainingLooptOp(huidig)){
+    const ok=await confirmModal('Je training loopt nog. Wat je hebt ingevuld blijft bewaard; via Trainen ga je terug naar je training.',
+      {title:'Training verlaten?',okLabel:'Toch openen',cancelLabel:'Bij training blijven'});
+    if(!ok)return;
+  }
+  go(doel);
 }
 // Repaint uitsluitend de zichtbare bnav (er is er hooguit één per keer relevant --
 // nooit alle 45 shells tegelijk vullen, dat zou onnodige DOM-arbeid per schermwissel zijn).
@@ -13422,6 +13481,7 @@ function tkPaintBnav(screenId){
 let tkNavStack=[];
 let tkNavPoppend=false;   // tijdens het terugzetten mag het omhulsel niet opnieuw pushen
 let tkNavAfsluitArm=0;    // tijdstip van de eerste 'terug' op het beginscherm
+let tkNavGuardDoorlaten=false; // UX-LOG-01: één bevestigde terugstap uit een lopende training
 const TK_NAV_MAX=60;      // plafond: een lange sessie mag de stapel niet laten groeien
 const TK_NAV_AFSLUIT_MS=2500;
 function tkNavHuidig(){
@@ -13517,6 +13577,20 @@ window.addEventListener('popstate',function(){
   // 2) Coach geopend vanuit een lopende training -> terug naar die training.
   const actief=document.querySelector('.scr.active');
   if(actief&&actief.id==='s-coach'&&coachReturn){ returnToTraining(); return; }
+  // 2b) UX-LOG-01: een terugveeg tijdens een lopende training vraagt eerst of de sporter de
+  //     training wil verlaten. De verbruikte entry wordt teruggelegd; bij "Toch verlaten" volgt
+  //     dezelfde stap terug als regel 3 (via één doorgelaten history.back()).
+  if(!tkNavGuardDoorlaten&&actief&&tkNavStack.length&&typeof tkTrainingLooptOp==='function'&&tkTrainingLooptOp(actief.id)){
+    try{ history.pushState({tkNav:'training'},''); }catch(_){ }
+    confirmModal('Je training loopt nog. Wat je hebt ingevuld blijft bewaard; via Trainen ga je terug naar je training.',
+      {title:'Training verlaten?',okLabel:'Toch verlaten',cancelLabel:'Bij training blijven'}).then(function(ok){
+        if(!ok)return;
+        tkNavGuardDoorlaten=true;
+        try{ history.back(); }catch(_){ tkNavGuardDoorlaten=false; }
+      });
+    return;
+  }
+  tkNavGuardDoorlaten=false;
   // 3) Normale stap terug.
   if(tkNavStack.length){
     const vorige=tkNavStack.pop();
@@ -21963,9 +22037,9 @@ function buildWeightModeSelect(exId,i,mode){
 function buildRpeStepper(exId,i,rpeVal,prevRpe){
   const disp=rpeVal!==undefined&&rpeVal!==null&&rpeVal!==''?rpeVal:'';
   return `<div class="set-field-wrap rpe-stepper-v" style="flex:1;display:flex;flex-direction:column;align-items:center">
-    <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},0.5)" style="width:28px;height:20px;border-radius:6px 6px 0 0;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">+</button>
+    <button type="button" class="rpe-btn rpe-up" aria-label="RPE verhogen" onclick="adjustRpe('${exId}',${i},0.5)" style="width:28px;height:20px;border-radius:6px 6px 0 0;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">+</button>
     <input class="set-field rpe-display" type="text" readonly aria-label="RPE (ervaren zwaarte)" id="s-${exId}-${i}-rpe" data-prev-rpe="${prevRpe||''}" value="${disp}" placeholder="–" style="font-size:13px;width:34px;height:22px;text-align:center;border-radius:0;border-left:1px solid var(--g2);border-right:1px solid var(--g2);border-top:none;border-bottom:none">
-    <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},-0.5)" style="width:28px;height:20px;border-radius:0 0 6px 6px;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">−</button>
+    <button type="button" class="rpe-btn rpe-down" aria-label="RPE verlagen" onclick="adjustRpe('${exId}',${i},-0.5)" style="width:28px;height:20px;border-radius:0 0 6px 6px;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">−</button>
     <div class="set-field-lbl">RPE</div>
   </div>`;
 }
@@ -22032,7 +22106,7 @@ function buildWorkSetRow(exId,i,prefill=null){
         <div class="setr-u" id="repsu-${exId}-${i}">${isAmrap?'AMRAP':'reps'}</div>
       </div>
       <div class="setr-cell setr-cell-rpe">
-        ${buildRpeStepper(exId,i,prefill&&i===1?prefill.rpe:'',prefill?prefill.rpe:'')}
+        ${buildRpeStepper(exId,i,prefill&&(i===1||prefill.perSet)?prefill.rpe:'',prefill?prefill.rpe:'')}
       </div>
     </div>
     <div class="setr-side">
@@ -22040,7 +22114,7 @@ function buildWorkSetRow(exId,i,prefill=null){
       <div class="set-circle setr-ring" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})" role="button" tabindex="0" aria-label="Set ${i} afronden"></div>
       <button class="set-more setr-toolbtn" onclick="showSetMenu('${exId}',${i},'work')" aria-label="Meer opties"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
     </div>
-    <div class="setr-e1rm" id="e1rm-${exId}-${i}" style="grid-column:1/-1;font-size:11px;color:var(--g4);padding:2px 0 0 44px"></div>
+    <div class="setr-e1rm" id="e1rm-${exId}-${i}" aria-live="polite"></div>
   </div>`;
 }
 // AMRAP-vlag (v4.68.0) — puur UI + in-memory sessionLog-state, GEEN nieuwe berekening.
@@ -23284,7 +23358,9 @@ function showPostSetAdvice(exId,setNum){
     if(body){
       const div=document.createElement('div');
       div.id='advice-'+exId;div.className='coach-advice-card';div.innerHTML=html;
-      if(addRow)body.insertBefore(div,addRow);else body.appendChild(div);
+      // UX-LOG-01: .add-row staat sinds F0.8E in de setkaart, niet direct in body. insertBefore op
+      // body gooide dan een NotFoundError (na afvinken + RPE aanpassen): advies weg, adjustRpe afgebroken.
+      if(addRow&&addRow.parentNode)addRow.parentNode.insertBefore(div,addRow);else body.appendChild(div);
     }
   }
 }
@@ -23325,8 +23401,13 @@ function logSet(exId,type,setNum,isWork){
   const rpe=isWork?normNumStr(document.getElementById('s-'+exId+'-'+setNum+'-rpe')?.value):null;
   // Effectief gewicht: houdt rekening met de gewicht-modus (vast/+kg/% vorige set).
   const effKg=isWork?getEffectiveKg(exId,setNum):(numNL(kg)||null);
-  if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]={kg,reps};}
-  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe,effKg};}
+  // UX-LOG-01: een bewerking vervangt alleen de invoerwaarden. Vlaggen die elders op dezelfde set
+  // zijn gezet (done/rest_sec via toggleSetDone, isAmrap via toggleAmrapSet) blijven behouden; voorheen
+  // wist elke toetsaanslag ze, waardoor een afgevinkte AMRAP-set als gewone, niet-afgevinkte set
+  // werd opgeslagen.
+  const _oud=(arr)=>(arr&&arr[setNum-1]&&typeof arr[setNum-1]==='object')?arr[setNum-1]:{};
+  if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]=Object.assign({},_oud(sessionLog[exId].wu),{kg,reps});}
+  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]=Object.assign({},_oud(sessionLog[exId].sets),{kg,reps,rpe,effKg});}
   // Check PR (per rep-bucket 1/3/5/10, plus absolute-PR fallback voor niet-rep oefeningen)
   if(isWork&&effKg){
     const exObj=exercises.find(e=>e.id===exId);
@@ -23616,7 +23697,16 @@ function removeExSession(id){
   sessionExtra=sessionExtra.filter(e=>e.id!==id);
   delete sessionLog[id];
   delete pctSelection[id];delete rpeManual[id];delete warmupState[id];delete cardioSplitMode[id];delete cardioSplits[id];delete manualKgSets[id];
-  renderTrainScreen(curT);
+  rerenderTrainScreenKeepLog(curT);
+}
+// UX-LOG-01: renderTrainScreen() bouwt alle kaarten opnieuw op uit het voorschrift. Wie dat
+// tijdens een lopende training doet (oefening toevoegen/verwijderen/vervangen), zette de
+// ingevulde sets van de OVERIGE oefeningen visueel terug op leeg terwijl sessionLog ze nog had;
+// de volgende bewerking overschreef sessionLog dan met die lege velden. Eén route: opnieuw
+// opbouwen en de bestaande restoreSessionLogToDom() eroverheen, net als bij hervatten.
+async function rerenderTrainScreenKeepLog(t){
+  await renderTrainScreen(t);
+  try{ restoreSessionLogToDom(t); }catch(e){ console.warn('restoreSessionLogToDom',e&&e.message); }
 }
 
 function updateProgress(t){
@@ -23676,7 +23766,7 @@ async function addExConfirm(exId,t){
   const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:t}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:t};
   if(!cardioType){ Object.assign(extra, await canonicalNewExerciseItem(ex.id, extra)); } // GAP-P3-033: canonical load voor toegevoegde oefening
   sessionExtra.push(extra);
-  renderTrainScreen(t);
+  rerenderTrainScreenKeepLog(t);
   toast(ex.name+' toegevoegd');
 }
 
@@ -23708,7 +23798,7 @@ async function execRemoveExercise(t,exId){
   const list=getSessionExs(t);
   if(!list.length){ toast('Geen oefeningen meer over'); return execLeaveDiscard(); }
   if((execFocus[t]||0)>=list.length)execFocus[t]=Math.max(0,list.length-1);
-  renderTrainScreen(t);
+  rerenderTrainScreenKeepLog(t);
   scheduleAutosave();
   toast('Oefening verwijderd');
 }
@@ -23734,7 +23824,7 @@ function execReplaceExercise(t,exId){
     const sxIdx=sessionExtra.findIndex(e=>e.id===exId&&e._t===t);
     if(sxIdx>=0){ const _rx2=await canonicalNewExerciseItem(replaced.id, sessionExtra[sxIdx]); sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name},_rx2); } // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
     delete sessionLog[exId]; // oude, reeds gelogde data hoort NIET automatisch bij de nieuwe oefening (expliciete productregel)
-    renderTrainScreen(t);
+    rerenderTrainScreenKeepLog(t);
     scheduleAutosave();
     toast('Vervangen door '+replaced.name);
   });
@@ -25969,7 +26059,10 @@ function renderEditSessFields(ex,session){
     let setsHTML='';
     for(let i=1;i<=count;i++){
       const d=detail[i-1];
-      const pre=d?{kg:(d.kg!==undefined&&d.kg!==''?d.kg:d.effKg),reps:d.reps,rpe:d.rpe}:null;
+      // UX-LOG-01: in de Logboek-editor hoort elke rij bij een eigen opgeslagen set, dus ook een
+      // eigen RPE. Zonder perSet toonde alleen set 1 zijn RPE en sloeg "Opslaan" de RPE van set 2..n
+      // leeg op (collectWorkSets leest het veld). Tijdens een training blijft set 1-only (cascade).
+      const pre=d?{kg:(d.kg!==undefined&&d.kg!==''?d.kg:d.effKg),reps:d.reps,rpe:d.rpe,perSet:true}:null;
       setsHTML+=buildWorkSetRow(ES_DOMID,i,pre);
     }
     f+=`<div id="es-sets-wrap">${setsHTML}</div>
@@ -37900,7 +37993,9 @@ var GW=(function(){
     if(!f)f=FEELS[2];
     var reps=null;
     if(actualReps!=null&&actualReps!==''){ var rp=parseInt(actualReps,10); if(!isNaN(rp)&&rp>0)reps=rp; }
-    c.setsDone.push({feel:f.k,rpe:f.rpe,reps:reps,at:Date.now()});
+    // UX-LOG-01: het gewicht van DEZE set vastleggen. Voorheen kreeg elke set bij opslaan het
+    // laatste gewicht van de oefening, dus 60 → +2,5 → set 1 werd als 62,5 kg bewaard.
+    c.setsDone.push({feel:f.k,rpe:f.rpe,reps:reps,kg:(c.weight!=null?c.weight:null),at:Date.now()});
     var h=hist();h[c.id]={weight:c.weight,reps:c.reps,feel:f.k,rpe:f.rpe,at:Date.now()};lsSet('tk_gw_hist',h);
     st.active.lastFeel=f.k;
     st.active.phase='advice';
@@ -38115,7 +38210,9 @@ var GW=(function(){
       var exStatus=(typeof ensureExerciseRowStatus==='function')?await ensureExerciseRowStatus(it.id):'exists';
       // Sprint 5 (DEC-SYNC-001): geen sessie-write zonder geldige oefeningreferentie.
       if(exStatus==='rejected'||exStatus==='failed'){ it._save='failed'; n.failed++; persist(); continue; }
-      var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
+      // UX-LOG-01: per set het vastgelegde gewicht; oudere actieve sessies (zonder sd.kg) vallen terug
+      // op het oefeningsgewicht, zoals voorheen.
+      var ws=it.setsDone.map(function(sd){return {kg:(sd.kg!=null?sd.kg:(it.weight!=null?it.weight:null)),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
       var uitkomst=null;
       try{
         /* Sprint 26 — EVIDENCE-AANSLUITING. Dit Guided-pad gaf geen `at` en geen

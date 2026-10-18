@@ -3105,3 +3105,47 @@ spierherstel (alle getrainde spiergroepen) of alleen de geplande spiergroepen mo
 keuze met invloed op de uitkomst. Niet zelfstandig gewijzigd. Opties: (a) zo laten en de kaart vermelden dat de score
 alleen de geplande spiergroepen weegt; (b) zonder geplande training het algemene spierherstel doorgeven; (c) altijd
 het algemene spierherstel doorgeven.
+
+## DEC-LOG-001 — Setregistratie: een bewerking raakt alleen de invoer, een training verlaat je niet per ongeluk (18 oktober 2026)
+
+**Context.** Gebruikerstestbevindingen v4.70.25, in de browser gereproduceerd op 320/360/390/412 px:
+1. De 1RM-schatting ("1RM ≈ 79 kg") stond als extra flex-item in de setrij (de inline `grid-column` werkt niet in
+   flex). Op 320 en 360 px werden kg en reps **6 px** breed; op 390 px 21 px.
+2. `logSet()` verving bij elke toetsaanslag het hele setobject. Een afgevinkte AMRAP-set verloor zo `done`,
+   `rest_sec` en `isAmrap` en werd als gewone, niet-afgevinkte set opgeslagen.
+3. Oefening toevoegen, verwijderen of vervangen bouwde het scherm opnieuw op zonder de ingevulde sets van de
+   overige oefeningen terug te zetten. De velden leken leeg; de volgende bewerking overschreef `sessionLog`.
+4. Begeleide training: elke set kreeg bij opslaan het láátste gewicht van de oefening.
+5. Logboek-editor: alleen set 1 toonde zijn RPE; opslaan schreef de RPE van set 2..n leeg weg.
+6. Na afvinken + RPE aanpassen gooide `showPostSetAdvice()` een NotFoundError (`.add-row` zit sinds F0.8E in de
+   setkaart): geen setadvies, `adjustRpe()` afgebroken.
+7. De hoofdnavigatie en de terugveeg haalden de sporter zonder vraag uit een lopende training; terug via Trainen
+   liep de klok (en wakelock) niet meer.
+8. Profielknoppen in schermkoppen toonden een generiek icoon i.p.v. de avatar; een losse 👥-knop op Home (dubbel
+   met de tab Samen) lag over de kopknoppen.
+
+**Besluit (technische uitvoering binnen het mandaat van 18 oktober 2026).**
+- 1RM-schatting op een eigen regel onder de invoer; leeg = geen ruimte. Op ≤ 374 px minder kader rond de
+  setkaarten, niet kleinere invoer. RPE-knoppen: groter raakvlak en een toegankelijke naam.
+- `logSet()` vervangt alleen kg/reps/RPE/effKg; overige setvlaggen blijven staan.
+- Opnieuw opbouwen tijdens een training gaat via `rerenderTrainScreenKeepLog()` = `renderTrainScreen()` +
+  de bestaande `restoreSessionLogToDom()` (hetzelfde herstelpad als hervatten).
+- Guided legt het gewicht per set vast (`setsDone[].kg`), met terugval voor oudere actieve sessies.
+- Logboek-editor: RPE per set (`prefill.perSet`); horizontale setrij; afvinken/AMRAP niet in de editor (worden daar
+  niet opgeslagen).
+- Navigatie: op het scherm van een lopende training vraagt een andere tab of een terugveeg eerst "Training
+  verlaten?" (`confirmModal`, geen native dialoog). Er gaat niets verloren. Terug op de training loopt de klok door.
+- Avatar: `tkPaintHeaderAvatar()` vult de vier profielknoppen met dezelfde `tkAvatarHtml()` als Home; zonder
+  profiel blijft het icoon. De losse 👥-knop is weg (Samen staat in de tabbalk).
+
+**Niet gewijzigd.** `core/` (0 bestanden), `epley1RM`, `getEffectiveKg`, `normNumStr`/`numNL`, `clampNumInput`,
+PR-detectie, de RPE-cascade (set 1 voorgevuld tijdens een training), `finishSession`, de offline-wachtrij en
+het conceptformaat.
+
+**Open.**
+- `restoreSessionLogToDom()` zet de gewichtsmodus (+kg/%/1RM) niet terug. Een berekende set komt na hervatten
+  terug als vast gewicht met dezelfde waarde. Niet nieuw; geen dataverlies.
+- Na het verwijderen van een set kan `addWorkSet()` een bestaand set-id hergebruiken (count+1). Niet in deze scope.
+- Guided per-set gewicht alleen broncontrole; geen browserflow (Guided-UI vereist een volledige catalogus).
+- `.ibtn` blijft 36 px (PO-besluit app-breed aanraakdoel, al open).
+- Geen toestelbewijs.

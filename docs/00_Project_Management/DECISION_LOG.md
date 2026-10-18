@@ -3149,3 +3149,51 @@ het conceptformaat.
 - Guided per-set gewicht alleen broncontrole; geen browserflow (Guided-UI vereist een volledige catalogus).
 - `.ibtn` blijft 36 px (PO-besluit app-breed aanraakdoel, al open).
 - Geen toestelbewijs.
+
+## DEC-EXEC-001 — Uitvoeringsketen: één schermnaam, een concept houdt zijn oefeningen en rij-id's, handmatige trainingen via de wachtrij (18 oktober 2026)
+
+**Context.** Reality-audit van de keten Training maken → Mijn trainingen → Preview → uitvoering → afronden →
+historie op main `160fefc` (v4.70.25). Bevestigd en in de browser nagespeeld:
+- **N** De tab Trainen ging tijdens een eigen of programmatraining naar `'s-train-'+curT.toLowerCase()`
+  (`s-train-custom_<id>`), een scherm dat niet bestaat: leeg beeld.
+- **B9** `resolvedWorkout` (Preview: vervangen/verwijderd/voorschrift) stond niet in het concept. Na een herstart
+  viel een hervatte vaste training terug op `TRAIN_CFG`; `finishSession()` schreef de sets van ingewisselde
+  oefeningen niet weg en `clearTrainingDraft()` wiste ze daarna. **Dataverlies.**
+- **B12** Sessierijen kregen pas in `sbPostQ` een id. Werd de app na een geslaagde write maar vóór de volgende
+  autosave gedood, dan gaf opnieuw afronden een tweede rij.
+- **B4** `custom_trainings` stond niet in `IDEMPOTENT_TABELLEN_MET_CLIENT_ID`: een replay na een verloren antwoord
+  bleef op 409 hangen en blokkeerde de oefeningen erachter.
+- **B1** Een handmatig aangemaakte training (`saveNewTraining`, `saveAsTrainingAndFinish`) ging via `sbPost`
+  zonder wachtrij en zonder markering: offline of bij een mislukte write verdween zij bij de volgende sync.
+- **B2** Offline verwijderen (`sbDel`) faalde stil; de training kwam bij de volgende sync terug.
+- **B3** "Permanent toevoegen" aan een Builder-training schreef alleen `exercise_id`'s: sets/reps/rpe/rust/pick weg.
+- **B7** Preview van een al lopende training maakte een nieuwe `training_instance` en koppelde de lopende sessie
+  daar stil aan; de oude instance bleef `active`.
+- **B10** `startCustomTraining` zette `trainPaused`/`pausedAccumMs` niet terug; opnieuw openen van een lopende eigen
+  training leegde `sessionLog`.
+
+**Besluit (technische uitvoering binnen het mandaat van 18 oktober 2026).**
+- `tkTrainScreenIdVoor(curT)` is de enige afleiding van het trainingsscherm (tab, navigatiebewaking, klok, Inzicht, dashboard).
+- Het concept bewaart `resolvedWorkout` van de lopende vaste training; hervatten zet die terug.
+- `tkSessieRijId(l)`: één client-id per oefening per uitvoering, in het concept vóór de write; na een geslaagde
+  write wordt het concept direct bijgewerkt (patroon van Guided `_rowId`).
+- `custom_trainings` is idempotent (merge-duplicates; UPDATE-policy uit v333).
+- Handmatige paden gebruiken `tkCustomTrainingPost`/`tkCustomTrainingPatch` + de bestaande wachtrij-veilige
+  oefeningenroute (`pushCustomTrainingExercises` → `pushCustomTrainingExercisesRich`); permanent toevoegen vult
+  `exercise_targets` aan.
+- Verwijderen via `sbDelQ(...,{detail:true})`; lukt ook queuen niet, dan komt de training lokaal terug met een
+  melding. De sync slaat een nog wachtende verwijdering over.
+- Preview van een lopende training: terug naar die training, geen nieuwe instance. Een lopende eigen training
+  opnieuw openen leegt niets.
+
+**Niet gewijzigd.** `core/`, `finishSession`-volgorde, FK-compat (DEC-SYNC-001), ouder-kindregels
+(DEC-SYNC-002), `sbPostQ`-semantiek (DEC-QUEUE-001), het databaseschema. Geen migratie.
+
+**Open (bewust niet in deze scope; gedocumenteerd voor een volgende stap).**
+- **B5/B6** Preview maakt de instance vóór de keuze hervatten/annuleren; bij hervatten of annuleren blijft die nieuwe
+  instance `active`. Oplossing raakt de start-volgorde in vier startpaden.
+- **B8** Gestructureerde duur-trainingen (lopen/fietsen/zwemmen) roepen `completeTrainingInstance` niet aan.
+- **B11** `startRepeatWorkout` kan een concept van dezelfde training zonder vraag overschrijven.
+- `sbPatchQ`/`sbDelQ` zonder `{detail:true}` geven bij een mislukte queue nog `true` (bestaand, DEC-QUEUE-001).
+- Pauzestand staat niet in het concept; programma starten/hervatten offline lukt niet (`sbGet` → `[]`).
+- Datum van een sessierij is de afrond-datum, niet de startdatum.

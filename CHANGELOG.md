@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — UX-EXEC-01 Uitvoeringsketen: geen verloren oefeningen, geen dubbele rijen, handmatige trainingen offline-veilig (18 oktober 2026)
+
+- **Bevindingen (audit + browser).** Tab Trainen gaf een leeg scherm tijdens een eigen/programmatraining; een hervatte vaste training (via Preview) verloor ingewisselde oefeningen en hun sets bij afronden; opnieuw afronden na een herstart kon een tweede sessierij geven; replay van `custom_trainings` bleef op 409 hangen; handmatige trainingen verdwenen offline bij de volgende sync en verwijderde kwamen terug; permanent toevoegen wiste Builder-doelen; Preview van een lopende training koppelde haar stil aan een nieuwe instance; pauzestand lekte in eigen trainingen.
+- **Oplossing (DEC-EXEC-001).** `tkTrainScreenIdVoor()`; `resolvedWorkout` in het concept; `tkSessieRijId()`; `custom_trainings` idempotent; handmatige paden via `tkCustomTrainingPost`/`-Patch` en de wachtrij-veilige oefeningenroute; `sbDelQ` met eerlijke uitkomst en sync-filter; Preview/`startCustomTraining` keren terug naar een lopende training.
+- **Niet gewijzigd.** `core/`, schema, wachtrijsemantiek, finish-volgorde.
+- **Open.** B5/B6/B8/B11, `sbPatchQ`/`sbDelQ` zonder detail, offline programma-start (zie DEC-EXEC-001).
+- **Gate.** `core/fExecutionIntegrity.test.js` (deel 2 Chromium: offline aanmaken/verwijderen + sync, tab Trainen, herstart + hervatten, Preview van een lopende training).
+
 ## Kandidaat (nog geen versie) — UX-LOG-01 Setregistratie mobiel bruikbaar, bewerkingen blijven staan (18 oktober 2026)
 
 - **Bevindingen (gereproduceerd).** kg/reps 6 px breed op 320/360 px zodra de 1RM-schatting verscheen; een afgevinkte AMRAP-set verloor `done`/`isAmrap` bij een bewerking; na oefening toevoegen/verwijderen/vervangen leken ingevulde sets leeg en werden ze bij de volgende bewerking overschreven; Guided bewaarde elke set met het laatste gewicht; de Logboek-editor schreef de RPE van set 2..n leeg weg; setadvies na RPE-wijziging gaf een NotFoundError; tabbalk en terugveeg verlieten de training zonder vraag en de klok liep daarna niet door; inconsistente profielknop en een overlappende 👥-knop op Home.

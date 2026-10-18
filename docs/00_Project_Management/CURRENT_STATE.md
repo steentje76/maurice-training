@@ -8,6 +8,15 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Uitvoeringsketen (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — UX-EXEC-01)
+
+- Invariant (DEC-EXEC-001): het trainingsscherm volgt uit `tkTrainScreenIdVoor(curT)`; het concept bewaart de
+  Preview-oefeningenlijst en per oefening een vaste sessierij-id; handmatige trainingen en verwijderen lopen via de
+  wachtrij; Preview of opnieuw openen van een lopende training maakt geen nieuwe uitvoering.
+- Open: B5/B6 (instance vóór hervat/annuleer), B8 (duur-instances), B11 (herhalen), `sbPatchQ`/`sbDelQ` zonder detail,
+  offline programma-start; geen toestelbewijs.
+- Status: pas waar op main na merge.
+
 ## Setregistratie (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — UX-LOG-01)
 
 - Invariant (DEC-LOG-001): een setbewerking vervangt alleen kg/reps/RPE/effKg; opnieuw opbouwen tijdens een training

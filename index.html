@@ -24691,16 +24691,22 @@ async function refreshHome(){
   const dfAdvies=tkDagfactorVoorAdvies(dfInfo), checkinVandaag=tkCheckinVandaag(lh);
   if(themeEl)themeEl.setAttribute('data-day',dfAdvies?dayState(dfAdvies.factor).key:'goed');
   // Waarom?-conclusie deelt dezelfde bron als de coaching (buildCoachAdvice); geen extra query.
-  try{window.homeCoachText=await buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag);}catch(e){window.homeCoachText='';}
+  try{window.homeCoachText=await buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag,heeftExplicietPlan);}catch(e){window.homeCoachText='';}
   await renderMorning(dfAdvies,nextT,checkinVandaag);
   renderTodayCta(nextT,dfAdvies);
   /* Sprint 14 — readiness van de dag: één beslissing, opgehaald vóór het tekenen. */
+  // Een mislukte of afgebroken refresh mag geen oude readiness aan Coach/AI laten zien.
+  window._tkReadiness=null;
+  let readinessCtx=null;
   try{
     const _rc=await tkReadinessVandaag(dfInfo,recRows,nextT,heeftExplicietPlan);
+    readinessCtx=_rc;
     const _re=document.getElementById('home-readiness');
     if(_re) _re.innerHTML=tkReadinessHtml(_rc);
   }catch(_){ const _re=document.getElementById('home-readiness'); if(_re)_re.innerHTML=''; }
-  renderCoachAdvies(dfAdvies,recRows);
+  // Coach Advies krijgt uitsluitend het besluit van DEZE Home-refresh mee.
+  // Geen globale vorige score gebruiken na een mislukte/onderbroken readiness-run.
+  renderCoachAdvies(dfAdvies,recRows,readinessCtx);
   await renderWeekStats();
   renderMotivatie();
   refreshHomeImprove(); // S1 — guarded, niet-blokkerend: vult de "Recente vooruitgang"-kaart async
@@ -24745,9 +24751,18 @@ function buildMorningMessage(dfInfo,nextT,checkinVandaag){
 function joinNl(arr){arr=arr.filter(Boolean);if(arr.length<=1)return arr[0]||'';return arr.slice(0,-1).join(', ')+' en '+arr[arr.length-1];}
 // v3.3.48 — warmere coach-toon. Accepteert optioneel voorberekende recRows (uit één
 // getRelevantMuscleRecovery-call) zodat hero, coach-advies én "Waarom?" dezelfde data delen.
-async function buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag){
+async function buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag,heeftExplicietPlan){
   dfInfo=tkDagfactorVoorAdvies(dfInfo);
   if(!dfInfo)return checkinVandaag?(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Nog geen check-in vandaag — vul je HRV in en ik vertel je precies wat vandaag slim is.';
+  // Een roterende workout-suggestie is GEEN expliciet plan: hier geen workoutadvies.
+  // De zone komt ook in deze kopie uitsluitend uit de bestaande Decision-regel.
+  if(heeftExplicietPlan===false){
+    const z=(typeof DecisionCore!=='undefined'&&DecisionCore.trainReadiness)?(DecisionCore.trainReadiness(dfInfo)||{}).cls:null;
+    return z==='g'?'Je dagfactor is gunstig. Er is geen training gepland; spierherstel wordt apart beoordeeld.':
+      z==='y'?'Je dagfactor vraagt om aandacht. Er is geen training gepland.':
+      z==='r'?'Je dagfactor is lager. Er is geen training gepland.':
+      'Er is onvoldoende basis voor een trainingsadvies.';
+  }
   const f=dfInfo.factor;
   const tnaam=(nextT&&nextT.naam)?nextT.naam:'je training';
   let loaded=[],ready=[];
@@ -24972,19 +24987,25 @@ async function openRecoveryDetail(){
     el.innerHTML='<div style="color:var(--g4);font-size:13px">Herstelgegevens konden niet worden geladen.</div>';
   }
 }
-function renderCoachAdvies(dfInfo,recRows){
+function renderCoachAdvies(dfInfo,recRows,readinessCtx){
   const el=document.getElementById('home-coach-advies');if(!el)return;
-  const a=buildCoachTraining(dfInfo,recRows);
-  if(!a){el.innerHTML='';return;}
+  const b=readinessCtx&&readinessCtx.besluit;
+  // De Coach-kaart doet geen eigen trainingsbesluit en hergebruikt NOOIT een oude globale score.
+  if(!b||b.trainingGepland!==true||!b.bruikbaar||!b.herstel||
+     !b.trainingsadvies||b.trainingsadvies.soort==='geen_advies'){
+    el.innerHTML='';return;
+  }
+  const m=CoachingCore.readinessCoachMessage(readinessCtx);
+  const a={title:m.kop||'Trainingadvies',line:m.aanpassing||m.betekenis||'',reden:m.onzekerheid||null};
   // P1 — zichtbare Recovery Score in de coach-kaart (deterministisch, echte data).
   let recLine='';
   try{
     // De kaart gebruikt de al door Decision Core geverifieerde scope; niet nogmaals rekenen.
-    const rs=window._tkReadiness&&window._tkReadiness.herstel;
+    const rs=b.herstel;
     if(rs && rs.score!=null){
       const bandTxt={hoog:'Hoog',gemiddeld:'Gemiddeld',laag:'Laag'}[rs.band]||rs.band;
       const bandCls=rs.band==='hoog'?'g':rs.band==='gemiddeld'?'y':'r';
-      recLine=`<div class="coach-advies-recovery status-${bandCls}" style="font-size:12px;font-weight:700;margin-bottom:4px">Herstel ${rs.score}/100 · ${bandTxt}${rs.betrouwbaarheid==='laag'?' (indicatief)':''}</div>`;
+      recLine=`<div class="coach-advies-recovery status-${bandCls}" style="font-size:12px;font-weight:700;margin-bottom:4px">Herstel voor ${escHtml(readinessCtx.geplandeTraining&&readinessCtx.geplandeTraining.naam||'je geplande training')}: ${rs.score}/100 · ${bandTxt}${rs.betrouwbaarheid==='laag'?' (indicatief)':''}</div>`;
     }
   }catch(_){}
   el.innerHTML=`<div class="coach-advies">

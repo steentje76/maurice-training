@@ -39,7 +39,7 @@ eq(badDay.zone,null,'B12 no day-readiness claim without dayfactor');
 const idx=fs.readFileSync(path.join(root,'index.html'),'utf8');
 ok(idx.includes('let heeftExplicietPlan=false')&&idx.includes('heeftExplicietPlan=true'),'B13 explicit scheduled occurrence distinct from rotation suggestion');
 ok(idx.includes('planBasis=!!(heeftExplicietPlan')&&idx.includes('geldigeSpieren'),'B14 orchestrator enforces planned complete muscle basis');
-ok(idx.includes("const rs=window._tkReadiness&&window._tkReadiness.herstel"),'B15 Coach card reuses Decision result, no UI recalculation');
+ok(idx.includes('const rs=b.herstel;')&&idx.includes('CoachingCore.readinessCoachMessage(readinessCtx)')&&!idx.includes('const a=buildCoachTraining(dfInfo,recRows);'),'B15 Coach card renders current Decision result via Coaching, no duplicate calculation');
 ok(idx.includes("if(!hit){pctBySvgId[id]=null;return;}"),'B16 unknown muscle heatmap is null, never 100% green');
 ok(idx.includes("r.hours===null?'—':r.pct+'%'"),'B17 no-data muscle card shows dash');
 console.log('fDecisionRecoveryPlanScope: '+pass+' geslaagd, '+fail+' mislukt');

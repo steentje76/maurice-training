@@ -273,7 +273,13 @@ async function deel2() {
     const f = u.calc.factor, z = DecisionCore.trainReadiness({ factor: f });
     eq(f, { S5: 1, S6: 1.05, S7: 0.85, S8: 0.93 }[s], s + '.0 dagfactor uit de berekening');
     ok(u.calc.basis.hrv || u.calc.basis.slaap || u.calc.basis.cyclus, s + '.0b er is een basis');
-    eq([u.titel, u.sub], [z.txt, SUB[z.cls]], s + '.1 hoofdstatus woordelijk zoals voorheen (' + z.txt + ')');
+    const subNu = z.cls === 'g'
+      ? (u.waarom.includes('Nog herstellend')
+        ? 'Je dagfactor is gunstig, maar sommige spiergroepen herstellen volgens de inschatting nog. Bekijk Waarom vandaag?'
+        : 'Je dagfactor is gunstig; spierherstel is een afzonderlijke schatting.')
+      : SUB[z.cls];
+    eq([u.titel, u.sub], [z.txt, subNu], s + '.1 hoofdstatus volgt Decision-zone, met eerlijke bronuitleg');
+    ok(u.waarom.includes('Afgeleid van je dagfactor; spierherstel is een aparte schatting.'), s + '.1b gereedheid los van spierherstel verklaard');
     eq([u.stats.Dagfactor, u.stats.Gereedheid], [String(f), String(CalcCore.readinessPercent(f))], s + '.2 Dagfactor en Gereedheid zijn de berekende waarden');
     eq(u.coach, COACH[z.cls], s + '.3 coachzin woordelijk zoals voorheen');
     const zone = z.cls === 'g' ? 'ready' : (z.cls === 'y' ? 'caution' : 'reduce');
@@ -281,6 +287,18 @@ async function deel2() {
     eq(u.readinessKop, { ready: 'Goed hersteld', caution: 'Voorzichtig vandaag', reduce: 'Belasting aanpassen' }[zone], s + '.5 readinesskaart toont het bestaande zonelabel');
     eq([u.thema, u.ring, u.bel], [DecisionCore.dayZone(f).key, String(f), false], s + '.6 dagthema, dagfactorkaart en check-in-herinnering ongewijzigd');
     ok(new RegExp('Dagfactor' + String(f).replace('.', '\\.')).test(u.waarom.replace(/\s/g, '')), s + '.7 "Waarom vandaag?" toont de berekende dagfactor');
+    await page.close();
+  }
+  /* UX-REC-01: hoge dagfactor en laag geschat spierherstel mogen geen volledige-herstelclaim worden. */
+  {
+    const recenteSessies = [{ exercise_id: 'sq', date: dag(0), rpe: 10, sets: 5, reps: 5, weight: 100 }];
+    const page = await open(390, SCEN.S6, recenteSessies);
+    const u = await lees(page);
+    ok(Number.parseInt(u.stats.Spierherstel, 10) < 70, 'UX-REC-01: test gebruikt daadwerkelijk laag geschat spierherstel');
+    eq(u.titel, DecisionCore.trainReadiness({ factor: u.calc.factor }).txt, 'UX-REC-01: canonieke Decision-zonetitel onveranderd');
+    ok(u.sub.startsWith('Je dagfactor is gunstig, maar sommige spiergroepen herstellen'), 'UX-REC-01: voorzichtigheid zichtbaar in de hero, zonder onjuiste volledige-herstelclaim');
+    ok(u.waarom.includes('Nog herstellend') && u.waarom.includes('Afgeleid van je dagfactor; spierherstel is een aparte schatting.'), 'UX-REC-01: beide signalen en hun bronverschil uitgelegd');
+    eq(u.stats.Gereedheid, String(CalcCore.readinessPercent(u.calc.factor)), 'UX-REC-01: score niet door presentatielaag herberekend');
     await page.close();
   }
   /* Responsive: Home-kengetallen en de dagsamenvatting op Inzicht */

@@ -32519,7 +32519,15 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   if(heroEl){
     const rd=(typeof trainReadiness==='function')?trainReadiness(dfInfo):null;
     const title=dfInfo?(rd?rd.txt:'Klaar om te trainen'):(checkinVandaag?TK_GEEN_ADVIES_TXT:'Doe je check-in');
-    const sub=dfInfo?(dfInfo.factor>=1?'Je lichaam is goed hersteld en klaar voor optimale prestaties.':dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.'):(checkinVandaag?TK_GEEN_ADVIES_SUB:'Vul je HRV in voor je dagfactor en herstelbeeld.');
+    // UX-REC-01: een gunstige dagfactor betekent niet dat elke spiergroep is hersteld.
+    // Het spierherstel blijft de BESTAANDE afzonderlijke schatting, geen nieuwe Decision-regel.
+    const lageSpiergroepen=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct<70);
+    const sub=dfInfo?(dfInfo.factor>=1
+      ? (lageSpiergroepen.length
+        ? 'Je dagfactor is gunstig, maar sommige spiergroepen herstellen volgens de inschatting nog. Bekijk Waarom vandaag?'
+        : 'Je dagfactor is gunstig; spierherstel is een afzonderlijke schatting.')
+      : dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.')
+      :(checkinVandaag?TK_GEEN_ADVIES_SUB:'Vul je HRV in voor je dagfactor en herstelbeeld.');
     const gereed=v43GereedheidScore(dfInfo?dfInfo.factor:null);
     const slaap=(lh&&(lh.sleep||lh.sleep===0))?v43SlaapTxt(lh.sleep):'—';
     // v4.6.0 — status-indicator = dagfactor-cirkel (vervangt het losse groene vinkje)
@@ -32539,6 +32547,7 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
       (wReady.length?wRow('Volledig hersteld',wReady.slice(0,3).join(', ')):'')+
       (wLow.length?wRow('Nog herstellend',wLow.slice(0,2).map(r=>r.muscle+' '+r.pct+'%').join(', ')):'')+
       (factor!=null?wRow('Dagfactor',dfVal+(wUit?' · '+wUit:'')):'')+
+      (factor!=null?wRow('Gereedheid','Afgeleid van je dagfactor; spierherstel is een aparte schatting.'):'')+
       (wTxt?`<div class="v43-why-p">${escHtml(wTxt)}</div>`:'')+
       ((wReady.length||wLow.length)?`<div class="v43-why-p" style="opacity:.7;font-size:11px">Spierherstel: vuistregel (48–72u, RPE-afhankelijk), geen gemeten fysiologische waarde.</div>`:'')
     ):('<div class="v43-why-p">'+(checkinVandaag?escHtml(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Doe je check-in (HRV + slaap) om je dagfactor en herstelbeeld te zien.')+'</div>');

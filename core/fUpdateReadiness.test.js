@@ -62,7 +62,8 @@ try { chromium = require('playwright').chromium; } catch (e) { chromium = null; 
     else {
       const page = await browser.newPage({ viewport: { width: 360, height: 900 } });
       const errs = []; page.on('pageerror', function (e) { errs.push(e.message); });
-      await page.goto('file://' + path.join(ROOT, 'index.html')); await page.waitForTimeout(500);
+      // Externe media mogen browseracceptatie niet blokkeren: JS/DOM zijn bij DOMContentLoaded gereed.
+      await page.goto('file://' + path.join(ROOT, 'index.html'), {waitUntil:'domcontentloaded', timeout:30000}); await page.waitForTimeout(500);
       const r = await page.evaluate(async function () {
         window.sbGet = async function () { return []; };
         window.flushOfflineQueue = async function () {};

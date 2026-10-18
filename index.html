@@ -4553,7 +4553,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <div class="v43-lbl" style="margin:16px 0 10px">Wat betekent dit?</div>
     <button class="lich-goto" onclick="go('s-coach')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.2 3.2L16.4 7.6 13.2 8.8 12 12l-1.2-3.2L7.6 7.6l3.2-1.2z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/></svg></span><span class="b"><b>Wat betekent dit voor vandaag?</b><s>De coach legt uit en adviseert</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11M4 4l3 3M20 20l-3-3M2 8l4-4M22 16l-4 4M14 4l3 3-8 8-3-3z"/></svg></span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="curT?go(tkTrainScreenIdVoor(curT)):go('s-train-mgr')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11M4 4l3 3M20 20l-3-3M2 8l4-4M22 16l-4 4M14 4l3 3-8 8-3-3z"/></svg></span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
     </div>
 
     <div class="v43-lbl" style="margin:18px 0 10px">Domeinen</div>
@@ -8629,7 +8629,12 @@ async function tkCustomTrainingHerstel(t,bestaatOpServer){
 }
 async function syncCustomTrainingsFromSupabase(){
   try{
-    const rows=await sbGet('custom_trainings','&order=sort_order.asc');
+    let rows=await sbGet('custom_trainings','&order=sort_order.asc');
+    // UX-EXEC-01 (B2): een training waarvan de verwijdering nog in de wachtrij staat, komt niet terug.
+    try{ const _wq=await offlineQueueAll(), _uid=tkHuidigeUid();
+      const _weg=new Set(_wq.filter(function(i){ return i.table==='custom_trainings'&&i.method==='DELETE'&&(i.owner_uid==null||i.owner_uid===_uid); }).map(function(i){ return String(i.filter||'').replace(/^id=eq\./,''); }));
+      if(_weg.size){ rows=rows.filter(function(r){ return !_weg.has(r.id); }); customTrainings=customTrainings.filter(function(t){ return !(t&&_weg.has(t.id)); }); }
+    }catch(_){ }
     if(rows.length){
       // Sprint 6: lokaal nog niet door de server bevestigde trainingen niet weggooien.
       const _opServer=new Set(rows.map(r=>r.id)), _onbevestigd=tkTrainingenOnbevestigd();
@@ -8686,12 +8691,11 @@ async function syncCustomTrainingsFromSupabase(){
     await migrateLegacyWbSaved();
   }catch(e){/* offline — lokale waarde blijft leidend */}
 }
+// UX-EXEC-01 (B1/B3): handmatige trainingen gebruiken nu dezelfde, wachtrij-veilige oefeningenroute
+// als de Builder (client-id per rij, ouder eerst, markering pas weg na bevestiging). Voorheen: sbDel +
+// sbPost zonder wachtrij, en bij een Builder-training gingen sets/reps/rpe/rust/pick verloren.
 async function pushCustomTrainingExercises(t){
-  await sbDel('custom_training_exercises','custom_training_id=eq.'+t.id);
-  let so=0;
-  for(const exId of (t.exercises||[])){
-    await sbPost('custom_training_exercises',{custom_training_id:t.id, exercise_id:exId, sort_order:so++});
-  }
+  return pushCustomTrainingExercisesRich(Object.assign({},t,{exercise_targets:tkTrainingOefendoelen(t)}));
 }
 // pushCustomTrainingExercisesRich — Werkblok B, alleen gebruikt door Builder-afkomstige
 // custom trainingen (t.source==='builder'): schrijft óók sets/reps/rpe/rest/pick per
@@ -9139,7 +9143,11 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
   training_instances: true, messages: true,
   // Sprint 7 (DEC-SYNC-002, Builder-integriteit): oefeningenrijen van een Builder-training krijgen een
   // client-id, zodat een herhaalde of opnieuw afgespeelde write nooit een tweede rij oplevert.
-  custom_training_exercises: true };
+  custom_training_exercises: true,
+  // UX-EXEC-01 (B4): de training-rij zelf heeft ook een client-id ('custom_…'/Builder-id) en een
+  // UPDATE-policy (v333). Zonder deze regel gaf een replay na een verloren antwoord een 409 die
+  // nooit uit de wachtrij verdween; de oefeningen erachter bleven dan voorgoed staan.
+  custom_trainings: true };
 // Sprint 7 (DEC-SYNC-002): tabellen in de lijst hierboven ZONDER UPDATE-policy (pg_policies, read-only
 // geverifieerd 9 oktober 2026). merge-duplicates is daar ON CONFLICT DO UPDATE en faalt bij een replay
 // van een al opgeslagen rij op RLS; voor deze tabellen is ignore-duplicates (DO NOTHING) het juiste
@@ -9192,6 +9200,16 @@ function tkMetTimeout(promise,ms){
   if(typeof setTimeout!=='function'||typeof clearTimeout!=='function') return promise; // omgeving zonder timers: geen time-out
   let timer; const t=new Promise(function(_,rej){ timer=setTimeout(function(){ const e=new Error('timeout'); e.tkTimeout=true; rej(e); },ms); });
   return Promise.race([promise,t]).finally(function(){ clearTimeout(timer); });
+}
+// UX-EXEC-01 — het scherm van een lopende training. curT is 'A'/'B' (vast), 'custom_<id>' of
+// 'prog_<blockId>'; de schermen heten s-train-a, s-train-custom-<id> en s-train-prog-<blockId>.
+// 's-train-'+curT.toLowerCase() klopte alleen voor vaste trainingen: tijdens een eigen of
+// programmatraining leidde de tab Trainen naar een niet-bestaand scherm (leeg beeld).
+function tkTrainScreenIdVoor(t){
+  if(!t)return null; t=String(t);
+  if(t.indexOf('custom_')===0)return 's-train-custom-'+t.slice(7);
+  if(t.indexOf('prog_')===0)return 's-train-prog-'+t.slice(5);
+  return 's-train-'+t.toLowerCase();
 }
 function newClientRowId(){
   return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('row-'+Date.now()+'-'+Math.random().toString(16).slice(2));
@@ -10464,12 +10482,24 @@ function tkGuidedStartGeblokkeerd(mode){
   toast('Je vorige begeleide training is nog niet opgeslagen — open hem op Vandaag om opnieuw op te slaan');
   return true;
 }
+// UX-EXEC-01 (B7): loopt precies deze training al, dan terug naar de lopende uitvoering. Geen nieuwe
+// training_instance en geen nieuwe oefeningenlijst over de lopende sessie heen (die werd anders stil
+// aan een nieuwe instance gekoppeld en de oude bleef 'active').
+function tkPreviewNaarLopendeTraining(source,id,mode){
+  const lopend=(source==='vast')?id:('custom_'+id);
+  if(mode==='guided'||typeof curT==='undefined'||!curT||curT!==lopend)return false;
+  closeModal('m-training-preview'); previewCtx=null; previewStarting=false;
+  toast('Deze training loopt al — je gaat verder waar je was');
+  if(source==='vast')startT(id); else startCustomTraining(id);
+  return true;
+}
 async function previewStartTraining(mode){
   if(!previewCtx||previewStarting)return;
   mode=mode||'normal';
   if(tkGuidedStartGeblokkeerd(mode))return;
   previewStarting=true;
   const {def,source,id}=previewCtx;
+  if(tkPreviewNaarLopendeTraining(source,id,mode))return; // UX-EXEC-01 (B7)
   const workingList=previewWorkingList();
   const modifications=previewBuildModifications();
   const resolvedItems=buildResolvedExecutionItems(workingList);
@@ -13301,7 +13331,7 @@ function go(id){
   stopTrainTimer();
   // UX-LOG-01: terug op het scherm van de lopende training (bv. via Trainen) loopt de klok en de
   // wakelock weer door. De tijd zelf komt uit trainStart/pausedAccumMs en ging nooit verloren.
-  if(typeof curT!=='undefined'&&curT&&!trainPaused&&trainStart&&id==='s-train-'+String(curT).toLowerCase())startTrainTimer(curT);
+  if(typeof curT!=='undefined'&&curT&&!trainPaused&&trainStart&&id===tkTrainScreenIdVoor(curT))startTrainTimer(curT);
   if(id==='s-home')refreshHome();
   if(id==='s-home'&&window.DASHUI)DASHUI.render();
   if(id==='s-builder'&&window.WBUI)WBUI.render();
@@ -13400,7 +13430,7 @@ const TK_PRIMARY_NAV=[
   {id:'vandaag',label:'Vandaag',target:'s-home',
     icon:'<path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/>'},
   {id:'trainen',label:'Trainen',
-    target:function(){ return (typeof curT!=='undefined'&&curT)?('s-train-'+curT.toLowerCase()):'s-train-mgr'; },
+    target:function(){ return (typeof curT!=='undefined'&&curT)?tkTrainScreenIdVoor(curT):'s-train-mgr'; },
     icon:'<path d="M6 8v8M18 8v8M3 12h18"/>'},
   {id:'inzicht',label:'Inzicht',target:'s-inzicht',
     icon:'<path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4"/>'},
@@ -13441,7 +13471,7 @@ function tkPrimaryNavHtml(activeTab){
 // per-ongeluk-verlaten. Trainen zelf, en navigatie zonder lopende training, gaan direct.
 function tkTrainingLooptOp(scherm){
   if(!scherm)return false;
-  if(typeof curT!=='undefined'&&curT&&scherm==='s-train-'+String(curT).toLowerCase())return true;
+  if(typeof curT!=='undefined'&&curT&&scherm===tkTrainScreenIdVoor(curT))return true;
   return scherm==='s-guided'&&!!(window.GW&&typeof GW.hasActive==='function'&&GW.hasActive());
 }
 async function tkPrimaryNavGo(doel){
@@ -19252,6 +19282,8 @@ async function startT(t){
     // RC0: de koppeling met training_instances terug uit de draft, zodat het afronden na
     // een herstart de instance alsnog op 'completed' zet i.p.v. hem als wees achter te laten.
     activeInstanceId=draft.instanceId||null;
+    // UX-EXEC-01: dezelfde oefeningenlijst als waarmee is gelogd (ook als Preview net een nieuwe zette).
+    if(draft.resolvedWorkout&&draft.resolvedWorkout.t===t&&Array.isArray(draft.resolvedWorkout.items))resolvedWorkout=draft.resolvedWorkout;
     _resumeElapsedMs=Number(draft.elapsedMs)||0;
     if(typeof execFocus!=='undefined')execFocus[t]=Number(draft.execFocus)||0; // P1: actieve oefening herstellen (was altijd terug naar 1)
     await renderTrainScreen(t);
@@ -19461,7 +19493,8 @@ async function buildTrainIntro(t,list){
      staat hier een neutrale zin: geen uitspraak over herstel, de training blijft zoals gepland. */
   let key=null;
   try{const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));const hd=hq.rows;if(hd&&hd[0]){const df=tkDagfactorVoorAdvies(dagfactor(hrvDagFactorPersonal(hd),hd[0].sleep,tkCyclusFaseVandaag(hd[0]),hq.signalen));if(df)key=dayState(df.factor).key;}}catch(_){}
-  const focus={goed:'Je herstel is goed — focus op sterke, gecontroleerde sets.',
+  // DEC-REC-001: het dagthema volgt de dagfactor, niet het spierherstel.
+  const focus={goed:'Je dagfactor is gunstig — focus op sterke, gecontroleerde sets.',
     normaal:'Prima dag — train op gevoel en houd je techniek scherp.',
     vermoeid:'Rustig opbouwen vandaag. Kwaliteit boven gewicht.',
     herstel:'Vandaag herstelgericht — houd het licht en luister naar je lijf.',
@@ -23129,7 +23162,11 @@ function persistTrainingDraft(silent){
     // verloren zodra Android de app afsloot: bij hervatten was activeInstanceId weer null,
     // completeTrainingInstance() werd nooit aangeroepen en de instance bleef eeuwig
     // 'active'. Precies de weesrijen die migratie v446 achteraf moest opruimen.
-    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0,instanceId:(typeof activeInstanceId!=='undefined'?activeInstanceId:null)||null}));
+    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0,instanceId:(typeof activeInstanceId!=='undefined'?activeInstanceId:null)||null,
+      // UX-EXEC-01: de via Preview samengestelde oefeningenlijst (vervangen/verwijderd/voorschrift) hoort
+      // bij dit concept. Zonder deze lijst viel een hervatte vaste training terug op TRAIN_CFG en schreef
+      // finishSession() de sets van ingewisselde oefeningen nooit weg (daarna wiste clearTrainingDraft ze).
+      resolvedWorkout:(typeof resolvedWorkout!=='undefined'&&resolvedWorkout&&resolvedWorkout.t===curT)?resolvedWorkout:null}));
     lastSaveTs=Date.now();saveState='saved';
   }catch(e){saveState='dirty';}
   updateSaveIndicator();
@@ -24161,6 +24198,13 @@ function renderSessionSummaryContent(t){
 // gedragswijziging voor de normale Execution: finishSession() bouwt/schrijft via deze
 // helpers en levert byte-equivalente rijen.
 async function writeSessionRow(row, opts){ return await sbPostQ('sessions', row, opts); }
+// UX-EXEC-01: één vaste client-id per oefening in deze uitvoering, vastgelegd in het concept VÓÓR de
+// write (zoals Guided met _rowId). Wordt de app na een geslaagde write maar vóór de volgende
+// autosave gedood, dan levert opnieuw afronden dezelfde id en dus geen tweede sessierij.
+function tkSessieRijId(l){
+  if(!l._sessionRowId){ l._sessionRowId=newClientRowId(); try{ persistTrainingDraft(true); }catch(_){ } }
+  return l._sessionRowId;
+}
 // ARCHITECTUUR-HARDENING (v4.91.0) — dedicated schrijfpad voor race_segments
 // (HYROX/Triathlon-brick), i.p.v. de gedeelde sessions-tabel.
 async function writeRaceSegmentRow(row){ return await sbPostQ('race_segments', row); }
@@ -24392,7 +24436,7 @@ async function finishSession(){
       // v4.70.4: alleen een AANTOONBAAR geslaagde write telt (sbPostQ geeft bij een PostgREST-400 false).
       // Retry schrijft een al gepersisteerde oefening niet opnieuw (geen dubbele rij).
       const _so=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,id:tkSessieRijId(l)},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); try{persistTrainingDraft(true);}catch(_){} }
       saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -24410,7 +24454,7 @@ async function finishSession(){
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       const _soS=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
+      if(!l._sessionRowPersistedAt){ row.id=tkSessieRijId(l); const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); try{persistTrainingDraft(true);}catch(_){} } // v4.70.4
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
@@ -31138,7 +31182,10 @@ function saveNewTraining(btnEl){
   const t={id,name,color,note,exercises:[]};
   customTrainings.push(t);
   localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
-  sbPost('custom_trainings',{id,naam:name,kleur:color,notitie:note||null,sort_order:customTrainings.length-1,scope:scopeVal});
+  // UX-EXEC-01 (B1): via de wachtrij en met markering, zodat een offline of mislukte write de
+  // training niet laat verdwijnen bij de volgende sync.
+  tkCustomTrainingPost({id,naam:name,kleur:color,notitie:note||null,sort_order:customTrainings.length-1,scope:scopeVal});
+  pushCustomTrainingExercises(t);
   closeModal('m-new-training');
   document.getElementById('nt-name').value='';
   toast(name+' aangemaakt');
@@ -31222,13 +31269,20 @@ async function submitShare(btnEl){
 
 async function deleteCustomTraining(id){
   if(!await confirmModal('Deze training verwijderen?',{title:'Training verwijderen',okLabel:'Verwijderen',danger:true})) return;
+  const _vorige=customTrainings.slice();
   customTrainings=customTrainings.filter(t=>t.id!==id);
   localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
+  // UX-EXEC-01 (B2): via de wachtrij (offline-veilig) en eerlijk: lukt ook queuen niet, dan komt de
+  // training lokaal terug en zegt de app dat. De sync slaat een nog wachtende verwijdering over.
+  const u=await sbDelQ('custom_trainings','id=eq.'+id,{detail:true}); // cascade ruimt custom_training_exercises vanzelf op
+  if(!u||!u.ok){
+    customTrainings=_vorige; localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
+    renderCustomTrainList(); renderCustomTrainBtns(); toast('Verwijderen is niet gelukt — probeer het opnieuw'); return;
+  }
   tkMarkeerTrainingOnbevestigd(id,false);
-  sbDel('custom_trainings','id=eq.'+id); // cascade ruimt custom_training_exercises vanzelf op
   renderCustomTrainList();
   renderCustomTrainBtns();
-  toast('Verwijderd');
+  toast(u.status==='queued'?'Verwijderd — wordt gesynchroniseerd zodra je online bent':'Verwijderd');
 }
 
 // Unified Training Editor (v3.0.3): Workout (custom training) gebruikt vanaf hier exact
@@ -31240,10 +31294,18 @@ async function deleteCustomTraining(id){
 // 4×6-8@8-standaardwaarden hieronder). Wordt uitsluitend door previewStartTraining()
 // meegegeven; elk ander (bestaand) aanroeppad werkt exact zoals voorheen.
 async function startCustomTraining(id,resolvedItems){
-  if(!resolvedItems)activeInstanceId=null; // idem als bij startT: geen instance-id meenemen buiten het Preview-pad
+  // UX-EXEC-01: een lopende training houdt haar instance (zie de terugkeer hieronder).
+  if(!resolvedItems&&curT!=='custom_'+id)activeInstanceId=null; // idem als bij startT: geen instance-id meenemen buiten het Preview-pad
   const t=customTrainings.find(x=>x.id===id);
   if(!t) return;
   const ctxT='custom_'+id;
+  // UX-EXEC-01: loopt deze training al, dan ga je er gewoon naar terug (zoals startT). Voorheen werd
+  // sessionLog hier geleegd; zonder tussentijdse autosave was het gelogde dan weg.
+  if(curT===ctxT&&document.getElementById('s-train-custom-'+id)){
+    document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('s-train-custom-'+id).classList.add('active');
+    if(!trainPaused)startTrainTimer(curT); return;
+  }
   // P0 RESUME — consistent met de vaste training (startT): een niet-afgeronde same-day draft voor DEZE
   // custom-training kan worden hervat, met álle data (sets/wu/cardio/done/notes/elapsed/actieve oefening).
   // Op de resume-pad wordt de recovery-aanpassing NIET opnieuw toegepast (zit al in de bewaarde sessionExtra)
@@ -31258,6 +31320,9 @@ async function startCustomTraining(id,resolvedItems){
   curT=ctxT;
   execFocus[curT]=0; if(typeof execSkipped!=='undefined')execSkipped[curT]=new Set(); // F0.7P/Q: verse start, geen skips
   sessionLog={};sessionExtra=[];
+  // UX-EXEC-01 (B10): zelfde reset als startT en de programmastart. Een eerdere pauze verkortte anders
+  // duration_s en de klok van deze training kon negatief worden.
+  trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
   await ensureExercisesLoaded();
   await ensureEquipmentTypesLoaded();
   if(_resume){
@@ -31843,7 +31908,13 @@ async function permanentlyAddExtras(){
     if(ct){
       if(!ct.exercises)ct.exercises=[];
       extras.forEach(e=>{if(!ct.exercises.includes(e.id))ct.exercises.push(e.id);});
+      // UX-EXEC-01 (B3): een Builder-training bewaart haar oefeningen als exercise_targets. Die lijst
+      // ook aanvullen; anders schreef de push alleen exercise_id's en verdwenen alle doelen.
+      if(Array.isArray(ct.exercise_targets)){
+        extras.forEach(e=>{ if(!ct.exercise_targets.some(x=>x&&x.exercise_id===e.id)) ct.exercise_targets.push({exercise_id:e.id,sets:e.sets??null,reps:e.reps??null,rpe:e.rpe??null,rest:null,pick:null}); });
+      }
       localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
+      tkCustomTrainingPatch(ct.id,{naam:ct.name,kleur:ct.color,notitie:ct.note||null});
       await pushCustomTrainingExercises(ct);
     }
   } else if(t.startsWith('prog_')){
@@ -31868,7 +31939,8 @@ function saveAsTrainingAndFinish(btnEl){
   const t={id:'saved_'+Date.now(),name,color:'#111111',note:'Opgeslagen na sessie '+td(),exercises:sessionExtra.filter(e=>e._t===curT).map(e=>e.id)};
   customTrainings.push(t);
   localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
-  sbPost('custom_trainings',{id:t.id,naam:t.name,kleur:t.color,notitie:t.note,sort_order:customTrainings.length-1}).then(()=>pushCustomTrainingExercises(t));
+  tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:t.note,sort_order:customTrainings.length-1}); // UX-EXEC-01 (B1)
+  pushCustomTrainingExercises(t);
   renderCustomTrainBtns();
   closeModal('m-save-as-training');
   toast(name+' opgeslagen als training');
@@ -38693,7 +38765,7 @@ var DASHUI=(function(){
       return '<div class="dash-today"><div class="dash-today-k">Lopende training</div>'+
         '<div class="dash-today-h">Je hebt een training lopen</div>'+
         '<div class="dash-today-s">Hervat waar je was gebleven, of rond af.</div>'+
-        '<button class="dash-today-btn" onclick="go(\'s-train-\'+curT.toLowerCase())">▶ Hervatten</button></div>';
+        '<button class="dash-today-btn" onclick="go(tkTrainScreenIdVoor(curT))">▶ Hervatten</button></div>';
     }
     var t=DASH.nextTraining();
     if(t){

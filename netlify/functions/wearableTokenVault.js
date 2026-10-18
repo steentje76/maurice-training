@@ -91,8 +91,9 @@ async function deleteWearableTokenSecret(supabaseUrl, serviceKey, secretId) {
 //  2. Volgorde bij (her)koppelen: nieuwe secrets opslaan -> koppeling laten wijzen naar de
 //     nieuwe secrets -> pas dan de oude secrets opruimen. Een werkende koppeling blijft
 //     intact tot de nieuwe volledig is vastgelegd.
-//  3. Mislukt een stap, dan worden de zojuist aangemaakte secrets weer verwijderd
-//     (compensatie) en blijft de bestaande koppeling ongewijzigd.
+//  3. Een definitieve afwijzing compenseert zojuist gemaakte secrets. Bij een
+//     ONZEKERE HTTP-uitkomst worden secrets juist NIET verwijderd zolang de
+//     database-upsert nog kan committen (unknown commit outcome).
 //  4. Opruimen gebeurt op secret-id, nooit op naam; een mislukte opruiming laat hooguit een
 //     versleuteld, niet-blokkerend wees-secret achter (zie cleanup_orphan_wearable_token_secrets,
 //     migratie_v581.sql).
@@ -136,7 +137,7 @@ async function ruimWeesSecretsOp(supabaseUrl, serviceKey, userId) {
  *   accessToken     verplicht
  *   refreshToken    optioneel; ontbreekt hij, dan blijft een bestaand refresh-secret behouden
  *   velden          overige kolommen voor wearable_connections (token_expires_at, scope, ...)
- * @returns {{ok:true}|{ok:false, fase:string}}  fase: 'lezen'|'access'|'refresh'|'koppeling'
+ * @returns {{ok:true}|{ok:false, fase:string}}  fase: 'invoer'|'lezen'|'access'|'refresh'|'koppeling'|'koppeling_onzeker'
  */
 async function vervangWearableTokens(o) {
   const { supabaseUrl, serviceKey, userId, provider, prefix, accessToken, refreshToken } = o;

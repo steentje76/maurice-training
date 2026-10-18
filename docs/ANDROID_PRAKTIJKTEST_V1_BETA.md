@@ -28,10 +28,14 @@ geen toestelbewijs.
 
 1. Open op de telefoon de huidige app → **Instellingen → Help & over de app → Klaar voor een update?**
    en tik **Synchroniseren en controleren**.
-2. Alleen bij **"Veilig om bij te werken"** verder. Staat er iets open: rond de training af of maak
-   verbinding en herhaal stap 1. *(Staat deze kaart nog niet in de geïnstalleerde versie: open Logboek
-   en controleer dat de laatste training er met een vinkje zonder klokje staat; geen oranje
-   "Wachtend op sync"-badge op Home.)*
+2. **Stop: verwijder de huidige app niet uitsluitend op basis van deze kaart.** De status
+   "Geen lokale blokkades gevonden" bevestigt alleen wat lokaal is gecontroleerd; hij bewijst
+   niet dat alle trainingsgegevens op de server staan. Controleer de serverregistratie en zorg
+   voor een aantoonbaar veilig overdrachts- of herstelpad. Staat er iets open of zijn gegevens
+   beschadigd/onbekend: rond de training af of herstel de gegevens en controleer opnieuw.
+   **Ontbreekt de updatekaart in de geïnstalleerde versie, dan is er geen veilige lokale
+   inventarisatie mogelijk; het ontbreken van een offline-badge is geen bewijs.**
+   Zonder bewezen veilige overdracht blijft herinstallatie GEBLOKKEERD.
 3. Download de APK uit de GitHub-pre-release (naam `Trainingskompas-<versie>-<sha>-debug.apk`).
 4. Vergelijk de SHA-256 in de release-notes met het bestand (optioneel, via een bestandsbeheerder met hash).
 5. Verwijder de oude app. Installeer de nieuwe APK (toestaan: "installeren uit onbekende bron").

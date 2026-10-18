@@ -108,8 +108,17 @@ async function vernieuwGoogleHealthToken(o) {
   const accessToken = refreshed.access_token;
   const stored = await updateWearableTokenSecret(supabaseUrl, serviceKey, conn.access_token_secret_id, accessToken);
   let rotated = false;
-  if (refreshed.refresh_token && refreshed.refresh_token !== refreshTokenValue && conn.refresh_token_secret_id) {
+  // Bij refresh-tokenrotatie kan de provider het oude token ongeldig maken. Een succesvolle
+  // OAuth-respons is dus GEEN succesvolle verversing als het nieuwe refresh-token niet
+  // duurzaam kan worden opgeslagen. Voorkom ook een vooruitgezette vervaltijd in dat geval.
+  if (refreshed.refresh_token && refreshed.refresh_token !== refreshTokenValue) {
+    if (!conn.refresh_token_secret_id) {
+      return { ok: false, permanent: false, oauthError: 'vault_refresh_id_missing', httpStatus: 0 };
+    }
     rotated = await updateWearableTokenSecret(supabaseUrl, serviceKey, conn.refresh_token_secret_id, refreshed.refresh_token);
+    if (!rotated) {
+      return { ok: false, permanent: false, oauthError: 'vault_refresh_store_failed', httpStatus: 0 };
+    }
   }
   if (stored) {
     const newExpiresAt = new Date(Date.now() + (refreshed.expires_in || 3600) * 1000).toISOString();

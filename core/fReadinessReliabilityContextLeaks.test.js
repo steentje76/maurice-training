@@ -94,7 +94,7 @@ function kleurVan(html) { return (/--tcol:([^"]*)"/.exec(html) || [null, null])[
   ok(/tkSpierherstelEvidence\(recRows\)/.test(extractFn(HTML, 'recoveryScoreFrom')), 'N2 bron: recoveryScoreFrom middelt alleen evidence-rijen');
   ok(/spierherstel:[^\n]*tkSpierherstelEvidence\(recRows\)/.test(extractFn(HTML, 'tkReadinessVandaag')), 'N2 bron: het spierherstelsignaal naar readinessDay is gefilterd');
   eq((HTML.match(/function tkSpierherstelEvidence\(/g) || []).length, 1, 'N2 bron: één helper voor de regel');
-  ok(/r\.hours!==null/.test(extractFn(HTML, 'tkSpierherstelEvidence')), 'N2 bron: de helper gebruikt de bestaande herkomst hours!==null');
+  ok(/typeof r\.hours==='number'&&isFinite\(r\.hours\)/.test(extractFn(HTML, 'tkSpierherstelEvidence')), 'N2 bron: alleen aantoonbare eindige trainingstijd is evidence, undefined is geen meting');
   ok(/const hq=tkHealthQualified\(hdRuw\);/.test(CTX), 'N3 bron: buildCtx keurt de healthrijen via tkHealthQualified()');
   eq((CTX.match(/hdRuw/g) || []).length, 3, 'N3 bron: de rauwe rijen worden alleen opgehaald, gekeurd en in commentaar genoemd');
   ok(/const hd=hq\.rows;/.test(CTX), 'N3 bron: hd in buildCtx zijn de gekeurde rijen');
@@ -164,11 +164,11 @@ function kleurVan(html) { return (/--tcol:([^"]*)"/.exec(html) || [null, null])[
   eq(BASIS.recoveryScoreFrom(DF, [{ muscle: 'borst', pct: 100, hours: 400 }]), CalcCore.recoveryScore({ dayFactor: 0.97, muscleRecoveryPct: 100 }), 'N2 gemeten 100% blijft 100%');
 
   // Keten: training starten zonder enige data -> geen herstelscore naar live coach en AI.
-  async function keten(hd, recRows) {
+  async function keten(hd, recRows, gepland) {
     const sb = runtime({ hd: hd, recRows: recRows });
     const hq = sb.tkHealthQualified(hd); const lh = hq.rows[0];
     const df = lh ? sb.dagfactor(sb.hrvDagFactorPersonal(hq.rows), lh.sleep, sb.tkCyclusFaseVandaag(lh), hq.signalen) : null;
-    await sb.tkReadinessVandaag(df, recRows || [], null);
+    await sb.tkReadinessVandaag(df, recRows || [], gepland?{naam:'Borsttraining',_muscles:['borst','triceps','schouders']}:null, !!gepland);
     return { besluit: sb.window._tkReadiness, adj: await sb.recoveryAdjustmentForToday(['borst', 'triceps'], {}) };
   }
   const kGeen = await keten([], NOOIT);
@@ -179,7 +179,9 @@ function kleurVan(html) { return (/--tcol:([^"]*)"/.exec(html) || [null, null])[
   ok((kGeen.besluit.beschikbaar || []).indexOf('spierherstel') < 0, 'N2 keten geen data: spierherstel telt niet als aanwezig signaal');
   ok(!/"score":100/.test(JSON.stringify(kGeen.besluit)), 'N2 keten geen data: nergens een score 100 in de payload');
   const kDeels = await keten([{ date: VANDAAG, sleep: 8 }], DEELS);
-  ok((kDeels.besluit.beschikbaar || []).indexOf('spierherstel') >= 0, 'N2 keten deels: spierherstel is aanwezig (er is één spier met historie)');
+  ok((kDeels.besluit.beschikbaar || []).indexOf('spierherstel') < 0 && kDeels.besluit.herstel===null, 'DEC-REC-001-B: zonder expliciete planning geen trainingsspecifiek spierherstelsignaal of score');
+  const kDeelsGepland=await keten([{date:VANDAAG,sleep:8}],DEELS,true);
+  ok(kDeelsGepland.besluit.herstel===null, 'DEC-REC-001-B: met planning en onvolledige spiergroephistorie geen trainingsherstelscore');
   eq(kDeels.adj.score, CalcCore.recoveryScore({ dayFactor: 1, muscleRecoveryPct: 60 }).score, 'N2 keten deels: de score rust op de ene gemeten spier');
   const kAlle = await keten([{ date: VANDAAG, sleep: 8 }], ALLE);
   eq(kAlle.adj.score, CalcCore.recoveryScore({ dayFactor: 1, muscleRecoveryPct: 80 }).score, 'N2 keten alle met historie: bestaande score');

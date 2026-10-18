@@ -54,7 +54,7 @@ console.log('\n[Sprint 14] Recovery & readiness');
 
 /* ── A. CONTRACT ─────────────────────────────────────────────────────────── */
 console.log('\nA. Contracten');
-eq(D.READINESS_DAY_VERSIE, 'readiness_day.v1', 'A1: de dagbeslissing heeft een eigen versie');
+eq(D.READINESS_DAY_VERSIE, 'readiness_day.v1.1', 'A1: de dagbeslissing heeft een eigen versie');
 eq(D.VERSIONS.readiness, 'readiness.v1', 'A2: de bestaande readiness.v1 is ongewijzigd blijven bestaan');
 ok(D.READINESS_DAY_VERSIE !== D.VERSIONS.readiness, 'A3: en is niet gekaapt door de nieuwe beslissing');
 eq(D.DAYZONE_VERSIE, 'dayzone.v1', 'A4: de dagzone heeft een eigen versie');
@@ -69,7 +69,7 @@ const velden = ['versie','bruikbaar','reden','beschikbaar','ontbreekt','datakwal
                 'herstel','zone','zoneLabel','zoneBetekenis','aanpassing','trainingsadvies','redenen','herkomst'];
 const vorm = D.readinessDay(VOL);
 velden.forEach(f => ok(Object.prototype.hasOwnProperty.call(vorm, f), 'A11: contract bevat ' + f));
-eq(D.readinessDay({}).versie, 'readiness_day.v1', 'A12: ook een leeg besluit draagt de versie');
+eq(D.readinessDay({}).versie, 'readiness_day.v1.1', 'A12: ook een leeg besluit draagt de versie');
 
 /* ── B. NORMALE READINESS ────────────────────────────────────────────────── */
 console.log('\nB. Normale readiness');
@@ -167,7 +167,7 @@ ok(stabiel, 'F1: vijftig aanroepen geven vijftig identieke uitkomsten');
 const invoer = kopie(VOL); D.readinessDay(invoer);
 eq(JSON.stringify(invoer), JSON.stringify(kopie(VOL)), 'F2: de invoer wordt niet gemuteerd');
 const decSrc = fs.readFileSync(path.join(__dirname, 'decision.js'), 'utf8');
-const readyBlok = decSrc.slice(decSrc.indexOf('READINESS VAN DE DAG (readiness_day.v1)'), decSrc.indexOf('RUST NA EEN SET (rest.v1)'));
+const readyBlok = decSrc.slice(decSrc.indexOf('READINESS VAN DE DAG (readiness_day.v1.1)'), decSrc.indexOf('RUST NA EEN SET (rest.v1)'));
 ok(!/Date\.now\(\)|Math\.random\(\)|new Date\(/.test(readyBlok), 'F3: geen tijd of toeval in de beslissing');
 
 /* ── G. TRAININGSAANPASSING ──────────────────────────────────────────────── */

@@ -3197,3 +3197,18 @@ historie op main `160fefc` (v4.70.25). Bevestigd en in de browser nagespeeld:
 - `sbPatchQ`/`sbDelQ` zonder `{detail:true}` geven bij een mislukte queue nog `true` (bestaand, DEC-QUEUE-001).
 - Pauzestand staat niet in het concept; programma starten/hervatten offline lukt niet (`sbGet` → `[]`).
 - Datum van een sessierij is de afrond-datum, niet de startdatum.
+
+## DEC-LIB-001 — Bibliotheken: eerst valideren, importeren alleen via een droogloop en een eigen PR (18 oktober 2026)
+
+**Context.** Opdracht bouwstap 4: bibliotheken voor oefeningen, voeding en supplementen uitbreiden of importgereed
+maken. Vastgesteld: de 186 aanvullende MoveKit-oefeningen staan niet in de repository en Batch 002 is geblokkeerd
+(MOVEKIT_MEDIA_SCALE_GATE, licentie); er is geen centrale voedingsdatabase; de supplementcatalogus is versioneerd
+en evidence-gebonden.
+
+**Besluit.** `tools/library-validate.js` (alleen-lezen) valideert de bibliotheken en levert een droogloop voor een
+volgende MoveKit-batch. `docs/LIBRARY_VALIDATION_REPORT.md` is de gegenereerde uitkomst; de test houdt hem actueel.
+Een import gebeurt alleen na de droogloop, met een PO-akkoord, in een eigen PR. Geen inhoud (Nederlandse namen,
+kennisrecords, voedingswaarden) wordt door de AI ingevuld zonder bron.
+
+**Open (PO).** Batch 002-poort; redactie van Nederlandse oefeningnamen; `Kuiten`/`Adductoren` in `MUSCLE_OPTIONS`;
+20 ontbrekende kennisrecords en posters; bron en licentie voor een centrale voedingsbibliotheek.

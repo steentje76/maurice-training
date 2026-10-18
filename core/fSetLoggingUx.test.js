@@ -63,14 +63,14 @@ function deel1() {
   /* 5. navigatie */
   ok(/onclick="tkPrimaryNavGo\(\\''\+doel\+'\\'\)"/.test(extractFn(HTML, 'tkPrimaryNavHtml')), '5a de hoofdnavigatie loopt via tkPrimaryNavGo()');
   const sb = { window: {}, GW: null };
-  vm.createContext(sb); vm.runInContext('var curT=null;' + extractFn(HTML, 'tkTrainingLooptOp'), sb);
+  vm.createContext(sb); vm.runInContext('var curT=null;' + (/function tkTrainScreenIdVoor\(/.test(HTML) ? extractFn(HTML, 'tkTrainScreenIdVoor') : '') + extractFn(HTML, 'tkTrainingLooptOp'), sb); /* UX-EXEC-01: schermnaam via tkTrainScreenIdVoor */
   eq([sb.tkTrainingLooptOp('s-train-a'), sb.tkTrainingLooptOp(null)], [false, false], '5b zonder lopende training: geen vraag');
   vm.runInContext("curT='A';", sb);
   eq([sb.tkTrainingLooptOp('s-train-a'), sb.tkTrainingLooptOp('s-home'), sb.tkTrainingLooptOp('s-train-b')], [true, false, false], '5c alleen op het scherm van de lopende training');
   sb.window.GW = sb.GW = { hasActive: function () { return true; } };
   ok(sb.tkTrainingLooptOp('s-guided'), '5d een actieve begeleide training telt ook');
   ok(/if\(!tkNavGuardDoorlaten&&actief&&tkNavStack\.length&&typeof tkTrainingLooptOp==='function'&&tkTrainingLooptOp\(actief\.id\)\)/.test(HTML), '5e terugveeg tijdens een training vraagt eerst');
-  ok(/if\(typeof curT!=='undefined'&&curT&&!trainPaused&&trainStart&&id==='s-train-'\+String\(curT\)\.toLowerCase\(\)\)startTrainTimer\(curT\);/.test(extractFn(HTML, 'go')), '5f terug op de training loopt de klok door (niet bij pauze)');
+  ok(/if\(typeof curT!=='undefined'&&curT&&!trainPaused&&trainStart&&id===(tkTrainScreenIdVoor\(curT\)|'s-train-'\+String\(curT\)\.toLowerCase\(\))\)startTrainTimer\(curT\);/.test(extractFn(HTML, 'go')), '5f terug op de training loopt de klok door (niet bij pauze)');
   ok(!/confirm\(|alert\(|prompt\(/.test(extractFn(HTML, 'tkPrimaryNavGo')), '5g geen native dialoog');
   /* 6. avatar */
   eq((HTML.match(/data-tk-avatar onclick="go\('s-profiel'\)"/g) || []).length, 4, '6a de vier profielknoppen in schermkoppen zijn gemarkeerd voor de avatar');

@@ -161,6 +161,12 @@ async function main() {
     eq([zonderPlan.herstel, zonderPlan.besluit.herstel, zonderPlan.besluit.trainingsadvies.soort], [null, null, 'geen_advies'], 'B11a geen expliciet plan -> geen trainingsherstelscore of trainingsadvies');
     const zonderSpierbasis = await draai({ hd: reeks(30, 'wearable'), recRows: [{ muscle: 'borst', pct: 80, hours: null }] });
     eq([zonderSpierbasis.herstel, zonderSpierbasis.besluit.herstel], [null, null], 'B11b plan zonder geldige spierherstelhistorie -> geen schijnscore');
+    const ontbrekendeGroep = await draai({ hd: reeks(30, 'wearable'), recRows: [REC[0]] });
+    eq([ontbrekendeGroep.herstel, ontbrekendeGroep.besluit.herstel], [null, null], 'B11c een geldige subset is geen complete dekking van alle geplande spieren');
+    const dubbeleGroep = await draai({ hd: reeks(30, 'wearable'), recRows: [REC[0], REC[0]] });
+    eq([dubbeleGroep.herstel, dubbeleGroep.besluit.herstel], [null, null], 'B11d dubbel getelde spier vervangt ontbrekende geplande spier niet');
+    const verkeerdeGroep = await draai({ hd: reeks(30, 'wearable'), recRows: [REC[0], { muscle: 'kuiten', pct: 90, hours: 10 }] });
+    eq([verkeerdeGroep.herstel, verkeerdeGroep.besluit.herstel], [null, null], 'B11e geldige maar niet-geplande spier vervangt ontbrekende spier niet');
     // fail-closed blijft: zonder keuringslaag telt de fase van vandaag nog wel, een oude niet
     const fc = runtime({ hd: [] }, { zonderDeviceCore: true });
     eq([homeDf(fc, [{ date: VANDAAG, hrv: 450, sleep: 4, cyclus_fase: 'luteaal' }]).cyclusFactor, homeDf(fc, [{ date: dag(4), hrv: 450, sleep: 4, cyclus_fase: 'luteaal' }]).cyclusFactor], [0.97, 1], 'B12 fail-closed: fase van vandaag blijft werken, een oude fase niet');

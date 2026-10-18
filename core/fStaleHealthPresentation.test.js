@@ -91,7 +91,7 @@ async function keten(hd, recRows, gepland) {
   const sb = runtime({ hd: hd, recRows: recRows });
   const hq = sb.tkHealthQualified(hd); const lh = hq.rows[0];
   const df = lh ? sb.dagfactor(sb.hrvDagFactorPersonal(hq.rows), lh.sleep, sb.tkCyclusFaseVandaag(lh), hq.signalen) : null;
-  await sb.tkReadinessVandaag(df, recRows || [], gepland?{naam:'Borsttraining',_muscles:['borst']}:null, !!gepland);
+  await sb.tkReadinessVandaag(df, recRows || [], gepland?{naam:'Borst- en schoudertraining',_muscles:['borst','schouders']}:null, !!gepland);
   const b = sb.window._tkReadiness; const adj = await sb.recoveryAdjustmentForToday(['borst'], {});
   return [df && df.factor, df && df.hrvFactor, df && df.slaapFactor, df && df.cyclusFactor, df && df.basis, b.herstel && [b.herstel.score, b.herstel.band, b.herstel.betrouwbaarheid],
     b.zone, b.datakwaliteit, b.beschikbaar, b.trainingsadvies, [adj.score, adj.band, adj.confidence, adj.factor, adj.setsDelta, adj.rpeDelta]];

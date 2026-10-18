@@ -24857,7 +24857,13 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT,heeftExplicietPlan){
   // mag een trainingsspecifieke herstelscore opleveren. Anders: null, nooit 89/100 op lege lijst.
   const geldigeSpieren=Array.isArray(recRows)&&recRows.length>0 &&
     tkSpierherstelEvidence(recRows).length===recRows.length;
-  const planBasis=!!(heeftExplicietPlan&&nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length&&geldigeSpieren);
+  // Fail-closed: een geldige subset is niet voldoende. Ook ontbrekende/onbekende
+  // spiergroepen en dubbele resultaatrijen verhinderen een trainingsscore.
+  const volledigeSpierdekking=!!(nextT&&Array.isArray(nextT._muscles)&&Array.isArray(recRows)&&
+    nextT._muscles.length>0&&nextT._muscles.length===recRows.length&&
+    new Set(recRows.map(r=>r&&r.muscle)).size===recRows.length&&
+    nextT._muscles.every(m=>recRows.some(r=>r&&r.muscle===m)));
+  const planBasis=!!(heeftExplicietPlan&&nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length&&geldigeSpieren&&volledigeSpierdekking);
   let herstel=null;
   if(planBasis){
     try{

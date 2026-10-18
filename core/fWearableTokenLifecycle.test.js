@@ -134,7 +134,9 @@ function wereld(opts) {
       if (method === 'DELETE') { if (w.faal.connDelete) return J({ code: 'XX000' }, 500); w.conns = w.conns.filter(function (c) { return !match(c); }); return J({}, 204); }
       if (method === 'PATCH') { const b = JSON.parse(bodyRaw); w.conns.filter(match).forEach(function (c) { Object.assign(c, b); }); return J({}, 204); }
       if (method === 'POST') {
-        if (w.faal.connWrite) return J({ code: 'XX000' }, 500);
+        // F1/F8 toetsen een DEFINITIEVE database-afwijzing (409), niet een 5xx waarvan
+        // de commitstatus onbekend kan zijn. Onzekere uitkomsten hebben eigen regressies.
+        if (w.faal.connWrite) return J({ code: '23505' }, 409);
         const b = JSON.parse(bodyRaw);
         const bestaand = w.conn(b.user_id, b.provider);
         const merge = /resolution=merge-duplicates/.test(String((o.headers || {}).Prefer || ''));

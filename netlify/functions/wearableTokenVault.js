@@ -174,6 +174,7 @@ async function vervangWearableTokens(o) {
   //    lost PostgREST een conflict alleen op de primaire sleutel op en faalt herkoppelen op
   //    UNIQUE(user_id, provider).
   let opgeslagen = false;
+  let uitkomstOnzeker = false;
   try {
     const res = await fetch(`${supabaseUrl}/rest/v1/wearable_connections?on_conflict=user_id,provider`, {
       method: 'POST',
@@ -184,11 +185,36 @@ async function vervangWearableTokens(o) {
       }))
     });
     opgeslagen = res.ok;
-    if (!res.ok) console.error('vervangWearableTokens: koppeling opslaan mislukt', res.status, await foutCode(res));
-  } catch (e) { console.error('vervangWearableTokens: koppeling opslaan catch', e && e.message); }
+    // 429/5xx kunnen optreden nadat de database de upsert al heeft gecommit.
+    if (!res.ok) {
+      uitkomstOnzeker = res.status === 429 || res.status >= 500;
+      console.error('vervangWearableTokens: koppeling opslaan mislukt', res.status, await foutCode(res));
+    }
+  } catch (e) {
+    // Geen HTTP-bevestiging betekent NIET dat de databasewijziging niet is uitgevoerd.
+    uitkomstOnzeker = true;
+    console.error('vervangWearableTokens: koppeling opslaan catch', e && e.message);
+  }
+
+  if (!opgeslagen && uitkomstOnzeker) {
+    // Read-after-write kan een ontvangen commit aantonen. Zelfs als deze read geen nieuwe
+    // koppeling laat zien, kan de oorspronkelijke write nog onderweg zijn. Verwijder in dit
+    // onzekere geval NOOIT nieuwe secrets: een latere commit kan ernaar gaan verwijzen.
+    try {
+      const controle = await fetch(
+        `${supabaseUrl}/rest/v1/wearable_connections?user_id=eq.${userId}&provider=eq.${provider}&select=access_token_secret_id,refresh_token_secret_id&limit=1`,
+        { headers: sbHeaders(serviceKey) }
+      );
+      const rows = controle.ok ? await controle.json() : null;
+      const rij = Array.isArray(rows) ? rows[0] : null;
+      opgeslagen = !!(rij && rij.access_token_secret_id === nieuwAccessId &&
+        rij.refresh_token_secret_id === refreshIdVoorRij);
+    } catch (_) { /* onbekende stand: behoud alle secrets voor latere reconciliation */ }
+    if (!opgeslagen) return { ok: false, fase: 'koppeling_onzeker' };
+  }
 
   if (!opgeslagen) {
-    // Compensatie: de nieuwe secrets weg, de bestaande koppeling blijft zoals zij was.
+    // Alleen bij een definitieve afwijzing (niet een netwerk-/serverstoring) compenseren.
     await deleteWearableTokenSecret(supabaseUrl, serviceKey, nieuwAccessId);
     if (nieuwRefreshId) await deleteWearableTokenSecret(supabaseUrl, serviceKey, nieuwRefreshId);
     return { ok: false, fase: 'koppeling' };

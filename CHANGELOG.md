@@ -1,5 +1,12 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — LIB-VALIDATE-01 Bibliotheekvalidatie en importgereedheid (18 oktober 2026)
+
+- **Nieuw.** `tools/library-validate.js` (alleen-lezen): oefeningencatalogus (id's, slugs, namen, metadata, relaties, kennislaag, video's, manifest + sha256, posters, Batch 002-poort), supplementen (enums, synoniemen, claims met bron, geen claimtaal) en de voedingsstatus; `--movekit-source` geeft een reproduceerbare droogloop voor een volgende batch.
+- **Rapport.** `docs/LIBRARY_VALIDATION_REPORT.md` (0 fouten; waarschuwingen: 0/226 NL-namen, 2 spiergroepen buiten de keuzelijst, 20 kennisrecords en 20 posters ontbreken) en `docs/LIBRARY_IMPORT_READINESS.md`.
+- **Niet gedaan.** Geen import, geen productie-SQL, geen app-wijziging.
+- **Gate.** `core/fLibraryValidation.test.js` (echte data, sabotage met een kapotte catalogus, droogloop schrijft niets, rapport actueel).
+
 ## Kandidaat (nog geen versie) — UX-EXEC-01 Uitvoeringsketen: geen verloren oefeningen, geen dubbele rijen, handmatige trainingen offline-veilig (18 oktober 2026)
 
 - **Bevindingen (audit + browser).** Tab Trainen gaf een leeg scherm tijdens een eigen/programmatraining; een hervatte vaste training (via Preview) verloor ingewisselde oefeningen en hun sets bij afronden; opnieuw afronden na een herstart kon een tweede sessierij geven; replay van `custom_trainings` bleef op 409 hangen; handmatige trainingen verdwenen offline bij de volgende sync en verwijderde kwamen terug; permanent toevoegen wiste Builder-doelen; Preview van een lopende training koppelde haar stil aan een nieuwe instance; pauzestand lekte in eigen trainingen.

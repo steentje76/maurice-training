@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Bibliotheken (18 oktober 2026 — LIB-VALIDATE-01)
+
+- Oefeningen: 226 MoveKit-oefeningen, 0 fouten; 0/226 met Nederlandse naam; Batch 002 (186) BLOCKED en bronbestanden
+  niet in de repository. Supplementen: 73 items, 128 claims, 0 fouten. Voeding: geen centrale bibliotheek.
+- Validatie: `node tools/library-validate.js --markdown --sha` (rapport `docs/LIBRARY_VALIDATION_REPORT.md`).
+
 ## Uitvoeringsketen (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — UX-EXEC-01)
 
 - Invariant (DEC-EXEC-001): het trainingsscherm volgt uit `tkTrainScreenIdVoor(curT)`; het concept bewaart de

@@ -8525,11 +8525,24 @@ function tkCustomTrainingPatch(id,body,opts){
   _tkTrainingOuder[id]=p;
   return p;
 }
-// Vergelijkt de inhoud die voor de sporter telt: naam en oefeningen (volgorde, sets, herhalingen, RPE,
-// rust, keuze). Metadata (jsonb, sleutelvolgorde kan wijzigen) bewust niet.
+// Vergelijk alle bewerkbare traininggegevens voordat de lokale pending-status wordt opgeheven.
+// JSONB-sleutelvolgorde kan op de server veranderen: canoniseer metadata recursief.
 function tkTrainingInhoud(t){
   const n=function(v){ return v==null?null:String(v); };
-  return JSON.stringify([n(t&&t.name),((t&&t.exercise_targets)||[]).map(function(e){ return [n(e.exercise_id),n(e.sets),n(e.reps),n(e.rpe),n(e.rest),n(e.pick)]; })]);
+  const canonical=function(v){
+    if(v==null)return null;
+    if(Array.isArray(v))return v.map(canonical);
+    if(typeof v==='object'){
+      const out={};
+      Object.keys(v).sort().forEach(function(k){ if(v[k]!==undefined)out[k]=canonical(v[k]); });
+      return out;
+    }
+    return v;
+  };
+  return JSON.stringify([
+    n(t&&t.name), n((t&&t.color)||'#111111'), n((t&&t.note)||''), canonical(t&&t.metadata),
+    ((t&&t.exercise_targets)||[]).map(function(e){ return [n(e.exercise_id),n(e.sets),n(e.reps),n(e.rpe),n(e.rest),n(e.pick)]; })
+  ]);
 }
 function tkWachtrijRaaktTraining(items,id){
   const uid=tkHuidigeUid();

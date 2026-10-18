@@ -8728,3 +8728,11 @@ Zie `docs/Sprintrapporten/Sprint3.1_Rapport.md` voor het volledige verslag.
 
 ## v3.3.25 en eerder
 Zie DECISION_LOG.md (DEC-001 t/m DEC-010) en CURRENT_STATE.md voor de volledige geschiedenis vóór dit CHANGELOG-bestand is gestart.
+
+### 18 oktober 2026 — DEC-REC-001-A/B (Draft, niet gepubliceerd)
+
+- `readiness_day.v1.1`: dagreadiness-zone `ready` communiceert **Gunstige dag** in plaats van **Goed hersteld**; numerieke dagfactor/gereedheid en oude sportdrempels ongewijzigd.
+- Alleen expliciet geplande trainingen komen in aanmerking voor een trainingsspecifieke herstelscore, en alleen met voor alle relevante spiergroepen aantoonbare historie; automatische rotatie is een suggestie, geen geplande training. Geen plan → geen trainingsherstelscore of trainingsadvies; daggereedheid blijft afzonderlijk zichtbaar.
+- Zonder spierhistorie zijn Home- en Lichaam-figuren neutraal; spierkaarten tonen geen verzonnen 100%-herstel.
+- Gedeelde Decision-, Coaching- en registry-contracten geversioneerd; service-worker CORE_SIG en caches bijgewerkt.
+- Alle wijzigingen uitsluitend op gestapelde Draft-branch; productie v4.70.25 ongewijzigd.

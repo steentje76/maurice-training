@@ -22,7 +22,7 @@
     phase: 'phase.v1',
     evidence: 'evidence.v1',
     dayzone: 'dayzone.v1',
-    readiness_day: 'readiness_day.v1',
+    readiness_day: 'readiness_day.v1.1',
     evidence_snapshot: 'evidence_snapshot.v1'
   };
 
@@ -275,7 +275,7 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════════════
-   * READINESS VAN DE DAG (readiness_day.v1) — Sprint 14
+   * READINESS VAN DE DAG (readiness_day.v1.1) — Sprint 14
    *
    * ÉÉN antwoord op: hoe sta ik er vandaag voor, en wat betekent dat voor de training die
    * ik van plan was? De losse onderdelen bestonden al — de sporter moest ze zelf combineren.
@@ -298,11 +298,11 @@
    * daar is in deze applicatie geen expliciete regel voor (computeProgAdjustment gaat niet
    * verder dan -1 set en -1,5 RPE), en een zone zonder regel zou een verzonnen oordeel zijn.
    * ══════════════════════════════════════════════════════════════════════════ */
-  var READINESS_DAY_VERSIE = 'readiness_day.v1';
+  var READINESS_DAY_VERSIE = 'readiness_day.v1.1';
   var READINESS_ZONES = ['ready', 'caution', 'reduce'];
   var READINESS_SIGNALEN = ['hrv', 'rhr', 'slaap', 'spierherstel', 'gevoel', 'trainingsbelasting'];
   var READINESS_ZONE_TEKST = {
-    ready:   { label: 'Goed hersteld',   betekenis: 'Je geplande training kan normaal worden uitgevoerd.' },
+    ready:   { label: 'Gunstige dag',   betekenis: 'Je dagfactor is gunstig; spierherstel en de geplande training beoordeel je afzonderlijk.' },
     caution: { label: 'Voorzichtig vandaag', betekenis: 'Train beheerst en houd je inspanning in de gaten.' },
     reduce:  { label: 'Belasting aanpassen', betekenis: 'De trainingsbelasting wordt vandaag aangepast.' }
   };
@@ -318,7 +318,7 @@
    *     pijn: string|null, trainingsdagen7: number|null
    *   }
    * }
-   * -> readiness_day.v1-contract
+   * -> readiness_day.v1.1-contract
    */
   // Kwaliteitsstatussen (observation.v1, DeviceCore.QUALITY_STATES) waarbij een health-signaal
   // NIET als actueel signaal voor vandaag telt. Eén lijst, gebruikt door readinessDay() en door
@@ -339,6 +339,10 @@
     var i = input || {};
     var sig = i.signalen || {};
     var factor = (typeof i.dagfactor === 'number' && isFinite(i.dagfactor)) ? i.dagfactor : null;
+    // DEC-REC-001-B: alleen een expliciet geplande training geeft een trainingsspecifiek oordeel.
+    // Ongespecificeerde oudere aanroepers houden hun bestaande contract (backward compatibility).
+    var heeftPlan = i.trainingGepland !== false;
+    var planHerstelBeschikbaar = heeftPlan && (i.trainingGepland !== true || !!(sig.spierherstel && sig.spierherstel.length));
 
     var beschikbaar = [], ontbreekt = [];
     function noteer(naam, aanwezig) { (aanwezig ? beschikbaar : ontbreekt).push(naam); }
@@ -366,7 +370,7 @@
     var kwaliteit = beschikbaar.length >= 5 ? 'volledig' : (beschikbaar.length >= 2 ? 'gedeeltelijk' : 'onvoldoende');
 
     var herstel = null;
-    if (i.herstel && typeof i.herstel.score === 'number' && isFinite(i.herstel.score) && i.herstel.band && i.herstel.band !== 'onbekend') {
+    if (planHerstelBeschikbaar && i.herstel && typeof i.herstel.score === 'number' && isFinite(i.herstel.score) && i.herstel.band && i.herstel.band !== 'onbekend') {
       herstel = { score: Math.round(i.herstel.score), band: i.herstel.band,
                   betrouwbaarheid: i.herstel.confidence || null };
     } else {
@@ -376,7 +380,7 @@
     var basis = {
       versie: READINESS_DAY_VERSIE, bruikbaar: false, reden: 'onvoldoende_gegevens',
       beschikbaar: beschikbaar, ontbreekt: ontbreekt, datakwaliteit: kwaliteit,
-      dagfactor: factor, gereedheid: null,
+      dagfactor: factor, gereedheid: null, trainingGepland: heeftPlan,
       herstel: herstel, dagthema: null,
       zone: null, zoneLabel: null, zoneBetekenis: null,
       aanpassing: null, trainingsadvies: { soort: 'geen_advies', setsDelta: 0, rpeDelta: 0 },
@@ -393,20 +397,26 @@
     var zone = zoneRuw.cls === 'g' ? 'ready' : (zoneRuw.cls === 'y' ? 'caution' : 'reduce');
     var tekst = READINESS_ZONE_TEKST[zone];
 
-    var aanpassing = computeProgAdjustment(factor, sig.spierherstel || [], sig.gevoel || null, sig.pijn || null);
+    var aanpassing = heeftPlan ? computeProgAdjustment(factor, sig.spierherstel || [], sig.gevoel || null, sig.pijn || null) : null;
+    var betekenis = heeftPlan ? tekst.betekenis :
+      (zone === 'ready' ? 'De dagfactor is gunstig; zonder geplande training volgt geen trainingsspecifiek hersteloordeel.' :
+       zone === 'caution' ? 'De dagfactor vraagt om aandacht; er is geen training geselecteerd.' :
+       'De dagfactor is lager; er is geen training geselecteerd.');
 
     return {
       versie: READINESS_DAY_VERSIE, bruikbaar: true,
       reden: (kwaliteit === 'onvoldoende') ? 'ok_beperkte_gegevens' : 'ok',
       beschikbaar: beschikbaar, ontbreekt: ontbreekt, datakwaliteit: kwaliteit,
-      dagfactor: factor, gereedheid: (typeof i.gereedheid === 'number' && isFinite(i.gereedheid)) ? i.gereedheid : null,
+      dagfactor: factor, trainingGepland: heeftPlan, gereedheid: (typeof i.gereedheid === 'number' && isFinite(i.gereedheid)) ? i.gereedheid : null,
       herstel: herstel,
       dagthema: dayZone(factor),                               // dayzone.v1 — bestaand
-      zone: zone, zoneLabel: tekst.label, zoneBetekenis: tekst.betekenis,
+      zone: zone, zoneLabel: tekst.label, zoneBetekenis: betekenis,
       aanpassing: aanpassing,
-      trainingsadvies: aanpassing
-        ? { soort: 'aangepast', setsDelta: aanpassing.setsDelta || 0, rpeDelta: aanpassing.rpeDelta || 0 }
-        : { soort: 'ongewijzigd', setsDelta: 0, rpeDelta: 0 },
+      trainingsadvies: !heeftPlan
+        ? { soort: 'geen_advies', setsDelta: 0, rpeDelta: 0 }
+        : aanpassing
+          ? { soort: 'aangepast', setsDelta: aanpassing.setsDelta || 0, rpeDelta: aanpassing.rpeDelta || 0 }
+          : { soort: 'ongewijzigd', setsDelta: 0, rpeDelta: 0 },
       redenen: aanpassing ? (aanpassing.redenen || []) : [],
       herkomst: { signalen: 'gemeten', dagfactor: 'berekend', herstel: 'berekend',
                   zone: 'besloten', aanpassing: 'besloten' }

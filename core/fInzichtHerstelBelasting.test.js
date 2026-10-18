@@ -125,7 +125,7 @@ const FIXTURE = function () {
       const errs = [];
       const page = await browser.newPage({ viewport: { width: w, height: 900 } });
       page.on('pageerror', function (e) { errs.push(e.message); });
-      await page.goto(url); await page.waitForTimeout(500);
+      await page.goto(url,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(500);
       await page.evaluate(FIXTURE);
       await page.evaluate(function () { go('s-inzicht'); });
       await page.waitForFunction(function () { return document.querySelectorAll('#lich-muslist .lich-mrow').length > 0 && document.querySelector('#lich-fig-back svg'); }, null, { timeout: 20000 });
@@ -214,7 +214,7 @@ const FIXTURE = function () {
     for (const w of [320, 360, 412]) {
       const page = await browser.newPage({ viewport: { width: w, height: 900 } });
       const errs = []; page.on('pageerror', function (e) { errs.push(e.message); });
-      await page.goto(url); await page.waitForTimeout(500);
+      await page.goto(url,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(500);
       await page.evaluate(FIXTURE);
       await page.evaluate(function () {
         const x = new Date(); x.setDate(x.getDate() - 10); const oud = x.toISOString().split('T')[0];
@@ -247,7 +247,7 @@ const FIXTURE = function () {
     {
       const page = await browser.newPage({ viewport: { width: 360, height: 800 } });
       const errs = []; page.on('pageerror', function (e) { errs.push(e.message); });
-      await page.goto(url); await page.waitForTimeout(500);
+      await page.goto(url,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(500);
       await page.evaluate(FIXTURE);
       const actief = function () { return page.evaluate(function () { return document.querySelector('.scr.active').id; }); };
       const terug = function (id) { return page.evaluate(function (x) { document.querySelector('#' + x + ' .hdr .ibtn').click(); }, id); };

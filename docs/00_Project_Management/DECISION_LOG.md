@@ -3105,3 +3105,19 @@ spierherstel (alle getrainde spiergroepen) of alleen de geplande spiergroepen mo
 keuze met invloed op de uitkomst. Niet zelfstandig gewijzigd. Opties: (a) zo laten en de kaart vermelden dat de score
 alleen de geplande spiergroepen weegt; (b) zonder geplande training het algemene spierherstel doorgeven; (c) altijd
 het algemene spierherstel doorgeven.
+
+## DEC-REC-001-A/B — PO-besluit goedgekeurd en technisch uitgewerkt (18 oktober 2026)
+
+**Bron van autorisatie:** expliciet akkoord Product Owner op zowel A als B, vastgelegd in GitHub issue #546. De eerder in dit document opgenomen openstaande beslispunten A/B zijn daarmee **GOEDGEKEURD**. Dit is een inhoudelijk besluit, **niet** het akkoord om te mergen of te publiceren.
+
+**A — readiness_day.v1.1.** Het Day Readiness Decision-label `ready` is voortaan **"Gunstige dag"** in plaats van een fysiologische uitspraak "Goed hersteld". De zone-ID, grenzen voor `trainReadiness`, invoermetingen, berekeningen en numerieke `gereedheid` blijven gelijk. De `zoneBetekenis` is beperkt tot de betekenis van de dagfactor, zonder een algemene spierherstelclaim.
+
+**B — expliciete planning als scopegrens.** Het automatisch geselecteerde volgende vaste schema (`computeNextVasteTraining`) is een **suggestie**, geen expliciet in de kalender ingeplande training. Alleen een werkelijk ingeplande `planned_training_occurrence` met `planned_training_assignment` voor de sporter van vandaag telt als `trainingGepland:true`. Zonder zo'n planning is de trainingsspecifieke herstelscore `null`, blijft de daggereedheid zichtbaar, en luidt `trainingsadvies.soort='geen_advies'`. De AI ontvangt geen herstelscore die in deze context niet bestaat.
+
+**Datakwaliteitsminimum voor geplande training:** bereken/laat een trainingsspecifieke herstelscore pas door bij ten minste één relevante spiergroep en voor **alle** relevante spiergroepen een geldige `pct` en geregistreerde `hours`. Bij onvolledige/no-data-input volgt `herstel:null` met `ontbreekt:['herstelscore']`. Dit is een conservatieve beschikbaarheidsvoorwaarde, geen nieuwe sportwetenschappelijke belastingsdrempel. Bestaande `recoveryScoreFrom` en `computeProgAdjustment` zijn rekenkundig niet aangepast.
+
+**Presentatiecorrectie:** spiergroepen zonder training blijven waar nodig compatibel in het bestaande rekencontract, maar worden in Lichaam- en Home-figuur **neutraal** weergegeven (SVG-null), zonder groene 100%-kleuring of 100%-balk. De Decision-labels op andere, apart gedefinieerde berekeningen blijven buiten deze beslissing.
+
+**Architectuur:** de Calculation Engine rekent; de Decision Engine bepaalt de zone en de betekenis; de Coaching Engine verwoordt de al vastgestelde beslissing en krijgt zonder planning geen trainingsherstelscore. Regels zijn versieerbaar, deterministisch en auditbaar.
+
+**Acceptatiestatus:** Draft-code en lokale tests. `main` en productie blijven v4.70.25; onafhankelijke review, bijgewerkte CORE_SIG + service-worker cache, volledige GitHub Quality Gate en een afzonderlijk mergebesluit blijven vereist. GitHub Actions is op dit moment account-breed geblokkeerd wegens een bevestigde billing lock (zie issue #548).

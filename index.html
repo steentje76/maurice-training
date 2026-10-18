@@ -24635,6 +24635,8 @@ async function refreshHome(){
   renderHomeProgramCard();
   await renderVasteTrainingBtns();
   const nextLblEl=document.getElementById('home-next-lbl');
+  // DEC-REC-001-B: rotatie toont een suggestie, geen expliciet geplande training.
+  let heeftExplicietPlan=false;
   if(vasteTrainingen.length){
     // SPRINT C2-C — expliciete planning krijgt voorrang boven de automatische
     // rotatie (PO-richting sectie 24): computeNextVasteTraining() blijft
@@ -24657,7 +24659,7 @@ async function refreshHome(){
         if(assR&&assR.length){
           const eersteOcc=occR.find(function(o){return o.id===assR[0].occurrence_id;});
           const def=vasteTrainingen.find(function(v){return v.id===(eersteOcc&&eersteOcc.workout_definition_id);});
-          if(def) next=def;
+          if(def){ next=def; heeftExplicietPlan=true; }
         }
       }
     }catch(e){ console.warn('explicit-planning precedence check mislukt, val terug op rotatie',e); }
@@ -24694,7 +24696,7 @@ async function refreshHome(){
   renderTodayCta(nextT,dfAdvies);
   /* Sprint 14 — readiness van de dag: één beslissing, opgehaald vóór het tekenen. */
   try{
-    const _rc=await tkReadinessVandaag(dfInfo,recRows,nextT);
+    const _rc=await tkReadinessVandaag(dfInfo,recRows,nextT,heeftExplicietPlan);
     const _re=document.getElementById('home-readiness');
     if(_re) _re.innerHTML=tkReadinessHtml(_rc);
   }catch(_){ const _re=document.getElementById('home-readiness'); if(_re)_re.innerHTML=''; }
@@ -24823,13 +24825,13 @@ function buildCoachTraining(dfInfo,recRows){
  *
  * Hier wordt NIETS berekend en NIETS besloten. De keten is:
  *   reeds berekende dagfactor + herstelscore + signalen
- *     -> DecisionCore.readinessDay      (readiness_day.v1)
+ *     -> DecisionCore.readinessDay      (readiness_day.v1.1)
  *     -> CoachingCore.buildReadinessContext / readinessCoachMessage
  *     -> deze functie plaatst tekst.
  * Het besluit wordt bewaard in window._tkReadiness zodat de live coach uit Sprint 13 en de
  * AI het kunnen LEZEN — nooit opnieuw berekenen.
  * ══════════════════════════════════════════════════════════════════════════ */
-async function tkReadinessVandaag(dfInfo,recRows,nextT){
+async function tkReadinessVandaag(dfInfo,recRows,nextT,heeftExplicietPlan){
   if(typeof DecisionCore==='undefined'||typeof DecisionCore.readinessDay!=='function') return null;
   /* Offline-first, zoals de rest van Home: begrens elke query zodat Home nooit blijft hangen
      op een trage verbinding. Zonder deze grens stopt refreshHome halverwege en blijven de
@@ -24851,12 +24853,20 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
   /* DEC-DQ-002: een dagfactor zonder basis gaat als null naar de Decision Engine. Dan volgt
      readinessDay() zijn bestaande pad zonder dagfactor: geen zone, geen advies. */
   const dfAdvies=tkDagfactorVoorAdvies(dfInfo);
+  // Alleen een expliciete planning MET bruikbare historie voor alle relevante spiergroepen
+  // mag een trainingsspecifieke herstelscore opleveren. Anders: null, nooit 89/100 op lege lijst.
+  const geldigeSpieren=Array.isArray(recRows)&&recRows.length>0 &&
+    tkSpierherstelEvidence(recRows).length===recRows.length;
+  const planBasis=!!(heeftExplicietPlan&&nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length&&geldigeSpieren);
   let herstel=null;
-  try{
-    const rhrDelta=tkRhrDeltaHerstel(hq);
-    herstel=recoveryScoreFrom(dfAdvies, recRows||[], {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
-  }catch(_){ herstel=null; }
+  if(planBasis){
+    try{
+      const rhrDelta=tkRhrDeltaHerstel(hq);
+      herstel=recoveryScoreFrom(dfAdvies, recRows, {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
+    }catch(_){ herstel=null; }
+  }
   const besluit=DecisionCore.readinessDay({
+    trainingGepland: !!heeftExplicietPlan,
     dagfactor: dfAdvies?dfAdvies.factor:null,
     gereedheid: dfAdvies?v43GereedheidScore(dfAdvies.factor):null,
     herstel: herstel,
@@ -24864,7 +24874,7 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
       hrv: (lh&&lh.hrv!=null)?{waarde:lh.hrv,kwaliteit:kw('hrv')}:null,
       rhr: (lh&&lh.rhr!=null)?{waarde:lh.rhr,kwaliteit:kw('rhr')}:null,
       slaap: (lh&&lh.sleep!=null)?{waarde:tkSleepHours(lh.sleep),kwaliteit:kw('slaap')}:null,
-      spierherstel: (function(){ const ev=tkSpierherstelEvidence(recRows); return ev.length?ev:null; })(),
+      spierherstel: planBasis?tkSpierherstelEvidence(recRows):null,
       gevoel: (lh&&lh.voelt)?String(lh.voelt):null,
       pijn: null,
       trainingsdagen7: dagen7
@@ -24872,7 +24882,7 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
   });
   window._tkReadiness=besluit;                       // alleen LEZEN door live coach en AI
   return CoachingCore.buildReadinessContext({besluit:besluit,
-    geplandeTraining:(nextT&&nextT.naam)?{naam:nextT.naam}:null});
+    geplandeTraining:(heeftExplicietPlan&&nextT&&nextT.naam)?{naam:nextT.naam}:null});
 }
 function tkReadinessHtml(ctx){
   if(!ctx||typeof CoachingCore.readinessCoachMessage!=='function') return '';
@@ -24963,11 +24973,12 @@ function renderCoachAdvies(dfInfo,recRows){
   // P1 — zichtbare Recovery Score in de coach-kaart (deterministisch, echte data).
   let recLine='';
   try{
-    const rs=recoveryScoreFrom(dfInfo,recRows);
+    // De kaart gebruikt de al door Decision Core geverifieerde scope; niet nogmaals rekenen.
+    const rs=window._tkReadiness&&window._tkReadiness.herstel;
     if(rs && rs.score!=null){
       const bandTxt={hoog:'Hoog',gemiddeld:'Gemiddeld',laag:'Laag'}[rs.band]||rs.band;
       const bandCls=rs.band==='hoog'?'g':rs.band==='gemiddeld'?'y':'r';
-      recLine=`<div class="coach-advies-recovery status-${bandCls}" style="font-size:12px;font-weight:700;margin-bottom:4px">Herstel ${rs.score}/100 · ${bandTxt}${rs.confidence==='laag'?' (indicatief)':''}</div>`;
+      recLine=`<div class="coach-advies-recovery status-${bandCls}" style="font-size:12px;font-weight:700;margin-bottom:4px">Herstel ${rs.score}/100 · ${bandTxt}${rs.betrouwbaarheid==='laag'?' (indicatief)':''}</div>`;
     }
   }catch(_){}
   el.innerHTML=`<div class="coach-advies">
@@ -25382,7 +25393,7 @@ const TK_TRAIN_INTRO_NEUTRAAL='Train zoals gepland en let op hoe het vandaag voe
 // hours!==null, dezelfde herkomst die de spierherstelweergave zelf al gebruikt. Dit is de ENE
 // plek voor die regel. Het trainingsvoorschrift (computeProgAdjustment) krijgt de rijen ongefilterd.
 function tkSpierherstelEvidence(recRows){
-  return Array.isArray(recRows)?recRows.filter(function(r){ return !!r&&r.hours!==null; }):[];
+  return Array.isArray(recRows)?recRows.filter(function(r){ return !!r&&typeof r.hours==='number'&&isFinite(r.hours)&&r.hours>=0&&typeof r.pct==='number'&&isFinite(r.pct); }):[];
 }
 // AI-CONTEXT: STALE IS NIET ACTUEEL (DEC-DQ-003).
 // De regel onder "HUIDIGE STATUS" in buildCtx(). Per signaal de nieuwste bruikbare meting met
@@ -32377,8 +32388,8 @@ function renderMuscleRecoveryHeatmap(containerId, pctBySvgId, opts){
     const path = g.querySelector('path');
     if(!path) return;
     const heeftModel = !neutraal || SVG_ID_RECOVERY_HOURS[g.id] != null;
-    // geen trainingsdata voor deze svg-id = volledig hersteld (zelfde aanname als lijst-kaart)
-    path.style.fill = heeftModel ? colorFn(100) : 'var(--load-0)';
+    // DEC-REC-001: geen historie is onbekend, niet '100% hersteld'.
+    path.style.fill = 'var(--load-0)';
     path.style.opacity = '1';
   });
   Object.entries(pctBySvgId).forEach(([svgId, pct])=>{
@@ -32387,7 +32398,7 @@ function renderMuscleRecoveryHeatmap(containerId, pctBySvgId, opts){
     const path = g.querySelector('path');
     if(!path) return;
     // zelfde drempels als de Spierherstel-lijst hierboven; herstel = stoplicht
-    const color = colorFn(pct);
+    const color = (typeof pct==='number'&&isFinite(pct)) ? colorFn(pct) : 'var(--load-0)';
     path.style.fill = color;
     path.style.opacity = '1';
   });
@@ -32494,7 +32505,7 @@ async function v43OverallRecovery(){
   const pctBySvgId={};
   Object.keys(SVG_ID_RECOVERY_HOURS).forEach(id=>{
     const hit=lastHitSvg[id];
-    if(!hit){pctBySvgId[id]=100;return;}
+    if(!hit){pctBySvgId[id]=null;return;}
     const hoursSince=(now-new Date(hit.date))/3600000;
     pctBySvgId[id]=computeMuscleRecoveryPct(hoursSince,SVG_ID_RECOVERY_HOURS[id],hit.rpe);
   });
@@ -32956,12 +32967,12 @@ async function renderLichaam(){
   if(list){
     // v4.22.0 (Sprint 5.3) — premium 2-koloms herstelkaarten per spiergroep.
     list.innerHTML=(rec.rows||[]).map(r=>{
-      const c=v43RecColor(r.pct);
+      const c=r.hours===null?'var(--g4)':v43RecColor(r.pct);
       const st=r.hours===null?'Geen recente training':(r.pct>=85?'Volledig hersteld':r.pct>=50?'Herstellend':'Vermoeid');
       // UX-REC-02: zonder trainingsdata is er geen schatting, dus ook geen belastbaarheidsclaim.
       const cm=r.hours===null?'Geen trainingsdata':(r.pct>=85?'Volgens schatting belastbaar':r.pct>=50?'Nog wat rust ideaal':'Vermijd zware belasting');
       // Elke kaart opent het spiergroep-detail — zelfde route als vanaf het overzicht.
-      return `<button class="lich-mcard" onclick="openSpierDetail(&quot;${escHtml(r.muscle)}&quot;)" style="text-align:left;border:0;font-family:var(--f);width:100%;cursor:pointer"><div class="top"><span class="nm">${escHtml(r.muscle)}</span><span class="pct" style="color:${c}">${r.pct}%</span></div><div class="bar"><i style="width:${r.pct}%;background:${c}"></i></div><div class="stt" style="color:${c}">${st}</div><div class="cm">${cm}</div></button>`;
+      return `<button class="lich-mcard" onclick="openSpierDetail(&quot;${escHtml(r.muscle)}&quot;)" style="text-align:left;border:0;font-family:var(--f);width:100%;cursor:pointer"><div class="top"><span class="nm">${escHtml(r.muscle)}</span><span class="pct" style="color:${c}">${r.hours===null?'—':r.pct+'%'}</span></div><div class="bar"><i style="width:${r.hours===null?0:r.pct}%;background:${c}"></i></div><div class="stt" style="color:${c}">${st}</div><div class="cm">${cm}</div></button>`;
     }).join('');
   }
   // v4.19.0 (Sprint 5.2) — lichaamsmetingen (verplaatst vanuit Profiel) op dit tabblad renderen.

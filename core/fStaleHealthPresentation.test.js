@@ -87,11 +87,11 @@ function home(hd) {
   const tech = (r.kaart.match(/<div class="df-tech">([^<]*)<\/div>/) || [null, null])[1];
   return { sb: sb, dfInfo: r.dfInfo, detail: r.detail, kaart: r.kaart, tech: tech, waarom: sb.__els['dagfactor-detail'].innerHTML, ring: (r.kaart.match(/<div class="df-ring-val">([^<]*)<\/div>/) || [])[1] };
 }
-async function keten(hd, recRows) {
+async function keten(hd, recRows, gepland) {
   const sb = runtime({ hd: hd, recRows: recRows });
   const hq = sb.tkHealthQualified(hd); const lh = hq.rows[0];
   const df = lh ? sb.dagfactor(sb.hrvDagFactorPersonal(hq.rows), lh.sleep, sb.tkCyclusFaseVandaag(lh), hq.signalen) : null;
-  await sb.tkReadinessVandaag(df, recRows || [], null);
+  await sb.tkReadinessVandaag(df, recRows || [], gepland?{naam:'Borsttraining',_muscles:['borst']}:null, !!gepland);
   const b = sb.window._tkReadiness; const adj = await sb.recoveryAdjustmentForToday(['borst'], {});
   return [df && df.factor, df && df.hrvFactor, df && df.slaapFactor, df && df.cyclusFactor, df && df.basis, b.herstel && [b.herstel.score, b.herstel.band, b.herstel.betrouwbaarheid],
     b.zone, b.datakwaliteit, b.beschikbaar, b.trainingsadvies, [adj.score, adj.band, adj.confidence, adj.factor, adj.setsDelta, adj.rpeDelta]];
@@ -119,7 +119,7 @@ function reeks(n, start) {
   return uit;
 }
 const kloon = function (x) { return JSON.parse(JSON.stringify(x)); };
-const REC = [{ pct: 80 }, { pct: 70 }];
+const REC = [{ muscle:'borst', pct: 80, hours: 24 }, { muscle:'schouders', pct: 70, hours: 30 }];
 const VANDAAG = dag(0);
 // scenario's
 const ACTUEEL = reeks(30);
@@ -322,9 +322,14 @@ async function main() {
 
   /* ══ E. Berekening en beslissing ongewijzigd ═════════════════════════════ */
   {
-    eq(await keten(kloon(ACTUEEL), REC), [1.05, 1.05, 1, 1, { hrv: true, slaap: true, cyclus: false }, [92, 'hoog', 'hoog'], 'ready', 'volledig', ['hrv', 'rhr', 'slaap', 'spierherstel', 'trainingsbelasting'], { soort: 'ongewijzigd', setsDelta: 0, rpeDelta: 0 }, [92, 'hoog', 'hoog', 1.05, 0, 0]], 'E1 volledig actuele invoer: dagfactor, herstelscore, readiness en trainingsaanpassing exact als in #515/#516');
-    eq((await keten(kloon(ALLES_OUD), REC)).slice(0, 6), [1, 1, 1, 1, { hrv: false, slaap: false, cyclus: false }, [75, 'gemiddeld', 'laag']], 'E2 verouderde invoer: zelfde uitkomst als in #515 (neutraal, alleen spierherstel)');
+    eq(await keten(kloon(ACTUEEL), REC, true), [1.05, 1.05, 1, 1, { hrv: true, slaap: true, cyclus: false }, [92, 'hoog', 'hoog'], 'ready', 'volledig', ['hrv', 'rhr', 'slaap', 'spierherstel', 'trainingsbelasting'], { soort: 'ongewijzigd', setsDelta: 0, rpeDelta: 0 }, [92, 'hoog', 'hoog', 1.05, 0, 0]], 'E1 volledig actuele invoer: dagfactor, herstelscore, readiness en trainingsaanpassing exact als in #515/#516');
+    eq((await keten(kloon(ALLES_OUD), REC, true)).slice(0, 6), [1, 1, 1, 1, { hrv: false, slaap: false, cyclus: false }, [75, 'gemiddeld', 'laag']], 'E2 verouderde invoer: zelfde uitkomst als in #515 (neutraal, alleen spierherstel)');
     const h = home(kloon(ACTUEEL)); const k = await keten(kloon(ACTUEEL), REC);
+    ok(k[5]===null && k[9].soort==='geen_advies', 'DEC-REC-001-B: zonder expliciete planning geen trainingsherstelscore of trainingadvies');
+    const onvolledig = await keten(kloon(ACTUEEL), [{ muscle:'borst', pct:100, hours:null }], true);
+    ok(onvolledig[5]===null && !onvolledig[8].includes('spierherstel'), 'DEC-REC-001-B: expliciet gepland maar zonder aantoonbare spierhistorie geen herstelgetal');
+    const gemengd = await keten(kloon(ACTUEEL), [REC[0], { muscle:'schouders', pct:100, hours:null }], true);
+    ok(gemengd[5]===null, 'DEC-REC-001-B: gemengd bekende/onbekende spiergroepen leidt niet tot partiële score');
     eq([h.dfInfo.factor, h.detail.hrvF, h.detail.slaapF], [k[0], k[1], k[2]], 'E3 de kaart toont dezelfde dagfactor en onderdelen als de keten berekent');
     const src = ['core/calculation.js', 'core/decision.js', 'core/deviceIntegration.js'].map(function (f) { return fs.readFileSync(path.join(ROOT, f), 'utf8'); }).join('\n');
     ok(!/tkHealthVandaag|tkNietMeegeteldTxt/.test(src), 'E4 de cores kennen de presentatiecontext niet (alleen index.html)');

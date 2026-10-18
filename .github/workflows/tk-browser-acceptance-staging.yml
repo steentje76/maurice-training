@@ -56,20 +56,25 @@ jobs:
             core/fExecutionIntegrity.test.js
             core/fUpdateReadiness.test.js
           )
+          failures=0
           for test_file in "${tests[@]}"; do
             echo "===== Browser suite: ${test_file} ====="
             log_file="$(mktemp)"
-            if ! node "${test_file}" >"${log_file}" 2>&1; then
+            if node "${test_file}" >"${log_file}" 2>&1; then
               cat "${log_file}"
-              rm -f "${log_file}"
-              exit 1
-            fi
-            cat "${log_file}"
-            if grep -Ei 'SKIP.*Chromium|Chromium.*SKIP|Chromium niet beschikbaar|Playwright niet beschikbaar' "${log_file}"; then
-              echo "::error::Browser suite silently skipped: ${test_file}"
-              rm -f "${log_file}"
-              exit 1
+              if grep -Ei 'SKIP.*Chromium|Chromium.*SKIP|Chromium niet beschikbaar|Playwright niet beschikbaar' "${log_file}"; then
+                echo "::error::Browser suite silently skipped: ${test_file}"
+                failures=$((failures + 1))
+              fi
+            else
+              cat "${log_file}"
+              echo "::error::Browser suite failed: ${test_file}"
+              failures=$((failures + 1))
             fi
             rm -f "${log_file}"
           done
+          echo "Browser acceptance: ${failures} failed or skipped of ${#tests[@]} suites."
+          if [ "${failures}" -ne 0 ]; then
+            exit 1
+          fi
           echo "Real Chromium browser acceptance completed."

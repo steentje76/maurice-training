@@ -81,4 +81,50 @@ function maak(opties){
 function resp(status,body){
   return {ok:status>=200&&status<300,status,headers:{get:()=>null},text:async()=>JSON.stringify(body),json:async()=>body};
 }
-module.exports={maak,resp,grab,fn,HTML};
+// Kleine in-memory PostgREST-nabootsing: eq/is.null/not.in-filters, PK- en on_conflict-gedrag, merge/ignore-duplicates.
+function db(){
+  const T={},seq={};
+  const tabel=t=>(T[t]=T[t]||[]);
+  const filters=(q)=>q.split('&').filter(x=>x&&x.indexOf('select=')<0&&x.indexOf('order=')<0&&x.indexOf('limit=')<0&&x.indexOf('on_conflict=')<0).map(x=>{const i=x.indexOf('=');return [x.slice(0,i),decodeURIComponent(x.slice(i+1))];});
+  const past=(rij,fs)=>fs.every(([k,v])=>{
+    if(v==='is.null')return rij[k]==null;
+    if(v.indexOf('eq.')===0)return String(rij[k])===v.slice(3);
+    if(v.indexOf('not.in.(')===0)return v.slice(8,-1).split(',').indexOf(String(rij[k]))<0;
+    return true;});
+  return {T,tabel,
+    afhandelen(req){
+      const u=new URL(req.url);const t=u.pathname.split('/').pop();const q=u.search.slice(1);
+      if(req.method==='GET')return resp(200,tabel(t).filter(r=>past(r,filters(q))));
+      if(req.method==='POST'){
+        const oc=(q.match(/on_conflict=([^&]+)/)||[])[1];
+        const sleutel=oc?decodeURIComponent(oc).split(','):['id'];
+        const merge=(req.prefer||'').indexOf('merge-duplicates')>=0, negeer=(req.prefer||'').indexOf('ignore-duplicates')>=0;
+        const uit=[];
+        for(const b of (Array.isArray(req.body)?req.body:[req.body])){
+          const rij=Object.assign({},b);
+          if(rij.user_id===undefined&&t!=='exercises')rij.user_id=req.uidBijVerzoek;
+          if(rij.id==null){seq[t]=(seq[t]||0)+1;rij.id=seq[t];}
+          const bestaand=tabel(t).find(x=>sleutel.every(k=>String(x[k])===String(rij[k])));
+          if(bestaand){ if(merge){Object.assign(bestaand,b);uit.push(bestaand);continue;} if(negeer)continue; return resp(409,{code:'23505'}); }
+          tabel(t).push(rij);uit.push(rij);
+        }
+        return resp(201,uit);
+      }
+      if(req.method==='DELETE'){const fs=filters(q);T[t]=tabel(t).filter(r=>!past(r,fs));return resp(204,null);}
+      if(req.method==='PATCH'){const fs=filters(q);const rs=tabel(t).filter(r=>past(r,fs));rs.forEach(r=>Object.assign(r,req.body));return resp(200,rs);}
+    }};
+}
+// Fout-injectie: regel(req, keer) → 'faal' (500, niets opgeslagen) | 'verloren' (opgeslagen, antwoord kwijt) | undefined
+function koppel(h,d,regel){
+  const keer={};
+  h.net.antwoord=async req=>{
+    const sl=req.method+' '+new URL(req.url).pathname.split('/').pop();keer[sl]=(keer[sl]||0)+1;
+    const r=regel?regel(req,keer[sl]):undefined;
+    if(r==='faal')return resp(500,{code:'XX000'});
+    const a=d.afhandelen(req);
+    if(r==='verloren'){const e=new TypeError('Failed to fetch');throw e;}
+    return a;
+  };
+}
+
+module.exports={maak,resp,grab,fn,HTML,db,koppel};

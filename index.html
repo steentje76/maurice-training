@@ -4133,7 +4133,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
         <button class="btn btn-o btn-sm" id="help-update-check" onclick="tkUpdateGereedheidToon(false)">Controleren</button>
         <button class="btn btn-r btn-sm" id="help-update-sync" onclick="tkUpdateGereedheidToon(true)">Synchroniseren en controleren</button>
+        <button class="btn btn-o btn-sm" id="help-update-verify" onclick="tkVerifieerMetServerToon()">Controleren met de server</button>
+        <!-- TK-REL-SEC-24: blijft uitgeschakeld tot ook lokale gegevens van vóór het controleregister volledig zijn geïnventariseerd. -->
+        <button class="btn btn-o btn-sm" id="help-update-safe" disabled aria-disabled="true" title="Nog niet beschikbaar: lokale gegevens van vóór deze versie zijn niet volledig geïnventariseerd">Veilig om te verwijderen</button>
       </div>
+      <div id="help-update-verify-body" aria-live="polite" style="margin-top:10px;color:var(--g4)"></div>
     </div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Over de app</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
       <div class="set-row"><div class="set-row-txt"><div class="set-row-lbl">Versie</div><div class="set-row-sub" id="help-app-ver">—</div></div></div>
@@ -6521,6 +6525,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 </div>
 
 <script src="core/calculation.js"></script>
+<script src="core/serverVerification.js"></script>
 <script src="core/nutritionFoundation2.js"></script>
 <script src="core/nutritionMealService.js"></script>
 <script src="core/nutritionHydrationService.js"></script>
@@ -8914,10 +8919,12 @@ async function sbFetch(url,o){
   // ANDERE ingelogde gebruiker wordt daar niet geweigerd maar op diens account gezet. Daarom wordt een write nooit
   // verstuurd als (a) de aanroeper hem aan een gebruiker bond (o.uid) en nu iemand anders is ingelogd, of (b) de
   // payload een user_id van een andere gebruiker draagt. Lokale weigering: status 0, niet retrybaar, geen wachtrij.
-  if(o.method&&o.method!=='GET'){
+  // TK-REL-SEC-22: de binding geldt ook voor GET (teruglezen voor verificatie gebeurt met het token van de eigenaar).
+  var _schrijf=!!(o.method&&o.method!=='GET');
+  if(_schrijf||Object.prototype.hasOwnProperty.call(o,'uid')){
     var weiger=null;
     if(Object.prototype.hasOwnProperty.call(o,'uid')&&o.uid!==uid0)weiger='binding';
-    else if(uid0&&o.body&&typeof o.body==='object'&&(Array.isArray(o.body)?o.body:[o.body]).some(function(x){ return !!x&&typeof x==='object'&&typeof x.user_id==='string'&&x.user_id!==''&&x.user_id!==uid0; }))weiger='payload';
+    else if(_schrijf&&uid0&&o.body&&typeof o.body==='object'&&(Array.isArray(o.body)?o.body:[o.body]).some(function(x){ return !!x&&typeof x==='object'&&typeof x.user_id==='string'&&x.user_id!==''&&x.user_id!==uid0; }))weiger='payload';
     if(weiger){ var fb={code:'tk_identiteit_'+weiger}; return {ok:false,status:0,tkIdentiteit:weiger,headers:{get:function(){return null;}},text:async function(){return JSON.stringify(fb);},json:async function(){return fb;}}; }
   }
   var r=await fetch(url,maak());
@@ -9421,7 +9428,7 @@ async function sbPostQ(t,d,opts){
   const _oc=(typeof TK_ON_CONFLICT==='object'&&TK_ON_CONFLICT&&typeof TK_ON_CONFLICT[t]==='string')?'?on_conflict='+TK_ON_CONFLICT[t]:'';
   const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':((IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||_oc)?'return=representation,resolution=merge-duplicates':'return=representation');
   const item=ignoreDup?{table:t,method:'POST',body:d,resolution:'ignore-duplicates'}:{table:t,method:'POST',body:d};
-  const uit=function(status,http,reden){ if(opts&&typeof opts==='object'){opts.status=status;opts.reden=reden||null;} tkLogSchrijf(status,t,reden,http); return detail?tkSchrijfUitkomst(status,http,reden):(status==='confirmed'||status==='queued'); };
+  const uit=function(status,http,reden){ if(opts&&typeof opts==='object'){opts.status=status;opts.reden=reden||null;} if((status==='confirmed'||status==='queued')&&typeof tkVerifyNa==='function')tkVerifyNa('POST',t,null,d,eigenaar,status,{resolution:item.resolution}); /* TK-REL-SEC-22 */ tkLogSchrijf(status,t,reden,http); return detail?tkSchrijfUitkomst(status,http,reden):(status==='confirmed'||status==='queued'); };
   // TK-REL-SEC-02: eigenaar en ingelogde identiteit vastleggen bij de aanroep, niet pas bij het queuen.
   const eigenaar=tkEigenaarUid(), uidStart=tkHuidigeUid();
   const queue=async function(http,reden){ if(reden==='timeout'||reden==='netwerk'||reden==='gateway')item.onzeker=true; /* TK-REL-SEC-19 */ const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); if(q===true&&reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
@@ -9472,7 +9479,7 @@ async function sbPostQOpgeslagen(t,d,opts){
 // wachtrij, geen write zonder eigenaar). Alleen gebruikt waar opts.detail expliciet wordt gevraagd.
 async function sbSchrijfQDetail(method,t,f,d,opts){
   const item=method==='DELETE'?{table:t,method:'DELETE',filter:f}:{table:t,method:'PATCH',filter:f,body:d};
-  const uit=function(status,http,reden){ tkLogSchrijf(status,t,reden,http); return tkSchrijfUitkomst(status,http,reden); };
+  const uit=function(status,http,reden){ if((status==='confirmed'||status==='queued')&&typeof tkVerifyNa==='function')tkVerifyNa(method,t,f,d,eigenaar,status); /* TK-REL-SEC-22 */ tkLogSchrijf(status,t,reden,http); return tkSchrijfUitkomst(status,http,reden); };
   const eigenaar=tkEigenaarUid(); // TK-REL-SEC-02: eigenaar van het moment van de write
   const queue=async function(http,reden){ if(reden==='timeout'||reden==='netwerk'||reden==='gateway')item.onzeker=true; const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); if(q===true&&reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
   if(!tkEigenaarUid()) return uit('failed',null,'account');
@@ -9518,6 +9525,7 @@ async function sbPatchQ(t,f,d,opts){
     const it={table:t,method:'PATCH',filter:f,body:d}; if(_reden==='timeout'||_reden==='netwerk'||_reden==='gateway')it.onzeker=true;
     const ok=!!eigenaar&&(await offlineQueueAdd(it,eigenaar))===true;
     updateOfflineBadge();
+    if(ok&&typeof tkVerifyNa==='function')tkVerifyNa('PATCH',t,f,d,eigenaar,'queued'); // TK-REL-SEC-22
     if(ok&&_reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde();
     return wantRows?{ok,rows:null,superseded:false}:ok;
   };
@@ -9538,8 +9546,11 @@ async function sbPatchQ(t,f,d,opts){
     if(wantRows){
       let rows=null;
       try{rows=await r.json();}catch(_){rows=null;}
-      return {ok:true,rows,superseded:Array.isArray(rows)&&rows.length===0};
+      const _sup=Array.isArray(rows)&&rows.length===0;
+      if(!_sup&&typeof tkVerifyNa==='function')tkVerifyNa('PATCH',t,f,d,eigenaar,'confirmed'); // TK-REL-SEC-22: alleen als de rij echt geraakt is
+      return {ok:true,rows,superseded:_sup};
     }
+    if(typeof tkVerifyNa==='function')tkVerifyNa('PATCH',t,f,d,eigenaar,'confirmed'); // TK-REL-SEC-22
     return true;
   }catch(e){
     _reden=(e&&e.tkTimeout)?'timeout':'netwerk';
@@ -9553,7 +9564,7 @@ async function sbPatchQ(t,f,d,opts){
 // hier een DELETE te queuen, zie deleteSessionEntry/deleteSessionDirect.
 async function sbDelQ(t,f,opts){
   const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02
-  const queue=async(reden)=>{const it={table:t,method:'DELETE',filter:f}; if(reden==='timeout'||reden==='netwerk'||reden==='gateway')it.onzeker=true; /* TK-REL-SEC-19 */ const ok=!!eigenaar&&(await offlineQueueAdd(it,eigenaar))===true;updateOfflineBadge();if(ok&&reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde();return ok;};
+  const queue=async(reden)=>{const it={table:t,method:'DELETE',filter:f}; if(reden==='timeout'||reden==='netwerk'||reden==='gateway')it.onzeker=true; /* TK-REL-SEC-19 */ const ok=!!eigenaar&&(await offlineQueueAdd(it,eigenaar))===true;updateOfflineBadge();if(ok&&typeof tkVerifyNa==='function')tkVerifyNa('DELETE',t,f,null,eigenaar,'queued');if(ok&&reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde();return ok;};
   // TK-REL-SEC-07: detail-aanroepers krijgen altijd het detail-object; sbSchrijfQDetail weigert zelf zonder eigenaar.
   if(opts&&opts.detail) return sbSchrijfQDetail('DELETE',t,f,null,opts);
   if(!eigenaar)return false;
@@ -9569,6 +9580,7 @@ async function sbDelQ(t,f,opts){
       if(sbRetryable(r.status))return queue((r.status===502||r.status===504)?'gateway':null);
       return false;
     }
+    if(typeof tkVerifyNa==='function')tkVerifyNa('DELETE',t,f,null,eigenaar,'confirmed'); // TK-REL-SEC-22
     return true;
   }catch(e){
     console.warn('sbDelQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
@@ -9692,6 +9704,8 @@ async function tkUpdateGereedheid(){
       if(ids.length)open.push(ids.length+(ids.length===1?' eigen training is':' eigen trainingen zijn')+' nog niet door de server bevestigd');
     }
   }catch(_){ onbekend.push('de lijst met eigen trainingen is beschadigd of onleesbaar'); }
+  // TK-REL-SEC-22: een opslagfout in het verificatieregister is zichtbaar en maakt de status onbekend (fail-closed).
+  try{ if(typeof tkVerifyDefect==='function'&&tkVerifyDefect())onbekend.push('het controleregister op dit toestel is onvolledig door een opslagfout'); }catch(_){ onbekend.push('het controleregister kon niet worden gecontroleerd'); }
   return {veilig:!open.length&&!onbekend.length, open:open, onbekend:onbekend, online:navigator.onLine!==false, versie:(typeof APP_VER!=='undefined'?APP_VER:null)};
 }
 async function tkUpdateGereedheidToon(eerstSync){
@@ -9846,6 +9860,296 @@ async function flushOfflineQueue(){
     try{toast('Offline-wachtrij niet leesbaar — gegevens niet bevestigd');}catch(_){}
   }finally{ _flushBezig=false; }
 }
+// ══════════════════════════════════════════════════════════
+// SERVER READ-AFTER-WRITE, FASE 2 (TK-REL-SEC-22..24, 19-10-2026)
+// Contract: serververify.v1 (core/serverVerification.js). Alleen SERVER_VERIFIED voor exact dezelfde tabel, record-id,
+// eigenaar en lokale revisie is bewijs dat de server de rij heeft. Een HTTP 2xx is dat nooit.
+//  - Register: aparte IndexedDB-database (tk_verificatie/register); de offline-wachtrij (maurice_offline/queue) wordt
+//    niet aangeraakt en niet gemigreerd. Elke ondersteunde write (sbPostQ/sbPatchQ/sbDelQ en de detailvarianten)
+//    verhoogt de revisie van zijn record en legt de verwachte inhoud vast. Een opslagfout zet een defect-markering
+//    (fail-closed: het register telt daarna als onvolledig).
+//  - Teruglezen: per tabel GET met binding aan de eigenaar (sbFetch weigert als een ander is ingelogd), daarna een
+//    identiteitscontrole. Een leesfout of wissel = UNKNOWN; niet zichtbaar = MISSING (niet definitief).
+//  - Ouder-kind: training_instances→sessions, custom_trainings→custom_training_exercises,
+//    nutrition_meals→nutrition_meal_items, activities→activity_laps; ontbrekende en onverwachte kinderen.
+//  - Logging: alleen aantallen per status, nooit id's of inhoud.
+const TK_VERIFY_DB='tk_verificatie', TK_VERIFY_STORE='register', TK_VERIFY_DEFECT_KEY='tk_verify_register_defect';
+const TK_VERIFY_TABELLEN={
+  training_instances:{eigenaarVeld:'user_id', label:'Trainingen (uitvoering)'},
+  sessions:{eigenaarVeld:'user_id', ouder:{tabel:'training_instances', fk:'training_instance_id'}, label:'Sets en oefeningen'},
+  // set_training_scope_context zet scope/gym_id op de server: die velden zijn geen verwachting van de client.
+  custom_trainings:{eigenaarVeld:'user_id', negeer:['scope','gym_id'], label:'Eigen trainingen'},
+  custom_training_exercises:{eigenaarVeld:'user_id', ouder:{tabel:'custom_trainings', fk:'custom_training_id'}, label:'Oefeningen in eigen trainingen'},
+  nutrition_meals:{eigenaarVeld:'user_id', label:'Maaltijden'},
+  // Geen eigen user_id-kolom: eigendom via de ouder (RLS op de ouder).
+  nutrition_meal_items:{eigenaarVeld:null, ouder:{tabel:'nutrition_meals', fk:'meal_id'}, label:'Maaltijdregels'},
+  activities:{eigenaarVeld:'user_id', label:'Activiteiten'},
+  activity_laps:{eigenaarVeld:null, sleutel:['activity_id','lap_index'], ouder:{tabel:'activities', fk:'activity_id'}, label:'Ronden'}
+};
+const TK_VERIFY_KINDEREN={ training_instances:['sessions'], custom_trainings:['custom_training_exercises'], nutrition_meals:['nutrition_meal_items'], activities:['activity_laps'] };
+const TK_VERIFY_SEP='\u001f';
+function tkVerifySleutel(t,rid,eig){ return (t&&rid!=null&&eig)?('r'+TK_VERIFY_SEP+t+TK_VERIFY_SEP+String(rid)+TK_VERIFY_SEP+String(eig)):null; }
+function tkVerifyRecordId(t,rij){
+  const cfg=TK_VERIFY_TABELLEN[t]; if(!cfg||!rij||typeof rij!=='object'||Array.isArray(rij))return null;
+  const sv=cfg.sleutel||['id']; const d=sv.map(k=>rij[k]); if(d.some(x=>x===null||x===undefined||x===''))return null;
+  return d.map(String).join(':');
+}
+function tkVerifyDb(){
+  return new Promise((resolve,reject)=>{
+    if(typeof indexedDB==='undefined'||!indexedDB){reject(new Error('geen_indexeddb'));return;}
+    const req=indexedDB.open(TK_VERIFY_DB,1);
+    req.onupgradeneeded=()=>{ const db=req.result; if(!db.objectStoreNames.contains(TK_VERIFY_STORE))db.createObjectStore(TK_VERIFY_STORE,{keyPath:'key'}); };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error('verify_db_open'));
+    req.onblocked=()=>reject(new Error('verify_db_blocked'));
+  });
+}
+function tkVerifyMarkeerDefect(reden){
+  try{ localStorage.setItem(TK_VERIFY_DEFECT_KEY,JSON.stringify({sinds:new Date().toISOString(),reden:String(reden||'onbekend').slice(0,40)})); }catch(_){}
+}
+function tkVerifyDefect(){ try{ return localStorage.getItem(TK_VERIFY_DEFECT_KEY)!==null; }catch(_){ return true; } }
+function tkVerifyEqFilter(f){
+  const eq={}; let alleenEq=true;
+  String(f||'').split('&').forEach(function(x){ if(!x)return; const i=x.indexOf('=eq.'); if(i>0)eq[x.slice(0,i)]=decodeURIComponent(x.slice(i+4)); else alleenEq=false; });
+  return {eq,alleenEq};
+}
+// Welke registerbewerkingen volgen uit één write? Alleen tabellen in TK_VERIFY_TABELLEN; andere tabellen vallen
+// buiten deze fase. Een write die niet aan één record te koppelen is, telt als "niet verifieerbaar".
+function tkVerifyAfleiden(method,t,f,body,opts){
+  const cfg=TK_VERIFY_TABELLEN[t]; if(!cfg)return [];
+  const sv=cfg.sleutel||['id'];
+  const verwachtVan=function(b){
+    const v={}; if(!b||typeof b!=='object')return v;
+    Object.keys(b).forEach(function(k){
+      if(k==='id'||k===cfg.eigenaarVeld||sv.indexOf(k)>=0||(cfg.negeer||[]).indexOf(k)>=0)return;
+      if(b[k]!==undefined)v[k]=b[k];
+    });
+    return v;
+  };
+  const ouderVan=function(b){ return (cfg.ouder&&b&&b[cfg.ouder.fk]!=null)?{tabel:cfg.ouder.tabel,record_id:String(b[cfg.ouder.fk])}:null; };
+  if(method==='POST'){
+    const rijen=Array.isArray(body)?body:[body];
+    return rijen.map(function(b){
+      const rid=tkVerifyRecordId(t,b);
+      if(rid===null)return {soort:'onverifieerbaar',tabel:t};
+      const sleutelWaarden={}; sv.forEach(k=>{sleutelWaarden[k]=b[k];});
+      return {soort:'write',tabel:t,record_id:rid,sleutelWaarden,verwacht:verwachtVan(b),ouder:ouderVan(b),overschrijf:!(opts&&opts.resolution==='ignore-duplicates')};
+    });
+  }
+  const {eq,alleenEq}=tkVerifyEqFilter(f);
+  const sleutelInFilter=sv.every(k=>eq[k]!==undefined);
+  if(sleutelInFilter){
+    const rid=sv.map(k=>String(eq[k])).join(':'); const sleutelWaarden={}; sv.forEach(k=>{sleutelWaarden[k]=eq[k];});
+    if(method==='DELETE')return [{soort:'verwijder',tabel:t,record_id:rid,sleutelWaarden}];
+    if(method==='PATCH')return [{soort:'wijzig',tabel:t,record_id:rid,sleutelWaarden,verwacht:verwachtVan(body),ouder:ouderVan(body)}];
+  }
+  // DELETE van alle kinderen van één ouder (bv. custom_training_exercises?custom_training_id=eq.X).
+  if(method==='DELETE'&&cfg.ouder&&alleenEq&&Object.keys(eq).length===1&&eq[cfg.ouder.fk]!==undefined)
+    return [{soort:'verwijderKinderen',tabel:t,ouder:{tabel:cfg.ouder.tabel,record_id:String(eq[cfg.ouder.fk])}}];
+  return [{soort:'onverifieerbaar',tabel:t}];
+}
+// Registreert een geslaagde of gequeuede write. Resolves true/false; bij een fout: defect-markering (fail-closed).
+async function tkVerifyNoteer(method,t,f,body,eigenaar,status,opts){
+  const ops=tkVerifyAfleiden(method,t,f,body,opts);
+  if(!ops.length)return true;
+  if(!eigenaar){ tkVerifyMarkeerDefect('geen_eigenaar'); return false; }
+  const nu=new Date().toISOString(), st=(status==='confirmed')?'SERVER_ACCEPTED':'QUEUED';
+  try{
+    const db=await tkVerifyDb();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(TK_VERIFY_STORE,'readwrite'); const store=tx.objectStore(TK_VERIFY_STORE);
+      const metaReq=store.get('__meta__');
+      const veilig=fn=>function(){ try{ fn(); }catch(e){ try{ tx.abort(); }catch(_){} } }; // fout in een handler: transactie afbreken (fail-closed)
+      metaReq.onsuccess=veilig(()=>{ if(!metaReq.result)store.put({key:'__meta__',soort:'meta',sinds:nu,versie:1}); });
+      ops.forEach(function(op){
+        if(op.soort==='onverifieerbaar'){
+          const k='o'+TK_VERIFY_SEP+op.tabel+TK_VERIFY_SEP+eigenaar;
+          const g=store.get(k); g.onsuccess=veilig(()=>{ const o=g.result||{key:k,soort:'onverifieerbaar',tabel:op.tabel,eigenaar,aantal:0}; o.aantal=(o.aantal||0)+1; o.ts=nu; store.put(o); });
+          return;
+        }
+        if(op.soort==='verwijderKinderen'){
+          const c=store.openCursor();
+          c.onsuccess=veilig(()=>{ const cur=c.result; if(!cur)return; const e=cur.value;
+            if(e&&e.soort==='record'&&e.tabel===op.tabel&&e.eigenaar===eigenaar&&e.ouder&&e.ouder.tabel===op.ouder.tabel&&e.ouder.record_id===op.ouder.record_id&&!e.verwijderd){
+              cur.update(Object.assign({},e,{revisie:(e.revisie||0)+1,verwijderd:true,status:st,status_revisie:null,ts:nu}));
+            }
+            cur.continue(); });
+          return;
+        }
+        const k=tkVerifySleutel(op.tabel,op.record_id,eigenaar);
+        const g=store.get(k);
+        g.onsuccess=veilig(()=>{
+          const oud=g.result;
+          if(op.soort==='write'&&oud&&!oud.verwijderd&&op.overschrijf===false)return; // ignore-duplicates: server houdt de bestaande rij
+          const basis=oud||{key:k,soort:'record',tabel:op.tabel,record_id:op.record_id,eigenaar,revisie:0,verwacht:{},sleutelWaarden:op.sleutelWaarden,ouder:null};
+          const n=Object.assign({},basis,{revisie:(basis.revisie||0)+1,status:st,status_revisie:null,ts:nu,afwijkingen:[]});
+          if(op.soort==='verwijder'){ n.verwijderd=true; }
+          else{
+            n.verwijderd=false;
+            // PATCH vult aan op de bekende verwachting; een POST zonder bekende rij begint opnieuw.
+            n.verwacht=Object.assign({},(op.soort==='wijzig'||(oud&&!oud.verwijderd))?(basis.verwacht||{}):{},op.verwacht||{});
+            if(op.ouder)n.ouder=op.ouder;
+            if(op.soort==='wijzig'&&!oud)n.onvolledig=true; // PATCH op een rij die het register niet kent: geen volledige verwachting
+          }
+          store.put(n);
+        });
+      });
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error||new Error('verify_tx'));
+      tx.onabort=()=>reject(tx.error||new Error('verify_tx_abort'));
+    });
+  }catch(e){ tkVerifyMarkeerDefect('noteer'); return false; }
+}
+// Synchrone haak voor de schrijflaag: nooit een exception naar de write, wel fail-closed bij een fout.
+function tkVerifyNa(method,t,f,body,eigenaar,status,opts){
+  try{ const p=tkVerifyNoteer(method,t,f,body,eigenaar,status,opts); if(p&&typeof p.then==='function')p.then(function(ok){ if(ok!==true)tkVerifyMarkeerDefect('noteer'); },function(){ tkVerifyMarkeerDefect('noteer'); }); }
+  catch(_){ tkVerifyMarkeerDefect('noteer'); }
+}
+// Strikt lezen: alleen een voltooide transactie met een array telt.
+async function tkVerifyLeesRegister(){
+  const db=await tkVerifyDb();
+  return await new Promise((resolve,reject)=>{
+    const tx=db.transaction(TK_VERIFY_STORE,'readonly'); const req=tx.objectStore(TK_VERIFY_STORE).getAll(); let rows=null;
+    req.onsuccess=()=>{rows=req.result;};
+    req.onerror=()=>reject(req.error||new Error('verify_read'));
+    tx.oncomplete=()=>Array.isArray(rows)?resolve(rows):reject(new Error('verify_snapshot_missing'));
+    tx.onerror=()=>reject(tx.error||new Error('verify_read_tx'));
+    tx.onabort=()=>reject(tx.error||new Error('verify_read_abort'));
+  });
+}
+// Resultaat terugschrijven, alleen als de revisie intussen niet veranderd is (anders is het resultaat verouderd).
+async function tkVerifySlaOp(resultaten,tijdstip){
+  const db=await tkVerifyDb();
+  return await new Promise((resolve,reject)=>{
+    const tx=db.transaction(TK_VERIFY_STORE,'readwrite'); const store=tx.objectStore(TK_VERIFY_STORE); let bewaard=0;
+    resultaten.forEach(function(r){
+      if(!r||!r._key)return;
+      const g=store.get(r._key);
+      g.onsuccess=function(){ try{ const e=g.result; if(!e||e.revisie!==r.revisie)return;
+        store.put(Object.assign({},e,{status:r.status,status_revisie:r.revisie,laatste_verificatie:tijdstip,afwijkingen:(r.afwijkingen||[]).slice(0,10)})); bewaard++; }catch(_){ try{ tx.abort(); }catch(__){} } };
+    });
+    tx.oncomplete=()=>resolve(bewaard);
+    tx.onerror=()=>reject(tx.error||new Error('verify_save'));
+    tx.onabort=()=>reject(tx.error||new Error('verify_save_abort'));
+  });
+}
+const TK_VERIFY_BLOK=50;
+// Leest rijen met binding aan de eigenaar. Uitkomst: array, of null bij elke fout of identiteitswissel.
+async function tkVerifyLees(t,kolom,waarden,eigenaar){
+  if(!waarden.length)return [];
+  const lijst=waarden.map(v=>'"'+String(v).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"').join(',');
+  try{
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}?select=*&${kolom}=in.(${encodeURIComponent(lijst)})`,{uid:eigenaar});
+    if(tkHuidigeUid()!==eigenaar||!r||!r.ok)return null;
+    const rows=await r.json();
+    if(tkHuidigeUid()!==eigenaar||!Array.isArray(rows))return null;
+    return rows;
+  }catch(_){ return null; }
+}
+let _tkVerifyBezig=false;
+async function tkVerifieerMetServer(){
+  const SVC=(typeof ServerVerificationCore!=='undefined')?ServerVerificationCore:null;
+  if(!SVC)return {ok:false,reden:'kern_ontbreekt'};
+  const uid=tkHuidigeUid(); if(!uid)return {ok:false,reden:'niet_ingelogd'};
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)return {ok:false,reden:'offline'};
+  if(_tkVerifyBezig)return {ok:false,reden:'bezig'};
+  _tkVerifyBezig=true;
+  try{
+    try{ await flushOfflineQueue(); }catch(_){}
+    if(tkHuidigeUid()!==uid)return {ok:false,reden:'account_gewisseld'};
+    let alle; try{ alle=await tkVerifyLeesRegister(); }catch(_){ return {ok:false,reden:'register_onleesbaar'}; }
+    const meta=alle.find(x=>x&&x.key==='__meta__')||null;
+    const items=alle.filter(x=>x&&x.soort==='record'&&x.eigenaar===uid);
+    const onverif=alle.filter(x=>x&&x.soort==='onverifieerbaar'&&x.eigenaar===uid).reduce((s,x)=>s+(x.aantal||0),0);
+    let wachtrij=[], wachtrijOk=true;
+    try{ wachtrij=(await tkLeesWachtrijStrikt()).filter(i=>i&&i.owner_uid===uid); }catch(_){ wachtrijOk=false; }
+    const wachtVoor=function(e){ return wachtrij.some(function(q){
+      if(q.table!==e.tabel)return false;
+      if(q.body&&tkVerifyRecordId(e.tabel,q.body)===e.record_id)return true;
+      const {eq}=tkVerifyEqFilter(q.filter); const sv=(TK_VERIFY_TABELLEN[e.tabel].sleutel||['id']);
+      return sv.every(k=>eq[k]!==undefined)&&sv.map(k=>String(eq[k])).join(':')===e.record_id; }); };
+    const tijdstip=new Date().toISOString();
+    const res={}; // key → resultaat
+    const opties=function(e,server){ const cfg=TK_VERIFY_TABELLEN[e.tabel];
+      return {tabel:e.tabel,revisie:e.revisie,verwacht:Object.assign({},e.verwacht||{},e.sleutelWaarden||{},(cfg.sleutel?{}:{id:e.record_id})),server,
+        eigenaar:uid,eigenaarVeld:cfg.eigenaarVeld,eigenaarViaOuder:cfg.eigenaarVeld===null,velden:Object.keys(e.verwacht||{}),
+        verwijderd:e.verwijderd===true,sleutelVelden:cfg.sleutel,bron:'supabase:rest:'+e.tabel,tijdstip}; };
+    const serverRijen={}; // tabel → array (gelezen) of null (leesfout)
+    for(const t of Object.keys(TK_VERIFY_TABELLEN)){
+      const cfg=TK_VERIFY_TABELLEN[t], mijn=items.filter(e=>e.tabel===t); if(!mijn.length)continue;
+      const kolom=(cfg.sleutel||['id'])[0];
+      const waarden=[...new Set(mijn.map(e=>String((e.sleutelWaarden&&e.sleutelWaarden[kolom]!=null)?e.sleutelWaarden[kolom]:e.record_id)))];
+      let rows=[];
+      for(let i=0;i<waarden.length&&rows!==null;i+=TK_VERIFY_BLOK){ const blok=await tkVerifyLees(t,kolom,waarden.slice(i,i+TK_VERIFY_BLOK),uid); rows=(blok===null)?null:rows.concat(blok); }
+      serverRijen[t]=rows;
+      mijn.forEach(function(e){
+        let r;
+        if(e.onvolledig){ r=SVC.verifyRecord(Object.assign(opties(e,undefined),{})); r.afwijkingen=['verwachting_onvolledig']; }
+        else if(wachtVoor(e)){ r=SVC.verifyRecord(opties(e,undefined)); r.afwijkingen=['wacht_in_wachtrij']; r.status='QUEUED'; }
+        else if(rows===null){ r=SVC.verifyRecord(opties(e,undefined)); }
+        else { const srv=rows.find(x=>tkVerifyRecordId(t,x)===e.record_id)||null; r=SVC.verifyRecord(opties(e,srv)); }
+        r._key=e.key; res[e.key]=r;
+      });
+    }
+    // Ouder-kind: kinderen per geregistreerde ouder lezen; ontbrekende en onverwachte kinderen.
+    for(const pt of Object.keys(TK_VERIFY_KINDEREN)){
+      const ouders=items.filter(e=>e.tabel===pt&&!e.verwijderd); if(!ouders.length)continue;
+      for(const ct of TK_VERIFY_KINDEREN[pt]){
+        const ccfg=TK_VERIFY_TABELLEN[ct], fk=ccfg.ouder.fk, oids=ouders.map(o=>o.record_id);
+        let kids=[];
+        for(let i=0;i<oids.length&&kids!==null;i+=TK_VERIFY_BLOK){ const blok=await tkVerifyLees(ct,fk,oids.slice(i,i+TK_VERIFY_BLOK),uid); kids=(blok===null)?null:kids.concat(blok); }
+        ouders.forEach(function(o){
+          const lokaal=items.filter(e=>e.tabel===ct&&!e.verwijderd&&e.ouder&&e.ouder.tabel===pt&&e.ouder.record_id===o.record_id);
+          const srvKids=(kids===null)?undefined:kids.filter(k=>String(k[fk])===o.record_id);
+          const pr=res[o.key];
+          if(srvKids===undefined){ if(pr&&pr.status==='SERVER_VERIFIED'){ pr.status='UNKNOWN'; pr.verified_at=null; pr.afwijkingen=['kinderen_niet_gelezen']; } return; }
+          const bekend=new Set(items.filter(e=>e.tabel===ct&&e.ouder&&e.ouder.record_id===o.record_id).map(e=>e.record_id));
+          const extra=srvKids.filter(k=>!bekend.has(String(tkVerifyRecordId(ct,k))));
+          if(extra.length&&pr&&(pr.status==='SERVER_VERIFIED')){ pr.status='MISMATCH'; pr.verified_at=null; pr.afwijkingen=['onverwacht_kind:'+ct]; }
+          // Kinderen zonder eigen eigenaarsveld: alleen geverifieerd als de ouder geverifieerd is.
+          if(ccfg.eigenaarVeld===null)lokaal.forEach(function(k){ const kr=res[k.key]; if(kr&&kr.status==='SERVER_VERIFIED'&&(!pr||pr.status!=='SERVER_VERIFIED')){ kr.status='UNKNOWN'; kr.verified_at=null; kr.afwijkingen=['eigenaar_ouder_onbewezen']; } });
+        });
+      }
+    }
+    // Kinderen zonder eigenaarsveld waarvan de ouder niet in het register staat: eigenaar niet te bewijzen.
+    items.forEach(function(e){ const cfg=TK_VERIFY_TABELLEN[e.tabel]; const r=res[e.key];
+      if(cfg.eigenaarVeld===null&&r&&r.status==='SERVER_VERIFIED'&&!(e.ouder&&items.some(o=>o.tabel===e.ouder.tabel&&o.record_id===e.ouder.record_id))){ r.status='UNKNOWN'; r.verified_at=null; r.afwijkingen=['ouder_niet_in_register']; } });
+    if(tkHuidigeUid()!==uid)return {ok:false,reden:'account_gewisseld'};
+    const lijst=Object.keys(res).map(k=>res[k]);
+    try{ await tkVerifySlaOp(lijst,tijdstip); }catch(_){ tkVerifyMarkeerDefect('opslaan_resultaat'); }
+    // Historie: lokale gegevens die het register niet kent (van vóór deze versie of buiten de ondersteunde writes).
+    let historisch=onverif;
+    const bekendeKeys=new Set(items.map(e=>e.key));
+    wachtrij.forEach(function(q){ if(!TK_VERIFY_TABELLEN[q.table])return; const rid=q.body?tkVerifyRecordId(q.table,q.body):null; if(!rid||!bekendeKeys.has(tkVerifySleutel(q.table,rid,uid)))historisch++; });
+    try{ const lok=JSON.parse(localStorage.getItem('tk_trainings')||'[]'); if(Array.isArray(lok))lok.forEach(function(ct){ if(ct&&ct.id&&!bekendeKeys.has(tkVerifySleutel('custom_trainings',String(ct.id),uid)))historisch++; }); }catch(_){ historisch++; }
+    const poort=SVC.beoordeelRegister({register:{aanwezig:!!meta,defect:tkVerifyDefect(),sinds:meta?meta.sinds:null,items:items.map(e=>({tabel:e.tabel,record_id:e.record_id,eigenaar:e.eigenaar,revisie:e.revisie}))},
+      resultaten:lijst.map(r=>Object.assign({},r)),historisch:{geinventariseerd:false,aantal:historisch},onleesbaar:wachtrijOk?[]:['wachtrij']});
+    const telling={}; const perTabel={};
+    lijst.forEach(function(r){ telling[r.status]=(telling[r.status]||0)+1; const t=r.tabel; perTabel[t]=perTabel[t]||{}; perTabel[t][r.status]=(perTabel[t][r.status]||0)+1; });
+    if(typeof ObservabilityCore!=='undefined'){ try{ ObservabilityCore.tkLog('INFO','verify_run','verify','read_after_write',{telling,historisch,registerDefect:tkVerifyDefect(),toegestaan:poort.toegestaan},{app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'}); }catch(_){} }
+    return {ok:true,tijdstip,telling,perTabel,historisch,registerSinds:meta?meta.sinds:null,registerDefect:tkVerifyDefect(),wachtrijLeesbaar:wachtrijOk,poort};
+  }finally{ _tkVerifyBezig=false; }
+}
+const TK_VERIFY_STATUS_TEKST={SERVER_VERIFIED:'bevestigd op de server',MISMATCH:'wijkt af van wat op dit toestel is ingevoerd',MISSING:'niet gevonden op de server',UNKNOWN:'niet te controleren',QUEUED:'wacht nog op verzending'};
+async function tkVerifieerMetServerToon(){
+  const el=document.getElementById('help-update-verify-body'); if(!el)return;
+  el.textContent='Controleren met de server…';
+  let u; try{ u=await tkVerifieerMetServer(); }catch(_){ u={ok:false,reden:'fout'}; }
+  const REDEN={niet_ingelogd:'Log eerst in.',offline:'Je bent offline. Maak verbinding en probeer het opnieuw.',account_gewisseld:'Er is intussen een ander account ingelogd; de controle is gestopt.',
+    register_onleesbaar:'Het controleregister op dit toestel is niet leesbaar — status onbekend.',kern_ontbreekt:'De controle is niet beschikbaar in deze versie.',bezig:'Er loopt al een controle.',fout:'De controle mislukte — status onbekend.'};
+  if(!u.ok){ el.innerHTML='<b style="color:var(--red)">Niet gecontroleerd.</b> '+escHtml(REDEN[u.reden]||REDEN.fout); return u; }
+  const regels=Object.keys(u.perTabel).map(function(t){ const c=u.perTabel[t];
+    return '<li>'+escHtml((TK_VERIFY_TABELLEN[t]&&TK_VERIFY_TABELLEN[t].label)||t)+': '+Object.keys(c).map(s=>c[s]+' '+escHtml(TK_VERIFY_STATUS_TEKST[s]||s)).join(', ')+'</li>'; });
+  const totaal=Object.keys(u.telling).reduce((s,k)=>s+u.telling[k],0), ok=u.telling.SERVER_VERIFIED||0;
+  el.innerHTML='<div><b>'+ok+' van '+totaal+'</b> gecontroleerde items zijn bevestigd op de server.</div>'+
+    (regels.length?'<ul style="margin:6px 0 0 18px;padding:0">'+regels.join('')+'</ul>':'<div style="margin-top:6px">Er staan nog geen gecontroleerde items in het register van dit toestel.</div>')+
+    (u.historisch?'<div style="margin-top:6px">'+u.historisch+' lokale gegevens staan niet in het controleregister (van vóór deze versie of niet per rij te controleren).</div>':'')+
+    (u.registerDefect?'<div style="margin-top:6px;color:var(--red)">Het controleregister is onvolledig door een eerdere opslagfout.</div>':'')+
+    (!u.wachtrijLeesbaar?'<div style="margin-top:6px;color:var(--red)">De offline-wachtrij kon niet worden gelezen.</div>':'')+
+    '<div style="margin-top:6px;color:var(--g4)">Dit is geen toestemming om de app te verwijderen: lokale gegevens van vóór deze versie zijn nog niet volledig geïnventariseerd.</div>';
+  return u;
+}
+
 function updateOfflineBadge(){
   tkLeesWachtrijStrikt().then(items=>{
     const el=document.getElementById('offline-badge');

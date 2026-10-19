@@ -74,10 +74,12 @@ In alle andere gevallen geldt **NO-GO**, met een lijst van redenen.
 
 | Onderdeel | Status |
 |---|---|
-| Contractkern (`core/serverVerification.js`) | **gereed**: pure functies, `fServerVerificationContract` 30/30, mutaties 14/14 gedood |
-| Lokaal register van te verifiëren id's | **open**: additief (localStorage of een nieuwe IDB-store) zonder de bestaande `queue`-store te migreren; eigen Draft-PR |
-| Leesroute per tabel (`GET ?id=in.(…)&select=<velden>,user_id` met identiteitsbinding) | **open**: hergebruik `sbFetch` met de uid-pin uit TK-REL-SEC-02 |
-| UI: "Synchroniseren en controleren" toont per bron `SERVER_VERIFIED` / blokkades | **open** |
-| Koppeling met `tkUpdateGereedheid()` | **open**: pas als register en leesroute bestaan; tot dan blijft de updatecontrole "geen toestemming tot verwijderen" melden |
+| Contractkern (`core/serverVerification.js`) | **gereed**: samengestelde identiteit (tabel + record-id + eigenaar + revisie), `beoordeelRegister`, MISSING nooit definitief; `fServerVerifyHardening` 30/30, `fServerVerificationContract` 31/31 |
+| Lokaal register | **gebouwd (fase 2, Draft)**: aparte IndexedDB `tk_verificatie/register`; de wachtrij-DB blijft ongewijzigd; opslagfout = defect (fail-closed) |
+| Leesroute per tabel | **gebouwd (fase 2, Draft)**: `GET ?select=*&<sleutel>=in.(…)` via `sbFetch` met `{uid}` (GET-binding), identiteitscontrole vóór en na |
+| UI | **gebouwd (fase 2, Draft)**: "Controleren met de server" in de updategereedheid; "Veilig om te verwijderen" uitgeschakeld |
+| Koppeling met `tkUpdateGereedheid()` | **deels**: een registerdefect maakt de gereedheid onbekend; de poort blijft dicht tot de historie is geïnventariseerd |
+
+Rapport: `docs/TK_SERVER_READ_AFTER_WRITE_FASE2_RAPPORT_20261019.md`.
 
 **Android:** een de-installatie blijft verboden tot §5 voor alle relevante lokale gegevens aantoonbaar `toegestaan` oplevert. Dat is nog niet het geval.

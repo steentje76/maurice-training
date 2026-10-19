@@ -43,13 +43,18 @@ check(V.aggregate([]).status===S.UNKNOWN,'C18 lege resultaatset → UNKNOWN (leg
 check(V.aggregate([{status:S.SERVER_VERIFIED},{status:S.MISSING},{status:S.UNKNOWN}]).status===S.MISSING,'C19 zwaarste status bepaalt groep');
 check(V.aggregate([{status:'SERVER_ACCEPTED'}]).status===S.UNKNOWN,'C20 SERVER_ACCEPTED (2xx) is geen verificatie → UNKNOWN');
 check(!V.magOvergaan('SENT','SERVER_VERIFIED')&&!V.magOvergaan('QUEUED','SERVER_VERIFIED')&&V.magOvergaan('SERVER_ACCEPTED','SERVER_VERIFIED'),'C21 SERVER_VERIFIED alleen bereikbaar vanuit SERVER_ACCEPTED');
-// 6. De-installatiepoort
-const ok1=r({server:Object.assign({},set)}),gate=(o)=>V.uninstallGate(Object.assign({inventaris:{volledig:true,onleesbaar:[],ids:['s1']},resultaten:[ok1]},o));
-check(gate({}).toegestaan===true,'C22 volledige inventaris, alles SERVER_VERIFIED → toegestaan');
-check(gate({inventaris:{volledig:false,onleesbaar:[],ids:['s1']}}).toegestaan===false,'C23 onvolledige inventaris → geweigerd');
-check(gate({inventaris:{volledig:true,onleesbaar:['tk_draft_training'],ids:['s1']}}).toegestaan===false,'C24 onleesbare lokale bron → geweigerd');
-check(gate({inventaris:{volledig:true,onleesbaar:[],ids:['s1','s9']}}).toegestaan===false,'C25 lokaal id zonder verificatie → geweigerd');
-check(gate({resultaten:[r({server:null})]}).toegestaan===false,'C26 MISSING → geweigerd');
-check(gate({inventaris:{volledig:true,onleesbaar:[]}}).toegestaan===false,'C27 inventaris zonder id-lijst → geweigerd');
+// 6. De-installatiepoort. TK-REL-SEC-21: identiteit is samengesteld (tabel + record-id + eigenaar + revisie) en de
+// historie moet volledig geïnventariseerd zijn; kale string-id's zijn dubbelzinnig en worden geweigerd (C22a).
+const ok1=r({server:Object.assign({},set),tabel:'sessions',revisie:1});
+const ID1={tabel:'sessions',record_id:'s1',eigenaar:'A',revisie:1};
+const INV=(o)=>Object.assign({volledig:true,onleesbaar:[],ids:[ID1],historischGeinventariseerd:true,historischAantal:0},o);
+const gate=(o)=>V.uninstallGate(Object.assign({inventaris:INV(),resultaten:[ok1]},o));
+check(gate({}).toegestaan===true,'C22 volledige inventaris, historie geïnventariseerd, alles SERVER_VERIFIED voor exact deze identiteit → toegestaan');
+check(gate({inventaris:INV({ids:['s1']})}).toegestaan===false,'C22a kale string-id (zonder tabel/eigenaar/revisie) → geweigerd');
+check(gate({inventaris:INV({volledig:false})}).toegestaan===false,'C23 onvolledige inventaris → geweigerd');
+check(gate({inventaris:INV({onleesbaar:['tk_draft_training']})}).toegestaan===false,'C24 onleesbare lokale bron → geweigerd');
+check(gate({inventaris:INV({ids:[ID1,{tabel:'sessions',record_id:'s9',eigenaar:'A',revisie:1}]})}).toegestaan===false,'C25 lokaal record zonder verificatie → geweigerd');
+check(gate({resultaten:[r({server:null,tabel:'sessions',revisie:1})]}).toegestaan===false,'C26 MISSING → geweigerd');
+check(gate({inventaris:INV({ids:undefined})}).toegestaan===false,'C27 inventaris zonder id-lijst → geweigerd');
 check(V.canoniek({b:1,a:' x '},['b','a'])===V.canoniek({a:'x',b:1},['a','b']),'C28 canonieke vorm onafhankelijk van sleutel- en veldvolgorde');
 klaar=true;console.log('TK-REL-SEC-10: '+n+'/'+n);

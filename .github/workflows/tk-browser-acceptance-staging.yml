@@ -13,6 +13,7 @@ on:
       - review/claude-p0-reaccept-20261019
       - review/claude-p1-write-ui-20261019
       - review/claude-p1-rest-20261019
+      - review/claude-raw-fase2-20261019
 
 permissions:
   contents: read
@@ -65,6 +66,7 @@ jobs:
             core/fExecutionIntegrity.test.js
             core/fUpdateReadiness.test.js
             core/fVerifyRegisterChromium.test.js
+            core/fHistInventoryChromium.test.js
           )
           failures=0
           for test_file in "${tests[@]}"; do

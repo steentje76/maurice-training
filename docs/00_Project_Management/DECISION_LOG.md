@@ -3309,3 +3309,15 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 5. De de-installatiepoort blijft dicht tot de lokale historie van vóór het register aantoonbaar is geïnventariseerd.
 
 **Niet besloten (PO).** Inventaris en basismeting van historische lokale gegevens. Client-id-kolommen voor identity-tabellen (migratie). De trigger weigert in plaats van te overschrijven (productiemigratie).
+
+## DEC-SYNC-005 — Verwijdering alleen bewezen via het DELETE-antwoord; historische gegevens nooit SERVER_VERIFIED (19 oktober 2026)
+
+**Context.** Onder RLS bewijst "niet meer zichtbaar" geen verwijdering: de rij kan bij een andere eigenaar staan, RLS kan de DELETE stil weigeren (2xx, 0 rijen) of het antwoord kan verloren zijn. Lokale gegevens van vóór het verificatieregister hebben geen schrijfgeschiedenis.
+
+**Besluit (technisch).**
+1. DELETE vraagt `Prefer: return=representation`. Alleen een teruggegeven rij met dezelfde identiteit en eigenaar is bewijs van verwijdering. Zonder bewijs is afwezig UNKNOWN, niet definitief.
+2. Elke lokale opslagbron staat in het manifest (`core/localInventory.js`). Een onbekende sleutel of database blokkeert.
+3. De inventaris is alleen-lezen en hervatbaar. Een historisch record dat gelijk is aan een serverrij heet HIST_GEKOPPELD, nooit SERVER_VERIFIED.
+4. Concepten, de wachtrij, serverkopieën, voorkeuren, oude structuren en gegevens van andere gebruikers blokkeren de de-installatiepoort. Een cache is niet automatisch veilig te verwijderen.
+
+**Niet besloten (PO).** Migraties M1–M4 uit `docs/TK_MIGRATIEVOORSTEL_CLIENTID_EIGENAARSCHAP_20261019.md`. Daarnaast: of het verlies van voorkeuren en toestemmingen bij een de-installatie acceptabel is.

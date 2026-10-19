@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-25..28 Historische inventaris en DELETE-contract (19 oktober 2026)
+
+- **DELETE-verificatie.** Een verwijdering is alleen bewezen als het DELETE-antwoord (`Prefer: return=representation`) exact die rij van die eigenaar teruggeeft. Afwezig bij teruglezen zonder dat bewijs is UNKNOWN, nooit bevestigd (RLS, andere eigenaar, verloren antwoord).
+- **Bronmanifest.** Alle lokale opslagbronnen (57) met locatie, eigenaar, identiteit, versie en categorie in `core/localInventory.js`; document gegenereerd (`docs/TK_LOKALE_BRONNEN_MANIFEST_20261019.md`).
+- **Inventaris en basismeting.** "Lokale gegevens inventariseren" in de updategereedheid: alleen lezen, hervatbaar, geen dubbele registraties, stopt bij een accountwissel. Eigen trainingen worden met de server vergeleken (gelijk = gekoppeld, geen serverbevestiging). "Veilig om te verwijderen" blijft uitgeschakeld.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470264.
+- **Rapport.** `docs/TK_HISTORISCHE_INVENTARIS_FASE3_RAPPORT_20261019.md`; migratievoorstel `docs/TK_MIGRATIEVOORSTEL_CLIENTID_EIGENAARSCHAP_20261019.md`.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-21..24 Read-after-write fase 2 (19 oktober 2026)
 
 - **Contractkern gehard.** Identiteit = tabel + record-id + eigenaar + revisie. Een leeg, defect of onvolledig register, niet-geïnventariseerde historie of een verouderde revisie is nooit veilig. Niet zichtbaar (RLS) = MISSING, niet definitief.

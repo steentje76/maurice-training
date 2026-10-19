@@ -79,6 +79,8 @@ In alle andere gevallen geldt **NO-GO**, met een lijst van redenen.
 | Leesroute per tabel | **gebouwd (fase 2, Draft)**: `GET ?select=*&<sleutel>=in.(…)` via `sbFetch` met `{uid}` (GET-binding), identiteitscontrole vóór en na |
 | UI | **gebouwd (fase 2, Draft)**: "Controleren met de server" in de updategereedheid; "Veilig om te verwijderen" uitgeschakeld |
 | Koppeling met `tkUpdateGereedheid()` | **deels**: een registerdefect maakt de gereedheid onbekend; de poort blijft dicht tot de historie is geïnventariseerd |
+| Verwijdering | **fase 3**: alleen bewezen via het DELETE-antwoord (`return=representation`); afwezig zonder bewijs = UNKNOWN |
+| Historische inventaris | **fase 3 (Draft)**: bronmanifest, alleen-lezen basismeting, `HIST_*`-statussen; nooit SERVER_VERIFIED |
 
 Rapport: `docs/TK_SERVER_READ_AFTER_WRITE_FASE2_RAPPORT_20261019.md`.
 

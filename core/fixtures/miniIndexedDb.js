@@ -3,7 +3,8 @@
  * autoIncrement), transaction(store, mode) met oncomplete/onerror/onabort, store.get/put/add/delete/getAll/openCursor
  * (cursor.value/update/continue). Gedrag zoals de echte API: verzoeken lossen asynchroon op, de transactie voltooit
  * nadat alle verzoeken klaar zijn. Foutinjectie: fouten.open (open faalt), fouten.abortBijSchrijven (transactie
- * breekt af bij commit), fouten.blocked, fouten.gooitBijPut (put gooit synchroon, zoals QuotaExceededError); tx.abort(). De echte browser-API wordt apart getest in Chromium. */
+ * breekt af bij commit), fouten.blocked, fouten.gooitBijPut (put gooit synchroon, zoals QuotaExceededError), fouten.abortTxNummer (de n-de schrijvende
+ * transactie breekt af: crash halverwege), fouten.geenLijst; tx.abort(); databases(). De echte browser-API wordt apart getest in Chromium. */
 'use strict';
 function maakIndexedDb(fouten){
   fouten=fouten||{};
@@ -18,7 +19,8 @@ function maakIndexedDb(fouten){
     tx.abort=function(){ if(tx._klaar)throw new Error('InvalidStateError'); tx._klaar=true; tx._afgebroken=true; tx.error=new Error('AbortError');
       later(()=>{ for(const n of namen)db.stores[n].rijen=tx._backup[n]; tx.onabort&&tx.onabort(); klaarMelden(); }); };
     const afronden=()=>{ if(tx._klaar||tx._open>0)return; tx._klaar=true;
-      later(()=>{ if(tx._geschreven&&fouten.abortBijSchrijven){ tx.error=new Error('AbortError'); for(const n of namen)db.stores[n].rijen=tx._backup[n]; tx.onabort&&tx.onabort(); } else tx.oncomplete&&tx.oncomplete(); klaarMelden(); }); };
+      later(()=>{ if(tx._geschreven)fouten._schrijfTx=(fouten._schrijfTx||0)+1;
+        if(tx._geschreven&&(fouten.abortBijSchrijven||(fouten.abortTxNummer&&fouten._schrijfTx===fouten.abortTxNummer))){ tx.error=new Error('AbortError'); for(const n of namen)db.stores[n].rijen=tx._backup[n]; tx.onabort&&tx.onabort(); } else tx.oncomplete&&tx.oncomplete(); klaarMelden(); }); };
     start.then(()=>{ tx._backup={}; for(const n of namen)tx._backup[n]=new Map([...db.stores[n].rijen].map(([k,v])=>[k,kloon(v)])); });
     const req=(werk)=>{ const r={onsuccess:null,onerror:null,result:undefined,error:null}; tx._open++;
       start.then(()=>later(()=>{ if(tx._afgebroken){ tx._open--; return; } try{ r.result=werk(); r.onsuccess&&r.onsuccess({target:r}); }catch(e){ r.error=e; r.onerror&&r.onerror({target:r}); tx.error=e; tx.onerror&&tx.onerror(); }
@@ -45,6 +47,8 @@ function maakIndexedDb(fouten){
   }
   return {
     _dbs:dbs,
+    // indexedDB.databases(): namen en versies van de bestaande databases (zoals Chromium).
+    databases(){ if(fouten.geenLijst)return Promise.reject(new Error('NotSupported')); return Promise.resolve(Object.keys(dbs).map(n=>({name:n,version:dbs[n].versie}))); },
     open(naam,versie){
       const r={onsuccess:null,onerror:null,onupgradeneeded:null,onblocked:null,result:null,error:null};
       later(()=>{

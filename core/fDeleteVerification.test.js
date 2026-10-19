@@ -15,7 +15,8 @@
  *  D7 app: replay van een gequeuede DELETE die de rij teruggeeft → bewezen;
  *  D8 app: teruggegeven rij met een andere eigenaar telt niet als bewijs;
  *  D9 app: alle kinderen van een ouder verwijderen → alleen teruggegeven kinderen bewezen; een verborgen kind niet;
- *  D10 app: detailvariant (sbDelQ met detail:true) legt hetzelfde bewijs vast. */
+ *  D10 app: detailvariant (sbDelQ met detail:true) legt hetzelfde bewijs vast;
+ *  D11 app: een herhaalde DELETE (0 rijen) van een al bewezen verwijderde rij houdt het bewijs. */
 'use strict';
 const assert=require('assert');
 const V=require('./serverVerification.js');
@@ -132,6 +133,12 @@ async function main(){
     const u=await h.ctx.sbDelQ('sessions','id=eq.s1',{detail:true});
     const e=await reg(h,'sessions','s1');
     check(u.status==='confirmed'&&e.verwijderBewijs==='rij_teruggegeven','D10 detailvariant legt hetzelfde bewijs vast'); });
+  // D11
+  await stap(async()=>{ const {h,d}=opzet();
+    d.tabel('sessions').push({id:'s1',user_id:'A',exercise_id:'squat'});
+    await h.ctx.sbDelQ('sessions','id=eq.s1'); await h.ctx.sbDelQ('sessions','id=eq.s1'); // tweede DELETE raakt 0 rijen
+    const e=await reg(h,'sessions','s1');
+    check(e.revisie===2&&e.verwijderBewijs==='rij_teruggegeven','D11 herhaalde DELETE van een bewezen verwijderde rij houdt het bewijs'); });
   klaar=true;console.log('TK-REL-SEC-25: '+n+'/'+n);
 }
 main().catch(e=>{console.error('FAIL',e&&e.stack||e);process.exitCode=1;});

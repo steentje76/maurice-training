@@ -7791,8 +7791,14 @@ async function ensureValidSession(){
   if(viaFederatedCallback)return true;
   const stored=loadAuthSession();
   if(!stored)return false;
+  // TK-REL-SEC-12: een andere tab kan intussen met een ander account zijn ingelogd (gedeelde localStorage). Dan hoort
+  // niets uit het geheugen van deze tab bij de nieuwe gebruiker: lopende uitvoering vergeten en de app herladen.
+  const _vorigeUid=(authSession&&authSession.user)?authSession.user.id:null;
+  const _wissel=!!_vorigeUid&&!!(stored.user&&stored.user.id)&&stored.user.id!==_vorigeUid;
+  if(_wissel&&typeof tkVergeetLopendeTraining==='function')tkVergeetLopendeTraining();
   authSession=stored;
   SB_H.Authorization='Bearer '+stored.access_token;
+  if(_wissel){ try{ if(typeof location!=='undefined'&&location&&typeof location.reload==='function')location.reload(); }catch(_){ } }
   if(stored.expires_at-Date.now()<5*60*1000){
     const ok=await refreshAuthToken();
     // TK-REL-SEC-02: alleen de sessie wissen waarvoor deze refresh liep, nooit een intussen nieuwere.
@@ -7896,8 +7902,19 @@ async function afterAuthSuccess(){
   document.getElementById('s-auth').classList.remove('active');
   await startAppAfterAuth();
 }
+// TK-REL-SEC-12: uitloggen wist lokale trainingsgegevens (wipePersonalCache). Staat er nog iets dat (mogelijk) niet op
+// de server staat, dan eerst expliciet bevestigen. De offline-wachtrij zelf blijft bewaard (eigenaar-gebonden).
+// Een mislukte controle telt als niet veilig (fail-closed).
+async function tkMagUitloggenMetLokaleData(){
+  let u=null; try{ u=await tkUpdateGereedheid(); }catch(_){ u=null; }
+  if(u&&u.veilig)return true;
+  const items=u?[].concat(u.open||[],(u.onbekend||[]).map(function(x){return 'onbekend: '+x;})):['de controle van lokale gegevens mislukte'];
+  return !!(await confirmModal('Op dit toestel staat nog: '+items.join('; ')+'. Uitloggen verwijdert lokale gegevens die nog niet op de server staan; wachtende synchronisatie blijft bewaard voor dit account. Toch uitloggen?',{title:'Niet-opgeslagen gegevens',okLabel:'Toch uitloggen',danger:true}));
+}
 async function authSignOut(){
   if(!await confirmModal('Weet je zeker dat je wilt uitloggen?',{title:'Uitloggen',okLabel:'Uitloggen'}))return;
+  if(!await tkMagUitloggenMetLokaleData())return; // TK-REL-SEC-12
+  tkVergeetLopendeTraining();
   clearAuthSession();
   wipePersonalCache(); // v332: niet wachten tot volgende login, meteen wissen bij uitloggen
   if(window.OrganizationContextRuntime) window.OrganizationContextRuntime.resetOrgContext(); // MS-F11-05: nooit tenant-branding van deze gebruiker laten hangen voor de volgende
@@ -35822,12 +35839,26 @@ function wipePersonalCache(){
   Object.keys(localStorage).filter(k=>k.startsWith('sel_')).forEach(k=>localStorage.removeItem(k));
   localStorage.removeItem(CACHE_OWNER_KEY);
 }
+// TK-REL-SEC-12: een lopende uitvoering (training, begeleide training, HYROX-race) hoort bij één gebruiker. Bij een
+// eigenaarwissel of bevestigd uitloggen gaat ze uit het geheugen, zodat ze nooit onder een ander account wordt
+// afgerond (de insert-trigger set_user_id_from_auth() zou de sets dan aan dat account geven). Zelfde opruiming als
+// execLeaveDiscard(); de lokale kopieën wist wipePersonalCache().
+function tkVergeetLopendeTraining(){
+  try{ if(typeof stopTrainTimer==='function') stopTrainTimer(); }catch(_){}
+  try{ if(typeof cancelRestTimer==='function') cancelRestTimer(); }catch(_){}
+  try{ if(typeof tkErgDisconnectAll==='function') tkErgDisconnectAll('owner_change'); }catch(_){}
+  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
+  resolvedWorkout=null;activeInstanceId=null;
+  hyroxActive=null;
+  try{ if(window.GW&&typeof GW.vergeetVoorEigenaarwissel==='function') GW.vergeetVoorEigenaarwissel(); }catch(_){}
+}
 function resetPersonalCacheIfNewDeviceOwner(uid){
   if(!uid)return;
   const lastOwner=localStorage.getItem(CACHE_OWNER_KEY);
   if(lastOwner===uid)return; // zelfde gebruiker als vorige keer op dit device — cache blijft geldig
   wipePersonalCache();
   localStorage.setItem(CACHE_OWNER_KEY, uid);
+  if(typeof tkVergeetLopendeTraining==='function')tkVergeetLopendeTraining(); // TK-REL-SEC-12
   // in-memory state ook resetten, anders blijft de zojuist gewiste data nog even
   // in het geheugen hangen tot een herlaad.
   // Kritieke fix — bevestigd via een screenopname: 'Geschatte 1RM' (progExData) toonde
@@ -38318,6 +38349,9 @@ var GW=(function(){
   function hasUnsaved(){return unsaved(lsGet('tk_gw_active',null));}
   // Een afgeronde maar nog niet opgeslagen training wordt nooit stil weggegooid.
   function abort(){if(unsaved(st.active))return false;st.active=null;clearActive();return true;}
+  // TK-REL-SEC-12: bij een eigenaarwissel de begeleide training alleen uit het geheugen halen (de lokale kopie
+  // wist wipePersonalCache); nooit onder een ander account laten afronden.
+  function vergeetVoorEigenaarwissel(){st.active=null;}
   function saveStatus(){var a=st.active;return (a&&a.save)?a.save:null;}
 
   /* ── Faseovergangen ── */
@@ -38612,7 +38646,7 @@ var GW=(function(){
   return {
     FEELS:FEELS, GOAL_RPE:GOAL_RPE, FAT_NL:FAT_NL, REC_NL:REC_NL,
     st:st, active:active, cur:cur, phase:phase,
-    start:start, resume:resume, hasActive:hasActive, abort:abort,
+    start:start, resume:resume, hasActive:hasActive, abort:abort, vergeetVoorEigenaarwissel:vergeetVoorEigenaarwissel,
     begin:begin, finishSet:finishSet, rateSet:rateSet, continueAfter:continueAfter,
     startRest:startRest, skipRest:skipRest, restTick:restTick, adjustRest:adjustRest,
     nextExercise:nextExercise, finish:finish, persistToSessions:persistToSessions, retrySave:retrySave, pendingSave:pendingSave, saveStatus:saveStatus, hasUnsaved:hasUnsaved,

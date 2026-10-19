@@ -7609,6 +7609,8 @@ function _tkImportMsg(txt){ var el=document.getElementById('lich-import-msg'); i
 async function tkConcept2Import(){
   if(typeof DeviceCore==='undefined') return;
   _tkImportMsg('Synchroniseren…');
+  // TK-REL-SEC-09: workouts horen bij de gebruiker die de import startte (inline identiteitsbinding).
+  var c2uid=(typeof authSession!=='undefined'&&authSession&&authSession.user)?authSession.user.id:null;
   var resp = await tkProviderRequest('concept2-import', {});
   if(!DeviceCore.isSyncOk(resp.status)){ _tkImportMsg(tkSyncMessage('concept2', resp)); return; }
   // server levert canonieke workouts (of ruwe results → client normaliseert defensief)
@@ -7622,7 +7624,9 @@ async function tkConcept2Import(){
   var plan = DeviceCore.importConcept2Workouts(workouts, existing||[], {});
   var inserted=0;
   for(var i=0;i<plan.toInsert.length;i++){
-    try{ if(typeof writeSessionRow==='function'){ await writeSessionRow(plan.toInsert[i]); inserted++; } }
+    if(c2uid&&!(authSession&&authSession.user&&authSession.user.id===c2uid)){ _tkImportMsg('Import gestopt: account gewisseld — '+inserted+' opgeslagen'); return; }
+    // Alleen een bevestigde of veilig gequeuede rij telt (writeSessionRow geeft false bij weigering).
+    try{ if(typeof writeSessionRow==='function'){ if(await writeSessionRow(plan.toInsert[i])) inserted++; } }
     catch(_){ /* deelfout: gestopt, idempotency dekt retry */ break; }
   }
   _tkImportMsg(tkSyncMessage('concept2', {status:'success'}, inserted));
@@ -9033,6 +9037,9 @@ function tkHrvImportCalls(row,userId){
 }
 async function tkImportHrvRows(rows){
   const uid=(authSession&&authSession.user&&authSession.user.id)?authSession.user.id:null;
+  // TK-REL-SEC-09: identiteitsbinding (inline: deze functie wordt ook los gebruikt). Na een accountwissel wordt
+  // niets meer geschreven; uitgelogd vanaf de start blijft zoals voorheen 'mislukt'.
+  const gewisseld=()=>!!uid&&!(authSession&&authSession.user&&authSession.user.id===uid);
   const res={ok:0,fail:0,skipped:0};
   // Deterministisch: bevat het bestand meerdere rijen voor dezelfde dag (export van vóór
   // UNIQUE(user_id,date)), dan gaat de oudste created_at eerst, zodat de nieuwste echte
@@ -9046,6 +9053,7 @@ async function tkImportHrvRows(rows){
     return a.i-b.i;
   });
   for(const item of volgorde){
+    if(gewisseld()){res.gestopt=(res.gestopt||0)+1;continue;}
     const plan=tkHrvImportCalls(item.r,uid);
     if(plan.error){res.fail++;continue;}
     if(plan.skip){res.skipped++;continue;}
@@ -30837,28 +30845,36 @@ async function importFromFile(input){
     const bcs = data.body_comp || [];
     const hrvs = data.hrv_log || [];
     let ok=0, fail=0, errors=[];
+    // TK-REL-SEC-09: alle records horen bij de gebruiker die de import startte. Na uitloggen of een
+    // accountwissel wordt niets meer verstuurd (de insert-trigger zou ze anders aan het nieuwe account geven).
+    const importUid=(authSession&&authSession.user)?authSession.user.id:null; let gestopt=0;
+    const gewisseld=()=>!!importUid&&!(authSession&&authSession.user&&authSession.user.id===importUid);
     const total = sessions.length + weights.length + bcs.length + hrvs.length;
     if(statusEl) statusEl.textContent = `${total} records gevonden — importeren...`;
     for(const s of sessions){
+      if(gewisseld()){gestopt++;continue;}
       const r=await fetch(`${SB_URL}/rest/v1/sessions`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates'},body:JSON.stringify(s)});
       if(r.ok) ok++; else { fail++; const e=await r.text(); errors.push('session: '+e.slice(0,60)); }
     }
     for(const w of weights){
+      if(gewisseld()){gestopt++;continue;}
       const r=await fetch(`${SB_URL}/rest/v1/weight_log`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates'},body:JSON.stringify(w)});
       r.ok?ok++:fail++;
     }
     for(const b of bcs){
+      if(gewisseld()){gestopt++;continue;}
       const r=await fetch(`${SB_URL}/rest/v1/body_comp`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates'},body:JSON.stringify(b)});
       r.ok?ok++:fail++;
     }
     // HRV SINGLE-WRITER: dagelijkse health-rijen gaan via de canonieke upsert_daily_health-RPC
     // (zie tkImportHrvRows) -- nooit meer rechtstreeks naar de tabel.
-    const hrvRes=await tkImportHrvRows(hrvs);
-    ok+=hrvRes.ok; fail+=hrvRes.fail;
+    const hrvRes=!gewisseld()?await tkImportHrvRows(hrvs):{ok:0,fail:0,skipped:0,gestopt:hrvs.length};
+    ok+=hrvRes.ok; fail+=hrvRes.fail; gestopt+=hrvRes.gestopt||0;
     const leegTxt=hrvRes.skipped?' · '+hrvRes.skipped+' leeg overgeslagen':'';
     if(errors.length) console.error('Import errors:', errors);
-    if(statusEl) statusEl.textContent = `${ok} records geïmporteerd${fail?' · '+fail+' mislukt':''}${leegTxt}`;
-    toast(ok+' records geïmporteerd'+(fail?' · '+fail+' mislukt':'')+leegTxt);
+    const gestoptTxt=gestopt?' · import gestopt: account gewisseld, '+gestopt+' niet verwerkt':'';
+    if(statusEl) statusEl.textContent = `${ok} records geïmporteerd${fail?' · '+fail+' mislukt':''}${leegTxt}${gestoptTxt}`;
+    toast(ok+' records geïmporteerd'+(fail?' · '+fail+' mislukt':'')+leegTxt+gestoptTxt);
     if(ok>0){ refreshHome(); }
     input.value='';
   } catch(e) {

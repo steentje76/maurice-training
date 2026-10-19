@@ -14,6 +14,7 @@ on:
       - review/claude-p1-write-ui-20261019
       - review/claude-p1-rest-20261019
       - review/claude-raw-fase2-20261019
+      - review/claude-hist-fase3-20261019
 
 permissions:
   contents: read
@@ -67,6 +68,7 @@ jobs:
             core/fUpdateReadiness.test.js
             core/fVerifyRegisterChromium.test.js
             core/fHistInventoryChromium.test.js
+            core/fLocalEncryptedBackupChromium.test.js
           )
           failures=0
           for test_file in "${tests[@]}"; do

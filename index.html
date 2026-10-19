@@ -6371,6 +6371,21 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="pf-row" onclick="exportCSV('body_comp')"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 13h5"/></svg></span><div class="pf-tx"><div class="pf-lb">Lichaamscompositie</div><div class="pf-sb">CSV-bestand</div></div><span class="pf-chev">&#8250;</span></button>
       <button class="pf-row" onclick="exportJSON()"><span class="pf-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 21h16"/></svg></span><div class="pf-tx"><div class="pf-lb">Kerngegevens exporteren</div><div class="pf-sb">Trainingen, gewicht, HRV, lichaamscompositie, oefeningen, profiel &amp; eigen trainingen (JSON)</div></div><span class="pf-chev">&#8250;</span></button>
     </div>
+    <div style="margin:14px 0 8px;padding:12px;border:1px solid var(--g2);border-radius:10px">
+      <strong>Versleutelde lokale reddingskopie (experimenteel)</strong>
+      <p style="font-size:12px;line-height:1.4">Bevat alleen herkenbare lokale gegevens van het huidige account en diens wachtrij. Geen aanmeldgegevens. Onbekende/oude bronnen kunnen ontbreken. Dit is geen volledige back-up en geen toestemming om de app te verwijderen.</p>
+      <label for="tk-backup-pass" style="font-size:12px">Wachtzin (minimaal 12 tekens)</label>
+      <input id="tk-backup-pass" type="password" autocomplete="new-password" minlength="12" class="input" style="width:100%;margin:4px 0 8px">
+      <label for="tk-backup-pass2" style="font-size:12px">Herhaal wachtzin</label>
+      <input id="tk-backup-pass2" type="password" autocomplete="new-password" minlength="12" class="input" style="width:100%;margin:4px 0 8px">
+      <button class="btn btn-o" type="button" onclick="tkMaakVersleuteldeLokaleBackup()">Versleuteld bestand maken</button>
+      <p style="font-size:12px;margin-top:12px">Controleer een eerder gemaakt bestand (alleen lezen, zet geen gegevens terug):</p>
+      <input id="tk-backup-file" type="file" accept=".tkbackup,application/json" aria-label="Versleutelde kopie kiezen" style="width:100%">
+      <label for="tk-backup-check-pass" style="font-size:12px">Wachtzin voor controle</label>
+      <input id="tk-backup-check-pass" type="password" autocomplete="off" class="input" style="width:100%;margin:4px 0 8px">
+      <button class="btn btn-o" type="button" onclick="tkControleerVersleuteldeLokaleBackup()">Bestand controleren (zonder terugzetten)</button>
+      <div id="tk-backup-status" role="status" aria-live="polite" style="font-size:12px;margin-top:8px"></div>
+    </div>
     <div style="margin-top:12px"><button class="btn btn-o" onclick="closeModal('m-export')">Sluiten</button></div>
   </div>
 </div>
@@ -6532,6 +6547,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/calculation.js"></script>
 <script src="core/serverVerification.js"></script>
 <script src="core/localInventory.js"></script>
+<script src="core/localBackup.js"></script>
 <script src="core/nutritionFoundation2.js"></script>
 <script src="core/nutritionMealService.js"></script>
 <script src="core/nutritionHydrationService.js"></script>
@@ -36229,6 +36245,61 @@ async function exportCSV(table){
   const csv = [headers.join(',')].concat(rows).join(String.fromCharCode(10));
   downloadFile(csv, table+'_export_'+td()+'.csv', 'text/csv');
   toast(table+' geexporteerd');
+}
+
+// TK-REL-SEC-29: encrypted, intentionally partial recovery export. NO restore or uninstall approval.
+let tkBackupBusy=false;
+function tkBackupStatus(bericht){const el=document.getElementById('tk-backup-status');if(el)el.textContent=bericht;}
+async function tkBackupSnapshot(){
+  const uid=(authSession&&authSession.user&&authSession.user.id)||null;
+  if(!uid||tkEigenaarUid()!==uid)throw new Error('Meld je aan bij het juiste account om een kopie te maken.');
+  if(typeof LocalInventoryCore==='undefined'||typeof TKLocalBackup==='undefined')throw new Error('De herstelmodule ontbreekt.');
+  const m=LocalInventoryCore.BRONNEN, local={};
+  const categorieen=new Set(['duurzaam','concept','wachtrij','serverkopie','voorkeur','legacy']);
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i),bron=LocalInventoryCore.bronVoorSleutel('localStorage',k);
+    if(!bron||!categorieen.has(bron.categorie)||bron.vorm==='geheim'){
+      if(!bron)local[k]=null; // alleen naam van onbekende bron; nooit inhoud of sessiegegevens
+      continue;
+    }
+    if(/auth_session|access[_-]?token|refresh[_-]?token|credential|oauth|secret/i.test(k))continue;
+    local[k]=localStorage.getItem(k);
+  }
+  const wachtrij=await offlineQueueAll(); // bestaande store alleen gelezen, niet geflusht
+  if(!Array.isArray(wachtrij))throw new Error('Offline-wachtrij onleesbaar: geen export gemaakt.');
+  return TKLocalBackup.prepare({owner:uid,cacheOwner:localStorage.getItem('tk_cache_owner_uid'),local,queue:wachtrij,manifest:m});
+}
+async function tkMaakVersleuteldeLokaleBackup(){
+  if(tkBackupBusy)return;
+  const a=document.getElementById('tk-backup-pass'),b=document.getElementById('tk-backup-pass2');
+  const pass=a?a.value:'',controle=b?b.value:'';
+  if(pass.length<12||pass!==controle){tkBackupStatus('Gebruik tweemaal dezelfde wachtzin van minimaal 12 tekens.');return;}
+  tkBackupBusy=true;tkBackupStatus('Lokale gegevens worden alleen gelezen en versleuteld...');
+  try{
+    const snapshot=await tkBackupSnapshot();
+    if(!authSession||!authSession.user||authSession.user.id!==snapshot.owner)throw new Error('Account is tijdens de kopie gewisseld.');
+    if(!snapshot.entries.length)throw new Error('Geen exporteerbare lokale gegevens voor dit account.');
+    const envelope=await TKLocalBackup.encrypt(snapshot,pass,window.crypto);
+    await TKLocalBackup.inspect(envelope,pass,window.crypto); // geheime sleutel en authenticatietag controleren
+    if(!authSession||!authSession.user||authSession.user.id!==snapshot.owner)throw new Error('Account is tijdens het versleutelen gewisseld.');
+    downloadFile(JSON.stringify(envelope),'trainingskompas_lokaal_'+td()+'.tkbackup','application/json');
+    tkBackupStatus('Versleutelde deelkopie aangeboden: '+snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. Bewaar wachtzin en bestand afzonderlijk. Controleer het gedownloade bestand. De app verwijderen blijft ONVEILIG.');
+  }catch(e){tkBackupStatus('Geen kopie gemaakt: '+(e&&e.message?e.message:'onbekende fout'));}
+  finally{if(a)a.value='';if(b)b.value='';tkBackupBusy=false;}
+}
+async function tkControleerVersleuteldeLokaleBackup(){
+  if(tkBackupBusy)return;const input=document.getElementById('tk-backup-file'),pw=document.getElementById('tk-backup-check-pass');
+  if(!input||!input.files||input.files.length!==1){tkBackupStatus('Kies eerst één versleuteld bestand.');return;}
+  if(input.files[0].size>100*1024*1024){tkBackupStatus('Bestand groter dan 100 MB; controleer via een apart veilig hulpmiddel.');return;}
+  tkBackupBusy=true;
+  try{
+    const obj=JSON.parse(await input.files[0].text());
+    const check=await TKLocalBackup.inspect(obj,pw?pw.value:'',window.crypto);
+    const uid=(authSession&&authSession.user&&authSession.user.id)||null;
+    if(!uid||uid!==check.owner){tkBackupStatus('Bestand is leesbaar, maar hoort niet bij het ingelogde account. Er is niets teruggezet.');return;}
+    tkBackupStatus('Bestand versleuteld en leesbaar: '+check.entries+' items, '+check.excluded+' overgeslagen. Er is NIETS teruggezet; de-installatie blijft geblokkeerd.');
+  }catch(_){tkBackupStatus('Controle mislukt: onjuiste wachtzin, beschadigd bestand of onbekend formaat.');}
+  finally{if(pw)pw.value='';tkBackupBusy=false;}
 }
 
 async function exportJSON(){

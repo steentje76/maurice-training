@@ -3,6 +3,7 @@ name: Trainingskompas Browser Acceptance Staging
 on:
   pull_request:
     branches:
+      - main
       - integration/tk-rec-android-20261018
 
 permissions:

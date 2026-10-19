@@ -8643,11 +8643,14 @@ async function tkCustomTrainingHerstel(t,bestaatOpServer){
 async function syncCustomTrainingsFromSupabase(){
   try{
     let rows=await sbGet('custom_trainings','&order=sort_order.asc');
-    // UX-EXEC-01 (B2): een training waarvan de verwijdering nog in de wachtrij staat, komt niet terug.
-    try{ const _wq=await offlineQueueAll(), _uid=tkHuidigeUid();
-      const _weg=new Set(_wq.filter(function(i){ return i.table==='custom_trainings'&&i.method==='DELETE'&&(i.owner_uid==null||i.owner_uid===_uid); }).map(function(i){ return String(i.filter||'').replace(/^id=eq\./,''); }));
-      if(_weg.size){ rows=rows.filter(function(r){ return !_weg.has(r.id); }); customTrainings=customTrainings.filter(function(t){ return !(t&&_weg.has(t.id)); }); }
-    }catch(_){ }
+    // TK-INT-01: zonder betrouwbare offline-wachtrij mogen serverrijen een lokaal
+    // verwijderde training niet opnieuw zichtbaar maken. Leesfout = sync overslaan;
+    // ook herstelwrites hieronder gebruiken precies deze gevalideerde snapshot.
+    const _wq=await offlineQueueAll();
+    if(!Array.isArray(_wq))throw new Error('queue_snapshot_invalid');
+    const _uid=tkHuidigeUid();
+    const _weg=new Set(_wq.filter(function(i){ return i.table==='custom_trainings'&&i.method==='DELETE'&&(i.owner_uid==null||i.owner_uid===_uid); }).map(function(i){ return String(i.filter||'').replace(/^id=eq\./,''); }));
+    if(_weg.size){ rows=rows.filter(function(r){ return !_weg.has(r.id); }); customTrainings=customTrainings.filter(function(t){ return !(t&&_weg.has(t.id)); }); }
     if(rows.length){
       // Sprint 6: lokaal nog niet door de server bevestigde trainingen niet weggooien.
       const _opServer=new Set(rows.map(r=>r.id)), _onbevestigd=tkTrainingenOnbevestigd();
@@ -8678,15 +8681,15 @@ async function syncCustomTrainingsFromSupabase(){
       localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
       renderCustomTrainBtns(); renderCustomTrainList();
       if(_herstel.length&&navigator.onLine){
-        let _q=[]; try{ _q=await offlineQueueAll(); }catch(_){}
-        for(const h of _herstel){ if(!tkWachtrijRaaktTraining(_q,h.t.id)) await tkCustomTrainingHerstel(h.t,h.opServer); }
+        // Hergebruik de gecontroleerde wachtrijsnapshot; fouten worden nooit als leeg geïnterpreteerd.
+        for(const h of _herstel){ if(!tkWachtrijRaaktTraining(_wq,h.t.id)) await tkCustomTrainingHerstel(h.t,h.opServer); }
       }
     } else if(customTrainings.length){
       // Eerste upload bij lege server: onbevestigde trainingen MOETEN via de idempotente
       // ouder-kind queue verlopen. De oude sbPost-route omzeilde die garanties juist
       // wanneer dit de allereerste Builder-training van de sporter was.
       const pending=new Set(tkTrainingenOnbevestigd());
-      let wachtend=[];try{wachtend=await offlineQueueAll();}catch(_){}
+      const wachtend=_wq;
       for(let i=0;i<customTrainings.length;i++){
         const t=customTrainings[i];
         if(pending.has(t.id)){

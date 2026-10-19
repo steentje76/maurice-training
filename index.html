@@ -9307,7 +9307,7 @@ async function sbPostQ(t,d,opts){
   const queue=async function(http,reden){ const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
   // Sprint 7 (Track D, ACCOUNT_MISMATCH): zonder bekende eigenaar geen write en geen wachtrij-item —
   // zo'n item zou later onder de VOLGENDE gebruiker kunnen worden verstuurd.
-  if(!eigenaar) return uit('failed',null,'account');
+  if(!tkEigenaarUid()) return uit('failed',null,'account');
   let reden=queueOnly?'afhankelijk':null;
   // Sprint 7 (DEC-SYNC-002): staat de ouder van deze rij nog in de wachtrij, dan gaat deze rij er ook in.
   if(!queueOnly&&TK_WACHTRIJ_OUDERS[t]&&await tkWachtrijHeeftOuder(t,d)){ queueOnly=true; reden='afhankelijk'; }
@@ -9346,7 +9346,7 @@ async function sbSchrijfQDetail(method,t,f,d){
   const uit=function(status,http,reden){ tkLogSchrijf(status,t,reden,http); return tkSchrijfUitkomst(status,http,reden); };
   const eigenaar=tkEigenaarUid(); // TK-REL-SEC-02: eigenaar van het moment van de write
   const queue=async function(http,reden){ const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
-  if(!eigenaar) return uit('failed',null,'account');
+  if(!tkEigenaarUid()) return uit('failed',null,'account');
   if(!navigator.onLine) return queue(null,'offline');
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,method==='DELETE'?{method:'DELETE'}:{method:'PATCH',prefer:'return=representation',body:d});

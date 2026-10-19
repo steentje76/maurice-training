@@ -3296,3 +3296,16 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 5. Een 409 telt alleen als bevestigd na teruglezen van exact dezelfde rij (`TK_CONFLICT_VERIFICATIE`). Een leesfout telt nooit als "bestaat niet".
 
 **Niet besloten (PO).** Client-id-kolom voor tabellen met identity-id (`goals`, `programs`, `program_blocks`, `athlete_conditions`, `checkin_conditions`), wat een migratie vergt. Daarnaast `AbortController` voor getimede writes (late aankomst van het originele verzoek).
+
+## DEC-SYNC-004 — Alleen SERVER_VERIFIED voor exact deze identiteit en revisie is bewijs (19 oktober 2026)
+
+**Context.** Een HTTP 2xx bewijst niet dat de rij met de verwachte inhoud bij de juiste eigenaar staat. Voorbeelden zijn de trigger `set_user_id_from_auth`, RLS, een verloren antwoord en een latere lokale wijziging.
+
+**Besluit (technisch).**
+1. Bewijs is alleen SERVER_VERIFIED voor exact dezelfde tabel, record-id, eigenaar en lokale revisie. Een verificatie van een oudere revisie telt niet.
+2. Een rij die voor de eigenaar niet zichtbaar is, is MISSING maar niet definitief. Een leesfout of accountwissel is UNKNOWN of stopt de controle.
+3. Het register staat in een aparte IndexedDB-database. Een opslagfout maakt het register onvolledig (fail-closed).
+4. Kinderen zonder eigen eigenaarsveld zijn alleen bewezen via een geverifieerde ouder in het register.
+5. De de-installatiepoort blijft dicht tot de lokale historie van vóór het register aantoonbaar is geïnventariseerd.
+
+**Niet besloten (PO).** Inventaris en basismeting van historische lokale gegevens. Client-id-kolommen voor identity-tabellen (migratie). De trigger weigert in plaats van te overschrijven (productiemigratie).

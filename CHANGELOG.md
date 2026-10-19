@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-21..24 Read-after-write fase 2 (19 oktober 2026)
+
+- **Contractkern gehard.** Identiteit = tabel + record-id + eigenaar + revisie. Een leeg, defect of onvolledig register, niet-geïnventariseerde historie of een verouderde revisie is nooit veilig. Niet zichtbaar (RLS) = MISSING, niet definitief.
+- **Verificatieregister.** Aparte IndexedDB-database `tk_verificatie`; de offline-wachtrij wordt niet gewijzigd. Ondersteunde writes leggen eigenaar, tabel, record-id, verwachte inhoud, revisie en ouder vast. Een opslagfout is zichtbaar en fail-closed.
+- **Teruglezen.** Met het token van de oorspronkelijke eigenaar (`sbFetch` bindt nu ook GET); een accountwissel of leesfout levert nooit SERVER_VERIFIED of een definitieve MISSING op. Ouder-kind voor trainingen/sets, eigen trainingen/oefeningen, maaltijden/regels en activiteiten/ronden.
+- **Scherm.** "Controleren met de server" toont aantallen per status; "Veilig om te verwijderen" blijft uitgeschakeld.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470263.
+- **Rapport.** `docs/TK_SERVER_READ_AFTER_WRITE_FASE2_RAPPORT_20261019.md`.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-15..20 Resterende P1's schrijfketen (19 oktober 2026)
 
 - **Accountisolatie.** Directe REST-helpers kunnen een write binden aan de gebruiker die de handeling startte (`opts.uid`). `sbFetch` verstuurt nooit een write met een payload-`user_id` van een andere gebruiker. `sbDel` en `sbUpsert` lopen via `sbFetch`. Gebonden flows: programma opslaan en opnieuw genereren, extra oefeningen, gewicht, intake, AI-coach-chat, seed en migratie, vaste trainingen, programma verwijderen.

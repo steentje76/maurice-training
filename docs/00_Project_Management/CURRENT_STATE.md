@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Read-after-write fase 2 (19 oktober 2026 — TK-REL-SEC-21..24, Draft-PR bovenop #563)
+
+- Verificatieregister in een aparte IndexedDB-database; teruglezen met het token van de eigenaar; ouder-kindcontrole voor vier relaties (DEC-SYNC-004).
+- "Controleren met de server" in de updategereedheid; "Veilig om te verwijderen" uitgeschakeld.
+- Poort blijft dicht: lokale historie van vóór het register is niet geïnventariseerd. De-installatie blijft NO-GO.
+
 ## Resterende P1's schrijfketen (19 oktober 2026 — TK-REL-SEC-15..20, Draft-PR's #562 en P1-rest)
 
 - Directe REST-writes en flows met meerdere awaits zijn gebonden aan de startende gebruiker (DEC-SEC-005).

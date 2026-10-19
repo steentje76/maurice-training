@@ -3272,3 +3272,27 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 
 **Niet besloten (PO).** Trigger weigert afwijkende `user_id` in plaats van te overschrijven (productiemigratie); open P1's uit de schrijfaanroep-matrix; register en leesroute voor read-after-write.
 
+## DEC-SEC-005 — Een directe write is gebonden aan de gebruiker die de handeling startte (19 oktober 2026)
+
+**Context.** Twintig productietabellen hebben de insert-trigger `set_user_id_from_auth()` (read-only geverifieerd 19-10-2026). DEC-SEC-002 en DEC-SEC-003 dekten de wachtrij, de imports en lopende uitvoeringen. Niet gedekt waren de directe helpers (`sbPost`, `sbPostReturning`, `sbPatch`, `sbDel`, `sbUpsert`, `sbRpc`) en flows met meerdere awaits: bevestigingsvraag, AI-antwoord, laden.
+
+**Besluit (technisch).**
+1. Een write kan via `opts.uid` aan een gebruiker worden gebonden. `sbFetch` verstuurt hem niet als een ander is ingelogd.
+2. Een write met een payload-`user_id` van een andere gebruiker wordt nooit verstuurd. Dat is een lokale weigering, niet retrybaar en niet gequeued.
+3. Flows met meerdere awaits leggen de gebruiker bij de start vast, ook vóór een bevestigingsvraag.
+4. Offline-first voor de bekende toesteleigenaar blijft ongewijzigd.
+
+**Niet besloten (PO).** Trigger weigert een afwijkende `user_id` in plaats van te overschrijven (productiemigratie). Social/coach-writes via een kale `fetch` blijven via RLS gebonden.
+
+## DEC-SYNC-003 — Volgorde per rij, onzekere writes en idempotente replay (19 oktober 2026)
+
+**Context.** Een verloren antwoord of een time-out na een geslaagde write mag geen tweede record opleveren en geen nieuwere waarde terugdraaien. Een onafhankelijke review toonde aan dat een merge-replay een latere wijziging (intrekken van een agenda-link) terugdraaide.
+
+**Besluit (technisch).**
+1. Een write die om een time-out (`TK_SCHRIJF_TIMEOUT_MS`), een netwerkfout na verzenden of een 502/504 niet bevestigd is, heet **onzeker** en wordt zo op het wachtrij-item gemarkeerd.
+2. Een onzekere insert zonder idempotente sleutel wordt nooit automatisch opnieuw verstuurd. De sporter kiest na controle "Toch versturen".
+3. De replay van een insert met client-id is een no-op (ignore-duplicates). Alleen tabellen met een natuurlijke sleutel waar de bedoeling "zet deze waarde" is, gebruiken `on_conflict` met merge (`exercise_goals`, `activity_laps`).
+4. Een write op een rij waarvoor al een write in de wachtrij staat, gaat erachteraan; in de flush wacht een latere write als een eerdere op dezelfde rij mislukte.
+5. Een 409 telt alleen als bevestigd na teruglezen van exact dezelfde rij (`TK_CONFLICT_VERIFICATIE`). Een leesfout telt nooit als "bestaat niet".
+
+**Niet besloten (PO).** Client-id-kolom voor tabellen met identity-id (`goals`, `programs`, `program_blocks`, `athlete_conditions`, `checkin_conditions`), wat een migratie vergt. Daarnaast `AbortController` voor getimede writes (late aankomst van het originele verzoek).

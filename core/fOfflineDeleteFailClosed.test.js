@@ -22,7 +22,7 @@ async function scenario(queue,local=[]){
     navigator:{onLine:true},
     sbGet:async t=>t==='custom_trainings'
       ?[{id:'pending-delete',naam:'Still on server',kleur:'#111'}]:[],
-    offlineQueueAll:async()=>{
+    tkLeesWachtrijStrikt:async()=>{
       if(queue instanceof Error)throw queue;
       return queue;
     },

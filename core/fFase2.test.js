@@ -347,7 +347,7 @@ function queueZandbak(opts) {
                    konstVar('_flushBezig'), konstVar('IDEMPOTENT_TABELLEN_MET_CLIENT_ID'), konstVar('TK_IDEMPOTENT_ZONDER_UPDATE'), konstVar('TK_WACHTRIJ_OUDERS'), konstVar('TK_SCHRIJF_TIMEOUT_MS'), pak('tkOuderSleutels'), pak('tkHuidigeUid'), pak('tkEigenaarUid'), pak('tkWachtrijHeeftOuder'), pak('tkFoutcode'), pak('tkLogSchrijf'), pak('tkMetTimeout'), pak('tkSchrijfUitkomst'), pak('sbSchrijfQDetail'), /* Sprint 7: helpers van de schrijflaag */
                    pak('newClientRowId'),
                    pak('sbRetryable'), pak('sbRefreshOnce'), pak('sbSessieVerlopen'),
-                   pak('sbFetch'), pak('offlineDb'), pak('offlineQueueAdd'),
+                   pak('sbFetch'), pak('offlineDb'), pak('tkLeesWachtrijStrikt'), pak('offlineQueueAdd'),
                    pak('offlineQueueAll'), pak('offlineQueueRemove'), pak('sbPostQ'),
                    pak('sbPatchQ'), pak('sbDelQ'), pak('flushOfflineQueue')].join('\n'), ctx);
   ctx._idb = idb;

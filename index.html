@@ -3399,6 +3399,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #es-sets-wrap .set-row.setr{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:10px 2px;border-bottom:1px solid var(--g1)}
 #es-sets-wrap .setr-ring,#es-sets-wrap .amrap-chip{display:none}
 .es-acties .btn{min-width:0;padding-left:8px;padding-right:8px}
+.es-acties .btn:first-child{flex:1}
 /* UX-LOG-01 — RPE-knoppen: zelfde look, groter raakvlak (onzichtbaar, naar buiten). */
 .setr-cell-rpe .rpe-btn{position:relative}
 .setr-cell-rpe .rpe-btn::after{content:'';position:absolute;left:-9px;right:-9px}
@@ -3411,6 +3412,9 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   .tks-setcard .set-row.setr{margin:6px 2px;padding:9px 6px;gap:5px}
   .tks-setcard .set-row.setr .setr-cells{gap:4px}
   .tks-wu-card .set-row.wur{margin:6px 2px;padding:8px 6px;gap:5px}
+  /* Verwijderen is destructief: op smalle schermen onder de twee hoofdacties, niet gecomprimeerd. */
+  .es-acties{flex-wrap:wrap}
+  .es-acties .btn:first-child{flex:0 0 100%;order:3}
   .es-acties .btn{font-size:14px;padding-left:6px;padding-right:6px}
 }
 /* VOLTOOIDE set: mint-tint; ingevoerde waarden blijven zichtbaar */
@@ -6509,7 +6513,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="modal-title" id="edit-sess-title">Bewerken</div>
     <div id="edit-sess-fields"></div>
     <div class="es-acties" style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-o" style="flex:1;background:#ffebee;color:var(--red);border-color:#ffcdd2" onclick="deleteSessionEntry()">Verwijder</button>
+      <button class="btn btn-o" style="background:#ffebee;color:var(--red);border-color:#ffcdd2" onclick="deleteSessionEntry()">Verwijder</button>
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-session')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveEditSession(this)">Opslaan</button>
     </div>

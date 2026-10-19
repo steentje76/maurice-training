@@ -44,8 +44,9 @@ function maak(opties){
     clearAuthSession(){ctx.authSession=null;ctx.SB_H.Authorization='Bearer anon';},
     refreshAuthToken:async()=>{st.refreshes++;const s=ctx.authSession;if(!s)return false;ctx.authSession=Object.assign({},s,{access_token:s.access_token+'2'});ctx.SB_H.Authorization='Bearer '+ctx.authSession.access_token;return true;},
     updateOfflineBadge(){},
-    offlineQueueAdd:async(item,eigenaar)=>{st.queue.push({item,eigenaar});return opties.queueResult!==false;},
-    tkLeesWachtrijStrikt:async()=>st.queue.map(q=>Object.assign({owner_uid:q.eigenaar},q.item)),
+    offlineQueueAdd:async(item,eigenaar)=>{ if(opties.queueResult===false)return false; st.queue.push({id:++teller,item,eigenaar}); return true; },
+    offlineQueueRemove:async(id)=>{ const i=st.queue.findIndex(q=>q.id===id); if(i>=0)st.queue.splice(i,1); return true; },
+    tkLeesWachtrijStrikt:async()=>st.queue.map(q=>Object.assign({},q.item,{id:q.id,owner_uid:q.eigenaar})),
     crypto:{randomUUID:()=>'uuid-'+(++teller)},
     setTimeout,clearTimeout,Promise,
     fetch:async(url,init)=>{
@@ -73,7 +74,9 @@ function maak(opties){
   login(opties.login===undefined?'A':opties.login);
   // Writes die met het token van gebruiker X de server bereikten.
   const writesMet=uid=>st.req.filter(r=>r.method!=='GET'&&r.token&&r.token.indexOf('Bearer t'+uid)===0&&r.url.indexOf('/.netlify/')<0);
-  return {ctx,st,net,login,writesMet};
+  // run(code): code in dezelfde context uitvoeren, bv. om een script-level let (TK_SCHRIJF_TIMEOUT_MS) te zetten.
+  const run=code=>vm.runInContext(code,ctx);
+  return {ctx,st,net,login,writesMet,run};
 }
 function resp(status,body){
   return {ok:status>=200&&status<300,status,headers:{get:()=>null},text:async()=>JSON.stringify(body),json:async()=>body};

@@ -27811,7 +27811,7 @@ function voedingConfirmRemoveMealItem(itemId){
   openModal('m-voeding-confirm');
 }
 async function voedingRemoveMealItemConfirmed(itemId){
-  try{ await sbDelQ('nutrition_meal_items','id=eq.'+itemId); toast('Verwijderd'); }
+  try{ const ok=await sbDelQ('nutrition_meal_items','id=eq.'+itemId); toast(ok?'Verwijderd':'Verwijderen mislukt. Probeer opnieuw.'); }
   catch(e){ toast('Verwijderen mislukt. Probeer opnieuw.'); }
   finally{ renderVoedingMaaltijdDetail(); } // her-render leest canonical items/aggregatie opnieuw -- geen DOM-delta
 }
@@ -27888,7 +27888,8 @@ async function voedingSaveItemEdit(){
   var _done=voedingWithBusy(document.querySelector('#voeding-item-edit-body .tk-btn-primary'),'Opslaan…');
   try{
     var snapshot=NutritionIngestService.buildNutrientSnapshot(r,null); // zelfde snapshot-opbouw als bij het aanmaken
-    await sbPatchQ('nutrition_meal_items','id=eq.'+voedingEditingItem.itemId,{quantity:voedingEditingItem.pendingQty,quantity_unit:voedingEditingItem.pendingUnit,nutrient_snapshot:snapshot});
+    const ok=await sbPatchQ('nutrition_meal_items','id=eq.'+voedingEditingItem.itemId,{quantity:voedingEditingItem.pendingQty,quantity_unit:voedingEditingItem.pendingUnit,nutrient_snapshot:snapshot});
+    if(!ok){errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.';errEl.style.display='block';return;}
     toast('Wijzigingen opgeslagen');
     voedingEditingItem=null; go('s-voeding-maaltijd-detail'); // her-render leest canonical items/aggregatie opnieuw -- geen delta-berekening
   }catch(e){ errEl.textContent='Opslaan mislukt. Controleer je verbinding en probeer opnieuw.'; errEl.style.display='block'; }
@@ -27902,8 +27903,9 @@ function voedingDeleteMeal(mealId){
 }
 async function voedingDeleteMealConfirmed(mealId){
   try{
-    await sbDelQ('nutrition_meal_items','meal_id=eq.'+mealId);
-    await sbDelQ('nutrition_meals','id=eq.'+mealId);
+    // TK-REL-SEC-06: als de kindverwijdering niet duurzaam is opgeslagen, geen ouderverwijdering starten.
+    if(!await sbDelQ('nutrition_meal_items','meal_id=eq.'+mealId)){toast('Verwijderen mislukt. Controleer je verbinding en probeer opnieuw.');return;}
+    if(!await sbDelQ('nutrition_meals','id=eq.'+mealId)){toast('Verwijderen mislukt. Controleer je verbinding en probeer opnieuw.');return;}
   }catch(e){ toast('Verwijderen mislukt. Controleer je verbinding en probeer opnieuw.'); return; }
   voedingOpenMealDetailId=null; go('s-voeding-maaltijden');
 }
@@ -27952,7 +27954,7 @@ async function voedingRenderSupplementHistory(){
     }).join('');
   }catch(e){ el.innerHTML=''; }
 }
-async function voedingDeleteSupplementLog(logId){ try{ await sbDelQ('nutrition_supplement_logs','id=eq.'+logId); }catch(e){ toast('Verwijderen mislukt. Controleer je verbinding en probeer opnieuw.'); return; } voedingRenderSupplementHistory(); }
+async function voedingDeleteSupplementLog(logId){ try{ if(!await sbDelQ('nutrition_supplement_logs','id=eq.'+logId)){toast('Verwijderen mislukt. Controleer je verbinding en probeer opnieuw.');return;} }catch(e){ toast('Verwijderen mislukt. Controleer je verbinding en probeer opnieuw.'); return; } voedingRenderSupplementHistory(); }
 
 /* ═══ SUP-EVIDENCE-02 — minimale, functionele koppeling ═══
  * Logging (hierboven) en Education (hieronder) blijven strikt gescheiden:

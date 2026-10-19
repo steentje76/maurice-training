@@ -93,11 +93,15 @@ function db(uniek){
     if(v==='is.null')return rij[k]==null;
     if(v.indexOf('eq.')===0)return String(rij[k])===v.slice(3);
     if(v.indexOf('not.in.(')===0)return v.slice(8,-1).split(',').indexOf(String(rij[k]))<0;
+    if(v.indexOf('lt.')===0)return Number(rij[k])<Number(v.slice(3));
+    if(v.indexOf('gt.')===0)return Number(rij[k])>Number(v.slice(3));
+    if(v.indexOf('in.(')===0)return v.slice(4,-1).split(',').map(x=>x.replace(/^"|"$/g,'').replace(/\\"/g,'"')).indexOf(String(rij[k]))>=0;
     return true;});
-  return {T,tabel,
+  const api={T,tabel,zichtbaar:null,
     afhandelen(req){
       const u=new URL(req.url);const t=u.pathname.split('/').pop();const q=u.search.slice(1);
-      if(req.method==='GET')return resp(200,tabel(t).filter(r=>past(r,filters(q))));
+      // zichtbaar(t, rij, uid): RLS-nabootsing per test (standaard alles zichtbaar).
+      if(req.method==='GET')return resp(200,tabel(t).filter(r=>past(r,filters(q))&&(!api.zichtbaar||api.zichtbaar(t,r,req.uidBijVerzoek))).map(r=>JSON.parse(JSON.stringify(r))));
       if(req.method==='POST'){
         const oc=(q.match(/on_conflict=([^&]+)/)||[])[1];
         const sleutel=oc?decodeURIComponent(oc).split(','):['id'];
@@ -117,6 +121,7 @@ function db(uniek){
       if(req.method==='DELETE'){const fs=filters(q);T[t]=tabel(t).filter(r=>!past(r,fs));return resp(204,null);}
       if(req.method==='PATCH'){const fs=filters(q);const rs=tabel(t).filter(r=>past(r,fs));rs.forEach(r=>Object.assign(r,req.body));return resp(200,rs);}
     }};
+  return api;
 }
 // Fout-injectie: regel(req, keer) → 'faal' (500, niets opgeslagen) | 'verloren' (opgeslagen, antwoord kwijt) | undefined
 function koppel(h,d,regel){

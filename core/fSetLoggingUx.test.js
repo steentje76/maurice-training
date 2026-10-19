@@ -201,14 +201,21 @@ async function deel2() {
         sets_detail: [{ kg: 100, reps: 5, rpe: 8 }, { kg: 100, reps: 5, rpe: 8.5 }, { kg: 102.5, reps: 4, rpe: 9 }] });
       await new Promise(function (r) { setTimeout(r, 300); });
       const r1 = document.getElementById('sr-es-1').getBoundingClientRect(), kg = document.getElementById('s-es-1-kg').getBoundingClientRect(), rp = document.getElementById('s-es-1-rpe').getBoundingClientRect();
-      const knoppen = Array.from(document.querySelectorAll('.es-acties .btn')).map(function (x) { const b = x.getBoundingClientRect(); return b.right <= innerWidth + 0.5 && x.scrollWidth <= x.clientWidth + 1; });
+      const knoppen = Array.from(document.querySelectorAll('.es-acties .btn')).map(function (x) {
+        const b = x.getBoundingClientRect();
+        return { past: b.left >= -0.5 && b.right <= innerWidth + 0.5 && x.scrollWidth <= x.clientWidth + 1,
+          breedte: b.width, hoogte: b.height, boven: b.top };
+      });
       const res = collectWorkSets('es').map(function (x) { return [x.kg, x.reps, x.rpe]; });
       closeModal('m-edit-session');
       return { horizontaal: Math.abs(kg.top - rp.top) < 30 && r1.height < 120, kgW: kg.width, knoppen: knoppen, res: res };
     });
     eq(e.res, [['100', '5', '8'], ['100', '5', '8.5'], ['102.5', '4', '9']], tag + 'E1 Logboek-editor: elke set houdt zijn eigen RPE; opslaan leest ze ongewijzigd terug (was leeg voor set 2..n)');
     ok(e.horizontaal && e.kgW >= 56, tag + 'E2 editor-setrij staat horizontaal zoals tijdens de training: kg ' + Math.round(e.kgW) + ' px');
-    ok(e.knoppen.length === 3 && e.knoppen.every(Boolean), tag + 'E3 Verwijder/Annuleer/Opslaan passen binnen het scherm: ' + JSON.stringify(e.knoppen));
+    ok(e.knoppen.length === 3 && e.knoppen.every(function (k) { return k.past && k.breedte >= 68 && k.hoogte >= 44; }),
+      tag + 'E3 Verwijder/Annuleer/Opslaan hebben leesbare labels, raakvlak en geen viewport-overloop: ' + JSON.stringify(e.knoppen));
+    ok(w > 374 || (e.knoppen[0].boven > e.knoppen[1].boven + 1 && Math.abs(e.knoppen[1].boven - e.knoppen[2].boven) < 1),
+      tag + 'E4 op 320-374px staat Verwijder onder Annuleer/Opslaan (destructieve actie gescheiden)');
     ok(page.__errs.filter(function (e) { return !/fetch|CORS|NetworkError|Failed to load/i.test(e); }).length === 0, tag + 'D9 geen JavaScript-fouten: ' + page.__errs.join(' | '));
     await page.close();
   }

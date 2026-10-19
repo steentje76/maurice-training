@@ -1,0 +1,80 @@
+name: Trainingskompas Browser Acceptance Staging
+
+on:
+  pull_request:
+    branches:
+      - integration/tk-rec-android-20261018
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tk-browser-acceptance-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  browser-acceptance:
+    name: Real Chromium Browser Acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact PR merge candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install app dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install pinned Playwright without changing lockfile
+        run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+
+      - name: Install real Chromium and required system libraries
+        run: npx playwright install --with-deps chromium
+
+      - name: Fail if Chromium is missing
+        run: |
+          node -e "const {chromium}=require('playwright'); if (!chromium || !chromium.executablePath()) process.exit(1); console.log('Chromium',chromium.executablePath())"
+
+      - name: Build application web assets
+        run: npm run cap:copy
+
+      - name: Execute mobile and recovery browser tests without silent skips
+        shell: bash
+        run: |
+          set -euo pipefail
+          tests=(
+            core/fHomeDagfactorBasisSafety.test.js
+            core/fRecoveryCommunicationConsistency.test.js
+            core/fInzichtHerstelBelasting.test.js
+            core/fSetLoggingUx.test.js
+            core/fExecutionIntegrity.test.js
+            core/fUpdateReadiness.test.js
+          )
+          failures=0
+          for test_file in "${tests[@]}"; do
+            echo "===== Browser suite: ${test_file} ====="
+            log_file="$(mktemp)"
+            if node "${test_file}" >"${log_file}" 2>&1; then
+              cat "${log_file}"
+              if grep -Ei 'SKIP.*Chromium|Chromium.*SKIP|Chromium niet beschikbaar|Playwright niet beschikbaar' "${log_file}"; then
+                echo "::error::Browser suite silently skipped: ${test_file}"
+                failures=$((failures + 1))
+              fi
+            else
+              cat "${log_file}"
+              echo "::error::Browser suite failed: ${test_file}"
+              failures=$((failures + 1))
+            fi
+            rm -f "${log_file}"
+          done
+          echo "Browser acceptance: ${failures} failed or skipped of ${#tests[@]} suites."
+          if [ "${failures}" -ne 0 ]; then
+            exit 1
+          fi
+          echo "Real Chromium browser acceptance completed."

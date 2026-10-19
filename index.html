@@ -8308,17 +8308,18 @@ async function loadTrainCfg(){
       // Eenmalige seed: schrijf de oorspronkelijke hardcoded schema's weg naar
       // Supabase (training_exercises) + vul muscle_primary/secondary aan op exercises.
       let sortA=0, sortB=0;
+      const _bind={uid:(typeof tkHuidigeUid==='function')?tkHuidigeUid():undefined}; // TK-REL-SEC-17: seed hoort bij de gebruiker die hem startte
       for(const t of ['A','B']){
         for(const e of TRAIN_CFG_SEED[t]){
           const sortOrder=(t==='A')?sortA++:sortB++;
-          await sbUpsert('training_exercises',{id:t+'_'+e.id,exercise_id:e.id,training_ref:t,sort_order:sortOrder,sets:e.sets||null,reps:e.reps||null,rpe:e.rpe||null,wu:e.wu||0,tip:e.tip||null});
+          await sbUpsert('training_exercises',{id:t+'_'+e.id,exercise_id:e.id,training_ref:t,sort_order:sortOrder,sets:e.sets||null,reps:e.reps||null,rpe:e.rpe||null,wu:e.wu||0,tip:e.tip||null},_bind);
           let exObj=exercises.find(x=>x.id===e.id);
           if(!exObj){
             const newRow={id:e.id,name:e.naam,type:e.type,active:true,pr:null,yt:e.yt||null,muscle_primary:e.muscles?.p||[],muscle_secondary:e.muscles?.s||[],scope:'global'};
-            await sbUpsert('exercises',newRow);
+            await sbUpsert('exercises',newRow,_bind);
             exercises.push(newRow);
           } else if(!exObj.muscle_primary || !exObj.muscle_primary.length){
-            await sbPatch('exercises','id=eq.'+e.id,{muscle_primary:e.muscles?.p||[],muscle_secondary:e.muscles?.s||[]});
+            await sbPatch('exercises','id=eq.'+e.id,{muscle_primary:e.muscles?.p||[],muscle_secondary:e.muscles?.s||[]},_bind);
             exObj.muscle_primary=e.muscles?.p||[]; exObj.muscle_secondary=e.muscles?.s||[];
           }
         }
@@ -8368,11 +8369,12 @@ async function ensureVasteTrainingenLoaded(){
 // training_type, dus bestaande data en geschiedenis blijven vanzelf werken en tonen vanaf
 // nu de (hernoembare) naam uit vaste_trainingen i.p.v. de kale letter.
 async function migreerABNaarVasteTrainingen(){
+  const _bind={uid:(typeof tkHuidigeUid==='function')?tkHuidigeUid():undefined}; // TK-REL-SEC-17: vaste_trainingen heeft set_user_id_from_auth
   const rows=await sbGet('training_exercises','');
   const refs=[...new Set(rows.map(r=>r.training_ref))].sort();
   let i=0;
   for(const ref of refs){
-    await sbPost('vaste_trainingen',{id:ref,naam:'Training '+ref,sort_order:i++});
+    await sbPost('vaste_trainingen',{id:ref,naam:'Training '+ref,sort_order:i++},_bind);
   }
 }
 function newVasteTrainingId(){
@@ -8507,12 +8509,13 @@ async function saveVasteTrainingName(btnEl){
   const naam=document.getElementById('vt-naam-input').value.trim();
   if(!naam){toast('Vul een naam in');return;}
   let vtId=vtEditId, _ok;
+  const _bind={uid:(typeof tkHuidigeUid==='function')?tkHuidigeUid():undefined}; // TK-REL-SEC-17
   if(vtEditId){
-    _ok=await sbPatch('vaste_trainingen','id=eq.'+vtEditId,{naam});
+    _ok=await sbPatch('vaste_trainingen','id=eq.'+vtEditId,{naam},_bind);
   }else{
     await ensureVasteTrainingenLoaded();
     vtId=newVasteTrainingId();
-    _ok=await sbPost('vaste_trainingen',{id:vtId,naam,sort_order:vasteTrainingen.length});
+    _ok=await sbPost('vaste_trainingen',{id:vtId,naam,sort_order:vasteTrainingen.length},_bind);
   }
   // TK-REL-SEC-15: niet opgeslagen = modal blijft open met de ingevulde naam, geen "Opgeslagen".
   if(!_ok){toast('Opslaan mislukt — controleer je verbinding en probeer opnieuw');return;}
@@ -8526,9 +8529,12 @@ async function saveVasteTrainingName(btnEl){
   }finally{if(btnEl)btnEl.disabled=false;}
 }
 async function deleteVasteTraining(id){
+  // TK-REL-SEC-17: identiteit vóór de bevestigingsvraag vastleggen. training_ref='A' bestaat bij elke gebruiker:
+  // logt intussen een ander in, dan zou diens training worden geleegd.
+  const _bind={uid:(typeof tkHuidigeUid==='function')?tkHuidigeUid():undefined};
   if(!await confirmModal('De oefeningen erin gaan ook mee. Je sessiegeschiedenis blijft staan.',{title:'Vaste training verwijderen',okLabel:'Verwijderen',danger:true}))return;
   // TK-REL-SEC-15: kind eerst; mislukt dat, dan de training zelf niet verwijderen en geen "Verwijderd" melden.
-  if(!await sbDel('training_exercises','training_ref=eq.'+id)||!await sbDel('vaste_trainingen','id=eq.'+id)){
+  if(!await sbDel('training_exercises','training_ref=eq.'+id,_bind)||!await sbDel('vaste_trainingen','id=eq.'+id,_bind)){
     _vasteTrainingenLoaded=false;await renderSchemaTrainingList();toast('Verwijderen mislukt — probeer het opnieuw');return;
   }
   _vasteTrainingenLoaded=false;
@@ -8904,6 +8910,16 @@ async function sbFetch(url,o){
   // met B's token worden verstuurd (de insert-trigger set_user_id_from_auth maakt de rij dan van B).
   var uidVan=function(){ return (authSession&&authSession.user)?authSession.user.id:null; };
   var uid0=uidVan();
+  // TK-REL-SEC-16: twintig tabellen hebben de insert-trigger set_user_id_from_auth. Een write met het token van een
+  // ANDERE ingelogde gebruiker wordt daar niet geweigerd maar op diens account gezet. Daarom wordt een write nooit
+  // verstuurd als (a) de aanroeper hem aan een gebruiker bond (o.uid) en nu iemand anders is ingelogd, of (b) de
+  // payload een user_id van een andere gebruiker draagt. Lokale weigering: status 0, niet retrybaar, geen wachtrij.
+  if(o.method&&o.method!=='GET'){
+    var weiger=null;
+    if(Object.prototype.hasOwnProperty.call(o,'uid')&&o.uid!==uid0)weiger='binding';
+    else if(uid0&&o.body&&typeof o.body==='object'&&(Array.isArray(o.body)?o.body:[o.body]).some(function(x){ return !!x&&typeof x==='object'&&typeof x.user_id==='string'&&x.user_id!==''&&x.user_id!==uid0; }))weiger='payload';
+    if(weiger){ var fb={code:'tk_identiteit_'+weiger}; return {ok:false,status:0,tkIdentiteit:weiger,headers:{get:function(){return null;}},text:async function(){return JSON.stringify(fb);},json:async function(){return fb;}}; }
+  }
   var r=await fetch(url,maak());
   if(r.status===401&&authSession&&authSession.refresh_token){
     // Identiteit gewisseld tijdens het verzoek: niet verversen, niet opnieuw versturen en de
@@ -8919,25 +8935,28 @@ async function sbFetch(url,o){
   return r;
 }
 async function sbGet(t,p=''){try{const r=await sbFetch(`${SB_URL}/rest/v1/${t}?select=*${p}`,{});if(!r.ok){console.error('sbGet',t,r.status,await r.text());return[];}return await r.json();}catch(e){console.error('sbGet catch',t,e);return[];}}
-async function sbPost(t,d){
+async function sbPost(t,d,opts){
   try{
-    const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:'return=representation',body:d});
+    // TK-REL-SEC-16: opts.uid bindt de write aan de gebruiker die de handeling startte.
+    const o={method:'POST',prefer:'return=representation',body:d}; if(opts&&opts.uid!==undefined)o.uid=opts.uid;
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,o);
     if(!r.ok){const err=await r.text();console.error('sbPost',t,r.status,err);}
     return r.ok;
   }catch(e){console.error('sbPost catch',t,e);return false;}
 // sbPostReturning: als sbPost, maar geeft het ingevoegde record terug i.p.v. true/false
 // (nodig zodra je het gegenereerde id direct verder wilt gebruiken, bv. program_id)
 }
-async function sbPostReturning(t,d){
+async function sbPostReturning(t,d,opts){
   try{
-    const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:'return=representation',body:d});
+    const o={method:'POST',prefer:'return=representation',body:d}; if(opts&&opts.uid!==undefined)o.uid=opts.uid; // TK-REL-SEC-16
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,o);
     if(!r.ok){const err=await r.text();console.error('sbPostReturning',t,r.status,err);return null;}
     return await r.json();
   }catch(e){console.error('sbPostReturning catch',t,e);return null;}
 }
-async function sbPatch(t,f,d){try{const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});if(!r.ok)console.error('sbPatch',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbPatch catch',t,e);return false;}}
+async function sbPatch(t,f,d,opts){try{const o={method:'PATCH',prefer:'return=representation',body:d};if(opts&&opts.uid!==undefined)o.uid=opts.uid;const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,o);if(!r.ok)console.error('sbPatch',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbPatch catch',t,e);return false;}}
 // sbRpc: aanroep van een Postgres-functie (bv. de atomaire upsert_daily_health, GAP-P1-008-closure).
-async function sbRpc(fn,args){try{const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});if(!r.ok){console.error('sbRpc',fn,r.status,await r.text());return null;}return await r.json();}catch(e){console.error('sbRpc catch',fn,e);return null;}}
+async function sbRpc(fn,args,opts){try{const o={method:'POST',body:args};if(opts&&opts.uid!==undefined)o.uid=opts.uid;const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,o);if(!r.ok){console.error('sbRpc',fn,r.status,await r.text());return null;}return await r.json();}catch(e){console.error('sbRpc catch',fn,e);return null;}}
 /* ── ÉÉN CANONIEKE hrv_log-RIJ PER DAG (v4.29.1 — dataverlies-fix) ─────────────
  * PROBLEEM: saveHRV()/pchkSubmit() deden een blinde INSERT in hrv_log. Vulde je in
  * de check-in alléén je rusthartslag in, dan ontstond een TWEEDE rij voor vandaag met
@@ -9088,9 +9107,10 @@ async function tkImportHrvRows(rows){
 // (voorheen schreven saveHRV/saveWeight/saveBC alle drie los naar weight_log)
 async function upsertWeightLog(weight,scale){
   if(!weight)return;
+  const _bind={uid:(typeof tkHuidigeUid==='function')?tkHuidigeUid():undefined}; // TK-REL-SEC-17: weight_log heeft set_user_id_from_auth
   const existing=await sbGet('weight_log','&date=eq.'+td()+'&limit=1');
-  if(existing.length)await sbPatch('weight_log','id=eq.'+existing[0].id,{weight,scale});
-  else await sbPost('weight_log',{date:td(),weight,scale});
+  if(existing.length)await sbPatch('weight_log','id=eq.'+existing[0].id,{weight,scale},_bind);
+  else await sbPost('weight_log',{date:td(),weight,scale},_bind);
 }
 // Afmetingen: nieuwe records gebruiken eigen kolommen, oude records vallen terug op het note-veld
 function resolveAfmetingen(row){
@@ -9107,8 +9127,9 @@ function resolveAfmetingen(row){
   }
   return {hips,chest,arm,thigh,metabAge};
 }
-async function sbDel(t,f){try{const r=await fetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE',headers:SB_H});if(!r.ok)console.error('sbDel',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbDel catch',t,e);return false;}}
-async function sbUpsert(t,d){try{const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(d)});if(!r.ok)console.error('sbUpsert',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbUpsert catch',t,e);return false;}}
+// TK-REL-SEC-16: sbDel/sbUpsert lopen via sbFetch (gedeelde refresh, identiteitspin, binding); voorheen een kale fetch.
+async function sbDel(t,f,opts){try{const o={method:'DELETE'};if(opts&&opts.uid!==undefined)o.uid=opts.uid;const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,o);if(!r.ok)console.error('sbDel',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbDel catch',t,e);return false;}}
+async function sbUpsert(t,d,opts){try{const o={method:'POST',prefer:'resolution=merge-duplicates',body:d};if(opts&&opts.uid!==undefined)o.uid=opts.uid;const r=await sbFetch(`${SB_URL}/rest/v1/${t}`,o);if(!r.ok)console.error('sbUpsert',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbUpsert catch',t,e);return false;}}
 
 // ══════════════════════════════════════════════════════════
 // OFFLINE QUEUE — v1, scope: alleen sessie-opslag (finishSession/saveEditSession/
@@ -9222,18 +9243,38 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
   // UX-EXEC-01 (B4): de training-rij zelf heeft ook een client-id ('custom_…'/Builder-id) en een
   // UPDATE-policy (v333). Zonder deze regel gaf een replay na een verloren antwoord een 409 die
   // nooit uit de wachtrij verdween; de oefeningen erachter bleven dan voorgoed staan.
+  // TK-REL-SEC-19: uuid-id met default en UPDATE-policy (read-only geverifieerd 19-10-2026). Zonder client-id gaf een
+  // replay na een verloren antwoord een tweede periode/doelrij/tokenrij (of bij de feed-token een eeuwige 409).
+  availability_periods: true, cycle_periods: true, nutrition_targets: true, calendar_feed_tokens: true,
+  // Zonder UPDATE-policy: zie TK_IDEMPOTENT_ZONDER_UPDATE (ignore-duplicates).
+  research_consents: true, nutrition_nutrient_values: true,
   custom_trainings: true };
 // Sprint 7 (DEC-SYNC-002): tabellen in de lijst hierboven ZONDER UPDATE-policy (pg_policies, read-only
 // geverifieerd 9 oktober 2026). merge-duplicates is daar ON CONFLICT DO UPDATE en faalt bij een replay
 // van een al opgeslagen rij op RLS; voor deze tabellen is ignore-duplicates (DO NOTHING) het juiste
 // idempotente gedrag.
 const TK_IDEMPOTENT_ZONDER_UPDATE = { messages: true };
+// TK-REL-SEC-19: ook zonder UPDATE-policy (alleen INSERT/SELECT, read-only geverifieerd 19-10-2026).
+TK_IDEMPOTENT_ZONDER_UPDATE.research_consents=true; TK_IDEMPOTENT_ZONDER_UPDATE.nutrition_nutrient_values=true;
+// TK-REL-SEC-20: ook voor de tabellen die in TK-REL-SEC-19 een client-id kregen. Een replay van een insert die al
+// aankwam moet een no-op zijn (DO NOTHING); met merge-duplicates draaide hij een latere wijziging terug (bv. een
+// ingetrokken agenda-link werd weer actief, een afgesloten periode weer open).
+['availability_periods','cycle_periods','nutrition_targets','calendar_feed_tokens'].forEach(function(t){ TK_IDEMPOTENT_ZONDER_UPDATE[t]=true; });
 // TK-REL-SEC-08: tabellen met een natuurlijke unieke sleutel (productie-index, read-only geverifieerd) waar een
 // write zonder client-id herhaald kan worden. Zonder on_conflict zet PostgREST ON CONFLICT alleen op de PK: een
 // replay na een verloren antwoord gaf dan een eeuwige 409 die de wachtrij en de updatecontrole blokkeerde.
 // Met on_conflict + merge-duplicates is de herhaling idempotent (UPDATE-policy bestaat). Geldt ook voor al
 // gequeuede items, omdat flushOfflineQueue() de URL per tabel opbouwt.
-const TK_ON_CONFLICT = { activity_laps: 'activity_id,lap_index' };
+// TK-REL-SEC-18: exercise_goals heeft de unieke sleutel (user_id, exercise_id) en een UPDATE-policy (read-only
+// geverifieerd 19-10-2026). Zonder on_conflict gaf een replay of een tweede toestel een 409 of een stil verloren doel.
+const TK_ON_CONFLICT = { activity_laps: 'activity_id,lap_index', exercise_goals: 'user_id,exercise_id' };
+// TK-REL-SEC-20: cycle_symptom_logs bewust NIET: de app leest de dagrij en schrijft de samengevoegde symptomen terug.
+// Met merge-duplicates zou een leesfout (sbGet geeft dan []) alle andere symptomen van die dag stil overschrijven.
+// TK-REL-SEC-18: tabellen waar een 409 bij een POST betekent "deze rij bestaat al" en waar de client het id zelf
+// kiest, maar zonder idempotente upsert (exercises: id = naam; geen UPDATE-recht op andermans rij). Na een 409 wordt
+// teruggelezen of exact deze rij (zelfde id en velden) voor de gebruiker zichtbaar is; alleen dan telt hij als
+// bevestigd. Een rij die niet zichtbaar is of andere inhoud heeft, blijft een eerlijke weigering.
+const TK_CONFLICT_VERIFICATIE = { exercises: ['id','name','type','scope','active'] }; // TK-REL-SEC-20: id = naam, dus ook type/scope/active
 // Sprint 7 (DEC-SYNC-002): afhankelijkheden tussen rijen in de offline-wachtrij (kolom → oudertabel,
 // FK of RLS-EXISTS in productie). Een kindrij wordt NOOIT los naar de server gestuurd zolang haar ouder
 // nog in de wachtrij staat (dan gaat het kind er ook in, FIFO), en de flush stuurt geen kind waarvan de
@@ -9319,7 +9360,48 @@ function tkNormalizeSessionsRow(row){
 // 'server' (tijdelijke serverfout), 'afhankelijk' (ouder nog in de wachtrij), 'validatie'/'toegang'
 // (definitieve weigering), 'opslag' (lokale wachtrij niet beschikbaar of vol), 'account' (geen ingelogde
 // eigenaar: nooit een wachtrij-item zonder eigenaar).
-function tkSchrijfUitkomst(status, http, reden){ return {ok:(status==='confirmed'||status==='queued'), status:status, http:(http!=null?http:null), reden:(reden||null)}; }
+// TK-REL-SEC-19: drie soorten "niet bevestigd": definitief (rejected/failed), tijdelijk (offline/server/auth: de server
+// heeft niets toegepast) en onzeker (time-out of netwerkfout NA verzenden: de server kan de write wél hebben toegepast).
+function tkSchrijfUitkomst(status, http, reden){ return {ok:(status==='confirmed'||status==='queued'), status:status, http:(http!=null?http:null), reden:(reden||null), onzeker:(reden==='timeout'||reden==='netwerk'||reden==='gateway')}; }
+// TK-REL-SEC-20: staat er voor deze eigenaar al een write op DEZELFDE rij in de wachtrij? Dan gaat deze write er
+// achteraan (FIFO), anders zou hij de oudere inhalen en zou de replay daarvan de nieuwe waarde terugdraaien. Zelfde
+// rij = zelfde tabel en (a) hetzelfde filter, (b) hetzelfde id, of (c) een gequeuede insert waarvan de body aan alle
+// eq-voorwaarden van het filter voldoet. Leesfout → false (dan geldt het bestaande gedrag).
+async function tkWachtrijRaaktRij(t,f,body){
+  let items; try{ items=await tkLeesWachtrijStrikt(); }catch(_){ return false; }
+  if(!Array.isArray(items)||!items.length)return false;
+  const uid=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
+  const eq={}; if(f)String(f).split('&').forEach(function(x){ const i=x.indexOf('=eq.'); if(i>0)eq[x.slice(0,i)]=decodeURIComponent(x.slice(i+4)); });
+  const sl=Object.keys(eq);
+  const bid=(body&&typeof body==='object'&&!Array.isArray(body)&&body.id!=null)?String(body.id):null;
+  return items.some(function(i){
+    if(!i||i.table!==t||!uid||i.owner_uid!==uid)return false;
+    if(f&&i.filter===f)return true;
+    if(bid&&((i.body&&i.body.id!=null&&String(i.body.id)===bid)||i.filter==='id=eq.'+bid))return true;
+    return !!(f&&i.method==='POST'&&i.body&&sl.length&&sl.every(function(k){ return i.body[k]!=null&&String(i.body[k])===eq[k]; }));
+  });
+}
+// Na een write die om de volgorde in de wachtrij ging: meteen een flush starten, zodat hij niet blijft wachten.
+function tkFlushNaVolgorde(){ try{ if(typeof flushOfflineQueue==='function'&&typeof setTimeout==='function')setTimeout(function(){ Promise.resolve(flushOfflineQueue()).catch(function(){}); },0); }catch(_){} }
+// TK-REL-SEC-19: is een replay van deze POST idempotent? Client-id in een upsert-tabel, ignore-duplicates op een
+// client-id, een natuurlijke sleutel (on_conflict) of een 409-verificatie. Anders kan een replay een tweede rij maken.
+function tkPostIsIdempotent(t,body,resolution){
+  const metId=!!body&&typeof body==='object'&&body.id!=null;
+  return !!((metId&&typeof IDEMPOTENT_TABELLEN_MET_CLIENT_ID==='object'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t])||(metId&&resolution==='ignore-duplicates')||
+    (typeof TK_ON_CONFLICT==='object'&&TK_ON_CONFLICT&&TK_ON_CONFLICT[t])||(metId&&typeof TK_CONFLICT_VERIFICATIE==='object'&&TK_CONFLICT_VERIFICATIE&&TK_CONFLICT_VERIFICATIE[t]));
+}
+// TK-REL-SEC-18: na een 409 teruglezen of exact deze rij (zelfde id en vergelijkingsvelden uit TK_CONFLICT_VERIFICATIE)
+// voor de huidige gebruiker zichtbaar is. Fail-closed: geen regel, leesfout of afwijking → false.
+async function tkRijBestaatAl(t,d){
+  const velden=(typeof TK_CONFLICT_VERIFICATIE==='object'&&TK_CONFLICT_VERIFICATIE)?TK_CONFLICT_VERIFICATIE[t]:null;
+  if(!velden||!d||typeof d!=='object'||Array.isArray(d)||d.id==null)return false;
+  try{
+    const r=await sbFetch(`${SB_URL}/rest/v1/${t}?select=${velden.join(',')}&id=eq.${encodeURIComponent(d.id)}&limit=1`,{});
+    if(!r.ok)return false;
+    const rows=await r.json();
+    return Array.isArray(rows)&&rows.length===1&&velden.every(function(k){ return String(rows[0][k]==null?'':rows[0][k])===String(d[k]==null?'':d[k]); });
+  }catch(_){ return false; }
+}
 async function sbPostQ(t,d,opts){
   const detail=!!(opts&&opts.detail);
   if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);
@@ -9342,17 +9424,22 @@ async function sbPostQ(t,d,opts){
   const uit=function(status,http,reden){ if(opts&&typeof opts==='object'){opts.status=status;opts.reden=reden||null;} tkLogSchrijf(status,t,reden,http); return detail?tkSchrijfUitkomst(status,http,reden):(status==='confirmed'||status==='queued'); };
   // TK-REL-SEC-02: eigenaar en ingelogde identiteit vastleggen bij de aanroep, niet pas bij het queuen.
   const eigenaar=tkEigenaarUid(), uidStart=tkHuidigeUid();
-  const queue=async function(http,reden){ const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
+  const queue=async function(http,reden){ if(reden==='timeout'||reden==='netwerk'||reden==='gateway')item.onzeker=true; /* TK-REL-SEC-19 */ const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); if(q===true&&reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
   // Sprint 7 (Track D, ACCOUNT_MISMATCH): zonder bekende eigenaar geen write en geen wachtrij-item —
   // zo'n item zou later onder de VOLGENDE gebruiker kunnen worden verstuurd.
   if(!tkEigenaarUid()) return uit('failed',null,'account');
+  // TK-REL-SEC-16: gebonden aan een andere gebruiker dan de eigenaar, of een payload van een andere gebruiker:
+  // geen write en geen wachtrij-item (zo'n item zou onder de verkeerde eigenaar worden afgespeeld).
+  if((opts&&opts.uid!==undefined&&opts.uid!==eigenaar)||(!!eigenaar&&!!d&&typeof d==='object'&&(Array.isArray(d)?d:[d]).some(function(x){ return !!x&&typeof x==='object'&&typeof x.user_id==='string'&&x.user_id!==''&&x.user_id!==eigenaar; }))) return uit('failed',null,'account');
   let reden=queueOnly?'afhankelijk':null;
   // Sprint 7 (DEC-SYNC-002): staat de ouder van deze rij nog in de wachtrij, dan gaat deze rij er ook in.
   if(!queueOnly&&TK_WACHTRIJ_OUDERS[t]&&await tkWachtrijHeeftOuder(t,d)){ queueOnly=true; reden='afhankelijk'; }
+  // TK-REL-SEC-20: een eerdere write op dezelfde rij wacht nog → deze erachteraan (volgorde blijft behouden).
+  if(!queueOnly&&navigator.onLine&&typeof tkWachtrijRaaktRij==='function'&&(await tkWachtrijRaaktRij(t,null,d))===true){ queueOnly=true; reden='volgorde'; }
   // TK-REL-SEC-02: wisselde de identiteit tijdens de await hierboven, dan niet met het nieuwe token versturen.
   if(tkHuidigeUid()!==uidStart){ queueOnly=true; reden='auth'; }
   if(!navigator.onLine||queueOnly) return queue(null,navigator.onLine?reden:'offline');
-  const magTimeout=!!(d&&d.id!=null&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||ignoreDup));
+  const magTimeout=!!(d&&d.id!=null&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||ignoreDup))||!!_oc; // TK-REL-SEC-18: on_conflict = idempotent
   try{
     const verzoek=sbFetch(`${SB_URL}/rest/v1/${t}${_oc}`,{method:'POST',prefer:prefer,body:d});
     const r=magTimeout?await tkMetTimeout(verzoek,TK_SCHRIJF_TIMEOUT_MS):await verzoek;
@@ -9360,8 +9447,12 @@ async function sbPostQ(t,d,opts){
       const err=await r.text();console.error('sbPostQ',t,r.status,tkFoutcode(err));
       // Tijdelijke serverfout (401 na mislukte refresh, 429, 5xx): NIET verliezen — dezelfde
       // wachtrij als bij een netwerkfout. Validatiefouten (400/409/422) blijven false.
-      if(sbRetryable(r.status)) return queue(r.status,r.status===401?'auth':'server');
-      return uit('rejected',r.status,r.status===401||r.status===403?'toegang':'validatie');
+      // TK-REL-SEC-20: 502/504 (gateway) kunnen ná de commit komen → onzeker.
+      if(sbRetryable(r.status)) return queue(r.status,r.status===401?'auth':((r.status===502||r.status===504)?'gateway':'server'));
+      // TK-REL-SEC-18: een 409 kan betekenen dat een eerdere poging wél aankwam (verloren antwoord). Alleen als exact
+      // deze rij zichtbaar wordt teruggelezen, telt hij als bevestigd; anders een eerlijke weigering.
+      const _bestond=r.status===409&&typeof tkRijBestaatAl==='function'&&(await tkRijBestaatAl(t,d))===true;
+      return uit(_bestond?'confirmed':'rejected',r.status,_bestond?'bestond':(r.status===401||r.status===403?'toegang':'validatie'));
     }
     return uit('confirmed',r.status);
   }catch(e){
@@ -9379,22 +9470,26 @@ async function sbPostQOpgeslagen(t,d,opts){
 }
 // Sprint 7 (DEC-SYNC-002): PATCH/DELETE met eerlijke uitkomst, zelfde regels als sbPostQ (retry-codes,
 // wachtrij, geen write zonder eigenaar). Alleen gebruikt waar opts.detail expliciet wordt gevraagd.
-async function sbSchrijfQDetail(method,t,f,d){
+async function sbSchrijfQDetail(method,t,f,d,opts){
   const item=method==='DELETE'?{table:t,method:'DELETE',filter:f}:{table:t,method:'PATCH',filter:f,body:d};
   const uit=function(status,http,reden){ tkLogSchrijf(status,t,reden,http); return tkSchrijfUitkomst(status,http,reden); };
   const eigenaar=tkEigenaarUid(); // TK-REL-SEC-02: eigenaar van het moment van de write
-  const queue=async function(http,reden){ const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
+  const queue=async function(http,reden){ if(reden==='timeout'||reden==='netwerk'||reden==='gateway')item.onzeker=true; const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); if(q===true&&reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
   if(!tkEigenaarUid()) return uit('failed',null,'account');
+  if((opts&&opts.uid!==undefined&&opts.uid!==eigenaar)||(!!eigenaar&&!!d&&typeof d==='object'&&(Array.isArray(d)?d:[d]).some(function(x){ return !!x&&typeof x==='object'&&typeof x.user_id==='string'&&x.user_id!==''&&x.user_id!==eigenaar; }))) return uit('failed',null,'account'); // TK-REL-SEC-16
   if(!navigator.onLine) return queue(null,'offline');
+  if(typeof tkWachtrijRaaktRij==='function'&&(await tkWachtrijRaaktRij(t,f,method==='DELETE'?null:d))===true) return queue(null,'volgorde'); // TK-REL-SEC-20
   try{
-    const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,method==='DELETE'?{method:'DELETE'}:{method:'PATCH',prefer:'return=representation',body:d});
+    // TK-REL-SEC-19: begrensd wachten. PATCH en DELETE zijn idempotent: na een time-out gaat het item de wachtrij in.
+    const _v=sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,method==='DELETE'?{method:'DELETE'}:{method:'PATCH',prefer:'return=representation',body:d});
+    const r=await ((typeof tkMetTimeout==='function'&&typeof TK_SCHRIJF_TIMEOUT_MS==='number')?tkMetTimeout(_v,TK_SCHRIJF_TIMEOUT_MS):_v);
     if(!r.ok){
       console.error('sb'+method+'Q',t,r.status,tkFoutcode(await r.text()));
-      if(sbRetryable(r.status)) return queue(r.status,r.status===401?'auth':'server');
+      if(sbRetryable(r.status)) return queue(r.status,r.status===401?'auth':((r.status===502||r.status===504)?'gateway':'server'));
       return uit('rejected',r.status,r.status===401||r.status===403?'toegang':'validatie');
     }
     return uit('confirmed',r.status);
-  }catch(e){ return queue(null,'netwerk'); }
+  }catch(e){ return queue(null,(e&&e.tkTimeout)?'timeout':'netwerk'); }
 }
 // sbPatchQ(t,f,d,opts) — opts is optioneel en 100% backward compatible: alle
 // bestaande aanroepen zonder 4e argument gedragen zich EXACT als voorheen
@@ -9415,22 +9510,29 @@ async function sbPatchQ(t,f,d,opts){
   if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);
   // Sprint 7 (DEC-SYNC-002): opts.detail geeft, net als bij sbPostQ, {ok,status,http,reden} terug —
   // inclusief 'failed' als queuen mislukt. Zonder opts.detail is het gedrag exact ongewijzigd.
-  if(opts&&opts.detail) return sbSchrijfQDetail('PATCH',t,f,d);
+  if(opts&&opts.detail) return sbSchrijfQDetail('PATCH',t,f,d,opts);
   const wantRows=opts&&opts.returnRows;
   const failed=()=>wantRows?{ok:false,rows:null,superseded:false}:false;
+  let _reden=null; // TK-REL-SEC-19: 'timeout'/'netwerk' = onzeker (het verzoek kan de server hebben bereikt)
   const queue=async()=>{
-    const ok=!!eigenaar&&(await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d},eigenaar))===true;
+    const it={table:t,method:'PATCH',filter:f,body:d}; if(_reden==='timeout'||_reden==='netwerk'||_reden==='gateway')it.onzeker=true;
+    const ok=!!eigenaar&&(await offlineQueueAdd(it,eigenaar))===true;
     updateOfflineBadge();
+    if(ok&&_reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde();
     return wantRows?{ok,rows:null,superseded:false}:ok;
   };
   // TK-REL-SEC-05: eigenaarloos betekent niet retrybaar; nooit als opgeslagen teruggeven.
   if(!eigenaar)return failed();
+  if((opts&&opts.uid!==undefined&&opts.uid!==eigenaar)||(!!eigenaar&&!!d&&typeof d==='object'&&(Array.isArray(d)?d:[d]).some(function(x){ return !!x&&typeof x==='object'&&typeof x.user_id==='string'&&x.user_id!==''&&x.user_id!==eigenaar; })))return failed(); // TK-REL-SEC-16
   if(!navigator.onLine)return queue();
+  if(typeof tkWachtrijRaaktRij==='function'&&(await tkWachtrijRaaktRij(t,f,d))===true){ _reden='volgorde'; return queue(); } // TK-REL-SEC-20
   try{
-    const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});
+    // TK-REL-SEC-19: begrensd wachten; een PATCH zet absolute waarden en is dus veilig opnieuw af te spelen.
+    const _v=sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});
+    const r=await ((typeof tkMetTimeout==='function'&&typeof TK_SCHRIJF_TIMEOUT_MS==='number')?tkMetTimeout(_v,TK_SCHRIJF_TIMEOUT_MS):_v);
     if(!r.ok){
       console.error('sbPatchQ',t,r.status,await r.text());
-      if(sbRetryable(r.status))return queue();
+      if(sbRetryable(r.status)){ if(r.status===502||r.status===504)_reden='gateway'; return queue(); }
       return wantRows?{ok:false,rows:null,superseded:false}:false;
     }
     if(wantRows){
@@ -9440,7 +9542,8 @@ async function sbPatchQ(t,f,d,opts){
     }
     return true;
   }catch(e){
-    console.warn('sbPatchQ offline, queued',t,e);
+    _reden=(e&&e.tkTimeout)?'timeout':'netwerk';
+    console.warn('sbPatchQ offline, queued',t,_reden);
     return queue();
   }
 }
@@ -9450,22 +9553,26 @@ async function sbPatchQ(t,f,d,opts){
 // hier een DELETE te queuen, zie deleteSessionEntry/deleteSessionDirect.
 async function sbDelQ(t,f,opts){
   const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02
-  const queue=async()=>{const ok=!!eigenaar&&(await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar))===true;updateOfflineBadge();return ok;};
+  const queue=async(reden)=>{const it={table:t,method:'DELETE',filter:f}; if(reden==='timeout'||reden==='netwerk'||reden==='gateway')it.onzeker=true; /* TK-REL-SEC-19 */ const ok=!!eigenaar&&(await offlineQueueAdd(it,eigenaar))===true;updateOfflineBadge();if(ok&&reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde();return ok;};
   // TK-REL-SEC-07: detail-aanroepers krijgen altijd het detail-object; sbSchrijfQDetail weigert zelf zonder eigenaar.
-  if(opts&&opts.detail) return sbSchrijfQDetail('DELETE',t,f,null);
+  if(opts&&opts.detail) return sbSchrijfQDetail('DELETE',t,f,null,opts);
   if(!eigenaar)return false;
+  if(opts&&opts.uid!==undefined&&opts.uid!==eigenaar)return false; // TK-REL-SEC-16
   if(!navigator.onLine)return queue();
+  if(typeof tkWachtrijRaaktRij==='function'&&(await tkWachtrijRaaktRij(t,f,null))===true)return queue('volgorde'); // TK-REL-SEC-20
   try{
-    const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE'});
+    // TK-REL-SEC-19: begrensd wachten; DELETE is idempotent.
+    const _v=sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE'});
+    const r=await ((typeof tkMetTimeout==='function'&&typeof TK_SCHRIJF_TIMEOUT_MS==='number')?tkMetTimeout(_v,TK_SCHRIJF_TIMEOUT_MS):_v);
     if(!r.ok){
       console.error('sbDelQ',t,r.status,await r.text());
-      if(sbRetryable(r.status))return queue();
+      if(sbRetryable(r.status))return queue((r.status===502||r.status===504)?'gateway':null);
       return false;
     }
     return true;
   }catch(e){
-    console.warn('sbDelQ offline, queued',t,e);
-    return queue();
+    console.warn('sbDelQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
+    return queue((e&&e.tkTimeout)?'timeout':'netwerk');
   }
 }
 // SPRINT C2-D — sbRpcQ: generieke offline/retry-veilige laag voor MUTERENDE RPC's,
@@ -9492,28 +9599,32 @@ function tkLogRpcOffline(event,fn,extra){
   if(typeof ObservabilityCore==='undefined')return;
   try{ObservabilityCore.tkLog('INFO',event,'offline_queue','rpc',Object.assign({function:fn},extra||{}),{app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});}catch(e){}
 }
-async function sbRpcQ(fn,args){
+async function sbRpcQ(fn,args,opts){
   const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02
   const queue=async extra=>{
-    const ok=!!eigenaar&&(await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args},eigenaar))===true;
+    const it={table:null,method:'RPC',function:fn,args:args}; if(extra&&(extra.reason==='timeout'||extra.reason==='netwerk'||extra.reason==='gateway'))it.onzeker=true; // TK-REL-SEC-19
+    const ok=!!eigenaar&&(await offlineQueueAdd(it,eigenaar))===true;
     updateOfflineBadge();
     tkLogRpcOffline(ok?'rpc_offline_queued':'rpc_queue_failed',fn,extra);
     return ok;
   };
   if(!eigenaar){tkLogRpcOffline('rpc_queue_failed',fn,{reason:'account'});return false;}
+  if(opts&&opts.uid!==undefined&&opts.uid!==eigenaar){tkLogRpcOffline('rpc_queue_failed',fn,{reason:'account'});return false;} // TK-REL-SEC-16
   if(!navigator.onLine)return queue();
   try{
-    const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});
+    // TK-REL-SEC-19: begrensd wachten; sbRpcQ is alleen toegestaan voor RPC's met een server-side idempotency-sleutel.
+    const _v=sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});
+    const r=await ((typeof tkMetTimeout==='function'&&typeof TK_SCHRIJF_TIMEOUT_MS==='number')?tkMetTimeout(_v,TK_SCHRIJF_TIMEOUT_MS):_v);
     if(!r.ok){
       const err=await r.text();console.error('sbRpcQ',fn,r.status,err);
-      if(sbRetryable(r.status))return queue({status:r.status});
+      if(sbRetryable(r.status))return queue({status:r.status,reason:(r.status===502||r.status===504)?'gateway':'server'});
       tkLogRpcOffline('rpc_replay_permanent_failure',fn,{status:r.status});
       return false;
     }
     return await r.json();
   }catch(e){
-    console.warn('sbRpcQ offline, queued',fn,e);
-    return queue();
+    console.warn('sbRpcQ offline, queued',fn,(e&&e.tkTimeout)?'timeout':'netwerk');
+    return queue({reason:(e&&e.tkTimeout)?'timeout':'netwerk'});
   }
 }
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
@@ -9650,6 +9761,10 @@ async function flushOfflineQueue(){
   // ronde weer in dezelfde volgorde (oefening eerst, FIFO).
   const _exNietGelukt={};
   const _ouderMislukt={};
+  // TK-REL-SEC-20: rijen waarop in deze ronde een write mislukte; latere writes op dezelfde rij blijven dan ook staan,
+  // anders zou de oudere bij de volgende ronde de nieuwere terugdraaien.
+  const _rijMislukt={};
+  const _rijSleutels=function(it){ const s=[]; if(it.filter)s.push(it.table+'|f|'+it.filter); if(it.body&&it.body.id!=null){ s.push(it.table+'|f|id=eq.'+it.body.id); } return s; };
   let _trainingGesynct=false;
   for(const item of teVerwerken){
     // Gebruiker kan tijdens een eerdere await zijn uitgelogd of gewisseld.
@@ -9662,6 +9777,11 @@ async function flushOfflineQueue(){
       // hier ongewijzigd meegestuurd -- exact dezelfde args als de eerste,
       // gefaalde poging, nooit opnieuw gegenereerd.
       if(item.method==='POST'&&item.table==='sessions'&&item.body&&_exNietGelukt[item.body.exercise_id]){skippedAny=true;continue;}
+      if(_rijSleutels(item).some(function(k){return _rijMislukt[k];})){_rijSleutels(item).forEach(function(k){_rijMislukt[k]=1;});skippedAny=true;continue;}
+      // TK-REL-SEC-19: een insert waarvan het antwoord verloren ging en waarvan een replay een tweede rij kan maken
+      // (geen client-id, geen natuurlijke sleutel), wordt nooit automatisch opnieuw verstuurd. Het item blijft zichtbaar
+      // in de wachtrij ("mogelijk al opgeslagen") zodat de sporter kan controleren en zelf kan kiezen.
+      if(item.method==='POST'&&item.onzeker&&typeof tkPostIsIdempotent==='function'&&!tkPostIsIdempotent(item.table,item.body,item.resolution)){skippedAny=true;continue;}
       // Sprint 7 (DEC-SYNC-002): hetzelfde voor elke kindrij uit TK_WACHTRIJ_OUDERS (oefeningen van een
       // Builder-training, supplementlog, voedingswaarden, barcode, maaltijdregel). Een overgeslagen kind
       // telt zelf ook als mislukt, zodat zijn eigen kinderen in deze ronde ook blijven staan.
@@ -9686,7 +9806,11 @@ async function flushOfflineQueue(){
       // Een accountwissel tijdens het netwerkverzoek maakt de bevestiging ambigu.
       // Bewaar het item voor idempotente replay onder zijn bewezen eigenaar.
       if(tkHuidigeUid()!==huidigeUid){skippedAny=true;break;}
-      if(!r.ok){
+      // TK-REL-SEC-18: replay van een rij die bij de eerste poging al aankwam (verloren antwoord) gaf een eeuwige 409,
+      // en blokkeerde de sessies erachter. Alleen als exact deze rij zichtbaar wordt teruggelezen, telt hij als verwerkt.
+      const _bestond=!r.ok&&r.status===409&&item.method==='POST'&&typeof tkRijBestaatAl==='function'&&(await tkRijBestaatAl(item.table,item.body))===true;
+      if(_bestond&&tkHuidigeUid()!==huidigeUid){skippedAny=true;break;}
+      if(!r.ok&&!_bestond){
         // v5.9.5: serverfout op dit ene item (bv. validatie, verwijzing naar inmiddels
         // verwijderde data) mag niet alle latere, op zichzelf staande items blokkeren —
         // die blijven anders voor altijd achter dit item hangen, ook bij de volgende
@@ -9696,6 +9820,7 @@ async function flushOfflineQueue(){
         if(item.method==='RPC')tkLogRpcOffline(sbRetryable(r.status)?'rpc_replay_retryable_failure':'rpc_replay_permanent_failure',item.function,{status:r.status});
         if(item.method==='POST'&&item.table==='exercises'&&item.body)_exNietGelukt[item.body.id]=1;
         if(item.method==='POST'&&item.body&&item.body.id!=null)_ouderMislukt[item.table+':'+item.body.id]=1;
+        _rijSleutels(item).forEach(function(k){_rijMislukt[k]=1;});
         skippedAny=true;
         continue;
       }
@@ -9738,6 +9863,9 @@ function updateOfflineBadge(){
 // Korte, leesbare omschrijving van een queue-item voor het beheerscherm.
 function describeOfflineQueueItem(item){
   const methodLbl={POST:'Nieuw',PATCH:'Wijziging',DELETE:'Verwijdering',RPC:'Actie'}[item.method]||item.method;
+  // TK-REL-SEC-19: onzekere insert zonder idempotente sleutel wordt niet automatisch herhaald.
+  if(item.method==='POST'&&item.onzeker&&typeof tkPostIsIdempotent==='function'&&!tkPostIsIdempotent(item.table,item.body,item.resolution))
+    return `${methodLbl}: ${escHtml(item.table||'')} — mogelijk al opgeslagen (de verbinding viel weg tijdens het opslaan) en daarom niet automatisch opnieuw verstuurd. Staat het er al: verwijder dit item. Staat het er niet: kies "Toch versturen"`;
   if(item.method==='RPC'&&item.function==='schedule_my_training')return `Mijn Training inplannen — ${escHtml(item.args?.p_planned_date||'')}`;
   if(item.method==='RPC')return `${methodLbl}: ${item.function}`;
   if(item.table==='sessions'&&item.body){
@@ -10869,8 +10997,35 @@ async function renderOfflineQueueModal(){
         <div class="lval" style="font-size:13px">${describeOfflineQueueItem(item)}</div>
         <div style="font-size:11px;color:var(--g4)">${new Date(item.ts).toLocaleString('nl-NL')}</div>
       </div>
+      ${(item.method==='POST'&&item.onzeker&&typeof tkPostIsIdempotent==='function'&&!tkPostIsIdempotent(item.table,item.body,item.resolution))?`<button onclick="vrijgevenOfflineQueueItem(${item.id})" class="btn btn-o btn-sm" style="margin-right:4px" aria-label="Toch versturen na controle">Toch versturen</button>`:''}
       <button onclick="removeOfflineQueueItem(${item.id})" style="background:none;border:none;color:var(--g3);font-size:16px;cursor:pointer;padding:4px">🗑</button>
     </div>`).join('');
+}
+// TK-REL-SEC-20: een vastgehouden onzeker item (insert zonder idempotente sleutel, antwoord verloren) bewust vrijgeven.
+// Werkt het BESTAANDE item bij (put op hetzelfde id): nooit een tweede item, de volgorde blijft gelijk. Fail-closed.
+async function offlineQueueVrijgeven(id){
+  try{
+    const db=await offlineDb();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(OFFLINE_STORE,'readwrite');
+      const st=tx.objectStore(OFFLINE_STORE);
+      const req=st.get(id); let ok=false;
+      req.onsuccess=()=>{ const it=req.result; if(it&&it.onzeker){ st.put(Object.assign({},it,{onzeker:false,vrijgegeven:true})); ok=true; } };
+      req.onerror=()=>reject(req.error);
+      tx.oncomplete=()=>resolve(ok);
+      tx.onerror=()=>reject(tx.error);
+      tx.onabort=()=>reject(tx.error||new Error('queue_put_aborted'));
+    });
+  }catch(e){console.error('offlineQueueVrijgeven',e);return false;}
+}
+async function vrijgevenOfflineQueueItem(id){
+  let item=null; try{ item=(await tkLeesWachtrijStrikt()).find(i=>i.id===id)||null; }catch(_){ toast('Offline-wachtrij niet leesbaar — niets verstuurd');return; }
+  if(!tkIsEigenWachtrijItem(item)){ toast('Dit item hoort niet bij jouw account — niets verstuurd');return; }
+  if(!await confirmModal('Controleer eerst of het er al staat. Staat het er niet, verstuur het dan opnieuw. Staat het er wel, dan ontstaat een dubbele rij.',{title:'Toch versturen?',okLabel:'Versturen'}))return;
+  if(await offlineQueueVrijgeven(id)!==true){ toast('Vrijgeven mislukt — er is niets verstuurd');return; }
+  updateOfflineBadge();
+  try{ await flushOfflineQueue(); }catch(_){}
+  renderOfflineQueueModal();
 }
 async function removeOfflineQueueItem(id){
   // TK-REL-SEC-03: alleen een eigen item; een item van een ander of onbekend account blijft bewaard.
@@ -12581,8 +12736,9 @@ async function intakeConfirm(btn){
   try{
     atleet=ocore().toAtleet(cand,atleet);
     localStorage.setItem('tk_atleet',JSON.stringify(atleet));
-    if(uid)await sbUpsert('atleet_profiel',{...atleet,user_id:uid});
-    if(uid)await sbUpsert('training_context',ocore().toTrainingContextRow(cand,uid));
+    // TK-REL-SEC-17: alle intake-writes horen bij uid (de gebruiker die de intake bevestigde).
+    if(uid)await sbUpsert('atleet_profiel',{...atleet,user_id:uid},{uid});
+    if(uid)await sbUpsert('training_context',ocore().toTrainingContextRow(cand,uid),{uid});
     // Coach-voorkeuren (presentatie-only) device-lokaal bewaren — geen schemawijziging, geen tweede source of truth.
     const prefs=ocore().toCoachPrefs(cand);
     localStorage.setItem('tk_coach_style',prefs.coach_style);
@@ -12597,11 +12753,11 @@ async function intakeConfirm(btn){
     for(let gi=0;gi<goals.length;gi++){
       const gk=JSON.stringify([goals[gi].type,goals[gi].naam||null,goals[gi].doelwaarde==null?null:goals[gi].doelwaarde]);
       if(intakeState.goalsOpgeslagen[gk])continue;
-      if(await sbPostQ('goals',goals[gi])) intakeState.goalsOpgeslagen[gk]=1; else _goalsNietOpgeslagen++;
+      if(await sbPostQ('goals',goals[gi],uid?{uid}:undefined)) intakeState.goalsOpgeslagen[gk]=1; else _goalsNietOpgeslagen++;
     }
     if(_goalsNietOpgeslagen) toast(_goalsNietOpgeslagen===1?'Eén doel is niet opgeslagen — voeg het later toe via Doelen':_goalsNietOpgeslagen+' doelen zijn niet opgeslagen — voeg ze later toe via Doelen');
     const conds=ocore().toConditions(cand);
-    for(const c of conds){await sbPost('athlete_conditions',c);}
+    for(const c of conds){await sbPost('athlete_conditions',c,uid?{uid}:undefined);}
     localStorage.setItem('tk_onboarding_done','1');
     intakeValueCTA(cand);
   }catch(e){
@@ -14862,7 +15018,8 @@ async function runningConfirmFinish(){
       // B1 Structured Intervals: plan<->actual-koppeling. NULL voor legacy/ad-hoc runs (geen fake instance).
       training_instance_id:(_runningPreviewConfig&&_runningPreviewConfig.instanceId)||null
     };
-    const savedActivity=await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)});
+    // TK-REL-SEC-18: een netwerkfout na de insert maakt de uitkomst onzeker; de dedupe_key-lookup hieronder beslist.
+    try{ await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)}); }catch(_onzeker){}
     let activityId=null;
     try{
       const rows=await sbGet('activities',`&dedupe_key=eq.${encodeURIComponent(dedupeKey)}&limit=1`);
@@ -16969,7 +17126,8 @@ async function cyclingConfirmFinish(){
       is_max_effort:isMaxEffort,
       rpe:isFinite(rpeWaarde)&&rpeWaarde>=0&&rpeWaarde<=10?rpeWaarde:null
     };
-    await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)});
+    // TK-REL-SEC-18: een netwerkfout na de insert maakt de uitkomst onzeker; de dedupe_key-lookup hieronder beslist.
+    try{ await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)}); }catch(_onzeker){}
     let activityId=null;
     try{
       const rows=await sbGet('activities',`&dedupe_key=eq.${encodeURIComponent(dedupeKey)}&limit=1`);
@@ -17489,7 +17647,8 @@ async function swimmingConfirmFinish(){
       is_max_effort:isMaxEffort,
       rpe:isFinite(rpeWaarde)&&rpeWaarde>=0&&rpeWaarde<=10?rpeWaarde:null
     };
-    await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)});
+    // TK-REL-SEC-18: een netwerkfout na de insert maakt de uitkomst onzeker; de dedupe_key-lookup hieronder beslist.
+    try{ await fetch(`${SB_URL}/rest/v1/activities`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify(payload)}); }catch(_onzeker){}
     let activityId=null;
     try{
       const rows=await sbGet('activities',`&dedupe_key=eq.${encodeURIComponent(dedupeKey)}&limit=1`);
@@ -18915,15 +19074,45 @@ async function opslaanProgramma(){
   if(programmaOpslaanBezig)return;
   const c=window._progConcept;
   if(!c)return;
+  // TK-REL-SEC-18: hervatbaar en idempotent opslaan. Het voorstel onthoudt (c._opslag) welk programma, welke blokken
+  // en welke oefeningrijen al op de server staan. Een nieuwe poging na een (deels) mislukte of onzekere poging slaat
+  // alleen de rest op: geen tweede programma, geen dubbel blok, geen dubbele oefening. Na een poging waarvan de
+  // uitkomst onbekend is (verloren antwoord) wordt eerst teruggelezen of de rij al bestaat.
+  // TK-REL-SEC-17: alle writes horen bij de gebruiker voor wie het voorstel is gemaakt.
+  const _uid=(typeof tkHuidigeUid==='function')?tkHuidigeUid():undefined;
+  const op=c._opslag||(c._opslag={uid:_uid,startDate:td(),progId:null,progPoging:false,blokken:{},blokPoging:{}});
+  if(op.uid!==_uid){window._progConcept=null;toast('Dit programmavoorstel hoort bij een ander account — genereer het opnieuw');return;}
+  const _bind={uid:_uid};
   programmaOpslaanBezig=true;
   window._progConcept=null; // meteen wissen — een eventuele tweede tap heeft dan niets meer om op te slaan
   const btn=document.getElementById('prog-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
   try{
-  const startDate=td();
+  const startDate=op.startDate;
   const plannedDates=computeBlockPlannedDates(startDate,c.blocks.length,c.schemaType,c.weekdagen,c.dagenPerWeek);
-  const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null,duur_minuten:c.duur||null,duur_overrides:(c.duurOverrides&&Object.keys(c.duurOverrides).length)?c.duurOverrides:null,event_date:c.eventDate||null,event_name:c.eventName||null});
-  const progId=prog?.[0]?.id;
+  // TK-REL-SEC-20: lezen dat mislukt (sbGetOrFail) of tijdens een accountwissel gebeurt, telt nooit als "bestaat niet".
+  const _zelfde=()=>(typeof tkHuidigeUid!=='function')||tkHuidigeUid()===_uid;
+  const _stop=(m)=>{ window._progConcept=c; toast(m); };
+  const _filter='&naam=eq.'+encodeURIComponent(c.naam)+'&start_date=eq.'+startDate;
+  if(!op.progId&&!op.bestondAl){
+    // Vóór de eerste insert vastleggen welke programma's met deze naam en startdatum al bestaan: een latere
+    // terugleescontrole herkent alleen een NIEUW programma als het onze, nooit een bestaand programma.
+    const vooraf=await sbGetOrFail('programs',_filter);
+    if(vooraf.failed||!_zelfde()){_stop('Opslaan gestopt: kon niet controleren of dit programma al bestaat — probeer het zo opnieuw');return;}
+    op.bestondAl=(vooraf.rows||[]).map(p=>String(p.id));
+  }
+  if(!op.progId&&op.progPoging){
+    const nu=await sbGetOrFail('programs',_filter+'&order=id.asc');
+    if(nu.failed||!_zelfde()){_stop('Opslaan gestopt: kon niet controleren of de vorige poging is aangekomen — probeer het zo opnieuw');return;}
+    const nieuw=(nu.rows||[]).filter(p=>p&&p.id!=null&&op.bestondAl.indexOf(String(p.id))<0);
+    if(nieuw.length)op.progId=nieuw[0].id;
+  }
+  if(!op.progId){
+    op.progPoging=true;
+    const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null,duur_minuten:c.duur||null,duur_overrides:(c.duurOverrides&&Object.keys(c.duurOverrides).length)?c.duurOverrides:null,event_date:c.eventDate||null,event_name:c.eventName||null},_bind);
+    op.progId=prog?.[0]?.id||null;
+  }
+  const progId=op.progId;
   if(!progId){window._progConcept=c; /* TK-REL-SEC-15: AI-concept niet kwijtraken; opnieuw opslaan blijft mogelijk */ console.error('opslaanProgramma: geen progId terug');toast('Opslaan mislukt bij het programma zelf — check console (F12) voor details');return;}
   // Elke insert wordt nu individueel gecontroleerd — voorheen faalde een oefening soms
   // stil (bv. bij een onverwacht datatype voor cardio-oefeningen als "Duurloop") zonder
@@ -18931,24 +19120,40 @@ async function opslaanProgramma(){
   let blockErrors=0, exErrors=0;
   for(let i=0;i<c.blocks.length;i++){
     const b=c.blocks[i];
-    const inserted=await sbPostReturning('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:plannedDates[i]});
-    const blockId=inserted?.[0]?.id;
-    if(!blockId){blockErrors++;console.error('opslaanProgramma: blok',i+1,'mislukt, resultaat:',inserted);continue;}
-    let sortOrder=0;
-    for(const o of b.oefeningen){
-      const ok=await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:parseInt(o.sets)||null,reps:o.reps!=null?String(o.reps):null,rpe_target:o.rpe!=null?String(o.rpe):null});
-      if(!ok){exErrors++;console.error('opslaanProgramma: oefening mislukt in blok',i+1,o);}
+    let blockId=op.blokken[i]||null;
+    if(!blockId&&op.blokPoging[i]){
+      const bekend=Object.keys(op.blokken).map(k=>op.blokken[k]);
+      const lees=await sbGetOrFail('program_blocks','&program_id=eq.'+progId+'&week_nr=eq.'+b.week_nr+'&planned_date='+(plannedDates[i]?'eq.'+plannedDates[i]:'is.null')+(bekend.length?'&id=not.in.('+bekend.join(',')+')':'')+'&order=id.asc&limit=1');
+      if(lees.failed||!_zelfde()){blockErrors++;continue;} // TK-REL-SEC-20: onbekend = niet opnieuw invoegen
+      if(lees.rows[0]&&lees.rows[0].id!=null)blockId=lees.rows[0].id;
+    }
+    if(!blockId){
+      op.blokPoging[i]=true;
+      const inserted=await sbPostReturning('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:plannedDates[i]},_bind);
+      blockId=inserted?.[0]?.id||null;
+    }
+    if(!blockId){blockErrors++;console.error('opslaanProgramma: blok',i+1,'mislukt');continue;}
+    op.blokken[i]=blockId;
+    for(let j=0;j<b.oefeningen.length;j++){
+      const o=b.oefeningen[j];
+      if(o._opgeslagen)continue; // al bevestigd bij een eerdere poging
+      if(!o._rijId)o._rijId=newClientRowId(); // vaste client-id per oefeningrij: een herhaling werkt dezelfde rij bij
+      const ok=await sbUpsert('program_block_exercises',{id:o._rijId,program_block_id:blockId,exercise_id:o.exercise_id,sort_order:j,sets:parseInt(o.sets)||null,reps:o.reps!=null?String(o.reps):null,rpe_target:o.rpe!=null?String(o.rpe):null},_bind);
+      if(ok)o._opgeslagen=true; else {exErrors++;console.error('opslaanProgramma: oefening mislukt in blok',i+1,o.exercise_id);}
     }
   }
-  closeModal('m-programma-gen');
   if(blockErrors||exErrors){
-    toast(`Opgeslagen met fouten: ${blockErrors} blok(ken) en ${exErrors} oefening(en) niet gelukt — check console (F12)`);
-  }else{
-    toast('Programma opgeslagen');
+    window._progConcept=c; // hervatbaar: een nieuwe tik slaat alleen de rest op
+    toast(`Programma deels opgeslagen: ${blockErrors} blok(ken) en ${exErrors} oefening(en) nog niet — tik opnieuw op opslaan om alleen de rest op te slaan`);
+    renderProgrammaList();
+    return;
   }
+  closeModal('m-programma-gen');
+  toast('Programma opgeslagen');
   renderProgrammaList();
   refreshHome();
   }catch(e){
+    window._progConcept=c;
     console.error('opslaanProgramma: onverwachte fout:',e);
     toast('Opslaan mislukt door een fout — check console (F12)');
   }finally{
@@ -19170,13 +19375,14 @@ async function renderKalender(){
     ${agenda}`;
 }
 async function deleteProgramma(progId){
+  const _bind={uid:(typeof tkHuidigeUid==='function')?tkHuidigeUid():undefined}; // TK-REL-SEC-17: vóór de bevestigingsvraag vastgelegd
   if(!await confirmModal('Dit kan niet ongedaan worden gemaakt.',{title:'Programma verwijderen',okLabel:'Verwijderen',danger:true}))return;
   const blocks=await sbGet('program_blocks','&program_id=eq.'+progId);
   // TK-REL-SEC-15: kinderen eerst; bij de eerste mislukte stap stoppen (programma blijft staan) en dat melden.
   let _ok=true;
-  for(const b of blocks){ if(!await sbDel('program_block_exercises','program_block_id=eq.'+b.id)){_ok=false;break;} }
-  if(_ok)_ok=await sbDel('program_blocks','program_id=eq.'+progId);
-  if(_ok)_ok=await sbDel('programs','id=eq.'+progId);
+  for(const b of blocks){ if(!await sbDel('program_block_exercises','program_block_id=eq.'+b.id,_bind)){_ok=false;break;} }
+  if(_ok)_ok=await sbDel('program_blocks','program_id=eq.'+progId,_bind);
+  if(_ok)_ok=await sbDel('programs','id=eq.'+progId,_bind);
   programBlockExCache={};
   if(!_ok){toast('Programma niet (volledig) verwijderd — probeer het opnieuw');renderProgrammaList();return;}
   toast('Programma verwijderd');
@@ -19266,7 +19472,7 @@ const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',heade
   if(!newBlocks.length||incompleteWeeks.some(w=>!_gegenereerd.has(w))){toast('Her-genereren gestopt — je bestaande schema is ongewijzigd');renderProgrammaList();return;}
   if(!_genActief()){toast('Her-genereren gestopt: account gewisseld — er is niets gewijzigd');return;}
   for(const b of incomplete){
-    if(!_genActief()||!(await sbDel('program_block_exercises','program_block_id=eq.'+b.id))||!(await sbDel('program_blocks','id=eq.'+b.id))){
+    if(!_genActief()||!(await sbDel('program_block_exercises','program_block_id=eq.'+b.id,{uid:_genUid}))||!(await sbDel('program_blocks','id=eq.'+b.id,{uid:_genUid}))){
       toast('Oude weken konden niet (volledig) worden verwijderd — er is niets nieuws toegevoegd');renderProgrammaList();return;
     }
   }
@@ -19275,13 +19481,13 @@ const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',heade
   for(let i=0;i<newBlocks.length;i++){
     if(!_genActief()){_mislukt+=newBlocks.length-i;break;}
     const b=newBlocks[i];
-    const inserted=await sbPostReturning('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:plannedDates[i]});
+    const inserted=await sbPostReturning('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:plannedDates[i]},{uid:_genUid});
     const blockId=inserted?.[0]?.id;
     if(!blockId){_mislukt++;continue;}
     let sortOrder=0,_blokOk=true;
     for(const o of b.oefeningen){
       if(!_genActief()){_blokOk=false;break;}
-      if(!await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:o.sets||null,reps:o.reps?String(o.reps):null,rpe_target:o.rpe?String(o.rpe):null}))_blokOk=false;
+      if(!await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:o.sets||null,reps:o.reps?String(o.reps):null,rpe_target:o.rpe?String(o.rpe):null},{uid:_genUid}))_blokOk=false;
     }
     if(_blokOk)_opgeslagen++; else _mislukt++;
   }
@@ -30722,7 +30928,10 @@ async function sendMsg(txt){
     return;
   }
   addMsg('user',txt);chatHist.push({role:'user',content:txt});
-  await sbPost('chat_history',{role:'user',content:txt,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
+  // TK-REL-SEC-17: het AI-antwoord is op de gegevens van deze gebruiker gebaseerd; chat_history heeft
+  // set_user_id_from_auth. Na een accountwissel tijdens het wachten mag het nooit bij een ander account belanden.
+  const _bind={uid:(typeof tkHuidigeUid==='function')?tkHuidigeUid():undefined};
+  await sbPost('chat_history',{role:'user',content:txt,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null},_bind);
   const tid=addMsg('coach','<span class="tk-typing"><span></span><span></span><span></span></span>',true,true);
   try{
     const sys=await buildCtx(activeSessionCtx);
@@ -30741,10 +30950,10 @@ async function sendMsg(txt){
       const opgeslagenTekst=check.valid?r:AIOutputContract.safeCoachFallback();
       renderCoachReply(r);
       chatHist.push({role:'assistant',content:opgeslagenTekst});
-      await sbPost('chat_history',{role:'assistant',content:opgeslagenTekst,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
+      await sbPost('chat_history',{role:'assistant',content:opgeslagenTekst,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null},_bind);
       if(!activeSessionId){ // opschonen alleen voor het algemene gesprek (bestaand gedrag)
         const all=await sbGet('chat_history','&session_id=is.null&order=created_at.asc');
-        if(all.length>40)for(const x of all.slice(0,all.length-40))await sbDel('chat_history','id=eq.'+x.id);
+        if(all.length>40)for(const x of all.slice(0,all.length-40))await sbDel('chat_history','id=eq.'+x.id,_bind);
       }
     }
   }catch(e){removeMsg(tid);addMsg('coach','Geen verbinding — ik kan de coach nu niet bereiken. Controleer je internet en probeer het opnieuw.');}
@@ -32202,15 +32411,20 @@ function finishSessionNoSave(){
 // training aan te maken.
 async function permanentlyAddExtras(){
   const t=curT;
+  // TK-REL-SEC-17: alle writes horen bij de gebruiker die de training afrondde (training_exercises en
+  // program_block_exercises hebben de insert-trigger set_user_id_from_auth).
+  const _bind={uid:(typeof tkHuidigeUid==='function')?tkHuidigeUid():undefined};
   const extras=sessionExtra.filter(e=>e._t===t&&!e._preloaded);
   if(!extras.length){closeModal('m-save-as-training');finishSessionNoSave();return;}
   await ensureVasteTrainingenLoaded();
+  // TK-REL-SEC-20: ook de route via eigen trainingen (wachtrij-helpers) mag na een accountwissel niets meer doen.
+  if(_bind.uid!==undefined&&tkHuidigeUid()!==_bind.uid){toast('Account gewisseld — er is niets toegevoegd');return;}
   let _mislukt=0;
   if(vasteTrainingen.some(v=>v.id===t)){
     const base=(TRAIN_CFG[t]||[]).length;
     let sortOrder=base;
     for(const e of extras){
-      if(!await sbUpsert('training_exercises',{id:t+'_'+e.id,exercise_id:e.id,training_ref:t,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe:e.rpe||null,wu:0}))_mislukt++;
+      if(!await sbUpsert('training_exercises',{id:t+'_'+e.id,exercise_id:e.id,training_ref:t,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe:e.rpe||null,wu:0},_bind))_mislukt++;
     }
   } else if(t.startsWith('custom_')){
     const id=t.slice('custom_'.length);
@@ -32230,10 +32444,17 @@ async function permanentlyAddExtras(){
     }
   } else if(t.startsWith('prog_')){
     const blockId=t.slice('prog_'.length);
-    const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+blockId);
+    // TK-REL-SEC-20: een leesfout mag niet als "blok is leeg" gelden (dan zou de dedupe niets doen).
+    const _lees=await sbGetOrFail('program_block_exercises','&program_block_id=eq.'+blockId);
+    if(_lees.failed){toast('Kon het programmablok niet controleren — er is niets toegevoegd, probeer het opnieuw');return;}
+    const rows=_lees.rows;
+    // TK-REL-SEC-18: een oefening die al in het blok staat (eerdere, deels geslaagde poging of verloren antwoord) wordt
+    // niet nog eens toegevoegd. Zo is een herhaling idempotent.
+    const _alInBlok=new Set(rows.map(r=>r.exercise_id));
     let sortOrder=rows.length;
     for(const e of extras){
-      if(!await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:e.id,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe_target:e.rpe||null}))_mislukt++;
+      if(_alInBlok.has(e.id))continue;
+      if(!await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:e.id,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe_target:e.rpe||null},_bind))_mislukt++; else _alInBlok.add(e.id);
     }
     delete programBlockExCache[blockId];
   }

@@ -1,5 +1,24 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-15..20 Resterende P1's schrijfketen (19 oktober 2026)
+
+- **Accountisolatie.** Directe REST-helpers kunnen een write binden aan de gebruiker die de handeling startte (`opts.uid`). `sbFetch` verstuurt nooit een write met een payload-`user_id` van een andere gebruiker. `sbDel` en `sbUpsert` lopen via `sbFetch`. Gebonden flows: programma opslaan en opnieuw genereren, extra oefeningen, gewicht, intake, AI-coach-chat, seed en migratie, vaste trainingen, programma verwijderen.
+- **Idempotency.**
+  - `exercises`: 409 wordt alleen na teruglezen als bevestigd geteld.
+  - `exercise_goals`: `on_conflict`.
+  - Programma opslaan is hervatbaar (vaste client-id per oefeningrij, terugleescontrole die bij twijfel weigert).
+  - Extra oefeningen worden niet dubbel toegevoegd.
+  - Hardlopen, fietsen en zwemmen afronden vangt een verloren antwoord op.
+- **Time-outs en onzekerheid.**
+  - `sbPatchQ`, `sbDelQ` en `sbRpcQ` wachten begrensd.
+  - De uitkomst onderscheidt definitief, tijdelijk en onzeker (`onzeker`).
+  - Een onzekere insert zonder idempotente sleutel wordt niet automatisch herhaald ("Toch versturen" na controle).
+  - Een latere write haalt een wachtende write op dezelfde rij niet in.
+  - De replay van een insert is een no-op.
+- **Matrix.** P1 20/20 opgelost; status per rij reproduceerbaar via `node tools/audit-matrix-status.js`.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470262.
+- **Rapport.** `docs/TK_P1_REST_SCHRIJFKETEN_20261019.md`; plan voor fase 2: `docs/TK_SERVER_READ_AFTER_WRITE_FASE2_PLAN_20261019.md`.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-07..14 P0-heracceptatie #557/#558 (19 oktober 2026)
 
 - **P0 opgelost.** Import (JSON/Concept2/HRV) bindt alle writes aan de gebruiker die de import startte; na een accountwissel wordt niets meer geschreven.

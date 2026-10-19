@@ -91,13 +91,13 @@ async function main(){
       check(st.toasts.includes('Permanent toegevoegd aan training')===gelukt,'W10c eigen training: eerlijke melding '+T); }
     // W9
     { const concept={naam:'P',blocks:[]};
-      const {c,st}=ctx(fn('async function opslaanProgramma(){'),{programmaOpslaanBezig:false,_progConcept:concept,td:()=>'2026-10-19',
+      const {c,st}=ctx(fn('async function opslaanProgramma(){'),{programmaOpslaanBezig:false,_progConcept:concept,td:()=>'2026-10-19',sbGetOrFail:async()=>({failed:false,rows:[]}),
         sbPostReturning:async()=>gelukt?[{id:'p1'}]:null,sbPost:async()=>true,computeBlockPlannedDates:()=>[]});
       await c.opslaanProgramma();
       check(gelukt||c._progConcept===concept,'W9 programma opslaan mislukt: AI-concept blijft bewaard '+T); }
     // W10
     { const {c,st}=ctx(fn('async function permanentlyAddExtras(){'),{curT:'prog_b1',sessionExtra:[{_t:'prog_b1',id:'e1'},{_t:'prog_b1',id:'e2'}],
-        sbGet:async()=>[],sbPost:async()=>gelukt,TRAIN_CFG:{}});
+        sbGet:async()=>[],sbGetOrFail:async()=>({failed:false,rows:[]}),sbPost:async()=>gelukt,TRAIN_CFG:{}});
       await c.permanentlyAddExtras();
       check(st.toasts.includes('Permanent toegevoegd aan training')===gelukt&&(gelukt||st.toasts.some(t=>/niet opgeslagen/.test(t))),'W10 extra oefeningen: eerlijke telling bij falen '+T); }
   }

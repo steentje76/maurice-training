@@ -4,20 +4,30 @@
 
 **Scope:** alle aanroepen van sbPostQ, sbPostQOpgeslagen, sbPatchQ, sbDelQ, sbRpcQ, sbPost, sbPostReturning, sbPatch, sbDel, sbUpsert, sbRpc, upsertWeightLog, upsertHrvLog en tkImportHrvRows, plus directe `fetch` POST/PATCH/DELETE naar `/rest/v1/` of `/.netlify/functions/`. Daarnaast vijf wrapper-aanroepen (writeSessionRow, writeRaceSegmentRow) die P0/P1-relevant zijn. Niet opgenomen: auth- en storage-endpoints, een commentaarregel (11335) en de interne aanroep in sbPostQOpgeslagen (9338). Totaal: 247 rijen.
 
-## Status na herstel (Draft-PR #560, 19-10-2026)
+## Status na herstel (bijgewerkt 19-10-2026, P1-rest)
 
-| Prio | Bevinding | Herstel |
+De classificatie hieronder (kolommen Klasse, Prio en Bewijs) is de baseline van 429d6c0/7ee0828 en is niet aangepast. Elke rij heeft in `TK_WRITE_CALLER_MATRIX_20261019.json` de velden `status` (`opgelost` / `deels` / `open` / `geen defect`), `fixedIn` (commits), `rest` en zo nodig `herclassificatie`. De tellingen en de tabel "Status per HEAD" hieronder komen rechtstreeks uit die JSON. Ze zijn reproduceerbaar met:
+
+```
+node tools/audit-matrix-status.js        # JSON: tellingen, koppeling aan de huidige index.html, onbekende aanroepen
+node tools/audit-matrix-status.js --md   # de tabellen in dit document
+```
+
+| Herstel | Commit | PR |
 |---|---|---|
-| P0 | `syncCustomTrainingsFromSupabase`: eerste upload (legacy) negeerde het resultaat → dataverlies | `bb354ad` (idempotente ouder-kindroute, markering, volgorde, identiteitsbinding) |
-| P0 | `heergenereerResterendeWeken`: schema verwijderd vóór de AI-generatie | `bb354ad` (pas vervangen na volledige generatie, eerlijke telling, identiteitsbinding) |
-| P0 | `finishSession` / Guided / HYROX: lopende training na uitloggen of eigenaarwissel onder het nieuwe account afgerond | `45f5e33` (uitvoering vergeten bij eigenaarwissel, bevestiging bij uitloggen, tab-wissel → herladen) |
-| P1 | `afrondenRunningActivity`: replay na verloren antwoord → dubbele activiteit | `9994705` (client-id). Rest: geen busy-guard (dubbel tikken) — open |
-| P1 | overige 19 FALSE-SUCCESS/DATA-LOSS/DUPLICATE-items | **open** — vervolg-Draft-PR (zie `docs/TK_P0_REACCEPTANCE_557_558_20261019.md` §10) |
-| — | imports (`importFromFile`, `tkConcept2Import`, `tkImportHrvRows`) | `1e610e8` |
+| P0: eerste upload eigen trainingen, opnieuw genereren van weken | `bb354ad` | #560 |
+| P0: lopende training, Guided of HYROX na een eigenaarwissel | `45f5e33` | #560 |
+| Imports gebonden aan de startende gebruiker | `1e610e8` | #560 |
+| activities en activity_laps idempotent | `9994705` | #560 |
+| P1: eerlijke meldingen na een mislukte write (10 schermen) | `7b19a35` | #562 |
+| Directe REST-writes en flows met meerdere awaits gebonden aan de startende gebruiker | `22bfd90` | deze PR |
+| Idempotency: exercises (409 → teruglezen), exercise_goals (`on_conflict`), programma opslaan hervatbaar, extra oefeningen zonder dubbel, duursport na een verloren antwoord | `77aa953` | deze PR |
+| Time-outs voor sbPatchQ, sbDelQ en sbRpcQ; status "onzeker"; geen automatische tweede niet-idempotente insert; extra tabellen met client-id | `c6b15e1` | deze PR |
+| Reviewbevindingen: volgorde per rij, replay van een insert is een no-op, verificatie die bij twijfel weigert, symptomen niet overschrijven, 502/504 zijn onzeker, "Toch versturen" | `83fcc6d` | deze PR |
 
-Opnieuw genereren van de ruwe inventaris: `node tools/audit-write-callers.js` (JSON op stdout; classificatie blijft handwerk met bewijs per regel).
+**P1: 20 van 20 opgelost.** Herclassificaties: `deleteVasteTraining` bleek ook ACCOUNT-RISK te hebben (`training_ref=A` bestaat bij elke gebruiker) en `sendMsg` ook (het AI-antwoord van A kwam na een wissel in de chatgeschiedenis van B). Beide zijn hersteld in `22bfd90`.
 
-## Telling
+## Telling van de classificatie (baseline, ongewijzigd)
 
 | Klasse | Aantal |
 |---|---|
@@ -289,7 +299,115 @@ Secundaire labels: ACCOUNT-RISK 13, DATA-LOSS 4, DUPLICATE-RISK 19, FALSE-SUCCES
 | 35933 | wearableSyncSilent | fetch POST | wearable-sync | wearable/Concept2 | SAFE | P3 | stil |
 | 36219 | hyroxCorrigeerLaatste | sbPatch | race_segments | training/sets/history | SAFE | P3 | Niet gequeued: offline → "Kon niet bijwerken" |
 
-## Analyse van de importpaden (meerdere opeenvolgende writes)
+## Status per HEAD (bijgewerkt 19-10-2026)
+
+Uitvoer van `node tools/audit-matrix-status.js --md`. De kolom Regel verwijst naar de index.html van deze branch. Een streepje betekent: een wrapper-aanroep of een aanroep naar een netlify-functie die de ruwe inventaris niet als REST-schrijfaanroep ziet. Rijen met status `geen defect` (P3 SAFE) zijn weggelaten.
+
+| Prio | opgelost | deels | open | geen defect | Totaal |
+|---|---|---|---|---|---|
+| P0 | 8 | 0 | 0 | 0 | 8 |
+| P1 | 20 | 0 | 0 | 0 | 20 |
+| P2 | 13 | 11 | 25 | 0 | 49 |
+| P3 | 13 | 0 | 2 | 155 | 170 |
+
+Rijen: 247. Aanroep bestaat niet meer: 2. Gekoppeld aan een aanroep in de huidige index.html (zelfde tabel en helper, in volgorde): 193; niet door de ruwe inventaris gezien (wrapper zoals writeSessionRow/upsertWeightLog, of helper gewijzigd): 52. Aanroepen in index.html zonder matrixrij: 0.
+
+| Regel (HEAD) | Prio | Functie | Helper | Tabel | Klasse | Status | Herstel | Rest |
+|---|---|---|---|---|---|---|---|---|
+| verwijderd | P0 | syncCustomTrainingsFromSupabase | sbPost | custom_trainings | DATA-LOSS / ACCOUNT-RISK | opgelost | `bb354ad` | Kale sbPost bestaat niet meer: de eerste upload loopt via tkCustomTrainingHerstel → sbPostQ (client-id, ouder eerst, markering) (bb354ad) |
+| verwijderd | P0 | syncCustomTrainingsFromSupabase | sbPost | custom_training_exercises | DATA-LOSS / DUPLICATE-RISK | opgelost | `bb354ad` | Kale sbPost bestaat niet meer: de eerste upload loopt via tkCustomTrainingHerstel → sbPostQ (client-id, ouder eerst, markering) (bb354ad) |
+| — | P0 | finishSession | writeSessionRow→sbPostQ | sessions | ACCOUNT-RISK | opgelost | `45f5e33` |  |
+| — | P0 | finishSession | writeSessionRow→sbPostQ | sessions | ACCOUNT-RISK | opgelost | `45f5e33` |  |
+| — | P0 | hyroxFinishSegment | writeRaceSegmentRow→sbPostQ | race_segments | ACCOUNT-RISK | opgelost | `45f5e33` |  |
+| — | P0 | GW.persistToSessions | writeSessionRow→sbPostQ | sessions | ACCOUNT-RISK | opgelost | `45f5e33` |  |
+| 19475 | P0 | heergenereerResterendeWeken | sbDel | program_block_exercises | DATA-LOSS / ACCOUNT-RISK | opgelost | `bb354ad`, `22bfd90` |  |
+| 19475 | P0 | heergenereerResterendeWeken | sbDel | program_blocks | DATA-LOSS / ACCOUNT-RISK | opgelost | `bb354ad`, `22bfd90` |  |
+| 8052 | P1 | upsertExerciseGoalField | sbPatchQ | exercise_goals | FALSE-SUCCESS | opgelost | `7b19a35` |  |
+| 8060 | P1 | upsertExerciseGoalField | sbPostQ | exercise_goals | FALSE-SUCCESS / DUPLICATE-RISK | opgelost | `7b19a35`, `77aa953`, `83fcc6d` | on_conflict maakt replay idempotent; volgorde per rij voorkomt dat een getimede insert een latere PATCH terugdraait (83fcc6d) |
+| 8514 | P1 | saveVasteTrainingName | sbPatch | vaste_trainingen | FALSE-SUCCESS / DATA-LOSS | opgelost | `7b19a35`, `22bfd90` |  |
+| 8518 | P1 | saveVasteTrainingName | sbPost | vaste_trainingen | FALSE-SUCCESS / DATA-LOSS | opgelost | `7b19a35`, `22bfd90` |  |
+| 8537 | P1 | deleteVasteTraining | sbDel | training_exercises | FALSE-SUCCESS | opgelost | `7b19a35`, `22bfd90` | Herclassificatie: ACCOUNT-RISK gevonden en hersteld: training_ref=A bestaat bij elke gebruiker; na een wissel tijdens de bevestigingsvraag werd de training van B geleegd |
+| 8537 | P1 | deleteVasteTraining | sbDel | vaste_trainingen | FALSE-SUCCESS | opgelost | `7b19a35`, `22bfd90` |  |
+| 13144 | P1 | calendarFeedRevoke | sbPatchQ | calendar_feed_tokens | FALSE-SUCCESS | opgelost | `7b19a35` |  |
+| 15203 | P1 | afrondenRunningActivity | sbPostQ | activities | DUPLICATE-RISK | opgelost | `9994705` | Functie is onbereikbaar (geen UI-markup, fCriticalFlowResilience bevinding 2); de live afrondpaden hebben een busy-guard en dedupe_key (77aa953: verloren antwoord) |
+| 18498 | P1 | saveLosOefening | sbPostQ | exercises | DUPLICATE-RISK | opgelost | `77aa953`, `83fcc6d` |  |
+| 19112 | P1 | opslaanProgramma | sbPostReturning | programs | DATA-LOSS / ACCOUNT-RISK | opgelost | `7b19a35`, `77aa953`, `83fcc6d` |  |
+| 19383 | P1 | deleteProgramma | sbDel | program_block_exercises | FALSE-SUCCESS | opgelost | `7b19a35`, `22bfd90` |  |
+| 19384 | P1 | deleteProgramma | sbDel | program_blocks | FALSE-SUCCESS | opgelost | `7b19a35`, `22bfd90` |  |
+| 19385 | P1 | deleteProgramma | sbDel | programs | FALSE-SUCCESS | opgelost | `7b19a35`, `22bfd90` |  |
+| 19484 | P1 | heergenereerResterendeWeken | sbPostReturning | program_blocks | FALSE-SUCCESS / ACCOUNT-RISK | opgelost | `bb354ad`, `22bfd90` |  |
+| 19490 | P1 | heergenereerResterendeWeken | sbPost | program_block_exercises | FALSE-SUCCESS / DUPLICATE-RISK | opgelost | `bb354ad`, `22bfd90` | Geen herhaling binnen één run; een nieuwe hergeneratie vervangt de onvolledige blokken (geen dubbele rijen) |
+| 19659 | P1 | saveBlockExercise | sbPatch | program_block_exercises | FALSE-SUCCESS / DATA-LOSS | opgelost | `7b19a35` |  |
+| 19668 | P1 | deleteBlockExercise | sbDel | program_block_exercises | FALSE-SUCCESS | opgelost | `7b19a35` |  |
+| 32427 | P1 | permanentlyAddExtras | sbUpsert | training_exercises | FALSE-SUCCESS / ACCOUNT-RISK | opgelost | `7b19a35`, `22bfd90`, `83fcc6d` |  |
+| 32457 | P1 | permanentlyAddExtras | sbPost | program_block_exercises | FALSE-SUCCESS / DUPLICATE-RISK | opgelost | `7b19a35`, `22bfd90`, `77aa953`, `83fcc6d` |  |
+| 38181 | P1 | deleteWorkout | sbDelQ | custom_trainings | FALSE-SUCCESS | opgelost | `7b19a35` |  |
+| — | P2 | tkConcept2Import | writeSessionRow→sbPostQ | sessions | SAFE / DUPLICATE-RISK | deels | `1e610e8` | Identiteitsbinding opgelost (1e610e8). Rest: dedupe alleen op [c2:id] in serversessies; gequeuede rijen worden niet gezien, dus een herhaalde import terwijl offline kan dupliceren (open, geen UI-aanroeper) |
+| — | P2 | saveHRV | upsertHrvLog | rpc upsert_daily_health (via upsertHrvLog) | FALSE-SUCCESS / ACCOUNT-RISK | open |  |  |
+| — | P2 | saveHRV | upsertWeightLog | weight_log (via upsertWeightLog) | FALSE-SUCCESS | open |  |  |
+| — | P2 | saveWeight | upsertWeightLog | weight_log (via upsertWeightLog) | FALSE-SUCCESS | open |  |  |
+| — | P2 | saveBC | upsertWeightLog | weight_log (via upsertWeightLog) | FALSE-SUCCESS | open |  |  |
+| — | P2 | importFromFile | tkImportHrvRows | rpc upsert_daily_health (via tkImportHrvRows) | SAFE | opgelost | `1e610e8` |  |
+| — | P2 | pchkSubmit | upsertHrvLog | rpc upsert_daily_health (via upsertHrvLog) | FALSE-SUCCESS | open |  |  |
+| 8315 | P2 | loadTrainCfg | sbUpsert | training_exercises | SAFE / ACCOUNT-RISK | deels | `22bfd90` | Accountbinding opgelost. Datamodel: training_exercises.id (A_squat) is globaal uniek; de seed van een tweede gebruiker botst (bestaand, P2) |
+| 8319 | P2 | loadTrainCfg | sbUpsert | exercises | SAFE / ACCOUNT-RISK | opgelost | `22bfd90` |  |
+| 8377 | P2 | migreerABNaarVasteTrainingen | sbPost | vaste_trainingen | SAFE / ACCOUNT-RISK | deels | `22bfd90` | Accountbinding opgelost. vaste_trainingen.id (A/B) is globaal uniek; migratie van een tweede gebruiker botst (bestaand, P2) |
+| 8568 | P2 | toggleFavorite | sbDel | exercise_favorites | FALSE-SUCCESS | open |  |  |
+| 8571 | P2 | toggleFavorite | sbPost | exercise_favorites | FALSE-SUCCESS / DUPLICATE-RISK | open |  |  |
+| 9006 | P2 | upsertHrvLog | sbRpc | upsert_daily_health | FALSE-SUCCESS | open |  |  |
+| 9100 | P2 | tkImportHrvRows | sbRpc | upsert_daily_health | SAFE | opgelost | `1e610e8` |  |
+| 9112 | P2 | upsertWeightLog | sbPatch | weight_log | FALSE-SUCCESS / DUPLICATE-RISK | deels | `22bfd90` | Accountbinding opgelost; resultaat nog steeds genegeerd en lees-dan-schrijf zonder unieke dag-sleutel (open) |
+| 9113 | P2 | upsertWeightLog | sbPost | weight_log | FALSE-SUCCESS / DUPLICATE-RISK | deels | `22bfd90` | Accountbinding opgelost; resultaat nog steeds genegeerd en lees-dan-schrijf zonder unieke dag-sleutel (open) |
+| 11074 | P2 | cyclusStartMenstruatie | sbPostQ | cycle_periods | SAFE / DUPLICATE-RISK | opgelost | `c6b15e1`, `83fcc6d` | Replay is ignore-duplicates (no-op), zodat een latere wijziging nooit wordt teruggedraaid (83fcc6d) |
+| 11132 | P2 | cyclusSlaSymptoomOp | sbPostQ | cycle_symptom_logs | SAFE / DUPLICATE-RISK | deels | `83fcc6d` | Bewust geen idempotente sleutel: merge-duplicates zou bij een leesfout alle symptomen van de dag overschrijven (review, 83fcc6d). Verloren antwoord → onzeker, vastgehouden in de wachtrij ("Toch versturen" na controle); een replay geeft anders 409 |
+| 12740 | P2 | intakeConfirm | sbUpsert | atleet_profiel | FALSE-SUCCESS / ACCOUNT-RISK | deels | `22bfd90` | Accountbinding opgelost; resultaat van de upsert wordt nog niet gecontroleerd (open) |
+| 12741 | P2 | intakeConfirm | sbUpsert | training_context | FALSE-SUCCESS / ACCOUNT-RISK | deels | `22bfd90` | Accountbinding opgelost; resultaat wordt nog niet gecontroleerd (open) |
+| 12756 | P2 | intakeConfirm | sbPostQ | goals | SAFE / DUPLICATE-RISK | deels | `c6b15e1`, `83fcc6d` | Geen automatische tweede write meer na een verloren antwoord (blijft als "mogelijk al opgeslagen" in de wachtrij); goals.id is identity, client-id vergt een schemabesluit |
+| 12760 | P2 | intakeConfirm | sbPost | athlete_conditions | FALSE-SUCCESS | deels | `22bfd90` | Accountbinding opgelost (athlete_conditions heeft set_user_id_from_auth); resultaat genegeerd (open) |
+| 13011 | P2 | saveNewGoal | sbPostQ | goals | SAFE / DUPLICATE-RISK | deels | `c6b15e1`, `83fcc6d` | Idem intakeConfirm/goals |
+| 13307 | P2 | saveAvailabilityPeriod | sbPostQ | availability_periods | SAFE / DUPLICATE-RISK | opgelost | `c6b15e1`, `83fcc6d` | Replay is ignore-duplicates (no-op), zodat een latere wijziging nooit wordt teruggedraaid (83fcc6d) |
+| 15022 | P2 | runningConfirmFinish | fetch POST | activities | SAFE | opgelost | `77aa953` | Netwerkfout na de insert wordt opgevangen; dedupe_key-lookup beslist |
+| 15654 | P2 | coachDeleteWorkoutFeedback | fetch DELETE | coach_workout_feedback | FALSE-SUCCESS | open |  |  |
+| 15691 | P2 | openCoachAthleteThread | fetch POST | message_threads | SAFE / DUPLICATE-RISK | open |  |  |
+| 15696 | P2 | openCoachAthleteThread | fetch POST | message_participants | DUPLICATE-RISK | open |  |  |
+| 15697 | P2 | openCoachAthleteThread | fetch POST | message_participants | DUPLICATE-RISK | open |  |  |
+| 15755 | P2 | coachDeletePrivateNote | fetch DELETE | coach_private_notes | FALSE-SUCCESS | open |  |  |
+| 16006 | P2 | socialCreateGroup | fetch POST | social_group_memberships | FALSE-SUCCESS | open |  |  |
+| 16596 | P2 | nutritionSaveEntry | sbPostQ | nutrition_entries | SAFE / DUPLICATE-RISK | open |  |  |
+| 17130 | P2 | cyclingConfirmFinish | fetch POST | activities | SAFE | opgelost | `77aa953` | Idem |
+| 17651 | P2 | swimmingConfirmFinish | fetch POST | activities | SAFE | opgelost | `77aa953` | Idem |
+| 17831 | P2 | saveHRV | sbPost | checkin_conditions | FALSE-SUCCESS | open |  |  |
+| 17866 | P2 | saveBC | sbPost | body_comp | FALSE-SUCCESS | open |  |  |
+| 19132 | P2 | opslaanProgramma | sbPostReturning | program_blocks | SAFE / ACCOUNT-RISK | opgelost | `77aa953`, `83fcc6d` |  |
+| 19141 | P2 | opslaanProgramma | sbPost | program_block_exercises | SAFE / DUPLICATE-RISK | opgelost | `77aa953`, `83fcc6d` | Nu sbUpsert met vaste client-id per oefeningrij (merge-duplicates): hervatbaar zonder dubbele rij |
+| 19431 | P2 | heergenereerResterendeWeken | sbPost | program_regeneration_log | SAFE | open |  |  |
+| 24965 | P2 | finishSession | sbPatchQ | program_blocks | SAFE | open |  |  |
+| 24977 | P2 | finishSession | sbPatchQ | planned_training_assignments | SAFE | open |  |  |
+| 26764 | P2 | deleteSessionEntry | sbDelQ | sessions | SAFE | open |  |  |
+| 30148 | P2 | delEx | sbPatch | exercises | FALSE-SUCCESS | open |  |  |
+| 30168 | P2 | saveNewEx | sbPost | exercises | DATA-LOSS | open |  |  |
+| 31117 | P2 | importFromFile | fetch POST | sessions | SAFE / FALSE-SUCCESS | opgelost | `1e610e8` |  |
+| 31122 | P2 | importFromFile | fetch POST | weight_log | SAFE / FALSE-SUCCESS | opgelost | `1e610e8` |  |
+| 31127 | P2 | importFromFile | fetch POST | body_comp | SAFE / FALSE-SUCCESS | opgelost | `1e610e8` |  |
+| 31198 | P2 | saveAtleet | sbUpsert | atleet_profiel | FALSE-SUCCESS / DATA-LOSS | open |  |  |
+| 32063 | P2 | pchkSubmit | sbPost | checkin_conditions | FALSE-SUCCESS | open |  |  |
+| 8322 | P3 | loadTrainCfg | sbPatch | exercises | SAFE | opgelost | `22bfd90` |  |
+| 13126 | P3 | calendarFeedGenerate | sbPostQ | calendar_feed_tokens | SAFE | opgelost | `c6b15e1`, `83fcc6d` | Client-id: een replay gaf voorheen een eeuwige 409 op de unieke actieve token Replay is ignore-duplicates (no-op), zodat een latere wijziging nooit wordt teruggedraaid (83fcc6d) |
+| 14223 | P3 | grantResearchConsent | sbPostQ | research_consents | SAFE | opgelost | `c6b15e1` |  |
+| 14229 | P3 | withdrawResearchConsent | sbPostQ | research_consents | SAFE | opgelost | `c6b15e1` |  |
+| 15037 | P3 | runningConfirmFinish | sbPostQ | activity_laps | SAFE | opgelost | `9994705` |  |
+| 17139 | P3 | cyclingConfirmFinish | sbPostQ | activity_laps | SAFE | opgelost | `9994705` |  |
+| 17660 | P3 | swimmingConfirmFinish | sbPostQ | activity_laps | SAFE | opgelost | `9994705` |  |
+| 27359 | P3 | voedingSaveTargets | sbPostQOpgeslagen | nutrition_targets | SAFE / DUPLICATE-RISK | opgelost | `c6b15e1`, `83fcc6d` | Replay is ignore-duplicates (no-op), zodat een latere wijziging nooit wordt teruggedraaid (83fcc6d) |
+| 29052 | P3 | voedingSubmitCorrection | sbPostQOpgeslagen | nutrition_nutrient_values | SAFE / DUPLICATE-RISK | opgelost | `c6b15e1` |  |
+| 30012 | P3 | savePeakGoal | sbPostQ | exercise_goals | SAFE / DUPLICATE-RISK | opgelost | `77aa953` |  |
+| 30934 | P3 | sendMsg | sbPost | chat_history | SAFE | opgelost | `22bfd90` | Herclassificatie: ACCOUNT-RISK gevonden en hersteld: het AI-antwoord voor A (op basis van A's gezondheidsdata) kwam na een accountwissel tijdens het wachten in de chatgeschiedenis van B (chat_history heeft set_user_id_from_auth) |
+| 30953 | P3 | sendMsg | sbPost | chat_history | SAFE | opgelost | `22bfd90` | Herclassificatie: ACCOUNT-RISK gevonden en hersteld: het AI-antwoord voor A (op basis van A's gezondheidsdata) kwam na een accountwissel tijdens het wachten in de chatgeschiedenis van B (chat_history heeft set_user_id_from_auth) |
+| 30956 | P3 | sendMsg | sbDel | chat_history | SAFE | opgelost | `22bfd90` | Herclassificatie: ACCOUNT-RISK gevonden en hersteld: het AI-antwoord voor A (op basis van A's gezondheidsdata) kwam na een accountwissel tijdens het wachten in de chatgeschiedenis van B (chat_history heeft set_user_id_from_auth) |
+| 31015 | P3 | clearChat | sbDel | chat_history | FALSE-SUCCESS | open |  |  |
+| 31019 | P3 | clearChat | sbDel | chat_history | FALSE-SUCCESS | open |  |  |
+
+## Analyse van de importpaden (meerdere opeenvolgende writes; historisch, HEAD 7ee0828)
 
 **Trigger-context.** In productie zet `set_user_id_from_auth()` `user_id := auth.uid()` op sessions, custom_trainings, custom_training_exercises, race_segments en program_blocks (docs/TK_INDEPENDENT_REREVIEW_CLAUDE_20261019.md; core/fImportIdentityBinding.test.js noemt ook weight_log en body_comp). De RLS-regel `WITH CHECK (user_id = auth.uid())` houdt een write met het verkeerde token dus niet tegen.
 
@@ -306,10 +424,20 @@ Secundaire labels: ACCOUNT-RISK 13, DATA-LOSS 4, DUPLICATE-RISK 19, FALSE-SUCCES
 | Bulk restore | Niet aanwezig: `exportJSON` exporteert, `importFromFile` is de enige restore | n.v.t. | n.v.t. |
 | CSV/Strava/Health-file import | Niet aanwezig in index.html (alleen CSV-**export**) | n.v.t. | n.v.t. |
 
-## Belangrijkste open bevindingen (HEAD 7ee0828)
+## Belangrijkste open bevindingen (historisch, HEAD 7ee0828)
+
+De punten 1 tot en met 5 hieronder zijn inmiddels opgelost (zie de statustabel hierboven).
+
 
 1. **P0 ACCOUNT-RISK, in-memory trainingsstatus niet eigenaargebonden** (finishSession 24642/24660, HYROX 36181, Guided 38567). `authSignOut` en `resetPersonalCacheIfNewDeviceOwner` wissen localStorage en catalogi, maar niet `curT`, `sessionLog`, `activeInstanceId`, `hyroxActive` of `GW.st.active`. Daarnaast schakelt `ensureValidSession` (via visibilitychange) stil over naar de sessie die een andere tab in `tk_auth_session` heeft gezet. A's sets worden dan met B als eigenaar weggeschreven (trigger). Dit is statisch afgeleid, niet in runtime gereproduceerd; het same-tab pad vereist dat B bij Home op "Hervatten" tikt.
 2. **P0 DATA-LOSS in heergenereerResterendeWeken**: resterende geplande blokken worden verwijderd vóór de AI-generatie; bij een AI-fout volgt een return zonder vervanging.
 3. **P0 DATA-LOSS in syncCustomTrainingsFromSupabase (legacy-tak)**: een mislukte sbPost wordt niet gemarkeerd; de volgende sync verwijdert de lokale training.
 4. **P1 FALSE-SUCCESS** in de beheerflows voor vaste trainingen en programma's (niet-gequeuede sbPost/sbPatch/sbDel met een succes-toast), bij 1RM/PR in exercise_goals, bij het intrekken van de agenda-feed en bij deleteWorkout.
 5. **P1 DUPLICATE-RISK** bij `exercises` via saveLosOefening (een 409 bij replay blokkeert afhankelijke sessies in de wachtrij) en bij handmatige runs zonder busy-guard (dubbel tikken).
+
+## Open na de P1-rest (19-10-2026)
+
+1. **P2 nog niet (volledig) opgelost: 36 rijen** (11 deels, 25 open). Daarvan dragen 21 het label FALSE-SUCCESS, 11 DUPLICATE-RISK, 5 ACCOUNT-RISK en 2 DATA-LOSS (een rij kan twee labels hebben). FALSE-SUCCESS: resultaat genegeerd bij directe writes buiten de trainingskern: favorieten, gewicht, HRV en check-in, lichaamssamenstelling, intake-profiel, coach/social-verwijderingen, `saveAtleet`, `saveNewEx`, `delEx`, `clearChat`. Accountbinding is bij de flows met meerdere awaits wel opgelost.
+2. **P2 DUPLICATE-RISK zonder idempotente sleutel.** `goals` (identity-id) en `cycle_symptom_logs` (bewust geen merge) worden na een verloren antwoord niet meer automatisch herhaald; de sporter kiest na controle "Toch versturen". Een client-id-kolom vergt een migratie (PO-besluit). Ook: `nutritionSaveEntry` heeft geen busy-guard en `openCoachAthleteThread` kan wees-threads geven.
+3. **Datamodel.** `training_exercises.id` (`A_squat`) en `vaste_trainingen.id` (`A`/`B`) zijn globaal uniek; de seed of migratie voor een tweede gebruiker botst. Dit bestond al.
+4. **Directe social/coach-writes via een kale `fetch`.** Geen 401-refresh. Accountisolatie geldt via RLS `WITH CHECK (<eigenaarskolom> = auth.uid())` met de eigenaar uit de payload (read-only geverifieerd), niet via de client-binding.

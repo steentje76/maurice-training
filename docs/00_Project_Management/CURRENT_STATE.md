@@ -8,11 +8,22 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Resterende P1's schrijfketen (19 oktober 2026 — TK-REL-SEC-15..20, Draft-PR's #562 en P1-rest)
+
+- Directe REST-writes en flows met meerdere awaits zijn gebonden aan de startende gebruiker (DEC-SEC-005).
+- Replays zijn idempotent of worden vastgehouden.
+- Een latere write haalt een wachtende write op dezelfde rij niet in (DEC-SYNC-003).
+- Matrix: P0 8/8 en P1 20/20 opgelost.
+- P2: 13 opgelost, 11 deels, 25 open.
+- P3: 13 opgelost, 2 open.
+- Read-after-write fase 2: plan gereed (`docs/TK_SERVER_READ_AFTER_WRITE_FASE2_PLAN_20261019.md`), nog niet gebouwd.
+- De-installatie blijft NO-GO.
+
 ## P0-heracceptatie #557/#558 (19 oktober 2026 — TK-REL-SEC-07..14, Draft-PR #560)
 
 - Imports, eerste trainingsupload en het opnieuw genereren van weken zijn gebonden aan de startende gebruiker; een
   lopende uitvoering gaat nooit naar een ander account (DEC-SEC-003). Activity-laps-replay idempotent; tab-lock op flush.
-- Matrix: 247 schrijfaanroepen, 8 P0 hersteld, 19 P1 open (`docs/audit/TK_WRITE_CALLER_MATRIX_20261019.md`).
+- Matrix: 247 schrijfaanroepen, 8 P0 hersteld (stand van #560; actuele stand hierboven).
 - Read-after-write: contract + kern (`core/serverVerification.js`), nog niet geladen; de-installatie blijft NO-GO.
 
 ## Accountisolatie offline-wachtrij (19 oktober 2026 — TK-REL-SEC-02..04, draft bovenop PR #555)

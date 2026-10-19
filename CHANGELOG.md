@@ -1,5 +1,12 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-30..31 Review reddingskopie en herstelpreview (19 oktober 2026)
+
+- **Reddingskopie gecorrigeerd (review #566).** Echte wachtrij-items komen nu in de kopie (de eerdere versie sloeg ze allemaal over); in de Android-app geen schijnsucces meer (browserdownload werkt daar niet); strikte wachtrijlezing; PBKDF2 600.000 iteraties (v1-bestanden blijven leesbaar); groottegrenzen en strikte validatie; markering van weggelaten of genormaliseerde velden.
+- **Herstelpreview.** Onder Gegevens exporteren: een kopie openen met wachtzin en per record zien wat herstelbaar is, al bestaat, conflicteert, bij een ander account hoort, onbekend of niet ondersteund is. "Dit is alleen een controle. Er worden geen gegevens teruggezet." Herstellen blijft uitgeschakeld.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470268.
+- **Documenten.** Review `docs/TK_REVIEW_PR566_REDDINGSKOPIE_20261019.md`, rapport `docs/TK_HERSTELPREVIEW_FASE4B_RAPPORT_20261019.md`, voorstel fase 4C `docs/TK_FASE4C_HERSTELVOORSTEL_20261019.md`.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-25..28 Historische inventaris en DELETE-contract (19 oktober 2026)
 
 - **DELETE-verificatie.** Een verwijdering is alleen bewezen als het DELETE-antwoord (`Prefer: return=representation`) exact die rij van die eigenaar teruggeeft. Afwezig bij teruglezen zonder dat bewijs is UNKNOWN, nooit bevestigd (RLS, andere eigenaar, verloren antwoord).

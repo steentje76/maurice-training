@@ -3321,3 +3321,15 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 4. Concepten, de wachtrij, serverkopieën, voorkeuren, oude structuren en gegevens van andere gebruikers blokkeren de de-installatiepoort. Een cache is niet automatisch veilig te verwijderen.
 
 **Niet besloten (PO).** Migraties M1–M4 uit `docs/TK_MIGRATIEVOORSTEL_CLIENTID_EIGENAARSCHAP_20261019.md`. Daarnaast: of het verlies van voorkeuren en toestemmingen bij een de-installatie acceptabel is.
+
+## DEC-SEC-006 — Reddingskopie en herstelpreview: alleen lezen, eigenaar gebonden, geen schijnsucces (19 oktober 2026)
+
+**Context.** De versleutelde reddingskopie (#566) en de herstelpreview raken lokale gebruikersgegevens van één account. Een onafhankelijke review vond dat echte wachtrij-items nooit in de kopie kwamen en dat de Android-app een download meldde die niet plaatsvond.
+
+**Besluit (technisch).**
+1. Een kopie of preview meldt alleen succes als de handeling aantoonbaar is uitgevoerd. In de Android-app wordt geen kopie gemaakt tot er een native opslagroute is.
+2. Bronnen worden strikt gelezen (wachtrij via `tkLeesWachtrijStrikt`). Een leesfout geeft geen kopie, of in de preview de status "onbekend".
+3. Bestanden: AES-256-GCM met PBKDF2-SHA256 600.000 iteraties (v1 met 210.000 alleen lezen), groottegrenzen vóór het decoderen, en strikte inhoudsvalidatie tegen het bronmanifest.
+4. De herstelpreview is alleen lezen. Een bestand van een ander account wordt geweigerd zonder inhoud of aantallen. HERSTELBAAR is geen toestemming tot herstellen; de herstelknop is uitgeschakeld.
+
+**Niet besloten (PO).** Fase 4C (`docs/TK_FASE4C_HERSTELVOORSTEL_20261019.md`): welke bronnen herstelbaar worden, de conflictstandaard en de native opslagroute op Android (nieuwe APK).

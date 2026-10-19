@@ -6385,6 +6385,19 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <input id="tk-backup-check-pass" type="password" autocomplete="off" class="input" style="width:100%;margin:4px 0 8px">
       <button class="btn btn-o" type="button" onclick="tkControleerVersleuteldeLokaleBackup()">Bestand controleren (zonder terugzetten)</button>
       <div id="tk-backup-status" role="status" aria-live="polite" style="font-size:12px;margin-top:8px"></div>
+      <!-- TK-REL-SEC-31: herstelpreview (alleen controleren). Herstellen blijft uitgeschakeld. -->
+      <div id="tk-restore-preview" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--g2)">
+        <strong>Herstelpreview</strong>
+        <p style="font-size:12px;line-height:1.4;font-weight:600">Dit is alleen een controle. Er worden geen gegevens teruggezet.</p>
+        <input id="tk-restore-file" type="file" accept=".tkbackup,application/json" aria-label="Versleutelde kopie kiezen voor de herstelpreview" style="width:100%">
+        <label for="tk-restore-pass" style="font-size:12px">Wachtzin</label>
+        <input id="tk-restore-pass" type="password" autocomplete="off" class="input" style="width:100%;margin:4px 0 8px">
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="btn btn-o" type="button" id="tk-restore-check" onclick="tkHerstelPreviewToon()">Herstelpreview tonen</button>
+          <button class="btn btn-o" type="button" id="tk-restore-apply" disabled aria-disabled="true" title="Herstellen is nog niet beschikbaar">Herstel uitvoeren (niet beschikbaar)</button>
+        </div>
+        <div id="tk-restore-result" role="status" aria-live="polite" style="font-size:12px;margin-top:8px"></div>
+      </div>
     </div>
     <div style="margin-top:12px"><button class="btn btn-o" onclick="closeModal('m-export')">Sluiten</button></div>
   </div>
@@ -6548,6 +6561,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/serverVerification.js"></script>
 <script src="core/localInventory.js"></script>
 <script src="core/localBackup.js"></script>
+<script src="core/restorePreview.js"></script>
 <script src="core/nutritionFoundation2.js"></script>
 <script src="core/nutritionMealService.js"></script>
 <script src="core/nutritionHydrationService.js"></script>
@@ -36308,6 +36322,96 @@ async function tkControleerVersleuteldeLokaleBackup(){
     tkBackupStatus('Bestand versleuteld en leesbaar: '+check.entries+' items, '+check.excluded+' overgeslagen. Er is NIETS teruggezet; de-installatie blijft geblokkeerd.');
   }catch(_){tkBackupStatus('Controle mislukt: onjuiste wachtzin, beschadigd bestand of onbekend formaat.');}
   finally{if(pw)pw.value='';tkBackupBusy=false;}
+}
+
+// TK-REL-SEC-31: HERSTELPREVIEW (fase 4B). ALLEEN LEZEN en controleren: er wordt niets teruggezet, geen lokale opslag
+// overschreven, geen wachtrij geleegd of afgespeeld en niets naar de server geschreven. Leesverzoeken gaan alleen met
+// het token van het ingelogde account (sbFetch-binding). Geen logging of telemetrie van de inhoud.
+//  B1 bestand veilig openen: grootte, formaat, wachtzin en authenticatietag (TKLocalBackup.inspect), eigenaar = ingelogd
+//     account; elke fout is fail-closed. Een accountwissel tijdens de controle stopt de preview.
+//  B2/B3 classificatie en deterministisch concept-herstelplan (TKRestorePreview); geen inhoud of credentials in het plan.
+let tkHerstelPreviewBezig=false;
+const TK_HERSTEL_TABELLEN_SERVER=['custom_trainings','training_instances','sessions','custom_training_exercises','nutrition_meals','nutrition_meal_items','activities'];
+async function tkHerstelServerLees(data,uid){
+  // Welke records bestaan al (zichtbaar voor dit account) op de server? Ontbrekende of mislukte lezing = onbekend.
+  const ids={}; const voeg=(t,id)=>{ if(TK_HERSTEL_TABELLEN_SERVER.indexOf(t)<0||id===null||id===undefined||id==='')return; (ids[t]=ids[t]||new Set()).add(String(id)); };
+  const ouders={sessions:'training_instance_id',custom_training_exercises:'custom_training_id',nutrition_meal_items:'meal_id',activity_laps:'activity_id'};
+  const ouderTabel={sessions:'training_instances',custom_training_exercises:'custom_trainings',nutrition_meal_items:'nutrition_meals',activity_laps:'activities'};
+  (data.entries||[]).forEach(function(e){
+    if(e.storage==='localStorage'&&e.source==='eigen_trainingen'){ try{ const v=JSON.parse(e.value); if(Array.isArray(v))v.forEach(t=>{ if(t&&t.id!=null)voeg('custom_trainings',t.id); }); }catch(_){} }
+    if(e.storage==='offline_queue'&&e.value&&e.value.method==='POST'&&e.value.body&&!Array.isArray(e.value.body)){
+      voeg(e.value.table,e.value.body.id);
+      const fk=ouders[e.value.table]; if(fk)voeg(ouderTabel[e.value.table],e.value.body[fk]);
+    }
+  });
+  const server={}; let kids=null;
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)return {server,kids};
+  for(const t of Object.keys(ids)){
+    const lijst=[...ids[t]]; let rows=[];
+    for(let i=0;i<lijst.length&&rows!==null;i+=TK_VERIFY_BLOK){ const b=await tkVerifyLees(t,'id',lijst.slice(i,i+TK_VERIFY_BLOK),uid); rows=(b===null)?null:rows.concat(b); }
+    if(rows===null)continue; // onbekend
+    lijst.forEach(id=>{ server[t+':'+id]=rows.find(r=>r&&String(r.id)===id)||null; });
+    if(t==='custom_trainings'){ let ks=[]; for(let i=0;i<lijst.length&&ks!==null;i+=TK_VERIFY_BLOK){ const b=await tkVerifyLees('custom_training_exercises','custom_training_id',lijst.slice(i,i+TK_VERIFY_BLOK),uid); ks=(b===null)?null:ks.concat(b); }
+      if(ks===null)lijst.forEach(id=>{ delete server['custom_trainings:'+id]; }); else kids=ks; }
+  }
+  return {server,kids};
+}
+async function tkHerstelPreview(bestand,wachtzin){
+  if(typeof TKLocalBackup==='undefined'||typeof TKRestorePreview==='undefined'||typeof LocalInventoryCore==='undefined')return {ok:false,reden:'module_ontbreekt'};
+  const uid=tkHuidigeUid(); if(!uid)return {ok:false,reden:'niet_ingelogd'};
+  if(!bestand||typeof bestand.text!=='function')return {ok:false,reden:'geen_bestand'};
+  if(!(bestand.size>0)||bestand.size>TKLocalBackup.MAX_BESTAND)return {ok:false,reden:'te_groot'};
+  let tekst; try{ tekst=await bestand.text(); }catch(_){ return {ok:false,reden:'lezen_onderbroken'}; }
+  if(typeof tekst!=='string'||!tekst.length||tekst.length>TKLocalBackup.MAX_BESTAND)return {ok:false,reden:'te_groot'};
+  if(tkHuidigeUid()!==uid)return {ok:false,reden:'account_gewisseld'};
+  let env; try{ env=JSON.parse(tekst); }catch(_){ return {ok:false,reden:'onbekend_formaat'}; }
+  let check;
+  try{ check=await TKLocalBackup.inspect(env,wachtzin,(typeof window!=='undefined'&&window.crypto)?window.crypto:undefined); }
+  catch(e){ const c=e&&e.code; return {ok:false,reden:(c==='wrong_password_or_corrupt_file'||c==='passphrase_min_12')?'wachtzin_of_beschadigd':(c==='secure_crypto_unavailable'?'crypto_ontbreekt':'onbekend_formaat')}; }
+  if(tkHuidigeUid()!==uid)return {ok:false,reden:'account_gewisseld'};
+  if(check.owner!==uid)return {ok:false,reden:'ander_account'}; // geen aantallen of inhoud van een ander account
+  // Lokale momentopname, alleen lezen. De inlogsessie en onbekende sleutels worden niet uitgelezen.
+  const local={};
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); const b=LocalInventoryCore.bronVoorSleutel('localStorage',k); if(!b||b.vorm==='geheim')continue; local[k]=localStorage.getItem(k); } }catch(_){ return {ok:false,reden:'lokaal_onleesbaar'}; }
+  let wachtrij=null; try{ wachtrij=await tkLeesWachtrijStrikt(); }catch(_){ wachtrij=null; }
+  const sv=await tkHerstelServerLees(check.data,uid);
+  if(tkHuidigeUid()!==uid)return {ok:false,reden:'account_gewisseld'};
+  const eigKey=(typeof CACHE_OWNER_KEY!=='undefined')?CACHE_OWNER_KEY:'tk_cache_owner_uid';
+  const uit=TKRestorePreview.classificeer({data:check.data,scanner:uid,lokaal:{localStorage:local,wachtrij,cacheEigenaar:localStorage.getItem(eigKey)},server:sv.server,
+    trainingGelijk:(sv.kids?function(row,t){ try{ return tkTrainingInhoud(tkTrainingVanServer(row,sv.kids))===tkTrainingInhoud(t); }catch(_){ return false; } }:null)});
+  if(!uit.ok)return {ok:false,reden:uit.reden};
+  const p=TKRestorePreview.plan(uit,{eigenaar:uid,formaat:env.format,aangemaakt:check.data.created,iteraties:check.iterations,legacyKdf:check.legacyKdf,omissions:check.data.omissions});
+  return {ok:true,plan:p,lokaleWachtrijLeesbaar:Array.isArray(wachtrij)};
+}
+const TK_HERSTEL_STATUS_TEKST={HERSTELBAAR:'potentieel herstelbaar (geen toestemming tot herstellen)',BESTAAT_AL:'staat al op dit toestel',CONFLICT:'conflict: zelfde gegeven, andere inhoud',
+  ANDER_ACCOUNT:'hoort bij een ander account (wordt niet getoond)',ONBEKEND:'onvoldoende vast te stellen',NIET_ONDERSTEUND:'kan nog niet veilig worden teruggezet'};
+async function tkHerstelPreviewToon(){
+  const el=document.getElementById('tk-restore-result'), input=document.getElementById('tk-restore-file'), pw=document.getElementById('tk-restore-pass');
+  const wachtzin=pw?pw.value:''; if(pw)pw.value='';
+  if(!el)return;
+  if(tkHerstelPreviewBezig)return;
+  const kop='<div style="font-weight:600;margin-bottom:6px">'+escHtml((typeof TKRestorePreview!=='undefined'&&TKRestorePreview)?TKRestorePreview.MELDING:'Dit is alleen een controle. Er worden geen gegevens teruggezet.')+'</div>';
+  if(!input||!input.files||input.files.length!==1){ el.innerHTML=kop+'Kies eerst één versleuteld bestand.'; return; }
+  tkHerstelPreviewBezig=true; el.innerHTML=kop+'Bestand controleren…';
+  let u; try{ u=await tkHerstelPreview(input.files[0],wachtzin); }catch(_){ u={ok:false,reden:'fout'}; }
+  finally{ tkHerstelPreviewBezig=false; }
+  const REDEN={niet_ingelogd:'Log eerst in.',geen_bestand:'Kies eerst één versleuteld bestand.',te_groot:'Bestand leeg of te groot; niet gecontroleerd.',
+    lezen_onderbroken:'Het bestand kon niet volledig worden gelezen. Probeer het opnieuw.',onbekend_formaat:'Onbekend of ongeldig bestandsformaat.',
+    wachtzin_of_beschadigd:'Onjuiste wachtzin of beschadigd bestand.',crypto_ontbreekt:'Versleuteling is op dit toestel niet beschikbaar.',
+    ander_account:'Dit bestand hoort bij een ander account. Er wordt niets getoond en niets teruggezet.',account_gewisseld:'Er is intussen een ander account ingelogd; de controle is gestopt.',
+    lokaal_onleesbaar:'Lokale gegevens op dit toestel zijn niet leesbaar; de controle is gestopt.',module_ontbreekt:'De herstelpreview is niet beschikbaar in deze versie.',fout:'De controle mislukte.'};
+  if(!u.ok){ el.innerHTML=kop+'<b style="color:var(--red)">Niet gecontroleerd.</b> '+escHtml(REDEN[u.reden]||REDEN.fout); return u; }
+  const p=u.plan, t=p.telling;
+  const regels=p.bronnen.map(b=>'<li>'+escHtml(b.bron)+': '+b.aantal+' ('+Object.keys(b.per_status).sort().map(s=>b.per_status[s]+' '+escHtml(TK_HERSTEL_STATUS_TEKST[s]||s)).join(', ')+')'+(b.al_op_server?' — '+b.al_op_server+' al op de server':'')+'</li>');
+  el.innerHTML=kop+
+    '<div><b>'+p.bestand.records+'</b> gegevens in het bestand. Potentieel herstelbaar: <b>'+t.HERSTELBAAR+'</b>.</div>'+
+    '<ul style="margin:6px 0 0 18px;padding:0"><li>Staat al op dit toestel: '+t.BESTAAT_AL+'</li><li>Conflicten: '+t.CONFLICT+'</li><li>Onvoldoende vast te stellen: '+t.ONBEKEND+'</li><li>Nog niet ondersteund: '+t.NIET_ONDERSTEUND+'</li><li>Van een ander account: '+t.ANDER_ACCOUNT+'</li></ul>'+
+    (regels.length?'<ul style="margin:6px 0 0 18px;padding:0">'+regels.join('')+'</ul>':'')+
+    '<div style="margin-top:6px">Het bestand is onvolledig'+(p.bestand.overgeslagen_bij_export?': '+p.bestand.overgeslagen_bij_export+' lokale gegevens zaten niet in de kopie':'')+'.</div>'+
+    (p.bestand.oude_sleutelafleiding?'<div style="margin-top:6px">Gemaakt met een oudere, zwakkere sleutelafleiding; maak een nieuwe kopie.</div>':'')+
+    (!u.lokaleWachtrijLeesbaar?'<div style="margin-top:6px;color:var(--red)">De offline-wachtrij op dit toestel was niet leesbaar; wachtrij-items zijn als onbekend aangemerkt.</div>':'')+
+    '<div style="margin-top:6px;color:var(--g4)">"Potentieel herstelbaar" is geen toestemming tot herstellen. Herstellen is nog niet mogelijk.</div>';
+  return u;
 }
 
 async function exportJSON(){

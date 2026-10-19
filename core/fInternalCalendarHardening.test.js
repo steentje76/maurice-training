@@ -77,7 +77,8 @@ ok(html.indexOf("if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory(
   const fn = slice('async function sbPatchQ(t,f,d,opts){', '// sbDelQ:');
   ok(fn.indexOf('!navigator.onLine') > 0 && fn.indexOf('offlineQueueAdd(') > 0, '18. sbPatchQ (gebruikt door availConflictSkip/Reschedule) queuet automatisch bij offline-status -- Calendar-reschedule/skip erven dit zonder extra code');
   ok(fn.indexOf('sbRetryable(r.status)') > 0, '19. Retryable serverfouten worden ook gequeued (niet uitsluitend een harde offline-detectie) -- retry-scenario gedekt');
-  ok(/catch\(e\)\{[\s\S]{0,80}offlineQueueAdd/.test(fn), '20. Een netwerk-exception tijdens de fetch zelf wordt eveneens gequeued (drievoudige dekking: offline/retryable-status/exception)');
+  // TK-REL-SEC-05: de catch delegeert aan queue(); queue() bewaart alleen als IndexedDB commit slaagt.
+  ok(/const queue=async\(\)=>\{[\s\S]{0,250}offlineQueueAdd/.test(fn) && /catch\(e\)\{[\s\S]{0,140}return queue\(\)/.test(fn), '20. Een netwerk-exception delegeert aan de duurzame wachtrij, zonder vals succes bij commit-fout');
 }
 {
   const fn = slice('if(_flushBezig)return;', 'if(syncedAny&&!(await tkLeesWachtrijStrikt())');

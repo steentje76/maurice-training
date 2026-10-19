@@ -59,7 +59,7 @@ Beide functies hadden geen `onabort`. Een transactie die tijdens commit afbreekt
 
 ### MEDIUM-03 (databehoud, niet gerepareerd) — dubbele activiteiten bij verloren antwoord
 
-`activities` en `activity_laps` (handmatige runs, Concept2/wearable-rondes) hebben geen client-id, geen natuurlijke unique key (alleen `pkey(id)`) en staan niet in `IDEMPOTENT_TABELLEN_MET_CLIENT_ID`. Verloren antwoord + replay = dubbele rij. Pre-existing.
+**Correctie 19-10-2026 (heracceptatie #557/#558):** de bewering "geen natuurlijke unique key" was onjuist. Ik had alleen `pg_constraint` bekeken, niet `pg_indexes`. Er bestaan unieke indexen `activities(user_id, dedupe_key) WHERE dedupe_key IS NOT NULL` en `activity_laps(activity_id, lap_index)`. Het werkelijke defect: bij `activity_laps` gaf een replay na een verloren antwoord een eeuwige 409 (wachtrij geblokkeerd), en de handmatige run (`activities` zonder `dedupe_key` of client-id) gaf een dubbele rij. Hersteld in #560 (`9994705`).
 
 ### MEDIUM-04 (testkwaliteit) — browsersuites die nergens echt draaien
 

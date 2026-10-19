@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-07..14 P0-heracceptatie #557/#558 (19 oktober 2026)
+
+- **P0 opgelost.** Import (JSON/Concept2/HRV) bindt alle writes aan de gebruiker die de import startte; na een accountwissel wordt niets meer geschreven.
+- **P0 opgelost.** Een lopende training, begeleide training of HYROX-race wordt bij een eigenaarwissel of bevestigd uitloggen uit het geheugen gehaald; uitloggen met niet-opgeslagen lokale gegevens vraagt eerst bevestiging; een sessiewissel via een andere tab herlaadt de app.
+- **P0 opgelost.** Eerste upload van eigen trainingen gebruikt de idempotente ouder-kindroute (geen lokaal verlies bij een gedeeltelijk mislukte upload); "Weken opnieuw genereren" vervangt het schema pas na volledige generatie.
+- **P1 opgelost.** `activity_laps` replay idempotent (`on_conflict`), handmatige runs met client-id; één flush tegelijk over tabs heen (Web Locks); `sbDelQ` detail-contract.
+- **Nieuw.** Read-after-write-contract `serververify.v1` (`core/serverVerification.js`, nog niet geladen) en schrijfaanroep-matrix (`docs/audit/TK_WRITE_CALLER_MATRIX_20261019.md`).
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470260.
+- **Rapport.** `docs/TK_P0_REACCEPTANCE_557_558_20261019.md`.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-02..04 Onafhankelijke herreview: accountisolatie in auth-retry en wachtrij-UI (19 oktober 2026)
 
 - **BLOCKER opgelost.** `sbFetch()` verstuurde na een 401 + refresh een wachtrij-item van gebruiker A opnieuw met het token van een intussen ingelogde gebruiker B. De insert-trigger `set_user_id_from_auth()` maakt zo'n rij in productie eigendom van B; RLS houdt dat niet tegen. Nu: geen refresh, retry of uitlog bij een gewijzigde identiteit, en de eigenaar van een write wordt vastgelegd bij de aanroep (niet pas bij het queuen), zodat B's flush A's write nooit alsnog verstuurt.

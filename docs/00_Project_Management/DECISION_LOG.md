@@ -3264,3 +3264,11 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 
 **Niet besloten (PO).** Reconciliatie van items zonder bewijsbare eigenaar; acceptatiecontract voor serverbevestiging (read-after-write); trigger-aanpassing (`user_id` uit payload valideren i.p.v. overschrijven) — dat is een productiemigratie en vraagt een apart besluit.
 
+## DEC-SEC-003 — Reeksen writes en lopende uitvoeringen zijn gebonden aan één gebruiker (19 oktober 2026)
+
+**Context.** Heracceptatie #557/#558. De insert-trigger `set_user_id_from_auth()` staat (read-only geverifieerd) ook op `weight_log`, `body_comp`, `hrv_log`, `sessions`, `custom_trainings`, `custom_training_exercises`, `race_segments` en `program_blocks`. Een write met het token van een andere gebruiker wordt dus stil van die gebruiker.
+
+**Besluit (technisch).** (1) Elke reeks writes (import, eerste trainingsupload, opnieuw genereren van weken) legt de gebruiker bij de start vast en stopt zodra die niet meer is ingelogd; een gedeeltelijk resultaat wordt eerlijk gemeld. (2) Een lopende uitvoering in het geheugen wordt bij een eigenaarwissel vergeten; uitloggen met niet-opgeslagen lokale gegevens vraagt expliciete bevestiging; een sessiewissel via een andere tab herlaadt de app. (3) Alleen `SERVER_VERIFIED` (`serververify.v1`) geldt als bewijs van serveropslag.
+
+**Niet besloten (PO).** Trigger weigert afwijkende `user_id` in plaats van te overschrijven (productiemigratie); open P1's uit de schrijfaanroep-matrix; register en leesroute voor read-after-write.
+

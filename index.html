@@ -9500,6 +9500,8 @@ async function sbRpcQ(fn,args){
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
 // blijft.
 let _flushBezig=false;
+// TK-REL-SEC-11: true terwijl deze context de tab-overstijgende flush-lock vasthoudt.
+let _flushInLock=false;
 // DEV-UPDATE-01 — UPDATEGEREEDHEID. Een Android-testbuild met een andere ondertekening kan alleen
 // na verwijderen worden geïnstalleerd, en allowBackup=false betekent dat verwijderen ALLE lokale
 // data wist: de offline-wachtrij (IndexedDB), een lopend trainingsconcept, een niet-opgeslagen
@@ -9588,6 +9590,16 @@ async function flushOfflineQueue(){
   // Zonder geldige sessie zou elke write op RLS stuklopen; de wachtrij blijft dan intact
   // en wordt na opnieuw inloggen alsnog verstuurd. Nooit weggooien.
   if(!authSession)return;
+  // TK-REL-SEC-11: tabs en vensters delen dezelfde IndexedDB-wachtrij; _flushBezig geldt alleen per context.
+  // Met Web Locks flusht er overal maar één tegelijk (een tweede tab slaat over). Zonder Web Locks (oude
+  // WebView) blijft het bestaande slot per context gelden.
+  if(navigator.locks&&typeof navigator.locks.request==='function'&&!_flushInLock){
+    return navigator.locks.request('tk-offline-flush',{ifAvailable:true},async function(lock){
+      if(!lock)return;
+      _flushInLock=true;
+      try{ return await flushOfflineQueue(); }finally{ _flushInLock=false; }
+    });
+  }
   _flushBezig=true;
   try{
   // TK-REL-SEC-01: bij IDB-fout NIET doen alsof de queue leeg is.

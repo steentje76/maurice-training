@@ -3255,3 +3255,12 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 **Architectuur:** de Calculation Engine rekent; de Decision Engine bepaalt de zone en de betekenis; de Coaching Engine verwoordt de al vastgestelde beslissing en krijgt zonder planning geen trainingsherstelscore. Regels zijn versieerbaar, deterministisch en auditbaar.
 
 **Acceptatiestatus:** Draft-code en lokale tests. `main` en productie blijven v4.70.25; onafhankelijke review, bijgewerkte CORE_SIG + service-worker cache, volledige GitHub Quality Gate en een afzonderlijk mergebesluit blijven vereist. GitHub Actions is op dit moment account-breed geblokkeerd wegens een bevestigde billing lock (zie issue #548).
+
+## DEC-SEC-002 — Een write wordt nooit opnieuw verstuurd onder een andere identiteit dan waarmee hij startte (19 oktober 2026)
+
+**Context.** Onafhankelijke herreview van PR #555. In productie zet de BEFORE INSERT-trigger `set_user_id_from_auth()` `user_id := auth.uid()` op `sessions`, `custom_trainings`, `custom_training_exercises`, `race_segments` en `program_blocks`; RLS `WITH CHECK (user_id = auth.uid())` is daardoor geen onafhankelijke grens tegen een write met het verkeerde token. De identiteitscontroles in `flushOfflineQueue()` dekten de 401-refresh-retry binnen `sbFetch()` niet.
+
+**Besluit.** (1) De eigenaar van een write wordt vastgelegd op het moment van de aanroep en zo in de wachtrij gezet; `sbFetch()` legt de identiteit vast vóór de eerste poging; is die bij een 401 vóór of na de refresh gewijzigd, dan geen refresh, geen retry en geen uitlog — de 401 gaat terug, het item blijft in de wachtrij. (2) Een token-refresh schrijft nooit terug na uitloggen of voor een andere gebruiker; bij dezelfde gebruiker blijft de nieuwste sessie staan. (3) Alle UI-paden rond de wachtrij gebruiken dezelfde eigenaarsregel als de flush (`owner_uid === ingelogde uid`); andermans en eigenaarloze items worden alleen geteld, nooit getoond of verwijderd. (4) Een IndexedDB-transactie die afbreekt, eindigt fail-closed.
+
+**Niet besloten (PO).** Reconciliatie van items zonder bewijsbare eigenaar; acceptatiecontract voor serverbevestiging (read-after-write); trigger-aanpassing (`user_id` uit payload valideren i.p.v. overschrijven) — dat is een productiemigratie en vraagt een apart besluit.
+

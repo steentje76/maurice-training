@@ -8,6 +8,13 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Accountisolatie offline-wachtrij (19 oktober 2026 — TK-REL-SEC-02..04, draft bovenop PR #555)
+
+- Een write wordt nooit opnieuw verstuurd onder een andere identiteit (DEC-SEC-002); verlate refresh overschrijft geen
+  nieuwere sessie; wachtrij-UI toont/verwijdert alleen eigen items; IDB-abort eindigt fail-closed.
+- Open: reconciliatie eigenaarloze items, read-after-write-contract, client-id voor `activities`/`activity_laps`,
+  tab-overstijgende flush-lock, browsersuites die in CI niet in Chromium draaien. Geen toestelbewijs.
+
 ## Updategereedheid en Android-test (18 oktober 2026 — DEV-UPDATE-01)
 
 - Help toont of het veilig is de app te verwijderen/opnieuw te installeren (wachtrij, concept, lopende/begeleide

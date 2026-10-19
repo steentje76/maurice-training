@@ -8,6 +8,13 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## P0-heracceptatie #557/#558 (19 oktober 2026 — TK-REL-SEC-07..14, Draft-PR #560)
+
+- Imports, eerste trainingsupload en het opnieuw genereren van weken zijn gebonden aan de startende gebruiker; een
+  lopende uitvoering gaat nooit naar een ander account (DEC-SEC-003). Activity-laps-replay idempotent; tab-lock op flush.
+- Matrix: 247 schrijfaanroepen, 8 P0 hersteld, 19 P1 open (`docs/audit/TK_WRITE_CALLER_MATRIX_20261019.md`).
+- Read-after-write: contract + kern (`core/serverVerification.js`), nog niet geladen; de-installatie blijft NO-GO.
+
 ## Accountisolatie offline-wachtrij (19 oktober 2026 — TK-REL-SEC-02..04, draft bovenop PR #555)
 
 - Een write wordt nooit opnieuw verstuurd onder een andere identiteit (DEC-SEC-002); verlate refresh overschrijft geen

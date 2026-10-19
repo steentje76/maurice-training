@@ -19,7 +19,7 @@ const SRC=[
   block('async function refreshAuthToken(){','function toggleAuthPassVisibility(){'),
   block('const SB_RETRY_STATUS=','async function sbGet('),
   block('async function offlineQueueAdd(item,eigenaar){','async function offlineQueueAll(){'),
-  block('const IDEMPOTENT_TABELLEN_MET_CLIENT_ID','// Sprint 6 (DEC-QUEUE-001): voor aanroepers'),
+  block('const IDEMPOTENT_TABELLEN_MET_CLIENT_ID','// Speelt de queue in volgorde af;'),
   block('async function flushOfflineQueue(){','function updateOfflineBadge(){')
 ].join('\n');
 // Een hangende promise laat Node met exit 0 stoppen zonder verdere asserties: dat telt als FAIL.
@@ -228,6 +228,21 @@ async function volgende(pending,pred){for(let i=0;i<200;i++){const k=pending.fin
     ctx.offlineQueueAll=async()=>[];
     await ctx.flushOfflineQueue();
     check('T13 onleesbare wachtrij: geen verzoeken en zichtbare melding',log.length===0&&toasts.some(m=>/niet leesbaar/i.test(m)));
+  }
+  // T14 — PATCH, DELETE en muterende RPC van A krijgen na een wissel naar B een 401: gequeued onder A,
+  // gemeld als bewaard (true), en B's flush verstuurt niets daarvan.
+  for(const soort of ['PATCH','DELETE','RPC']){
+    const {ctx,log,pending}=maakCtx(sess('A',1));
+    const p=soort==='PATCH'?ctx.sbPatchQ('sessions','id=eq.s1',{reps:9}):soort==='DELETE'?ctx.sbDelQ('sessions','id=eq.s1'):ctx.sbRpcQ('schedule_my_training',{p_occurrence_id:'o1'});
+    const eerste=await volgende(pending,isRest);
+    ctx.clearAuthSession();ctx.saveAuthSession(sess('B',1));
+    eerste.d.res(resp(401,{}));
+    const r=await p;
+    check('T14 '+soort+' van A na wissel: bewaard onder eigenaar A',r===true&&ctx.queue.length===1&&ctx.queue[0].owner_uid==='A');
+    const run=ctx.flushOfflineQueue();
+    for(let i=0;i<30;i++){const j=pending.findIndex(x=>isRest(x.url));if(j>=0)pending.splice(j,1)[0].d.res(resp(201,[]));await tick();}
+    await run;
+    check('T14 '+soort+' van A wordt nooit met B-token verzonden',log.filter(x=>isRest(x.url)&&/at-B-/.test(x.auth||'')).length===0&&ctx.queue.length===1);
   }
   klaar=true;
   console.log('TK-REL-SEC-02: '+pass+'/'+pass);

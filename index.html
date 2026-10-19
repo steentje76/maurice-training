@@ -7609,6 +7609,8 @@ function _tkImportMsg(txt){ var el=document.getElementById('lich-import-msg'); i
 async function tkConcept2Import(){
   if(typeof DeviceCore==='undefined') return;
   _tkImportMsg('Synchroniseren…');
+  // TK-REL-SEC-09: workouts horen bij de gebruiker die de import startte (inline identiteitsbinding).
+  var c2uid=(typeof authSession!=='undefined'&&authSession&&authSession.user)?authSession.user.id:null;
   var resp = await tkProviderRequest('concept2-import', {});
   if(!DeviceCore.isSyncOk(resp.status)){ _tkImportMsg(tkSyncMessage('concept2', resp)); return; }
   // server levert canonieke workouts (of ruwe results → client normaliseert defensief)
@@ -7622,7 +7624,9 @@ async function tkConcept2Import(){
   var plan = DeviceCore.importConcept2Workouts(workouts, existing||[], {});
   var inserted=0;
   for(var i=0;i<plan.toInsert.length;i++){
-    try{ if(typeof writeSessionRow==='function'){ await writeSessionRow(plan.toInsert[i]); inserted++; } }
+    if(c2uid&&!(authSession&&authSession.user&&authSession.user.id===c2uid)){ _tkImportMsg('Import gestopt: account gewisseld — '+inserted+' opgeslagen'); return; }
+    // Alleen een bevestigde of veilig gequeuede rij telt (writeSessionRow geeft false bij weigering).
+    try{ if(typeof writeSessionRow==='function'){ if(await writeSessionRow(plan.toInsert[i])) inserted++; } }
     catch(_){ /* deelfout: gestopt, idempotency dekt retry */ break; }
   }
   _tkImportMsg(tkSyncMessage('concept2', {status:'success'}, inserted));
@@ -7787,8 +7791,14 @@ async function ensureValidSession(){
   if(viaFederatedCallback)return true;
   const stored=loadAuthSession();
   if(!stored)return false;
+  // TK-REL-SEC-12: een andere tab kan intussen met een ander account zijn ingelogd (gedeelde localStorage). Dan hoort
+  // niets uit het geheugen van deze tab bij de nieuwe gebruiker: lopende uitvoering vergeten en de app herladen.
+  const _vorigeUid=(authSession&&authSession.user)?authSession.user.id:null;
+  const _wissel=!!_vorigeUid&&!!(stored.user&&stored.user.id)&&stored.user.id!==_vorigeUid;
+  if(_wissel&&typeof tkVergeetLopendeTraining==='function')tkVergeetLopendeTraining();
   authSession=stored;
   SB_H.Authorization='Bearer '+stored.access_token;
+  if(_wissel){ try{ if(typeof location!=='undefined'&&location&&typeof location.reload==='function')location.reload(); }catch(_){ } }
   if(stored.expires_at-Date.now()<5*60*1000){
     const ok=await refreshAuthToken();
     // TK-REL-SEC-02: alleen de sessie wissen waarvoor deze refresh liep, nooit een intussen nieuwere.
@@ -7892,8 +7902,19 @@ async function afterAuthSuccess(){
   document.getElementById('s-auth').classList.remove('active');
   await startAppAfterAuth();
 }
+// TK-REL-SEC-12: uitloggen wist lokale trainingsgegevens (wipePersonalCache). Staat er nog iets dat (mogelijk) niet op
+// de server staat, dan eerst expliciet bevestigen. De offline-wachtrij zelf blijft bewaard (eigenaar-gebonden).
+// Een mislukte controle telt als niet veilig (fail-closed).
+async function tkMagUitloggenMetLokaleData(){
+  let u=null; try{ u=await tkUpdateGereedheid(); }catch(_){ u=null; }
+  if(u&&u.veilig)return true;
+  const items=u?[].concat(u.open||[],(u.onbekend||[]).map(function(x){return 'onbekend: '+x;})):['de controle van lokale gegevens mislukte'];
+  return !!(await confirmModal('Op dit toestel staat nog: '+items.join('; ')+'. Uitloggen verwijdert lokale gegevens die nog niet op de server staan; wachtende synchronisatie blijft bewaard voor dit account. Toch uitloggen?',{title:'Niet-opgeslagen gegevens',okLabel:'Toch uitloggen',danger:true}));
+}
 async function authSignOut(){
   if(!await confirmModal('Weet je zeker dat je wilt uitloggen?',{title:'Uitloggen',okLabel:'Uitloggen'}))return;
+  if(!await tkMagUitloggenMetLokaleData())return; // TK-REL-SEC-12
+  tkVergeetLopendeTraining();
   clearAuthSession();
   wipePersonalCache(); // v332: niet wachten tot volgende login, meteen wissen bij uitloggen
   if(window.OrganizationContextRuntime) window.OrganizationContextRuntime.resetOrgContext(); // MS-F11-05: nooit tenant-branding van deze gebruiker laten hangen voor de volgende
@@ -8643,9 +8664,9 @@ function tkWachtrijRaaktTraining(items,id){
   });
 }
 // Herstel na herstart of gedeeltelijke opslag: dezelfde, idempotente opslag nog een keer (stil).
-async function tkCustomTrainingHerstel(t,bestaatOpServer){
+async function tkCustomTrainingHerstel(t,bestaatOpServer,volgorde){
   if(bestaatOpServer) tkCustomTrainingPatch(t.id,{naam:t.name,kleur:t.color,notitie:t.note||null,metadata:t.metadata},{stil:true});
-  else tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:t.note||null,sort_order:0,scope:'personal',source:t.source||'builder',metadata:t.metadata},{stil:true});
+  else tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:t.note||null,sort_order:(typeof volgorde==='number'?volgorde:0),scope:'personal',source:t.source||'builder',metadata:t.metadata},{stil:true});
   // Een legacy training heeft vaak alleen 'exercises'. Zonder normalisatie zou rich-recovery
   // eerst alle serveroefeningen verwijderen en daarna nul rijen terugschrijven.
   return pushCustomTrainingExercisesRich(Object.assign({},t,{exercise_targets:tkTrainingOefendoelen(t)}),{stil:true});
@@ -8699,20 +8720,16 @@ async function syncCustomTrainingsFromSupabase(){
       // Eerste upload bij lege server: onbevestigde trainingen MOETEN via de idempotente
       // ouder-kind queue verlopen. De oude sbPost-route omzeilde die garanties juist
       // wanneer dit de allereerste Builder-training van de sporter was.
-      const pending=new Set(tkTrainingenOnbevestigd());
+      // TK-REL-SEC-13: ook legacy-trainingen (niet gemarkeerd) via dezelfde idempotente ouder-kindroute. Die markeert
+      // de training eerst als "alleen op dit toestel" en haalt de markering pas weg na volledige bevestiging, zodat een
+      // mislukte upload bij de volgende sync nooit lokaal verdwijnt (de oude sbPost-lus negeerde het resultaat).
+      // De upload hoort bij de gebruiker die de sync startte.
       const wachtend=_wq;
       for(let i=0;i<customTrainings.length;i++){
+        if(tkHuidigeUid()!==_uid)break;
         const t=customTrainings[i];
-        if(pending.has(t.id)){
-          if(navigator.onLine&&!tkWachtrijRaaktTraining(wachtend,t.id)) await tkCustomTrainingHerstel(t,false);
-          continue;
-        }
-        // Bestaande legacy-migratieroute alleen voor niet-pending trainingen.
-        await sbPost('custom_trainings',{id:t.id, naam:t.name, kleur:t.color, notitie:t.note||null, sort_order:i});
-        let so=0;
-        for(const exId of (t.exercises||[])){
-          await sbPost('custom_training_exercises',{custom_training_id:t.id, exercise_id:exId, sort_order:so++});
-        }
+        if(!navigator.onLine||tkWachtrijRaaktTraining(wachtend,t.id))continue;
+        await tkCustomTrainingHerstel(t,false,i);
       }
     }
     await migrateLegacyWbSaved();
@@ -9033,6 +9050,9 @@ function tkHrvImportCalls(row,userId){
 }
 async function tkImportHrvRows(rows){
   const uid=(authSession&&authSession.user&&authSession.user.id)?authSession.user.id:null;
+  // TK-REL-SEC-09: identiteitsbinding (inline: deze functie wordt ook los gebruikt). Na een accountwissel wordt
+  // niets meer geschreven; uitgelogd vanaf de start blijft zoals voorheen 'mislukt'.
+  const gewisseld=()=>!!uid&&!(authSession&&authSession.user&&authSession.user.id===uid);
   const res={ok:0,fail:0,skipped:0};
   // Deterministisch: bevat het bestand meerdere rijen voor dezelfde dag (export van vóór
   // UNIQUE(user_id,date)), dan gaat de oudste created_at eerst, zodat de nieuwste echte
@@ -9046,6 +9066,7 @@ async function tkImportHrvRows(rows){
     return a.i-b.i;
   });
   for(const item of volgorde){
+    if(gewisseld()){res.gestopt=(res.gestopt||0)+1;continue;}
     const plan=tkHrvImportCalls(item.r,uid);
     if(plan.error){res.fail++;continue;}
     if(plan.skip){res.skipped++;continue;}
@@ -9188,6 +9209,10 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
   // Sprint 7 (DEC-SYNC-002, Builder-integriteit): oefeningenrijen van een Builder-training krijgen een
   // client-id, zodat een herhaalde of opnieuw afgespeelde write nooit een tweede rij oplevert.
   custom_training_exercises: true,
+  // TK-REL-SEC-08: handmatige runs (sbPostQ('activities')) hadden geen client-id en geen natuurlijke sleutel:
+  // een replay na een verloren antwoord gaf een tweede activiteit. id is uuid en UPDATE-policy bestaat
+  // (read-only geverifieerd 19-10-2026), dus hetzelfde upsert-mechanisme als hierboven.
+  activities: true,
   // UX-EXEC-01 (B4): de training-rij zelf heeft ook een client-id ('custom_…'/Builder-id) en een
   // UPDATE-policy (v333). Zonder deze regel gaf een replay na een verloren antwoord een 409 die
   // nooit uit de wachtrij verdween; de oefeningen erachter bleven dan voorgoed staan.
@@ -9197,6 +9222,12 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
 // van een al opgeslagen rij op RLS; voor deze tabellen is ignore-duplicates (DO NOTHING) het juiste
 // idempotente gedrag.
 const TK_IDEMPOTENT_ZONDER_UPDATE = { messages: true };
+// TK-REL-SEC-08: tabellen met een natuurlijke unieke sleutel (productie-index, read-only geverifieerd) waar een
+// write zonder client-id herhaald kan worden. Zonder on_conflict zet PostgREST ON CONFLICT alleen op de PK: een
+// replay na een verloren antwoord gaf dan een eeuwige 409 die de wachtrij en de updatecontrole blokkeerde.
+// Met on_conflict + merge-duplicates is de herhaling idempotent (UPDATE-policy bestaat). Geldt ook voor al
+// gequeuede items, omdat flushOfflineQueue() de URL per tabel opbouwt.
+const TK_ON_CONFLICT = { activity_laps: 'activity_id,lap_index' };
 // Sprint 7 (DEC-SYNC-002): afhankelijkheden tussen rijen in de offline-wachtrij (kolom → oudertabel,
 // FK of RLS-EXISTS in productie). Een kindrij wordt NOOIT los naar de server gestuurd zolang haar ouder
 // nog in de wachtrij staat (dan gaat het kind er ook in, FIFO), en de flush stuurt geen kind waarvan de
@@ -9299,7 +9330,8 @@ async function sbPostQ(t,d,opts){
   // queue ('failed', IndexedDB niet beschikbaar) gaf hier tot v4.70.22 true — een valse succesmelding
   // terwijl de data nergens stond. Impactanalyse van alle aanroepers: DECISION_LOG DEC-QUEUE-001.
   let queueOnly=!!(opts&&opts.queueOnly); const ignoreDup=!!(opts&&opts.ignoreDuplicates)||!!TK_IDEMPOTENT_ZONDER_UPDATE[t];
-  const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation');
+  const _oc=(typeof TK_ON_CONFLICT==='object'&&TK_ON_CONFLICT&&typeof TK_ON_CONFLICT[t]==='string')?'?on_conflict='+TK_ON_CONFLICT[t]:'';
+  const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':((IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||_oc)?'return=representation,resolution=merge-duplicates':'return=representation');
   const item=ignoreDup?{table:t,method:'POST',body:d,resolution:'ignore-duplicates'}:{table:t,method:'POST',body:d};
   const uit=function(status,http,reden){ if(opts&&typeof opts==='object'){opts.status=status;opts.reden=reden||null;} tkLogSchrijf(status,t,reden,http); return detail?tkSchrijfUitkomst(status,http,reden):(status==='confirmed'||status==='queued'); };
   // TK-REL-SEC-02: eigenaar en ingelogde identiteit vastleggen bij de aanroep, niet pas bij het queuen.
@@ -9316,7 +9348,7 @@ async function sbPostQ(t,d,opts){
   if(!navigator.onLine||queueOnly) return queue(null,navigator.onLine?reden:'offline');
   const magTimeout=!!(d&&d.id!=null&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||ignoreDup));
   try{
-    const verzoek=sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:prefer,body:d});
+    const verzoek=sbFetch(`${SB_URL}/rest/v1/${t}${_oc}`,{method:'POST',prefer:prefer,body:d});
     const r=magTimeout?await tkMetTimeout(verzoek,TK_SCHRIJF_TIMEOUT_MS):await verzoek;
     if(!r.ok){
       const err=await r.text();console.error('sbPostQ',t,r.status,tkFoutcode(err));
@@ -9413,8 +9445,9 @@ async function sbPatchQ(t,f,d,opts){
 async function sbDelQ(t,f,opts){
   const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02
   const queue=async()=>{const ok=!!eigenaar&&(await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar))===true;updateOfflineBadge();return ok;};
-  if(!eigenaar)return false;
+  // TK-REL-SEC-07: detail-aanroepers krijgen altijd het detail-object; sbSchrijfQDetail weigert zelf zonder eigenaar.
   if(opts&&opts.detail) return sbSchrijfQDetail('DELETE',t,f,null);
+  if(!eigenaar)return false;
   if(!navigator.onLine)return queue();
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE'});
@@ -9480,6 +9513,8 @@ async function sbRpcQ(fn,args){
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
 // blijft.
 let _flushBezig=false;
+// TK-REL-SEC-11: true terwijl deze context de tab-overstijgende flush-lock vasthoudt.
+let _flushInLock=false;
 // DEV-UPDATE-01 — UPDATEGEREEDHEID. Een Android-testbuild met een andere ondertekening kan alleen
 // na verwijderen worden geïnstalleerd, en allowBackup=false betekent dat verwijderen ALLE lokale
 // data wist: de offline-wachtrij (IndexedDB), een lopend trainingsconcept, een niet-opgeslagen
@@ -9568,6 +9603,16 @@ async function flushOfflineQueue(){
   // Zonder geldige sessie zou elke write op RLS stuklopen; de wachtrij blijft dan intact
   // en wordt na opnieuw inloggen alsnog verstuurd. Nooit weggooien.
   if(!authSession)return;
+  // TK-REL-SEC-11: tabs en vensters delen dezelfde IndexedDB-wachtrij; _flushBezig geldt alleen per context.
+  // Met Web Locks flusht er overal maar één tegelijk (een tweede tab slaat over). Zonder Web Locks (oude
+  // WebView) blijft het bestaande slot per context gelden.
+  if(navigator.locks&&typeof navigator.locks.request==='function'&&!_flushInLock){
+    return navigator.locks.request('tk-offline-flush',{ifAvailable:true},async function(lock){
+      if(!lock)return;
+      _flushInLock=true;
+      try{ return await flushOfflineQueue(); }finally{ _flushInLock=false; }
+    });
+  }
   _flushBezig=true;
   try{
   // TK-REL-SEC-01: bij IDB-fout NIET doen alsof de queue leeg is.
@@ -9618,7 +9663,8 @@ async function flushOfflineQueue(){
         if(item.body.id!=null)_ouderMislukt[item.table+':'+item.body.id]=1;
         skippedAny=true;continue;
       }
-      const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:(item.method==='RPC'?`${SB_URL}/rest/v1/rpc/${item.function}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`);
+      const _oc=(item.method==='POST'&&typeof TK_ON_CONFLICT==='object'&&TK_ON_CONFLICT&&typeof TK_ON_CONFLICT[item.table]==='string')?'?on_conflict='+TK_ON_CONFLICT[item.table]:'';
+      const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}${_oc}`:(item.method==='RPC'?`${SB_URL}/rest/v1/rpc/${item.function}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`);
       // F13 Post-Audit Remediation (P1-04): dezelfde idempotente upsert-header
       // als sbPostQ() zelf gebruikt. Zonder dit zou een item dat vóór het
       // queuen al succesvol (met hetzelfde, client-gegenereerde id) was
@@ -9629,7 +9675,7 @@ async function flushOfflineQueue(){
         ?{method:'DELETE'}
         :(item.method==='RPC'
           ?{method:'POST',body:item.args}
-          :{method:item.method,prefer:(item.method==='POST'&&item.resolution==='ignore-duplicates')?'return=representation,resolution=ignore-duplicates':((item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation'),body:item.body});
+          :{method:item.method,prefer:(item.method==='POST'&&item.resolution==='ignore-duplicates')?'return=representation,resolution=ignore-duplicates':((item.method==='POST'&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table]||_oc))?'return=representation,resolution=merge-duplicates':'return=representation'),body:item.body});
       const r=await sbFetch(url,opts);
       // Een accountwissel tijdens het netwerkverzoek maakt de bevestiging ambigu.
       // Bewaar het item voor idempotente replay onder zijn bewezen eigenaar.
@@ -19145,6 +19191,10 @@ async function heergenereerResterendeWeken(progId,btnEl){
   const bevestiging=`Weken ${incompleteWeeks.join(', ')} opnieuw genereren o.b.v. hoe het écht ging (${progress.adherencePct}% adherence tot nu toe${progress.avgRpeDelta!=null?`, gem. RPE ${progress.avgRpeDelta>0?'+':''}${progress.avgRpeDelta} t.o.v. plan`:''})? Nog niet-uitgevoerde trainingen in deze weken worden vervangen.`;
   if(!await confirmModal(bevestiging,{title:'Weken opnieuw genereren',okLabel:'Genereren'}))return;
   heergenererenBezig=true;
+  // TK-REL-SEC-14: alle writes horen bij de gebruiker die het her-genereren startte (program_blocks heeft de
+  // insert-trigger set_user_id_from_auth); na een accountwissel tijdens de lange AI-generatie wordt niets geschreven.
+  const _genUid=tkHuidigeUid();
+  const _genActief=()=>!!_genUid&&tkHuidigeUid()===_genUid;
   if(btnEl){btnEl.disabled=true;btnEl.textContent='Bezig met her-genereren...';}
   try{
   await ensureExercisesLoaded();
@@ -19168,10 +19218,7 @@ async function heergenereerResterendeWeken(progId,btnEl){
       reden:'Gebruiker koos "Weken opnieuw genereren" op basis van getoonde voortgang.'
     });
   }catch(_auditErr){ console.error('program_regeneration_log write mislukt (regeneratie gaat door):',_auditErr); }
-  for(const b of incomplete){
-    await sbDel('program_block_exercises','program_block_id=eq.'+b.id);
-    await sbDel('program_blocks','id=eq.'+b.id);
-  }
+  // TK-REL-SEC-14: de oude blokken worden pas verwijderd als ALLE weken opnieuw zijn gegenereerd (zie hieronder).
   const bibliotheek=exercises.filter(e=>e.active!==false).map(e=>`${e.id}:${e.name}(${e.type||'strength'})`).join(', ');
   const prList=exercises.filter(e=>getOneRM(e.id)).map(e=>({naam:e.name,kg:getOneRM(e.id)})).slice(0,12);
   const profielTekst=atleetProfielTekst(atleet)+(prList.length?' '+buildPRTekst(prList):'');
@@ -19201,19 +19248,31 @@ const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',heade
       parsed.blocks.forEach(b=>{b.week_nr=wk;b.fase_naam=faseNaam;newBlocks.push(b);b.oefeningen.forEach(o=>{if(o.exercise_id&&!gebruiktIds.includes(o.exercise_id))gebruiktIds.push(o.exercise_id);});});
     }catch(e){toast('Verbindingsfout bij week '+wk);break;}
   }
-  if(!newBlocks.length){renderProgrammaList();return;}
+  // TK-REL-SEC-14: alleen vervangen als elke te vervangen week een nieuw schema heeft; anders blijft alles staan.
+  const _gegenereerd=new Set(newBlocks.map(b=>b.week_nr));
+  if(!newBlocks.length||incompleteWeeks.some(w=>!_gegenereerd.has(w))){toast('Her-genereren gestopt — je bestaande schema is ongewijzigd');renderProgrammaList();return;}
+  if(!_genActief()){toast('Her-genereren gestopt: account gewisseld — er is niets gewijzigd');return;}
+  for(const b of incomplete){
+    if(!_genActief()||!(await sbDel('program_block_exercises','program_block_id=eq.'+b.id))||!(await sbDel('program_blocks','id=eq.'+b.id))){
+      toast('Oude weken konden niet (volledig) worden verwijderd — er is niets nieuws toegevoegd');renderProgrammaList();return;
+    }
+  }
   const plannedDates=computeBlockPlannedDates(td(),newBlocks.length,prog.schema_type,prog.weekdagen||[],dagenPerWeek);
+  let _opgeslagen=0,_mislukt=0;
   for(let i=0;i<newBlocks.length;i++){
+    if(!_genActief()){_mislukt+=newBlocks.length-i;break;}
     const b=newBlocks[i];
     const inserted=await sbPostReturning('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:plannedDates[i]});
     const blockId=inserted?.[0]?.id;
-    if(!blockId)continue;
-    let sortOrder=0;
+    if(!blockId){_mislukt++;continue;}
+    let sortOrder=0,_blokOk=true;
     for(const o of b.oefeningen){
-      await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:o.sets||null,reps:o.reps?String(o.reps):null,rpe_target:o.rpe?String(o.rpe):null});
+      if(!_genActief()){_blokOk=false;break;}
+      if(!await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:o.sets||null,reps:o.reps?String(o.reps):null,rpe_target:o.rpe?String(o.rpe):null}))_blokOk=false;
     }
+    if(_blokOk)_opgeslagen++; else _mislukt++;
   }
-  toast(newBlocks.length+' trainingen her-gegenereerd');
+  toast(_opgeslagen+' trainingen her-gegenereerd'+(_mislukt?' — '+_mislukt+' niet (volledig) opgeslagen, controleer het programma':''));
   renderProgrammaList();
   refreshHome();
   }finally{
@@ -30824,28 +30883,36 @@ async function importFromFile(input){
     const bcs = data.body_comp || [];
     const hrvs = data.hrv_log || [];
     let ok=0, fail=0, errors=[];
+    // TK-REL-SEC-09: alle records horen bij de gebruiker die de import startte. Na uitloggen of een
+    // accountwissel wordt niets meer verstuurd (de insert-trigger zou ze anders aan het nieuwe account geven).
+    const importUid=(authSession&&authSession.user)?authSession.user.id:null; let gestopt=0;
+    const gewisseld=()=>!!importUid&&!(authSession&&authSession.user&&authSession.user.id===importUid);
     const total = sessions.length + weights.length + bcs.length + hrvs.length;
     if(statusEl) statusEl.textContent = `${total} records gevonden — importeren...`;
     for(const s of sessions){
+      if(gewisseld()){gestopt++;continue;}
       const r=await fetch(`${SB_URL}/rest/v1/sessions`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates'},body:JSON.stringify(s)});
       if(r.ok) ok++; else { fail++; const e=await r.text(); errors.push('session: '+e.slice(0,60)); }
     }
     for(const w of weights){
+      if(gewisseld()){gestopt++;continue;}
       const r=await fetch(`${SB_URL}/rest/v1/weight_log`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates'},body:JSON.stringify(w)});
       r.ok?ok++:fail++;
     }
     for(const b of bcs){
+      if(gewisseld()){gestopt++;continue;}
       const r=await fetch(`${SB_URL}/rest/v1/body_comp`,{method:'POST',headers:{...SB_H,'Prefer':'resolution=ignore-duplicates'},body:JSON.stringify(b)});
       r.ok?ok++:fail++;
     }
     // HRV SINGLE-WRITER: dagelijkse health-rijen gaan via de canonieke upsert_daily_health-RPC
     // (zie tkImportHrvRows) -- nooit meer rechtstreeks naar de tabel.
-    const hrvRes=await tkImportHrvRows(hrvs);
-    ok+=hrvRes.ok; fail+=hrvRes.fail;
+    const hrvRes=!gewisseld()?await tkImportHrvRows(hrvs):{ok:0,fail:0,skipped:0,gestopt:hrvs.length};
+    ok+=hrvRes.ok; fail+=hrvRes.fail; gestopt+=hrvRes.gestopt||0;
     const leegTxt=hrvRes.skipped?' · '+hrvRes.skipped+' leeg overgeslagen':'';
     if(errors.length) console.error('Import errors:', errors);
-    if(statusEl) statusEl.textContent = `${ok} records geïmporteerd${fail?' · '+fail+' mislukt':''}${leegTxt}`;
-    toast(ok+' records geïmporteerd'+(fail?' · '+fail+' mislukt':'')+leegTxt);
+    const gestoptTxt=gestopt?' · import gestopt: account gewisseld, '+gestopt+' niet verwerkt':'';
+    if(statusEl) statusEl.textContent = `${ok} records geïmporteerd${fail?' · '+fail+' mislukt':''}${leegTxt}${gestoptTxt}`;
+    toast(ok+' records geïmporteerd'+(fail?' · '+fail+' mislukt':'')+leegTxt+gestoptTxt);
     if(ok>0){ refreshHome(); }
     input.value='';
   } catch(e) {
@@ -35781,12 +35848,26 @@ function wipePersonalCache(){
   Object.keys(localStorage).filter(k=>k.startsWith('sel_')).forEach(k=>localStorage.removeItem(k));
   localStorage.removeItem(CACHE_OWNER_KEY);
 }
+// TK-REL-SEC-12: een lopende uitvoering (training, begeleide training, HYROX-race) hoort bij één gebruiker. Bij een
+// eigenaarwissel of bevestigd uitloggen gaat ze uit het geheugen, zodat ze nooit onder een ander account wordt
+// afgerond (de insert-trigger set_user_id_from_auth() zou de sets dan aan dat account geven). Zelfde opruiming als
+// execLeaveDiscard(); de lokale kopieën wist wipePersonalCache().
+function tkVergeetLopendeTraining(){
+  try{ if(typeof stopTrainTimer==='function') stopTrainTimer(); }catch(_){}
+  try{ if(typeof cancelRestTimer==='function') cancelRestTimer(); }catch(_){}
+  try{ if(typeof tkErgDisconnectAll==='function') tkErgDisconnectAll('owner_change'); }catch(_){}
+  curT=null;sessionLog={};sessionExtra=[];pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};sessionRxAdj={};sessionPrBase={};
+  resolvedWorkout=null;activeInstanceId=null;
+  hyroxActive=null;
+  try{ if(window.GW&&typeof GW.vergeetVoorEigenaarwissel==='function') GW.vergeetVoorEigenaarwissel(); }catch(_){}
+}
 function resetPersonalCacheIfNewDeviceOwner(uid){
   if(!uid)return;
   const lastOwner=localStorage.getItem(CACHE_OWNER_KEY);
   if(lastOwner===uid)return; // zelfde gebruiker als vorige keer op dit device — cache blijft geldig
   wipePersonalCache();
   localStorage.setItem(CACHE_OWNER_KEY, uid);
+  if(typeof tkVergeetLopendeTraining==='function')tkVergeetLopendeTraining(); // TK-REL-SEC-12
   // in-memory state ook resetten, anders blijft de zojuist gewiste data nog even
   // in het geheugen hangen tot een herlaad.
   // Kritieke fix — bevestigd via een screenopname: 'Geschatte 1RM' (progExData) toonde
@@ -38277,6 +38358,9 @@ var GW=(function(){
   function hasUnsaved(){return unsaved(lsGet('tk_gw_active',null));}
   // Een afgeronde maar nog niet opgeslagen training wordt nooit stil weggegooid.
   function abort(){if(unsaved(st.active))return false;st.active=null;clearActive();return true;}
+  // TK-REL-SEC-12: bij een eigenaarwissel de begeleide training alleen uit het geheugen halen (de lokale kopie
+  // wist wipePersonalCache); nooit onder een ander account laten afronden.
+  function vergeetVoorEigenaarwissel(){st.active=null;}
   function saveStatus(){var a=st.active;return (a&&a.save)?a.save:null;}
 
   /* ── Faseovergangen ── */
@@ -38571,7 +38655,7 @@ var GW=(function(){
   return {
     FEELS:FEELS, GOAL_RPE:GOAL_RPE, FAT_NL:FAT_NL, REC_NL:REC_NL,
     st:st, active:active, cur:cur, phase:phase,
-    start:start, resume:resume, hasActive:hasActive, abort:abort,
+    start:start, resume:resume, hasActive:hasActive, abort:abort, vergeetVoorEigenaarwissel:vergeetVoorEigenaarwissel,
     begin:begin, finishSet:finishSet, rateSet:rateSet, continueAfter:continueAfter,
     startRest:startRest, skipRest:skipRest, restTick:restTick, adjustRest:adjustRest,
     nextExercise:nextExercise, finish:finish, persistToSessions:persistToSessions, retrySave:retrySave, pendingSave:pendingSave, saveStatus:saveStatus, hasUnsaved:hasUnsaved,

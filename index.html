@@ -23361,7 +23361,7 @@ function restoreCompletedSetVisualState(exId){
     const done = (s && typeof s.done==='boolean') ? s.done : !!(s&&(s.kg||s.reps));
     if(!done)return;
     const i=idx+1;
-    const c=document.getElementById('sc-'+exId+'-'+i); if(c){c.classList.add('done');if(c.hasAttribute('aria-pressed'))c.setAttribute('aria-pressed','true');}
+    const c=document.getElementById('sc-'+exId+'-'+i); if(c){c.classList.add('done');if(typeof c.hasAttribute==='function'&&c.hasAttribute('aria-pressed'))c.setAttribute('aria-pressed','true');}
     const r=document.getElementById('sr-'+exId+'-'+i); if(r)r.classList.add('done');
   });
   // F0.8B Active Set Focus spiegelt '.done' → na herstel de banner verversen (indien zichtbaar).
@@ -23587,7 +23587,7 @@ function toggleSetDone(exId,setNum){
   const nowDone=!c.classList.contains('done');
   c.classList.toggle('done');
   // UX-EXEC-A11Y-01: dezelfde bron-status is nu voor screenreaders beschikbaar.
-  if(c.hasAttribute('aria-pressed'))c.setAttribute('aria-pressed',String(nowDone));
+  if(typeof c.hasAttribute==='function'&&c.hasAttribute('aria-pressed'))c.setAttribute('aria-pressed',String(nowDone));
   // v3.3.53 — kaart weerspiegelt de done-status (presentatie; circle blijft de bron).
   document.getElementById('sr-'+exId+'-'+setNum)?.classList.toggle('done',nowDone);
   // P1-fix: done-status PERSISTENT maken in sessionLog zodat resume niet op een heuristiek (kg||reps)

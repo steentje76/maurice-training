@@ -63,3 +63,8 @@
 - `node core/fUxAppShellCanonicalNav.test.js`: **47/47 PASS**.
 - `git -c core.whitespace=cr-at-eol diff --check`: **PASS**; source change limited to 12 added, 5 removed lines in `index.html`.
 - Local full `node core/release-gate.js`: **NOT GREEN / NOT CLAIMED**. On the Windows device, the existing `core/fConcept2ArtifactFirewall.test.js` failed with `spawnSync npm ENOENT` and another Node process emitted a native stack trace. These failures are not attributed to the UX delta without reproduction in Linux CI. A clean Linux Quality Gate and independent review are still mandatory prior to any merge.
+
+## Independent PR review / CI regression follow-up
+- PR #554 first GitHub Quality Gate run [39208102261](https://github.com/steentje76/maurice-training/actions/runs/39208102261) **FAILED** on new `c.hasAttribute()` in the older `fHardening.test.js` simulated DOM object. Independent inspection of the GitHub CI log (not inferred from local browser pass) identified this as a genuine regression introduced by UX-EXEC-A11Y-01.
+- Corrective commit guards the optional DOM method before reading the existing `aria-pressed` attribute. `fHardening.test.js` now **349/349 PASS**, `fUxAppShellCanonicalNav.test.js` **47/47 PASS** on the corrected code. No training or calculation behavior changed.
+- A repeated headless Chromium launch on the Windows machine encountered a transient navigation timeout / closed browser, so the earlier 6-width PASS from before the guard correction is not misrepresented as a fresh final-HEAD PASS. Linux CI, a fresh exact-HEAD Chromium rerun and PO Android review remain separate acceptance gates.

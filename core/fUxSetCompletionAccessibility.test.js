@@ -11,8 +11,8 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/\r\n/g, '\n');
 
 assert.match(html, /<button type="button" class="set-circle setr-ring" id="sc-\$\{exId\}-\$\{i\}"[^>]*aria-pressed="\$\{!!\(setObj&&setObj\.done\)\}"/, 'completion is a native button with initial persisted state');
-assert.match(html, /if\(c\.hasAttribute\('aria-pressed'\)\)c\.setAttribute\('aria-pressed',String\(nowDone\)\)/, 'toggle reflects existing done state to assistive tech');
-assert.match(html, /if\(c\.hasAttribute\('aria-pressed'\)\)c\.setAttribute\('aria-pressed','true'\)/, 'session resume reflects restored completed state');
+assert.match(html, /if\(typeof c\.hasAttribute==='function'&&c\.hasAttribute\('aria-pressed'\)\)c\.setAttribute\('aria-pressed',String\(nowDone\)\)/, 'toggle reflects existing done state to assistive tech');
+assert.match(html, /if\(typeof c\.hasAttribute==='function'&&c\.hasAttribute\('aria-pressed'\)\)c\.setAttribute\('aria-pressed','true'\)/, 'session resume reflects restored completed state');
 assert.match(html, /\.setr-ring\{width:44px;height:44px;margin:-5px/, 'hit target is 44px while taking old 34px layout width');
 assert.match(html, /\.setr-ring::before\{[^}]*inset:5px[^}]*border:2px/, '34px visual ring remains unchanged');
 assert.match(html, /\.setr-ring:focus-visible\{outline:2px solid var\(--accent\)/, 'visible keyboard focus');
@@ -39,7 +39,7 @@ console.log('UX-EXEC-A11Y-01 source contract: 7/7 PASS');
       const page = await browser.newPage({viewport:{width,height:900}});
       const errors = [];
       page.on('pageerror',e=>errors.push(e.message));
-      await page.goto('file://' + path.join(root,'index.html'));
+      await page.goto('file://' + path.join(root,'index.html'), {waitUntil:'domcontentloaded',timeout:60000});
       await page.evaluate(async function() {
         const seed=TRAIN_CFG_SEED.A.slice(1,4);
         const exRows=seed.map(function(e) {return {id:e.id,name:e.naam,type:e.type,active:true,muscle_primary:e.muscles.p,muscle_secondary:e.muscles.s,scope:'global'};});

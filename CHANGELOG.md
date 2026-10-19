@@ -1,5 +1,16 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-02..04 Onafhankelijke herreview: accountisolatie in auth-retry en wachtrij-UI (19 oktober 2026)
+
+- **BLOCKER opgelost.** `sbFetch()` verstuurde na een 401 + refresh een wachtrij-item van gebruiker A opnieuw met het token van een intussen ingelogde gebruiker B. De insert-trigger `set_user_id_from_auth()` maakt zo'n rij in productie eigendom van B; RLS houdt dat niet tegen. Nu: geen refresh, retry of uitlog bij een gewijzigde identiteit, en de eigenaar van een write wordt vastgelegd bij de aanroep (niet pas bij het queuen), zodat B's flush A's write nooit alsnog verstuurt.
+- **HIGH opgelost.** Een verlate refresh van A overschreef de sessie van B. `refreshAuthToken()` gooit het antwoord weg bij uitloggen of een andere gebruiker en houdt bij dezelfde gebruiker de nieuwste sessie (geen weggegooide refresh bij terugkeer naar de app).
+- **Testkwaliteit.** `fOfflineQueueCrossAccountLeakage` draaide sinds PR #555 geen asserties meer (exit 0 met hangende promise); hersteld, en elke nieuwe suite faalt nu als hij niet volledig afrondt.
+- **HIGH opgelost.** Wachtende sets, het wachtrijscherm en verwijderen respecteren nu dezelfde eigenaarsgrens als de flush; andermans/eigenaarloze items alleen als aantal, bewaard.
+- **MEDIUM opgelost.** `offlineQueueAdd/Remove` hingen bij een commit-abort; nu `false`.
+- **Gates.** `core/fAuthSwitchRetryIsolation.test.js`, `core/fQueueUiOwnerIsolation.test.js`, `core/fQueueTxAbortSettles.test.js`. Service-worker cache v470256.
+- **Niet gewijzigd.** Schema, RLS, triggers, signing, secrets, versionCode, Calculation/Decision/AI.
+- **Rapport.** `docs/TK_INDEPENDENT_REREVIEW_CLAUDE_20261019.md`.
+
 ## Kandidaat (nog geen versie) — DEV-UPDATE-01 Updategereedheid en Android-praktijktest (18 oktober 2026)
 
 - **Nieuw.** Help → "Klaar voor een update?": controleert alleen-lezen de offline-wachtrij, een niet-afgeronde of lopende training, een niet-opgeslagen begeleide training en onbevestigde eigen trainingen. Een onleesbare bron = niet veilig. Met "Synchroniseren en controleren" (bestaande flush).

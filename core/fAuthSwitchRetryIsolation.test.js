@@ -220,6 +220,15 @@ async function volgende(pending,pred){for(let i=0;i<200;i++){const k=pending.fin
     check('T12 geen REST-write met B-token na wissel vóór verzenden',log.filter(x=>isRest(x.url)).length===0);
     check('T12 write blijft bewaard onder eigenaar A',u.status==='queued'&&ctx.queue.length===1&&ctx.queue[0].owner_uid==='A');
   }
+  // T13 — onleesbare wachtrij bij flush: niets versturen en de status zichtbaar "onbekend" maken
+  // (niet stil stoppen alsof de wachtrij leeg is).
+  {
+    const {ctx,log}=maakCtx(sess('A',1));const toasts=[];ctx.toast=m=>toasts.push(m);
+    ctx.tkLeesWachtrijStrikt=async()=>{throw new Error('IDB abort');};
+    ctx.offlineQueueAll=async()=>[];
+    await ctx.flushOfflineQueue();
+    check('T13 onleesbare wachtrij: geen verzoeken en zichtbare melding',log.length===0&&toasts.some(m=>/niet leesbaar/i.test(m)));
+  }
   klaar=true;
   console.log('TK-REL-SEC-02: '+pass+'/'+pass);
 })().catch(e=>{console.error('FAIL',e&&e.message||e);process.exitCode=1;});

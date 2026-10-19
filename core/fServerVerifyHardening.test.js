@@ -12,7 +12,9 @@
  *  H8 ouder-kind met kinderen zonder eigen eigenaarsveld (laps, maaltijdregels): alleen geverifieerd als de ouder
  *     geverifieerd is; onverwacht serverkind → MISMATCH; samengestelde kindsleutel (activity_id + lap_index);
  *  H9 een DELETE als laatste lokale write: afwezig = bevestigd, nog aanwezig = MISMATCH;
- *  H10 meerdere uitkomsten voor één identiteit: de zwaarste telt (geen gunstige keuze). */
+ *  H10 meerdere uitkomsten voor één identiteit: de zwaarste telt (geen gunstige keuze);
+ *  H11 tabel zonder eigenaarsveld: alleen geverifieerd als de eigenaar via de ouder bewezen is;
+ *  H12 registeritem met onvolledige identiteit (geen revisie of eigenaar) → reden identiteit_onvolledig. */
 'use strict';
 const assert=require('assert'),V=require('./serverVerification.js');
 let klaar=false,n=0;
@@ -83,4 +85,15 @@ const beoordeel=(o)=>(typeof V.beoordeelRegister==='function')
   const mm=vr({tabel:'sessions',verwacht:{id:'s1',naam:'x'},server:{id:'s1',user_id:'A',naam:'y'}});
   check(beoordeel({register:{aanwezig:true,defect:false,items:[{tabel:'sessions',record_id:'s1',eigenaar:'A',revisie:1}]},resultaten:[ok,mm]}).toegestaan===false,'H10 tegenstrijdige uitkomsten voor één identiteit → de zwaarste telt');
   check(beoordeel({register:{aanwezig:true,defect:false,items:[{tabel:'sessions',record_id:'s1',eigenaar:'A',revisie:1}]},resultaten:[ok]}).toegestaan===true,'H10 één geldige uitkomst voor exact deze identiteit en volledige historie → toegestaan (positieve controle)'); }
+// H11
+{ const basis={tabel:'nutrition_meal_items',eigenaarVeld:null,verwacht:{id:'i1',naam:'x'},server:{id:'i1',meal_id:'m1',naam:'x'}};
+  const zonder=vr(basis);
+  check(zonder.status!==S.SERVER_VERIFIED,'H11 geen eigenaarsveld en eigenaar niet via de ouder bewezen → niet geverifieerd');
+  check(vr(Object.assign({},basis,{eigenaarViaOuder:true})).status===S.SERVER_VERIFIED,'H11 eigenaar via de ouder bewezen → geverifieerd (positieve controle)'); }
+// H12
+{ const ok=vr({tabel:'sessions',verwacht:{id:'s1',naam:'x'},server:{id:'s1',user_id:'A',naam:'x'}});
+  const r1=beoordeel({register:{aanwezig:true,defect:false,items:[{tabel:'sessions',record_id:'s1',eigenaar:'A'}]},resultaten:[ok]});
+  const r2=beoordeel({register:{aanwezig:true,defect:false,items:[{tabel:'sessions',record_id:'s1',revisie:1}]},resultaten:[ok]});
+  check(r1.toegestaan===false&&(r1.redenen||[]).indexOf('identiteit_onvolledig')>=0,'H12 registeritem zonder revisie → identiteit_onvolledig');
+  check(r2.toegestaan===false&&(r2.redenen||[]).indexOf('identiteit_onvolledig')>=0,'H12 registeritem zonder eigenaar → identiteit_onvolledig'); }
 klaar=true;console.log('TK-REL-SEC-21: '+n+'/'+n);

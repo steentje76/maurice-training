@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Reddingskopie en herstelpreview (19 oktober 2026 — TK-REL-SEC-29..31, Draft-PR's #566, #567 en fase 4B)
+
+- Versleutelde lokale reddingskopie (#566) na review gecorrigeerd (#567): echte wachtrij, geen schijnsucces in de Android-app, sterkere sleutelafleiding, strikte validatie.
+- Herstelpreview (alleen controleren) met concept-herstelplan; herstellen is niet gebouwd en uitgeschakeld (DEC-SEC-006).
+- Android: kopie maken in de app nog niet mogelijk (native opslagroute nodig). De-installatie blijft NO-GO.
+
 ## Historische inventaris fase 3 (19 oktober 2026 — TK-REL-SEC-25..28, Draft-PR bovenop #564)
 
 - Verwijdering alleen bewezen via het DELETE-antwoord (DEC-SYNC-005).

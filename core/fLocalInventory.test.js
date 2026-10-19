@@ -10,7 +10,8 @@
  *  I9 vergelijking met de server: gelijk → HIST_GEKOPPELD (nooit SERVER_VERIFIED); afwijkingen per soort;
  *  I10 deterministisch en hervatbaar: zelfde invoer → zelfde vingerafdrukken; afgeronde, ongewijzigde bronnen overslaan;
  *  I11 samenvatting: aantallen en poortinvoer; alleen compleet bij volledige, voltooide run;
- *  I12 alleen te vergelijken records dragen hun waarde; geen enkel record krijgt SERVER_VERIFIED. */
+ *  I12 alleen te vergelijken records dragen hun waarde; geen enkel record krijgt SERVER_VERIFIED;
+ *  I13 het bronmanifest in docs is gegenereerd uit en gelijk aan het manifest in de code. */
 'use strict';
 const assert=require('assert'),fs=require('fs'),path=require('path');
 const L=require('./localInventory.js');
@@ -114,4 +115,7 @@ const van=(u,bron)=>recs(u).filter(r=>r.bron===bron);
   const r=recs(u);
   check(r.filter(x=>'waarde' in x).every(x=>x.teVergelijken)&&!JSON.stringify(r.filter(x=>!x.teVergelijken)).match(/Geheime notitie|privé/),'I12 alleen te vergelijken records dragen hun waarde; overige records alleen een vingerafdruk');
   check(!r.some(x=>x.status==='SERVER_VERIFIED'),'I12 geen enkel historisch record krijgt SERVER_VERIFIED'); }
+// I13
+{ const r=require('child_process').spawnSync(process.execPath,[path.join(__dirname,'..','tools','inventory-manifest.js'),'--check'],{encoding:'utf8'});
+  check(r.status===0,'I13 bronmanifest (docs) is gelijk aan het manifest in de code'+(r.status?(': '+r.stderr):'')); }
 console.log('TK-REL-SEC-26: '+n+'/'+n);

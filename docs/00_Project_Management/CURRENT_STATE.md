@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Historische inventaris fase 3 (19 oktober 2026 — TK-REL-SEC-25..28, Draft-PR bovenop #564)
+
+- Verwijdering alleen bewezen via het DELETE-antwoord (DEC-SYNC-005).
+- Bronmanifest (57 bronnen) en een alleen-lezen, hervatbare inventaris met basismeting voor eigen trainingen.
+- Poort blijft dicht: concepten, voorkeuren, serverkopieën en de wachtrij blokkeren. De-installatie blijft NO-GO.
+
 ## Read-after-write fase 2 (19 oktober 2026 — TK-REL-SEC-21..24, Draft-PR bovenop #563)
 
 - Verificatieregister in een aparte IndexedDB-database; teruglezen met het token van de eigenaar; ouder-kindcontrole voor vier relaties (DEC-SYNC-004).

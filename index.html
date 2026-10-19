@@ -8664,9 +8664,9 @@ function tkWachtrijRaaktTraining(items,id){
   });
 }
 // Herstel na herstart of gedeeltelijke opslag: dezelfde, idempotente opslag nog een keer (stil).
-async function tkCustomTrainingHerstel(t,bestaatOpServer){
+async function tkCustomTrainingHerstel(t,bestaatOpServer,volgorde){
   if(bestaatOpServer) tkCustomTrainingPatch(t.id,{naam:t.name,kleur:t.color,notitie:t.note||null,metadata:t.metadata},{stil:true});
-  else tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:t.note||null,sort_order:0,scope:'personal',source:t.source||'builder',metadata:t.metadata},{stil:true});
+  else tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:t.note||null,sort_order:(typeof volgorde==='number'?volgorde:0),scope:'personal',source:t.source||'builder',metadata:t.metadata},{stil:true});
   // Een legacy training heeft vaak alleen 'exercises'. Zonder normalisatie zou rich-recovery
   // eerst alle serveroefeningen verwijderen en daarna nul rijen terugschrijven.
   return pushCustomTrainingExercisesRich(Object.assign({},t,{exercise_targets:tkTrainingOefendoelen(t)}),{stil:true});
@@ -8720,20 +8720,16 @@ async function syncCustomTrainingsFromSupabase(){
       // Eerste upload bij lege server: onbevestigde trainingen MOETEN via de idempotente
       // ouder-kind queue verlopen. De oude sbPost-route omzeilde die garanties juist
       // wanneer dit de allereerste Builder-training van de sporter was.
-      const pending=new Set(tkTrainingenOnbevestigd());
+      // TK-REL-SEC-13: ook legacy-trainingen (niet gemarkeerd) via dezelfde idempotente ouder-kindroute. Die markeert
+      // de training eerst als "alleen op dit toestel" en haalt de markering pas weg na volledige bevestiging, zodat een
+      // mislukte upload bij de volgende sync nooit lokaal verdwijnt (de oude sbPost-lus negeerde het resultaat).
+      // De upload hoort bij de gebruiker die de sync startte.
       const wachtend=_wq;
       for(let i=0;i<customTrainings.length;i++){
+        if(tkHuidigeUid()!==_uid)break;
         const t=customTrainings[i];
-        if(pending.has(t.id)){
-          if(navigator.onLine&&!tkWachtrijRaaktTraining(wachtend,t.id)) await tkCustomTrainingHerstel(t,false);
-          continue;
-        }
-        // Bestaande legacy-migratieroute alleen voor niet-pending trainingen.
-        await sbPost('custom_trainings',{id:t.id, naam:t.name, kleur:t.color, notitie:t.note||null, sort_order:i});
-        let so=0;
-        for(const exId of (t.exercises||[])){
-          await sbPost('custom_training_exercises',{custom_training_id:t.id, exercise_id:exId, sort_order:so++});
-        }
+        if(!navigator.onLine||tkWachtrijRaaktTraining(wachtend,t.id))continue;
+        await tkCustomTrainingHerstel(t,false,i);
       }
     }
     await migrateLegacyWbSaved();
@@ -19195,6 +19191,10 @@ async function heergenereerResterendeWeken(progId,btnEl){
   const bevestiging=`Weken ${incompleteWeeks.join(', ')} opnieuw genereren o.b.v. hoe het écht ging (${progress.adherencePct}% adherence tot nu toe${progress.avgRpeDelta!=null?`, gem. RPE ${progress.avgRpeDelta>0?'+':''}${progress.avgRpeDelta} t.o.v. plan`:''})? Nog niet-uitgevoerde trainingen in deze weken worden vervangen.`;
   if(!await confirmModal(bevestiging,{title:'Weken opnieuw genereren',okLabel:'Genereren'}))return;
   heergenererenBezig=true;
+  // TK-REL-SEC-14: alle writes horen bij de gebruiker die het her-genereren startte (program_blocks heeft de
+  // insert-trigger set_user_id_from_auth); na een accountwissel tijdens de lange AI-generatie wordt niets geschreven.
+  const _genUid=tkHuidigeUid();
+  const _genActief=()=>!!_genUid&&tkHuidigeUid()===_genUid;
   if(btnEl){btnEl.disabled=true;btnEl.textContent='Bezig met her-genereren...';}
   try{
   await ensureExercisesLoaded();
@@ -19218,10 +19218,7 @@ async function heergenereerResterendeWeken(progId,btnEl){
       reden:'Gebruiker koos "Weken opnieuw genereren" op basis van getoonde voortgang.'
     });
   }catch(_auditErr){ console.error('program_regeneration_log write mislukt (regeneratie gaat door):',_auditErr); }
-  for(const b of incomplete){
-    await sbDel('program_block_exercises','program_block_id=eq.'+b.id);
-    await sbDel('program_blocks','id=eq.'+b.id);
-  }
+  // TK-REL-SEC-14: de oude blokken worden pas verwijderd als ALLE weken opnieuw zijn gegenereerd (zie hieronder).
   const bibliotheek=exercises.filter(e=>e.active!==false).map(e=>`${e.id}:${e.name}(${e.type||'strength'})`).join(', ');
   const prList=exercises.filter(e=>getOneRM(e.id)).map(e=>({naam:e.name,kg:getOneRM(e.id)})).slice(0,12);
   const profielTekst=atleetProfielTekst(atleet)+(prList.length?' '+buildPRTekst(prList):'');
@@ -19251,19 +19248,31 @@ const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',heade
       parsed.blocks.forEach(b=>{b.week_nr=wk;b.fase_naam=faseNaam;newBlocks.push(b);b.oefeningen.forEach(o=>{if(o.exercise_id&&!gebruiktIds.includes(o.exercise_id))gebruiktIds.push(o.exercise_id);});});
     }catch(e){toast('Verbindingsfout bij week '+wk);break;}
   }
-  if(!newBlocks.length){renderProgrammaList();return;}
+  // TK-REL-SEC-14: alleen vervangen als elke te vervangen week een nieuw schema heeft; anders blijft alles staan.
+  const _gegenereerd=new Set(newBlocks.map(b=>b.week_nr));
+  if(!newBlocks.length||incompleteWeeks.some(w=>!_gegenereerd.has(w))){toast('Her-genereren gestopt — je bestaande schema is ongewijzigd');renderProgrammaList();return;}
+  if(!_genActief()){toast('Her-genereren gestopt: account gewisseld — er is niets gewijzigd');return;}
+  for(const b of incomplete){
+    if(!_genActief()||!(await sbDel('program_block_exercises','program_block_id=eq.'+b.id))||!(await sbDel('program_blocks','id=eq.'+b.id))){
+      toast('Oude weken konden niet (volledig) worden verwijderd — er is niets nieuws toegevoegd');renderProgrammaList();return;
+    }
+  }
   const plannedDates=computeBlockPlannedDates(td(),newBlocks.length,prog.schema_type,prog.weekdagen||[],dagenPerWeek);
+  let _opgeslagen=0,_mislukt=0;
   for(let i=0;i<newBlocks.length;i++){
+    if(!_genActief()){_mislukt+=newBlocks.length-i;break;}
     const b=newBlocks[i];
     const inserted=await sbPostReturning('program_blocks',{program_id:progId,week_nr:b.week_nr,fase_naam:b.fase_naam,planned_date:plannedDates[i]});
     const blockId=inserted?.[0]?.id;
-    if(!blockId)continue;
-    let sortOrder=0;
+    if(!blockId){_mislukt++;continue;}
+    let sortOrder=0,_blokOk=true;
     for(const o of b.oefeningen){
-      await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:o.sets||null,reps:o.reps?String(o.reps):null,rpe_target:o.rpe?String(o.rpe):null});
+      if(!_genActief()){_blokOk=false;break;}
+      if(!await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:o.exercise_id,sort_order:sortOrder++,sets:o.sets||null,reps:o.reps?String(o.reps):null,rpe_target:o.rpe?String(o.rpe):null}))_blokOk=false;
     }
+    if(_blokOk)_opgeslagen++; else _mislukt++;
   }
-  toast(newBlocks.length+' trainingen her-gegenereerd');
+  toast(_opgeslagen+' trainingen her-gegenereerd'+(_mislukt?' — '+_mislukt+' niet (volledig) opgeslagen, controleer het programma':''));
   renderProgrammaList();
   refreshHome();
   }finally{

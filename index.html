@@ -8048,9 +8048,10 @@ async function upsertExerciseGoalField(exId,field,value){
   // nullable, migratie_v564). Alleen bij one_rm; PR/peak_goal raken deze datum niet (geen fake recency).
   const patch={[field]:value};
   if(field==='one_rm'){ patch.updated_at=(value==null?null:new Date().toISOString()); }
-  if(existing && !existing._alleenGeheugen){
-    await sbPatchQ('exercise_goals','exercise_id=eq.'+exId,patch);
-    Object.assign(existing,patch);
+  if(existing && !existing._alleenGeheugen){ // TK-REL-SEC-15: echt resultaat terug
+    const _okP=await sbPatchQ('exercise_goals','exercise_id=eq.'+exId,patch);
+    if(_okP)Object.assign(existing,patch);
+    return !!_okP;
   }else{
     const row=Object.assign({user_id:authSession?.user?.id,exercise_id:exId},patch);
     // Sprint 6 (DEC-QUEUE-001): alleen als de rij bevestigd of gequeued is, bestaat hij (straks) op de
@@ -8058,6 +8059,7 @@ async function upsertExerciseGoalField(exId,field,value){
     // een INSERT doet in plaats van een PATCH die nul rijen raakt (stil verlies).
     const _okW=await sbPostQ('exercise_goals',row);
     exerciseGoals.set(exId,Object.assign({peak_goal:null,pr:null,one_rm:null,updated_at:null},existing||{},patch,{_alleenGeheugen:!_okW}));
+    return !!_okW;
   }
 }
 
@@ -8504,14 +8506,16 @@ async function saveVasteTrainingName(btnEl){
   try{
   const naam=document.getElementById('vt-naam-input').value.trim();
   if(!naam){toast('Vul een naam in');return;}
-  let vtId=vtEditId;
+  let vtId=vtEditId, _ok;
   if(vtEditId){
-    await sbPatch('vaste_trainingen','id=eq.'+vtEditId,{naam});
+    _ok=await sbPatch('vaste_trainingen','id=eq.'+vtEditId,{naam});
   }else{
     await ensureVasteTrainingenLoaded();
     vtId=newVasteTrainingId();
-    await sbPost('vaste_trainingen',{id:vtId,naam,sort_order:vasteTrainingen.length});
+    _ok=await sbPost('vaste_trainingen',{id:vtId,naam,sort_order:vasteTrainingen.length});
   }
+  // TK-REL-SEC-15: niet opgeslagen = modal blijft open met de ingevulde naam, geen "Opgeslagen".
+  if(!_ok){toast('Opslaan mislukt — controleer je verbinding en probeer opnieuw');return;}
   // P6 — extra velden additief opslaan (localStorage), zodat de AI ze later kan gebruiken.
   if(vtId)vtMetaSave(vtId,{type:vtMetaSel.type||'',doel:vtMetaSel.doel||'',dagen:vtMetaSel.dagen||'',weken:vtMetaSel.weken||''});
   _vasteTrainingenLoaded=false;
@@ -8523,8 +8527,10 @@ async function saveVasteTrainingName(btnEl){
 }
 async function deleteVasteTraining(id){
   if(!await confirmModal('De oefeningen erin gaan ook mee. Je sessiegeschiedenis blijft staan.',{title:'Vaste training verwijderen',okLabel:'Verwijderen',danger:true}))return;
-  await sbDel('training_exercises','training_ref=eq.'+id);
-  await sbDel('vaste_trainingen','id=eq.'+id);
+  // TK-REL-SEC-15: kind eerst; mislukt dat, dan de training zelf niet verwijderen en geen "Verwijderd" melden.
+  if(!await sbDel('training_exercises','training_ref=eq.'+id)||!await sbDel('vaste_trainingen','id=eq.'+id)){
+    _vasteTrainingenLoaded=false;await renderSchemaTrainingList();toast('Verwijderen mislukt — probeer het opnieuw');return;
+  }
   _vasteTrainingenLoaded=false;
   await renderSchemaTrainingList();
   await renderVasteTrainingBtns();
@@ -12977,7 +12983,11 @@ function calendarFeedShowLink(){
 async function calendarFeedRevoke(){
   const bevestigd=await confirmModal('Agenda-koppeling intrekken? De bestaande link werkt dan niet meer.',{title:'Intrekken',okLabel:'Intrekken',cancelLabel:'Annuleren'});
   if(!bevestigd)return;
-  await sbPatchQ('calendar_feed_tokens','user_id=eq.'+authSession.user.id+'&active=eq.true',{active:false,revoked_at:new Date().toISOString()});
+  // TK-REL-SEC-15: alleen als ingetrokken melden als de intrekking bevestigd of veilig gequeued is; anders blijft de
+  // feed-link actief en moet de sporter dat weten (privacy).
+  if(!await sbPatchQ('calendar_feed_tokens','user_id=eq.'+authSession.user.id+'&active=eq.true',{active:false,revoked_at:new Date().toISOString()})){
+    toast('Intrekken mislukt — de agenda-link werkt nog. Controleer je verbinding en probeer opnieuw.');renderCalendarFeedCard();return;
+  }
   calendarFeedPlaintextCache=null;
   toast('Agenda-koppeling ingetrokken');
   renderCalendarFeedCard();
@@ -18914,7 +18924,7 @@ async function opslaanProgramma(){
   const plannedDates=computeBlockPlannedDates(startDate,c.blocks.length,c.schemaType,c.weekdagen,c.dagenPerWeek);
   const prog=await sbPostReturning('programs',{naam:c.naam,doel:c.doel,sport:c.sport||null,start_date:startDate,status:'actief',schema_type:c.schemaType,weekdagen:(c.weekdagen&&c.weekdagen.length)?c.weekdagen:null,duur_minuten:c.duur||null,duur_overrides:(c.duurOverrides&&Object.keys(c.duurOverrides).length)?c.duurOverrides:null,event_date:c.eventDate||null,event_name:c.eventName||null});
   const progId=prog?.[0]?.id;
-  if(!progId){console.error('opslaanProgramma: geen progId terug');toast('Opslaan mislukt bij het programma zelf — check console (F12) voor details');return;}
+  if(!progId){window._progConcept=c; /* TK-REL-SEC-15: AI-concept niet kwijtraken; opnieuw opslaan blijft mogelijk */ console.error('opslaanProgramma: geen progId terug');toast('Opslaan mislukt bij het programma zelf — check console (F12) voor details');return;}
   // Elke insert wordt nu individueel gecontroleerd — voorheen faalde een oefening soms
   // stil (bv. bij een onverwacht datatype voor cardio-oefeningen als "Duurloop") zonder
   // dat er iets zichtbaars gebeurde. Nu tellen en melden we mislukte inserts expliciet.
@@ -19162,10 +19172,13 @@ async function renderKalender(){
 async function deleteProgramma(progId){
   if(!await confirmModal('Dit kan niet ongedaan worden gemaakt.',{title:'Programma verwijderen',okLabel:'Verwijderen',danger:true}))return;
   const blocks=await sbGet('program_blocks','&program_id=eq.'+progId);
-  for(const b of blocks){await sbDel('program_block_exercises','program_block_id=eq.'+b.id);}
-  await sbDel('program_blocks','program_id=eq.'+progId);
-  await sbDel('programs','id=eq.'+progId);
+  // TK-REL-SEC-15: kinderen eerst; bij de eerste mislukte stap stoppen (programma blijft staan) en dat melden.
+  let _ok=true;
+  for(const b of blocks){ if(!await sbDel('program_block_exercises','program_block_id=eq.'+b.id)){_ok=false;break;} }
+  if(_ok)_ok=await sbDel('program_blocks','program_id=eq.'+progId);
+  if(_ok)_ok=await sbDel('programs','id=eq.'+progId);
   programBlockExCache={};
+  if(!_ok){toast('Programma niet (volledig) verwijderd — probeer het opnieuw');renderProgrammaList();return;}
   toast('Programma verwijderd');
   renderProgrammaList();
   refreshHome();
@@ -19436,7 +19449,8 @@ async function saveBlockExercise(btnEl){
     pct_1rm:document.getElementById('bex-pct').value?parseFloat(document.getElementById('bex-pct').value):null,
     notes:document.getElementById('bex-notes').value||null
   };
-  await sbPatch('program_block_exercises','id=eq.'+curBlockExRow.id,patch);
+  // TK-REL-SEC-15: niet opgeslagen = invoer blijft staan, geen "Opgeslagen".
+  if(!await sbPatch('program_block_exercises','id=eq.'+curBlockExRow.id,patch)){toast('Opslaan mislukt — controleer je verbinding en probeer opnieuw');return;}
   delete programBlockExCache[curProgramBlockId];
   closeModal('m-block-ex-edit');
   await renderProgramBlockDetail();
@@ -19445,7 +19459,7 @@ async function saveBlockExercise(btnEl){
 }
 async function deleteBlockExercise(){
   if(!curBlockExRow)return;
-  await sbDel('program_block_exercises','id=eq.'+curBlockExRow.id);
+  if(!await sbDel('program_block_exercises','id=eq.'+curBlockExRow.id)){toast('Verwijderen mislukt — probeer het opnieuw');return;} // TK-REL-SEC-15
   delete programBlockExCache[curProgramBlockId];
   closeModal('m-block-ex-edit');
   await renderProgramBlockDetail();
@@ -21744,7 +21758,7 @@ async function saveOneRM(exId,val){
   }
   const v=parseFloat(val);
   localStorage.setItem('tk_1rm_'+exId,v); // meteen lokaal, ook als sync faalt
-  await upsertExerciseGoalField(exId,'one_rm',v);
+  if(!await upsertExerciseGoalField(exId,'one_rm',v)&&typeof toast==='function')toast('1RM op dit toestel bewaard — opslaan op de server is mislukt'); // TK-REL-SEC-15
   // v306.1: bij een nieuwe 1RM automatisch herberekenen voor alle nog niet handmatig
   // aangepaste werksets (applyPct respecteert manualKgSets per set zelf).
   const sel=pctSelection[exId];
@@ -31221,14 +31235,16 @@ async function saveStartingStrength(btnEl){
     const {provided}=computeStartingStrength(ssReadEntries());
     if(!provided.length){toast('Vul minimaal één lift in (of sla over)');return;}
     try{ if(typeof ensureExerciseGoalsLoaded==='function')await ensureExerciseGoalsLoaded(); }catch(_){}
-    let n=0;
+    let n=0, pogingen=0;
     for(const p of provided){
       for(const id of p.storeIds){
-        if(resolvePickerEx(id)){ try{ await upsertExerciseGoalField(id,'one_rm',p.est1RM); n++; }catch(_){}}
+        if(resolvePickerEx(id)){ pogingen++; try{ if(await upsertExerciseGoalField(id,'one_rm',p.est1RM)) n++; }catch(_){}}
       }
     }
+    // TK-REL-SEC-15: alleen echt opgeslagen liften tellen; niets opgeslagen = modal blijft open.
+    if(pogingen&&!n){toast('Opslaan mislukt — controleer je verbinding en probeer opnieuw');return;}
     closeModal('m-starting-strength');
-    toast(provided.length+' referentielift'+(provided.length===1?'':'s')+' opgeslagen');
+    toast(n<pogingen?(n+' van '+pogingen+' referentiewaarden opgeslagen — de rest niet'):(provided.length+' referentielift'+(provided.length===1?'':'s')+' opgeslagen'));
     try{ if(typeof refreshRatioFactors==='function')await refreshRatioFactors(); }catch(_){}
   }finally{ if(btnEl)btnEl.disabled=false; }
 }
@@ -32189,11 +32205,12 @@ async function permanentlyAddExtras(){
   const extras=sessionExtra.filter(e=>e._t===t&&!e._preloaded);
   if(!extras.length){closeModal('m-save-as-training');finishSessionNoSave();return;}
   await ensureVasteTrainingenLoaded();
+  let _mislukt=0;
   if(vasteTrainingen.some(v=>v.id===t)){
     const base=(TRAIN_CFG[t]||[]).length;
     let sortOrder=base;
     for(const e of extras){
-      await sbUpsert('training_exercises',{id:t+'_'+e.id,exercise_id:e.id,training_ref:t,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe:e.rpe||null,wu:0});
+      if(!await sbUpsert('training_exercises',{id:t+'_'+e.id,exercise_id:e.id,training_ref:t,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe:e.rpe||null,wu:0}))_mislukt++;
     }
   } else if(t.startsWith('custom_')){
     const id=t.slice('custom_'.length);
@@ -32208,19 +32225,22 @@ async function permanentlyAddExtras(){
       }
       localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
       tkCustomTrainingPatch(ct.id,{naam:ct.name,kleur:ct.color,notitie:ct.note||null});
-      await pushCustomTrainingExercises(ct);
+      const _u=await pushCustomTrainingExercises(ct);
+      if(!_u||!_u.ok)_mislukt=extras.length;
     }
   } else if(t.startsWith('prog_')){
     const blockId=t.slice('prog_'.length);
     const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+blockId);
     let sortOrder=rows.length;
     for(const e of extras){
-      await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:e.id,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe_target:e.rpe||null});
+      if(!await sbPost('program_block_exercises',{program_block_id:blockId,exercise_id:e.id,sort_order:sortOrder++,sets:e.sets||null,reps:e.reps||null,rpe_target:e.rpe||null}))_mislukt++;
     }
     delete programBlockExCache[blockId];
   }
   closeModal('m-save-as-training');
-  toast('Permanent toegevoegd aan training');
+  // TK-REL-SEC-15: eerlijke telling. Geen automatische herhaling: program_block_exercises heeft geen client-id, dus
+  // een nieuwe poging zou de wél opgeslagen oefeningen verdubbelen.
+  toast(_mislukt?((extras.length-_mislukt)+' van '+extras.length+' oefeningen toegevoegd — '+_mislukt+' niet opgeslagen'):'Permanent toegevoegd aan training');
   renderSessionSummaryContent(curT);
 }
 
@@ -37929,12 +37949,18 @@ var WB=(function(){
     return id;
   }
   function favWorkout(wid){wbFavs[wid]=!wbFavs[wid];lsSet('tk_wb_favs',wbFavs);}
+  // TK-REL-SEC-15: zelfde contract als deleteCustomTraining(): wachten op de echte uitkomst; lukt ook queuen niet,
+  // dan komt de training lokaal terug (anders verscheen hij bij de volgende sync stil opnieuw).
   function deleteWorkout(wid){
-    if(typeof customTrainings==='undefined')return;
+    if(typeof customTrainings==='undefined')return Promise.resolve(null);
+    var vorige=customTrainings.slice(), wasOnbevestigd=tkTrainingenOnbevestigd().indexOf(wid)>=0;
     customTrainings=customTrainings.filter(function(t){return t.id!==wid;});
     lsSet('tk_trainings',customTrainings);
     tkMarkeerTrainingOnbevestigd(wid,false);
-    sbDelQ('custom_trainings','id=eq.'+wid);
+    return Promise.resolve(sbDelQ('custom_trainings','id=eq.'+wid,{detail:true})).then(function(u){
+      if(!u||!u.ok){ customTrainings=vorige; lsSet('tk_trainings',customTrainings); if(wasOnbevestigd)tkMarkeerTrainingOnbevestigd(wid,true); }
+      return u;
+    });
   }
   function resumeWorkout(wid){
     if(typeof customTrainings==='undefined')return false;
@@ -38250,7 +38276,7 @@ var WBUI=(function(){
   function dupe(){WB.saveWorkout(WB.autoName()+' (kopie)');render();if(window.toast)toast('Gedupliceerd');}
   function dupeSaved(wid){WB.duplicateWorkout(wid);render();if(window.toast)toast('Gedupliceerd');}
   function fav(wid){WB.favWorkout(wid);render();}
-  function del(wid){WB.deleteWorkout(wid);render();if(window.toast)toast('Verwijderd');}
+  function del(wid){ return Promise.resolve(WB.deleteWorkout(wid)).then(function(u){ render(); if(window.toast)toast(u&&u.ok?(u.status==='queued'?'Verwijderd — wordt gesynchroniseerd zodra je online bent':'Verwijderd'):'Verwijderen is niet gelukt — probeer het opnieuw'); }); }
   function resume(wid){if(ivEdit(wid))return;if(WB.resumeWorkout(wid)){_open={};render();var sc=document.getElementById('wb-scroll');if(sc)sc.scrollTop=0;if(window.toast)toast('Training hervat');}}
 
   return {render:render,rebuild:rebuild,toggleSetup:toggleSetup,toggleEx:toggleEx,setGoal:setGoal,toggleMuscle:toggleMuscle,toggleEq:toggleEq,setTime:setTime,setLevel:setLevel,setForm:setForm,

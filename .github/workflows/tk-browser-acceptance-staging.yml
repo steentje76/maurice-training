@@ -10,6 +10,7 @@ on:
       - review/claude-independent-20261019
       - fix/tk-queue-persistence-gate-20261019
       - fix/tk-nutrition-write-ui-gate-20261019
+      - review/claude-p0-reaccept-20261019
 
 permissions:
   contents: read

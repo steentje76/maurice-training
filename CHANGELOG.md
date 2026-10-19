@@ -1,5 +1,43 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — DEV-UPDATE-01 Updategereedheid en Android-praktijktest (18 oktober 2026)
+
+- **Nieuw.** Help → "Klaar voor een update?": controleert alleen-lezen de offline-wachtrij, een niet-afgeronde of lopende training, een niet-opgeslagen begeleide training en onbevestigde eigen trainingen. Een onleesbare bron = niet veilig. Met "Synchroniseren en controleren" (bestaande flush).
+- **Waarom.** Een nieuwe debug-testbuild kan alleen na verwijderen worden geïnstalleerd (andere sleutel), en verwijderen wist alle lokale data (`allowBackup=false`).
+- **Doc.** `docs/ANDROID_PRAKTIJKTEST_V1_BETA.md`: installatieprocedure en checklist sportschool; device-items OPEN.
+- **Niet gewijzigd.** Signing, secrets, workflows, applicationId, versionCode.
+- **Gate.** `core/fUpdateReadiness.test.js`.
+
+## Kandidaat (nog geen versie) — LIB-VALIDATE-01 Bibliotheekvalidatie en importgereedheid (18 oktober 2026)
+
+- **Nieuw.** `tools/library-validate.js` (alleen-lezen): oefeningencatalogus (id's, slugs, namen, metadata, relaties, kennislaag, video's, manifest + sha256, posters, Batch 002-poort), supplementen (enums, synoniemen, claims met bron, geen claimtaal) en de voedingsstatus; `--movekit-source` geeft een reproduceerbare droogloop voor een volgende batch.
+- **Rapport.** `docs/LIBRARY_VALIDATION_REPORT.md` (0 fouten; waarschuwingen: 0/226 NL-namen, 2 spiergroepen buiten de keuzelijst, 20 kennisrecords en 20 posters ontbreken) en `docs/LIBRARY_IMPORT_READINESS.md`.
+- **Niet gedaan.** Geen import, geen productie-SQL, geen app-wijziging.
+- **Gate.** `core/fLibraryValidation.test.js` (echte data, sabotage met een kapotte catalogus, droogloop schrijft niets, rapport actueel).
+
+## Kandidaat (nog geen versie) — UX-EXEC-01 Uitvoeringsketen: geen verloren oefeningen, geen dubbele rijen, handmatige trainingen offline-veilig (18 oktober 2026)
+
+- **Bevindingen (audit + browser).** Tab Trainen gaf een leeg scherm tijdens een eigen/programmatraining; een hervatte vaste training (via Preview) verloor ingewisselde oefeningen en hun sets bij afronden; opnieuw afronden na een herstart kon een tweede sessierij geven; replay van `custom_trainings` bleef op 409 hangen; handmatige trainingen verdwenen offline bij de volgende sync en verwijderde kwamen terug; permanent toevoegen wiste Builder-doelen; Preview van een lopende training koppelde haar stil aan een nieuwe instance; pauzestand lekte in eigen trainingen.
+- **Oplossing (DEC-EXEC-001).** `tkTrainScreenIdVoor()`; `resolvedWorkout` in het concept; `tkSessieRijId()`; `custom_trainings` idempotent; handmatige paden via `tkCustomTrainingPost`/`-Patch` en de wachtrij-veilige oefeningenroute; `sbDelQ` met eerlijke uitkomst en sync-filter; Preview/`startCustomTraining` keren terug naar een lopende training.
+- **Niet gewijzigd.** `core/`, schema, wachtrijsemantiek, finish-volgorde.
+- **Open.** B5/B6/B8/B11, `sbPatchQ`/`sbDelQ` zonder detail, offline programma-start (zie DEC-EXEC-001).
+- **Gate.** `core/fExecutionIntegrity.test.js` (deel 2 Chromium: offline aanmaken/verwijderen + sync, tab Trainen, herstart + hervatten, Preview van een lopende training).
+
+## Kandidaat (nog geen versie) — UX-LOG-01 Setregistratie mobiel bruikbaar, bewerkingen blijven staan (18 oktober 2026)
+
+- **Bevindingen (gereproduceerd).** kg/reps 6 px breed op 320/360 px zodra de 1RM-schatting verscheen; een afgevinkte AMRAP-set verloor `done`/`isAmrap` bij een bewerking; na oefening toevoegen/verwijderen/vervangen leken ingevulde sets leeg en werden ze bij de volgende bewerking overschreven; Guided bewaarde elke set met het laatste gewicht; de Logboek-editor schreef de RPE van set 2..n leeg weg; setadvies na RPE-wijziging gaf een NotFoundError; tabbalk en terugveeg verlieten de training zonder vraag en de klok liep daarna niet door; inconsistente profielknop en een overlappende 👥-knop op Home.
+- **Oplossing (DEC-LOG-001).** 1RM-regel onder de invoer (`.setr-e1rm`), smaller kader op ≤ 374 px, groter RPE-raakvlak; `logSet()` behoudt setvlaggen; `rerenderTrainScreenKeepLog()` voor de vier herbouwpaden; Guided `setsDone[].kg`; editor RPE per set + horizontale rij + passende knoppen; `showPostSetAdvice()` voegt in naast `.add-row`; `tkPrimaryNavGo()` + popstate-regel 2b vragen "Training verlaten?"; klok hervat in `go()`; `tkPaintHeaderAvatar()`; 👥-knop verwijderd.
+- **Niet gewijzigd.** `core/`, rekenlogica (Epley, effectief gewicht, normalisatie, PR), RPE-cascade, opslag en wachtrij.
+- **Gate.** `core/fSetLoggingUx.test.js` (deel 1 altijd; deel 2 Chromium op 320/360/390/412 px met de echte trainingsflow). Sabotage: op main 16 mislukt.
+
+## Kandidaat (nog geen versie) — UX-REC-02 Herstelcommunicatie consistent op Vandaag, Inzicht en Coach (18 oktober 2026)
+
+- **Bevinding.** Bij dagfactor 1,02 / gereedheid 85 / slaap 6u01 / spierherstel laag zei de coachzin nog "Je herstel is sterk" of "Je lichaam is klaar voor belasting", en zette Inzicht "Klaar om te trainen" naast de spierherstelring zonder herkomst. PR #540 (UX-REC-01) loste alleen de hero-subtitel op.
+- **Oplossing (DEC-REC-001).** `buildCoachAdvice()`, `buildCoachIntro()` en `buildMorningMessage()` schrijven het oordeel toe aan de dagfactor; zelfde zone en filters. "Waarom vandaag?" in de hero toont gebaseerd-op met meetmoment, telt-niet-mee, berekening en betrouwbaarheid via de nieuwe helper `tkDagfactorHerkomst()` (ook gebruikt door `renderDagfactorDetail`, geen dubbele formuletekst). Spierherstel als gemiddelde schatting met aantal spiergroepen. Hero-label "Herstel nu" → "Vandaag"; legenda benoemt de spierfiguur. Inzicht: herkomstregel onder het oordeel; spierkaart zonder data "Geen trainingsdata" i.p.v. "Klaar voor belasting". Inzicht-spierlijst: een groep zonder trainingsdata toont "—" / "Geen data" i.p.v. "100% Hersteld".
+- **Niet gewijzigd.** `core/` (0 bestanden), drempels, Decision-titel, readiness-zone, AI-payload.
+- **Open.** Kop "Goed hersteld" op de readinesskaart (DEC-REC-001-A) en herstelscore/readiness die alleen de spiergroepen van de geplande training wegen (DEC-REC-001-B): beide PO-besluit.
+- **Gate.** `core/fRecoveryCommunicationConsistency.test.js` (deel 1 altijd; deel 2 Chromium op 320/360/390/412 px, praktijkscenario 1,02 / 85 / 6u01). `core/fHomeDagfactorBasisSafety.test.js` (verwachte coachzinnen) en `core/fInzichtHerstelBelasting.test.js` (rij zonder data) bewust bijgewerkt.
+
 ## v4.70.25 — Wearable-koppeling hersteld: veilige tokenopslag, Android-app bereikt de server, eerlijke koppelstatus (gebruikerstest 11 oktober 2026)
 
 - **Bug (S8-VAULT-NAME, S8-VAULT-ORPHAN).** Koppelen eindigde op "Koppelen mislukt (opslaan)". Supabase registreerde op 11 oktober tussen 06:28 en 06:29 UTC zes keer HTTP 409 op `store_wearable_token_secret`, PostgreSQL zes keer SQLSTATE 23505 op `secrets_name_idx`.
@@ -8720,3 +8758,11 @@ Zie `docs/Sprintrapporten/Sprint3.1_Rapport.md` voor het volledige verslag.
 
 ## v3.3.25 en eerder
 Zie DECISION_LOG.md (DEC-001 t/m DEC-010) en CURRENT_STATE.md voor de volledige geschiedenis vóór dit CHANGELOG-bestand is gestart.
+
+### 18 oktober 2026 — DEC-REC-001-A/B (Draft, niet gepubliceerd)
+
+- `readiness_day.v1.1`: dagreadiness-zone `ready` communiceert **Gunstige dag** in plaats van **Goed hersteld**; numerieke dagfactor/gereedheid en oude sportdrempels ongewijzigd.
+- Alleen expliciet geplande trainingen komen in aanmerking voor een trainingsspecifieke herstelscore, en alleen met voor alle relevante spiergroepen aantoonbare historie; automatische rotatie is een suggestie, geen geplande training. Geen plan → geen trainingsherstelscore of trainingsadvies; daggereedheid blijft afzonderlijk zichtbaar.
+- Zonder spierhistorie zijn Home- en Lichaam-figuren neutraal; spierkaarten tonen geen verzonnen 100%-herstel.
+- Gedeelde Decision-, Coaching- en registry-contracten geversioneerd; service-worker CORE_SIG en caches bijgewerkt.
+- Alle wijzigingen uitsluitend op gestapelde Draft-branch; productie v4.70.25 ongewijzigd.

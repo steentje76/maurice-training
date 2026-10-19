@@ -3059,3 +3059,199 @@ publicatiestatus op "Testing", dan publiceren ("In production"). Zie `docs/B9_H3
 Zolang de status "Testing" is, moet elke koppeling na 7 dagen opnieuw worden gelegd.
 
 **Status.** NOT VERIFIED. Niet vast te stellen zonder Console-toegang.
+
+## DEC-REC-001 — Herstelcommunicatie: een oordeel noemt zijn bron (18 oktober 2026)
+
+**Context.** Praktijkbevinding van de Product Owner op v4.70.25: dagfactor 1,02, gereedheid 85, slaap 6u01 en tegelijk
+spierherstel 40%, met "Klaar om te trainen" op het dashboard. PR #540 (UX-REC-01) maakte de hero-subtitel voorzichtig.
+Daarna bleef staan:
+- de coachzin uit `buildCoachAdvice()` (coachkaart Vandaag én "Waarom vandaag?") zei bij zone g "Je herstel is sterk",
+  "Je algehele herstel is sterk" of "Je lichaam is klaar voor belasting". De zone komt uitsluitend uit de dagfactor
+  (HRV × slaap × cyclus); de spiergroepen in die functie zijn alleen die van de volgende training. Bij een gunstige
+  dagfactor zonder geplande training stond er dus "Je herstel is sterk" naast een spierherstel van 40%;
+- "Waarom vandaag?" in de hero noemde niet welke metingen de dagfactor voedden, met welk meetmoment en welke
+  betrouwbaarheid. Die uitleg bestond wel (`renderDagfactorDetail`), maar in een kaart die op Home verborgen is;
+- Inzicht zette "Klaar om te trainen" naast de spierherstelring zonder herkomst, en spierkaarten zonder trainingsdata
+  zeiden "Klaar voor belasting";
+- het hero-label heette "Herstel nu" boven een oordeel dat niet over herstel gaat.
+
+**Besluit (technische uitvoering binnen het mandaat van 18 oktober 2026).**
+1. Een dagoordeel wordt toegeschreven aan de dagfactor ("Je dagfactor is gunstig/gemiddeld/laag"). Spierherstel
+   heet overal een schatting (vuistregel 48–72 u, RPE-afhankelijk).
+2. "Waarom vandaag?" toont: dagfactor, *gebaseerd op* (alleen de signalen die de dagfactor voedden, elk met
+   meetmoment), *telt vandaag niet mee*, de berekening, de betrouwbaarheid (bestaande `conf`/`sig`) en het
+   spierherstel als gemiddelde schatting over de getrainde spiergroepen. Eén helper (`tkDagfactorHerkomst`) voor beide
+   panelen; geen nieuwe berekening.
+3. Geen herstel- of belastbaarheidsclaim zonder trainingsdata: spierkaart "Geen trainingsdata", Inzicht-spierlijst
+   "—" / "Geen data" in plaats van "100% Hersteld" (selectie `lichTop4Herstel` ongewijzigd).
+
+**Niet gewijzigd.** `core/` volledig ongewijzigd: `CalcCore`, `DecisionCore` (`trainReadiness`, `dayZone`,
+`readinessDay`, `computeProgAdjustment`), `CoachingCore`, alle drempels (0,93 / 1,00; spierfilters < 70 % en ≥ 90 %;
+kaartlabels ≥ 85 % / ≥ 50 %), de hero-titel uit de Decision Engine en de AI-payload.
+
+**OPEN — PRODUCT OWNER-BESLUIT NODIG (DEC-REC-001-A).** `READINESS_ZONE_TEKST.ready.label` in `core/decision.js`
+(readiness_day.v1) is "Goed hersteld". Die tekst staat als kop op de readinesskaart van Vandaag en gaat als `zoneLabel`
+naar de live coach en de AI. De zone `ready` volgt alleen de dagfactor; bij spierherstel 40% staat er dus "Goed
+hersteld", met eronder "Meegewogen: laag spierherstel". Een herlabeling is een wijziging van het Decision-contract
+(versie, CORE_SIG, AI-payload) en wordt daarom niet zelfstandig uitgevoerd. Voorstel: label `ready` → "Gunstige dag"
+in een readiness_day.v1.1, met bijgewerkte pins. Tot dat besluit blijft de kop ongewijzigd.
+
+**OPEN — PRODUCT OWNER-BESLUIT NODIG (DEC-REC-001-B).** `tkReadinessVandaag()` geeft `recoveryScoreFrom()` en
+`readinessDay().signalen.spierherstel` alleen de spiergroepen van de *volgende geplande training* mee (`recRows` uit
+`getRelevantMuscleRecovery`). Zonder geplande training is die lijst leeg. In het nagebouwde praktijkscenario (dagfactor
+1,02, slaap 6u01, quadriceps 13%) toont de readinesskaart daardoor "herstelscore 89/100 (hoog)" en "je spierherstel
+ontbreekt", terwijl de hero 13% spierherstel toont. Of de herstelscore en `computeProgAdjustment` het algemene
+spierherstel (alle getrainde spiergroepen) of alleen de geplande spiergroepen moeten wegen, is een sportinhoudelijke
+keuze met invloed op de uitkomst. Niet zelfstandig gewijzigd. Opties: (a) zo laten en de kaart vermelden dat de score
+alleen de geplande spiergroepen weegt; (b) zonder geplande training het algemene spierherstel doorgeven; (c) altijd
+het algemene spierherstel doorgeven.
+
+## DEC-LOG-001 — Setregistratie: een bewerking raakt alleen de invoer, een training verlaat je niet per ongeluk (18 oktober 2026)
+
+**Context.** Gebruikerstestbevindingen v4.70.25, in de browser gereproduceerd op 320/360/390/412 px:
+1. De 1RM-schatting ("1RM ≈ 79 kg") stond als extra flex-item in de setrij (de inline `grid-column` werkt niet in
+   flex). Op 320 en 360 px werden kg en reps **6 px** breed; op 390 px 21 px.
+2. `logSet()` verving bij elke toetsaanslag het hele setobject. Een afgevinkte AMRAP-set verloor zo `done`,
+   `rest_sec` en `isAmrap` en werd als gewone, niet-afgevinkte set opgeslagen.
+3. Oefening toevoegen, verwijderen of vervangen bouwde het scherm opnieuw op zonder de ingevulde sets van de
+   overige oefeningen terug te zetten. De velden leken leeg; de volgende bewerking overschreef `sessionLog`.
+4. Begeleide training: elke set kreeg bij opslaan het láátste gewicht van de oefening.
+5. Logboek-editor: alleen set 1 toonde zijn RPE; opslaan schreef de RPE van set 2..n leeg weg.
+6. Na afvinken + RPE aanpassen gooide `showPostSetAdvice()` een NotFoundError (`.add-row` zit sinds F0.8E in de
+   setkaart): geen setadvies, `adjustRpe()` afgebroken.
+7. De hoofdnavigatie en de terugveeg haalden de sporter zonder vraag uit een lopende training; terug via Trainen
+   liep de klok (en wakelock) niet meer.
+8. Profielknoppen in schermkoppen toonden een generiek icoon i.p.v. de avatar; een losse 👥-knop op Home (dubbel
+   met de tab Samen) lag over de kopknoppen.
+
+**Besluit (technische uitvoering binnen het mandaat van 18 oktober 2026).**
+- 1RM-schatting op een eigen regel onder de invoer; leeg = geen ruimte. Op ≤ 374 px minder kader rond de
+  setkaarten, niet kleinere invoer. RPE-knoppen: groter raakvlak en een toegankelijke naam.
+- `logSet()` vervangt alleen kg/reps/RPE/effKg; overige setvlaggen blijven staan.
+- Opnieuw opbouwen tijdens een training gaat via `rerenderTrainScreenKeepLog()` = `renderTrainScreen()` +
+  de bestaande `restoreSessionLogToDom()` (hetzelfde herstelpad als hervatten).
+- Guided legt het gewicht per set vast (`setsDone[].kg`), met terugval voor oudere actieve sessies.
+- Logboek-editor: RPE per set (`prefill.perSet`); horizontale setrij; afvinken/AMRAP niet in de editor (worden daar
+  niet opgeslagen).
+- Navigatie: op het scherm van een lopende training vraagt een andere tab of een terugveeg eerst "Training
+  verlaten?" (`confirmModal`, geen native dialoog). Er gaat niets verloren. Terug op de training loopt de klok door.
+- Avatar: `tkPaintHeaderAvatar()` vult de vier profielknoppen met dezelfde `tkAvatarHtml()` als Home; zonder
+  profiel blijft het icoon. De losse 👥-knop is weg (Samen staat in de tabbalk).
+
+**Niet gewijzigd.** `core/` (0 bestanden), `epley1RM`, `getEffectiveKg`, `normNumStr`/`numNL`, `clampNumInput`,
+PR-detectie, de RPE-cascade (set 1 voorgevuld tijdens een training), `finishSession`, de offline-wachtrij en
+het conceptformaat.
+
+**Open.**
+- `restoreSessionLogToDom()` zet de gewichtsmodus (+kg/%/1RM) niet terug. Een berekende set komt na hervatten
+  terug als vast gewicht met dezelfde waarde. Niet nieuw; geen dataverlies.
+- Na het verwijderen van een set kan `addWorkSet()` een bestaand set-id hergebruiken (count+1). Niet in deze scope.
+- Guided per-set gewicht alleen broncontrole; geen browserflow (Guided-UI vereist een volledige catalogus).
+- `.ibtn` blijft 36 px (PO-besluit app-breed aanraakdoel, al open).
+- Geen toestelbewijs.
+
+## DEC-EXEC-001 — Uitvoeringsketen: één schermnaam, een concept houdt zijn oefeningen en rij-id's, handmatige trainingen via de wachtrij (18 oktober 2026)
+
+**Context.** Reality-audit van de keten Training maken → Mijn trainingen → Preview → uitvoering → afronden →
+historie op main `160fefc` (v4.70.25). Bevestigd en in de browser nagespeeld:
+- **N** De tab Trainen ging tijdens een eigen of programmatraining naar `'s-train-'+curT.toLowerCase()`
+  (`s-train-custom_<id>`), een scherm dat niet bestaat: leeg beeld.
+- **B9** `resolvedWorkout` (Preview: vervangen/verwijderd/voorschrift) stond niet in het concept. Na een herstart
+  viel een hervatte vaste training terug op `TRAIN_CFG`; `finishSession()` schreef de sets van ingewisselde
+  oefeningen niet weg en `clearTrainingDraft()` wiste ze daarna. **Dataverlies.**
+- **B12** Sessierijen kregen pas in `sbPostQ` een id. Werd de app na een geslaagde write maar vóór de volgende
+  autosave gedood, dan gaf opnieuw afronden een tweede rij.
+- **B4** `custom_trainings` stond niet in `IDEMPOTENT_TABELLEN_MET_CLIENT_ID`: een replay na een verloren antwoord
+  bleef op 409 hangen en blokkeerde de oefeningen erachter.
+- **B1** Een handmatig aangemaakte training (`saveNewTraining`, `saveAsTrainingAndFinish`) ging via `sbPost`
+  zonder wachtrij en zonder markering: offline of bij een mislukte write verdween zij bij de volgende sync.
+- **B2** Offline verwijderen (`sbDel`) faalde stil; de training kwam bij de volgende sync terug.
+- **B3** "Permanent toevoegen" aan een Builder-training schreef alleen `exercise_id`'s: sets/reps/rpe/rust/pick weg.
+- **B7** Preview van een al lopende training maakte een nieuwe `training_instance` en koppelde de lopende sessie
+  daar stil aan; de oude instance bleef `active`.
+- **B10** `startCustomTraining` zette `trainPaused`/`pausedAccumMs` niet terug; opnieuw openen van een lopende eigen
+  training leegde `sessionLog`.
+
+**Besluit (technische uitvoering binnen het mandaat van 18 oktober 2026).**
+- `tkTrainScreenIdVoor(curT)` is de enige afleiding van het trainingsscherm (tab, navigatiebewaking, klok, Inzicht, dashboard).
+- Het concept bewaart `resolvedWorkout` van de lopende vaste training; hervatten zet die terug.
+- `tkSessieRijId(l)`: één client-id per oefening per uitvoering, in het concept vóór de write; na een geslaagde
+  write wordt het concept direct bijgewerkt (patroon van Guided `_rowId`).
+- `custom_trainings` is idempotent (merge-duplicates; UPDATE-policy uit v333).
+- Handmatige paden gebruiken `tkCustomTrainingPost`/`tkCustomTrainingPatch` + de bestaande wachtrij-veilige
+  oefeningenroute (`pushCustomTrainingExercises` → `pushCustomTrainingExercisesRich`); permanent toevoegen vult
+  `exercise_targets` aan.
+- Verwijderen via `sbDelQ(...,{detail:true})`; lukt ook queuen niet, dan komt de training lokaal terug met een
+  melding. De sync slaat een nog wachtende verwijdering over.
+- Preview van een lopende training: terug naar die training, geen nieuwe instance. Een lopende eigen training
+  opnieuw openen leegt niets.
+
+**Niet gewijzigd.** `core/`, `finishSession`-volgorde, FK-compat (DEC-SYNC-001), ouder-kindregels
+(DEC-SYNC-002), `sbPostQ`-semantiek (DEC-QUEUE-001), het databaseschema. Geen migratie.
+
+**Open (bewust niet in deze scope; gedocumenteerd voor een volgende stap).**
+- **B5/B6** Preview maakt de instance vóór de keuze hervatten/annuleren; bij hervatten of annuleren blijft die nieuwe
+  instance `active`. Oplossing raakt de start-volgorde in vier startpaden.
+- **B8** Gestructureerde duur-trainingen (lopen/fietsen/zwemmen) roepen `completeTrainingInstance` niet aan.
+- **B11** `startRepeatWorkout` kan een concept van dezelfde training zonder vraag overschrijven.
+- `sbPatchQ`/`sbDelQ` zonder `{detail:true}` geven bij een mislukte queue nog `true` (bestaand, DEC-QUEUE-001).
+- Pauzestand staat niet in het concept; programma starten/hervatten offline lukt niet (`sbGet` → `[]`).
+- Datum van een sessierij is de afrond-datum, niet de startdatum.
+
+## DEC-LIB-001 — Bibliotheken: eerst valideren, importeren alleen via een droogloop en een eigen PR (18 oktober 2026)
+
+**Context.** Opdracht bouwstap 4: bibliotheken voor oefeningen, voeding en supplementen uitbreiden of importgereed
+maken. Vastgesteld: de 186 aanvullende MoveKit-oefeningen staan niet in de repository en Batch 002 is geblokkeerd
+(MOVEKIT_MEDIA_SCALE_GATE, licentie); er is geen centrale voedingsdatabase; de supplementcatalogus is versioneerd
+en evidence-gebonden.
+
+**Besluit.** `tools/library-validate.js` (alleen-lezen) valideert de bibliotheken en levert een droogloop voor een
+volgende MoveKit-batch. `docs/LIBRARY_VALIDATION_REPORT.md` is de gegenereerde uitkomst; de test houdt hem actueel.
+Een import gebeurt alleen na de droogloop, met een PO-akkoord, in een eigen PR. Geen inhoud (Nederlandse namen,
+kennisrecords, voedingswaarden) wordt door de AI ingevuld zonder bron.
+
+**Open (PO).** Batch 002-poort; redactie van Nederlandse oefeningnamen; `Kuiten`/`Adductoren` in `MUSCLE_OPTIONS`;
+20 ontbrekende kennisrecords en posters; bron en licentie voor een centrale voedingsbibliotheek.
+
+## DEC-UPDATE-001 — Vóór een herinstallatie: eerst bewijzen dat er niets lokaal staat (18 oktober 2026)
+
+**Context.** Elke CI-debugbuild heeft een eigen debug-sleutel (ADR-ANDROID-SIGNING-001, PR #532); een nieuwe testbuild
+gaat dus alleen na verwijderen op het toestel. `allowBackup=false`: verwijderen wist de offline-wachtrij, een lopend
+concept, een niet-opgeslagen begeleide training en onbevestigde eigen trainingen. De laatste testbuild-release is
+v4.70.23; v4.70.25 heeft nog geen APK.
+
+**Besluit.** Help → "Klaar voor een update?" (`tkUpdateGereedheid()`): alleen-lezen controle van die vier bronnen;
+een onleesbare bron is "niet veilig" (fail-closed). "Synchroniseren en controleren" hergebruikt `flushOfflineQueue()`.
+Installatieprocedure en praktijktestchecklist: `docs/ANDROID_PRAKTIJKTEST_V1_BETA.md`.
+
+**Niet gewijzigd.** Signing, secrets, applicationId, versionCode, workflows, Vault, OAuth-configuratie.
+
+**Open (PO).** Stabiele testsleutel (D1–D4 in PR #532). Testbuild bouwen: workflow `Android Debug APK` met de exacte
+SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDATION REQUIRED.
+
+
+## DEC-UPDATE-002 — Android update-inventarisatie zonder valse servergarantie (18 oktober 2026)
+
+**Context.** Onafhankelijke review van PR #545, DEV-UPDATE-01: de updatekaart gaf ten onrechte `veilig:true` bij beschadigde `tk_draft_training` en een onverwacht niet-arrayformaat van `tk_trainings_onbevestigd`. De opslag van een lopende Guided-sessie (`tk_gw_active`) was bovendien niet afgedekt door alleen `GW.hasUnsaved()`. Een succesvol IndexedDB `getAll()`-request bewijst niet dat de hele transactie ook slaagt.
+
+**Technisch herstel op afzonderlijke gestapelde Draft-PR.** Lees de ruwe keys en valideer vorm vóór oordeel; elke aanwezige lokale trainingsdraft telt als mogelijk verliesrisico, óók zonder ingevulde werksets. Beschadigde of onverwachte opslag is `onbekend`, nooit `veilig`. Controleer ook de actieve Guided-key. Wacht bij de wachtrij tot de readonly-transactie succesvol voltooid is (`oncomplete`), en blokkeer bij `onabort`/`onerror`.
+
+**Communicatiecontract.** `veilig:true` betekent uitsluitend dat de onderzochte lokale bronnen geen blokkade opleverden. Het is **geen bewijs van serverregistratie en geen toestemming tot de-installatie**. De Help-kaart en Android-praktijktestprocedure zeggen dit nu expliciet. Geen signing-, migratie- of serverwijzigingen uitgevoerd.
+
+**Nog open.** Volledige serverzijde bevestiging/export van alle potentieel uitsluitend lokale gegevens; betrouwbare ondertekening/upgrade zonder de-installatie (ADR-ANDROID-SIGNING-001); echte Android-acceptatie. Zonder die gegevens blijft installatie met verwijdering **NO-GO**.
+
+## DEC-REC-001-A/B — PO-besluit goedgekeurd en technisch uitgewerkt (18 oktober 2026)
+
+**Bron van autorisatie:** expliciet akkoord Product Owner op zowel A als B, vastgelegd in GitHub issue #546. De eerder in dit document opgenomen openstaande beslispunten A/B zijn daarmee **GOEDGEKEURD**. Dit is een inhoudelijk besluit, **niet** het akkoord om te mergen of te publiceren.
+
+**A — readiness_day.v1.1.** Het Day Readiness Decision-label `ready` is voortaan **"Gunstige dag"** in plaats van een fysiologische uitspraak "Goed hersteld". De zone-ID, grenzen voor `trainReadiness`, invoermetingen, berekeningen en numerieke `gereedheid` blijven gelijk. De `zoneBetekenis` is beperkt tot de betekenis van de dagfactor, zonder een algemene spierherstelclaim.
+
+**B — expliciete planning als scopegrens.** Het automatisch geselecteerde volgende vaste schema (`computeNextVasteTraining`) is een **suggestie**, geen expliciet in de kalender ingeplande training. Alleen een werkelijk ingeplande `planned_training_occurrence` met `planned_training_assignment` voor de sporter van vandaag telt als `trainingGepland:true`. Zonder zo'n planning is de trainingsspecifieke herstelscore `null`, blijft de daggereedheid zichtbaar, en luidt `trainingsadvies.soort='geen_advies'`. De AI ontvangt geen herstelscore die in deze context niet bestaat.
+
+**Datakwaliteitsminimum voor geplande training:** bereken/laat een trainingsspecifieke herstelscore pas door bij ten minste één relevante spiergroep en voor **alle** relevante spiergroepen een geldige `pct` en geregistreerde `hours`. Bij onvolledige/no-data-input volgt `herstel:null` met `ontbreekt:['herstelscore']`. Dit is een conservatieve beschikbaarheidsvoorwaarde, geen nieuwe sportwetenschappelijke belastingsdrempel. Bestaande `recoveryScoreFrom` en `computeProgAdjustment` zijn rekenkundig niet aangepast.
+
+**Presentatiecorrectie:** spiergroepen zonder training blijven waar nodig compatibel in het bestaande rekencontract, maar worden in Lichaam- en Home-figuur **neutraal** weergegeven (SVG-null), zonder groene 100%-kleuring of 100%-balk. De Decision-labels op andere, apart gedefinieerde berekeningen blijven buiten deze beslissing.
+
+**Architectuur:** de Calculation Engine rekent; de Decision Engine bepaalt de zone en de betekenis; de Coaching Engine verwoordt de al vastgestelde beslissing en krijgt zonder planning geen trainingsherstelscore. Regels zijn versieerbaar, deterministisch en auditbaar.
+
+**Acceptatiestatus:** Draft-code en lokale tests. `main` en productie blijven v4.70.25; onafhankelijke review, bijgewerkte CORE_SIG + service-worker cache, volledige GitHub Quality Gate en een afzonderlijk mergebesluit blijven vereist. GitHub Actions is op dit moment account-breed geblokkeerd wegens een bevestigde billing lock (zie issue #548).

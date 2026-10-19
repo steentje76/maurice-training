@@ -2328,7 +2328,7 @@ html[data-theme="dark"]{--v45-slate:#9db4c0}
 #home-hero .v43-stat-v{font-size:18px}
 /* Smalle schermen: Spierherstel en Gereedheid breken op het zachte afbreekstreepje i.p.v. over het
    kengetal ernaast te lopen. Alle vier labels houden dezelfde hoogte, zodat de rij uitgelijnd blijft. */
-@media(max-width:400px){#home-hero .v43-stat-k{min-height:36px}}
+@media(max-width:400px){#home-hero .v43-stat-k{min-height:36px;font-size:clamp(11px,2.9vw,12px);overflow-wrap:anywhere}}
 .v43-stat-df{display:flex;flex-direction:column}
 .v43-df-circle{width:38px;height:38px;border-radius:50%;border:2.5px solid;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;margin-bottom:10px;background:rgba(0,184,148,.06)}
 html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
@@ -2959,10 +2959,10 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .grid{display:flex;gap:8px;margin-top:16px}
 /* Onder 360 px passen vier tegels niet naast elkaar (minimaal 64 px per tegel): dan 2×2. */
 @media(max-width:359px){:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .grid{display:grid;grid-template-columns:1fr 1fr}}
-:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m{flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 6px;text-align:center}
+:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m{flex:1;min-width:0;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 6px;text-align:center}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .v{font-size:15px;font-weight:800;color:#fff}
-:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .w{font-size:9px;font-weight:600;color:rgba(230,240,243,.62);margin-top:5px;line-height:1.2}
-:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .k{font-size:8px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .w{font-size:9px;font-weight:600;color:rgba(230,240,243,.62);margin-top:5px;line-height:1.2;overflow-wrap:anywhere}
+:is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-rhero .m .k{font-size:8px;color:rgba(230,240,243,.6);font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:3px;overflow-wrap:anywhere}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anat{background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:16px}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anat .v43-lich-toggle{display:flex;justify-content:center;margin-bottom:8px}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anat .v43-lich-fig{min-height:210px;display:flex;align-items:center;justify-content:center}
@@ -3386,6 +3386,37 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .setr-ring.done::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800}
 .setr-toolbtn{width:30px;height:24px;border:none;background:none;color:var(--g3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .setr-toolbtn svg{width:18px;height:18px}
+/* UX-LOG-01 — de 1RM-schatting staat op een eigen regel onder de invoer. Zij stond als vierde
+   flex-item IN de rij (inline grid-column werkte niet in flex) en kneep kg/reps tot ~6px op
+   320-360px. Leeg = geen ruimte; gevuld = volle breedte onder de cellen. */
+.tks-setcard .set-row.setr{flex-wrap:wrap}
+.setr-e1rm{flex:0 0 100%;order:9;font-size:11px;color:var(--g4);padding:2px 0 0 33px;line-height:1.3}
+.setr-e1rm:empty{display:none}
+.ibtn.ibtn-avatar{padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+/* UX-LOG-01 — Logboek-editor: dezelfde horizontale setrij als tijdens de training (stond gestapeld:
+   nummer, invoer, AMRAP, ring en menu elk op een eigen regel). Afvinken en AMRAP worden door de
+   editor niet opgeslagen (collectWorkSets leest kg/reps/RPE), dus die bediening staat hier niet. */
+#es-sets-wrap .set-row.setr{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:10px 2px;border-bottom:1px solid var(--g1)}
+#es-sets-wrap .setr-ring,#es-sets-wrap .amrap-chip{display:none}
+.es-acties .btn{min-width:0;padding-left:8px;padding-right:8px}
+.es-acties .btn:first-child{flex:1}
+/* UX-LOG-01 — RPE-knoppen: zelfde look, groter raakvlak (onzichtbaar, naar buiten). */
+.setr-cell-rpe .rpe-btn{position:relative}
+.setr-cell-rpe .rpe-btn::after{content:'';position:absolute;left:-9px;right:-9px}
+.setr-cell-rpe .rpe-up::after{top:-10px;bottom:0}
+.setr-cell-rpe .rpe-down::after{top:0;bottom:-10px}
+/* UX-LOG-01 — smalle toestellen (320-374px): minder kader rond de setkaarten zodat kg en reps
+   leesbaar blijven (was 42px bij 320px, "62.5" afgekapt). Alleen marges/afstanden. */
+@media (max-width:374px){
+  .ex-card .tks-card{margin-left:4px;margin-right:4px}
+  .tks-setcard .set-row.setr{margin:6px 2px;padding:9px 6px;gap:5px}
+  .tks-setcard .set-row.setr .setr-cells{gap:4px}
+  .tks-wu-card .set-row.wur{margin:6px 2px;padding:8px 6px;gap:5px}
+  /* Verwijderen is destructief: op smalle schermen onder de twee hoofdacties, niet gecomprimeerd. */
+  .es-acties{flex-wrap:wrap}
+  .es-acties .btn:first-child{flex:0 0 100%;order:3}
+  .es-acties .btn{font-size:14px;padding-left:6px;padding-right:6px}
+}
 /* VOLTOOIDE set: mint-tint; ingevoerde waarden blijven zichtbaar */
 .tks-setcard .set-row.setr.done{background:var(--v43-mint);border-color:transparent}
 .tks-setcard .set-row.setr.done .setr-cell .set-field{background:rgba(255,255,255,.55)}
@@ -3749,7 +3780,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div id="v43-home-head"></div>
     <div id="offline-badge" style="display:none;margin-top:8px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
-    <button class="ibtn" onclick="go('s-social')" aria-label="Naar Sociaal" style="position:absolute;top:12px;right:12px">👥</button>
+    <!-- UX-LOG-01: de losse 👥-knop (dubbel met de tab Samen) lag over de avatar/check-in-knoppen; verwijderd. -->
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
     <div id="home-dash" style="display:none"></div>
@@ -3800,7 +3831,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Samen</div><div class="hdr-sub">Samen sporten, motiveren en groeien</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+      <button class="ibtn" data-tk-avatar onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     </div>
   </div>
   <div class="scroll" id="social-scroll" style="padding:16px"></div>
@@ -4093,6 +4124,15 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
         <button class="btn btn-r btn-sm" id="help-feedback-btn" onclick="openBetaFeedback()">Feedback geven in de app</button>
         <button class="btn btn-o btn-sm" id="help-feedback-triage-btn" style="display:none" onclick="openFeedbackTriage()">Feedback-triage</button>
+      </div>
+    </div></div>
+    <!-- DEV-UPDATE-01: vóór verwijderen/opnieuw installeren van de app (testbuild met een andere
+         ondertekening) controleren dat er niets lokaal staat dat de server nog niet heeft. -->
+    <div class="card" id="help-update-card"><div class="card-hd"><div class="card-title">Klaar voor een update?</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
+      <div id="help-update-body" aria-live="polite" style="color:var(--g4)">Nog niet gecontroleerd.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+        <button class="btn btn-o btn-sm" id="help-update-check" onclick="tkUpdateGereedheidToon(false)">Controleren</button>
+        <button class="btn btn-r btn-sm" id="help-update-sync" onclick="tkUpdateGereedheidToon(true)">Synchroniseren en controleren</button>
       </div>
     </div></div>
     <div class="card"><div class="card-hd"><div class="card-title">Over de app</div></div><div class="card-body" style="font-size:13px;line-height:1.5">
@@ -4470,7 +4510,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Inzicht</div><div class="hdr-sub">Jouw ontwikkeling en herstel</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+      <button class="ibtn" data-tk-avatar onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -4526,7 +4566,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <div class="v43-lbl" style="margin:16px 0 10px">Wat betekent dit?</div>
     <button class="lich-goto" onclick="go('s-coach')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.2 3.2L16.4 7.6 13.2 8.8 12 12l-1.2-3.2L7.6 7.6l3.2-1.2z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/></svg></span><span class="b"><b>Wat betekent dit voor vandaag?</b><s>De coach legt uit en adviseert</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11M4 4l3 3M20 20l-3-3M2 8l4-4M22 16l-4 4M14 4l3 3-8 8-3-3z"/></svg></span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="curT?go(tkTrainScreenIdVoor(curT)):go('s-train-mgr')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11M4 4l3 3M20 20l-3-3M2 8l4-4M22 16l-4 4M14 4l3 3-8 8-3-3z"/></svg></span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
     </div>
 
     <div class="v43-lbl" style="margin:18px 0 10px">Domeinen</div>
@@ -4558,7 +4598,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Voeding</div><div class="hdr-sub">Wat je vandaag hebt gegeten</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" data-icon="profiel" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+      <button class="ibtn" data-tk-avatar onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" data-icon="profiel" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     </div>
   </div>
   <div class="scroll" style="flex:1;overflow-y:auto">
@@ -4911,7 +4951,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div class="hdr-row">
       <div><div class="hdr-title" role="heading" aria-level="1">Trainen</div><div class="hdr-sub">Plan, start en beheer je trainingen</div></div>
-      <button class="ibtn" onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" data-icon="profiel" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Profiel"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+      <button class="ibtn" data-tk-avatar onclick="go('s-profiel')" aria-label="Profiel openen"><svg class="tk-icon" data-icon="profiel" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Profiel"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
     </div>
   </div>
   <div class="scroll" style="padding-top:8px">
@@ -6472,8 +6512,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="modal-handle"></div>
     <div class="modal-title" id="edit-sess-title">Bewerken</div>
     <div id="edit-sess-fields"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-o" style="flex:1;background:#ffebee;color:var(--red);border-color:#ffcdd2" onclick="deleteSessionEntry()">Verwijder</button>
+    <div class="es-acties" style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-o" style="background:#ffebee;color:var(--red);border-color:#ffcdd2" onclick="deleteSessionEntry()">Verwijder</button>
       <button class="btn btn-o" style="flex:1" onclick="closeModal('m-edit-session')">Annuleer</button>
       <button class="btn btn-r" style="flex:2" onclick="saveEditSession(this)">Opslaan</button>
     </div>
@@ -8602,7 +8642,15 @@ async function tkCustomTrainingHerstel(t,bestaatOpServer){
 }
 async function syncCustomTrainingsFromSupabase(){
   try{
-    const rows=await sbGet('custom_trainings','&order=sort_order.asc');
+    let rows=await sbGet('custom_trainings','&order=sort_order.asc');
+    // TK-INT-01: zonder betrouwbare offline-wachtrij mogen serverrijen een lokaal
+    // verwijderde training niet opnieuw zichtbaar maken. Leesfout = sync overslaan;
+    // ook herstelwrites hieronder gebruiken precies deze gevalideerde snapshot.
+    const _wq=await offlineQueueAll();
+    if(!Array.isArray(_wq))throw new Error('queue_snapshot_invalid');
+    const _uid=tkHuidigeUid();
+    const _weg=new Set(_wq.filter(function(i){ return i.table==='custom_trainings'&&i.method==='DELETE'&&(i.owner_uid==null||i.owner_uid===_uid); }).map(function(i){ return String(i.filter||'').replace(/^id=eq\./,''); }));
+    if(_weg.size){ rows=rows.filter(function(r){ return !_weg.has(r.id); }); customTrainings=customTrainings.filter(function(t){ return !(t&&_weg.has(t.id)); }); }
     if(rows.length){
       // Sprint 6: lokaal nog niet door de server bevestigde trainingen niet weggooien.
       const _opServer=new Set(rows.map(r=>r.id)), _onbevestigd=tkTrainingenOnbevestigd();
@@ -8633,15 +8681,15 @@ async function syncCustomTrainingsFromSupabase(){
       localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
       renderCustomTrainBtns(); renderCustomTrainList();
       if(_herstel.length&&navigator.onLine){
-        let _q=[]; try{ _q=await offlineQueueAll(); }catch(_){}
-        for(const h of _herstel){ if(!tkWachtrijRaaktTraining(_q,h.t.id)) await tkCustomTrainingHerstel(h.t,h.opServer); }
+        // Hergebruik de gecontroleerde wachtrijsnapshot; fouten worden nooit als leeg geïnterpreteerd.
+        for(const h of _herstel){ if(!tkWachtrijRaaktTraining(_wq,h.t.id)) await tkCustomTrainingHerstel(h.t,h.opServer); }
       }
     } else if(customTrainings.length){
       // Eerste upload bij lege server: onbevestigde trainingen MOETEN via de idempotente
       // ouder-kind queue verlopen. De oude sbPost-route omzeilde die garanties juist
       // wanneer dit de allereerste Builder-training van de sporter was.
       const pending=new Set(tkTrainingenOnbevestigd());
-      let wachtend=[];try{wachtend=await offlineQueueAll();}catch(_){}
+      const wachtend=_wq;
       for(let i=0;i<customTrainings.length;i++){
         const t=customTrainings[i];
         if(pending.has(t.id)){
@@ -8659,12 +8707,11 @@ async function syncCustomTrainingsFromSupabase(){
     await migrateLegacyWbSaved();
   }catch(e){/* offline — lokale waarde blijft leidend */}
 }
+// UX-EXEC-01 (B1/B3): handmatige trainingen gebruiken nu dezelfde, wachtrij-veilige oefeningenroute
+// als de Builder (client-id per rij, ouder eerst, markering pas weg na bevestiging). Voorheen: sbDel +
+// sbPost zonder wachtrij, en bij een Builder-training gingen sets/reps/rpe/rust/pick verloren.
 async function pushCustomTrainingExercises(t){
-  await sbDel('custom_training_exercises','custom_training_id=eq.'+t.id);
-  let so=0;
-  for(const exId of (t.exercises||[])){
-    await sbPost('custom_training_exercises',{custom_training_id:t.id, exercise_id:exId, sort_order:so++});
-  }
+  return pushCustomTrainingExercisesRich(Object.assign({},t,{exercise_targets:tkTrainingOefendoelen(t)}));
 }
 // pushCustomTrainingExercisesRich — Werkblok B, alleen gebruikt door Builder-afkomstige
 // custom trainingen (t.source==='builder'): schrijft óók sets/reps/rpe/rest/pick per
@@ -9112,7 +9159,11 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
   training_instances: true, messages: true,
   // Sprint 7 (DEC-SYNC-002, Builder-integriteit): oefeningenrijen van een Builder-training krijgen een
   // client-id, zodat een herhaalde of opnieuw afgespeelde write nooit een tweede rij oplevert.
-  custom_training_exercises: true };
+  custom_training_exercises: true,
+  // UX-EXEC-01 (B4): de training-rij zelf heeft ook een client-id ('custom_…'/Builder-id) en een
+  // UPDATE-policy (v333). Zonder deze regel gaf een replay na een verloren antwoord een 409 die
+  // nooit uit de wachtrij verdween; de oefeningen erachter bleven dan voorgoed staan.
+  custom_trainings: true };
 // Sprint 7 (DEC-SYNC-002): tabellen in de lijst hierboven ZONDER UPDATE-policy (pg_policies, read-only
 // geverifieerd 9 oktober 2026). merge-duplicates is daar ON CONFLICT DO UPDATE en faalt bij een replay
 // van een al opgeslagen rij op RLS; voor deze tabellen is ignore-duplicates (DO NOTHING) het juiste
@@ -9165,6 +9216,16 @@ function tkMetTimeout(promise,ms){
   if(typeof setTimeout!=='function'||typeof clearTimeout!=='function') return promise; // omgeving zonder timers: geen time-out
   let timer; const t=new Promise(function(_,rej){ timer=setTimeout(function(){ const e=new Error('timeout'); e.tkTimeout=true; rej(e); },ms); });
   return Promise.race([promise,t]).finally(function(){ clearTimeout(timer); });
+}
+// UX-EXEC-01 — het scherm van een lopende training. curT is 'A'/'B' (vast), 'custom_<id>' of
+// 'prog_<blockId>'; de schermen heten s-train-a, s-train-custom-<id> en s-train-prog-<blockId>.
+// 's-train-'+curT.toLowerCase() klopte alleen voor vaste trainingen: tijdens een eigen of
+// programmatraining leidde de tab Trainen naar een niet-bestaand scherm (leeg beeld).
+function tkTrainScreenIdVoor(t){
+  if(!t)return null; t=String(t);
+  if(t.indexOf('custom_')===0)return 's-train-custom-'+t.slice(7);
+  if(t.indexOf('prog_')===0)return 's-train-prog-'+t.slice(5);
+  return 's-train-'+t.toLowerCase();
 }
 function newClientRowId(){
   return (typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():('row-'+Date.now()+'-'+Math.random().toString(16).slice(2));
@@ -9372,6 +9433,82 @@ async function sbRpcQ(fn,args){
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden
 // blijft.
 let _flushBezig=false;
+// DEV-UPDATE-01 — UPDATEGEREEDHEID. Een Android-testbuild met een andere ondertekening kan alleen
+// na verwijderen worden geïnstalleerd, en allowBackup=false betekent dat verwijderen ALLE lokale
+// data wist: de offline-wachtrij (IndexedDB), een lopend trainingsconcept, een niet-opgeslagen
+// begeleide training en nog niet door de server bevestigde Builder-trainingen. Deze controle
+// leest uitsluitend die bestaande bronnen; ze wijzigt niets en verwijdert niets. Kan een bron
+// niet worden gelezen, dan is de uitkomst "niet veilig" (fail-closed), nooit "veilig".
+async function tkLeesWachtrijStrikt(){
+  const db=await offlineDb();
+  return await new Promise((resolve,reject)=>{
+    const tx=db.transaction(OFFLINE_STORE,'readonly');
+    const req=tx.objectStore(OFFLINE_STORE).getAll();
+    let rows=null;
+    // req.onsuccess kan afgaan vóór een latere transaction abort.
+    // Pas de voltooide transactie bewijst dat het lezen werkelijk geslaagd is.
+    req.onsuccess=()=>{rows=req.result;};
+    req.onerror=()=>reject(req.error||new Error('queue_read_failed'));
+    tx.oncomplete=()=>resolve(rows||[]);
+    tx.onerror=()=>reject(tx.error||new Error('queue_transaction_failed'));
+    tx.onabort=()=>reject(tx.error||new Error('queue_transaction_aborted'));
+  });
+}
+async function tkUpdateGereedheid(){
+  const open=[], onbekend=[];
+  try{ const q=await tkLeesWachtrijStrikt(); if(!Array.isArray(q))throw new Error('invalid_queue'); if(q.length)open.push(q.length+(q.length===1?' wijziging wacht':' wijzigingen wachten')+' nog op de server'); }
+  catch(_){ onbekend.push('de offline-wachtrij kon niet worden gelezen'); }
+  // DEV-UPDATE-02: restoreTrainingDraft() maskeert JSON-fouten als null; een lokale
+  // draft is nooit bewijs voor bevestigde serveropslag, ook zonder werksets.
+  try{
+    const raw=localStorage.getItem('tk_draft_training');
+    if(raw!==null){
+      if(!raw.trim())throw new Error('empty_draft');
+      const draft=JSON.parse(raw);
+      if(!draft||typeof draft!=='object'||Array.isArray(draft))throw new Error('invalid_draft');
+      open.push(draftHasData(draft)?'er staat een niet-afgeronde training':'er staat een lokaal trainingsconcept; serverstatus onbekend');
+    }
+  }catch(_){ onbekend.push('het trainingsconcept is beschadigd of onleesbaar'); }
+  try{ if(typeof curT!=='undefined'&&curT)open.push('er loopt nu een training'); }catch(_){}
+  try{
+    // GW.hasUnsaved() detecteert alleen afgeronde onbewaarde sessies. Ook een lopende
+    // Guided-sessie staat in tk_gw_active en moet voor een uninstall worden bewaard.
+    const raw=localStorage.getItem('tk_gw_active');
+    if(raw!==null){
+      if(!raw.trim())throw new Error('empty_guided');
+      const a=JSON.parse(raw);
+      if(!a||typeof a!=='object'||!Array.isArray(a.items))throw new Error('invalid_guided');
+      open.push('er staat een begeleide training op dit toestel');
+    }else if(window.GW&&typeof GW.hasUnsaved==='function'&&GW.hasUnsaved()){
+      open.push('een begeleide training is nog niet opgeslagen');
+    }
+  }catch(_){ onbekend.push('de begeleide training is beschadigd of onleesbaar'); }
+  try{
+    const raw=localStorage.getItem(TK_TRAININGEN_ONBEVESTIGD);
+    if(raw!==null){
+      if(!raw.trim())throw new Error('empty_pending');
+      const ids=JSON.parse(raw);
+      if(!Array.isArray(ids)||!ids.every(id=>typeof id==='string'&&id.trim()))throw new Error('invalid_pending');
+      if(ids.length)open.push(ids.length+(ids.length===1?' eigen training is':' eigen trainingen zijn')+' nog niet door de server bevestigd');
+    }
+  }catch(_){ onbekend.push('de lijst met eigen trainingen is beschadigd of onleesbaar'); }
+  return {veilig:!open.length&&!onbekend.length, open:open, onbekend:onbekend, online:navigator.onLine!==false, versie:(typeof APP_VER!=='undefined'?APP_VER:null)};
+}
+async function tkUpdateGereedheidToon(eerstSync){
+  const el=document.getElementById('help-update-body'); if(!el)return;
+  el.textContent=eerstSync?'Synchroniseren…':'Controleren…';
+  if(eerstSync){ try{ await flushOfflineQueue(); }catch(_){} }
+  let u=null; try{ u=await tkUpdateGereedheid(); }catch(_){ u={veilig:false,open:[],onbekend:['de controle zelf mislukte'],online:navigator.onLine!==false,versie:null}; }
+  const lijst=function(a){ return '<ul style="margin:6px 0 0 18px;padding:0">'+a.map(function(x){return '<li>'+escHtml(x)+'</li>';}).join('')+'</ul>'; };
+  if(u.veilig){
+    el.innerHTML='<b style="color:var(--accent)">Geen lokale blokkades gevonden.</b> Controleer apart of je trainingen op de server zijn opgeslagen. Deze controle is geen toestemming om de huidige app te verwijderen'+(u.versie?' (versie '+escHtml(u.versie)+')':'')+'.';
+  }else{
+    el.innerHTML='<b style="color:var(--red)">Nog niet verwijderen of opnieuw installeren.</b>'+
+      (u.open.length?lijst(u.open):'')+(u.onbekend.length?lijst(u.onbekend.map(function(x){return 'Onbekend: '+x;})):'')+
+      '<div style="margin-top:6px">'+(u.online?'Rond open trainingen af en kies "Synchroniseren en controleren".':'Je bent offline. Maak verbinding en kies "Synchroniseren en controleren".')+'</div>';
+  }
+  return u;
+}
 async function flushOfflineQueue(){
   if(!navigator.onLine)return;
   // Her-entree-slot. flushOfflineQueue() wordt door DRIE onafhankelijke bronnen aangeroepen
@@ -10437,12 +10574,24 @@ function tkGuidedStartGeblokkeerd(mode){
   toast('Je vorige begeleide training is nog niet opgeslagen — open hem op Vandaag om opnieuw op te slaan');
   return true;
 }
+// UX-EXEC-01 (B7): loopt precies deze training al, dan terug naar de lopende uitvoering. Geen nieuwe
+// training_instance en geen nieuwe oefeningenlijst over de lopende sessie heen (die werd anders stil
+// aan een nieuwe instance gekoppeld en de oude bleef 'active').
+function tkPreviewNaarLopendeTraining(source,id,mode){
+  const lopend=(source==='vast')?id:('custom_'+id);
+  if(mode==='guided'||typeof curT==='undefined'||!curT||curT!==lopend)return false;
+  closeModal('m-training-preview'); previewCtx=null; previewStarting=false;
+  toast('Deze training loopt al — je gaat verder waar je was');
+  if(source==='vast')startT(id); else startCustomTraining(id);
+  return true;
+}
 async function previewStartTraining(mode){
   if(!previewCtx||previewStarting)return;
   mode=mode||'normal';
   if(tkGuidedStartGeblokkeerd(mode))return;
   previewStarting=true;
   const {def,source,id}=previewCtx;
+  if(tkPreviewNaarLopendeTraining(source,id,mode))return; // UX-EXEC-01 (B7)
   const workingList=previewWorkingList();
   const modifications=previewBuildModifications();
   const resolvedItems=buildResolvedExecutionItems(workingList);
@@ -10911,6 +11060,17 @@ async function tkAvatarSignedUrl(pad){
    vult de foto asynchroon aan zodra de signed URL er is. onerror valt terug
    op initialen: een verlopen of verwijderde URL mag nooit een gebroken
    beeldicoon tonen. */
+// UX-LOG-01 — één avatar overal: de profielknop in schermkoppen (Samen, Inzicht, Trainen, …) toont
+// dezelfde foto/initialen als Home (AvatarCore via tkAvatarHtml). Zonder bekend profiel blijft het
+// bestaande profiel-icoon staan (geen lege knop).
+function tkPaintHeaderAvatar(scr){
+  try{
+    const btn=scr&&scr.querySelector('button[data-tk-avatar]');
+    if(!btn||typeof atleet==='undefined'||!atleet||!(atleet.naam||atleet.avatar_path))return;
+    btn.innerHTML=tkAvatarHtml({avatarPath:atleet.avatar_path||null,naam:atleet.naam||'',size:32,ring:false});
+    btn.classList.add('ibtn-avatar');
+  }catch(_){ }
+}
 function tkAvatarHtml(opts){
   const o=opts||{};
   const res=AvatarCore.resolve({
@@ -13259,8 +13419,11 @@ function go(id){
   // blijft werken (bewaarde terugkeerpunten, oude links) en komt daar uit.
   if(id==='s-lichaam'){id='s-inzicht';}
   document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById(id);if(el){el.classList.add('active');focusScreenForA11y(el);}
+  const el=document.getElementById(id);if(el){el.classList.add('active');focusScreenForA11y(el);tkPaintHeaderAvatar(el);}
   stopTrainTimer();
+  // UX-LOG-01: terug op het scherm van de lopende training (bv. via Trainen) loopt de klok en de
+  // wakelock weer door. De tijd zelf komt uit trainStart/pausedAccumMs en ging nooit verloren.
+  if(typeof curT!=='undefined'&&curT&&!trainPaused&&trainStart&&id===tkTrainScreenIdVoor(curT))startTrainTimer(curT);
   if(id==='s-home')refreshHome();
   if(id==='s-home'&&window.DASHUI)DASHUI.render();
   if(id==='s-builder'&&window.WBUI)WBUI.render();
@@ -13359,7 +13522,7 @@ const TK_PRIMARY_NAV=[
   {id:'vandaag',label:'Vandaag',target:'s-home',
     icon:'<path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/>'},
   {id:'trainen',label:'Trainen',
-    target:function(){ return (typeof curT!=='undefined'&&curT)?('s-train-'+curT.toLowerCase()):'s-train-mgr'; },
+    target:function(){ return (typeof curT!=='undefined'&&curT)?tkTrainScreenIdVoor(curT):'s-train-mgr'; },
     icon:'<path d="M6 8v8M18 8v8M3 12h18"/>'},
   {id:'inzicht',label:'Inzicht',target:'s-inzicht',
     icon:'<path d="M4 19V5M4 19h16M8 19v-6M12 19v-9M16 19v-4"/>'},
@@ -13391,8 +13554,26 @@ function tkPrimaryNavHtml(activeTab){
   return TK_PRIMARY_NAV.map(t=>{
     const actief=t.id===activeTab;
     const doel=typeof t.target==='function'?t.target():t.target;
-    return '<button class="ni'+(actief?' active':'')+'"'+(actief?' aria-current="page"':'')+' onclick="go(\''+doel+'\')"><span class="ni-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+t.icon+'</svg></span><span class="ni-label">'+t.label+'</span>'+(t.id==='trainen'?'<div class="ni-dot" id="nav-train-dot"></div>':'')+'</button>';
+    return '<button class="ni'+(actief?' active':'')+'"'+(actief?' aria-current="page"':'')+' onclick="tkPrimaryNavGo(\''+doel+'\')"><span class="ni-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+t.icon+'</svg></span><span class="ni-label">'+t.label+'</span>'+(t.id==='trainen'?'<div class="ni-dot" id="nav-train-dot"></div>':'')+'</button>';
   }).join('');
+}
+// UX-LOG-01 — de hoofdnavigatie blijft zichtbaar tijdens een training, maar een tik op een andere
+// tab mag de sporter niet onbedoeld uit een lopende training halen (en de klok/wakelock stoppen).
+// Er gaat niets verloren (sessionLog + concept blijven staan); de vraag voorkomt alleen het
+// per-ongeluk-verlaten. Trainen zelf, en navigatie zonder lopende training, gaan direct.
+function tkTrainingLooptOp(scherm){
+  if(!scherm)return false;
+  if(typeof curT!=='undefined'&&curT&&scherm===tkTrainScreenIdVoor(curT))return true;
+  return scherm==='s-guided'&&!!(window.GW&&typeof GW.hasActive==='function'&&GW.hasActive());
+}
+async function tkPrimaryNavGo(doel){
+  const huidig=tkNavHuidig();
+  if(doel!==huidig&&tkTrainingLooptOp(huidig)){
+    const ok=await confirmModal('Je training loopt nog. Wat je hebt ingevuld blijft bewaard; via Trainen ga je terug naar je training.',
+      {title:'Training verlaten?',okLabel:'Toch openen',cancelLabel:'Bij training blijven'});
+    if(!ok)return;
+  }
+  go(doel);
 }
 // Repaint uitsluitend de zichtbare bnav (er is er hooguit één per keer relevant --
 // nooit alle 45 shells tegelijk vullen, dat zou onnodige DOM-arbeid per schermwissel zijn).
@@ -13422,6 +13603,7 @@ function tkPaintBnav(screenId){
 let tkNavStack=[];
 let tkNavPoppend=false;   // tijdens het terugzetten mag het omhulsel niet opnieuw pushen
 let tkNavAfsluitArm=0;    // tijdstip van de eerste 'terug' op het beginscherm
+let tkNavGuardDoorlaten=false; // UX-LOG-01: één bevestigde terugstap uit een lopende training
 const TK_NAV_MAX=60;      // plafond: een lange sessie mag de stapel niet laten groeien
 const TK_NAV_AFSLUIT_MS=2500;
 function tkNavHuidig(){
@@ -13517,6 +13699,20 @@ window.addEventListener('popstate',function(){
   // 2) Coach geopend vanuit een lopende training -> terug naar die training.
   const actief=document.querySelector('.scr.active');
   if(actief&&actief.id==='s-coach'&&coachReturn){ returnToTraining(); return; }
+  // 2b) UX-LOG-01: een terugveeg tijdens een lopende training vraagt eerst of de sporter de
+  //     training wil verlaten. De verbruikte entry wordt teruggelegd; bij "Toch verlaten" volgt
+  //     dezelfde stap terug als regel 3 (via één doorgelaten history.back()).
+  if(!tkNavGuardDoorlaten&&actief&&tkNavStack.length&&typeof tkTrainingLooptOp==='function'&&tkTrainingLooptOp(actief.id)){
+    try{ history.pushState({tkNav:'training'},''); }catch(_){ }
+    confirmModal('Je training loopt nog. Wat je hebt ingevuld blijft bewaard; via Trainen ga je terug naar je training.',
+      {title:'Training verlaten?',okLabel:'Toch verlaten',cancelLabel:'Bij training blijven'}).then(function(ok){
+        if(!ok)return;
+        tkNavGuardDoorlaten=true;
+        try{ history.back(); }catch(_){ tkNavGuardDoorlaten=false; }
+      });
+    return;
+  }
+  tkNavGuardDoorlaten=false;
   // 3) Normale stap terug.
   if(tkNavStack.length){
     const vorige=tkNavStack.pop();
@@ -19178,6 +19374,8 @@ async function startT(t){
     // RC0: de koppeling met training_instances terug uit de draft, zodat het afronden na
     // een herstart de instance alsnog op 'completed' zet i.p.v. hem als wees achter te laten.
     activeInstanceId=draft.instanceId||null;
+    // UX-EXEC-01: dezelfde oefeningenlijst als waarmee is gelogd (ook als Preview net een nieuwe zette).
+    if(draft.resolvedWorkout&&draft.resolvedWorkout.t===t&&Array.isArray(draft.resolvedWorkout.items))resolvedWorkout=draft.resolvedWorkout;
     _resumeElapsedMs=Number(draft.elapsedMs)||0;
     if(typeof execFocus!=='undefined')execFocus[t]=Number(draft.execFocus)||0; // P1: actieve oefening herstellen (was altijd terug naar 1)
     await renderTrainScreen(t);
@@ -19387,7 +19585,8 @@ async function buildTrainIntro(t,list){
      staat hier een neutrale zin: geen uitspraak over herstel, de training blijft zoals gepland. */
   let key=null;
   try{const hq=tkHealthQualified(await sbGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));const hd=hq.rows;if(hd&&hd[0]){const df=tkDagfactorVoorAdvies(dagfactor(hrvDagFactorPersonal(hd),hd[0].sleep,tkCyclusFaseVandaag(hd[0]),hq.signalen));if(df)key=dayState(df.factor).key;}}catch(_){}
-  const focus={goed:'Je herstel is goed — focus op sterke, gecontroleerde sets.',
+  // DEC-REC-001: het dagthema volgt de dagfactor, niet het spierherstel.
+  const focus={goed:'Je dagfactor is gunstig — focus op sterke, gecontroleerde sets.',
     normaal:'Prima dag — train op gevoel en houd je techniek scherp.',
     vermoeid:'Rustig opbouwen vandaag. Kwaliteit boven gewicht.',
     herstel:'Vandaag herstelgericht — houd het licht en luister naar je lijf.',
@@ -21963,9 +22162,9 @@ function buildWeightModeSelect(exId,i,mode){
 function buildRpeStepper(exId,i,rpeVal,prevRpe){
   const disp=rpeVal!==undefined&&rpeVal!==null&&rpeVal!==''?rpeVal:'';
   return `<div class="set-field-wrap rpe-stepper-v" style="flex:1;display:flex;flex-direction:column;align-items:center">
-    <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},0.5)" style="width:28px;height:20px;border-radius:6px 6px 0 0;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">+</button>
+    <button type="button" class="rpe-btn rpe-up" aria-label="RPE verhogen" onclick="adjustRpe('${exId}',${i},0.5)" style="width:28px;height:20px;border-radius:6px 6px 0 0;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">+</button>
     <input class="set-field rpe-display" type="text" readonly aria-label="RPE (ervaren zwaarte)" id="s-${exId}-${i}-rpe" data-prev-rpe="${prevRpe||''}" value="${disp}" placeholder="–" style="font-size:13px;width:34px;height:22px;text-align:center;border-radius:0;border-left:1px solid var(--g2);border-right:1px solid var(--g2);border-top:none;border-bottom:none">
-    <button type="button" class="rpe-btn" onclick="adjustRpe('${exId}',${i},-0.5)" style="width:28px;height:20px;border-radius:0 0 6px 6px;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">−</button>
+    <button type="button" class="rpe-btn rpe-down" aria-label="RPE verlagen" onclick="adjustRpe('${exId}',${i},-0.5)" style="width:28px;height:20px;border-radius:0 0 6px 6px;border:1px solid var(--g2);font-size:13px;line-height:1;cursor:pointer">−</button>
     <div class="set-field-lbl">RPE</div>
   </div>`;
 }
@@ -22032,7 +22231,7 @@ function buildWorkSetRow(exId,i,prefill=null){
         <div class="setr-u" id="repsu-${exId}-${i}">${isAmrap?'AMRAP':'reps'}</div>
       </div>
       <div class="setr-cell setr-cell-rpe">
-        ${buildRpeStepper(exId,i,prefill&&i===1?prefill.rpe:'',prefill?prefill.rpe:'')}
+        ${buildRpeStepper(exId,i,prefill&&(i===1||prefill.perSet)?prefill.rpe:'',prefill?prefill.rpe:'')}
       </div>
     </div>
     <div class="setr-side">
@@ -22040,7 +22239,7 @@ function buildWorkSetRow(exId,i,prefill=null){
       <div class="set-circle setr-ring" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})" role="button" tabindex="0" aria-label="Set ${i} afronden"></div>
       <button class="set-more setr-toolbtn" onclick="showSetMenu('${exId}',${i},'work')" aria-label="Meer opties"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
     </div>
-    <div class="setr-e1rm" id="e1rm-${exId}-${i}" style="grid-column:1/-1;font-size:11px;color:var(--g4);padding:2px 0 0 44px"></div>
+    <div class="setr-e1rm" id="e1rm-${exId}-${i}" aria-live="polite"></div>
   </div>`;
 }
 // AMRAP-vlag (v4.68.0) — puur UI + in-memory sessionLog-state, GEEN nieuwe berekening.
@@ -23055,7 +23254,11 @@ function persistTrainingDraft(silent){
     // verloren zodra Android de app afsloot: bij hervatten was activeInstanceId weer null,
     // completeTrainingInstance() werd nooit aangeroepen en de instance bleef eeuwig
     // 'active'. Precies de weesrijen die migratie v446 achteraf moest opruimen.
-    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0,instanceId:(typeof activeInstanceId!=='undefined'?activeInstanceId:null)||null}));
+    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0,instanceId:(typeof activeInstanceId!=='undefined'?activeInstanceId:null)||null,
+      // UX-EXEC-01: de via Preview samengestelde oefeningenlijst (vervangen/verwijderd/voorschrift) hoort
+      // bij dit concept. Zonder deze lijst viel een hervatte vaste training terug op TRAIN_CFG en schreef
+      // finishSession() de sets van ingewisselde oefeningen nooit weg (daarna wiste clearTrainingDraft ze).
+      resolvedWorkout:(typeof resolvedWorkout!=='undefined'&&resolvedWorkout&&resolvedWorkout.t===curT)?resolvedWorkout:null}));
     lastSaveTs=Date.now();saveState='saved';
   }catch(e){saveState='dirty';}
   updateSaveIndicator();
@@ -23284,7 +23487,9 @@ function showPostSetAdvice(exId,setNum){
     if(body){
       const div=document.createElement('div');
       div.id='advice-'+exId;div.className='coach-advice-card';div.innerHTML=html;
-      if(addRow)body.insertBefore(div,addRow);else body.appendChild(div);
+      // UX-LOG-01: .add-row staat sinds F0.8E in de setkaart, niet direct in body. insertBefore op
+      // body gooide dan een NotFoundError (na afvinken + RPE aanpassen): advies weg, adjustRpe afgebroken.
+      if(addRow&&addRow.parentNode)addRow.parentNode.insertBefore(div,addRow);else body.appendChild(div);
     }
   }
 }
@@ -23325,8 +23530,13 @@ function logSet(exId,type,setNum,isWork){
   const rpe=isWork?normNumStr(document.getElementById('s-'+exId+'-'+setNum+'-rpe')?.value):null;
   // Effectief gewicht: houdt rekening met de gewicht-modus (vast/+kg/% vorige set).
   const effKg=isWork?getEffectiveKg(exId,setNum):(numNL(kg)||null);
-  if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]={kg,reps};}
-  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe,effKg};}
+  // UX-LOG-01: een bewerking vervangt alleen de invoerwaarden. Vlaggen die elders op dezelfde set
+  // zijn gezet (done/rest_sec via toggleSetDone, isAmrap via toggleAmrapSet) blijven behouden; voorheen
+  // wist elke toetsaanslag ze, waardoor een afgevinkte AMRAP-set als gewone, niet-afgevinkte set
+  // werd opgeslagen.
+  const _oud=(arr)=>(arr&&arr[setNum-1]&&typeof arr[setNum-1]==='object')?arr[setNum-1]:{};
+  if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]=Object.assign({},_oud(sessionLog[exId].wu),{kg,reps});}
+  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]=Object.assign({},_oud(sessionLog[exId].sets),{kg,reps,rpe,effKg});}
   // Check PR (per rep-bucket 1/3/5/10, plus absolute-PR fallback voor niet-rep oefeningen)
   if(isWork&&effKg){
     const exObj=exercises.find(e=>e.id===exId);
@@ -23616,7 +23826,16 @@ function removeExSession(id){
   sessionExtra=sessionExtra.filter(e=>e.id!==id);
   delete sessionLog[id];
   delete pctSelection[id];delete rpeManual[id];delete warmupState[id];delete cardioSplitMode[id];delete cardioSplits[id];delete manualKgSets[id];
-  renderTrainScreen(curT);
+  rerenderTrainScreenKeepLog(curT);
+}
+// UX-LOG-01: renderTrainScreen() bouwt alle kaarten opnieuw op uit het voorschrift. Wie dat
+// tijdens een lopende training doet (oefening toevoegen/verwijderen/vervangen), zette de
+// ingevulde sets van de OVERIGE oefeningen visueel terug op leeg terwijl sessionLog ze nog had;
+// de volgende bewerking overschreef sessionLog dan met die lege velden. Eén route: opnieuw
+// opbouwen en de bestaande restoreSessionLogToDom() eroverheen, net als bij hervatten.
+async function rerenderTrainScreenKeepLog(t){
+  await renderTrainScreen(t);
+  try{ restoreSessionLogToDom(t); }catch(e){ console.warn('restoreSessionLogToDom',e&&e.message); }
 }
 
 function updateProgress(t){
@@ -23676,7 +23895,7 @@ async function addExConfirm(exId,t){
   const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:t}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:t};
   if(!cardioType){ Object.assign(extra, await canonicalNewExerciseItem(ex.id, extra)); } // GAP-P3-033: canonical load voor toegevoegde oefening
   sessionExtra.push(extra);
-  renderTrainScreen(t);
+  rerenderTrainScreenKeepLog(t);
   toast(ex.name+' toegevoegd');
 }
 
@@ -23708,7 +23927,7 @@ async function execRemoveExercise(t,exId){
   const list=getSessionExs(t);
   if(!list.length){ toast('Geen oefeningen meer over'); return execLeaveDiscard(); }
   if((execFocus[t]||0)>=list.length)execFocus[t]=Math.max(0,list.length-1);
-  renderTrainScreen(t);
+  rerenderTrainScreenKeepLog(t);
   scheduleAutosave();
   toast('Oefening verwijderd');
 }
@@ -23734,7 +23953,7 @@ function execReplaceExercise(t,exId){
     const sxIdx=sessionExtra.findIndex(e=>e.id===exId&&e._t===t);
     if(sxIdx>=0){ const _rx2=await canonicalNewExerciseItem(replaced.id, sessionExtra[sxIdx]); sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name},_rx2); } // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
     delete sessionLog[exId]; // oude, reeds gelogde data hoort NIET automatisch bij de nieuwe oefening (expliciete productregel)
-    renderTrainScreen(t);
+    rerenderTrainScreenKeepLog(t);
     scheduleAutosave();
     toast('Vervangen door '+replaced.name);
   });
@@ -24071,6 +24290,13 @@ function renderSessionSummaryContent(t){
 // gedragswijziging voor de normale Execution: finishSession() bouwt/schrijft via deze
 // helpers en levert byte-equivalente rijen.
 async function writeSessionRow(row, opts){ return await sbPostQ('sessions', row, opts); }
+// UX-EXEC-01: één vaste client-id per oefening in deze uitvoering, vastgelegd in het concept VÓÓR de
+// write (zoals Guided met _rowId). Wordt de app na een geslaagde write maar vóór de volgende
+// autosave gedood, dan levert opnieuw afronden dezelfde id en dus geen tweede sessierij.
+function tkSessieRijId(l){
+  if(!l._sessionRowId){ l._sessionRowId=newClientRowId(); try{ persistTrainingDraft(true); }catch(_){ } }
+  return l._sessionRowId;
+}
 // ARCHITECTUUR-HARDENING (v4.91.0) — dedicated schrijfpad voor race_segments
 // (HYROX/Triathlon-brick), i.p.v. de gedeelde sessions-tabel.
 async function writeRaceSegmentRow(row){ return await sbPostQ('race_segments', row); }
@@ -24302,7 +24528,7 @@ async function finishSession(){
       // v4.70.4: alleen een AANTOONBAAR geslaagde write telt (sbPostQ geeft bij een PostgREST-400 false).
       // Retry schrijft een al gepersisteerde oefening niet opnieuw (geen dubbele rij).
       const _so=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,id:tkSessieRijId(l)},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); try{persistTrainingDraft(true);}catch(_){} }
       saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -24320,7 +24546,7 @@ async function finishSession(){
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       const _soS=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
+      if(!l._sessionRowPersistedAt){ row.id=tkSessieRijId(l); const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); try{persistTrainingDraft(true);}catch(_){} } // v4.70.4
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
@@ -24635,6 +24861,8 @@ async function refreshHome(){
   renderHomeProgramCard();
   await renderVasteTrainingBtns();
   const nextLblEl=document.getElementById('home-next-lbl');
+  // DEC-REC-001-B: rotatie toont een suggestie, geen expliciet geplande training.
+  let heeftExplicietPlan=false;
   if(vasteTrainingen.length){
     // SPRINT C2-C — expliciete planning krijgt voorrang boven de automatische
     // rotatie (PO-richting sectie 24): computeNextVasteTraining() blijft
@@ -24657,7 +24885,7 @@ async function refreshHome(){
         if(assR&&assR.length){
           const eersteOcc=occR.find(function(o){return o.id===assR[0].occurrence_id;});
           const def=vasteTrainingen.find(function(v){return v.id===(eersteOcc&&eersteOcc.workout_definition_id);});
-          if(def) next=def;
+          if(def){ next=def; heeftExplicietPlan=true; }
         }
       }
     }catch(e){ console.warn('explicit-planning precedence check mislukt, val terug op rotatie',e); }
@@ -24689,16 +24917,24 @@ async function refreshHome(){
   const dfAdvies=tkDagfactorVoorAdvies(dfInfo), checkinVandaag=tkCheckinVandaag(lh);
   if(themeEl)themeEl.setAttribute('data-day',dfAdvies?dayState(dfAdvies.factor).key:'goed');
   // Waarom?-conclusie deelt dezelfde bron als de coaching (buildCoachAdvice); geen extra query.
-  try{window.homeCoachText=await buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag);}catch(e){window.homeCoachText='';}
+  // Oude coachingcontext eerst wissen; pas na de Decision-run nieuwe tekst genereren.
+  window.homeCoachText='';
   await renderMorning(dfAdvies,nextT,checkinVandaag);
   renderTodayCta(nextT,dfAdvies);
   /* Sprint 14 — readiness van de dag: één beslissing, opgehaald vóór het tekenen. */
+  // Een mislukte of afgebroken refresh mag geen oude readiness aan Coach/AI laten zien.
+  window._tkReadiness=null;
+  let readinessCtx=null;
   try{
-    const _rc=await tkReadinessVandaag(dfInfo,recRows,nextT);
+    const _rc=await tkReadinessVandaag(dfInfo,recRows,nextT,heeftExplicietPlan);
+    readinessCtx=_rc;
     const _re=document.getElementById('home-readiness');
     if(_re) _re.innerHTML=tkReadinessHtml(_rc);
   }catch(_){ const _re=document.getElementById('home-readiness'); if(_re)_re.innerHTML=''; }
-  renderCoachAdvies(dfAdvies,recRows);
+  // Coach Advies krijgt uitsluitend het besluit van DEZE Home-refresh mee.
+  // Geen globale vorige score gebruiken na een mislukte/onderbroken readiness-run.
+  try{window.homeCoachText=await buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag,heeftExplicietPlan,readinessCtx);}catch(e){window.homeCoachText='';}
+  renderCoachAdvies(dfAdvies,recRows,readinessCtx);
   await renderWeekStats();
   renderMotivatie();
   refreshHomeImprove(); // S1 — guarded, niet-blokkerend: vult de "Recente vooruitgang"-kaart async
@@ -24730,7 +24966,7 @@ function buildMorningMessage(dfInfo,nextT,checkinVandaag){
     regel=checkinVandaag?(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Nog geen check-in vandaag — vul je HRV in voor je dagfactor.';
   }else{
     const f=dfInfo.factor;
-    const toon=f>=1?'Sterke dag — je lichaam staat op groen.'
+    const toon=f>=1?'Gunstige dagfactor vandaag.'
       :f>=0.93?'Prima dag. Houd je RPE in de gaten.'
       :'Herstel-dag. Houd het licht en luister naar je lijf.';
     regel=toon+(nextT?` Vandaag staat ${nextT.naam} klaar.`:'');
@@ -24743,9 +24979,28 @@ function buildMorningMessage(dfInfo,nextT,checkinVandaag){
 function joinNl(arr){arr=arr.filter(Boolean);if(arr.length<=1)return arr[0]||'';return arr.slice(0,-1).join(', ')+' en '+arr[arr.length-1];}
 // v3.3.48 — warmere coach-toon. Accepteert optioneel voorberekende recRows (uit één
 // getRelevantMuscleRecovery-call) zodat hero, coach-advies én "Waarom?" dezelfde data delen.
-async function buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag){
+async function buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag,heeftExplicietPlan,readinessCtx){
   dfInfo=tkDagfactorVoorAdvies(dfInfo);
   if(!dfInfo)return checkinVandaag?(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Nog geen check-in vandaag — vul je HRV in en ik vertel je precies wat vandaag slim is.';
+  // Een roterende workout-suggestie is GEEN expliciet plan: hier geen workoutadvies.
+  // De zone komt ook in deze kopie uitsluitend uit de bestaande Decision-regel.
+  if(heeftExplicietPlan===false){
+    const z=(typeof DecisionCore!=='undefined'&&DecisionCore.trainReadiness)?(DecisionCore.trainReadiness(dfInfo)||{}).cls:null;
+    return z==='g'?'Je dagfactor is gunstig. Er is geen training gepland; spierherstel wordt apart beoordeeld.':
+      z==='y'?'Je dagfactor vraagt om aandacht. Er is geen training gepland.':
+      z==='r'?'Je dagfactor is lager. Er is geen training gepland.':
+      'Er is onvoldoende basis voor een trainingsadvies.';
+  }
+  // De Home-route mag pas trainingsspecifiek formuleren na een bruikbaar Decision-besluit.
+  // Incomplete spierdekking, mislukte readiness of ontbrekende plan-evidence zijn nooit groen licht.
+  if(heeftExplicietPlan===true){
+    const b=readinessCtx&&readinessCtx.besluit;
+    if(!b||b.trainingGepland!==true||!b.bruikbaar||!b.herstel||
+       !b.trainingsadvies||b.trainingsadvies.soort==='geen_advies'){
+      return (b&&b.zoneBetekenis?b.zoneBetekenis+' ':'')+
+        'Voor deze geplande training zijn onvoldoende herstelgegevens beschikbaar.';
+    }
+  }
   const f=dfInfo.factor;
   const tnaam=(nextT&&nextT.naam)?nextT.naam:'je training';
   let loaded=[],ready=[];
@@ -24769,20 +25024,23 @@ async function buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag){
   // groeien als DEC-READY-001's drempels ooit wijzigen zonder dat deze tekstfunctie het
   // merkt. Zelfde output-teksten, nu structureel gebonden aan één bron van waarheid.
   const zoneCls=(typeof DecisionCore!=='undefined'&&DecisionCore.trainReadiness)?(DecisionCore.trainReadiness(dfInfo)||{}).cls:(f>=1?'g':(f>=0.93?'y':'r'));
+  // UX-REC-02: de zone komt uit de dagfactor (HRV x slaap x cyclus), niet uit spierherstel. De tekst
+  // schrijft het oordeel daarom toe aan de dagfactor en noemt spierherstel een schatting. Zelfde
+  // zone, zelfde spiergroepfilters (pct<70 / pct>=90): alleen de verwoording is eerlijker.
   if(zoneCls==='g'){
-    if(loaded.length)return `Je algehele herstel is sterk. Let op: ${joinNl(loaded.slice(0,2))} ${loaded.length>1?'zijn':'is'} nog niet volledig hersteld — houd daar rekening mee bij ${tnaam}.`;
-    if(ready.length)return `Je lichaam is klaar voor belasting. ${joinNl(ready.slice(0,2)).replace(/^./,c=>c.toUpperCase())} ${ready.length>1?'zijn':'is'} volledig hersteld — vandaag is een uitstekend moment voor ${tnaam}.`;
-    return `Je herstel is sterk. Vandaag heb je de grootste kans op progressie${nextT?` met ${tnaam}`:''}.`;
+    if(loaded.length)return `Je dagfactor is gunstig. Let op: ${joinNl(loaded.slice(0,2))} ${loaded.length>1?'zijn':'is'} volgens de inschatting nog niet hersteld — houd daar rekening mee bij ${tnaam}.`;
+    if(ready.length)return `Je dagfactor is gunstig en ${joinNl(ready.slice(0,2))} ${ready.length>1?'zijn':'is'} volgens de inschatting hersteld. Een goed moment voor ${tnaam}.`;
+    return `Je dagfactor is gunstig${nextT?` voor ${tnaam}`:''}. Spierherstel is een aparte schatting.`;
   }
-  if(zoneCls==='y')return `Je herstel is oké. Train ${tnaam} vandaag op gevoel en houd je RPE in de gaten.`;
-  return `Je lichaam vraagt vandaag om rust. Houd ${tnaam} licht of kies voor actief herstel.`;
+  if(zoneCls==='y')return `Je dagfactor is gemiddeld. Train ${tnaam} vandaag op gevoel en houd je RPE in de gaten.`;
+  return `Je dagfactor is laag. Houd ${tnaam} vandaag licht of kies voor actief herstel.`;
 }
 // v3.3.49/50 P4 — Welkom + motiverende coachintro (hoort bij de begroeting). Kort, uit dayState.
 function buildCoachIntro(dfInfo,checkinVandaag){
   dfInfo=tkDagfactorVoorAdvies(dfInfo);
   if(!dfInfo)return checkinVandaag?(TK_GEEN_ADVIES_TXT+'.'):'Vul je HRV in, dan vertel ik je hoe je ervoor staat.';
   const k=dayState(dfInfo.factor).key;
-  return {goed:'Je bent klaar voor een sterke trainingsdag.',
+  return {goed:'Je dagfactor is gunstig vandaag.',
     normaal:'Er ligt een mooie training op je te wachten.',
     vermoeid:'Rustig aan vandaag — kwaliteit boven kwantiteit.',
     herstel:'Vandaag draait om herstel en opladen.',
@@ -24820,13 +25078,13 @@ function buildCoachTraining(dfInfo,recRows){
  *
  * Hier wordt NIETS berekend en NIETS besloten. De keten is:
  *   reeds berekende dagfactor + herstelscore + signalen
- *     -> DecisionCore.readinessDay      (readiness_day.v1)
+ *     -> DecisionCore.readinessDay      (readiness_day.v1.1)
  *     -> CoachingCore.buildReadinessContext / readinessCoachMessage
  *     -> deze functie plaatst tekst.
  * Het besluit wordt bewaard in window._tkReadiness zodat de live coach uit Sprint 13 en de
  * AI het kunnen LEZEN — nooit opnieuw berekenen.
  * ══════════════════════════════════════════════════════════════════════════ */
-async function tkReadinessVandaag(dfInfo,recRows,nextT){
+async function tkReadinessVandaag(dfInfo,recRows,nextT,heeftExplicietPlan){
   if(typeof DecisionCore==='undefined'||typeof DecisionCore.readinessDay!=='function') return null;
   /* Offline-first, zoals de rest van Home: begrens elke query zodat Home nooit blijft hangen
      op een trage verbinding. Zonder deze grens stopt refreshHome halverwege en blijven de
@@ -24848,12 +25106,26 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
   /* DEC-DQ-002: een dagfactor zonder basis gaat als null naar de Decision Engine. Dan volgt
      readinessDay() zijn bestaande pad zonder dagfactor: geen zone, geen advies. */
   const dfAdvies=tkDagfactorVoorAdvies(dfInfo);
+  // Alleen een expliciete planning MET bruikbare historie voor alle relevante spiergroepen
+  // mag een trainingsspecifieke herstelscore opleveren. Anders: null, nooit 89/100 op lege lijst.
+  const geldigeSpieren=Array.isArray(recRows)&&recRows.length>0 &&
+    tkSpierherstelEvidence(recRows).length===recRows.length;
+  // Fail-closed: een geldige subset is niet voldoende. Ook ontbrekende/onbekende
+  // spiergroepen en dubbele resultaatrijen verhinderen een trainingsscore.
+  const volledigeSpierdekking=!!(nextT&&Array.isArray(nextT._muscles)&&Array.isArray(recRows)&&
+    nextT._muscles.length>0&&nextT._muscles.length===recRows.length&&
+    new Set(recRows.map(r=>r&&r.muscle)).size===recRows.length&&
+    nextT._muscles.every(m=>recRows.some(r=>r&&r.muscle===m)));
+  const planBasis=!!(heeftExplicietPlan&&nextT&&Array.isArray(nextT._muscles)&&nextT._muscles.length&&geldigeSpieren&&volledigeSpierdekking);
   let herstel=null;
-  try{
-    const rhrDelta=tkRhrDeltaHerstel(hq);
-    herstel=recoveryScoreFrom(dfAdvies, recRows||[], {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
-  }catch(_){ herstel=null; }
+  if(planBasis){
+    try{
+      const rhrDelta=tkRhrDeltaHerstel(hq);
+      herstel=recoveryScoreFrom(dfAdvies, recRows, {rhrDelta:(rhrDelta!=null?rhrDelta:undefined), voelt:(lh&&lh.voelt)||undefined});
+    }catch(_){ herstel=null; }
+  }
   const besluit=DecisionCore.readinessDay({
+    trainingGepland: !!heeftExplicietPlan,
     dagfactor: dfAdvies?dfAdvies.factor:null,
     gereedheid: dfAdvies?v43GereedheidScore(dfAdvies.factor):null,
     herstel: herstel,
@@ -24861,7 +25133,7 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
       hrv: (lh&&lh.hrv!=null)?{waarde:lh.hrv,kwaliteit:kw('hrv')}:null,
       rhr: (lh&&lh.rhr!=null)?{waarde:lh.rhr,kwaliteit:kw('rhr')}:null,
       slaap: (lh&&lh.sleep!=null)?{waarde:tkSleepHours(lh.sleep),kwaliteit:kw('slaap')}:null,
-      spierherstel: (function(){ const ev=tkSpierherstelEvidence(recRows); return ev.length?ev:null; })(),
+      spierherstel: planBasis?tkSpierherstelEvidence(recRows):null,
       gevoel: (lh&&lh.voelt)?String(lh.voelt):null,
       pijn: null,
       trainingsdagen7: dagen7
@@ -24869,7 +25141,7 @@ async function tkReadinessVandaag(dfInfo,recRows,nextT){
   });
   window._tkReadiness=besluit;                       // alleen LEZEN door live coach en AI
   return CoachingCore.buildReadinessContext({besluit:besluit,
-    geplandeTraining:(nextT&&nextT.naam)?{naam:nextT.naam}:null});
+    geplandeTraining:(heeftExplicietPlan&&nextT&&nextT.naam)?{naam:nextT.naam}:null});
 }
 function tkReadinessHtml(ctx){
   if(!ctx||typeof CoachingCore.readinessCoachMessage!=='function') return '';
@@ -24953,18 +25225,25 @@ async function openRecoveryDetail(){
     el.innerHTML='<div style="color:var(--g4);font-size:13px">Herstelgegevens konden niet worden geladen.</div>';
   }
 }
-function renderCoachAdvies(dfInfo,recRows){
+function renderCoachAdvies(dfInfo,recRows,readinessCtx){
   const el=document.getElementById('home-coach-advies');if(!el)return;
-  const a=buildCoachTraining(dfInfo,recRows);
-  if(!a){el.innerHTML='';return;}
+  const b=readinessCtx&&readinessCtx.besluit;
+  // De Coach-kaart doet geen eigen trainingsbesluit en hergebruikt NOOIT een oude globale score.
+  if(!b||b.trainingGepland!==true||!b.bruikbaar||!b.herstel||
+     !b.trainingsadvies||b.trainingsadvies.soort==='geen_advies'){
+    el.innerHTML='';return;
+  }
+  const m=CoachingCore.readinessCoachMessage(readinessCtx);
+  const a={title:m.kop||'Trainingadvies',line:m.aanpassing||m.betekenis||'',reden:m.onzekerheid||null};
   // P1 — zichtbare Recovery Score in de coach-kaart (deterministisch, echte data).
   let recLine='';
   try{
-    const rs=recoveryScoreFrom(dfInfo,recRows);
+    // De kaart gebruikt de al door Decision Core geverifieerde scope; niet nogmaals rekenen.
+    const rs=b.herstel;
     if(rs && rs.score!=null){
       const bandTxt={hoog:'Hoog',gemiddeld:'Gemiddeld',laag:'Laag'}[rs.band]||rs.band;
       const bandCls=rs.band==='hoog'?'g':rs.band==='gemiddeld'?'y':'r';
-      recLine=`<div class="coach-advies-recovery status-${bandCls}" style="font-size:12px;font-weight:700;margin-bottom:4px">Herstel ${rs.score}/100 · ${bandTxt}${rs.confidence==='laag'?' (indicatief)':''}</div>`;
+      recLine=`<div class="coach-advies-recovery status-${bandCls}" style="font-size:12px;font-weight:700;margin-bottom:4px">Herstel voor ${escHtml(readinessCtx.geplandeTraining&&readinessCtx.geplandeTraining.naam||'je geplande training')}: ${rs.score}/100 · ${bandTxt}${rs.betrouwbaarheid==='laag'?' (indicatief)':''}</div>`;
     }
   }catch(_){}
   el.innerHTML=`<div class="coach-advies">
@@ -25379,7 +25658,7 @@ const TK_TRAIN_INTRO_NEUTRAAL='Train zoals gepland en let op hoe het vandaag voe
 // hours!==null, dezelfde herkomst die de spierherstelweergave zelf al gebruikt. Dit is de ENE
 // plek voor die regel. Het trainingsvoorschrift (computeProgAdjustment) krijgt de rijen ongefilterd.
 function tkSpierherstelEvidence(recRows){
-  return Array.isArray(recRows)?recRows.filter(function(r){ return !!r&&r.hours!==null; }):[];
+  return Array.isArray(recRows)?recRows.filter(function(r){ return !!r&&typeof r.hours==='number'&&isFinite(r.hours)&&r.hours>=0&&typeof r.pct==='number'&&isFinite(r.pct)&&r.pct>=0&&r.pct<=100; }):[];
 }
 // AI-CONTEXT: STALE IS NIET ACTUEEL (DEC-DQ-003).
 // De regel onder "HUIDIGE STATUS" in buildCtx(). Per signaal de nieuwste bruikbare meting met
@@ -25640,6 +25919,25 @@ function dagfactorUitleg(hrv,slaapUren,cyclusFase,df,vandaag){
   }
   return parts.join(', ')||'onvoldoende data';
 }
+// UX-REC-02 — herkomst van de dagfactor, één bron voor beide "Waarom vandaag?"-panelen.
+// Leest uitsluitend window.homeDfDetail (refreshHome); rekent niets opnieuw uit. `gebruikt` noemt
+// alleen de signalen die de dagfactor werkelijk voedden (HRV, slaap, cyclus), elk met zijn eigen
+// meetmoment; RHR voedt de dagfactor niet en staat hier dus bewust niet.
+function tkDagfactorHerkomst(d){
+  if(!d)return null;
+  const c=d.ctx||{hrv:{},rhr:{},slaap:{},cyclus:{}};
+  const gebruikt=[d.hrv?`HRV ${d.hrv} ms${tkMetingNa(c.hrv)}`:'',d.sleep?`slaap ${fmtSleep(d.sleep)}${tkMetingNa(c.slaap)}`:'',d.cyclus?`cyclus ${d.cyclus}`:''].filter(Boolean);
+  // Metingen die er wel zijn maar de dagfactor van vandaag niet voedden: apart, met de reden.
+  const nietMee=[
+    (!c.hrv.gebruikt&&c.hrv.waarde!=null)?`HRV ${c.hrv.waarde} ms (${[c.hrv.wanneer,c.hrv.referentie?'persoonlijke baseline wordt nog opgebouwd':''].filter(Boolean).join(', ')})`:'',
+    (c.rhr.waarde!=null&&c.rhr.oud)?`RHR ${c.rhr.waarde} (${c.rhr.wanneer})`:'',
+    (!c.slaap.gebruikt&&c.slaap.waarde!=null)?`slaap ${fmtSleep(c.slaap.waarde)} (${c.slaap.wanneer})`:''
+  ].filter(Boolean).join(' · ');
+  const formule=d.heeftBasis===false
+    ? `Geen dagfactor voor vandaag: geen van de signalen voedt hem. De rekenwaarde ${d.factor} (HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}) is een neutrale invulling, geen meting.`
+    : `${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05.`;
+  return {gebruikt,nietMee,formule,betrouwbaarheid:`${d.conf} (${d.sig}/3 signalen)`};
+}
 // v3.3.48 P4 — premium "Waarom vandaag?": composeert de uitleg lui (bij eerste opening)
 // uit reeds bestaande, gecachte data (dagfactor, herstelsignalen, spiergroep-herstel,
 // weekvolume, coachconclusie). Geen nieuwe berekening; alleen inzichtelijk maken.
@@ -25656,12 +25954,8 @@ function renderDagfactorDetail(){
   const c=d.ctx||{hrv:{},rhr:{},slaap:{},cyclus:{}};
   const sig=[d.hrv?`HRV ${d.hrv} ms${tkMetingNa(c.hrv)}`:'',d.rhr?`RHR ${d.rhr}${tkMetingNa(c.rhr)}`:'',d.sleep?`slaap ${fmtSleep(d.sleep)}${tkMetingNa(c.slaap)}`:'',d.cyclus?`cyclus ${d.cyclus}`:''].filter(Boolean).join(' · ')||'—';
   html+=row('Herstelsignalen',escHtml(sig));
-  // Metingen die er wel zijn maar de dagfactor van vandaag niet voedden: apart, met de reden.
-  const nietMee=[
-    (!c.hrv.gebruikt&&c.hrv.waarde!=null)?`HRV ${c.hrv.waarde} ms (${[c.hrv.wanneer,c.hrv.referentie?'persoonlijke baseline wordt nog opgebouwd':''].filter(Boolean).join(', ')})`:'',
-    (c.rhr.waarde!=null&&c.rhr.oud)?`RHR ${c.rhr.waarde} (${c.rhr.wanneer})`:'',
-    (!c.slaap.gebruikt&&c.slaap.waarde!=null)?`slaap ${fmtSleep(c.slaap.waarde)} (${c.slaap.wanneer})`:''
-  ].filter(Boolean).join(' · ');
+  const herkomst=tkDagfactorHerkomst(d);
+  const nietMee=herkomst.nietMee;
   if(nietMee)html+=row('Telt vandaag niet mee',escHtml(nietMee));
   if(rec.length)html+=row('Spiergroepen',rec.slice(0,4).map(r=>`${escHtml(r.muscle)} ${r.pct}%`).join(' · '));
   if(wk&&wk.volKg)html+=row('Weekvolume',`${wk.volKg} kg · ${wk.pctStr} vs vorige week`);
@@ -25681,9 +25975,7 @@ function renderDagfactorDetail(){
   // geen gemeten fysiologische waarde. Alleen tonen als er daadwerkelijk spiergroepen
   // met data in dit paneel staan.
   const spierBronTxt = rec.length ? ' Spierherstel: vuistregel (48-72u, RPE-afhankelijk), geen gemeten fysiologische waarde.' : '';
-  const formule=d.heeftBasis===false
-    ? `Geen dagfactor voor vandaag: geen van de signalen voedt hem. De rekenwaarde ${d.factor} (HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}) is een neutrale invulling, geen meting.`
-    : `${d.factor} = HRV ${d.hrvF.toFixed(2)} × slaap ${d.slaapF.toFixed(2)}${d.cycTxt||''}, geclipt 0.85–1.05.`;
+  const formule=herkomst.formule;
   html+=`<div class="dfd-note">${formule} Informatief — past nooit automatisch je gewicht aan. Confidence: ${d.conf} (${d.sig}/3 signalen).${hrvBronTxt}${spierBronTxt}</div>`;
   el.innerHTML=html;
 }
@@ -25953,7 +26245,10 @@ function renderEditSessFields(ex,session){
     let setsHTML='';
     for(let i=1;i<=count;i++){
       const d=detail[i-1];
-      const pre=d?{kg:(d.kg!==undefined&&d.kg!==''?d.kg:d.effKg),reps:d.reps,rpe:d.rpe}:null;
+      // UX-LOG-01: in de Logboek-editor hoort elke rij bij een eigen opgeslagen set, dus ook een
+      // eigen RPE. Zonder perSet toonde alleen set 1 zijn RPE en sloeg "Opslaan" de RPE van set 2..n
+      // leeg op (collectWorkSets leest het veld). Tijdens een training blijft set 1-only (cascade).
+      const pre=d?{kg:(d.kg!==undefined&&d.kg!==''?d.kg:d.effKg),reps:d.reps,rpe:d.rpe,perSet:true}:null;
       setsHTML+=buildWorkSetRow(ES_DOMID,i,pre);
     }
     f+=`<div id="es-sets-wrap">${setsHTML}</div>
@@ -31029,7 +31324,10 @@ function saveNewTraining(btnEl){
   const t={id,name,color,note,exercises:[]};
   customTrainings.push(t);
   localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
-  sbPost('custom_trainings',{id,naam:name,kleur:color,notitie:note||null,sort_order:customTrainings.length-1,scope:scopeVal});
+  // UX-EXEC-01 (B1): via de wachtrij en met markering, zodat een offline of mislukte write de
+  // training niet laat verdwijnen bij de volgende sync.
+  tkCustomTrainingPost({id,naam:name,kleur:color,notitie:note||null,sort_order:customTrainings.length-1,scope:scopeVal});
+  pushCustomTrainingExercises(t);
   closeModal('m-new-training');
   document.getElementById('nt-name').value='';
   toast(name+' aangemaakt');
@@ -31113,13 +31411,20 @@ async function submitShare(btnEl){
 
 async function deleteCustomTraining(id){
   if(!await confirmModal('Deze training verwijderen?',{title:'Training verwijderen',okLabel:'Verwijderen',danger:true})) return;
+  const _vorige=customTrainings.slice();
   customTrainings=customTrainings.filter(t=>t.id!==id);
   localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
+  // UX-EXEC-01 (B2): via de wachtrij (offline-veilig) en eerlijk: lukt ook queuen niet, dan komt de
+  // training lokaal terug en zegt de app dat. De sync slaat een nog wachtende verwijdering over.
+  const u=await sbDelQ('custom_trainings','id=eq.'+id,{detail:true}); // cascade ruimt custom_training_exercises vanzelf op
+  if(!u||!u.ok){
+    customTrainings=_vorige; localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
+    renderCustomTrainList(); renderCustomTrainBtns(); toast('Verwijderen is niet gelukt — probeer het opnieuw'); return;
+  }
   tkMarkeerTrainingOnbevestigd(id,false);
-  sbDel('custom_trainings','id=eq.'+id); // cascade ruimt custom_training_exercises vanzelf op
   renderCustomTrainList();
   renderCustomTrainBtns();
-  toast('Verwijderd');
+  toast(u.status==='queued'?'Verwijderd — wordt gesynchroniseerd zodra je online bent':'Verwijderd');
 }
 
 // Unified Training Editor (v3.0.3): Workout (custom training) gebruikt vanaf hier exact
@@ -31131,10 +31436,18 @@ async function deleteCustomTraining(id){
 // 4×6-8@8-standaardwaarden hieronder). Wordt uitsluitend door previewStartTraining()
 // meegegeven; elk ander (bestaand) aanroeppad werkt exact zoals voorheen.
 async function startCustomTraining(id,resolvedItems){
-  if(!resolvedItems)activeInstanceId=null; // idem als bij startT: geen instance-id meenemen buiten het Preview-pad
+  // UX-EXEC-01: een lopende training houdt haar instance (zie de terugkeer hieronder).
+  if(!resolvedItems&&curT!=='custom_'+id)activeInstanceId=null; // idem als bij startT: geen instance-id meenemen buiten het Preview-pad
   const t=customTrainings.find(x=>x.id===id);
   if(!t) return;
   const ctxT='custom_'+id;
+  // UX-EXEC-01: loopt deze training al, dan ga je er gewoon naar terug (zoals startT). Voorheen werd
+  // sessionLog hier geleegd; zonder tussentijdse autosave was het gelogde dan weg.
+  if(curT===ctxT&&document.getElementById('s-train-custom-'+id)){
+    document.querySelectorAll('.scr,.pin-screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('s-train-custom-'+id).classList.add('active');
+    if(!trainPaused)startTrainTimer(curT); return;
+  }
   // P0 RESUME — consistent met de vaste training (startT): een niet-afgeronde same-day draft voor DEZE
   // custom-training kan worden hervat, met álle data (sets/wu/cardio/done/notes/elapsed/actieve oefening).
   // Op de resume-pad wordt de recovery-aanpassing NIET opnieuw toegepast (zit al in de bewaarde sessionExtra)
@@ -31149,6 +31462,9 @@ async function startCustomTraining(id,resolvedItems){
   curT=ctxT;
   execFocus[curT]=0; if(typeof execSkipped!=='undefined')execSkipped[curT]=new Set(); // F0.7P/Q: verse start, geen skips
   sessionLog={};sessionExtra=[];
+  // UX-EXEC-01 (B10): zelfde reset als startT en de programmastart. Een eerdere pauze verkortte anders
+  // duration_s en de klok van deze training kon negatief worden.
+  trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
   await ensureExercisesLoaded();
   await ensureEquipmentTypesLoaded();
   if(_resume){
@@ -31734,7 +32050,13 @@ async function permanentlyAddExtras(){
     if(ct){
       if(!ct.exercises)ct.exercises=[];
       extras.forEach(e=>{if(!ct.exercises.includes(e.id))ct.exercises.push(e.id);});
+      // UX-EXEC-01 (B3): een Builder-training bewaart haar oefeningen als exercise_targets. Die lijst
+      // ook aanvullen; anders schreef de push alleen exercise_id's en verdwenen alle doelen.
+      if(Array.isArray(ct.exercise_targets)){
+        extras.forEach(e=>{ if(!ct.exercise_targets.some(x=>x&&x.exercise_id===e.id)) ct.exercise_targets.push({exercise_id:e.id,sets:e.sets??null,reps:e.reps??null,rpe:e.rpe??null,rest:null,pick:null}); });
+      }
       localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
+      tkCustomTrainingPatch(ct.id,{naam:ct.name,kleur:ct.color,notitie:ct.note||null});
       await pushCustomTrainingExercises(ct);
     }
   } else if(t.startsWith('prog_')){
@@ -31759,7 +32081,8 @@ function saveAsTrainingAndFinish(btnEl){
   const t={id:'saved_'+Date.now(),name,color:'#111111',note:'Opgeslagen na sessie '+td(),exercises:sessionExtra.filter(e=>e._t===curT).map(e=>e.id)};
   customTrainings.push(t);
   localStorage.setItem('tk_trainings',JSON.stringify(customTrainings));
-  sbPost('custom_trainings',{id:t.id,naam:t.name,kleur:t.color,notitie:t.note,sort_order:customTrainings.length-1}).then(()=>pushCustomTrainingExercises(t));
+  tkCustomTrainingPost({id:t.id,naam:t.name,kleur:t.color,notitie:t.note,sort_order:customTrainings.length-1}); // UX-EXEC-01 (B1)
+  pushCustomTrainingExercises(t);
   renderCustomTrainBtns();
   closeModal('m-save-as-training');
   toast(name+' opgeslagen als training');
@@ -32361,8 +32684,8 @@ function renderMuscleRecoveryHeatmap(containerId, pctBySvgId, opts){
     const path = g.querySelector('path');
     if(!path) return;
     const heeftModel = !neutraal || SVG_ID_RECOVERY_HOURS[g.id] != null;
-    // geen trainingsdata voor deze svg-id = volledig hersteld (zelfde aanname als lijst-kaart)
-    path.style.fill = heeftModel ? colorFn(100) : 'var(--load-0)';
+    // DEC-REC-001: geen historie is onbekend, niet '100% hersteld'.
+    path.style.fill = 'var(--load-0)';
     path.style.opacity = '1';
   });
   Object.entries(pctBySvgId).forEach(([svgId, pct])=>{
@@ -32371,7 +32694,7 @@ function renderMuscleRecoveryHeatmap(containerId, pctBySvgId, opts){
     const path = g.querySelector('path');
     if(!path) return;
     // zelfde drempels als de Spierherstel-lijst hierboven; herstel = stoplicht
-    const color = colorFn(pct);
+    const color = (typeof pct==='number'&&isFinite(pct)) ? colorFn(pct) : 'var(--load-0)';
     path.style.fill = color;
     path.style.opacity = '1';
   });
@@ -32478,7 +32801,7 @@ async function v43OverallRecovery(){
   const pctBySvgId={};
   Object.keys(SVG_ID_RECOVERY_HOURS).forEach(id=>{
     const hit=lastHitSvg[id];
-    if(!hit){pctBySvgId[id]=100;return;}
+    if(!hit){pctBySvgId[id]=null;return;}
     const hoursSince=(now-new Date(hit.date))/3600000;
     pctBySvgId[id]=computeMuscleRecoveryPct(hoursSince,SVG_ID_RECOVERY_HOURS[id],hit.rpe);
   });
@@ -32519,7 +32842,17 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   if(heroEl){
     const rd=(typeof trainReadiness==='function')?trainReadiness(dfInfo):null;
     const title=dfInfo?(rd?rd.txt:'Klaar om te trainen'):(checkinVandaag?TK_GEEN_ADVIES_TXT:'Doe je check-in');
-    const sub=dfInfo?(dfInfo.factor>=1?'Je lichaam is goed hersteld en klaar voor optimale prestaties.':dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.'):(checkinVandaag?TK_GEEN_ADVIES_SUB:'Vul je HRV in voor je dagfactor en herstelbeeld.');
+    // UX-REC-01: een gunstige dagfactor betekent niet dat elke spiergroep is hersteld.
+    // Het spierherstel blijft de BESTAANDE afzonderlijke schatting, geen nieuwe Decision-regel.
+    // UX-REC-02: één lijst voor hero-subtitel én "Waarom vandaag?" (was twee identieke filters).
+    const wReady=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct>=90).map(r=>r.muscle);
+    const wLow=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct<70).sort((a,b)=>a.pct-b.pct);
+    const sub=dfInfo?(dfInfo.factor>=1
+      ? (wLow.length
+        ? 'Je dagfactor is gunstig, maar sommige spiergroepen herstellen volgens de inschatting nog. Bekijk Waarom vandaag?'
+        : 'Je dagfactor is gunstig; spierherstel is een afzonderlijke schatting.')
+      : dfInfo.factor>=0.93?'Train vandaag op gevoel en houd je RPE in de gaten.':'Je lichaam vraagt om rust — houd het vandaag licht.')
+      :(checkinVandaag?TK_GEEN_ADVIES_SUB:'Vul je HRV in voor je dagfactor en herstelbeeld.');
     const gereed=v43GereedheidScore(dfInfo?dfInfo.factor:null);
     const slaap=(lh&&(lh.sleep||lh.sleep===0))?v43SlaapTxt(lh.sleep):'—';
     // v4.6.0 — status-indicator = dagfactor-cirkel (vervangt het losse groene vinkje)
@@ -32529,23 +32862,30 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
     const dfCol=dfCls==='g'?'var(--green)':dfCls==='r'?'var(--red)':'var(--y)';
     const dfVal=factor==null?'—':String(factor);
     // v4.6.0 — "Waarom vandaag?" inline in de hero (zelfde databron; de losse kaart vervalt)
-    const wReady=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct>=90).map(r=>r.muscle);
-    const wLow=(rec.rows||[]).filter(r=>r.hours!==null&&r.pct<70).sort((a,b)=>a.pct-b.pct);
     const wUit=(dfInfo&&dfInfo.uitleg)?dfInfo.uitleg:'';
     let wTxt=window.homeCoachText||'';
     if(!wTxt){try{wTxt=await buildCoachAdvice(dfInfo,nextT,recRows,checkinVandaag);}catch(e){wTxt='';}}
     const wRow=(l,v)=>`<div class="v43-why-row"><span>${l}</span><b>${escHtml(v)}</b></div>`;
+    // UX-REC-02: eerst wat de dagfactor voedde (met meetmoment en betrouwbaarheid), dan de
+    // aparte spierherstel-schatting. Alles uit window.homeDfDetail en rec; geen herberekening.
+    const herk=(typeof tkDagfactorHerkomst==='function')?tkDagfactorHerkomst(window.homeDfDetail):null;
+    const nGetraind=(rec.rows||[]).filter(r=>r.hours!==null).length;
     const whyBody=dfInfo?(
-      (wReady.length?wRow('Volledig hersteld',wReady.slice(0,3).join(', ')):'')+
-      (wLow.length?wRow('Nog herstellend',wLow.slice(0,2).map(r=>r.muscle+' '+r.pct+'%').join(', ')):'')+
       (factor!=null?wRow('Dagfactor',dfVal+(wUit?' · '+wUit:'')):'')+
+      ((herk&&herk.gebruikt.length)?wRow('Gebaseerd op',herk.gebruikt.join(' · ')):'')+
+      ((herk&&herk.nietMee)?wRow('Telt vandaag niet mee',herk.nietMee):'')+
+      (factor!=null?wRow('Gereedheid','Afgeleid van je dagfactor; spierherstel is een aparte schatting.'):'')+
+      (rec.hasData?wRow('Spierherstel',rec.overall+'% · schatting, gemiddelde van '+nGetraind+' getrainde spiergroep'+(nGetraind===1?'':'en')):'')+
+      (wReady.length?wRow('Hersteld (schatting)',wReady.slice(0,3).join(', ')):'')+
+      (wLow.length?wRow('Nog herstellend',wLow.slice(0,2).map(r=>r.muscle+' '+r.pct+'%').join(', ')):'')+
       (wTxt?`<div class="v43-why-p">${escHtml(wTxt)}</div>`:'')+
+      (herk?`<div class="v43-why-p" style="opacity:.7;font-size:11px">${escHtml(herk.formule)} Betrouwbaarheid: ${escHtml(herk.betrouwbaarheid)}.</div>`:'')+
       ((wReady.length||wLow.length)?`<div class="v43-why-p" style="opacity:.7;font-size:11px">Spierherstel: vuistregel (48–72u, RPE-afhankelijk), geen gemeten fysiologische waarde.</div>`:'')
     ):('<div class="v43-why-p">'+(checkinVandaag?escHtml(TK_GEEN_ADVIES_TXT+'. '+TK_GEEN_ADVIES_SUB):'Doe je check-in (HRV + slaap) om je dagfactor en herstelbeeld te zien.')+'</div>');
     heroEl.innerHTML=`<div class="v43-hero" onclick="v43ToggleWhy()" style="cursor:pointer" role="button" aria-expanded="false" aria-label="Herstelstatus — tik voor waarom vandaag">
       <div class="v43-hero-top">
         <div class="v43-hero-l">
-          <div class="v43-lbl">Herstel nu</div>
+          <div class="v43-lbl">Vandaag</div>
           <div class="v43-hero-title">${escHtml(title)}</div>
           <div class="v43-hero-sub">${escHtml(sub)}</div>
         </div>
@@ -32557,7 +32897,8 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.bolt}</div><div class="v43-stat-v">${gereed!=null?gereed:'—'}</div><div class="v43-stat-k">Gereed&shy;heid</div></div>
         <div class="v43-stat"><div class="v43-stat-ic">${V43I.moon}</div><div class="v43-stat-v">${slaap}</div><div class="v43-stat-k">Slaap</div></div>
       </div>
-      <div class="v43-legend">
+      <div class="v43-legend" aria-label="Kleuren van de spierfiguur">
+        <div class="d">Spierfiguur:</div>
         <div class="d"><span class="dot" style="background:var(--green)"></span>Goed hersteld</div>
         <div class="d"><span class="dot" style="background:var(--y)"></span>Matig hersteld</div>
         <div class="d"><span class="dot" style="background:var(--red)"></span>Weinig hersteld</div>
@@ -32922,11 +33263,12 @@ async function renderLichaam(){
   if(list){
     // v4.22.0 (Sprint 5.3) — premium 2-koloms herstelkaarten per spiergroep.
     list.innerHTML=(rec.rows||[]).map(r=>{
-      const c=v43RecColor(r.pct);
+      const c=r.hours===null?'var(--g4)':v43RecColor(r.pct);
       const st=r.hours===null?'Geen recente training':(r.pct>=85?'Volledig hersteld':r.pct>=50?'Herstellend':'Vermoeid');
-      const cm=r.hours===null?'Klaar voor belasting':(r.pct>=85?'Klaar voor zware belasting':r.pct>=50?'Nog wat rust ideaal':'Vermijd zware belasting');
+      // UX-REC-02: zonder trainingsdata is er geen schatting, dus ook geen belastbaarheidsclaim.
+      const cm=r.hours===null?'Geen trainingsdata':(r.pct>=85?'Volgens schatting belastbaar':r.pct>=50?'Nog wat rust ideaal':'Vermijd zware belasting');
       // Elke kaart opent het spiergroep-detail — zelfde route als vanaf het overzicht.
-      return `<button class="lich-mcard" onclick="openSpierDetail(&quot;${escHtml(r.muscle)}&quot;)" style="text-align:left;border:0;font-family:var(--f);width:100%;cursor:pointer"><div class="top"><span class="nm">${escHtml(r.muscle)}</span><span class="pct" style="color:${c}">${r.pct}%</span></div><div class="bar"><i style="width:${r.pct}%;background:${c}"></i></div><div class="stt" style="color:${c}">${st}</div><div class="cm">${cm}</div></button>`;
+      return `<button class="lich-mcard" onclick="openSpierDetail(&quot;${escHtml(r.muscle)}&quot;)" style="text-align:left;border:0;font-family:var(--f);width:100%;cursor:pointer"><div class="top"><span class="nm">${escHtml(r.muscle)}</span><span class="pct" style="color:${c}">${r.hours===null?'—':r.pct+'%'}</span></div><div class="bar"><i style="width:${r.hours===null?0:r.pct}%;background:${c}"></i></div><div class="stt" style="color:${c}">${st}</div><div class="cm">${cm}</div></button>`;
     }).join('');
   }
   // v4.19.0 (Sprint 5.2) — lichaamsmetingen (verplaatst vanuit Profiel) op dit tabblad renderen.
@@ -32966,7 +33308,7 @@ async function renderLichaamPremium(){
     hero.innerHTML=`<div class="lich-rhero">
       <div class="top">
         <div class="rring">${ringSvg}<div class="c"><div class="n">${ov!=null?ov+'%':'—'}</div><div class="l">Spierherstel</div></div></div>
-        <div class="st"><div class="eye">Vandaag</div><div class="rd">${escHtml(ready)}</div><div class="badge">${escHtml(badge)}</div></div>
+        <div class="st"><div class="eye">Vandaag</div><div class="rd">${escHtml(ready)}</div><div class="badge">${escHtml(badge)}</div>${beoordeeld?'<div class="lich-herk" style="font-size:11px;line-height:1.35;color:rgba(230,240,243,.78);margin-top:6px">Op basis van je dagfactor · spierherstel is een aparte schatting</div>':''}</div>
       </div>
       <div class="grid">${tile(dfToon?df.toFixed(2):'—','Dagfactor',dfToon?'berekend':'',dfToon?'':'Nog te weinig gegevens')}${tile(lh&&lh.sleep!=null?v43SlaapTxt(lh.sleep):'—','Slaap','gemeten',(lh&&lh.sleep!=null)?wanneer:'')}${tile(lh&&lh.hrv!=null?lh.hrv:'—','HRV','gemeten',(lh&&lh.hrv!=null)?wanneer:'')}${tile(lh&&lh.rhr!=null?lh.rhr:'—','Rust HR','gemeten',(lh&&lh.rhr!=null)?wanneer:'')}</div>
     </div>`;
@@ -33162,7 +33504,11 @@ async function renderLichaamAnatomie(rec){
       // niets; het contrast tussen beste en slechtste is de informatie. Puur een selectie
       // over de al berekende rec.rows — geen nieuwe berekening, geen nieuwe drempel.
       rows=lichTop4Herstel(rec.rows)
-        .map(r=>{ const st=lichRecStatus(r.pct); return {nm:r.muscle,pctBar:r.pct,val:r.pct+'%',st:st[0],col:st[1]}; });
+        .map(r=>{
+          // UX-REC-02: zonder trainingsdata (hours null) is 100% een aanname, geen schatting.
+          // Selectie en drempels ongewijzigd; alleen de weergave zegt dat er geen data is.
+          if(r.hours===null) return {nm:r.muscle,pctBar:0,val:'—',st:'Geen data',col:'var(--g4)'};
+          const st=lichRecStatus(r.pct); return {nm:r.muscle,pctBar:r.pct,val:r.pct+'%',st:st[0],col:st[1]}; });
     }
     list.innerHTML=rows.length
       ? rows.map(r=>'<button class="lich-mrow" onclick="openSpierDetail(\''+r.nm.replace(/'/g,"\\'")+'\')">'+
@@ -37861,7 +38207,9 @@ var GW=(function(){
     if(!f)f=FEELS[2];
     var reps=null;
     if(actualReps!=null&&actualReps!==''){ var rp=parseInt(actualReps,10); if(!isNaN(rp)&&rp>0)reps=rp; }
-    c.setsDone.push({feel:f.k,rpe:f.rpe,reps:reps,at:Date.now()});
+    // UX-LOG-01: het gewicht van DEZE set vastleggen. Voorheen kreeg elke set bij opslaan het
+    // laatste gewicht van de oefening, dus 60 → +2,5 → set 1 werd als 62,5 kg bewaard.
+    c.setsDone.push({feel:f.k,rpe:f.rpe,reps:reps,kg:(c.weight!=null?c.weight:null),at:Date.now()});
     var h=hist();h[c.id]={weight:c.weight,reps:c.reps,feel:f.k,rpe:f.rpe,at:Date.now()};lsSet('tk_gw_hist',h);
     st.active.lastFeel=f.k;
     st.active.phase='advice';
@@ -38076,7 +38424,9 @@ var GW=(function(){
       var exStatus=(typeof ensureExerciseRowStatus==='function')?await ensureExerciseRowStatus(it.id):'exists';
       // Sprint 5 (DEC-SYNC-001): geen sessie-write zonder geldige oefeningreferentie.
       if(exStatus==='rejected'||exStatus==='failed'){ it._save='failed'; n.failed++; persist(); continue; }
-      var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
+      // UX-LOG-01: per set het vastgelegde gewicht; oudere actieve sessies (zonder sd.kg) vallen terug
+      // op het oefeningsgewicht, zoals voorheen.
+      var ws=it.setsDone.map(function(sd){return {kg:(sd.kg!=null?sd.kg:(it.weight!=null?it.weight:null)),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
       var uitkomst=null;
       try{
         /* Sprint 26 — EVIDENCE-AANSLUITING. Dit Guided-pad gaf geen `at` en geen
@@ -38557,7 +38907,7 @@ var DASHUI=(function(){
       return '<div class="dash-today"><div class="dash-today-k">Lopende training</div>'+
         '<div class="dash-today-h">Je hebt een training lopen</div>'+
         '<div class="dash-today-s">Hervat waar je was gebleven, of rond af.</div>'+
-        '<button class="dash-today-btn" onclick="go(\'s-train-\'+curT.toLowerCase())">▶ Hervatten</button></div>';
+        '<button class="dash-today-btn" onclick="go(tkTrainScreenIdVoor(curT))">▶ Hervatten</button></div>';
     }
     var t=DASH.nextTraining();
     if(t){

@@ -8,6 +8,47 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Updategereedheid en Android-test (18 oktober 2026 — DEV-UPDATE-01)
+
+- Help toont of het veilig is de app te verwijderen/opnieuw te installeren (wachtrij, concept, lopende/begeleide
+  training, onbevestigde eigen trainingen; fail-closed).
+- Laatste testbuild-release: v4.70.23 (`apk-debug-v4.70.23-7c33f7797-run48`); v4.70.25 en de kandidaat-PR's hebben nog
+  geen APK. Debug-signing wisselt per build (PR #532 open). Checklist: `docs/ANDROID_PRAKTIJKTEST_V1_BETA.md`.
+
+## Bibliotheken (18 oktober 2026 — LIB-VALIDATE-01)
+
+- Oefeningen: 226 MoveKit-oefeningen, 0 fouten; 0/226 met Nederlandse naam; Batch 002 (186) BLOCKED en bronbestanden
+  niet in de repository. Supplementen: 73 items, 128 claims, 0 fouten. Voeding: geen centrale bibliotheek.
+- Validatie: `node tools/library-validate.js --markdown --sha` (rapport `docs/LIBRARY_VALIDATION_REPORT.md`).
+
+## Uitvoeringsketen (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — UX-EXEC-01)
+
+- Invariant (DEC-EXEC-001): het trainingsscherm volgt uit `tkTrainScreenIdVoor(curT)`; het concept bewaart de
+  Preview-oefeningenlijst en per oefening een vaste sessierij-id; handmatige trainingen en verwijderen lopen via de
+  wachtrij; Preview of opnieuw openen van een lopende training maakt geen nieuwe uitvoering.
+- Open: B5/B6 (instance vóór hervat/annuleer), B8 (duur-instances), B11 (herhalen), `sbPatchQ`/`sbDelQ` zonder detail,
+  offline programma-start; geen toestelbewijs.
+- Status: pas waar op main na merge.
+
+## Setregistratie (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — UX-LOG-01)
+
+- Invariant (DEC-LOG-001): een setbewerking vervangt alleen kg/reps/RPE/effKg; opnieuw opbouwen tijdens een training
+  herstelt de ingevulde sets; Guided bewaart het gewicht per set; de Logboek-editor bewaart de RPE per set.
+- Een lopende training verlaat je via tabbalk of terugveeg pas na "Training verlaten?"; terug op de training loopt
+  de klok door. De 1RM-schatting staat onder de invoer.
+- Open: gewichtsmodus niet hersteld bij hervatten; set-id na verwijderen; geen toestelbewijs.
+- Status: pas waar op main na merge.
+
+## Herstelcommunicatie Vandaag/Inzicht (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — PR #540 + vervolg-PR)
+
+- Invariant (DEC-REC-001): een dagoordeel noemt de dagfactor als bron; spierherstel heet een schatting. "Waarom
+  vandaag?" in de hero toont wat de dagfactor voedde (met meetmoment), wat niet meetelde, de berekening en de
+  betrouwbaarheid, via `tkDagfactorHerkomst()`. Inzicht vermeldt de herkomst van "Klaar om te trainen".
+- Berekeningen, drempels, Decision- en Coaching-core ongewijzigd.
+- Open (PO-besluit): kop "Goed hersteld" op de readinesskaart (DEC-REC-001-A); herstelscore en readiness wegen alleen
+  de spiergroepen van de geplande training (DEC-REC-001-B). Geen toestelbewijs.
+- Status: pas waar op main na merge van PR #540 en de vervolg-PR.
+
 ## Wearable-koppeling: tokenopslag, Android-bereikbaarheid, koppelstatus (v4.70.25, 11 oktober 2026)
 
 - Invariant (DEC-VAULT-001): elke autorisatie krijgt een unieke Vault-secretnaam. Bij (her)koppelen worden eerst de

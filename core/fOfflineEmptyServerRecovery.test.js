@@ -29,7 +29,7 @@ async function scenario(name,{online=true,queued=false,parentStatus='confirmed'}
   tkHuidigeUid:()=> 'u-test',
   updateOfflineBadge:()=>{},
   renderCustomTrainBtns:()=>{},renderCustomTrainList:()=>{},
-  offlineQueueAll:async()=>queued?[{table:'custom_trainings',body:{id:'new-01'},owner_uid:'u-test'}]:[],
+  tkLeesWachtrijStrikt:async()=>queued?[{table:'custom_trainings',body:{id:'new-01'},owner_uid:'u-test'}]:[],
   migrateLegacyWbSaved:async()=>{migrated++;},
   sbGet:async table=>table==='custom_trainings'?[]:[],
   sbPost:async(table,row)=>{writes.push({api:'sbPost',table,row});return true;},

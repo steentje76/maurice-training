@@ -8646,7 +8646,8 @@ async function syncCustomTrainingsFromSupabase(){
     // TK-INT-01: zonder betrouwbare offline-wachtrij mogen serverrijen een lokaal
     // verwijderde training niet opnieuw zichtbaar maken. Leesfout = sync overslaan;
     // ook herstelwrites hieronder gebruiken precies deze gevalideerde snapshot.
-    const _wq=await offlineQueueAll();
+    // TK-REL-SEC-01: een lege snapshot mag nooit het gevolg zijn van een gemaskeerde IDB-fout.
+    const _wq=await tkLeesWachtrijStrikt();
     if(!Array.isArray(_wq))throw new Error('queue_snapshot_invalid');
     const _uid=tkHuidigeUid();
     const _weg=new Set(_wq.filter(function(i){ return i.table==='custom_trainings'&&i.method==='DELETE'&&(i.owner_uid==null||i.owner_uid===_uid); }).map(function(i){ return String(i.filter||'').replace(/^id=eq\./,''); }));
@@ -9195,7 +9196,8 @@ function tkEigenaarUid(){
 }
 async function tkWachtrijHeeftOuder(t,body){
   const sl=tkOuderSleutels(t,body); if(!sl.length) return false;
-  let items=[]; try{ items=await offlineQueueAll(); }catch(_){ return false; }
+  // Zonder leesbaar queuebewijs kan een kindrij niet veilig zijn ouder passeren.
+  let items=[]; try{ items=await tkLeesWachtrijStrikt(); }catch(_){ return true; }
   const uid=tkHuidigeUid();
   return items.some(function(i){ return i.method==='POST'&&i.body&&i.body.id!=null&&(i.owner_uid==null||i.owner_uid===uid)&&sl.indexOf(i.table+':'+i.body.id)>=0; });
 }
@@ -9449,7 +9451,8 @@ async function tkLeesWachtrijStrikt(){
     // Pas de voltooide transactie bewijst dat het lezen werkelijk geslaagd is.
     req.onsuccess=()=>{rows=req.result;};
     req.onerror=()=>reject(req.error||new Error('queue_read_failed'));
-    tx.oncomplete=()=>resolve(rows||[]);
+    // Een afgeronde transactie zonder geldig getAll-resultaat is geen lege wachtrij.
+    tx.oncomplete=()=>Array.isArray(rows)?resolve(rows):reject(new Error('queue_snapshot_missing'));
     tx.onerror=()=>reject(tx.error||new Error('queue_transaction_failed'));
     tx.onabort=()=>reject(tx.error||new Error('queue_transaction_aborted'));
   });
@@ -9522,7 +9525,8 @@ async function flushOfflineQueue(){
   if(!authSession)return;
   _flushBezig=true;
   try{
-  const items=await offlineQueueAll();
+  // TK-REL-SEC-01: bij IDB-fout NIET doen alsof de queue leeg is.
+  const items=await tkLeesWachtrijStrikt();
   if(!items.length)return;
   items.sort((a,b)=>a.id-b.id);
   // F13 Post-Audit Remediation (P1-05): op een gedeeld toestel kan de
@@ -9538,7 +9542,8 @@ async function flushOfflineQueue(){
   // vóór deze fix (geen regressie, wel geen extra bescherming voor
   // die specifieke, tijdelijke overgangsgroep).
   const huidigeUid=authSession&&authSession.user?authSession.user.id:null;
-  const teVerwerken=items.filter(function(item){ return item.owner_uid==null||item.owner_uid===huidigeUid; });
+  // Legacy items zonder owner_uid zijn onbewezen: nooit onder een willekeurig volgend account replayen.
+  const teVerwerken=items.filter(function(item){ return !!huidigeUid&&item.owner_uid===huidigeUid; });
   const vanAndereGebruiker=items.length-teVerwerken.length;
   if(vanAndereGebruiker>0){
     console.warn('flushOfflineQueue: '+vanAndereGebruiker+' item(s) van een andere gebruiker overgeslagen (blijven geisoleerd in de wachtrij)');
@@ -9551,6 +9556,9 @@ async function flushOfflineQueue(){
   const _ouderMislukt={};
   let _trainingGesynct=false;
   for(const item of teVerwerken){
+    // Gebruiker kan tijdens een eerdere await zijn uitgelogd of gewisseld.
+    // Ook de headers van sbFetch zijn dynamisch: hercontrole vóór iedere write.
+    if(tkHuidigeUid()!==huidigeUid)break;
     try{
       // SPRINT C2-D: item.method==='RPC' -- generieke muterende-RPC-replay
       // (sbRpcQ). Geen Prefer-header nodig (RPC is geen PostgREST-upsert);
@@ -9578,6 +9586,9 @@ async function flushOfflineQueue(){
           ?{method:'POST',body:item.args}
           :{method:item.method,prefer:(item.method==='POST'&&item.resolution==='ignore-duplicates')?'return=representation,resolution=ignore-duplicates':((item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation'),body:item.body});
       const r=await sbFetch(url,opts);
+      // Een accountwissel tijdens het netwerkverzoek maakt de bevestiging ambigu.
+      // Bewaar het item voor idempotente replay onder zijn bewezen eigenaar.
+      if(tkHuidigeUid()!==huidigeUid){skippedAny=true;break;}
       if(!r.ok){
         // v5.9.5: serverfout op dit ene item (bv. validatie, verwijzing naar inmiddels
         // verwijderde data) mag niet alle latere, op zichzelf staande items blokkeren —
@@ -9592,7 +9603,9 @@ async function flushOfflineQueue(){
         continue;
       }
       if(item.method==='RPC')tkLogRpcOffline('rpc_replay_success',item.function);
-      await offlineQueueRemove(item.id);
+      // Een fout bij lokale queue-delete is géén bevestiging dat de operatie is afgerond.
+      // Laat het item bewaard voor latere idempotente replay.
+      if(await offlineQueueRemove(item.id)!==true){skippedAny=true;break;}
       syncedAny=true;
       if(item.table==='custom_trainings'||item.table==='custom_training_exercises')_trainingGesynct=true;
     }catch(e){console.warn('flushOfflineQueue offline again, stop',e);break;}
@@ -9602,12 +9615,17 @@ async function flushOfflineQueue(){
   // (training én oefeningen) op de server staat; pas dan vervalt de markering "alleen op dit toestel".
   if(_trainingGesynct&&typeof syncCustomTrainingsFromSupabase==='function'){ try{ await syncCustomTrainingsFromSupabase(); }catch(_){} }
   if(document.getElementById('m-offline-queue')?.classList.contains('open'))renderOfflineQueueModal();
-  if(syncedAny&&!(await offlineQueueAll()).length)toast('Offline sessies gesynchroniseerd');
+  // Ook het eindbericht vereist een transactie-bevestigde queue-read.
+  if(syncedAny&&!(await tkLeesWachtrijStrikt()).length)toast('Offline sessies gesynchroniseerd');
   else if(skippedAny)toast('Sommige offline items konden niet synchroniseren — bekijk de wachtrij voor details');
+  }catch(e){
+    // Opslag onbekend: nooit bevestigen, wissen of de blokkade verbergen.
+    console.warn('flushOfflineQueue: queue status unknown',e);
+    try{toast('Offline-wachtrij niet leesbaar — gegevens niet bevestigd');}catch(_){}
   }finally{ _flushBezig=false; }
 }
 function updateOfflineBadge(){
-  offlineQueueAll().then(items=>{
+  tkLeesWachtrijStrikt().then(items=>{
     const el=document.getElementById('offline-badge');
     if(!el)return;
     // Sprint 7 (Track D): ook Builder-trainingen die de server nog niet volledig heeft, staan in de melding.
@@ -9615,6 +9633,9 @@ function updateOfflineBadge(){
     if(items.length){el.textContent=items.length+' wachtend op sync — tik voor details';el.style.display='block';}
     else if(nTr){el.textContent=(nTr===1?'1 training staat':nTr+' trainingen staan')+' alleen op dit toestel — tik voor details';el.style.display='block';}
     else{el.style.display='none';}
+  }).catch(function(){
+    const el=document.getElementById('offline-badge');
+    if(el){el.textContent='Offline-opslag onbekend — tik voor details';el.style.display='block';}
   });
 }
 // Korte, leesbare omschrijving van een queue-item voor het beheerscherm.

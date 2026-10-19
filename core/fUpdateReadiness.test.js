@@ -28,7 +28,7 @@ function extractFn(src, name) {
 /* A */
 const g = extractFn(HTML, 'tkUpdateGereedheid'), s = extractFn(HTML, 'tkLeesWachtrijStrikt');
 ok(/id="help-update-card"/.test(HTML) && /onclick="tkUpdateGereedheidToon\(true\)"/.test(HTML), 'A1 de kaart staat op Help, met controleren en synchroniseren');
-ok(!/offlineQueueAll/.test(g) && /tkLeesWachtrijStrikt\(\)/.test(g) && /'readonly'/.test(s) && /reject\(req\.error\|\|/.test(s) && /tx\.oncomplete=\(\)=>resolve\(rows\|\|\[\]\)/.test(s) && /tx\.onabort=\(\)=>reject\(/.test(s), 'A2 de wachtrij wordt strikt gelezen: een leesfout is geen lege wachtrij');
+ok(!/offlineQueueAll/.test(g) && /tkLeesWachtrijStrikt\(\)/.test(g) && /'readonly'/.test(s) && /reject\(req\.error\|\|/.test(s) && /tx\.oncomplete=\(\)=>Array\.isArray\(rows\)\?resolve\(rows\):reject\(/.test(s) && /tx\.onabort=\(\)=>reject\(/.test(s), 'A2 de wachtrij wordt strikt gelezen: een leesfout is geen lege wachtrij');
 ok(/veilig:!open\.length&&!onbekend\.length/.test(g), 'A3 alleen veilig zonder open punten én zonder onbekende bronnen (fail-closed)');
 ok(!/setItem|removeItem|offlineQueueRemove|sbPost|sbPatch|sbDel|clearTrainingDraft/.test(g), 'A4 de controle schrijft en verwijdert niets');
 ["localStorage.getItem('tk_draft_training')", 'draftHasData(draft)', "localStorage.getItem('tk_gw_active')", 'GW.hasUnsaved()', 'TK_TRAININGEN_ONBEVESTIGD'].forEach(function (b) { ok(g.indexOf(b) >= 0, 'A5 bestaande bron gebruikt: ' + b); });

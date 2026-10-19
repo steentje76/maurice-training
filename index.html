@@ -9188,6 +9188,10 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
   // Sprint 7 (DEC-SYNC-002, Builder-integriteit): oefeningenrijen van een Builder-training krijgen een
   // client-id, zodat een herhaalde of opnieuw afgespeelde write nooit een tweede rij oplevert.
   custom_training_exercises: true,
+  // TK-REL-SEC-08: handmatige runs (sbPostQ('activities')) hadden geen client-id en geen natuurlijke sleutel:
+  // een replay na een verloren antwoord gaf een tweede activiteit. id is uuid en UPDATE-policy bestaat
+  // (read-only geverifieerd 19-10-2026), dus hetzelfde upsert-mechanisme als hierboven.
+  activities: true,
   // UX-EXEC-01 (B4): de training-rij zelf heeft ook een client-id ('custom_…'/Builder-id) en een
   // UPDATE-policy (v333). Zonder deze regel gaf een replay na een verloren antwoord een 409 die
   // nooit uit de wachtrij verdween; de oefeningen erachter bleven dan voorgoed staan.
@@ -9197,6 +9201,12 @@ const IDEMPOTENT_TABELLEN_MET_CLIENT_ID = { sessions: true, race_segments: true,
 // van een al opgeslagen rij op RLS; voor deze tabellen is ignore-duplicates (DO NOTHING) het juiste
 // idempotente gedrag.
 const TK_IDEMPOTENT_ZONDER_UPDATE = { messages: true };
+// TK-REL-SEC-08: tabellen met een natuurlijke unieke sleutel (productie-index, read-only geverifieerd) waar een
+// write zonder client-id herhaald kan worden. Zonder on_conflict zet PostgREST ON CONFLICT alleen op de PK: een
+// replay na een verloren antwoord gaf dan een eeuwige 409 die de wachtrij en de updatecontrole blokkeerde.
+// Met on_conflict + merge-duplicates is de herhaling idempotent (UPDATE-policy bestaat). Geldt ook voor al
+// gequeuede items, omdat flushOfflineQueue() de URL per tabel opbouwt.
+const TK_ON_CONFLICT = { activity_laps: 'activity_id,lap_index' };
 // Sprint 7 (DEC-SYNC-002): afhankelijkheden tussen rijen in de offline-wachtrij (kolom → oudertabel,
 // FK of RLS-EXISTS in productie). Een kindrij wordt NOOIT los naar de server gestuurd zolang haar ouder
 // nog in de wachtrij staat (dan gaat het kind er ook in, FIFO), en de flush stuurt geen kind waarvan de
@@ -9299,7 +9309,8 @@ async function sbPostQ(t,d,opts){
   // queue ('failed', IndexedDB niet beschikbaar) gaf hier tot v4.70.22 true — een valse succesmelding
   // terwijl de data nergens stond. Impactanalyse van alle aanroepers: DECISION_LOG DEC-QUEUE-001.
   let queueOnly=!!(opts&&opts.queueOnly); const ignoreDup=!!(opts&&opts.ignoreDuplicates)||!!TK_IDEMPOTENT_ZONDER_UPDATE[t];
-  const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation');
+  const _oc=(typeof TK_ON_CONFLICT==='object'&&TK_ON_CONFLICT&&typeof TK_ON_CONFLICT[t]==='string')?'?on_conflict='+TK_ON_CONFLICT[t]:'';
+  const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':((IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||_oc)?'return=representation,resolution=merge-duplicates':'return=representation');
   const item=ignoreDup?{table:t,method:'POST',body:d,resolution:'ignore-duplicates'}:{table:t,method:'POST',body:d};
   const uit=function(status,http,reden){ if(opts&&typeof opts==='object'){opts.status=status;opts.reden=reden||null;} tkLogSchrijf(status,t,reden,http); return detail?tkSchrijfUitkomst(status,http,reden):(status==='confirmed'||status==='queued'); };
   // TK-REL-SEC-02: eigenaar en ingelogde identiteit vastleggen bij de aanroep, niet pas bij het queuen.
@@ -9316,7 +9327,7 @@ async function sbPostQ(t,d,opts){
   if(!navigator.onLine||queueOnly) return queue(null,navigator.onLine?reden:'offline');
   const magTimeout=!!(d&&d.id!=null&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||ignoreDup));
   try{
-    const verzoek=sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:prefer,body:d});
+    const verzoek=sbFetch(`${SB_URL}/rest/v1/${t}${_oc}`,{method:'POST',prefer:prefer,body:d});
     const r=magTimeout?await tkMetTimeout(verzoek,TK_SCHRIJF_TIMEOUT_MS):await verzoek;
     if(!r.ok){
       const err=await r.text();console.error('sbPostQ',t,r.status,tkFoutcode(err));
@@ -9619,7 +9630,8 @@ async function flushOfflineQueue(){
         if(item.body.id!=null)_ouderMislukt[item.table+':'+item.body.id]=1;
         skippedAny=true;continue;
       }
-      const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}`:(item.method==='RPC'?`${SB_URL}/rest/v1/rpc/${item.function}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`);
+      const _oc=(item.method==='POST'&&typeof TK_ON_CONFLICT==='object'&&TK_ON_CONFLICT&&typeof TK_ON_CONFLICT[item.table]==='string')?'?on_conflict='+TK_ON_CONFLICT[item.table]:'';
+      const url=item.method==='POST'?`${SB_URL}/rest/v1/${item.table}${_oc}`:(item.method==='RPC'?`${SB_URL}/rest/v1/rpc/${item.function}`:`${SB_URL}/rest/v1/${item.table}?${item.filter}`);
       // F13 Post-Audit Remediation (P1-04): dezelfde idempotente upsert-header
       // als sbPostQ() zelf gebruikt. Zonder dit zou een item dat vóór het
       // queuen al succesvol (met hetzelfde, client-gegenereerde id) was
@@ -9630,7 +9642,7 @@ async function flushOfflineQueue(){
         ?{method:'DELETE'}
         :(item.method==='RPC'
           ?{method:'POST',body:item.args}
-          :{method:item.method,prefer:(item.method==='POST'&&item.resolution==='ignore-duplicates')?'return=representation,resolution=ignore-duplicates':((item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation'),body:item.body});
+          :{method:item.method,prefer:(item.method==='POST'&&item.resolution==='ignore-duplicates')?'return=representation,resolution=ignore-duplicates':((item.method==='POST'&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table]||_oc))?'return=representation,resolution=merge-duplicates':'return=representation'),body:item.body});
       const r=await sbFetch(url,opts);
       // Een accountwissel tijdens het netwerkverzoek maakt de bevestiging ambigu.
       // Bewaar het item voor idempotente replay onder zijn bewezen eigenaar.

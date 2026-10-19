@@ -17,7 +17,7 @@ function fn(decl){
 const LAAG=[
   grab('const SB_RETRY_STATUS=','async function sbGet('),
   fn('async function sbGet('),fn('async function sbPost('),fn('async function sbPostReturning('),fn('async function sbPatch('),fn('async function sbRpc('),
-  fn('async function sbDel('),fn('async function sbUpsert('),
+  fn('async function sbDel('),fn('async function sbUpsert('),fn('async function sbGetOrFail('),
   grab('const IDEMPOTENT_TABELLEN_MET_CLIENT_ID','// UX-EXEC-01 — het scherm van een lopende training'),
   fn('function newClientRowId('),fn('function tkNormalizeSessionsRow('),
   grab('function tkSchrijfUitkomst(status, http, reden){','// Speelt de queue in volgorde af;')
@@ -82,7 +82,10 @@ function resp(status,body){
   return {ok:status>=200&&status<300,status,headers:{get:()=>null},text:async()=>JSON.stringify(body),json:async()=>body};
 }
 // Kleine in-memory PostgREST-nabootsing: eq/is.null/not.in-filters, PK- en on_conflict-gedrag, merge/ignore-duplicates.
-function db(){
+// uniek: { tabel: [[kolommen], ...] } — extra unieke sleutels naast de PK. Een schending op een andere sleutel dan het
+// conflictdoel (PK of on_conflict) geeft 409, zoals Postgres/PostgREST.
+function db(uniek){
+  uniek=uniek||{};
   const T={},seq={};
   const tabel=t=>(T[t]=T[t]||[]);
   const filters=(q)=>q.split('&').filter(x=>x&&x.indexOf('select=')<0&&x.indexOf('order=')<0&&x.indexOf('limit=')<0&&x.indexOf('on_conflict=')<0).map(x=>{const i=x.indexOf('=');return [x.slice(0,i),decodeURIComponent(x.slice(i+1))];});
@@ -106,6 +109,7 @@ function db(){
           if(rij.id==null){seq[t]=(seq[t]||0)+1;rij.id=seq[t];}
           const bestaand=tabel(t).find(x=>sleutel.every(k=>String(x[k])===String(rij[k])));
           if(bestaand){ if(merge){Object.assign(bestaand,b);uit.push(bestaand);continue;} if(negeer)continue; return resp(409,{code:'23505'}); }
+          if((uniek[t]||[]).some(ks=>tabel(t).some(x=>ks.every(k=>x[k]!=null&&String(x[k])===String(rij[k])))))return resp(409,{code:'23505'});
           tabel(t).push(rij);uit.push(rij);
         }
         return resp(201,uit);

@@ -9,9 +9,8 @@
  *  T3 replay van een getimede PATCH na herstel: dezelfde waarde, geen extra effect;
  *  T4 onzekere insert ZONDER idempotente sleutel (goals): niet automatisch opnieuw verstuurd, blijft zichtbaar in de
  *     wachtrij; een onzekere insert MET client-id (sessions) wordt wel afgespeeld;
- *  T5 tabellen met client-id of natuurlijke sleutel (availability_periods, cycle_periods, nutrition_targets,
- *     calendar_feed_tokens, research_consents, nutrition_nutrient_values, cycle_symptom_logs): verloren antwoord +
- *     replay → precies één rij.
+ *  T5 tabellen met client-id (availability_periods, cycle_periods, nutrition_targets, calendar_feed_tokens,
+ *     research_consents, nutrition_nutrient_values): verloren antwoord + replay → precies één rij.
  * Draait de ECHTE schrijflaag en flushOfflineQueue uit index.html via core/fixtures/schrijfHarnas.js. */
 'use strict';
 const assert=require('assert');
@@ -82,8 +81,9 @@ async function main(){
     ['nutrition_targets',{user_id:'A',kcal:2400}],
     ['calendar_feed_tokens',{user_id:'A',token_hash:'h',active:true}],
     ['research_consents',{user_id:'A',research_purpose:'x',consent_version:'1',action:'granted'}],
-    ['nutrition_nutrient_values',{product_id:'p1',basis:'PER_100G',energy_kcal:120}],
-    ['cycle_symptom_logs',{log_date:'2026-10-19',symptoms:['kramp']}]];
+    ['nutrition_nutrient_values',{product_id:'p1',basis:'PER_100G',energy_kcal:120}]];
+  // cycle_symptom_logs bewust zonder idempotente sleutel (TK-REL-SEC-20: merge zou bij een leesfout symptomen overschrijven):
+  // een verloren antwoord wordt daar dus vastgehouden (zie T4), niet automatisch herhaald.
   for(const [t,row] of T5){
     const d=db();
     const h=maak({extraSrc:FLUSH,ctx:{renderOfflineQueueModal(){}}});

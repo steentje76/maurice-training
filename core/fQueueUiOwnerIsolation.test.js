@@ -16,6 +16,8 @@ const SRC=[
   block('async function getPendingSessionRows(){',"window.addEventListener('online',flushOfflineQueue);"),
   block('async function deleteSessionDirect(id){','function addSetToDate(')
 ].join('\n');
+// Een hangende promise laat Node met exit 0 stoppen zonder verdere asserties: dat telt als FAIL.
+let klaar=false;process.on('exit',()=>{if(!klaar){console.error('FAIL niet alle scenario\'s afgerond (hangende promise)');process.exitCode=1;}});
 let pass=0;const check=(l,ok)=>{assert(ok,l);pass++;console.log('PASS',l);};
 
 function maak(uid,items,opts={}){
@@ -25,7 +27,7 @@ function maak(uid,items,opts={}){
     tkHuidigeUid:()=>(ctx.authSession&&ctx.authSession.user)?ctx.authSession.user.id:null,
     offlineQueueAll:async()=>opts.readFails?[]:items.slice(),
     tkLeesWachtrijStrikt:async()=>{if(opts.readFails)throw new Error('IDB abort');return items.slice();},
-    offlineQueueRemove:async id=>{removed.push(id);return true;},
+    offlineQueueRemove:async id=>{if(opts.removeFails)return false;removed.push(id);return true;},
     confirmModal:async()=>true,updateOfflineBadge(){},refreshHome(){},loadHistory(){},toast:m=>toasts.push(m),
     document:{getElementById:id=>id==='offline-queue-list'?el:null},
     tkTrainingenOnbevestigd:()=>[],customTrainings:[],exercises:[],
@@ -53,5 +55,8 @@ const ITEMS=[it(1,'A','ex-van-A'),it(2,undefined,'ex-legacy'),it(3,'B','ex-van-B
    await ctx.deleteSessionDirect('pending_3');check('U4 eigen pending-sessie wel',removed.length===1&&removed[0]===3);}
   {const {ctx,el}=maak('B',ITEMS,{readFails:true});await ctx.renderOfflineQueueModal();
    check('U5 onleesbare wachtrij wordt niet als leeg getoond',el.innerHTML.indexOf('Geen items wachtend op sync')<0&&/niet leesbaar/i.test(el.innerHTML));}
+  {const {ctx,toasts}=maak('B',ITEMS,{removeFails:true});await ctx.deleteSessionDirect('pending_3');
+   check('U6 mislukte lokale delete wordt niet als "Verwijderd" gemeld',toasts.indexOf('Verwijderd')<0&&toasts.some(t=>/mislukt/i.test(t)));}
+  klaar=true;
   console.log('TK-REL-SEC-03: '+pass+'/'+pass);
 })().catch(e=>{console.error('FAIL',e&&e.message||e);process.exitCode=1;});

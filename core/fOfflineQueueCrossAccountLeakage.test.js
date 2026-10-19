@@ -46,7 +46,7 @@ function nepIndexedDB() {
     var handlers = {};
     var obj = {
       add: function (item) { store.push(Object.assign({ id: volgende++ }, item)); klaar(); },
-      getAll: function () { var r = {}; setTimeout(function () { r.result = store.slice(); r.onsuccess && r.onsuccess(); }, 0); return r; },
+      getAll: function () { var r = {}; setTimeout(function () { r.result = store.slice(); r.onsuccess && r.onsuccess(); klaar(); }, 0); return r; }, // TK-REL-SEC-02: transactie rondt ook af (strikte lezer wacht op oncomplete)
       delete: function (id) { store = store.filter(function (x) { return x.id !== id; }); klaar(); }
     };
     function klaar() { setTimeout(function () { handlers.oncomplete && handlers.oncomplete(); }, 0); }
@@ -153,16 +153,23 @@ tAsync('P1-05-B: wanneer gebruiker A vervolgens terugkeert op hetzelfde toestel,
   });
 });
 
-tAsync('P1-05-C: een item zonder bekende owner_uid (legacy, van vóór deze fix) blijft flushbaar -- geen stille dataverlies-regressie', function () {
+// PR #555 (TK-REL-SEC-01b) wijzigde het beleid: een item zonder bewijsbare eigenaar wordt NIET meer onder de
+// ingelogde gebruiker verstuurd, maar blijft bewaard (quarantaine). Deze case faalde stil sinds 4e684a7: de
+// nep-IndexedDB riep nooit oncomplete aan, waardoor de suite zonder asserties met exit 0 eindigde.
+tAsync('P1-05-C: een item zonder bekende owner_uid (legacy) wordt niet onder een ander account verstuurd en blijft bewaard', function () {
   var idb = nepIndexedDB();
   idb._store().push({ id: 1, table: 'sessions', method: 'POST', body: { date: '2026-08-31' }, ts: Date.now() }); // geen owner_uid-veld
   var ctx = queueZandbak({ idb: idb, online: true, sessie: { access_token: 't', refresh_token: 'r', user: { id: 'user-C' } } });
   return ctx.flushOfflineQueue().then(function () {
     var gepost = ctx._verzoeken.filter(function (v) { return v.method === 'POST' && v.url.indexOf('/sessions') !== -1; });
-    assert.strictEqual(gepost.length, 1, 'een legacy-item zonder owner_uid wordt nog steeds geflushed (geen regressie t.o.v. het gedrag van vóór deze fix)');
+    assert.strictEqual(gepost.length, 0, 'een legacy-item zonder owner_uid mag niet onder user-C worden verstuurd');
+    assert.strictEqual(idb._store().length, 1, 'het legacy-item blijft bewaard (niet stil weggegooid)');
   });
 });
 
+// Een test die nooit afrondt (hangende promise) mag niet als geslaagd eindigen.
+var _alleAfgerond = false;
+process.on('exit', function () { if (!_alleAfgerond) { console.error('MISLUKT: niet alle tests afgerond (hangende promise)'); process.exitCode = 1; } });
 Promise.all(wachtend.map(function (w) {
   return Promise.resolve().then(w.fn).then(function () { n++; }, function (e) {
     console.error('MISLUKT:', w.naam, '\n ', e && e.message);
@@ -170,6 +177,7 @@ Promise.all(wachtend.map(function (w) {
   });
 })).then(function () {
   console.log('\n========================================================');
+  _alleAfgerond = true;
   console.log('fOfflineQueueCrossAccountLeakage.test.js — ' + n + ' tests geslaagd');
   if (process.exitCode) process.exit(1);
 });

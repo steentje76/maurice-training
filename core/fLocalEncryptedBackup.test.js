@@ -22,9 +22,10 @@ function input(){
       'tk_wb_saved':JSON.stringify([{id:'old'}]),
       'totally_unknown_key':'other secret local source'
     },
-    queue:[{id:5,owner_uid:owner,item:{table:'sessions',method:'POST',body:{reps:5,id:'s1',refresh_token:'REMOVE_ME'}}},
-      {id:6,owner_uid:other,item:{table:'sessions',method:'POST',body:{reps:9}}},
-      {id:7,owner_uid:owner,item:{table:'sessions',method:'POST',body:{user_id:other,reps:10}}}]};
+    // TK-REL-SEC-30: echte (platte) wachtrijrecords zoals offlineQueueAdd ze opslaat; de geneste 'item'-vorm bestond niet.
+    queue:[{id:5,owner_uid:owner,ts:1,table:'sessions',method:'POST',body:{reps:5,id:'s1',refresh_token:'REMOVE_ME'}},
+      {id:6,owner_uid:other,ts:1,table:'sessions',method:'POST',body:{reps:9}},
+      {id:7,owner_uid:owner,ts:1,table:'sessions',method:'POST',body:{user_id:other,reps:10}}]};
 }
 (async()=>{
   const src=input(),before=JSON.stringify(src);

@@ -20,7 +20,10 @@ let ok=0;function check(c,name){assert(c,name);ok++;console.log('PASS '+name);}
       localStorage.setItem('tk_trainings',JSON.stringify([{id:'ct1',name:'Back-up squat',access_token:'DO_NOT_EXPORT'}]));
       localStorage.setItem('tk_draft_training',JSON.stringify({t:'Bench',sessionLog:[{reps:8}]}));
       const before=[localStorage.getItem('tk_trainings'),localStorage.getItem('tk_draft_training')];
-      window.offlineQueueAll=async()=>[{id:9,owner_uid:uid,item:{table:'sessions',method:'POST',body:{id:'s9',reps:8}}}];
+      // TK-REL-SEC-30: echte IndexedDB-wachtrij (strikt gelezen) in plaats van een gestubde offlineQueueAll().
+      const qdb=await offlineDb(); await new Promise(res=>{ const tx=qdb.transaction(OFFLINE_STORE,'readwrite'); tx.objectStore(OFFLINE_STORE).clear(); tx.oncomplete=res; });
+      await offlineQueueAdd({table:'sessions',method:'POST',body:{id:'s9',reps:8}},uid);
+      const qVoor=JSON.stringify(await offlineQueueAll());
       let file=null;window.downloadFile=(data,name,mime)=>{file={data,name,mime};};
       document.getElementById('tk-backup-pass').value='my super strong password 22';
       document.getElementById('tk-backup-pass2').value='my super strong password 22';
@@ -29,7 +32,21 @@ let ok=0;function check(c,name){assert(c,name);ok++;console.log('PASS '+name);}
         passCleared:document.getElementById('tk-backup-pass').value===''&&document.getElementById('tk-backup-pass2').value==='',
         unchanged:before[0]===localStorage.getItem('tk_trainings')&&before[1]===localStorage.getItem('tk_draft_training')};
       const envelope=JSON.parse(file.data),verified=await TKLocalBackup.inspect(envelope,'my super strong password 22',window.crypto);
-      result.inspected=verified;return result;
+      result.inspected=verified;
+      result.queueUnchanged=JSON.stringify(await offlineQueueAll())===qVoor;
+      // TK-REL-SEC-30 R1 in de echte browser: een IndexedDB-fout bij het lezen van de wachtrij → geen kopie.
+      file=null; const echtGetAll=IDBObjectStore.prototype.getAll;
+      IDBObjectStore.prototype.getAll=function(){ throw new DOMException('stuk','UnknownError'); };
+      document.getElementById('tk-backup-pass').value='my super strong password 22'; document.getElementById('tk-backup-pass2').value='my super strong password 22';
+      await tkMaakVersleuteldeLokaleBackup(); IDBObjectStore.prototype.getAll=echtGetAll;
+      result.queueFail={download:!!file,status:document.getElementById('tk-backup-status').textContent};
+      // R2: Android-app → geen schijnsucces.
+      file=null; window.Capacitor={isNativePlatform:()=>true};
+      document.getElementById('tk-backup-pass').value='my super strong password 22'; document.getElementById('tk-backup-pass2').value='my super strong password 22';
+      await tkMaakVersleuteldeLokaleBackup(); delete window.Capacitor;
+      result.native={download:!!file,status:document.getElementById('tk-backup-status').textContent,passCleared:document.getElementById('tk-backup-pass').value===''};
+      result.iterations=envelope.iterations;
+      return result;
     });
     check(result.download&&result.name.endsWith('.tkbackup'),'Encrypted file created through real UI');
     check(!result.plaintext.includes('Back-up squat')&&!result.plaintext.includes('DO_NOT_EXPORT'),'No plaintext or authentication secret in downloaded content');
@@ -37,6 +54,10 @@ let ok=0;function check(c,name){assert(c,name);ok++;console.log('PASS '+name);}
     check(result.unchanged,'Local records byte-for-byte unchanged');
     check(result.inspected.entries>=3&&result.inspected.restoreAllowed===false&&result.inspected.complete===false,'Decrypt supports read-only preview only');
     check(/ONVEILIG/.test(result.status),'UI explicitly warns uninstall is unsafe');
+    check(result.queueUnchanged,'Real IndexedDB queue unchanged by export');
+    check(result.iterations>=600000,'New file uses PBKDF2 with >= 600000 iterations');
+    check(!result.queueFail.download&&/wachtrij/i.test(result.queueFail.status),'Unreadable real IndexedDB queue: no backup offered');
+    check(!result.native.download&&/Android-app/.test(result.native.status)&&result.native.passCleared,'Native app: no false download success, passphrase cleared');
     check(errors.length===0,'No browser page exceptions');
     console.log('fLocalEncryptedBackupChromium: '+ok+'/'+ok);
   }finally{await browser.close();}

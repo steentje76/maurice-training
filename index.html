@@ -36250,6 +36250,9 @@ async function exportCSV(table){
 // TK-REL-SEC-29: encrypted, intentionally partial recovery export. NO restore or uninstall approval.
 let tkBackupBusy=false;
 function tkBackupStatus(bericht){const el=document.getElementById('tk-backup-status');if(el)el.textContent=bericht;}
+// TK-REL-SEC-30: in de Android-app (Capacitor) doet een browserdownload (<a download> met blob-URL) niets: de WebView
+// heeft geen DownloadListener. Daar geen kopie maken in plaats van een schijnsucces te melden.
+function tkIsNativeApp(){ try{ const C=(typeof window!=='undefined'&&window.Capacitor)||(typeof Capacitor!=='undefined'?Capacitor:null); return !!(C&&typeof C.isNativePlatform==='function'&&C.isNativePlatform()===true); }catch(_){ return false; } }
 async function tkBackupSnapshot(){
   const uid=(authSession&&authSession.user&&authSession.user.id)||null;
   if(!uid||tkEigenaarUid()!==uid)throw new Error('Meld je aan bij het juiste account om een kopie te maken.');
@@ -36265,7 +36268,9 @@ async function tkBackupSnapshot(){
     if(/auth_session|access[_-]?token|refresh[_-]?token|credential|oauth|secret/i.test(k))continue;
     local[k]=localStorage.getItem(k);
   }
-  const wachtrij=await offlineQueueAll(); // bestaande store alleen gelezen, niet geflusht
+  // TK-REL-SEC-30: strikt lezen. offlineQueueAll() maskeert een IndexedDB-fout als lege lijst; dan zouden niet-verstuurde
+  // writes stil ontbreken. Alleen gelezen, niet geflusht.
+  let wachtrij; try{ wachtrij=await tkLeesWachtrijStrikt(); }catch(_){ wachtrij=null; }
   if(!Array.isArray(wachtrij))throw new Error('Offline-wachtrij onleesbaar: geen export gemaakt.');
   return TKLocalBackup.prepare({owner:uid,cacheOwner:localStorage.getItem('tk_cache_owner_uid'),local,queue:wachtrij,manifest:m});
 }
@@ -36273,7 +36278,8 @@ async function tkMaakVersleuteldeLokaleBackup(){
   if(tkBackupBusy)return;
   const a=document.getElementById('tk-backup-pass'),b=document.getElementById('tk-backup-pass2');
   const pass=a?a.value:'',controle=b?b.value:'';
-  if(pass.length<12||pass!==controle){tkBackupStatus('Gebruik tweemaal dezelfde wachtzin van minimaal 12 tekens.');return;}
+  if(tkIsNativeApp()){ if(a)a.value=''; if(b)b.value=''; tkBackupStatus('In de Android-app kan dit bestand nog niet worden opgeslagen (de app ondersteunt geen browserdownloads). Er is geen kopie gemaakt. De app verwijderen blijft ONVEILIG.'); return; }
+  if(pass.length<12||pass!==controle){if(a)a.value='';if(b)b.value='';tkBackupStatus('Gebruik tweemaal dezelfde wachtzin van minimaal 12 tekens.');return;}
   tkBackupBusy=true;tkBackupStatus('Lokale gegevens worden alleen gelezen en versleuteld...');
   try{
     const snapshot=await tkBackupSnapshot();
@@ -36283,14 +36289,16 @@ async function tkMaakVersleuteldeLokaleBackup(){
     await TKLocalBackup.inspect(envelope,pass,window.crypto); // geheime sleutel en authenticatietag controleren
     if(!authSession||!authSession.user||authSession.user.id!==snapshot.owner)throw new Error('Account is tijdens het versleutelen gewisseld.');
     downloadFile(JSON.stringify(envelope),'trainingskompas_lokaal_'+td()+'.tkbackup','application/json');
-    tkBackupStatus('Versleutelde deelkopie aangeboden: '+snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. Bewaar wachtzin en bestand afzonderlijk. Controleer het gedownloade bestand. De app verwijderen blijft ONVEILIG.');
+    tkBackupStatus('Versleutelde deelkopie aangeboden: '+snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. Controleer of het bestand echt is opgeslagen en bewaar wachtzin en bestand afzonderlijk. De app verwijderen blijft ONVEILIG.');
   }catch(e){tkBackupStatus('Geen kopie gemaakt: '+(e&&e.message?e.message:'onbekende fout'));}
   finally{if(a)a.value='';if(b)b.value='';tkBackupBusy=false;}
 }
 async function tkControleerVersleuteldeLokaleBackup(){
   if(tkBackupBusy)return;const input=document.getElementById('tk-backup-file'),pw=document.getElementById('tk-backup-check-pass');
-  if(!input||!input.files||input.files.length!==1){tkBackupStatus('Kies eerst één versleuteld bestand.');return;}
-  if(input.files[0].size>100*1024*1024){tkBackupStatus('Bestand groter dan 100 MB; controleer via een apart veilig hulpmiddel.');return;}
+  // TK-REL-SEC-30: de wachtzin wordt op elk pad gewist; grootte begrensd vóór het inlezen.
+  if(!input||!input.files||input.files.length!==1){if(pw)pw.value='';tkBackupStatus('Kies eerst één versleuteld bestand.');return;}
+  const _max=(typeof TKLocalBackup!=='undefined'&&TKLocalBackup.MAX_BESTAND)||24*1024*1024;
+  if(!(input.files[0].size>0)||input.files[0].size>_max){if(pw)pw.value='';tkBackupStatus('Bestand leeg of te groot (maximaal '+Math.round(_max/1048576)+' MB); niet gecontroleerd.');return;}
   tkBackupBusy=true;
   try{
     const obj=JSON.parse(await input.files[0].text());

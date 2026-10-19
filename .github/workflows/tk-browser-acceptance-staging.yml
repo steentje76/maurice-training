@@ -15,6 +15,8 @@ on:
       - review/claude-p1-rest-20261019
       - review/claude-raw-fase2-20261019
       - review/claude-hist-fase3-20261019
+      - feat/tk-local-encrypted-backup-20261019
+      - review/claude-backup-review-20261019
 
 permissions:
   contents: read

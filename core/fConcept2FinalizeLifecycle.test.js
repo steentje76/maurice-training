@@ -102,7 +102,7 @@ function makeWorld(html, over) {
     const pg = over.pgrst;
     Object.assign(env, { writeSessionRow: UNDEF, sbPostQ: UNDEF, SB_URL: 'https://x.supabase.co', navigator: { onLine: true },
       SB_RETRY_STATUS: JSON.parse((html.match(/SB_RETRY_STATUS\s*=\s*(\[[^\]]*\])/) || [0, '[]'])[1]), sbFetch: (u, i) => pg.fetch(u, i), offlineQueueAdd: async (it) => { pg.queued.push(it); }, updateOfflineBadge: () => {},
-      authSession: { user: { id: 'u-test' } }, offlineQueueAll: async () => [], TK_IDEMPOTENT_ZONDER_UPDATE: null, TK_WACHTRIJ_OUDERS: null, TK_SCHRIJF_TIMEOUT_MS: null });
+      authSession: { user: { id: 'u-test' } }, offlineQueueAll: async () => [], tkLeesWachtrijStrikt: async () => [], TK_IDEMPOTENT_ZONDER_UPDATE: null, TK_WACHTRIJ_OUDERS: null, TK_SCHRIJF_TIMEOUT_MS: null });
   }
   Object.assign(env, over.env || {});
   const proxy = new Proxy(env, {

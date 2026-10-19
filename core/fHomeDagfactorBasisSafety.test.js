@@ -48,6 +48,13 @@ const COACH = {
   y: 'Je dagfactor is gemiddeld. Train je training vandaag op gevoel en houd je RPE in de gaten.',
   r: 'Je dagfactor is laag. Houd je training vandaag licht of kies voor actief herstel.'
 };
+// DEC-REC-001-B: een Home zonder expliciete planning mag geen trainingsadvies tonen.
+// De legacy COACH-map hierboven blijft voor oudere rechtstreekse aanroepers staan.
+const COACH_ZONDER_PLAN = {
+  g: 'Je dagfactor is gunstig. Er is geen training gepland; spierherstel wordt apart beoordeeld.',
+  y: 'Je dagfactor vraagt om aandacht. Er is geen training gepland.',
+  r: 'Je dagfactor is lager. Er is geen training gepland.'
+};
 const SUB = {
   g: 'Je lichaam is goed hersteld en klaar voor optimale prestaties.',
   y: 'Train vandaag op gevoel en houd je RPE in de gaten.',
@@ -283,7 +290,7 @@ async function deel2() {
     eq([u.titel, u.sub], [z.txt, subNu], s + '.1 hoofdstatus volgt Decision-zone, met eerlijke bronuitleg');
     ok(u.waarom.includes('Afgeleid van je dagfactor; spierherstel is een aparte schatting.'), s + '.1b gereedheid los van spierherstel verklaard');
     eq([u.stats.Dagfactor, u.stats.Gereedheid], [String(f), String(CalcCore.readinessPercent(f))], s + '.2 Dagfactor en Gereedheid zijn de berekende waarden');
-    eq(u.coach, COACH[z.cls], s + '.3 coachzin woordelijk zoals voorheen');
+    eq(u.coach, COACH_ZONDER_PLAN[z.cls], s + '.3 coach noemt de dagstatus maar geeft geen trainingsadvies zonder expliciet plan');
     const zone = z.cls === 'g' ? 'ready' : (z.cls === 'y' ? 'caution' : 'reduce');
     eq([u.besluit.bruikbaar, u.besluit.zone, u.besluit.dagfactor, u.besluit.gereedheid, u.besluit.dagthema], [true, zone, f, CalcCore.readinessPercent(f), DecisionCore.dayZone(f).key], s + '.4 _tkReadiness: zone, dagfactor, gereedheid en dagthema ongewijzigd');
     eq(u.readinessKop, { ready: 'Gunstige dag', caution: 'Voorzichtig vandaag', reduce: 'Belasting aanpassen' }[zone], s + '.5 readinesskaart toont het bestaande zonelabel');
@@ -315,7 +322,7 @@ async function deel2() {
       return { namen: b.map(function (x) { return x.naam; }), overlap: overlap, hoogtes: b.map(function (x) { return x.h; }), regels: b.map(function (x) { return x.regels; }), binnen: b.every(function (x) { return x.r <= kaart.right + 0.5 && x.l >= kaart.left - 0.5; }), pagina: document.getElementById('s-home').scrollWidth > document.getElementById('s-home').clientWidth + 1 };
     });
     eq(h.namen, ['Dagfactor', 'Spierherstel', 'Gereedheid', 'Slaap'], w + 'px R1 het Home-kengetal heet Spierherstel');
-    ok(!h.overlap && h.binnen && !h.pagina, w + 'px R2 geen overlap tussen de labels, alles binnen de kaart, geen horizontaal scrollen');
+    ok(!h.overlap && h.binnen && !h.pagina, w + 'px R2 geen overlap tussen de labels, alles binnen de kaart, geen horizontaal scrollen: ' + JSON.stringify(h));
     ok(new Set(h.hoogtes).size === 1, w + 'px R3 de vier labels zijn even hoog, de rij blijft uitgelijnd: ' + JSON.stringify(h.hoogtes));
     eq(h.regels[1], w <= 360 ? 2 : 1, w + 'px R4 Spierherstel staat op ' + (w <= 360 ? 'twee regels (afgebroken op het streepje)' : 'één regel'));
     await page.evaluate(function () { window.__inz = false; go('s-inzicht'); });

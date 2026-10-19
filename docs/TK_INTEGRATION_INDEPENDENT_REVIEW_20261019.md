@@ -42,3 +42,11 @@ De bestaande Chromium-workflow is expliciet aan `pull_request` richting `main` t
 5. Fysieke Android/OAuth-toestelacceptatie; de huidige installatie blijft staan.
 
 **Voorlopig oordeel:** gerichte P1-fout hersteld en statisch onderbouwd; integratierelease **NO-GO** tot de bovengenoemde gates aantoonbaar zijn afgesloten.
+
+## 6. Ronde 2 — browserbevindingen op de geconsolideerde hoofd-PR
+
+- Quality Gate op `a60524c`: [run 39201537854](https://github.com/steentje76/maurice-training/actions/runs/39201537854) **SUCCESS**.
+- Chromium op diezelfde HEAD: [run 39201537911](https://github.com/steentje76/maurice-training/actions/runs/39201537911) **FAILURE**: Home/dagfactor 188/195; de overige vijf suites samen 451/451 groen.
+- Vier Home-browserasserties vergeleken teksten nog met het oudere trainingsadvies terwijl de vastgestelde testcontext géén expliciete planning bevat; een afzonderlijke Recovery/Coach-suite bewees al dat dan geen trainingsadvies hoort te verschijnen. Browserasserties nu expliciet gebonden aan DEC-REC-001-B; de legacy contracttests voor aanroepers zonder nieuwe planscope blijven ongewijzigd.
+- Drie responsieve controles bij 320–390px signaleerden labeloverlap/afbreking en overflow bij vier Inzicht-tegels. Herstel uitsluitend presentatie-CSS: breedtebewuste fontgrootte/woordafbreking voor Home-kengetallen, `min-width:0` plus veilige tekstafbreking voor Inzicht-tegels. Berekenings- en beslislogica niet aangepast.
+- Nieuwe volledige browseracceptatie, exact op de eind-HEAD, **vereist**; eerdere successen en lokale statische tests geven geen releasegoedkeuring.

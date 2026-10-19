@@ -3381,9 +3381,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .setr-cell-rpe .set-field-lbl{font-size:9px;letter-spacing:.5px;color:var(--g4);margin-top:3px}
 /* rechterzijde: ✓-ring (voltooien) + meer-menu */
 .setr-side{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
-.setr-ring{width:34px;height:34px;border:2px solid var(--g2);border-radius:50%;color:transparent;position:relative}
-.setr-ring.done{background:var(--accent);border-color:var(--accent)}
-.setr-ring.done::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800}
+/* UX-EXEC-A11Y-01: 44x44 native click target; 34px ring remains visually identical.
+   Negative margin keeps the set-row footprint and 320px field widths unchanged. */
+.setr-ring{width:44px;height:44px;margin:-5px;box-sizing:border-box;border:0;border-radius:50%;background:transparent;appearance:none;padding:0;color:transparent;position:relative}
+.setr-ring::before{content:'';position:absolute;inset:5px;border:2px solid var(--g2);border-radius:50%}
+.set-circle.setr-ring.done{background:transparent;border-color:transparent;color:transparent}
+.setr-ring.done::before{background:var(--accent);border-color:var(--accent)}
+.setr-ring.done::after{content:'✓';position:absolute;inset:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800}
+.setr-ring:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .setr-toolbtn{width:30px;height:24px;border:none;background:none;color:var(--g3);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .setr-toolbtn svg{width:18px;height:18px}
 /* UX-LOG-01 — de 1RM-schatting staat op een eigen regel onder de invoer. Zij stond als vierde
@@ -7760,13 +7765,22 @@ function scheduleAuthRefresh(){
 }
 async function refreshAuthToken(){
   if(!authSession?.refresh_token)return false;
+  // TK-REL-SEC-02: een refresh hoort bij de sessie waarvoor hij startte. Is intussen uitgelogd of
+  // een andere sessie actief, dan mag het (verlate) antwoord die sessie nooit overschrijven.
+  const start=authSession;
   try{
     const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`,{
       method:'POST', headers:{apikey:SB_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({refresh_token:authSession.refresh_token})
+      body:JSON.stringify({refresh_token:start.refresh_token})
     });
     if(!r.ok)return false;
     const d=await r.json();
+    // Uitgelogd of andere gebruiker: nooit terugschrijven. Zelfde gebruiker, maar intussen al door een
+    // andere refresh/login vernieuwd: de nieuwere sessie houden en dat als geslaagd melden (de aanroeper
+    // gebruikt het actuele token). Alleen object-identiteit vergelijken was te streng: ensureValidSession()
+    // vervangt het sessieobject bij elke terugkeer naar de app.
+    if(!authSession||!authSession.user||!start.user||authSession.user.id!==start.user.id)return false;
+    if(authSession.refresh_token!==start.refresh_token)return true;
     saveAuthSession({access_token:d.access_token, refresh_token:d.refresh_token, expires_at:Date.now()+d.expires_in*1000, user:{id:d.user.id, email:d.user.email}});
     return true;
   }catch(e){return false;}
@@ -7782,7 +7796,8 @@ async function ensureValidSession(){
   SB_H.Authorization='Bearer '+stored.access_token;
   if(stored.expires_at-Date.now()<5*60*1000){
     const ok=await refreshAuthToken();
-    if(!ok){clearAuthSession();return false;}
+    // TK-REL-SEC-02: alleen de sessie wissen waarvoor deze refresh liep, nooit een intussen nieuwere.
+    if(!ok){ if(!authSession||authSession.refresh_token===stored.refresh_token){clearAuthSession();return false;} return true; }
   }else{
     scheduleAuthRefresh();
   }
@@ -8646,7 +8661,8 @@ async function syncCustomTrainingsFromSupabase(){
     // TK-INT-01: zonder betrouwbare offline-wachtrij mogen serverrijen een lokaal
     // verwijderde training niet opnieuw zichtbaar maken. Leesfout = sync overslaan;
     // ook herstelwrites hieronder gebruiken precies deze gevalideerde snapshot.
-    const _wq=await offlineQueueAll();
+    // TK-REL-SEC-01: een lege snapshot mag nooit het gevolg zijn van een gemaskeerde IDB-fout.
+    const _wq=await tkLeesWachtrijStrikt();
     if(!Array.isArray(_wq))throw new Error('queue_snapshot_invalid');
     const _uid=tkHuidigeUid();
     const _weg=new Set(_wq.filter(function(i){ return i.table==='custom_trainings'&&i.method==='DELETE'&&(i.owner_uid==null||i.owner_uid===_uid); }).map(function(i){ return String(i.filter||'').replace(/^id=eq\./,''); }));
@@ -8865,11 +8881,22 @@ async function sbFetch(url,o){
     if(o.body!==undefined)init.body=JSON.stringify(o.body);
     return init;
   };
+  // TK-REL-SEC-02: identiteit van dit verzoek vastleggen vóór de eerste poging. Een retry na
+  // refresh gebruikt SB_H opnieuw; is intussen een andere gebruiker ingelogd, dan zou A's payload
+  // met B's token worden verstuurd (de insert-trigger set_user_id_from_auth maakt de rij dan van B).
+  var uidVan=function(){ return (authSession&&authSession.user)?authSession.user.id:null; };
+  var uid0=uidVan();
   var r=await fetch(url,maak());
   if(r.status===401&&authSession&&authSession.refresh_token){
+    // Identiteit gewisseld tijdens het verzoek: niet verversen, niet opnieuw versturen en de
+    // nieuwe gebruiker niet uitloggen. De 401 gaat terug; aanroepers queuen/bewaren het item.
+    if(uidVan()!==uid0)return r;
+    var s1=authSession;
     var ok=await sbRefreshOnce();
+    if(uidVan()!==uid0)return r;
     if(ok){ _sbSessieVerlopenGemeld=false; r=await fetch(url,maak()); }
-    else { sbSessieVerlopen(); }
+    // Alleen uitloggen als de sessie nog het refresh-token heeft dat zojuist faalde (geen nieuwere login).
+    else if(authSession&&authSession.refresh_token===s1.refresh_token){ sbSessieVerlopen(); }
   }
   return r;
 }
@@ -9090,16 +9117,20 @@ function offlineDb(){
 // flush te kunnen bevestigen dat het item daadwerkelijk bij de dan actief
 // ingelogde gebruiker hoort -- op een gedeeld toestel mag een offline-
 // item van gebruiker A nooit onder gebruiker B's sessie geflushed worden.
-async function offlineQueueAdd(item){
+async function offlineQueueAdd(item,eigenaar){
   try{
     const db=await offlineDb();
     // Sprint 7 (Track D): bij een offline verlopen sessie de laatst bekende eigenaar van het toestel.
-    const ownerUid=(typeof tkEigenaarUid==='function')?tkEigenaarUid():((typeof authSession!=='undefined'&&authSession&&authSession.user)?authSession.user.id:null);
+    // TK-REL-SEC-02: geeft de aanroeper de eigenaar van het moment van de write mee, dan geldt die —
+    // anders zou een write van A die pas na een accountwissel wordt gequeued, B als eigenaar krijgen.
+    const ownerUid=(eigenaar!==undefined)?eigenaar:(typeof tkEigenaarUid==='function')?tkEigenaarUid():((typeof authSession!=='undefined'&&authSession&&authSession.user)?authSession.user.id:null);
     return await new Promise((resolve,reject)=>{
       const tx=db.transaction(OFFLINE_STORE,'readwrite');
       tx.objectStore(OFFLINE_STORE).add({...item,ts:Date.now(),owner_uid:ownerUid});
       tx.oncomplete=()=>resolve(true);
       tx.onerror=()=>reject(tx.error);
+      // TK-REL-SEC-04: abort tijdens commit (bv. quota) vuurt alleen 'abort': fail-closed i.p.v. hangen.
+      tx.onabort=()=>reject(tx.error||new Error('queue_add_aborted'));
     });
   }catch(e){console.error('offlineQueueAdd',e);return false;}
 }
@@ -9122,6 +9153,8 @@ async function offlineQueueRemove(id){
       tx.objectStore(OFFLINE_STORE).delete(id);
       tx.oncomplete=()=>resolve(true);
       tx.onerror=()=>reject(tx.error);
+      // TK-REL-SEC-04: zonder deze handler bleef flushOfflineQueue() bij een commit-abort eeuwig hangen.
+      tx.onabort=()=>reject(tx.error||new Error('queue_remove_aborted'));
     });
   }catch(e){console.error('offlineQueueRemove',e);return false;}
 }
@@ -9195,7 +9228,8 @@ function tkEigenaarUid(){
 }
 async function tkWachtrijHeeftOuder(t,body){
   const sl=tkOuderSleutels(t,body); if(!sl.length) return false;
-  let items=[]; try{ items=await offlineQueueAll(); }catch(_){ return false; }
+  // Zonder leesbaar queuebewijs kan een kindrij niet veilig zijn ouder passeren.
+  let items=[]; try{ items=await tkLeesWachtrijStrikt(); }catch(_){ return true; }
   const uid=tkHuidigeUid();
   return items.some(function(i){ return i.method==='POST'&&i.body&&i.body.id!=null&&(i.owner_uid==null||i.owner_uid===uid)&&sl.indexOf(i.table+':'+i.body.id)>=0; });
 }
@@ -9273,13 +9307,17 @@ async function sbPostQ(t,d,opts){
   const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation');
   const item=ignoreDup?{table:t,method:'POST',body:d,resolution:'ignore-duplicates'}:{table:t,method:'POST',body:d};
   const uit=function(status,http,reden){ if(opts&&typeof opts==='object'){opts.status=status;opts.reden=reden||null;} tkLogSchrijf(status,t,reden,http); return detail?tkSchrijfUitkomst(status,http,reden):(status==='confirmed'||status==='queued'); };
-  const queue=async function(http,reden){ const q=await offlineQueueAdd(item); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
+  // TK-REL-SEC-02: eigenaar en ingelogde identiteit vastleggen bij de aanroep, niet pas bij het queuen.
+  const eigenaar=tkEigenaarUid(), uidStart=tkHuidigeUid();
+  const queue=async function(http,reden){ const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
   // Sprint 7 (Track D, ACCOUNT_MISMATCH): zonder bekende eigenaar geen write en geen wachtrij-item —
   // zo'n item zou later onder de VOLGENDE gebruiker kunnen worden verstuurd.
   if(!tkEigenaarUid()) return uit('failed',null,'account');
   let reden=queueOnly?'afhankelijk':null;
   // Sprint 7 (DEC-SYNC-002): staat de ouder van deze rij nog in de wachtrij, dan gaat deze rij er ook in.
   if(!queueOnly&&TK_WACHTRIJ_OUDERS[t]&&await tkWachtrijHeeftOuder(t,d)){ queueOnly=true; reden='afhankelijk'; }
+  // TK-REL-SEC-02: wisselde de identiteit tijdens de await hierboven, dan niet met het nieuwe token versturen.
+  if(tkHuidigeUid()!==uidStart){ queueOnly=true; reden='auth'; }
   if(!navigator.onLine||queueOnly) return queue(null,navigator.onLine?reden:'offline');
   const magTimeout=!!(d&&d.id!=null&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||ignoreDup));
   try{
@@ -9311,7 +9349,8 @@ async function sbPostQOpgeslagen(t,d,opts){
 async function sbSchrijfQDetail(method,t,f,d){
   const item=method==='DELETE'?{table:t,method:'DELETE',filter:f}:{table:t,method:'PATCH',filter:f,body:d};
   const uit=function(status,http,reden){ tkLogSchrijf(status,t,reden,http); return tkSchrijfUitkomst(status,http,reden); };
-  const queue=async function(http,reden){ const q=await offlineQueueAdd(item); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
+  const eigenaar=tkEigenaarUid(); // TK-REL-SEC-02: eigenaar van het moment van de write
+  const queue=async function(http,reden){ const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
   if(!tkEigenaarUid()) return uit('failed',null,'account');
   if(!navigator.onLine) return queue(null,'offline');
   try{
@@ -9339,17 +9378,18 @@ async function sbSchrijfQDetail(method,t,f,d){
 // de compare-and-set-voorwaarde zelf staat al in f/d en wordt door
 // flushOfflineQueue() ongewijzigd meegestuurd bij de latere, echte poging.
 async function sbPatchQ(t,f,d,opts){
+  const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02: eigenaar van het moment van de write
   if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);
   // Sprint 7 (DEC-SYNC-002): opts.detail geeft, net als bij sbPostQ, {ok,status,http,reden} terug —
   // inclusief 'failed' als queuen mislukt. Zonder opts.detail is het gedrag exact ongewijzigd.
   if(opts&&opts.detail) return sbSchrijfQDetail('PATCH',t,f,d);
   const wantRows=opts&&opts.returnRows;
-  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return wantRows?{ok:true,rows:null,superseded:false}:true;}
+  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d},eigenaar);updateOfflineBadge();return wantRows?{ok:true,rows:null,superseded:false}:true;}
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});
     if(!r.ok){
       console.error('sbPatchQ',t,r.status,await r.text());
-      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});updateOfflineBadge();return wantRows?{ok:true,rows:null,superseded:false}:true;}
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d},eigenaar);updateOfflineBadge();return wantRows?{ok:true,rows:null,superseded:false}:true;}
       return wantRows?{ok:false,rows:null,superseded:false}:false;
     }
     if(wantRows){
@@ -9360,7 +9400,7 @@ async function sbPatchQ(t,f,d,opts){
     return true;
   }catch(e){
     console.warn('sbPatchQ offline, queued',t,e);
-    await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d});
+    await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d},eigenaar);
     updateOfflineBadge();
     return wantRows?{ok:true,rows:null,superseded:false}:true;
   }
@@ -9370,19 +9410,20 @@ async function sbPatchQ(t,f,d,opts){
 // (pending POST, dus nog geen echte id) verwijdert de aanroeper direct uit de queue i.p.v.
 // hier een DELETE te queuen, zie deleteSessionEntry/deleteSessionDirect.
 async function sbDelQ(t,f,opts){
+  const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02
   if(opts&&opts.detail) return sbSchrijfQDetail('DELETE',t,f,null);
-  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'DELETE',filter:f});updateOfflineBadge();return true;}
+  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar);updateOfflineBadge();return true;}
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE'});
     if(!r.ok){
       console.error('sbDelQ',t,r.status,await r.text());
-      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'DELETE',filter:f});updateOfflineBadge();return true;}
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar);updateOfflineBadge();return true;}
       return false;
     }
     return true;
   }catch(e){
     console.warn('sbDelQ offline, queued',t,e);
-    await offlineQueueAdd({table:t,method:'DELETE',filter:f});
+    await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar);
     updateOfflineBadge();
     return true;
   }
@@ -9412,19 +9453,20 @@ function tkLogRpcOffline(event,fn,extra){
   try{ObservabilityCore.tkLog('INFO',event,'offline_queue','rpc',Object.assign({function:fn},extra||{}),{app_version:(typeof APP_VER!=='undefined'?APP_VER:'unknown'),environment:'browser'});}catch(e){}
 }
 async function sbRpcQ(fn,args){
-  if(!navigator.onLine){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn);return true;}
+  const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02
+  if(!navigator.onLine){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args},eigenaar);updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn);return true;}
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});
     if(!r.ok){
       const err=await r.text();console.error('sbRpcQ',fn,r.status,err);
-      if(sbRetryable(r.status)){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn,{status:r.status});return true;}
+      if(sbRetryable(r.status)){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args},eigenaar);updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn,{status:r.status});return true;}
       tkLogRpcOffline('rpc_replay_permanent_failure',fn,{status:r.status});
       return false;
     }
     return await r.json();
   }catch(e){
     console.warn('sbRpcQ offline, queued',fn,e);
-    await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args});
+    await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args},eigenaar);
     updateOfflineBadge();
     tkLogRpcOffline('rpc_offline_queued',fn);
     return true;
@@ -9449,7 +9491,8 @@ async function tkLeesWachtrijStrikt(){
     // Pas de voltooide transactie bewijst dat het lezen werkelijk geslaagd is.
     req.onsuccess=()=>{rows=req.result;};
     req.onerror=()=>reject(req.error||new Error('queue_read_failed'));
-    tx.oncomplete=()=>resolve(rows||[]);
+    // Een afgeronde transactie zonder geldig getAll-resultaat is geen lege wachtrij.
+    tx.oncomplete=()=>Array.isArray(rows)?resolve(rows):reject(new Error('queue_snapshot_missing'));
     tx.onerror=()=>reject(tx.error||new Error('queue_transaction_failed'));
     tx.onabort=()=>reject(tx.error||new Error('queue_transaction_aborted'));
   });
@@ -9522,7 +9565,8 @@ async function flushOfflineQueue(){
   if(!authSession)return;
   _flushBezig=true;
   try{
-  const items=await offlineQueueAll();
+  // TK-REL-SEC-01: bij IDB-fout NIET doen alsof de queue leeg is.
+  const items=await tkLeesWachtrijStrikt();
   if(!items.length)return;
   items.sort((a,b)=>a.id-b.id);
   // F13 Post-Audit Remediation (P1-05): op een gedeeld toestel kan de
@@ -9538,7 +9582,8 @@ async function flushOfflineQueue(){
   // vóór deze fix (geen regressie, wel geen extra bescherming voor
   // die specifieke, tijdelijke overgangsgroep).
   const huidigeUid=authSession&&authSession.user?authSession.user.id:null;
-  const teVerwerken=items.filter(function(item){ return item.owner_uid==null||item.owner_uid===huidigeUid; });
+  // Legacy items zonder owner_uid zijn onbewezen: nooit onder een willekeurig volgend account replayen.
+  const teVerwerken=items.filter(function(item){ return !!huidigeUid&&item.owner_uid===huidigeUid; });
   const vanAndereGebruiker=items.length-teVerwerken.length;
   if(vanAndereGebruiker>0){
     console.warn('flushOfflineQueue: '+vanAndereGebruiker+' item(s) van een andere gebruiker overgeslagen (blijven geisoleerd in de wachtrij)');
@@ -9551,6 +9596,9 @@ async function flushOfflineQueue(){
   const _ouderMislukt={};
   let _trainingGesynct=false;
   for(const item of teVerwerken){
+    // Gebruiker kan tijdens een eerdere await zijn uitgelogd of gewisseld.
+    // Ook de headers van sbFetch zijn dynamisch: hercontrole vóór iedere write.
+    if(tkHuidigeUid()!==huidigeUid)break;
     try{
       // SPRINT C2-D: item.method==='RPC' -- generieke muterende-RPC-replay
       // (sbRpcQ). Geen Prefer-header nodig (RPC is geen PostgREST-upsert);
@@ -9578,6 +9626,9 @@ async function flushOfflineQueue(){
           ?{method:'POST',body:item.args}
           :{method:item.method,prefer:(item.method==='POST'&&item.resolution==='ignore-duplicates')?'return=representation,resolution=ignore-duplicates':((item.method==='POST'&&IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table])?'return=representation,resolution=merge-duplicates':'return=representation'),body:item.body});
       const r=await sbFetch(url,opts);
+      // Een accountwissel tijdens het netwerkverzoek maakt de bevestiging ambigu.
+      // Bewaar het item voor idempotente replay onder zijn bewezen eigenaar.
+      if(tkHuidigeUid()!==huidigeUid){skippedAny=true;break;}
       if(!r.ok){
         // v5.9.5: serverfout op dit ene item (bv. validatie, verwijzing naar inmiddels
         // verwijderde data) mag niet alle latere, op zichzelf staande items blokkeren —
@@ -9592,7 +9643,9 @@ async function flushOfflineQueue(){
         continue;
       }
       if(item.method==='RPC')tkLogRpcOffline('rpc_replay_success',item.function);
-      await offlineQueueRemove(item.id);
+      // Een fout bij lokale queue-delete is géén bevestiging dat de operatie is afgerond.
+      // Laat het item bewaard voor latere idempotente replay.
+      if(await offlineQueueRemove(item.id)!==true){skippedAny=true;break;}
       syncedAny=true;
       if(item.table==='custom_trainings'||item.table==='custom_training_exercises')_trainingGesynct=true;
     }catch(e){console.warn('flushOfflineQueue offline again, stop',e);break;}
@@ -9602,12 +9655,17 @@ async function flushOfflineQueue(){
   // (training én oefeningen) op de server staat; pas dan vervalt de markering "alleen op dit toestel".
   if(_trainingGesynct&&typeof syncCustomTrainingsFromSupabase==='function'){ try{ await syncCustomTrainingsFromSupabase(); }catch(_){} }
   if(document.getElementById('m-offline-queue')?.classList.contains('open'))renderOfflineQueueModal();
-  if(syncedAny&&!(await offlineQueueAll()).length)toast('Offline sessies gesynchroniseerd');
+  // Ook het eindbericht vereist een transactie-bevestigde queue-read.
+  if(syncedAny&&!(await tkLeesWachtrijStrikt()).length)toast('Offline sessies gesynchroniseerd');
   else if(skippedAny)toast('Sommige offline items konden niet synchroniseren — bekijk de wachtrij voor details');
+  }catch(e){
+    // Opslag onbekend: nooit bevestigen, wissen of de blokkade verbergen.
+    console.warn('flushOfflineQueue: queue status unknown',e);
+    try{toast('Offline-wachtrij niet leesbaar — gegevens niet bevestigd');}catch(_){}
   }finally{ _flushBezig=false; }
 }
 function updateOfflineBadge(){
-  offlineQueueAll().then(items=>{
+  tkLeesWachtrijStrikt().then(items=>{
     const el=document.getElementById('offline-badge');
     if(!el)return;
     // Sprint 7 (Track D): ook Builder-trainingen die de server nog niet volledig heeft, staan in de melding.
@@ -9615,6 +9673,9 @@ function updateOfflineBadge(){
     if(items.length){el.textContent=items.length+' wachtend op sync — tik voor details';el.style.display='block';}
     else if(nTr){el.textContent=(nTr===1?'1 training staat':nTr+' trainingen staan')+' alleen op dit toestel — tik voor details';el.style.display='block';}
     else{el.style.display='none';}
+  }).catch(function(){
+    const el=document.getElementById('offline-badge');
+    if(el){el.textContent='Offline-opslag onbekend — tik voor details';el.style.display='block';}
   });
 }
 // Korte, leesbare omschrijving van een queue-item voor het beheerscherm.
@@ -10727,17 +10788,25 @@ async function openOfflineQueueModal(){
   await renderOfflineQueueModal();
   openModal('m-offline-queue');
 }
+// TK-REL-SEC-03: zelfde eigenaarsgrens als flushOfflineQueue(). Alleen een item met een bewezen
+// eigenaar gelijk aan de ingelogde gebruiker is "eigen"; legacy-items zonder owner_uid niet.
+function tkIsEigenWachtrijItem(item){ const u=tkHuidigeUid(); return !!u&&!!item&&item.owner_uid===u; }
 async function renderOfflineQueueModal(){
-  const items=await offlineQueueAll();
-  items.sort((a,b)=>b.id-a.id);
   const el=document.getElementById('offline-queue-list');
   if(!el)return;
+  let alle;
+  try{ alle=await tkLeesWachtrijStrikt(); }
+  catch(_){ el.innerHTML='<p style="color:var(--red);font-size:13px">Offline-wachtrij niet leesbaar — status onbekend. Verwijder of herinstalleer de app niet.</p>'; return; }
+  const items=alle.filter(tkIsEigenWachtrijItem);
+  const nVreemd=alle.length-items.length;
+  const _vreemd=nVreemd?`<div class="lrow"><div style="flex:1"><div class="lval" style="font-size:13px">${nVreemd} item${nVreemd===1?'':'s'} van een ander of onbekend account</div><div style="font-size:11px;color:var(--g4)">Bewaard en niet verstuurd. Inhoud verborgen. Verwijder de app niet zolang dit hier staat.</div></div></div>`:'';
+  items.sort((a,b)=>b.id-a.id);
   // Sprint 7 (Track D): overzicht van wat alleen op dit toestel staat. Alleen namen, geen inhoud.
   const _onb=(typeof tkTrainingenOnbevestigd==='function')?tkTrainingenOnbevestigd():[];
   const _trNamen=_onb.map(id=>{ const t=(typeof customTrainings!=='undefined'?customTrainings:[]).find(x=>x&&x.id===id); return t?t.name:null; }).filter(Boolean);
   const _kop=_trNamen.length?`<div class="lrow" style="align-items:flex-start"><div style="flex:1"><div class="lval" style="font-size:13px">Alleen op dit toestel: ${_trNamen.map(n=>escHtml(n)).join(', ')}</div><div style="font-size:11px;color:var(--g4)">Mijn trainingen — wordt opnieuw verstuurd zodra je online bent. Verwijder de app niet zolang dit hier staat.</div></div></div>`:'';
-  if(!items.length){el.innerHTML=_kop+'<p style="color:var(--g4);font-size:13px">Geen items wachtend op sync</p>';return;}
-  el.innerHTML=_kop+items.map(item=>`
+  if(!items.length){el.innerHTML=_kop+_vreemd+(nVreemd?'':'<p style="color:var(--g4);font-size:13px">Geen items wachtend op sync</p>');return;}
+  el.innerHTML=_kop+_vreemd+items.map(item=>`
     <div class="lrow" style="align-items:center">
       <div style="flex:1">
         <div class="lval" style="font-size:13px">${describeOfflineQueueItem(item)}</div>
@@ -10747,8 +10816,11 @@ async function renderOfflineQueueModal(){
     </div>`).join('');
 }
 async function removeOfflineQueueItem(id){
+  // TK-REL-SEC-03: alleen een eigen item; een item van een ander of onbekend account blijft bewaard.
+  let item=null; try{ item=(await tkLeesWachtrijStrikt()).find(i=>i.id===id)||null; }catch(_){ toast('Offline-wachtrij niet leesbaar — niets verwijderd');return; }
+  if(!tkIsEigenWachtrijItem(item)){ toast('Dit item hoort niet bij jouw account — niets verwijderd');return; }
   if(!await confirmModal('Dit item niet meer synchroniseren en verwijderen uit de wachtrij?',{title:'Uit wachtrij verwijderen',okLabel:'Verwijderen',danger:true}))return;
-  await offlineQueueRemove(id);
+  if(await offlineQueueRemove(id)!==true)toast('Verwijderen uit de wachtrij mislukt');
   updateOfflineBadge();
   renderOfflineQueueModal();
   refreshHome();
@@ -11835,7 +11907,8 @@ async function submitNewTeamPin(){
 async function getPendingSessionRows(){
   const items=await offlineQueueAll();
   return items
-    .filter(it=>it.table==='sessions'&&it.method==='POST')
+    // TK-REL-SEC-03: nooit wachtende sets van een vorig of onbekend account tonen.
+    .filter(it=>it.table==='sessions'&&it.method==='POST'&&tkIsEigenWachtrijItem(it))
     .map(it=>({...it.body,id:'pending_'+it.id,_pending:true,_queueId:it.id}));
 }
 window.addEventListener('online',flushOfflineQueue);
@@ -22236,7 +22309,7 @@ function buildWorkSetRow(exId,i,prefill=null){
     </div>
     <div class="setr-side">
       <button class="rower-chip amrap-chip${isAmrap?' sel':''}" id="amrapchip-${exId}-${i}" style="font-size:10px;padding:2px 6px;min-width:auto" onclick="toggleAmrapSet('${exId}',${i})" aria-pressed="${isAmrap}" aria-label="Markeer als AMRAP">AMRAP</button>
-      <div class="set-circle setr-ring" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})" role="button" tabindex="0" aria-label="Set ${i} afronden"></div>
+      <button type="button" class="set-circle setr-ring" id="sc-${exId}-${i}" onclick="toggleSetDone('${exId}',${i})" aria-pressed="${!!(setObj&&setObj.done)}" aria-label="Set ${i} afronden"></button>
       <button class="set-more setr-toolbtn" onclick="showSetMenu('${exId}',${i},'work')" aria-label="Meer opties"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
     </div>
     <div class="setr-e1rm" id="e1rm-${exId}-${i}" aria-live="polite"></div>
@@ -23356,7 +23429,7 @@ function restoreCompletedSetVisualState(exId){
     const done = (s && typeof s.done==='boolean') ? s.done : !!(s&&(s.kg||s.reps));
     if(!done)return;
     const i=idx+1;
-    const c=document.getElementById('sc-'+exId+'-'+i); if(c)c.classList.add('done');
+    const c=document.getElementById('sc-'+exId+'-'+i); if(c){c.classList.add('done');if(typeof c.hasAttribute==='function'&&c.hasAttribute('aria-pressed'))c.setAttribute('aria-pressed','true');}
     const r=document.getElementById('sr-'+exId+'-'+i); if(r)r.classList.add('done');
   });
   // F0.8B Active Set Focus spiegelt '.done' → na herstel de banner verversen (indien zichtbaar).
@@ -23581,6 +23654,8 @@ function toggleSetDone(exId,setNum){
   if(!c)return;
   const nowDone=!c.classList.contains('done');
   c.classList.toggle('done');
+  // UX-EXEC-A11Y-01: dezelfde bron-status is nu voor screenreaders beschikbaar.
+  if(typeof c.hasAttribute==='function'&&c.hasAttribute('aria-pressed'))c.setAttribute('aria-pressed',String(nowDone));
   // v3.3.53 — kaart weerspiegelt de done-status (presentatie; circle blijft de bron).
   document.getElementById('sr-'+exId+'-'+setNum)?.classList.toggle('done',nowDone);
   // P1-fix: done-status PERSISTENT maken in sessionLog zodat resume niet op een heuristiek (kg||reps)
@@ -26172,7 +26247,11 @@ function fmtDate(d){
 async function deleteSessionDirect(id){
   if(!await confirmModal('Deze sessie verwijderen?',{title:'Sessie verwijderen',okLabel:'Verwijderen',danger:true})) return;
   if(typeof id==='string'&&id.startsWith('pending_')){
-    await offlineQueueRemove(parseInt(id.slice('pending_'.length)));
+    // TK-REL-SEC-03: eigenaar en lokale delete bevestigen; anders niets melden als verwijderd.
+    const qid=parseInt(id.slice('pending_'.length));
+    let item=null; try{ item=(await tkLeesWachtrijStrikt()).find(i=>i.id===qid)||null; }catch(_){ toast('Offline-wachtrij niet leesbaar — niets verwijderd');return; }
+    if(!tkIsEigenWachtrijItem(item)){ toast('Deze sessie hoort niet bij jouw account — niets verwijderd');return; }
+    if(await offlineQueueRemove(qid)!==true){ toast('Verwijderen mislukt — sessie staat nog in de wachtrij');return; }
     updateOfflineBadge();
     toast('Verwijderd');loadHistory();
     return;

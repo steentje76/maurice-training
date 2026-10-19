@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - integration/tk-rec-android-20261018
+      - review/tk-consolidated-20261019
+      - review/tk-release-audit-20261019
 
 permissions:
   contents: read
@@ -54,6 +56,7 @@ jobs:
             core/fRecoveryCommunicationConsistency.test.js
             core/fInzichtHerstelBelasting.test.js
             core/fSetLoggingUx.test.js
+            core/fUxSetCompletionAccessibility.test.js
             core/fExecutionIntegrity.test.js
             core/fUpdateReadiness.test.js
           )

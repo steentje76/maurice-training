@@ -22,6 +22,16 @@
     return value;
   }
   function checkOwner(uid){if(typeof uid!=='string'||uid.length<8)throw Error('owner_required');}
+  // Queue owner metadata alone is insufficient: legacy payloads can carry a different user_id.
+  function embeddedOtherOwner(v,owner,depth=0){
+    if(depth>25)return true;
+    if(!v||typeof v!=='object')return false;
+    if(Array.isArray(v))return v.some(x=>embeddedOtherOwner(x,owner,depth+1));
+    return Object.entries(v).some(([k,x])=>{
+      if(['user_id','owner_uid','p_user_id'].includes(k)&&x!=null&&String(x)!==owner)return true;
+      return embeddedOtherOwner(x,owner,depth+1);
+    });
+  }
   function prepare({owner,cacheOwner,local={},queue=[],manifest=[]}={}){
     checkOwner(owner);
     if(!Array.isArray(manifest)||manifest.length<1||!Array.isArray(queue)||!local||typeof local!=='object')throw Error('snapshot_invalid');
@@ -49,6 +59,7 @@
     for(const q of queue){
       if(!q||q.owner_uid!==owner){omissions.push({source:'offline_queue',reason:'other_or_unknown_owner'});continue;}
       if(!Number.isSafeInteger(q.id)||q.id<0||!q.item||typeof q.item!=='object'){omissions.push({source:'offline_queue',reason:'invalid_queue_item'});continue;}
+      if(embeddedOtherOwner(q.item,owner)){omissions.push({source:'offline_queue',reason:'payload_other_owner'});continue;}
       entries.push({storage:'offline_queue',key:String(q.id),value:clean(q.item),source:'offline_wachtrij'});
     }
     entries.sort((a,b)=>a.storage.localeCompare(b.storage)||a.key.localeCompare(b.key));

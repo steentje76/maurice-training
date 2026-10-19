@@ -23,7 +23,8 @@ function input(){
       'totally_unknown_key':'other secret local source'
     },
     queue:[{id:5,owner_uid:owner,item:{table:'sessions',method:'POST',body:{reps:5,id:'s1',refresh_token:'REMOVE_ME'}}},
-      {id:6,owner_uid:other,item:{table:'sessions',method:'POST',body:{reps:9}}}]};
+      {id:6,owner_uid:other,item:{table:'sessions',method:'POST',body:{reps:9}}},
+      {id:7,owner_uid:owner,item:{table:'sessions',method:'POST',body:{user_id:other,reps:10}}}]};
 }
 (async()=>{
   const src=input(),before=JSON.stringify(src);
@@ -33,6 +34,7 @@ function input(){
   ok(b.entries.some(e=>e.key==='tk_trainings')&&b.entries.some(e=>e.key==='tk_draft_training'),'durable and draft included');
   ok(b.entries.some(e=>e.storage==='offline_queue'&&e.key==='5'),'owner queue retained');
   ok(!b.entries.some(e=>e.storage==='offline_queue'&&e.key==='6'),'other owner queue excluded');
+  ok(!b.entries.some(e=>e.storage==='offline_queue'&&e.key==='7')&&b.omissions.some(x=>x.reason==='payload_other_owner'),'legacy queue item with mismatched payload owner rejected');
   ok(!b.entries.some(e=>e.key==='tk_auth_session'),'authentication session excluded');
   ok(b.entries.some(e=>e.key==='tk_wb_saved'),'legacy Builder data included only when cache owner matches');
   ok(!b.entries.some(e=>e.key==='tk_running_execution_v1_'+other),'other owner running session excluded');

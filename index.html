@@ -9479,7 +9479,7 @@ async function sbPostQOpgeslagen(t,d,opts){
 // wachtrij, geen write zonder eigenaar). Alleen gebruikt waar opts.detail expliciet wordt gevraagd.
 async function sbSchrijfQDetail(method,t,f,d,opts){
   const item=method==='DELETE'?{table:t,method:'DELETE',filter:f}:{table:t,method:'PATCH',filter:f,body:d};
-  const uit=function(status,http,reden){ if((status==='confirmed'||status==='queued')&&typeof tkVerifyNa==='function')tkVerifyNa(method,t,f,d,eigenaar,status); /* TK-REL-SEC-22 */ tkLogSchrijf(status,t,reden,http); return tkSchrijfUitkomst(status,http,reden); };
+  const uit=function(status,http,reden,rijen){ if((status==='confirmed'||status==='queued')&&typeof tkVerifyNa==='function')tkVerifyNa(method,t,f,d,eigenaar,status,rijen?{rijen:rijen}:undefined); /* TK-REL-SEC-22/25 */ tkLogSchrijf(status,t,reden,http); return tkSchrijfUitkomst(status,http,reden); };
   const eigenaar=tkEigenaarUid(); // TK-REL-SEC-02: eigenaar van het moment van de write
   const queue=async function(http,reden){ if(reden==='timeout'||reden==='netwerk'||reden==='gateway')item.onzeker=true; const q=await offlineQueueAdd(item,eigenaar); updateOfflineBadge(); if(q===true&&reden==='volgorde'&&typeof tkFlushNaVolgorde==='function')tkFlushNaVolgorde(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
   if(!tkEigenaarUid()) return uit('failed',null,'account');
@@ -9488,13 +9488,15 @@ async function sbSchrijfQDetail(method,t,f,d,opts){
   if(typeof tkWachtrijRaaktRij==='function'&&(await tkWachtrijRaaktRij(t,f,method==='DELETE'?null:d))===true) return queue(null,'volgorde'); // TK-REL-SEC-20
   try{
     // TK-REL-SEC-19: begrensd wachten. PATCH en DELETE zijn idempotent: na een time-out gaat het item de wachtrij in.
-    const _v=sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,method==='DELETE'?{method:'DELETE'}:{method:'PATCH',prefer:'return=representation',body:d});
+    // TK-REL-SEC-25: DELETE vraagt de verwijderde rijen terug; alleen die gelden als bewijs van verwijdering.
+    const _v=sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,method==='DELETE'?{method:'DELETE',prefer:'return=representation'}:{method:'PATCH',prefer:'return=representation',body:d});
     const r=await ((typeof tkMetTimeout==='function'&&typeof TK_SCHRIJF_TIMEOUT_MS==='number')?tkMetTimeout(_v,TK_SCHRIJF_TIMEOUT_MS):_v);
     if(!r.ok){
       console.error('sb'+method+'Q',t,r.status,tkFoutcode(await r.text()));
       if(sbRetryable(r.status)) return queue(r.status,r.status===401?'auth':((r.status===502||r.status===504)?'gateway':'server'));
       return uit('rejected',r.status,r.status===401||r.status===403?'toegang':'validatie');
     }
+    if(method==='DELETE'){ let _rijen=null; try{ _rijen=await r.json(); }catch(_){} return uit('confirmed',r.status,undefined,Array.isArray(_rijen)?_rijen:[]); }
     return uit('confirmed',r.status);
   }catch(e){ return queue(null,(e&&e.tkTimeout)?'timeout':'netwerk'); }
 }
@@ -9573,14 +9575,14 @@ async function sbDelQ(t,f,opts){
   if(typeof tkWachtrijRaaktRij==='function'&&(await tkWachtrijRaaktRij(t,f,null))===true)return queue('volgorde'); // TK-REL-SEC-20
   try{
     // TK-REL-SEC-19: begrensd wachten; DELETE is idempotent.
-    const _v=sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE'});
+    const _v=sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE',prefer:'return=representation'}); // TK-REL-SEC-25
     const r=await ((typeof tkMetTimeout==='function'&&typeof TK_SCHRIJF_TIMEOUT_MS==='number')?tkMetTimeout(_v,TK_SCHRIJF_TIMEOUT_MS):_v);
     if(!r.ok){
       console.error('sbDelQ',t,r.status,await r.text());
       if(sbRetryable(r.status))return queue((r.status===502||r.status===504)?'gateway':null);
       return false;
     }
-    if(typeof tkVerifyNa==='function')tkVerifyNa('DELETE',t,f,null,eigenaar,'confirmed'); // TK-REL-SEC-22
+    if(typeof tkVerifyNa==='function'){ let _rijen=null; try{ _rijen=await r.json(); }catch(_){} tkVerifyNa('DELETE',t,f,null,eigenaar,'confirmed',{rijen:Array.isArray(_rijen)?_rijen:[]}); } // TK-REL-SEC-22/25
     return true;
   }catch(e){
     console.warn('sbDelQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
@@ -9812,7 +9814,7 @@ async function flushOfflineQueue(){
       // no-op-upsert -- het item zou dan voor altijd "mislukt" in de wachtrij
       // blijven staan, zonder dat er ooit een echte duplicate ontstaat.
       const opts=item.method==='DELETE'
-        ?{method:'DELETE'}
+        ?{method:'DELETE',prefer:'return=representation'} // TK-REL-SEC-25: verwijderde rijen terug als bewijs
         :(item.method==='RPC'
           ?{method:'POST',body:item.args}
           :{method:item.method,prefer:(item.method==='POST'&&item.resolution==='ignore-duplicates')?'return=representation,resolution=ignore-duplicates':((item.method==='POST'&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[item.table]||_oc))?'return=representation,resolution=merge-duplicates':'return=representation'),body:item.body});
@@ -9839,6 +9841,8 @@ async function flushOfflineQueue(){
         continue;
       }
       if(item.method==='RPC')tkLogRpcOffline('rpc_replay_success',item.function);
+      // TK-REL-SEC-25: een geslaagde DELETE-replay registreren met de teruggegeven rijen (bewijs of niet).
+      if(r.ok&&item.method==='DELETE'&&typeof tkVerifyNa==='function'){ let _rijen=null; try{ _rijen=await r.json(); }catch(_){} tkVerifyNa('DELETE',item.table,item.filter,null,item.owner_uid||huidigeUid,'confirmed',{rijen:Array.isArray(_rijen)?_rijen:[]}); }
       // Een fout bij lokale queue-delete is géén bevestiging dat de operatie is afgerond.
       // Laat het item bewaard voor latere idempotente replay.
       if(await offlineQueueRemove(item.id)!==true){skippedAny=true;break;}
@@ -9915,9 +9919,13 @@ function tkVerifyEqFilter(f){
 }
 // Welke registerbewerkingen volgen uit één write? Alleen tabellen in TK_VERIFY_TABELLEN; andere tabellen vallen
 // buiten deze fase. Een write die niet aan één record te koppelen is, telt als "niet verifieerbaar".
-function tkVerifyAfleiden(method,t,f,body,opts){
+function tkVerifyAfleiden(method,t,f,body,opts,eigenaar){
   const cfg=TK_VERIFY_TABELLEN[t]; if(!cfg)return [];
   const sv=cfg.sleutel||['id'];
+  // TK-REL-SEC-25: bewijs van verwijdering = de server gaf exact deze rij (van deze eigenaar) terug als verwijderd.
+  const rijen=(opts&&Array.isArray(opts.rijen))?opts.rijen:null;
+  const vanEigenaar=function(r){ return cfg.eigenaarVeld===null||(r[cfg.eigenaarVeld]!=null&&!!eigenaar&&String(r[cfg.eigenaarVeld])===String(eigenaar)); };
+  const bewezen=function(rid){ return !!rijen&&rijen.some(function(r){ return !!r&&typeof r==='object'&&tkVerifyRecordId(t,r)===rid&&vanEigenaar(r); }); };
   const verwachtVan=function(b){
     const v={}; if(!b||typeof b!=='object')return v;
     Object.keys(b).forEach(function(k){
@@ -9940,17 +9948,18 @@ function tkVerifyAfleiden(method,t,f,body,opts){
   const sleutelInFilter=sv.every(k=>eq[k]!==undefined);
   if(sleutelInFilter){
     const rid=sv.map(k=>String(eq[k])).join(':'); const sleutelWaarden={}; sv.forEach(k=>{sleutelWaarden[k]=eq[k];});
-    if(method==='DELETE')return [{soort:'verwijder',tabel:t,record_id:rid,sleutelWaarden}];
+    if(method==='DELETE')return [{soort:'verwijder',tabel:t,record_id:rid,sleutelWaarden,bewezen:bewezen(rid)}];
     if(method==='PATCH')return [{soort:'wijzig',tabel:t,record_id:rid,sleutelWaarden,verwacht:verwachtVan(body),ouder:ouderVan(body)}];
   }
   // DELETE van alle kinderen van één ouder (bv. custom_training_exercises?custom_training_id=eq.X).
   if(method==='DELETE'&&cfg.ouder&&alleenEq&&Object.keys(eq).length===1&&eq[cfg.ouder.fk]!==undefined)
-    return [{soort:'verwijderKinderen',tabel:t,ouder:{tabel:cfg.ouder.tabel,record_id:String(eq[cfg.ouder.fk])}}];
+    return [{soort:'verwijderKinderen',tabel:t,ouder:{tabel:cfg.ouder.tabel,record_id:String(eq[cfg.ouder.fk])},
+      bewezen:(rijen||[]).filter(function(r){ return !!r&&typeof r==='object'&&String(r[cfg.ouder.fk])===String(eq[cfg.ouder.fk])&&vanEigenaar(r); }).map(function(r){ return tkVerifyRecordId(t,r); }).filter(function(x){ return x!==null; })}];
   return [{soort:'onverifieerbaar',tabel:t}];
 }
 // Registreert een geslaagde of gequeuede write. Resolves true/false; bij een fout: defect-markering (fail-closed).
 async function tkVerifyNoteer(method,t,f,body,eigenaar,status,opts){
-  const ops=tkVerifyAfleiden(method,t,f,body,opts);
+  const ops=tkVerifyAfleiden(method,t,f,body,opts,eigenaar);
   if(!ops.length)return true;
   if(!eigenaar){ tkVerifyMarkeerDefect('geen_eigenaar'); return false; }
   const nu=new Date().toISOString(), st=(status==='confirmed')?'SERVER_ACCEPTED':'QUEUED';
@@ -9971,7 +9980,7 @@ async function tkVerifyNoteer(method,t,f,body,eigenaar,status,opts){
           const c=store.openCursor();
           c.onsuccess=veilig(()=>{ const cur=c.result; if(!cur)return; const e=cur.value;
             if(e&&e.soort==='record'&&e.tabel===op.tabel&&e.eigenaar===eigenaar&&e.ouder&&e.ouder.tabel===op.ouder.tabel&&e.ouder.record_id===op.ouder.record_id&&!e.verwijderd){
-              cur.update(Object.assign({},e,{revisie:(e.revisie||0)+1,verwijderd:true,status:st,status_revisie:null,ts:nu}));
+              cur.update(Object.assign({},e,{revisie:(e.revisie||0)+1,verwijderd:true,verwijderBewijs:(op.bewezen.indexOf(e.record_id)>=0)?'rij_teruggegeven':null,status:st,status_revisie:null,ts:nu}));
             }
             cur.continue(); });
           return;
@@ -9983,9 +9992,11 @@ async function tkVerifyNoteer(method,t,f,body,eigenaar,status,opts){
           if(op.soort==='write'&&oud&&!oud.verwijderd&&op.overschrijf===false)return; // ignore-duplicates: server houdt de bestaande rij
           const basis=oud||{key:k,soort:'record',tabel:op.tabel,record_id:op.record_id,eigenaar,revisie:0,verwacht:{},sleutelWaarden:op.sleutelWaarden,ouder:null};
           const n=Object.assign({},basis,{revisie:(basis.revisie||0)+1,status:st,status_revisie:null,ts:nu,afwijkingen:[]});
-          if(op.soort==='verwijder'){ n.verwijderd=true; }
+          if(op.soort==='verwijder'){ n.verwijderd=true;
+            // Een eerder bewezen verwijdering blijft bewezen als een herhaalde DELETE 0 rijen raakt (rij was al weg).
+            n.verwijderBewijs=op.bewezen?'rij_teruggegeven':((oud&&oud.verwijderd&&oud.verwijderBewijs==='rij_teruggegeven')?'rij_teruggegeven':null); }
           else{
-            n.verwijderd=false;
+            n.verwijderd=false; n.verwijderBewijs=null;
             // PATCH vult aan op de bekende verwachting; een POST zonder bekende rij begint opnieuw.
             n.verwacht=Object.assign({},(op.soort==='wijzig'||(oud&&!oud.verwijderd))?(basis.verwacht||{}):{},op.verwacht||{});
             if(op.ouder)n.ouder=op.ouder;
@@ -10073,7 +10084,7 @@ async function tkVerifieerMetServer(){
     const opties=function(e,server){ const cfg=TK_VERIFY_TABELLEN[e.tabel];
       return {tabel:e.tabel,revisie:e.revisie,verwacht:Object.assign({},e.verwacht||{},e.sleutelWaarden||{},(cfg.sleutel?{}:{id:e.record_id})),server,
         eigenaar:uid,eigenaarVeld:cfg.eigenaarVeld,eigenaarViaOuder:cfg.eigenaarVeld===null,velden:Object.keys(e.verwacht||{}),
-        verwijderd:e.verwijderd===true,sleutelVelden:cfg.sleutel,bron:'supabase:rest:'+e.tabel,tijdstip}; };
+        verwijderd:e.verwijderd===true,verwijderBewezen:e.verwijderBewijs==='rij_teruggegeven',sleutelVelden:cfg.sleutel,bron:'supabase:rest:'+e.tabel,tijdstip}; };
     const serverRijen={}; // tabel → array (gelezen) of null (leesfout)
     for(const t of Object.keys(TK_VERIFY_TABELLEN)){
       const cfg=TK_VERIFY_TABELLEN[t], mijn=items.filter(e=>e.tabel===t); if(!mijn.length)continue;

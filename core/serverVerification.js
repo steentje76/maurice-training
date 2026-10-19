@@ -145,12 +145,13 @@
   }
 
   /* verifyRecord({ verwacht, server, eigenaar, eigenaarVeld, velden, bron, tijdstip,
-   *                 tabel, revisie, sleutelVelden, eigenaarViaOuder, verwijderd })
+   *                 tabel, revisie, sleutelVelden, eigenaarViaOuder, verwijderd, verwijderBewezen })
    *  verwacht: de lokaal ingevoerde rij; server: de teruggelezen rij, null (niet zichtbaar) of undefined (niet gelezen).
    *  tabel/revisie (TK-REL-SEC-21) maken de samengestelde identiteit compleet; zonder beide telt het resultaat
    *  in beoordeelRegister() nooit als bewijs. eigenaarVeld:null mag alleen met eigenaarViaOuder:true (tabellen
    *  zonder eigen user_id, zoals nutrition_meal_items/activity_laps: eigendom via de ouder en RLS op de ouder).
-   *  verwijderd:true: de laatste lokale write was een DELETE; verwacht wordt dat de rij ontbreekt.
+   *  verwijderd:true: de laatste lokale write was een DELETE; verwacht wordt dat de rij ontbreekt. verwijderBewezen:true
+ *  alleen als het DELETE-antwoord exact deze rij van deze eigenaar als verwijderd teruggaf (TK-REL-SEC-25).
    *  Uitkomst: { versie, status, tabel, record_id, owner_uid, revisie, sleutel, hash_lokaal, hash_server,
    *              afwijkingen[], definitief, bron, verified_at } */
   function verifyRecord(inv) {
@@ -170,7 +171,13 @@
     basis.hash_lokaal = vingerafdruk(canoniek(v, velden));
     if (i.server === undefined) { basis.afwijkingen.push('niet_teruggelezen'); return basis; }
     if (i.verwijderd === true) {
-      if (i.server === null) { basis.status = STATUS.SERVER_VERIFIED; basis.afwijkingen = []; basis.verified_at = String(i.tijdstip); return basis; }
+      // TK-REL-SEC-25: afwezig in een RLS-gefilterd leesresultaat bewijst geen verwijdering (andere eigenaar, stille
+      // RLS-weigering, verloren antwoord). Alleen met bewijs uit het DELETE-antwoord zelf (exact deze rij van deze
+      // eigenaar teruggegeven als verwijderd) telt afwezig als bevestigd; anders UNKNOWN, nooit definitief.
+      if (i.server === null) {
+        if (i.verwijderBewezen === true) { basis.status = STATUS.SERVER_VERIFIED; basis.afwijkingen = []; basis.verified_at = String(i.tijdstip); return basis; }
+        basis.afwijkingen.push('afwezig_voor_eigenaar'); basis.afwijkingen.push('verwijdering_niet_bewezen'); return basis;
+      }
       basis.status = STATUS.MISMATCH; basis.afwijkingen.push('nog_aanwezig'); return basis;
     }
     // Niet zichtbaar ≠ bewezen afwezig: RLS of een andere eigenaar kan de rij verbergen. Nooit definitief.

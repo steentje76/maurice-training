@@ -118,7 +118,10 @@ function db(uniek){
         }
         return resp(201,uit);
       }
-      if(req.method==='DELETE'){const fs=filters(q);T[t]=tabel(t).filter(r=>!past(r,fs));return resp(204,null);}
+      // DELETE zoals PostgREST: RLS bepaalt welke rijen geraakt worden (onzichtbare rijen blijven staan, 2xx met 0 rijen);
+      // met Prefer: return=representation komen de verwijderde rijen terug, anders 204 zonder body.
+      if(req.method==='DELETE'){const fs=filters(q);const weg=tabel(t).filter(r=>past(r,fs)&&(!api.zichtbaar||api.zichtbaar(t,r,req.uidBijVerzoek)));T[t]=tabel(t).filter(r=>weg.indexOf(r)<0);
+        return (req.prefer||'').indexOf('return=representation')>=0?resp(200,weg.map(r=>JSON.parse(JSON.stringify(r)))):resp(204,null);}
       if(req.method==='PATCH'){const fs=filters(q);const rs=tabel(t).filter(r=>past(r,fs));rs.forEach(r=>Object.assign(r,req.body));return resp(200,rs);}
     }};
   return api;

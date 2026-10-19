@@ -11,7 +11,7 @@
  *     een echte afwijking blijft MISMATCH;
  *  H8 ouder-kind met kinderen zonder eigen eigenaarsveld (laps, maaltijdregels): alleen geverifieerd als de ouder
  *     geverifieerd is; onverwacht serverkind → MISMATCH; samengestelde kindsleutel (activity_id + lap_index);
- *  H9 een DELETE als laatste lokale write: afwezig = bevestigd, nog aanwezig = MISMATCH;
+ *  H9 een DELETE als laatste lokale write: afwezig = bevestigd alleen met bewijs uit het DELETE-antwoord, nog aanwezig = MISMATCH;
  *  H10 meerdere uitkomsten voor één identiteit: de zwaarste telt (geen gunstige keuze);
  *  H11 tabel zonder eigenaarsveld: alleen geverifieerd als de eigenaar via de ouder bewezen is;
  *  H12 registeritem met onvolledige identiteit (geen revisie of eigenaar) → reden identiteit_onvolledig. */
@@ -77,7 +77,9 @@ const beoordeel=(o)=>(typeof V.beoordeelRegister==='function')
   check(pc({serverKinderen:[{activity_id:'act1',lap_index:0,duration_seconds:300},{activity_id:'act1',lap_index:1,duration_seconds:290},{activity_id:'act1',lap_index:2,duration_seconds:10}]}).status===S.MISMATCH,'H8 onverwachte lap op de server → MISMATCH');
   check(pc({serverKinderen:undefined}).status===S.UNKNOWN,'H8 kinderen niet gelezen → UNKNOWN'); }
 // H9
-{ check(vr({tabel:'sessions',verwacht:{id:'s1'},velden:[],verwijderd:true,server:null}).status===S.SERVER_VERIFIED,'H9 verwijderd en afwezig → bevestigd');
+{ // TK-REL-SEC-25: afwezig is pas bevestigd met bewijs uit het DELETE-antwoord (zie fDeleteVerification).
+  check(vr({tabel:'sessions',verwacht:{id:'s1'},velden:[],verwijderd:true,verwijderBewezen:true,server:null}).status===S.SERVER_VERIFIED,'H9 verwijderd (bewezen in het DELETE-antwoord) en afwezig → bevestigd');
+  check(vr({tabel:'sessions',verwacht:{id:'s1'},velden:[],verwijderd:true,server:null}).status===S.UNKNOWN,'H9 verwijderd en afwezig zonder bewijs → UNKNOWN (RLS kan de rij verbergen)');
   check(vr({tabel:'sessions',verwacht:{id:'s1'},velden:[],verwijderd:true,server:{id:'s1',user_id:'A'}}).status===S.MISMATCH,'H9 verwijderd maar nog aanwezig → MISMATCH');
   check(vr({tabel:'sessions',verwacht:{id:'s1'},velden:[],verwijderd:true}).status===S.UNKNOWN,'H9 verwijderd, niet gelezen → UNKNOWN'); }
 // H10

@@ -8,6 +8,7 @@ on:
       - review/tk-consolidated-20261019
       - review/tk-release-audit-20261019
       - review/claude-independent-20261019
+      - fix/tk-queue-persistence-gate-20261019
 
 permissions:
   contents: read

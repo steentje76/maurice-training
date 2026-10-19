@@ -9379,12 +9379,20 @@ async function sbPatchQ(t,f,d,opts){
   // inclusief 'failed' als queuen mislukt. Zonder opts.detail is het gedrag exact ongewijzigd.
   if(opts&&opts.detail) return sbSchrijfQDetail('PATCH',t,f,d);
   const wantRows=opts&&opts.returnRows;
-  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d},eigenaar);updateOfflineBadge();return wantRows?{ok:true,rows:null,superseded:false}:true;}
+  const failed=()=>wantRows?{ok:false,rows:null,superseded:false}:false;
+  const queue=async()=>{
+    const ok=!!eigenaar&&(await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d},eigenaar))===true;
+    updateOfflineBadge();
+    return wantRows?{ok,rows:null,superseded:false}:ok;
+  };
+  // TK-REL-SEC-05: eigenaarloos betekent niet retrybaar; nooit als opgeslagen teruggeven.
+  if(!eigenaar)return failed();
+  if(!navigator.onLine)return queue();
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});
     if(!r.ok){
       console.error('sbPatchQ',t,r.status,await r.text());
-      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d},eigenaar);updateOfflineBadge();return wantRows?{ok:true,rows:null,superseded:false}:true;}
+      if(sbRetryable(r.status))return queue();
       return wantRows?{ok:false,rows:null,superseded:false}:false;
     }
     if(wantRows){
@@ -9395,9 +9403,7 @@ async function sbPatchQ(t,f,d,opts){
     return true;
   }catch(e){
     console.warn('sbPatchQ offline, queued',t,e);
-    await offlineQueueAdd({table:t,method:'PATCH',filter:f,body:d},eigenaar);
-    updateOfflineBadge();
-    return wantRows?{ok:true,rows:null,superseded:false}:true;
+    return queue();
   }
 }
 // sbDelQ: als sbDel, maar queuet bij netwerkfout. Wordt alleen aangeroepen met een échte
@@ -9406,21 +9412,21 @@ async function sbPatchQ(t,f,d,opts){
 // hier een DELETE te queuen, zie deleteSessionEntry/deleteSessionDirect.
 async function sbDelQ(t,f,opts){
   const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02
+  const queue=async()=>{const ok=!!eigenaar&&(await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar))===true;updateOfflineBadge();return ok;};
+  if(!eigenaar)return false;
   if(opts&&opts.detail) return sbSchrijfQDetail('DELETE',t,f,null);
-  if(!navigator.onLine){await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar);updateOfflineBadge();return true;}
+  if(!navigator.onLine)return queue();
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE'});
     if(!r.ok){
       console.error('sbDelQ',t,r.status,await r.text());
-      if(sbRetryable(r.status)){await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar);updateOfflineBadge();return true;}
+      if(sbRetryable(r.status))return queue();
       return false;
     }
     return true;
   }catch(e){
     console.warn('sbDelQ offline, queued',t,e);
-    await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar);
-    updateOfflineBadge();
-    return true;
+    return queue();
   }
 }
 // SPRINT C2-D — sbRpcQ: generieke offline/retry-veilige laag voor MUTERENDE RPC's,
@@ -9449,22 +9455,26 @@ function tkLogRpcOffline(event,fn,extra){
 }
 async function sbRpcQ(fn,args){
   const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02
-  if(!navigator.onLine){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args},eigenaar);updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn);return true;}
+  const queue=async extra=>{
+    const ok=!!eigenaar&&(await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args},eigenaar))===true;
+    updateOfflineBadge();
+    tkLogRpcOffline(ok?'rpc_offline_queued':'rpc_queue_failed',fn,extra);
+    return ok;
+  };
+  if(!eigenaar){tkLogRpcOffline('rpc_queue_failed',fn,{reason:'account'});return false;}
+  if(!navigator.onLine)return queue();
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});
     if(!r.ok){
       const err=await r.text();console.error('sbRpcQ',fn,r.status,err);
-      if(sbRetryable(r.status)){await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args},eigenaar);updateOfflineBadge();tkLogRpcOffline('rpc_offline_queued',fn,{status:r.status});return true;}
+      if(sbRetryable(r.status))return queue({status:r.status});
       tkLogRpcOffline('rpc_replay_permanent_failure',fn,{status:r.status});
       return false;
     }
     return await r.json();
   }catch(e){
     console.warn('sbRpcQ offline, queued',fn,e);
-    await offlineQueueAdd({table:null,method:'RPC',function:fn,args:args},eigenaar);
-    updateOfflineBadge();
-    tkLogRpcOffline('rpc_offline_queued',fn);
-    return true;
+    return queue();
   }
 }
 // Speelt de queue in volgorde af; stopt bij de eerste fout zodat de volgorde behouden

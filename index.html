@@ -9311,10 +9311,10 @@ async function sbPostQ(t,d,opts){
   let reden=queueOnly?'afhankelijk':null;
   // Sprint 7 (DEC-SYNC-002): staat de ouder van deze rij nog in de wachtrij, dan gaat deze rij er ook in.
   if(!queueOnly&&TK_WACHTRIJ_OUDERS[t]&&await tkWachtrijHeeftOuder(t,d)){ queueOnly=true; reden='afhankelijk'; }
+  // TK-REL-SEC-02: wisselde de identiteit tijdens de await hierboven, dan niet met het nieuwe token versturen.
+  if(tkHuidigeUid()!==uidStart){ queueOnly=true; reden='auth'; }
   if(!navigator.onLine||queueOnly) return queue(null,navigator.onLine?reden:'offline');
   const magTimeout=!!(d&&d.id!=null&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||ignoreDup));
-  // Wisselde de identiteit tijdens de await hierboven, dan niet versturen met het nieuwe token.
-  if(tkHuidigeUid()!==uidStart) return queue(null,'auth');
   try{
     const verzoek=sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:prefer,body:d});
     const r=magTimeout?await tkMetTimeout(verzoek,TK_SCHRIJF_TIMEOUT_MS):await verzoek;

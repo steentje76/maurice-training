@@ -9413,8 +9413,9 @@ async function sbPatchQ(t,f,d,opts){
 async function sbDelQ(t,f,opts){
   const eigenaar=(typeof tkEigenaarUid==='function')?tkEigenaarUid():undefined; // TK-REL-SEC-02
   const queue=async()=>{const ok=!!eigenaar&&(await offlineQueueAdd({table:t,method:'DELETE',filter:f},eigenaar))===true;updateOfflineBadge();return ok;};
-  if(!eigenaar)return false;
+  // TK-REL-SEC-07: detail-aanroepers krijgen altijd het detail-object; sbSchrijfQDetail weigert zelf zonder eigenaar.
   if(opts&&opts.detail) return sbSchrijfQDetail('DELETE',t,f,null);
+  if(!eigenaar)return false;
   if(!navigator.onLine)return queue();
   try{
     const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'DELETE'});

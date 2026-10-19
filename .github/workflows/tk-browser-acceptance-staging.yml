@@ -6,6 +6,7 @@ on:
       - main
       - integration/tk-rec-android-20261018
       - review/tk-consolidated-20261019
+      - review/tk-release-audit-20261019
 
 permissions:
   contents: read

@@ -1,5 +1,12 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-33 Android native export van de reddingskopie (20 oktober 2026)
+
+- **Android.** De bestaande knop "Versleuteld bestand maken" slaat in de app op via het Android-opslagdialoog (eigen plugin, Storage Access Framework, geen opslagrechten). Het bestand wordt na het schrijven volledig teruggelezen en op grootte en SHA-256 gecontroleerd; alleen dan: "Versleutelde kopie weggeschreven en teruggelezen." Annuleren, schrijf-, lees- of vergelijkingsfouten en een accountwissel worden nooit als gelukt gemeld; een onvolledig bestand wordt verwijderd.
+- **Web.** Ongewijzigd (browserdownload).
+- **Testvariant.** Buildtype `exportproef` met eigen applicationId; de bestaande app, signing en versionCode zijn ongewijzigd. SW-cache v470270.
+- **Documenten.** `docs/TK_ANDROID_NATIVE_EXPORT_RAPPORT_20261020.md`, testprotocol `docs/TK_ANDROID_EXPORT_TESTPROTOCOL_20261020.md`.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-32 Herstelpreview: betrouwbare inhoudsvergelijking (20 oktober 2026)
 
 - **Herstelpreview.** Gelijkheid ("staat al op dit toestel", "al op de server") wordt beslist op een volledige canonieke inhoudsvergelijking; de 32-bits vingerafdruk is alleen nog een aanduiding. Een veld `__proto__` blijft gewone data en telt mee.

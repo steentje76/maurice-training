@@ -3333,3 +3333,15 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 4. De herstelpreview is alleen lezen. Een bestand van een ander account wordt geweigerd zonder inhoud of aantallen. HERSTELBAAR is geen toestemming tot herstellen; de herstelknop is uitgeschakeld.
 
 **Niet besloten (PO).** Fase 4C (`docs/TK_FASE4C_HERSTELVOORSTEL_20261019.md`): welke bronnen herstelbaar worden, de conflictstandaard en de native opslagroute op Android (nieuwe APK).
+
+## DEC-SEC-007 — Android-export: alleen "gelukt" na volledig teruglezen (20 oktober 2026)
+
+**Context.** In de Android-app werkt een browserdownload niet (#567, F2). De eigenaar koos D1 (eigen SAF-plugin), D2 (alleen een geïsoleerde debug-APK) en D3 (de bestaande knop kiest zelf de route).
+
+**Besluit (technisch).**
+1. De native export schrijft alleen de versleutelde envelop, in begrensde delen. Daarna volgt sync, en het bestand wordt via de ContentResolver volledig teruggelezen. Grootte en SHA-256 worden native én in de webcontrole vergeleken.
+2. Alleen VERIFIED_READBACK geldt als gelukt; de melding noemt dat dit geen garantie is voor cloudsynchronisatie. CANCELLED, WRITE_FAILED, READ_FAILED, MISMATCH en ACCOUNT_CHANGED zijn nooit gelukt. Een aangemaakt document wordt dan verwijderd, en of dat lukte wordt gemeld.
+3. Er zijn geen algemene opslagrechten, er is geen logging en er is geen opslag van inhoud. De eigenaar wordt gecontroleerd vóór de start, tussen de delen en na terugkomst.
+4. Testinstallaties gebruiken alleen de variant `com.trainingskompas.app.exportproef`.
+
+**Niet besloten (PO).** Installatie op een fysiek toestel volgens het testprotocol; Android-release.

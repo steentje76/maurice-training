@@ -36,8 +36,22 @@
   // Tabellen waarvan een POST met client-id (body.id) of natuurlijke sleutel idempotent opnieuw kan worden verstuurd.
   const IDEMPOTENT_NATUURLIJK={activity_laps:true,exercise_goals:true};
   function leeg(v){ return v===null||v===undefined; }
-  function canon(v){ if(leeg(v))return null; if(Array.isArray(v))return v.map(canon); if(typeof v==='object'){ const o={}; Object.keys(v).sort().forEach(k=>{ if(v[k]!==undefined)o[k]=canon(v[k]); }); return o; } return v; }
-  const vf=x=>INV.vingerafdruk(JSON.stringify(canon(x)));
+  // TK-REL-SEC-32: volledige canonieke serialisatie. Geen tussenobjecten (een eigen veld "__proto__" blijft gewone
+  // data en kan geen prototype worden); sleutels gesorteerd, recursief; strings, getallen, null en false blijven
+  // onderscheiden; een ontbrekend veld is niet gelijk aan null. Deze tekst beslist over gelijkheid; de 32-bits
+  // vingerafdruk is alleen een ondersteunende aanduiding in het plan (botsingen mogelijk).
+  const MAX_DIEPTE=64;
+  function canonTekst(v,d){
+    d=d||0; if(d>MAX_DIEPTE)throw new Error('te_diep');
+    if(v===null||v===undefined)return 'null';
+    if(typeof v==='number'){ if(!isFinite(v))throw new Error('ongeldig_getal'); return JSON.stringify(v); }
+    if(typeof v==='string'||typeof v==='boolean')return JSON.stringify(v);
+    if(Array.isArray(v))return '['+v.map(x=>(x===undefined?'null':canonTekst(x,d+1))).join(',')+']';
+    if(typeof v==='object'){ const ks=Object.keys(v).filter(k=>v[k]!==undefined).sort(); return '{'+ks.map(k=>JSON.stringify(k)+':'+canonTekst(v[k],d+1)).join(',')+'}'; }
+    throw new Error('ongeldig_type');
+  }
+  function ct(x){ try{ return canonTekst(x); }catch(_){ return null; } }
+  const vf=x=>{ const c=ct(x); return c===null?null:INV.vingerafdruk(c); };
   function parse(raw){ try{ return {ok:true,v:JSON.parse(raw)}; }catch(_){ return {ok:false}; } }
   function eigenaarIn(v,uid,d){ d=d||0; if(d>25||!v||typeof v!=='object')return false; if(Array.isArray(v))return v.some(x=>eigenaarIn(x,uid,d+1));
     return Object.keys(v).some(k=>(['user_id','owner_uid','p_user_id'].indexOf(k)>=0&&!leeg(v[k])&&String(v[k])!==uid)||eigenaarIn(v[k],uid,d+1)); }
@@ -68,7 +82,9 @@
       const raw=local[key]; if(typeof raw!=='string')return;
       const sp=splits(bron,key,raw); const id=bron.id+'|'+key;
       if(!sp.ok){ onleesbaar[id]=true; return; }
-      idx[id]=idx[id]||{}; sp.recs.forEach(r=>{ idx[id][r.rs]=(r.identiteit==='geheel'&&bron.vorm==='tekst')?vf(r.waarde):vf(r.waarde); });
+      // Per identiteit de volledige canonieke inhoud; bij identiteit-op-inhoud de verzameling van alle inhouden.
+      idx[id]=idx[id]||{per:{},inhoud:new Set()};
+      sp.recs.forEach(r=>{ const c=ct(r.waarde); if(c===null){ onleesbaar[id]=true; return; } if(r.identiteit==='inhoud')idx[id].inhoud.add(c); else idx[id].per[r.rs]=c; });
     });
     return {idx,onleesbaar};
   }
@@ -88,9 +104,9 @@
     const lok=i.lokaal||{}, srv=i.server||{};
     const L=lokaleIndex(lok.localStorage||{},uid,lok.cacheEigenaar);
     const lokaleWachtrij=Array.isArray(lok.wachtrij)?lok.wachtrij.filter(q=>q&&q.owner_uid===uid):null;
-    const lokQ={inhoud:{},identiteit:{}};
-    (lokaleWachtrij||[]).forEach(function(q){ const it={}; Object.keys(q).forEach(k=>{ if(k!=='id'&&k!=='ts'&&k!=='owner_uid')it[k]=q[k]; });
-      lokQ.inhoud[vf(wachtrijInhoud(it))]=true; const ident=wachtrijIdentiteit(it); if(ident)lokQ.identiteit[ident]=vf(wachtrijInhoud(it)); });
+    const lokQ={inhoud:new Set(),identiteit:Object.create(null)};
+    (lokaleWachtrij||[]).forEach(function(q){ const it=Object.create(null); Object.keys(q).forEach(k=>{ if(k!=='id'&&k!=='ts'&&k!=='owner_uid')it[k]=q[k]; });
+      const c=ct(wachtrijInhoud(it)); if(c===null)return; lokQ.inhoud.add(c); const ident=wachtrijIdentiteit(it); if(ident)lokQ.identiteit[ident]=c; });
     // Bekende ouders: in het bestand, in de lokale wachtrij, in de lokale eigen trainingen of zichtbaar op de server.
     const ouders={};
     d.entries.forEach(function(e){ if(e.storage==='offline_queue'){ const ident=wachtrijIdentiteit(e.value); if(ident)ouders[ident]='bestand'; }
@@ -116,7 +132,7 @@
         if(!sp.ok){ push({bron:bron.id,record_sleutel:'*',status:S.ONBEKEND,redenen:['inhoud_onleesbaar'],vingerafdruk:INV.vingerafdruk(e.value),op_server:'onbekend'}); return; }
         const lokId=bron.id+'|'+e.key, lokIdx=L.idx[lokId]||null, lokOnleesbaar=!!L.onleesbaar[lokId];
         sp.recs.forEach(function(r){
-          const v=vf(r.waarde), red=[];
+          const c=ct(r.waarde), v=(c===null)?null:INV.vingerafdruk(c), red=[];
           if(e.redacted)red.push('velden_weggelaten_in_kopie');
           let st;
           let srvStatus='onbekend';
@@ -127,8 +143,10 @@
           else if(!(ONDERSTEUND[bron.id]||ONDERSTEUNDE_CATEGORIE[bron.categorie])){ st=S.NIET_ONDERSTEUND; red.push('type_niet_ondersteund:'+bron.categorie); }
           else if(e.redacted){ st=S.ONBEKEND; }
           else if(r.identiteit==='onbekend'){ st=S.ONBEKEND; red.push('geen_identiteit'); }
+          else if(c===null){ st=S.ONBEKEND; red.push('inhoud_niet_vergelijkbaar'); }
           else if(lokOnleesbaar){ st=S.ONBEKEND; red.push('lokale_bron_onleesbaar'); }
-          else if(lokIdx&&lokIdx[r.rs]!==undefined){ st=(lokIdx[r.rs]===v)?S.BESTAAT_AL:S.CONFLICT; if(st===S.CONFLICT)red.push('lokaal_andere_inhoud'); }
+          else if(r.identiteit==='inhoud'){ st=(lokIdx&&lokIdx.inhoud.has(c))?S.BESTAAT_AL:S.HERSTELBAAR; }
+          else if(lokIdx&&Object.prototype.hasOwnProperty.call(lokIdx.per,r.rs)){ st=(lokIdx.per[r.rs]===c)?S.BESTAAT_AL:S.CONFLICT; if(st===S.CONFLICT)red.push('lokaal_andere_inhoud'); }
           else st=S.HERSTELBAAR;
           // Afhankelijkheid: een markering "alleen op dit toestel" zonder de training zelf.
           if(bron.id==='trainingen_onbevestigd'&&st===S.HERSTELBAAR&&!ouders['custom_trainings:'+String(r.waarde)]){ st=S.ONBEKEND; red.push('ouder_ontbreekt'); }
@@ -138,15 +156,17 @@
         return;
       }
       // Wachtrij-item
-      const it=e.value, inh=wachtrijInhoud(it), v=vf(inh), ident=wachtrijIdentiteit(it), red=[];
+      const it=e.value, inh=wachtrijInhoud(it), c=ct(inh), v=(c===null)?null:INV.vingerafdruk(c), ident=wachtrijIdentiteit(it), red=[];
       const rs=ident?('wachtrij:'+ident):('wachtrij-inhoud:'+v);
+      // (de vingerafdruk in een sleutel zonder identiteit is alleen een aanduiding; gelijkheid volgt uit c)
       let st, srvStatus='onbekend';
-      if(ident)srvStatus=opServer(ident,it.body,function(row,body){ return Object.keys(body||{}).filter(k=>k!=='user_id').every(k=>JSON.stringify(canon(row[k]))===JSON.stringify(canon(body[k]))); });
+      if(ident)srvStatus=opServer(ident,it.body,function(row,body){ return Object.keys(body||{}).filter(k=>k!=='user_id').every(k=>{ const a=ct(row[k]), b=ct(body[k]); return a!==null&&a===b; }); });
       if(eigenaarIn(it,uid)||filterEigenaarAnders(it.filter,uid)){ st=S.ANDER_ACCOUNT; red.push('eigenaar_in_inhoud'); }
       else if(e.redacted){ st=S.ONBEKEND; red.push('velden_weggelaten_in_kopie'); }
+      else if(c===null){ st=S.ONBEKEND; red.push('inhoud_niet_vergelijkbaar'); }
       else if(lokaleWachtrij===null){ st=S.ONBEKEND; red.push('lokale_wachtrij_onleesbaar'); }
-      else if(lokQ.inhoud[v]){ st=S.BESTAAT_AL; }
-      else if(ident&&lokQ.identiteit[ident]){ st=S.CONFLICT; red.push('lokaal_andere_inhoud'); }
+      else if(lokQ.inhoud.has(c)){ st=S.BESTAAT_AL; }
+      else if(ident&&Object.prototype.hasOwnProperty.call(lokQ.identiteit,ident)){ st=S.CONFLICT; red.push('lokaal_andere_inhoud'); }
       else if(it.method==='POST'&&!ident&&!IDEMPOTENT_NATUURLIJK[it.table]){ st=S.NIET_ONDERSTEUND; red.push('niet_idempotent_dubbel_risico'); }
       else if(it.method==='RPC'){ st=S.NIET_ONDERSTEUND; red.push('rpc_niet_ondersteund'); }
       else st=S.HERSTELBAAR;
@@ -190,5 +210,5 @@
       records:recs.map(r=>({bron:r.bron,record_sleutel:r.record_sleutel,status:r.status,op_server:r.op_server,redenen:r.redenen.slice().sort(),vingerafdruk:r.vingerafdruk,
         tabel:r.tabel||undefined,methode:r.methode||undefined,afhankelijk_van:(r.afhankelijk_van&&r.afhankelijk_van.length)?r.afhankelijk_van.slice().sort():undefined}))};
   }
-  return {VERSIE,STATUS:S,MELDING,classificeer,plan};
+  return {VERSIE,STATUS:S,MELDING,classificeer,plan,canonTekst};
 }));

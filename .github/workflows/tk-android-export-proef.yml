@@ -136,7 +136,7 @@ jobs:
           target: google_apis
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: cd android && ./gradlew :app:connectedDebugAndroidTest --no-daemon -Pandroid.testInstrumentationRunnerArguments.class=${{ matrix.klassen }}
+          script: bash tools/ci/run-instrumentation.sh ${{ matrix.klassen }}
       - name: Report instrumentation test counts
         if: always()
         run: |
@@ -147,6 +147,14 @@ jobs:
             grep -oE '<testcase [^>]*name="[^"]*"' "$f" | grep -oE 'name="[^"]*"' | sed 's/^/testcase /' || true
           done
           if [ "$found" = 0 ]; then echo "::warning title=emulator-api${{ matrix.api }}::geen testresultaten gevonden"; fi
+          if [ -f instrumentatie.log ]; then
+            grep -E "error:|FAILED|What went wrong|Execution failed|AssertionError|Exception:|INSTALL_FAILED|Tests on .* failed|> Task .*FAILED" instrumentatie.log | head -n 25 | while IFS= read -r regel; do
+              echo "::error title=emulator-api${{ matrix.api }}::$(echo "$regel" | cut -c1-400)"
+            done
+            grep -E "Finished [0-9]+ tests|Tests on .* (passed|failed)|BUILD (SUCCESSFUL|FAILED)" instrumentatie.log | head -n 10 | while IFS= read -r regel; do
+              echo "::notice title=emulator-api${{ matrix.api }}::$(echo "$regel" | cut -c1-300)"
+            done
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

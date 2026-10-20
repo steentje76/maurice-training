@@ -12,4 +12,9 @@ cd "$ROOT/android"
   "-Pandroid.testInstrumentationRunnerArguments.class=$1" 2>&1 | tee "$LOG"
 rc=$?
 echo "::notice title=emulator-script::gradle exit=$rc"
+# JUnit-XML zoeken (pad verschilt per AGP-versie) en als annotaties tonen.
+find "$ROOT/android" -path '*/build/*' -name '*.xml' -newer "$ROOT/package.json" 2>/dev/null | xargs -r grep -l '<testsuite' 2>/dev/null | head -n 5 | while IFS= read -r f; do
+  echo "::notice title=emulator-xml::${f#$ROOT/}"
+  python3 "$ROOT/tools/ci/junit-annotaties.py" "$f" "emulator-sdk" || true
+done
 exit $rc

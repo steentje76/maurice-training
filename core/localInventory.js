@@ -130,6 +130,7 @@
     b({ id: 'namespace_migratie', opslag: 'localStorage', sleutel: 'tk_ns_migrated', categorie: CAT.SYSTEEM, vorm: 'tekst', eigenaar: 'geen', versie: 'v1', omschrijving: 'Markering namespace-migratie' }),
     b({ id: 'builder_migratie', opslag: 'localStorage', sleutel: 'tk_wb_migrated_v1', categorie: CAT.SYSTEEM, vorm: 'tekst', eigenaar: 'geen', versie: 'v1', omschrijving: 'Markering Builder-migratie' }),
     b({ id: 'register_defect', opslag: 'localStorage', sleutel: 'tk_verify_register_defect', categorie: CAT.SYSTEEM, vorm: 'tekst', eigenaar: 'geen', versie: 'v1', omschrijving: 'Opslagfout in het controleregister' }),
+    b({ id: 'export_bezig', opslag: 'localStorage', sleutel: 'tk_export_bezig', categorie: CAT.SYSTEEM, vorm: 'object', eigenaar: 'geen', versie: 'v1 {naam, gestart}', omschrijving: 'Markering van een lopende native export (bestandsnaam en tijdstip, geen inhoud)' }),
     b({ id: 'organisatiecontext', opslag: 'sessionStorage', sleutel: 'tk_active_org_pref_v1', categorie: CAT.TOESTEL, vorm: 'tekst', eigenaar: 'geen', versie: 'v1', omschrijving: 'Gekozen organisatie in deze sessie' }),
     b({ id: 'offline_wachtrij', opslag: 'indexedDB', database: 'maurice_offline', categorie: CAT.WACHTRIJ, vorm: 'wachtrij', eigenaar: 'item', versie: 'v1 (store queue)',
       omschrijving: 'Nog niet verstuurde writes; eigenaar per item (owner_uid)' }),

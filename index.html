@@ -6562,6 +6562,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/localInventory.js"></script>
 <script src="core/localBackup.js"></script>
 <script src="core/restorePreview.js"></script>
+<script src="core/nativeBackupExport.js"></script>
 <script src="core/nutritionFoundation2.js"></script>
 <script src="core/nutritionMealService.js"></script>
 <script src="core/nutritionHydrationService.js"></script>
@@ -36267,6 +36268,28 @@ function tkBackupStatus(bericht){const el=document.getElementById('tk-backup-sta
 // TK-REL-SEC-30: in de Android-app (Capacitor) doet een browserdownload (<a download> met blob-URL) niets: de WebView
 // heeft geen DownloadListener. Daar geen kopie maken in plaats van een schijnsucces te melden.
 function tkIsNativeApp(){ try{ const C=(typeof window!=='undefined'&&window.Capacitor)||(typeof Capacitor!=='undefined'?Capacitor:null); return !!(C&&typeof C.isNativePlatform==='function'&&C.isNativePlatform()===true); }catch(_){ return false; } }
+// TK-REL-SEC-33: native Android-export via de eigen SAF-plugin. Zonder plugin (oudere APK) geen export en geen schijnsucces.
+function tkNativeExportPlugin(){ try{ const C=(typeof window!=='undefined'&&window.Capacitor)||null; const p=C&&C.Plugins&&C.Plugins.TkBestandOpslaan; return (p&&typeof p.start==='function')?p:null; }catch(_){ return null; } }
+// Een onderbroken export (app gestopt tijdens het opslaan) laat een markering achter; het bestand kan onvolledig zijn.
+const TK_EXPORT_BEZIG_KEY='tk_export_bezig';
+function tkExportOnderbrokenMelding(){ try{ const m=JSON.parse(localStorage.getItem(TK_EXPORT_BEZIG_KEY)||'null'); if(!m||typeof m!=='object')return ''; localStorage.removeItem(TK_EXPORT_BEZIG_KEY);
+  return 'Let op: een eerdere export ('+String(m.naam||'onbekend').slice(0,100)+') is onderbroken. Dat bestand kan onvolledig zijn: gebruik het niet als back-up. '; }catch(_){ return ''; } }
+const TK_NATIVE_EXPORT_TEKST={
+  VERIFIED_READBACK:'Versleutelde kopie weggeschreven en teruggelezen.',
+  CANCELLED:'Opslaan geannuleerd. Er is geen kopie gemaakt.',
+  WRITE_FAILED:'Opslaan mislukt. Er is geen bruikbare kopie gemaakt.',
+  READ_FAILED:'Het bestand kon na het schrijven niet worden teruggelezen. Er is geen bruikbare kopie gemaakt.',
+  MISMATCH:'Het teruggelezen bestand wijkt af van wat geschreven is. Er is geen bruikbare kopie gemaakt.',
+  ACCOUNT_CHANGED:'Er is intussen een ander account ingelogd; de kopie is afgebroken.'};
+function tkNativeExportMelding(r){
+  if(!r||!TK_NATIVE_EXPORT_TEKST[r.status])return 'Opslaan mislukt. Er is geen bruikbare kopie gemaakt.';
+  if(r.status==='VERIFIED_READBACK')return TK_NATIVE_EXPORT_TEKST.VERIFIED_READBACK+(r.naam?' Bestand: '+String(r.naam).slice(0,120)+'.':'')+' Dit is nog geen garantie dat een cloudopslag (zoals Google Drive) het bestand al volledig heeft gesynchroniseerd. Bewaar wachtzin en bestand afzonderlijk. De app verwijderen blijft ONVEILIG.';
+  let t=TK_NATIVE_EXPORT_TEKST[r.status];
+  if(r.status==='WRITE_FAILED'&&r.reden==='opslag_vol')t='Opslaan mislukt: onvoldoende opslagruimte. Er is geen bruikbare kopie gemaakt.';
+  if(r.status==='WRITE_FAILED'&&r.reden==='te_groot')t='De kopie is te groot om op te slaan. Er is geen kopie gemaakt.';
+  if(r.documentAangemaakt&&r.status!=='CANCELLED')t+=r.verwijderd?' Het onvolledige bestand is verwijderd.':' Het bestand kon niet worden verwijderd: verwijder het zelf en gebruik het niet als back-up.';
+  return t+' De app verwijderen blijft ONVEILIG.';
+}
 async function tkBackupSnapshot(){
   const uid=(authSession&&authSession.user&&authSession.user.id)||null;
   if(!uid||tkEigenaarUid()!==uid)throw new Error('Meld je aan bij het juiste account om een kopie te maken.');
@@ -36292,7 +36315,8 @@ async function tkMaakVersleuteldeLokaleBackup(){
   if(tkBackupBusy)return;
   const a=document.getElementById('tk-backup-pass'),b=document.getElementById('tk-backup-pass2');
   const pass=a?a.value:'',controle=b?b.value:'';
-  if(tkIsNativeApp()){ if(a)a.value=''; if(b)b.value=''; tkBackupStatus('In de Android-app kan dit bestand nog niet worden opgeslagen (de app ondersteunt geen browserdownloads). Er is geen kopie gemaakt. De app verwijderen blijft ONVEILIG.'); return; }
+  const _native=tkIsNativeApp(), _plugin=_native?tkNativeExportPlugin():null, _vorige=tkExportOnderbrokenMelding();
+  if(_native&&(!_plugin||typeof TKNativeExport==='undefined')){ if(a)a.value=''; if(b)b.value=''; tkBackupStatus(_vorige+'Deze versie van de app kan de kopie nog niet opslaan (native opslag ontbreekt). Er is geen kopie gemaakt. De app verwijderen blijft ONVEILIG.'); return; }
   if(pass.length<12||pass!==controle){if(a)a.value='';if(b)b.value='';tkBackupStatus('Gebruik tweemaal dezelfde wachtzin van minimaal 12 tekens.');return;}
   tkBackupBusy=true;tkBackupStatus('Lokale gegevens worden alleen gelezen en versleuteld...');
   try{
@@ -36302,8 +36326,21 @@ async function tkMaakVersleuteldeLokaleBackup(){
     const envelope=await TKLocalBackup.encrypt(snapshot,pass,window.crypto);
     await TKLocalBackup.inspect(envelope,pass,window.crypto); // geheime sleutel en authenticatietag controleren
     if(!authSession||!authSession.user||authSession.user.id!==snapshot.owner)throw new Error('Account is tijdens het versleutelen gewisseld.');
-    downloadFile(JSON.stringify(envelope),'trainingskompas_lokaal_'+td()+'.tkbackup','application/json');
-    tkBackupStatus('Versleutelde deelkopie aangeboden: '+snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. Controleer of het bestand echt is opgeslagen en bewaar wachtzin en bestand afzonderlijk. De app verwijderen blijft ONVEILIG.');
+    const _tekst=JSON.stringify(envelope), _naam='trainingskompas_lokaal_'+td()+'.tkbackup';
+    if(_native){
+      // TK-REL-SEC-33: Android — eigen SAF-plugin; alleen de versleutelde envelop gaat over de bridge. De eigenaar
+      // wordt vóór de start, tussen de delen en na terugkomst opnieuw gecontroleerd.
+      try{ localStorage.setItem(TK_EXPORT_BEZIG_KEY,JSON.stringify({naam:_naam,gestart:new Date().toISOString()})); }catch(_){}
+      let r;
+      try{ r=await TKNativeExport.exporteer({plugin:_plugin,tekst:_tekst,naam:_naam,subtle:window.crypto&&window.crypto.subtle,maxGrootte:TKLocalBackup.MAX_BESTAND,
+        eigenaarGelijk:()=>!!(authSession&&authSession.user&&authSession.user.id===snapshot.owner&&tkEigenaarUid()===snapshot.owner)}); }
+      catch(_){ r={status:'WRITE_FAILED',reden:'bridge'}; }
+      finally{ try{ localStorage.removeItem(TK_EXPORT_BEZIG_KEY); }catch(_){} }
+      tkBackupStatus(_vorige+(r&&r.status==='VERIFIED_READBACK'?(snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. '):'')+tkNativeExportMelding(r));
+      return;
+    }
+    downloadFile(_tekst,_naam,'application/json');
+    tkBackupStatus(_vorige+'Versleutelde deelkopie aangeboden: '+snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. Controleer of het bestand echt is opgeslagen en bewaar wachtzin en bestand afzonderlijk. De app verwijderen blijft ONVEILIG.');
   }catch(e){tkBackupStatus('Geen kopie gemaakt: '+(e&&e.message?e.message:'onbekende fout'));}
   finally{if(a)a.value='';if(b)b.value='';tkBackupBusy=false;}
 }

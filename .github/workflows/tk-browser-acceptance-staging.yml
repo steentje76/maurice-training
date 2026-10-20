@@ -18,6 +18,7 @@ on:
       - feat/tk-local-encrypted-backup-20261019
       - review/claude-backup-review-20261019
       - review/claude-restore-preview-20261019
+      - review/claude-restore-canon-20261020
 
 permissions:
   contents: read
@@ -73,6 +74,7 @@ jobs:
             core/fHistInventoryChromium.test.js
             core/fLocalEncryptedBackupChromium.test.js
             core/fRestorePreviewChromium.test.js
+            core/fNativeBackupExportChromium.test.js
           )
           failures=0
           for test_file in "${tests[@]}"; do

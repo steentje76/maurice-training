@@ -49,6 +49,16 @@ android {
         }
     }
     buildTypes {
+        // TK-REL-SEC-33: geïsoleerde testvariant voor de exportproef. Eigen applicationId (naast de bestaande app
+        // te installeren, kan hem nooit overschrijven) en daardoor volledig eigen lokale opslag. Ondertekening erft
+        // via initWith van debug (de debug-sleutel van de bouwomgeving), nooit de productiesleutel. Bouwen: ./gradlew assembleExportproef. De bestaande debug- en releasebuild zijn
+        // ongewijzigd.
+        exportproef {
+            initWith debug
+            applicationIdSuffix ".exportproef"
+            versionNameSuffix "-exportproef"
+            matchingFallbacks = ['debug']
+        }
         release {
             // Bewust GEEN debug-ondertekening als terugval: een debug-getekend artefact
             // mag nooit per ongeluk als release de deur uit.

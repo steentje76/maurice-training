@@ -11,7 +11,8 @@
  *     begrensde delen; boven de grens geweigerd vóór de plugin;  N12 geen wachtzin of onversleutelde gegevens over de
  *     bridge of in logs; native code zonder logging, SharedPreferences of opslagrechten;  N13 webexport werkt
  *     ongewijzigd;  N14 de herstelpreview opent dezelfde kopie;  N15 oudere APK zonder plugin → geen schijnsucces;
- *  N16 verwijderen mislukt → expliciet gemeld;  N17 "Veilig om te verwijderen" blijft uitgeschakeld. */
+ *  N16 verwijderen mislukt → expliciet gemeld;  N17 "Veilig om te verwijderen" blijft uitgeschakeld;
+ *  N18 (TK-REL-SEC-34) exportoverzicht per bron: aanwezig, geëxporteerd, overgeslagen, niet exporteerbaar. */
 'use strict';
 const assert=require('assert'),fs=require('fs'),path=require('path'),vm=require('vm');
 const {webcrypto}=require('crypto');
@@ -85,7 +86,7 @@ const ENVELOP=n=>{ const b='{"format":"tk-local-rescue-encrypted.v1","kdf":"PBKD
   await stap(async()=>{ const {ctx,st,nep,status,veld}=app();
     await ctx.tkMaakVersleuteldeLokaleBackup();
     const docs=Object.keys(nep.st.documenten), tekst=nep.st.documenten[docs[0]];
-    check(/^\d+ items, \d+ overgeslagen\. Versleutelde kopie weggeschreven en teruggelezen\./.test(status())&&/geen garantie dat een cloudopslag/.test(status())&&/ONVEILIG/.test(status()),'N1 geslaagde opslag → "Versleutelde kopie weggeschreven en teruggelezen." met cloud-voorbehoud');
+    check(/^\d+ items, \d+ overgeslagen\. .*Versleutelde kopie weggeschreven en teruggelezen\./.test(status())&&/geen garantie dat een cloudopslag/.test(status())&&/ONVEILIG/.test(status()),'N1 geslaagde opslag → "Versleutelde kopie weggeschreven en teruggelezen." met cloud-voorbehoud');
     check(docs.length===1&&st.downloads.length===0&&nep.st.aanroepen.join(',')==='start,schrijf,voltooi,afronden','N1 native route gekozen (geen browserdownload); één document');
     const env=JSON.parse(tekst); const r=await B.inspect(env,PASS,webcrypto);
     check(r.owner===A&&r.entries>=2,'N1 opgeslagen bestand is een geldige, ontsleutelbare kopie van dit account');
@@ -164,5 +165,14 @@ const ENVELOP=n=>{ const b='{"format":"tk-local-rescue-encrypted.v1","kdf":"PBKD
     const oud=app({geenPlugin:true}); await oud.ctx.tkMaakVersleuteldeLokaleBackup();
     check(/kan de kopie nog niet opslaan/.test(oud.status())&&oud.st.downloads.length===0,'N15 oudere APK zonder plugin → geen schijnsucces');
     check(/id="help-update-safe" disabled aria-disabled="true"/.test(HTML)&&(HTML.match(/help-update-safe/g)||[]).length===1,'N17 "Veilig om te verwijderen" blijft uitgeschakeld'); });
+  // N18 (TK-REL-SEC-34) exportoverzicht per bron met synthetische testgegevens
+  await stap(async()=>{ const ls=opslag({tk_cache_owner_uid:A,tk_trainings:JSON.stringify([{id:'ct1',name:'Synth A'},{id:'ct2',name:'Synth B'}]),
+      tk_draft_training:JSON.stringify({t:'kracht',sessionLog:{squat:[{kg:40,reps:5}]}}),tk_coach_style:'kort',tk_theme:'dark',tk_auth_session:'{"access_token":"T"}'});
+    const {ctx,status}=app({ls,queue:[{id:3,ts:1,owner_uid:A,table:'sessions',method:'POST',body:{id:'s1',exercise_id:'squat',reps:5}}]});
+    await ctx.tkMaakVersleuteldeLokaleBackup();
+    const t=status();
+    check(/Geëxporteerd: actieve_training: 1, coach_stijl: 1, eigen_trainingen: 2, offline_wachtrij: 1\./.test(t),'N18 overzicht: 2 eigen trainingen, 1 lopende training, 1 wachtrij-item en de voorkeur geëxporteerd');
+    check(/Niet exporteerbaar \(toestel\/systeem\): cache_eigenaar, sessie, thema\./.test(t)&&/controleer met de herstelpreview/.test(t),'N18 niet exporteerbaar (toestel/systeem) apart benoemd; herstelbaarheid verwijst naar de preview');
+    check(!/Synth A|Synth B|access_token|squat/.test(t),'N18 overzicht bevat alleen bronnamen en aantallen, geen inhoud'); });
   console.log('TK-REL-SEC-33: '+n+'/'+n);
 })().catch(e=>{console.error('FAIL',e&&e.stack||e);process.exitCode=1;});

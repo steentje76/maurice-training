@@ -40,6 +40,13 @@ import java.util.UUID;
 public class TkBestandOpslaanPlugin extends Plugin {
 
     private static final String NAAM_PATROON = "[A-Za-z0-9._-]{1,96}\\.tkbackup";
+    /**
+     * TK-REL-SEC-34: MIME-contract. application/octet-stream houdt de naam "….tkbackup" intact (bij application/json
+     * voegen DocumentsUI-providers ".json" toe als de extensie niet bij het type past). De importkiezer in de app
+     * (accept=".tkbackup,application/octet-stream,application/json") moet dit type daarom expliciet toelaten; de
+     * inhoud wordt bij het openen altijd volledig gecontroleerd (MIME of extensie keurt niets goed).
+     */
+    public static final String EXPORT_MIME = "application/octet-stream";
 
     private String sessieId;
     private TkExportSessie sessie;
@@ -67,7 +74,7 @@ public class TkBestandOpslaanPlugin extends Plugin {
         startSha = sha;
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/octet-stream");
+        intent.setType(EXPORT_MIME);
         intent.putExtra(Intent.EXTRA_TITLE, naam);
         startActivityForResult(call, intent, "naKeuze");
     }

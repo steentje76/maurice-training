@@ -88,6 +88,8 @@ dependencies {
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    // TK-REL-SEC-34: echte Android-bestandskiezer (DocumentsUI) in de emulatortest; alleen voor instrumentatietests.
+    androidTestImplementation "androidx.test.uiautomator:uiautomator:2.3.0"
     implementation project(':capacitor-cordova-android-plugins')
 
     // ANDROID-BARCODE-SCANNER-opdracht: native CameraX + Google ML Kit

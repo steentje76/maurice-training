@@ -62,6 +62,17 @@ let n=0,fout=0; const ok=(c,l)=>{ n++; if(c)console.log('  ok  '+l); else { fout
     await page.setInputFiles('#tk-restore-file',{name:r.namen[0],mimeType:'application/json',buffer:Buffer.from(r.bestand)});
     const pv=await page.evaluate(async()=>{ document.getElementById('tk-restore-pass').value='een lange wachtzin voor test'; const u=await tkHerstelPreviewToon(); return {ok:u&&u.ok,tekst:document.getElementById('tk-restore-result').textContent}; });
     ok(pv.ok===true&&/gegevens in het bestand/.test(pv.tekst)&&/Dit is alleen een controle/.test(pv.tekst),'K3 de herstelpreview opent het native opgeslagen bestand');
+    // TK-REL-SEC-34: MIME-contract in de echte bestandsinvoer; inhoud beslist, niet naam of type.
+    const acc=await page.evaluate(()=>[document.getElementById('tk-restore-file').accept,document.getElementById('tk-backup-file').accept]);
+    ok(acc.every(a=>a.split(',').indexOf('application/octet-stream')>=0&&a.split(',').indexOf('.tkbackup')>=0),'K7 beide bestandsinvoeren laten het native exporttype (application/octet-stream) toe');
+    const kies=async(naam,mime,buf)=>{ await page.setInputFiles('#tk-restore-file',{name:naam,mimeType:mime,buffer:buf});
+      return page.evaluate(async()=>{ document.getElementById('tk-restore-pass').value='een lange wachtzin voor test'; const u=await tkHerstelPreviewToon(); return {ok:!!(u&&u.ok),tekst:document.getElementById('tk-restore-result').textContent}; }); };
+    const o1=await kies(r.namen[0],'application/octet-stream',Buffer.from(r.bestand));
+    ok(o1.ok&&/gegevens in het bestand/.test(o1.tekst),'K7 native export met type application/octet-stream opent in de herstelpreview');
+    const o2=await kies('kopie.bin','application/x-onbekend',Buffer.from(r.bestand));
+    ok(o2.ok,'K7 dezelfde inhoud met een andere naam en ander type → gelezen (inhoud beslist)');
+    const o3=await kies('onzin.tkbackup','application/octet-stream',Buffer.from('{"format":"tk-local-rescue-encrypted.v1","data":"AAAA"}'));
+    ok(!o3.ok&&/Niet gecontroleerd/.test(o3.tekst),'K7 ".tkbackup" met ongeldige inhoud → veilig geweigerd');
     ok(errs.length===0,'K6 geen paginafouten'+(errs.length?(': '+errs.join(' | ')):''));
   }finally{ await browser.close(); }
   console.log('fNativeBackupExportChromium: '+(n-fout)+' geslaagd, '+fout+' mislukt');

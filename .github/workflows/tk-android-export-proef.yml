@@ -81,9 +81,18 @@ jobs:
           retention-days: 14
 
   emulator-instrumentatie:
-    name: Emulator-instrumentatie (synthetische gegevens)
+    name: Emulator-instrumentatie API ${{ matrix.api }} (synthetische gegevens)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Android 11 (API 30): zelfde versie als de fysieke Galaxy A70; DocumentsUI-selecteerbaarheid + ContentResolver.
+          - api: 30
+            klassen: com.trainingskompas.app.export.ContentBestemmingInstrumentedTest,com.trainingskompas.app.export.ImportKiezerSelecteerbaarheidTest
+          - api: 34
+            klassen: com.trainingskompas.app.export.ContentBestemmingInstrumentedTest,com.trainingskompas.app.export.ImportKiezerSelecteerbaarheidTest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -113,15 +122,15 @@ jobs:
       - name: Instrumentatietests op de emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: ${{ matrix.api }}
           arch: x86_64
           target: google_apis
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: cd android && ./gradlew :app:connectedDebugAndroidTest --no-daemon -Pandroid.testInstrumentationRunnerArguments.class=com.trainingskompas.app.export.ContentBestemmingInstrumentedTest
+          script: cd android && ./gradlew :app:connectedDebugAndroidTest --no-daemon -Pandroid.testInstrumentationRunnerArguments.class=${{ matrix.klassen }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: emulator-instrumentatie-rapport
+          name: emulator-instrumentatie-rapport-api${{ matrix.api }}
           path: android/app/build/reports/androidTests/
           retention-days: 14

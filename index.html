@@ -6380,7 +6380,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <input id="tk-backup-pass2" type="password" autocomplete="new-password" minlength="12" class="input" style="width:100%;margin:4px 0 8px">
       <button class="btn btn-o" type="button" onclick="tkMaakVersleuteldeLokaleBackup()">Versleuteld bestand maken</button>
       <p style="font-size:12px;margin-top:12px">Controleer een eerder gemaakt bestand (alleen lezen, zet geen gegevens terug):</p>
-      <input id="tk-backup-file" type="file" accept=".tkbackup,application/json" aria-label="Versleutelde kopie kiezen" style="width:100%">
+      <!-- TK-REL-SEC-34: MIME-/extensiecontract. Android-WebView (Capacitor BridgeWebChromeClient.getValidTypes) laat een
+           onbekende extensie (.tkbackup) weg; alleen MIME-typen bereiken de kiezer. De native export schrijft
+           application/octet-stream, dus dat type moet hier expliciet staan. MIME of extensie keurt niets goed: inhoud,
+           authenticatietag, eigenaar en account worden altijd gecontroleerd. -->
+      <input id="tk-backup-file" type="file" accept=".tkbackup,application/octet-stream,application/json" aria-label="Versleutelde kopie kiezen" style="width:100%">
       <label for="tk-backup-check-pass" style="font-size:12px">Wachtzin voor controle</label>
       <input id="tk-backup-check-pass" type="password" autocomplete="off" class="input" style="width:100%;margin:4px 0 8px">
       <button class="btn btn-o" type="button" onclick="tkControleerVersleuteldeLokaleBackup()">Bestand controleren (zonder terugzetten)</button>
@@ -6389,7 +6393,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div id="tk-restore-preview" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--g2)">
         <strong>Herstelpreview</strong>
         <p style="font-size:12px;line-height:1.4;font-weight:600">Dit is alleen een controle. Er worden geen gegevens teruggezet.</p>
-        <input id="tk-restore-file" type="file" accept=".tkbackup,application/json" aria-label="Versleutelde kopie kiezen voor de herstelpreview" style="width:100%">
+        <input id="tk-restore-file" type="file" accept=".tkbackup,application/octet-stream,application/json" aria-label="Versleutelde kopie kiezen voor de herstelpreview" style="width:100%">
         <label for="tk-restore-pass" style="font-size:12px">Wachtzin</label>
         <input id="tk-restore-pass" type="password" autocomplete="off" class="input" style="width:100%;margin:4px 0 8px">
         <div style="display:flex;flex-wrap:wrap;gap:8px">
@@ -36311,6 +36315,24 @@ async function tkBackupSnapshot(){
   if(!Array.isArray(wachtrij))throw new Error('Offline-wachtrij onleesbaar: geen export gemaakt.');
   return TKLocalBackup.prepare({owner:uid,cacheOwner:localStorage.getItem('tk_cache_owner_uid'),local,queue:wachtrij,manifest:m});
 }
+// TK-REL-SEC-34: overzicht per bron (alleen namen en aantallen, nooit inhoud) zodat een export controleerbaar is:
+// aanwezig, geëxporteerd, overgeslagen (met reden) en niet exporteerbaar (toestel/systeem). "Geëxporteerd" is nog geen
+// bewijs van herstelbaarheid: dat toont pas de herstelpreview.
+function tkBackupOverzicht(snapshot){
+  const aanwezig=new Set(), nietExporteerbaar=new Set(); let onbekend=0;
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i), b=LocalInventoryCore.bronVoorSleutel('localStorage',k);
+    if(!b){ onbekend++; continue; } aanwezig.add(b.id); if(b.categorie==='toestel'||b.categorie==='systeem')nietExporteerbaar.add(b.id); } }catch(_){}
+  const per={};
+  (snapshot.entries||[]).forEach(function(e){ const id=e.source; let n=1;
+    // Aantal records volgens de vorm in het bronmanifest: array → elementen, map → sleutels, object/tekst → 1.
+    if(e.storage==='localStorage'){ const b=LocalInventoryCore.bronVoorSleutel('localStorage',e.key), vorm=b&&b.vorm; try{ const v=JSON.parse(e.value); if((vorm==='array'||vorm==='ids')&&Array.isArray(v))n=v.length; else if(vorm==='map'&&v&&typeof v==='object'&&!Array.isArray(v))n=Object.keys(v).length; }catch(_){ n=1; } }
+    per[id]=(per[id]||0)+n; });
+  if(per.offline_wachtrij)aanwezig.add('offline_wachtrij');
+  const over={}; (snapshot.omissions||[]).forEach(function(o){ const k=o.source+' ('+o.reason+')'; over[k]=(over[k]||0)+1; });
+  const lijst=o=>Object.keys(o).sort().map(k=>k+': '+o[k]).join(', ')||'geen';
+  return 'Aanwezige bronnen: '+aanwezig.size+(onbekend?' (+'+onbekend+' onbekend)':'')+'. Geëxporteerd: '+lijst(per)+'. Overgeslagen: '+lijst(over)+
+    '. Niet exporteerbaar (toestel/systeem): '+([...nietExporteerbaar].sort().join(', ')||'geen')+'. Herstelbaarheid: controleer met de herstelpreview. ';
+}
 async function tkMaakVersleuteldeLokaleBackup(){
   if(tkBackupBusy)return;
   const a=document.getElementById('tk-backup-pass'),b=document.getElementById('tk-backup-pass2');
@@ -36336,11 +36358,11 @@ async function tkMaakVersleuteldeLokaleBackup(){
         eigenaarGelijk:()=>!!(authSession&&authSession.user&&authSession.user.id===snapshot.owner&&tkEigenaarUid()===snapshot.owner)}); }
       catch(_){ r={status:'WRITE_FAILED',reden:'bridge'}; }
       finally{ try{ localStorage.removeItem(TK_EXPORT_BEZIG_KEY); }catch(_){} }
-      tkBackupStatus(_vorige+(r&&r.status==='VERIFIED_READBACK'?(snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. '):'')+tkNativeExportMelding(r));
+      tkBackupStatus(_vorige+(r&&r.status==='VERIFIED_READBACK'?(snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. '+tkBackupOverzicht(snapshot)):'')+tkNativeExportMelding(r));
       return;
     }
     downloadFile(_tekst,_naam,'application/json');
-    tkBackupStatus(_vorige+'Versleutelde deelkopie aangeboden: '+snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. Controleer of het bestand echt is opgeslagen en bewaar wachtzin en bestand afzonderlijk. De app verwijderen blijft ONVEILIG.');
+    tkBackupStatus(_vorige+'Versleutelde deelkopie aangeboden: '+snapshot.entries.length+' items, '+snapshot.omissions.length+' overgeslagen. '+tkBackupOverzicht(snapshot)+'Controleer of het bestand echt is opgeslagen en bewaar wachtzin en bestand afzonderlijk. De app verwijderen blijft ONVEILIG.');
   }catch(e){tkBackupStatus('Geen kopie gemaakt: '+(e&&e.message?e.message:'onbekende fout'));}
   finally{if(a)a.value='';if(b)b.value='';tkBackupBusy=false;}
 }

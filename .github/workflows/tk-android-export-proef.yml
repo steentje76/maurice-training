@@ -68,6 +68,15 @@ jobs:
           cp "$APK" "dist/Trainingskompas-exportproef-${GITHUB_SHA::9}.apk"
           (cd dist && sha256sum *.apk > SHA256SUMS.txt && cat SHA256SUMS.txt)
           git rev-parse HEAD > dist/commit.txt
+          # Bewijs ook als annotatie (leesbaar via de check-run-API, zonder logtoegang).
+          echo "::notice title=exportproef-apk::$(cat dist/SHA256SUMS.txt) commit=$(cat dist/commit.txt) package=com.trainingskompas.app.exportproef"
+      - name: Report native unit test counts
+        if: always()
+        run: |
+          for f in android/app/build/test-results/testDebugUnitTest/*.xml; do
+            [ -f "$f" ] || continue
+            echo "::notice title=native-unit-tests::$(grep -o '<testsuite [^>]*' "$f" | grep -oE '(name|tests|failures|errors|skipped)="[^"]*"' | tr '\n' ' ')"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: trainingskompas-exportproef-apk
@@ -128,6 +137,16 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: cd android && ./gradlew :app:connectedDebugAndroidTest --no-daemon -Pandroid.testInstrumentationRunnerArguments.class=${{ matrix.klassen }}
+      - name: Report instrumentation test counts
+        if: always()
+        run: |
+          found=0
+          for f in $(find android/app/build/outputs/androidTest-results -name '*.xml' 2>/dev/null); do
+            found=1
+            echo "::notice title=emulator-api${{ matrix.api }}::$(grep -o '<testsuite [^>]*' "$f" | grep -oE '(name|tests|failures|errors|skipped)="[^"]*"' | tr '\n' ' ')"
+            grep -oE '<testcase [^>]*name="[^"]*"' "$f" | grep -oE 'name="[^"]*"' | sed 's/^/testcase /' || true
+          done
+          if [ "$found" = 0 ]; then echo "::warning title=emulator-api${{ matrix.api }}::geen testresultaten gevonden"; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,7 +1,6 @@
 package com.trainingskompas.app.export;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -94,8 +93,14 @@ public class ImportKiezerSelecteerbaarheidTest {
         return u;
     }
 
-    /** Opent de kiezer zoals de WebView/Capacitor hem opent en bepaalt of het bestand selecteerbaar is. */
-    private boolean selecteerbaar(String[] types, String naam) {
+    enum Stand { SELECTEERBAAR, UITGESCHAKELD, VERBORGEN }
+
+    /**
+     * Opent de kiezer zoals de WebView/Capacitor hem opent en bepaalt de stand van het bestand in de map Downloads.
+     * Afhankelijk van de DocumentsUI-versie wordt een niet-passend bestand uitgeschakeld (Android 11, fysiek bewezen)
+     * of niet getoond; beide betekenen: niet selecteerbaar.
+     */
+    private Stand stand(String[] types, String naam) {
         UiDevice d = apparaat();
         Intent i = new Intent(Intent.ACTION_GET_CONTENT);
         i.addCategory(Intent.CATEGORY_OPENABLE);
@@ -112,13 +117,13 @@ public class ImportKiezerSelecteerbaarheidTest {
             dl.click();
             item = d.wait(Until.findObject(By.text(naam)), WACHT);
         }
-        assertNotNull("bestand " + naam + " niet zichtbaar in de kiezer", item);
+        if (item == null) { d.pressBack(); d.pressBack(); return Stand.VERBORGEN; }
         boolean aan = true;
         UiObject2 o = item;
         for (int n = 0; n < 5 && o != null; n++) { if (!o.isEnabled()) aan = false; o = o.getParent(); }
         d.pressBack();
         d.pressBack();
-        return aan;
+        return aan ? Stand.SELECTEERBAAR : Stand.UITGESCHAKELD;
     }
 
     @Test
@@ -128,7 +133,8 @@ public class ImportKiezerSelecteerbaarheidTest {
         String[] types = geldigeTypes(".tkbackup,application/json");
         assertEquals(1, types.length);
         assertEquals("application/json", types[0]);
-        assertFalse("reproductie van het defect: met alleen application/json hoort het bestand uitgeschakeld te zijn", selecteerbaar(types, naam));
+        Stand s = stand(types, naam);
+        assertTrue("reproductie van het defect: met alleen application/json hoort het bestand niet selecteerbaar te zijn, stand=" + s, s != Stand.SELECTEERBAAR);
     }
 
     @Test
@@ -137,7 +143,7 @@ public class ImportKiezerSelecteerbaarheidTest {
         maakDownload(naam);
         String[] types = geldigeTypes(acceptUitApp("tk-restore-file"));
         assertTrue(java.util.Arrays.asList(types).contains(TkBestandOpslaanPlugin.EXPORT_MIME));
-        assertTrue("herstelpreview: native export moet selecteerbaar zijn", selecteerbaar(types, naam));
+        assertEquals("herstelpreview: native export moet selecteerbaar zijn", Stand.SELECTEERBAAR, stand(types, naam));
         String[] check = geldigeTypes(acceptUitApp("tk-backup-file"));
         assertTrue(java.util.Arrays.asList(check).contains(TkBestandOpslaanPlugin.EXPORT_MIME));
     }

@@ -18,6 +18,9 @@ on:
       - feat/tk-local-encrypted-backup-20261019
       - review/claude-backup-review-20261019
       - review/claude-restore-preview-20261019
+      - review/claude-restore-canon-20261020
+      - integration/tk-full-security-ux-20261020
+      - integration/tk-sec-ux-20261019
 
 permissions:
   contents: read
@@ -67,6 +70,7 @@ jobs:
             core/fRecoveryCommunicationConsistency.test.js
             core/fInzichtHerstelBelasting.test.js
             core/fSetLoggingUx.test.js
+            core/fUxSetCompletionAccessibility.test.js
             core/fExecutionIntegrity.test.js
             core/fUpdateReadiness.test.js
             core/fVerifyRegisterChromium.test.js

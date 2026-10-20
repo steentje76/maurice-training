@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Android native export (20 oktober 2026 — TK-REL-SEC-33, Draft-PR bovenop #569)
+
+- Reddingskopie in de Android-app via een eigen SAF-plugin met volledig teruglezen en SHA-256-controle (DEC-SEC-007); web ongewijzigd.
+- Geïsoleerde testvariant `com.trainingskompas.app.exportproef`. Fysieke test (Galaxy A70, Android 11): export geslaagd, herstelpreview kon het bestand niet kiezen (blocker T3).
+- TK-REL-SEC-34: MIME-contract van de bestandskiezer hersteld (DEC-SEC-008); emulator API 30/34 groen. Fysieke heracceptatie (protocol v2) open. Android-release en de-installatie: NO-GO.
+
 ## Reddingskopie en herstelpreview (19 oktober 2026 — TK-REL-SEC-29..31, Draft-PR's #566, #567 en fase 4B)
 
 - Versleutelde lokale reddingskopie (#566) na review gecorrigeerd (#567): echte wachtrij, geen schijnsucces in de Android-app, sterkere sleutelafleiding, strikte validatie.

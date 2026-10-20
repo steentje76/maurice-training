@@ -57,7 +57,8 @@ let ok=0;function check(c,name){assert(c,name);ok++;console.log('PASS '+name);}
     check(result.queueUnchanged,'Real IndexedDB queue unchanged by export');
     check(result.iterations>=600000,'New file uses PBKDF2 with >= 600000 iterations');
     check(!result.queueFail.download&&/wachtrij/i.test(result.queueFail.status),'Unreadable real IndexedDB queue: no backup offered');
-    check(!result.native.download&&/Android-app/.test(result.native.status)&&result.native.passCleared,'Native app: no false download success, passphrase cleared');
+    // TK-REL-SEC-33: zonder native plugin (oudere APK) geen export en geen schijnsucces; met plugin: fNativeBackupExport*.
+    check(!result.native.download&&/kan de kopie nog niet opslaan/.test(result.native.status)&&result.native.passCleared,'Native app without export plugin: no false download success, passphrase cleared');
     check(errors.length===0,'No browser page exceptions');
     console.log('fLocalEncryptedBackupChromium: '+ok+'/'+ok);
   }finally{await browser.close();}

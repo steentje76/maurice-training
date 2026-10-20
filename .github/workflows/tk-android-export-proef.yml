@@ -1,0 +1,166 @@
+name: Trainingskompas Android Export Proef
+
+# TK-REL-SEC-33: native Android-export van de versleutelde reddingskopie.
+# - native unit tests (JUnit, TkExportSessie);
+# - geïsoleerde debug-APK met eigen applicationId (com.trainingskompas.app.exportproef), debug-ondertekend;
+#   kan de bestaande app nooit overschrijven; geen productiesleutel, geen installatie op een fysiek toestel;
+# - instrumentatietests op een emulator met synthetische gegevens (ContentResolver-route: schrijven, sync, teruglezen).
+on:
+  pull_request:
+    branches:
+      - review/claude-restore-canon-20261020
+      - review/claude-android-export-20261020
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tk-android-export-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-unit-en-apk:
+    name: Native unit tests + exportproef-APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - run: npm ci
+      - name: Sync Capacitor Android assets
+        run: npm run cap:sync
+      - run: chmod +x android/gradlew
+      - name: Native unit tests (debug)
+        working-directory: android
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+      - name: Build exportproef APK (eigen applicationId, debug-ondertekend)
+        working-directory: android
+        run: ./gradlew :app:assembleExportproef --no-daemon
+      - name: Verify isolation of the test APK
+        run: |
+          set -euo pipefail
+          APK=$(ls android/app/build/outputs/apk/exportproef/*.apk | head -n1)
+          AAPT2="$ANDROID_HOME/build-tools/36.0.0/aapt2"
+          "$AAPT2" dump badging "$APK" | tee badging.txt | head -n 3
+          grep -q "package: name='com.trainingskompas.app.exportproef'" badging.txt
+          grep -q "versionName='[0-9.]*-exportproef'" badging.txt
+          "$AAPT2" dump permissions "$APK" | tee permissions.txt
+          if grep -Eq "WRITE_EXTERNAL_STORAGE|READ_EXTERNAL_STORAGE|MANAGE_EXTERNAL_STORAGE|READ_MEDIA_" permissions.txt; then echo "::error::algemene opslagrechten in de APK"; exit 1; fi
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK" | tee certs.txt
+          grep -q "CN=Android Debug" certs.txt
+          mkdir -p dist
+          cp "$APK" "dist/Trainingskompas-exportproef-${GITHUB_SHA::9}.apk"
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          git rev-parse HEAD > dist/commit.txt
+          # Bewijs ook als annotatie (leesbaar via de check-run-API, zonder logtoegang).
+          echo "::notice title=exportproef-apk::$(cat dist/SHA256SUMS.txt) commit=$(cat dist/commit.txt) package=com.trainingskompas.app.exportproef"
+      - name: Report native unit test counts
+        if: always()
+        run: |
+          for f in android/app/build/test-results/testDebugUnitTest/*.xml; do
+            [ -f "$f" ] || continue
+            echo "::notice title=native-unit-tests::$(grep -o '<testsuite [^>]*' "$f" | grep -oE '(name|tests|failures|errors|skipped)="[^"]*"' | tr '\n' ' ')"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trainingskompas-exportproef-apk
+          path: dist/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-unit-test-rapport
+          path: android/app/build/reports/tests/
+          retention-days: 14
+
+  emulator-instrumentatie:
+    name: Emulator-instrumentatie API ${{ matrix.api }} (synthetische gegevens)
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Android 11 (API 30): zelfde versie als de fysieke Galaxy A70; DocumentsUI-selecteerbaarheid + ContentResolver.
+          - api: 30
+            klassen: com.trainingskompas.app.export.ContentBestemmingInstrumentedTest,com.trainingskompas.app.export.ImportKiezerSelecteerbaarheidTest
+          - api: 34
+            klassen: com.trainingskompas.app.export.ContentBestemmingInstrumentedTest,com.trainingskompas.app.export.ImportKiezerSelecteerbaarheidTest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - run: npm ci
+      - run: npm run cap:sync
+      - run: chmod +x android/gradlew
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Instrumentatietests op de emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: false
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash tools/ci/run-instrumentation.sh ${{ matrix.klassen }}
+      - name: Report instrumentation test counts
+        if: always()
+        run: |
+          found=0
+          while IFS= read -r f; do
+            [ -n "$f" ] || continue
+            found=1
+            echo "::notice title=emulator-api${{ matrix.api }}::$(grep -o '<testsuite [^>]*' "$f" | grep -oE '(name|tests|failures|errors|skipped)="[^"]*"' | tr '\n' ' ')"
+            grep -oE '<testcase [^>]*name="[^"]*"' "$f" | grep -oE 'name="[^"]*"' | sed 's/^/testcase /' || true
+            python3 tools/ci/junit-annotaties.py "$f" "emulator-api${{ matrix.api }}" || true
+          done < <(find android/app/build/outputs/androidTest-results -name '*.xml' 2>/dev/null)
+          if [ "$found" = 0 ]; then echo "::warning title=emulator-api${{ matrix.api }}::geen testresultaten gevonden"; fi
+          if [ -f instrumentatie.log ]; then
+            grep -E "error:|FAILED|What went wrong|Execution failed|AssertionError|Exception:|INSTALL_FAILED|Tests on .* failed|> Task .*FAILED" instrumentatie.log | head -n 4 | while IFS= read -r regel; do
+              echo "::error title=emulator-api${{ matrix.api }}::$(echo "$regel" | cut -c1-400)"
+            done
+            grep -E "Finished [0-9]+ tests|Tests on .* (passed|failed)|BUILD (SUCCESSFUL|FAILED)" instrumentatie.log | head -n 10 | while IFS= read -r regel; do
+              echo "::notice title=emulator-api${{ matrix.api }}::$(echo "$regel" | cut -c1-300)"
+            done
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-instrumentatie-rapport-api${{ matrix.api }}
+          path: android/app/build/reports/androidTests/
+          retention-days: 14

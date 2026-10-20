@@ -1,5 +1,11 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-32 Herstelpreview: betrouwbare inhoudsvergelijking (20 oktober 2026)
+
+- **Herstelpreview.** Gelijkheid ("staat al op dit toestel", "al op de server") wordt beslist op een volledige canonieke inhoudsvergelijking; de 32-bits vingerafdruk is alleen nog een aanduiding. Een veld `__proto__` blijft gewone data en telt mee.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470269.
+- **Documenten.** `docs/TK_HERSTELPREVIEW_CANON_HERSTEL_20261020.md`; voorstel Android-export `docs/TK_ANDROID_EXPORT_VOORSTEL_20261020.md`.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-30..31 Review reddingskopie en herstelpreview (19 oktober 2026)
 
 - **Reddingskopie gecorrigeerd (review #566).** Echte wachtrij-items komen nu in de kopie (de eerdere versie sloeg ze allemaal over); in de Android-app geen schijnsucces meer (browserdownload werkt daar niet); strikte wachtrijlezing; PBKDF2 600.000 iteraties (v1-bestanden blijven leesbaar); groottegrenzen en strikte validatie; markering van weggelaten of genormaliseerde velden.

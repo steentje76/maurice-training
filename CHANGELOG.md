@@ -1,5 +1,12 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-34 Herstelpreview kiest de eigen Android-export (20 oktober 2026)
+
+- **Herstel blocker T3.** Het in de app gemaakte `.tkbackup`-bestand (type `application/octet-stream`) was in de Android-bestandskiezer van de herstelpreview uitgeschakeld: Capacitor vertaalt `.tkbackup` naar niets, waardoor alleen `application/json` overbleef. Beide bestandsinvoeren accepteren nu precies `.tkbackup`, `application/octet-stream` en `application/json`; oude en nieuwe kopieën zijn kiesbaar. Alle inhouds-, wachtzin-, eigenaar- en accountcontroles blijven verplicht; MIME of naam keurt niets goed.
+- **Exportmelding.** Na een export: aanwezige bronnen, geëxporteerd (aantal records per bron), overgeslagen met reden en niet exporteerbaar (toestel/systeem), zonder inhoud. Herstelbaarheid blijkt alleen uit de herstelpreview.
+- **Tests.** Emulator API 30 en 34 met de echte DocumentsUI (oud: uitgeschakeld, nieuw: kiesbaar). SW-cache v470271.
+- **Documenten.** `docs/TK_ANDROID_MIME_HERSTEL_20261020.md`, testprotocol versie 2.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-33 Android native export van de reddingskopie (20 oktober 2026)
 
 - **Android.** De bestaande knop "Versleuteld bestand maken" slaat in de app op via het Android-opslagdialoog (eigen plugin, Storage Access Framework, geen opslagrechten). Het bestand wordt na het schrijven volledig teruggelezen en op grootte en SHA-256 gecontroleerd; alleen dan: "Versleutelde kopie weggeschreven en teruggelezen." Annuleren, schrijf-, lees- of vergelijkingsfouten en een accountwissel worden nooit als gelukt gemeld; een onvolledig bestand wordt verwijderd.

@@ -56,7 +56,7 @@ Er is geen encryptie in Java. De herstelpreview uit #568/#569 leest het bestand.
 
 | Suite | Resultaat | RED op `adaf1e4` |
 |---|---|---|
-| `TkExportSessieTest` (JUnit, native kern; lokaal met JDK 21 en een minimale JUnit-shim, in CI met Gradle) | 17/17 | klasse bestaat niet |
+| `TkExportSessieTest` (JUnit, native kern; lokaal met JDK 21 en een minimale JUnit-shim, in CI met Gradle) | 16/16 (gecorrigeerd 20-10: eerder ten onrechte 17/17 vermeld; CI-annotatie `tests="16" failures="0"`) | klasse bestaat niet |
 | `fNativeBackupExport` (echt exportblok + module, nep-plugin met het native contract) | 38/38 | N0 RED; met de module meegekopieerd 22 RED (UI weigert nog) |
 | `fNativeBackupExportChromium` (echte UI, IndexedDB, WebCrypto; preview opent het bestand) | 7/7 | `TKNativeExport is not defined` |
 | `fLocalEncryptedBackupChromium` (scenario "native zonder plugin" aangepast aan het nieuwe gedrag) | 11/11 | — |

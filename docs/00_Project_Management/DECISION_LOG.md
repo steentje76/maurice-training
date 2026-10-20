@@ -3345,3 +3345,14 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 4. Testinstallaties gebruiken alleen de variant `com.trainingskompas.app.exportproef`.
 
 **Niet besloten (PO).** Installatie op een fysiek toestel volgens het testprotocol; Android-release.
+
+## DEC-SEC-008 — Bestandskiezer herstelpreview: expliciet MIME-contract (20 oktober 2026)
+
+**Context.** Fysieke test: het eigen exportbestand (`application/octet-stream`) was in de Android-kiezer uitgeschakeld, omdat Capacitor 6 de onbekende extensie `.tkbackup` laat wegvallen en alleen `application/json` doorgeeft.
+
+**Besluit (technisch).**
+1. Beide bestandsinvoeren: `accept=".tkbackup,application/octet-stream,application/json"`. Geen wildcard.
+2. De native export blijft `application/octet-stream` (`EXPORT_MIME`). Export als `application/json` is afgewezen: providers voegen dan `.json` toe en bestaande kopieën blijven onkiesbaar.
+3. MIME en extensie keuren niets goed; de envelop, de cryptografie, de inhoudsvalidatie en de eigenaar- en accountcontroles beslissen.
+
+**Niet besloten (PO).** Fysieke heracceptatie volgens protocol v2; Android-release.

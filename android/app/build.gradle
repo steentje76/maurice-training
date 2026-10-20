@@ -59,6 +59,17 @@ android {
             versionNameSuffix "-exportproef"
             matchingFallbacks = ['debug']
         }
+        // TK-REL-SEC-34: tweede, aanvullende testvariant voor de fysieke heracceptatie van het MIME-herstel.
+        // Eigen applicationId (com.trainingskompas.app.exportproefmime), naast de app en naast de eerdere
+        // testvariant te installeren; overschrijft of wist geen van beide. Eigen app-label via de bronset
+        // src/exportproefmime (TK MIME-proef). Ondertekening erft via initWith van debug, nooit release.
+        // Bouwen: ./gradlew assembleExportproefmime.
+        exportproefmime {
+            initWith debug
+            applicationIdSuffix ".exportproefmime"
+            versionNameSuffix "-exportproefmime"
+            matchingFallbacks = ['debug']
+        }
         release {
             // Bewust GEEN debug-ondertekening als terugval: een debug-getekend artefact
             // mag nooit per ongeluk als release de deur uit.

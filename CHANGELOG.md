@@ -1,5 +1,12 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — TK-REL-SEC-34 heracceptatie: testvariant TK MIME-proef (20 oktober 2026)
+
+- **Testvariant.** Buildtype `exportproefmime` met applicationId `com.trainingskompas.app.exportproefmime`, versionName-suffix `-exportproefmime` en label "TK MIME-proef"; debug-ondertekend. Naast de app en naast `…exportproef` te installeren; die blijven ongewijzigd (DEC-SEC-009).
+- **CI.** Aparte job `exportproefmime-apk`: bouw uit de PR-head-commit, controle van pakketnaam, label, opslagrechten, ondertekening en verpakt MIME-contract; artifact `trainingskompas-exportproefmime-apk`.
+- **Niet gewijzigd.** App-code, web, schema, signing credentials, versionCode, SW-cache.
+- **Documenten.** Testprotocol versie 3.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-34 Herstelpreview kiest de eigen Android-export (20 oktober 2026)
 
 - **Herstel blocker T3.** Het in de app gemaakte `.tkbackup`-bestand (type `application/octet-stream`) was in de Android-bestandskiezer van de herstelpreview uitgeschakeld: Capacitor vertaalt `.tkbackup` naar niets, waardoor alleen `application/json` overbleef. Beide bestandsinvoeren accepteren nu precies `.tkbackup`, `application/octet-stream` en `application/json`; oude en nieuwe kopieën zijn kiesbaar. Alle inhouds-, wachtzin-, eigenaar- en accountcontroles blijven verplicht; MIME of naam keurt niets goed.

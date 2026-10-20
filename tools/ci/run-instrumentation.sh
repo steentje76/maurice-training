@@ -6,12 +6,15 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG="$ROOT/instrumentatie.log"
 echo "::notice title=emulator-script::gestart; sdk=$(adb shell getprop ro.build.version.sdk 2>&1 | tr -d '\r')"
 # Animaties uit (zelf, zodat een fout hierin de test niet blokkeert).
+adb logcat -c || true
 for k in window_animation_scale transition_animation_scale animator_duration_scale; do adb shell settings put global "$k" 0 || true; done
 cd "$ROOT/android"
 ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace \
   "-Pandroid.testInstrumentationRunnerArguments.class=$1" 2>&1 | tee "$LOG"
 rc=$?
 echo "::notice title=emulator-script::gradle exit=$rc"
+# Kiezerstand uit de test (alleen synthetische bestandsnamen; tag TKKIEZER).
+adb logcat -d -s TKKIEZER:I 2>/dev/null | grep "stand=" | head -n 4 | while IFS= read -r r; do echo "::notice title=emulator-kiezer::$(echo "$r" | cut -c1-500)"; done
 # JUnit-XML zoeken (pad verschilt per AGP-versie) en als annotaties tonen.
 # Let op: het pad bevat spaties ("emulator-5554 - 11").
 find "$ROOT/android" -path '*/build/*' -name 'TEST-*.xml' -newer "$ROOT/package.json" 2>/dev/null | head -n 5 | while IFS= read -r f; do

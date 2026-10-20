@@ -113,13 +113,15 @@ public class ImportKiezerSelecteerbaarheidTest {
         ctx().startActivity(i);
         UiObject2 item = d.wait(Until.findObject(By.text(naam)), 4000);
         if (item == null) {
-            UiObject2 menu = d.wait(Until.findObject(By.desc("Show roots")), WACHT);
-            if (menu != null) menu.click();
-            UiObject2 dl = d.wait(Until.findObject(By.text("Downloads")), WACHT);
-            assertNotNull("root Downloads niet gevonden", dl);
-            dl.click();
+            d.waitForIdle();
+            klik(d, By.desc("Show roots"), false);
+            assertTrue("root Downloads niet gevonden", klik(d, By.text("Downloads"), true));
+            d.waitForIdle();
             item = d.wait(Until.findObject(By.text(naam)), WACHT);
         }
+        if (item == null) { laatsteDetail = "pkg=" + d.getCurrentPackageName(); d.pressBack(); d.pressBack(); return Stand.VERBORGEN; }
+        d.waitForIdle();
+        item = d.wait(Until.findObject(By.text(naam)), WACHT);
         if (item == null) { d.pressBack(); d.pressBack(); return Stand.VERBORGEN; }
         boolean aan = true;
         StringBuilder sb = new StringBuilder("pkg=").append(d.getCurrentPackageName()).append(" types=").append(java.util.Arrays.toString(types));
@@ -133,6 +135,16 @@ public class ImportKiezerSelecteerbaarheidTest {
         return aan ? Stand.SELECTEERBAAR : Stand.UITGESCHAKELD;
     }
 
+    /** Klikt op een element; zoekt opnieuw als DocumentsUI het intussen heeft hertekend (StaleObjectException). */
+    private static boolean klik(UiDevice d, androidx.test.uiautomator.BySelector sel, boolean verplicht) {
+        for (int poging = 0; poging < 4; poging++) {
+            UiObject2 o = d.wait(Until.findObject(sel), poging == 0 ? WACHT : 2000);
+            if (o == null) { if (!verplicht) return false; continue; }
+            try { o.click(); return true; } catch (androidx.test.uiautomator.StaleObjectException e) { d.waitForIdle(); }
+        }
+        return false;
+    }
+
     @Test
     public void oudeAcceptLijstSchakeltExportUit() throws Exception {
         String naam = "tkproef-oud-" + System.currentTimeMillis() + ".tkbackup";
@@ -141,6 +153,7 @@ public class ImportKiezerSelecteerbaarheidTest {
         assertEquals(1, types.length);
         assertEquals("application/json", types[0]);
         Stand s = stand(types, naam);
+        android.util.Log.i("TKKIEZER", "oud stand=" + s + " " + laatsteDetail);
         assertTrue("reproductie van het defect: met alleen application/json hoort het bestand niet selecteerbaar te zijn, stand=" + s + " " + laatsteDetail + " mime=" + mimeNaInvoegen, s != Stand.SELECTEERBAAR);
     }
 
@@ -150,7 +163,9 @@ public class ImportKiezerSelecteerbaarheidTest {
         maakDownload(naam);
         String[] types = geldigeTypes(acceptUitApp("tk-restore-file"));
         assertTrue(java.util.Arrays.asList(types).contains(TkBestandOpslaanPlugin.EXPORT_MIME));
-        assertEquals("herstelpreview: native export moet selecteerbaar zijn", Stand.SELECTEERBAAR, stand(types, naam));
+        Stand s = stand(types, naam);
+        android.util.Log.i("TKKIEZER", "app stand=" + s + " " + laatsteDetail);
+        assertEquals("herstelpreview: native export moet selecteerbaar zijn " + laatsteDetail, Stand.SELECTEERBAAR, s);
         String[] check = geldigeTypes(acceptUitApp("tk-backup-file"));
         assertTrue(java.util.Arrays.asList(check).contains(TkBestandOpslaanPlugin.EXPORT_MIME));
     }

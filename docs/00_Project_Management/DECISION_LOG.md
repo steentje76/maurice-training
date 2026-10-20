@@ -3356,3 +3356,14 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 3. MIME en extensie keuren niets goed; de envelop, de cryptografie, de inhoudsvalidatie en de eigenaar- en accountcontroles beslissen.
 
 **Niet besloten (PO).** Fysieke heracceptatie volgens protocol v2; Android-release.
+
+## DEC-SEC-009 — Heracceptatie MIME-herstel op een aparte testvariant (20 oktober 2026)
+
+**Context.** De eerdere testvariant `com.trainingskompas.app.exportproef` staat met proefgegevens op het fysieke toestel. Bijwerken of wissen daarvan is uitgesloten; de heracceptatie vraagt wel een schone installatie met het MIME-herstel.
+
+**Besluit (technisch).**
+1. Extra buildtype `exportproefmime`: `initWith debug`, `applicationIdSuffix ".exportproefmime"`, `versionNameSuffix "-exportproefmime"`. Eigen label "TK MIME-proef" via de bronset `src/exportproefmime` (alleen `strings.xml`: geen manifest, code of rechten).
+2. `com.trainingskompas.app`, `…exportproef`, de releaseondertekening, signing credentials en versionCode blijven ongewijzigd.
+3. Aparte CI-job bouwt uit de exacte PR-head-commit (niet de merge-commit) en controleert pakketnaam, label, opslagrechten (gelijk aan exportproef), debugondertekening en het verpakte MIME-contract; eigen artifact met SHA-256 en broncommit.
+
+**Niet besloten (PO).** Uitkomst van de fysieke heracceptatie (protocol v3); verwijderen van testvarianten; Android-release.

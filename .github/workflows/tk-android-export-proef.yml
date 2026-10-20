@@ -5,6 +5,8 @@ name: Trainingskompas Android Export Proef
 # - geïsoleerde debug-APK met eigen applicationId (com.trainingskompas.app.exportproef), debug-ondertekend;
 #   kan de bestaande app nooit overschrijven; geen productiesleutel, geen installatie op een fysiek toestel;
 # - instrumentatietests op een emulator met synthetische gegevens (ContentResolver-route: schrijven, sync, teruglezen).
+# TK-REL-SEC-34 (heracceptatie): aparte job voor de tweede geïsoleerde variant com.trainingskompas.app.exportproefmime
+#   (label "TK MIME-proef"), gebouwd uit de exacte PR-head-commit, met eigen controles en een eigen APK-artifact.
 on:
   pull_request:
     branches:
@@ -163,4 +165,92 @@ jobs:
         with:
           name: emulator-instrumentatie-rapport-api${{ matrix.api }}
           path: android/app/build/reports/androidTests/
+          retention-days: 14
+
+  exportproefmime-apk:
+    name: Exportproefmime-APK (TK MIME-proef, heracceptatie)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # Bewust de exacte PR-head-commit en niet de merge-commit van GitHub: de APK moet één op één
+      # herleidbaar zijn tot een commit op de branch.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - run: npm ci
+      - name: Sync Capacitor Android assets
+        run: npm run cap:sync
+      - run: chmod +x android/gradlew
+      - name: Build exportproefmime APK (+ exportproef als vergelijking)
+        working-directory: android
+        run: ./gradlew :app:assembleExportproefmime :app:assembleExportproef --no-daemon
+      - name: Verify isolation, label, permissions, signing and MIME contract
+        run: |
+          set -euo pipefail
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          APK=$(ls android/app/build/outputs/apk/exportproefmime/*.apk | head -n1)
+          REF=$(ls android/app/build/outputs/apk/exportproef/*.apk | head -n1)
+          COMMIT=$(git rev-parse HEAD)
+          "$BT/aapt2" dump badging "$APK" > badging.txt
+          head -n 3 badging.txt
+          # Pakketnaam exact; nooit een van de bestaande pakketten.
+          grep -q "^package: name='com.trainingskompas.app.exportproefmime' " badging.txt
+          if grep -Eq "^package: name='com\.trainingskompas\.app(\.exportproef)?' " badging.txt; then echo "::error::pakketnaam valt samen met een bestaand pakket"; exit 1; fi
+          grep -q "versionName='[0-9.]*-exportproefmime'" badging.txt
+          grep -q "versionCode='47025'" badging.txt
+          grep -q "^application-label:'TK MIME-proef'$" badging.txt
+          grep -q "^launchable-activity: name='com.trainingskompas.app.MainActivity'" badging.txt
+          grep -q "debuggable" badging.txt
+          # Opslagrechten: geen algemene opslagrechten, en dezelfde rechtenset als de eerder geaccepteerde exportproef.
+          "$BT/aapt2" dump permissions "$APK" | tee permissions.txt
+          if grep -Eq "WRITE_EXTERNAL_STORAGE|READ_EXTERNAL_STORAGE|MANAGE_EXTERNAL_STORAGE|READ_MEDIA_" permissions.txt; then echo "::error::algemene opslagrechten in de APK"; exit 1; fi
+          "$BT/aapt2" dump permissions "$REF" > permissions-ref.txt
+          diff <(grep -v '^package:' permissions.txt | sed 's/com\.trainingskompas\.app\.exportproefmime/PKG/g' | sort) \
+               <(grep -v '^package:' permissions-ref.txt | sed 's/com\.trainingskompas\.app\.exportproef/PKG/g' | sort)
+          # Debugondertekening, nooit de productiesleutel.
+          "$BT/apksigner" verify --verbose --print-certs "$APK" | tee certs.txt
+          grep -q "CN=Android Debug" certs.txt
+          CERT=$(grep -m1 "certificate SHA-256 digest" certs.txt | awk '{print $NF}')
+          # MIME-herstel zit in de verpakte app: exact contract op beide bestandsinvoeren, geen wildcard.
+          unzip -p "$APK" assets/public/index.html > packaged-index.html
+          N=$(grep -o 'accept="\.tkbackup,application/octet-stream,application/json"' packaged-index.html | wc -l)
+          test "$N" -ge 2 || { echo "::error::accept-contract ontbreekt in de verpakte index.html ($N)"; exit 1; }
+          if grep -Eq 'id="tk-(backup|restore)-file"[^>]*accept="\*/\*"' packaged-index.html; then echo "::error::wildcard-accept"; exit 1; fi
+          unzip -p "$APK" 'classes*.dex' | grep -a -q 'TkBestandOpslaanPlugin'
+          VNAME=$(grep -o "versionName='[^']*'" badging.txt | cut -d"'" -f2)
+          mkdir -p dist-mime
+          NAAM="Trainingskompas-exportproefmime-${VNAME%-exportproefmime}-${COMMIT::9}.apk"
+          cp "$APK" "dist-mime/$NAAM"
+          (cd dist-mime && sha256sum "$NAAM" > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          {
+            echo "commit=$COMMIT"
+            echo "package=com.trainingskompas.app.exportproefmime"
+            echo "label=TK MIME-proef"
+            echo "versionName=$VNAME"
+            echo "signing=Android Debug (debug-sleutel van de CI-runner)"
+            echo "cert_sha256=$CERT"
+            echo "accept_contract_count=$N"
+          } > dist-mime/BUILDINFO.txt
+          cat dist-mime/BUILDINFO.txt
+          echo "::notice title=exportproefmime-apk::$(cat dist-mime/SHA256SUMS.txt) commit=$COMMIT package=com.trainingskompas.app.exportproefmime label=TK MIME-proef versionName=$VNAME cert_sha256=$CERT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trainingskompas-exportproefmime-apk
+          path: dist-mime/
           retention-days: 14

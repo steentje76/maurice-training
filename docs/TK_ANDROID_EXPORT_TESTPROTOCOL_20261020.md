@@ -1,13 +1,13 @@
 # Testprotocol fysiek Android-toestel — native export en herstelpreview (TK-REL-SEC-33/34)
 
-**Versie 2.** Bijgewerkt na de fysieke test op de Galaxy A70 (Android 11). Daar was blocker T3: de herstelpreview kon het eigen exportbestand niet selecteren. De oorzaak en het herstel staan in `docs/TK_ANDROID_MIME_HERSTEL_20261020.md`.
+**Versie 3.** Versie 2 volgde op de fysieke test op de Galaxy A70 (Android 11), met blocker T3: de herstelpreview kon het eigen exportbestand niet selecteren (oorzaak en herstel: `docs/TK_ANDROID_MIME_HERSTEL_20261020.md`). Versie 3 voert de heracceptatie uit op een **aparte, schone testvariant** `com.trainingskompas.app.exportproefmime` (label "TK MIME-proef"), zodat de eerder geïnstalleerde `com.trainingskompas.app.exportproef` en de bestaande app onaangeroerd blijven.
 
 **Uitvoering:** onafhankelijk (ChatGPT) op het verbonden toestel. Geautomatiseerde tests (node, Chromium, emulator) zijn **geen** bewijs voor deze scenario's. Elk scenario moet op het fysieke toestel zelf worden aangetoond.
 
 ## 0. Harde grenzen
 
-- Installeer **alleen** `com.trainingskompas.app.exportproef`, en alleen na nieuwe expliciete toestemming van de eigenaar.
-- Raak de bestaande Trainingskompas-installatie niet aan: niet bijwerken, niet verwijderen, geen `pm clear`.
+- Installeer voor de heracceptatie **alleen** `com.trainingskompas.app.exportproefmime` (label "TK MIME-proef"), en pas nadat pakketnaam, SHA-256 en broncommit van de APK zijn geverifieerd (§ 1). De eigenaar heeft voor deze variant toestemming gegeven (20-10-2026).
+- Raak `com.trainingskompas.app` en `com.trainingskompas.app.exportproef` niet aan: niet bijwerken, niet vervangen, niet verwijderen, geen `pm clear`. Gebruik nooit `adb install -r` met de exportproefmime-APK als een van deze pakketten het doel zou zijn.
 - Gebruik alleen het testaccount (Radio) en synthetische gegevens. Geen productieaccount.
 - Lees geen wachtzinnen, tokens of accountgegevens uit: geen `run-as` op de bestaande app, geen dump van WebView-opslag.
 - Voer geen herstel uit; "Herstel uitvoeren" moet uitgeschakeld blijven.
@@ -19,16 +19,27 @@
 adb devices -l                                   # exact één toestel: SM-A705FN
 adb shell getprop ro.build.version.release       # 11
 adb shell pm list packages | grep trainingskompas
-#   verwacht: package:com.trainingskompas.app (bestaand, NIET aanraken)
-#             package:com.trainingskompas.app.exportproef (indien al aanwezig: oude testversie)
-sha256sum Trainingskompas-exportproef-<sha9>.apk   # moet gelijk zijn aan SHA256SUMS.txt / CI-annotatie
-aapt2 dump badging Trainingskompas-exportproef-<sha9>.apk | head -n 2
-#   verwacht: package: name='com.trainingskompas.app.exportproef' … versionName='4.70.25-exportproef'
+#   verwacht: package:com.trainingskompas.app              (bestaand, NIET aanraken)
+#             package:com.trainingskompas.app.exportproef  (eerdere testvariant, NIET aanraken)
+#             package:com.trainingskompas.app.exportproefmime ontbreekt nog
+APK=Trainingskompas-exportproefmime-4.70.25-<sha9>.apk  # uit CI-artifact trainingskompas-exportproefmime-apk
+sha256sum "$APK"                                 # moet gelijk zijn aan SHA256SUMS.txt én de CI-annotatie exportproefmime-apk
+cat BUILDINFO.txt                                # commit = PR-head-commit; package; label; cert_sha256
+aapt2 dump badging "$APK" | grep -E "^package:|^application-label:"
+#   verwacht: package: name='com.trainingskompas.app.exportproefmime' versionCode='47025' versionName='4.70.25-exportproefmime'
+#             application-label:'TK MIME-proef'
+apksigner verify --print-certs "$APK" | grep -E "Subject|SHA-256"   # CN=Android Debug; digest = cert_sha256
+for p in com.trainingskompas.app com.trainingskompas.app.exportproef; do
+  adb shell dumpsys package $p | grep -E "versionName|firstInstallTime|lastUpdateTime"   # beginwaarde vastleggen
+done
+adb install "$APK"                               # nieuwe installatie, ZONDER -r
 ```
 
-- **Bijwerken van de testvariant:** `adb install -r <apk>` is alleen toegestaan als het geïnstalleerde pakket exact `com.trainingskompas.app.exportproef` is. Een signature-mismatch betekent stoppen en melden; niet de-installeren zonder toestemming.
-- **Na de installatie:** `adb shell dumpsys package com.trainingskompas.app.exportproef | grep -E "versionName|firstInstallTime|lastUpdateTime"`.
-- **Bestaande app ongewijzigd:** `adb shell dumpsys package com.trainingskompas.app | grep -E "versionName|lastUpdateTime"` vóór en na de proef vastleggen; die moeten gelijk zijn.
+- **Stopcriteria vóór installatie:** afwijkende SHA-256, pakketnaam, label, broncommit of ondertekening; een al aanwezig `…exportproefmime`-pakket van een andere build. Dan niet installeren en melden.
+- **Ondertekening:** de APK is getekend met de debug-sleutel van de CI-runner. Een APK uit een latere CI-run heeft een andere sleutel; `adb install -r` daarover faalt met een signature-mismatch. Dan stoppen en melden; niet de-installeren zonder toestemming.
+- **Na de installatie:** `adb shell dumpsys package com.trainingskompas.app.exportproefmime | grep -E "versionName|firstInstallTime|lastUpdateTime"`.
+- **Bestaande pakketten ongewijzigd:** de dumpsys-waarden van `com.trainingskompas.app` en `com.trainingskompas.app.exportproef` vóór en na de proef moeten gelijk zijn.
+- **Schone opslag:** de nieuwe variant heeft eigen lokale gegevens. Log in met het testaccount Radio en maak de synthetische gegevens van § 2 opnieuw aan. Het oude exportbestand in Downloads (T3b) blijft via de kiezer bereikbaar; daarvoor zijn geen opslagrechten nodig.
 
 ## 2. Synthetische testgegevens (opdracht C)
 
@@ -62,17 +73,17 @@ Vul per scenario **Werkelijk**, **Bewijs** en **Uitkomst** (PASS/FAIL/BLOCKED) i
 | T9 | Export → direct na Opslaan uitloggen en met een tweede testaccount inloggen (indien haalbaar) | "ander account … afgebroken"; geen succes | Schermafbeelding | Timing; anders BLOCKED |
 | T10 | Vliegtuigmodus aan → export naar Downloads | Gelukt (alleen lokaal) | Schermafbeelding | — |
 | T11 | `adb logcat -c` vóór T1 en T3; daarna `adb logcat -d > log.txt`; zoeken naar de wachtzin, "Proef Kracht", `"data":"`, `access_token` | Geen treffers | `grep -c` per zoekterm (0) | — |
-| T12 | `adb shell dumpsys package com.trainingskompas.app.exportproef \| grep -A3 "runtime permissions"` en Instellingen → Apps → machtigingen | Geen opslag- of bestandsmachtiging | Uitvoer | — |
+| T12 | `adb shell dumpsys package com.trainingskompas.app.exportproefmime \| grep -A3 "runtime permissions"` en Instellingen → Apps → machtigingen | Geen opslag- of bestandsmachtiging | Uitvoer | — |
 
 ## 4. Afsluiting
 
 1. Vliegtuigmodus uit.
 2. Vulbestanden `tk-vul-*` verwijderen. Proefbestanden in Downloads blijven staan; ze zijn versleuteld met een wegwerpwachtzin.
-3. Leg `dumpsys package com.trainingskompas.app` opnieuw vast; het moet gelijk zijn aan de beginwaarde.
-4. De testvariant verwijderen alleen met toestemming van de eigenaar.
+3. Leg `dumpsys package` van `com.trainingskompas.app` en `com.trainingskompas.app.exportproef` opnieuw vast; beide moeten gelijk zijn aan de beginwaarde.
+4. De testvarianten verwijderen alleen met toestemming van de eigenaar.
 
 ## 5. Verslag
 
-Per scenario: handeling, verwacht, werkelijk, bewijs (bestandsnamen van schermafbeeldingen en dumps), PASS/FAIL/BLOCKED en restrisico. Vermeld ook toestel, Android-versie, de commit en de APK-SHA-256 uit de CI-annotatie, en de datum.
+Per scenario: handeling, verwacht, werkelijk, bewijs (bestandsnamen van schermafbeeldingen en dumps), PASS/FAIL/BLOCKED en restrisico. Vermeld ook toestel, Android-versie, pakketnaam (`com.trainingskompas.app.exportproefmime`), de commit en de APK-SHA-256 uit de CI-annotatie `exportproefmime-apk`, en de datum.
 
 **Definitieve acceptatie** vraagt minimaal T1, T2, T3, T3c, T3d, T3e, T4, T11 en T12 met PASS.

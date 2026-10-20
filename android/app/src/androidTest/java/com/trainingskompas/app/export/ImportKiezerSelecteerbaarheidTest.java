@@ -47,6 +47,8 @@ import java.util.regex.Pattern;
 public class ImportKiezerSelecteerbaarheidTest {
     private static final long WACHT = 10000;
     private final List<Uri> aangemaakt = new ArrayList<>();
+    private String laatsteDetail = "";
+    private String mimeNaInvoegen = "";
 
     private static Context ctx() { return InstrumentationRegistry.getInstrumentation().getTargetContext(); }
     private static UiDevice apparaat() { return UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()); }
@@ -83,6 +85,7 @@ public class ImportKiezerSelecteerbaarheidTest {
         v.put(MediaStore.MediaColumns.IS_PENDING, 1);
         Uri u = cr.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
         assertNotNull(u);
+        mimeNaInvoegen = cr.getType(u);
         aangemaakt.add(u);
         try (OutputStream o = cr.openOutputStream(u)) {
             o.write((TkExportSessie.ENVELOP_BEGIN + "\"data\":\"QUJD\"}").getBytes(StandardCharsets.US_ASCII));
@@ -119,8 +122,12 @@ public class ImportKiezerSelecteerbaarheidTest {
         }
         if (item == null) { d.pressBack(); d.pressBack(); return Stand.VERBORGEN; }
         boolean aan = true;
+        StringBuilder sb = new StringBuilder("pkg=").append(d.getCurrentPackageName()).append(" types=").append(java.util.Arrays.toString(types));
         UiObject2 o = item;
-        for (int n = 0; n < 5 && o != null; n++) { if (!o.isEnabled()) aan = false; o = o.getParent(); }
+        for (int n = 0; n < 5 && o != null; n++) {
+            sb.append(" [").append(o.getClassName()).append(" en=").append(o.isEnabled()).append(" cl=").append(o.isClickable()).append(']');
+            if (!o.isEnabled()) aan = false; o = o.getParent(); }
+        laatsteDetail = sb.toString();
         d.pressBack();
         d.pressBack();
         return aan ? Stand.SELECTEERBAAR : Stand.UITGESCHAKELD;
@@ -134,7 +141,7 @@ public class ImportKiezerSelecteerbaarheidTest {
         assertEquals(1, types.length);
         assertEquals("application/json", types[0]);
         Stand s = stand(types, naam);
-        assertTrue("reproductie van het defect: met alleen application/json hoort het bestand niet selecteerbaar te zijn, stand=" + s, s != Stand.SELECTEERBAAR);
+        assertTrue("reproductie van het defect: met alleen application/json hoort het bestand niet selecteerbaar te zijn, stand=" + s + " " + laatsteDetail + " mime=" + mimeNaInvoegen, s != Stand.SELECTEERBAAR);
     }
 
     @Test

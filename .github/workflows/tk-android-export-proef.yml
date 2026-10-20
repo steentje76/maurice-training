@@ -142,12 +142,13 @@ jobs:
         if: always()
         run: |
           found=0
-          for f in $(find android/app/build/outputs/androidTest-results -name '*.xml' 2>/dev/null); do
+          while IFS= read -r f; do
+            [ -n "$f" ] || continue
             found=1
             echo "::notice title=emulator-api${{ matrix.api }}::$(grep -o '<testsuite [^>]*' "$f" | grep -oE '(name|tests|failures|errors|skipped)="[^"]*"' | tr '\n' ' ')"
             grep -oE '<testcase [^>]*name="[^"]*"' "$f" | grep -oE 'name="[^"]*"' | sed 's/^/testcase /' || true
             python3 tools/ci/junit-annotaties.py "$f" "emulator-api${{ matrix.api }}" || true
-          done
+          done < <(find android/app/build/outputs/androidTest-results -name '*.xml' 2>/dev/null)
           if [ "$found" = 0 ]; then echo "::warning title=emulator-api${{ matrix.api }}::geen testresultaten gevonden"; fi
           if [ -f instrumentatie.log ]; then
             grep -E "error:|FAILED|What went wrong|Execution failed|AssertionError|Exception:|INSTALL_FAILED|Tests on .* failed|> Task .*FAILED" instrumentatie.log | head -n 4 | while IFS= read -r regel; do

@@ -13,7 +13,8 @@ cd "$ROOT/android"
 rc=$?
 echo "::notice title=emulator-script::gradle exit=$rc"
 # JUnit-XML zoeken (pad verschilt per AGP-versie) en als annotaties tonen.
-find "$ROOT/android" -path '*/build/*' -name '*.xml' -newer "$ROOT/package.json" 2>/dev/null | xargs -r grep -l '<testsuite' 2>/dev/null | head -n 5 | while IFS= read -r f; do
+# Let op: het pad bevat spaties ("emulator-5554 - 11").
+find "$ROOT/android" -path '*/build/*' -name 'TEST-*.xml' -newer "$ROOT/package.json" 2>/dev/null | head -n 5 | while IFS= read -r f; do
   echo "::notice title=emulator-xml::${f#$ROOT/}"
   python3 "$ROOT/tools/ci/junit-annotaties.py" "$f" "emulator-sdk" || true
 done

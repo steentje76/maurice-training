@@ -56,18 +56,48 @@
   }
   function checkOwner(uid){if(typeof uid!=='string'||uid.length<8||uid.length>128)throw fout('owner_required');}
   // Wachtrij: eigenaar in de payload of in een filter (user_id=eq.X) die niet de exporteur is → niet exporteren.
-  const FILTER_EIGENAAR=/(?:^|&)(user_id|owner_uid|p_user_id)=eq\.([^&]*)/g;
+  // SEC-570-02 (heracceptatie PR #570): ook tekstwaarden worden gecontroleerd. Een tekst die JSON is, wordt (begrensd)
+  // geparsed en met dezelfde regels doorzocht, ook genest en dubbel gecodeerd. Een tekst die een eigenaarskolom noemt
+  // maar niet te controleren is (ongeldige JSON, ander filterpatroon), telt als onverifieerbaar en wordt overgeslagen.
+  // Een eigenaarsveld moet exact de tekst van de exporteur zijn (geen String() van arrays/objecten/getallen).
+  // Uitkomst: null (geen andere eigenaar gevonden) of de reden om over te slaan.
+  const EIGENAAR_SLEUTEL=/^(user_id|owner_uid|p_user_id)$/i;
+  const NOEMT_EIGENAAR=/(?:^|[^A-Za-z0-9_])(user_id|owner_uid|p_user_id)(?:[^A-Za-z0-9_]|$)/i;
+  const ANDERE='payload_other_owner', ONVERIFIEERBAAR='payload_unverifiable';
+  function filterEigenaar(f,owner){
+    for(const deel of f.split('&')){
+      if(!deel)continue;
+      const i=deel.indexOf('='); let k,w;
+      try{ k=decodeURIComponent(i<0?deel:deel.slice(0,i)); w=i<0?'':decodeURIComponent(deel.slice(i+1)); }catch(_){ return ANDERE; }
+      if(EIGENAAR_SLEUTEL.test(k)){ if(w!=='eq.'+owner)return ANDERE; continue; }
+      // Eigenaarskolom elders in het filter (or=(user_id.eq.X), not.user_id…): niet eenduidig te controleren.
+      if(NOEMT_EIGENAAR.test(k)||NOEMT_EIGENAAR.test(w))return ONVERIFIEERBAAR;
+    }
+    return null;
+  }
+  function tekstEigenaar(s,owner,depth){
+    if(s.length>MAX_WAARDE)return ONVERIFIEERBAAR;
+    const t=s.trim();
+    if(t[0]==='{'||t[0]==='['||t[0]==='"'){
+      let p; try{ p=JSON.parse(t); }catch(_){ return NOEMT_EIGENAAR.test(s)?ONVERIFIEERBAAR:null; }
+      return embeddedOtherOwner(p,owner,depth+1);
+    }
+    return NOEMT_EIGENAAR.test(s)?ONVERIFIEERBAAR:null;
+  }
   function embeddedOtherOwner(v,owner,depth){
     depth=depth||0;
-    if(depth>25)return true;
-    if(!v||typeof v!=='object')return false;
-    if(Array.isArray(v))return v.some(x=>embeddedOtherOwner(x,owner,depth+1));
-    return Object.keys(v).some(k=>{
+    if(depth>25)return ONVERIFIEERBAAR;
+    if(typeof v==='string')return tekstEigenaar(v,owner,depth);
+    if(!v||typeof v!=='object')return null;
+    if(Array.isArray(v)){ for(const x of v){ const r=embeddedOtherOwner(x,owner,depth+1); if(r)return r; } return null; }
+    for(const k of Object.keys(v)){
       const x=v[k];
-      if(['user_id','owner_uid','p_user_id'].includes(k)&&x!=null&&String(x)!==owner)return true;
-      if(k==='filter'&&typeof x==='string'){ let m; FILTER_EIGENAAR.lastIndex=0; while((m=FILTER_EIGENAAR.exec(x))){ let w=m[2]; try{ w=decodeURIComponent(w); }catch(_){ return true; } if(w!==owner)return true; } }
-      return embeddedOtherOwner(x,owner,depth+1);
-    });
+      if(EIGENAAR_SLEUTEL.test(k)){ if(x!=null&&x!==owner)return ANDERE; continue; }
+      if(NOEMT_EIGENAAR.test(k)&&x!=null&&typeof x!=='object'&&x!==owner)return ONVERIFIEERBAAR;
+      if(k==='filter'&&typeof x==='string'){ const r=filterEigenaar(x,owner); if(r)return r; continue; }
+      const r=embeddedOtherOwner(x,owner,depth+1); if(r)return r;
+    }
+    return null;
   }
   function bronVoor(manifest,k){
     let found=null;
@@ -107,7 +137,12 @@
       const item=Object.create(null); for(const k of Object.keys(q)){ if(k!=='id'&&k!=='ts'&&k!=='owner_uid')item[k]=q[k]; }
       if(!Number.isSafeInteger(q.id)||q.id<0||(typeof item.table!=='string'&&typeof item.function!=='string')||METHODS.indexOf(item.method)<0){omissions.push({source:'offline_queue',reason:'invalid_queue_item'});continue;}
       if(CREDENTIAL_TABELLEN.indexOf(item.table)>=0){omissions.push({source:'offline_queue',reason:'credential_material'});continue;}
-      if(embeddedOtherOwner(item,owner)){omissions.push({source:'offline_queue',reason:'payload_other_owner'});continue;}
+      // SEC-570-02: offlineQueueAdd bewaart body/args altijd als object of array en filter als tekst. Een ander type
+      // (bv. een JSON-tekst als body: legacy of beschadigd) is geen productievorm: herkenbaar overslaan. Het
+      // wachtrijrecord zelf blijft onaangeroerd in maurice_offline/queue; prepare() leest alleen.
+      if((item.body!=null&&typeof item.body!=='object')||(item.args!=null&&typeof item.args!=='object')||(item.filter!=null&&typeof item.filter!=='string')){omissions.push({source:'offline_queue',reason:'unexpected_payload_type'});continue;}
+      const anders=embeddedOtherOwner(item,owner);
+      if(anders){omissions.push({source:'offline_queue',reason:anders});continue;}
       const st={redacted:false}; const value=clean(item,st);
       const e={storage:'offline_queue',key:String(q.id),value,source:'offline_wachtrij'}; if(st.redacted)e.redacted=true;
       entries.push(e);

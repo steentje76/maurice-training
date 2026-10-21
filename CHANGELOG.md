@@ -1,5 +1,12 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — SEC-570 Eigenaarscontrole serververificatie en back-upisolatie (21 oktober 2026)
+
+- **Serververificatie (SEC-570-01).** Een lokale rij waarvan het eigenaarsveld afwijkt van de opgegeven eigenaar is nooit meer "bevestigd op de server" (ook niet via het DELETE-bewijs). Een eigenaar, tabel, record-id of revisie die geen tekst of getal is, telt niet als identiteit. De de-installatiepoort telt alleen intern consistent bewijs.
+- **Reddingskopie (SEC-570-02).** Wachtrijrecords waarvan de payload (ook als JSON-tekst, genest of dubbel gecodeerd, of in een filter) een andere of niet te controleren eigenaar noemt, komen niet in de kopie en zijn zichtbaar als overgeslagen. Body/args die geen object zijn worden overgeslagen. De wachtrij zelf blijft ongewijzigd.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, authenticatie, versionCode, read-only herstelpreview. SW-cache v470271.
+- **Rapport.** `docs/TK_SEC570_HERSTEL_20261021.md`.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-32 Herstelpreview: betrouwbare inhoudsvergelijking (20 oktober 2026)
 
 - **Herstelpreview.** Gelijkheid ("staat al op dit toestel", "al op de server") wordt beslist op een volledige canonieke inhoudsvergelijking; de 32-bits vingerafdruk is alleen nog een aanduiding. Een veld `__proto__` blijft gewone data en telt mee.

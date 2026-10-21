@@ -8,6 +8,12 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## SEC-570 herstel (21 oktober 2026 — Draft-PR bovenop integratie-PR #570)
+
+- Serververificatie: een tegenstrijdige lokale eigenaar of niet-primitieve identiteit is nooit SERVER_VERIFIED; de poort telt alleen intern consistent bewijs (DEC-SEC-007).
+- Reddingskopie: wachtrijpayloads (ook JSON-tekst) met een andere of niet te controleren eigenaar worden herkenbaar overgeslagen; de wachtrij blijft ongewijzigd.
+- Read-only herstelpreview van bestaande bestanden ongewijzigd. Heracceptatie open. De-installatie blijft NO-GO.
+
 ## Reddingskopie en herstelpreview (19 oktober 2026 — TK-REL-SEC-29..31, Draft-PR's #566, #567 en fase 4B)
 
 - Versleutelde lokale reddingskopie (#566) na review gecorrigeerd (#567): echte wachtrij, geen schijnsucces in de Android-app, sterkere sleutelafleiding, strikte validatie.

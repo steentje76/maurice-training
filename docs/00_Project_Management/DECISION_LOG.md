@@ -3346,3 +3346,15 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 5. De read-only herstelpreview van bestaande bestanden blijft ongewijzigd om geldige gegevens in die bestanden niet onleesbaar te maken.
 
 **Niet besloten (PO/auditor).** Of de preview bestaande bestanden met zo'n afwijkend wachtrijitem moet weigeren of het item moet markeren.
+
+## DEC-SEC-008 — Een reddingskopie bevat geen credentialmateriaal, ook niet in tekst; bij twijfel overslaan, nooit herschrijven (21 oktober 2026)
+
+**Context.** De heracceptatie van PR #573 vond SEC-570-03: `clean()` verwijderde credentialvelden alleen uit objecten, waardoor een JSON-tekst met bijvoorbeeld `refresh_token` in een wachtrij- of `localStorage`-waarde in de versleutelde kopie terechtkwam (pre-existing in #570; geen normale schrijfroute die dit maakt).
+
+**Besluit (technisch).**
+1. Na `clean()` wordt elke waarde begrensd en lineair doorzocht op credentialmateriaal in tekst en JSON-tekst (`BAD_KEY`, `BAD_SOURCE`, `CREDENTIAL_TABELLEN`, JWT, Bearer). Een treffer of een niet te controleren waarde laat het item of de bron weg met een herkenbare reden.
+2. Tekst wordt nooit herschreven om een geheim te verwijderen, zodat een JSON-tekst niet ongemerkt van betekenis verandert. Exacte credentialvelden in objecten blijven verwijderd met markering (bestaand gedrag).
+3. De echte wachtrij en lokale gegevens worden niet gewijzigd. Een kopie blijft onvolledig (`complete:false`, `restoreAllowed:false`).
+4. Bestaande kopieën worden niet gemigreerd en blijven read-only leesbaar.
+
+**Niet besloten (PO).** Hoe om te gaan met bestaande kopieën van vóór deze versie (waarschuwing of weigering bij inspectie, of verwijdering door de gebruiker), en of detectie wordt uitgebreid naar sleutelloze geheimen.

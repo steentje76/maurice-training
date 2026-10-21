@@ -1,5 +1,11 @@
 # Trainingskompas — Changelog
 
+## Kandidaat (nog geen versie) — SEC-570-03 Geen credentials in tekstvelden van de reddingskopie (21 oktober 2026)
+
+- **Reddingskopie (SEC-570-03).** Wachtrij-items en lokale bronnen waarvan een tekst- of JSON-tekstveld (ook genest, dubbel gecodeerd of afgebroken) credentialmateriaal bevat (bv. `refresh_token`, een JWT of een Bearer-token), of met credentialachtige sleutels, komen niet meer in de kopie en zijn zichtbaar als overgeslagen. Tekst wordt nooit herschreven; de wachtrij blijft ongewijzigd. Begrensd tegen resource-uitputting.
+- **Niet gewijzigd.** Bestandsformaat, validatie, read-only herstelpreview, herstelknop (uit), schema, RLS, secrets, signing, authenticatie, versionCode. SW-cache v470272.
+- **Rapport.** `docs/TK_SEC570_HERSTEL_20261021.md` §7.
+
 ## Kandidaat (nog geen versie) — SEC-570 Eigenaarscontrole serververificatie en back-upisolatie (21 oktober 2026)
 
 - **Serververificatie (SEC-570-01).** Een lokale rij waarvan het eigenaarsveld afwijkt van de opgegeven eigenaar is nooit meer "bevestigd op de server" (ook niet via het DELETE-bewijs). Een eigenaar, tabel, record-id of revisie die geen tekst of getal is, telt niet als identiteit. De de-installatiepoort telt alleen intern consistent bewijs.

@@ -54,6 +54,66 @@
     }
     return value;
   }
+  // SEC-570-03 (heracceptatie PR #573): clean() verwijdert credentialvelden alleen uit objecten; een tekstwaarde
+  // (bv. een JSON-tekst met "refresh_token") bleef ongemoeid. geheimIn() doorzoekt een al geschoonde waarde op
+  // credentialmateriaal dat clean() niet betrouwbaar kan verwijderen zonder de tekst semantisch te wijzigen:
+  //  - tekst die een credentialsleutel (BAD_KEY) of -bron (BAD_SOURCE) als sleutel noemt ("…_token": / =), ook met
+  //    escapes (\"), percent-codering, een JWT of een Bearer-token;
+  //  - JSON-tekst (begrensd geparsed, ook genest en dubbel gecodeerd) met zo'n sleutel of een credentialtabel;
+  //  - objectsleutels die op BAD_SOURCE lijken (clean() verwijdert alleen exacte BAD_KEY-namen) en RPC-namen.
+  // Begrensd: diepte ≤ 25, per tekst ≤ MAX_WAARDE, totaal te doorzoeken tekst ≤ MAX_SCAN per item. Ongeldige JSON
+  // met \u-escapes, overschreden grenzen of te diepe nesting zijn niet te controleren. De aanroeper slaat het
+  // item dan over met een herkenbare reden; er wordt nooit tekst herschreven. Uitkomst: null of de reden.
+  // Alle patronen zijn lineair (ReDoS): begrensde kwantoren, geen onbegrensde tekenklasse vóór een vaste tekst.
+  const GEHEIM_SLEUTELS=BAD_KEY.source.replace(/^\^\(|\)\$$/g,'');
+  const TEKST_SLEUTEL=new RegExp('(?:^|[^A-Za-z0-9_])\\\\{0,8}["\']?(?:'+GEHEIM_SLEUTELS+')\\\\{0,8}["\']?\\s{0,8}[:=]','i');
+  const TEKST_BRON=new RegExp(BAD_SOURCE.source+'[A-Za-z0-9_-]{0,64}\\\\{0,8}["\']?\\s{0,8}[:=]','i');
+  const TEKST_BEARER=/\bBearer\s{1,8}[A-Za-z0-9._~+\/=-]{16}/i;
+  const TEKST_GEHEIM=[TEKST_SLEUTEL,TEKST_BRON,TEKST_BEARER];
+  // JWT: drie base64url-delen van ≥ 8 tekens, het eerste beginnend met "eyJ". Lineair: maximale reeksen van
+  // base64url-tekens en punten (zonder terugzoeken), daarna per reeks een eenvoudige controle.
+  const RUN_JWT=/[A-Za-z0-9_.-]+/g;
+  function bevatJwt(s){
+    RUN_JWT.lastIndex=0; let m;
+    while((m=RUN_JWT.exec(s))){
+      const d=m[0].split('.');
+      for(let i=0;i+2<d.length;i++)if(d[i].length>=8&&d[i].indexOf('eyJ')>=0&&d[i+1].length>=8&&d[i+2].length>=8)return true;
+    }
+    return false;
+  }
+  const MAX_SCAN=2*MAX_WAARDE;
+  const IN_TEKST='credential_in_text', CRED='credential_material', NIET_TE_CONTROLEREN='payload_unverifiable';
+  function tekstNoemtGeheim(s){
+    if(TEKST_GEHEIM.some(r=>r.test(s))||bevatJwt(s))return true;
+    // Percent-codering: per %XX decoderen (ASCII volstaat voor sleutelnamen); gooit nooit, dus één ongeldige
+    // reeks elders in de tekst kan de controle niet omzeilen.
+    if(/%[0-9A-Fa-f]{2}/.test(s)){ const d=s.replace(/%([0-9A-Fa-f]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16))); if(TEKST_GEHEIM.some(r=>r.test(d))||bevatJwt(d))return true; }
+    return false;
+  }
+  function geheimIn(v,st,depth,inTekst){
+    depth=depth||0;
+    if(depth>25)return NIET_TE_CONTROLEREN;
+    if(typeof v==='string'){
+      if(v.length>MAX_WAARDE||(st.scan=(st.scan||0)+v.length)>MAX_SCAN)return NIET_TE_CONTROLEREN;
+      if(tekstNoemtGeheim(v))return IN_TEKST;
+      const t=v.trim();
+      if(t[0]==='{'||t[0]==='['||t[0]==='"'){
+        let p; try{ p=JSON.parse(t); }catch(_){ return /\\u[0-9A-Fa-f]{4}/.test(t)?NIET_TE_CONTROLEREN:null; }
+        return geheimIn(p,st,depth+1,true);
+      }
+      return null;
+    }
+    if(!v||typeof v!=='object')return null;
+    if(Array.isArray(v)){ for(const x of v){ const r=geheimIn(x,st,depth+1,inTekst); if(r)return r; } return null; }
+    for(const k of Object.keys(v)){
+      const x=v[k];
+      if(BAD_KEY.test(k)||BAD_SOURCE.test(k))return inTekst?IN_TEKST:CRED;
+      if(k==='table'&&typeof x==='string'&&CREDENTIAL_TABELLEN.indexOf(x)>=0)return inTekst?IN_TEKST:CRED;
+      if(k==='function'&&typeof x==='string'&&BAD_SOURCE.test(x))return CRED;
+      const r=geheimIn(x,st,depth+1,inTekst); if(r)return r;
+    }
+    return null;
+  }
   function checkOwner(uid){if(typeof uid!=='string'||uid.length<8||uid.length>128)throw fout('owner_required');}
   // Wachtrij: eigenaar in de payload of in een filter (user_id=eq.X) die niet de exporteur is → niet exporteren.
   // SEC-570-02 (heracceptatie PR #570): ook tekstwaarden worden gecontroleerd. Een tekst die JSON is, wordt (begrensd)
@@ -121,8 +181,11 @@
       if(m.eigenaar==='geen'){omissions.push({source:m.id,reason:'no_personal_owner'});continue;}
       if(typeof raw!=='string'){omissions.push({source:m.id,reason:'unreadable'});continue;}
       if(raw.length>MAX_WAARDE){omissions.push({source:m.id,reason:'too_large'});continue;}
-      const st={redacted:false}; let value=raw;
-      try{value=JSON.stringify(clean(JSON.parse(raw),st));}catch(e){if(e.code==='nesting_too_deep')throw e; value=raw;}
+      const st={redacted:false}; let value=raw, geschoond, geparsed=false;
+      try{geschoond=clean(JSON.parse(raw),st); geparsed=true; value=JSON.stringify(geschoond);}catch(e){if(e.code==='nesting_too_deep')throw e; value=raw;}
+      // SEC-570-03: credentialmateriaal dat clean() niet kan verwijderen (in tekst of JSON-tekst): bron overslaan.
+      const geheimL=geheimIn(geparsed?geschoond:raw,{},0,false);
+      if(geheimL){omissions.push({source:m.id,reason:geheimL});continue;}
       if(seen.has(key))throw fout('duplicate_source');seen.add(key);
       const e={storage:'localStorage',key,value,source:m.id};
       if(st.redacted)e.redacted=true;
@@ -144,6 +207,9 @@
       const anders=embeddedOtherOwner(item,owner);
       if(anders){omissions.push({source:'offline_queue',reason:anders});continue;}
       const st={redacted:false}; const value=clean(item,st);
+      // SEC-570-03: credentialmateriaal dat clean() niet kan verwijderen: item overslaan, de wachtrij blijft intact.
+      const geheimQ=geheimIn(value,{},0,false);
+      if(geheimQ){omissions.push({source:'offline_queue',reason:geheimQ});continue;}
       const e={storage:'offline_queue',key:String(q.id),value,source:'offline_wachtrij'}; if(st.redacted)e.redacted=true;
       entries.push(e);
     }

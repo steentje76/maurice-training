@@ -12,7 +12,8 @@ v4.70.25
 
 - Serververificatie: een tegenstrijdige lokale eigenaar of niet-primitieve identiteit is nooit SERVER_VERIFIED; de poort telt alleen intern consistent bewijs (DEC-SEC-007).
 - Reddingskopie: wachtrijpayloads (ook JSON-tekst) met een andere of niet te controleren eigenaar worden herkenbaar overgeslagen; de wachtrij blijft ongewijzigd.
-- Read-only herstelpreview van bestaande bestanden ongewijzigd. Heracceptatie open. De-installatie blijft NO-GO.
+- Reddingskopie (SEC-570-03): items en bronnen met credentialmateriaal in tekst- of JSON-tekstvelden worden herkenbaar overgeslagen; bestaande kopieën niet gemigreerd (DEC-SEC-008).
+- Read-only herstelpreview van bestaande bestanden ongewijzigd. SEC-570-01/02 geaccepteerd voor de integratiebranch; heracceptatie SEC-570-03 open. De-installatie blijft NO-GO.
 
 ## Reddingskopie en herstelpreview (19 oktober 2026 — TK-REL-SEC-29..31, Draft-PR's #566, #567 en fase 4B)
 

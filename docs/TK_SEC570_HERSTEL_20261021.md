@@ -86,3 +86,73 @@ Zie de Draft-PR voor de volledige lokale lus en de GitHub-runs op de exacte hers
 ## 6. Aanbeveling
 
 Onafhankelijke heracceptatie op de exacte herstel-HEAD door de auditor: beide oorspronkelijke reproducties, `fSec570Herstel` met `TK_RED=1` tegen `d81f63b7`, `fSec570Mutants`, de Quality Gate en de echte Chromium-acceptatie. Daarna besluit over samenvoegen in de integratiebranch van #570. Geen merge, deploy of Android-handeling vanuit deze sprint.
+
+## 7. SEC-570-03 — credentials in tekst- en JSON-tekstvelden (vervolg op de heracceptatie van #573)
+
+**Bron:** heracceptatie PR #573, comment 6325896718 (SEC-570-01/02 ACCEPTED; SEC-570-03 MEDIUM, pre-existing in #570).
+**Oude HEAD #573:** `6e1d35fa4aaf4d205af9bd20b8f52439260daa83`. Nieuwe HEAD: zie de commit en de PR-comment.
+
+### Root cause
+`clean()` verwijdert credentialvelden (`BAD_KEY`, exacte namen) alleen uit objecten en laat elke tekstwaarde ongemoeid. Een JSON-tekst als veldwaarde (`meta:'{"refresh_token":"…"}'`), ook genest, dubbel gecodeerd of afgebroken, kwam daardoor ongewijzigd in de kopie. Hetzelfde gold voor `localStorage`-waarden, die door dezelfde `clean()` gaan. De eigenaarscontrole van SEC-570-02 zoekt alleen eigenaarskolommen, geen credentials. Verder gold `BAD_SOURCE` alleen voor bronsleutels, niet voor objectsleutels (`refreshToken`, `oauth_state`), en werden een geneste credentialtabel of RPC-naam niet herkend.
+
+### Herstel (alleen `core/localBackup.js`)
+`geheimIn()` doorzoekt na `clean()` de geschoonde waarde van elk wachtrij-item en elke `localStorage`-bron. Bij een treffer wordt het item of de bron **overgeslagen**, met een herkenbare reden. Tekst wordt nooit herschreven, zodat de JSON-tekst niet ongemerkt semantisch verandert.
+
+| Treffer | Reden |
+|---|---|
+| tekst die een `BAD_KEY`- of `BAD_SOURCE`-sleutel als sleutel noemt (`"…": `, `…=`), ook met escapes (`\"`), percent-codering, een JWT of een Bearer-token | `credential_in_text` |
+| JSON-tekst (geparsed, ook genest/dubbel gecodeerd) met zo'n sleutel of een credentialtabel | `credential_in_text` |
+| objectsleutel die op `BAD_SOURCE` lijkt (exacte `BAD_KEY`-namen verwijdert `clean()` al), geneste credentialtabel, RPC-naam die op `BAD_SOURCE` lijkt | `credential_material` |
+| tekst > 8 MB, totaal te doorzoeken tekst > 16 MB per item, diepte > 25, ongeldige JSON met `\u`-escapes | `payload_unverifiable` |
+
+Begrenzing: alle patronen zijn lineair (begrensde kwantoren; JWT via een lineaire scan over tokenreeksen). Gemeten op adversariële 1 MB-invoer (herhaalde `oauth`, `secret_`, backslashes, `eyJ`, spaties, `%41`, `Bearer`, quotes): ≤ 250 ms per item. Een eerste versie met `[A-Za-z0-9_-]*` vóór de bronnaam backtrackte kwadratisch; dit is door de K9-budgettest gevonden vóór commit en vervangen.
+
+Ongewijzigd bestaand gedrag: exacte `BAD_KEY`-velden in objecten worden verwijderd en het item wordt gemarkeerd (`redacted`). De eigenaarsisolatie van SEC-570-01/02 gaat vóór de credentialscan. `valideer()`, `inspect()`, `encrypt()` en de herstelpreview zijn niet gewijzigd. De echte wachtrij wordt niet aangeraakt (`prepare()` leest alleen). De kopie blijft `complete:false` en `restoreAllowed:false`; de UI noemt haar een deelkopie met het aantal overgeslagen items.
+
+### Testbewijs
+- **Auditorreproductie:** RED op `d81f63b7` en op `6e1d35fa` (canary in kopie, 1 entry), GREEN na herstel (0 entries, `credential_in_text`).
+- **`fSec570CredentialHerstel`:** 58/58 groen.
+  - RED-modus tegen de modules van `6e1d35fa`: 43 van 58 RED.
+  - RED-modus tegen de modules van `d81f63b7`: 46 van 58 RED.
+  - De overige scenario's zijn positieve controles of gevallen die bestaande redactie en SEC-570-02 al dekten.
+- **`fSec570CredentialMutants`:** ongemuteerde controle plus 15/15 mutanten gedood. N6 overleefde eerst, omdat het testgeval `refresh_token` gebruikte, dat ook onder `BAD_SOURCE` valt. Toegevoegd is een geval met een sleutel die alleen in `BAD_KEY` staat (`password`); de code is daarvoor niet gewijzigd.
+- **Testmatrix (opdrachtpunten 1–14):**
+  - K1 auditorreproductie.
+  - K2 tien `BAD_KEY`-sleutels en diepe nesting in JSON-tekst.
+  - K3 dubbel, drievoudig en afgebroken gecodeerd.
+  - K4 arrays.
+  - K5 RPC-args, RPC-sleutels en RPC-namen.
+  - K6 objecten: exacte sleutels geredigeerd, camelCase en `oauth_state` overgeslagen.
+  - K7 legacy en afwijkend: geneste credentialtabel, `\u`-escape, percent-codering, filter, `sleutel: waarde`, `oauth_code=`, JWT, Bearer.
+  - K8 ongeldige JSON en te diepe nesting.
+  - K9 grenzen: > 8 MB, > 16 MB totaal, 3 MB toegestaan, vertakte meervoudige codering.
+  - K10 geldige JSON-tekst, tekst en productievormen behouden.
+  - K11 nieuwe versleutelde kopie en een bestaand v1-bestand leesbaar.
+  - K12 eigenaarsisolatie gaat voor.
+  - K13 wachtrij byte-gelijk.
+  - K14 `complete:false` en `restoreAllowed:false`.
+  - L1–L3 `localStorage`-pad.
+- **Regressie:** zie de PR-comment. Geen bestaande test gewijzigd.
+
+### Backward compatibility
+- Het bestandsformaat (envelop, `DATA_FORMAT`, entryvelden), de validatie en de leesroute zijn ongewijzigd. Bestaande v1- en v2-bestanden blijven leesbaar (K11).
+- Er zijn geen nieuwe velden; alleen nieuwe omissieredenen (tekst ≤ 64, binnen de bestaande validatie).
+- Gedrag dat verandert in een nieuwe kopie:
+  - items en bronnen met credentialmateriaal in tekst, of met `BAD_SOURCE`-achtige objectsleutels, worden overgeslagen;
+  - `localStorage`-waarden dieper dan 25 niveaus worden overgeslagen (eerder geëxporteerd tot 32).
+- Productieschrijvers queuen geen credentialachtige sleutels of RPC-namen (geïnventariseerd in `index.html`). `refresh_token`/`access_token` komen alleen voor in de auth-sessiecode, niet in wachtrij- of `localStorage`-databronnen.
+
+### Credentialrisico in bestaande kopieën
+- `core/localBackup.js` staat niet op `main`. De reddingskopie is dus nooit via de productiedeploy beschikbaar geweest. In de Android-app weigert de functie (geen native opslagroute).
+- Een bestaande kopie met dit lek kan alleen gemaakt zijn via een Netlify-preview of een lokale build van een draftbranch, met afwijkende of legacy wachtrij- of `localStorage`-data.
+- Zo'n bestand is AES-256-GCM-versleuteld met de wachtzin van de gebruiker. Herstel is uitgeschakeld en de preview leest alleen.
+- Het herstel verandert zulke bestanden niet: er is geen migratie en de inhoud wordt bij inspectie niet opnieuw gecontroleerd. Het credential blijft in het bestand staan zolang dat bestaat.
+- PO-besluit nodig (open): bij `inspect()` waarschuwen of weigeren voor oudere bestanden, of gebruikers vragen kopieën van vóór deze versie te verwijderen. Een contentcontrole in `valideer()` zou zulke bestanden in hun geheel onleesbaar maken (zie beperking 2 in §5).
+
+### Resterende risico's en beperkingen
+1. Detectie is patroongebaseerd. Niet herkend worden:
+   - credentials zonder sleutelnaam en zonder JWT- of Bearer-vorm, zoals een kale opaque token of een base64-gecodeerd geheim;
+   - sleutelnamen buiten `BAD_KEY`/`BAD_SOURCE`, zoals `pin` of `otp`.
+2. Valse positieven zijn mogelijk, bijvoorbeeld een notitie met `password: …` of `token=…`. Het item wordt dan overgeslagen; het staat nog wel in de wachtrij en wordt gewoon verstuurd.
+3. Bestaande kopieën: zie hierboven.
+4. Geen fysiek Android-bewijs; niet van toepassing.

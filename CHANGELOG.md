@@ -1,5 +1,11 @@
 # Trainingskompas — Changelog
 
+## Kandidaat — SEC-570-03A dubbele URL-codering (22 oktober 2026)
+
+- Reddingskopie: maximaal vier URL-decodeerrondes bij credentialscreening; na overschrijding conservatief overslaan met payload_unverifiable.
+- Nieuwe onafhankelijke regressie-/mutatietests; serviceworker-cache v470273. Draft, NO MERGE / NO DEPLOY.
+
+
 ## Kandidaat (nog geen versie) — SEC-570-03 Geen credentials in tekstvelden van de reddingskopie (21 oktober 2026)
 
 - **Reddingskopie (SEC-570-03).** Wachtrij-items en lokale bronnen waarvan een tekst- of JSON-tekstveld (ook genest, dubbel gecodeerd of afgebroken) credentialmateriaal bevat (bv. `refresh_token`, een JWT of een Bearer-token), of met credentialachtige sleutels, komen niet meer in de kopie en zijn zichtbaar als overgeslagen. Tekst wordt nooit herschreven; de wachtrij blijft ongewijzigd. Begrensd tegen resource-uitputting.

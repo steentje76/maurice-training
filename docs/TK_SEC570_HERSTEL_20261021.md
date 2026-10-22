@@ -156,3 +156,7 @@ Ongewijzigd bestaand gedrag: exacte `BAD_KEY`-velden in objecten worden verwijde
 2. Valse positieven zijn mogelijk, bijvoorbeeld een notitie met `password: …` of `token=…`. Het item wordt dan overgeslagen; het staat nog wel in de wachtrij en wordt gewoon verstuurd.
 3. Bestaande kopieën: zie hierboven.
 4. Geen fysiek Android-bewijs; niet van toepassing.
+
+## SEC-570-03A (22 oktober 2026) — kandidaat, nog niet onafhankelijk geaccepteerd
+Extra fail-closed controle op meervoudige URL-codering van credentialnamen binnen offlinequeue, filterteksten en lokale reddingskopiebronnen. De scanner decodeert hoogstens vier rondes en inspecteert elke ronde; bij overblijvende percentcodering na die limiet wordt de bron conservatief overgeslagen als payload_unverifiable. Bestaande back-ups blijven onaangeroerd en leesbaar; originele wachtrijrecords veranderen niet.
+Nieuwe RED/GREEN-test: core/fSec570PercentDecode.test.js; nieuwe onafhankelijke mutantcontrole: core/fSec570PercentDecodeMutants.test.js. Serviceworker-cache v470273. Geen besluit tot merge, productie of Android-installatie.

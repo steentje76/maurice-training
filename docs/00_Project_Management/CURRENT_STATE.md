@@ -744,3 +744,5 @@ Gecontroleerde, technische uitfasering van het legacy Gym-model, uitgevoerd na e
 **Live, zelf uitgevoerde technische risicoreparatie:** een voorgenomen `on_conflict`-upsert op `memberships` bleek onbetrouwbaar (unique constraint bevat een nullable `team_id`, NULL-waarden zijn nooit gelijk aan elkaar) — vervangen door een expliciete select-dan-patch/post, live transactioneel getest.
 
 **Tests:** `core/fCanonicalGymTrackB.test.js` (nieuw, 9/9), `core/fGymTeamSecurity.test.js` bijgewerkt (17/17), `core/fAdminAuthGymRlsHardening.test.js` 1 assertie bijgewerkt (8/8). Release gate: 230/230. Cross-domain regressie (Organization/Team/Entitlements) 0 problemen. **ACTIVE LEGACY WRITE:** alleen het bewuste, gedocumenteerde dual-write op `users.gym_role`. **STATUS: TECHNICAL FOUNDATION CLOSED — READY FOR FUTURE GYM UX.** Volledig rapport: `docs/TRACK_B_CANONICAL_GYM_MIGRATION_REPORT.md`.
+
+- SEC-570-03A (22 oktober 2026): meervoudige URL-decodering kandidaat-herstel in Draft-PR #573; heracceptatie open, geen productie/Android.

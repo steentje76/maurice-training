@@ -83,11 +83,21 @@
   }
   const MAX_SCAN=2*MAX_WAARDE;
   const IN_TEKST='credential_in_text', CRED='credential_material', NIET_TE_CONTROLEREN='payload_unverifiable';
+  // SEC-570-03A: %25 encodes the percent sign of the next %XX.
+  // Check every layer with bounded, linear scans. On excess layers: fail closed.
+  const MAX_URL_DECODE_RONDES=4;
   function tekstNoemtGeheim(s){
     if(TEKST_GEHEIM.some(r=>r.test(s))||bevatJwt(s))return true;
-    // Percent-codering: per %XX decoderen (ASCII volstaat voor sleutelnamen); gooit nooit, dus één ongeldige
-    // reeks elders in de tekst kan de controle niet omzeilen.
-    if(/%[0-9A-Fa-f]{2}/.test(s)){ const d=s.replace(/%([0-9A-Fa-f]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16))); if(TEKST_GEHEIM.some(r=>r.test(d))||bevatJwt(d))return true; }
+    if(/%[0-9A-Fa-f]{2}/.test(s)){
+      let d=s;
+      for(let n=0;n<MAX_URL_DECODE_RONDES;n++){
+        const next=d.replace(/%([0-9A-Fa-f]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+        if(next===d)break;
+        d=next;
+        if(TEKST_GEHEIM.some(r=>r.test(d))||bevatJwt(d))return true;
+      }
+      if(/%[0-9A-Fa-f]{2}/.test(d))return NIET_TE_CONTROLEREN;
+    }
     return false;
   }
   function geheimIn(v,st,depth,inTekst){
@@ -95,7 +105,8 @@
     if(depth>25)return NIET_TE_CONTROLEREN;
     if(typeof v==='string'){
       if(v.length>MAX_WAARDE||(st.scan=(st.scan||0)+v.length)>MAX_SCAN)return NIET_TE_CONTROLEREN;
-      if(tekstNoemtGeheim(v))return IN_TEKST;
+      const tekstControle=tekstNoemtGeheim(v);
+      if(tekstControle)return tekstControle===NIET_TE_CONTROLEREN?NIET_TE_CONTROLEREN:IN_TEKST;
       const t=v.trim();
       if(t[0]==='{'||t[0]==='['||t[0]==='"'){
         let p; try{ p=JSON.parse(t); }catch(_){ return /\\u[0-9A-Fa-f]{4}/.test(t)?NIET_TE_CONTROLEREN:null; }

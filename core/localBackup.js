@@ -136,7 +136,13 @@
   const NOEMT_EIGENAAR=/(?:^|[^A-Za-z0-9_])(user_id|owner_uid|p_user_id)(?:[^A-Za-z0-9_]|$)/i;
   const ANDERE='payload_other_owner', ONVERIFIEERBAAR='payload_unverifiable';
   function filterEigenaar(f,owner){
-    for(const deel of f.split('&')){
+    let decoded=f;
+    for(let n=0;n<MAX_URL_DECODE_RONDES;n++){
+      if(!/%[0-9A-Fa-f]{2}/.test(decoded))break;
+      decoded=decoded.replace(/%([0-9A-Fa-f]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+    }
+    if(/%[0-9A-Fa-f]{2}/.test(decoded))return ONVERIFIEERBAAR;
+    for(const deel of decoded.split('&')){
       if(!deel)continue;
       const i=deel.indexOf('='); let k,w;
       try{ k=decodeURIComponent(i<0?deel:deel.slice(0,i)); w=i<0?'':decodeURIComponent(deel.slice(i+1)); }catch(_){ return ANDERE; }
@@ -148,12 +154,19 @@
   }
   function tekstEigenaar(s,owner,depth){
     if(s.length>MAX_WAARDE)return ONVERIFIEERBAAR;
-    const t=s.trim();
-    if(t[0]==='{'||t[0]==='['||t[0]==='"'){
-      let p; try{ p=JSON.parse(t); }catch(_){ return NOEMT_EIGENAAR.test(s)?ONVERIFIEERBAAR:null; }
-      return embeddedOtherOwner(p,owner,depth+1);
+    let decoded=s;
+    for(let n=0;n<=MAX_URL_DECODE_RONDES;n++){
+      const t=decoded.trim();
+      if(t[0]==='{'||t[0]==='['||t[0]==='\"'){
+        let p,parsed=false;
+        try{p=JSON.parse(t);parsed=true;}catch(_){if(NOEMT_EIGENAAR.test(decoded))return ONVERIFIEERBAAR;}
+        if(parsed){const r=embeddedOtherOwner(p,owner,depth+1);if(r)return r;}
+      }else if(NOEMT_EIGENAAR.test(decoded))return ONVERIFIEERBAAR;
+      if(!/%[0-9A-Fa-f]{2}/.test(decoded))return null;
+      if(n===MAX_URL_DECODE_RONDES)return ONVERIFIEERBAAR;
+      decoded=decoded.replace(/%([0-9A-Fa-f]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
     }
-    return NOEMT_EIGENAAR.test(s)?ONVERIFIEERBAAR:null;
+    return null;
   }
   function embeddedOtherOwner(v,owner,depth){
     depth=depth||0;

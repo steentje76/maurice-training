@@ -21,7 +21,7 @@ const MUTANTS=[
   ['M6 tekstwaarden in wachtrijpayload niet meer gecontroleerd','localBackup.js',
     'function tekstEigenaar(s,owner,depth){','function tekstEigenaar(s,owner,depth){ return null;'],
   ['M7 ongeldige JSON die een eigenaar noemt toegestaan','localBackup.js',
-    'catch(_){ return NOEMT_EIGENAAR.test(s)?ONVERIFIEERBAAR:null; }','catch(_){ return null; }'],
+    'catch(_){if(NOEMT_EIGENAAR.test(decoded))return ONVERIFIEERBAAR;}','catch(_){ return null; }'],
   ['M8 controle op type body/args/filter uit','localBackup.js',
     "{omissions.push({source:'offline_queue',reason:'unexpected_payload_type'});continue;}",'{}'],
   ['M9 eigenaarsveld terug naar String()-coërcie','localBackup.js',

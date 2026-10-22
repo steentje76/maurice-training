@@ -23,6 +23,8 @@ const local=pack([],{sel_rowing:'memo '+layers(JSON.stringify({refresh_token:SEC
 check('L2 twice encoded secret in localStorage excluded',()=>local.entries.every(e=>e.key!=='sel_rowing')&&local.omissions.some(o=>o.reason==='credential_in_text'));
 const six=pack(queue(layers(JSON.stringify({refresh_token:SECRET}),6)));
 check('D6 above decode limit fails closed',()=>six.entries.every(x=>x.storage!=='offline_queue')&&six.omissions.some(o=>o.reason==='payload_unverifiable'));
+const deepLocal=pack([],{sel_rowing:'memo '+layers(JSON.stringify({refresh_token:SECRET}),6)});
+check('L6 >4 encoding layers in localStorage fail closed',()=>deepLocal.entries.every(x=>x.key!=='sel_rowing')&&deepLocal.omissions.some(o=>o.reason==='payload_unverifiable'));
 const normal=pack(queue('100% ready; workout done'));
 check('P positive harmless percent text survives',()=>normal.entries.some(x=>x.storage==='offline_queue'));
 const valid=pack(queue(layers(JSON.stringify({sets:3,reps:8}),2)));

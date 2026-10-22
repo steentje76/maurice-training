@@ -8855,3 +8855,5 @@ Zie DECISION_LOG.md (DEC-001 t/m DEC-010) en CURRENT_STATE.md voor de volledige 
 - Zonder spierhistorie zijn Home- en Lichaam-figuren neutraal; spierkaarten tonen geen verzonnen 100%-herstel.
 - Gedeelde Decision-, Coaching- en registry-contracten geversioneerd; service-worker CORE_SIG en caches bijgewerkt.
 - Alle wijzigingen uitsluitend op gestapelde Draft-branch; productie v4.70.25 ongewijzigd.
+
+- SEC-570-03B (kandidaat): multi-URL-gecodeerde vreemde eigenaar in offlinequeue en filters fail-closed. Tests en mutatietests toegevoegd, SW-cache v470274.

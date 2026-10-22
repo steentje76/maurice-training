@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## Draft kandidaat — SEC-570-04 F1/F2/F4 security- en databehoudcorrecties (22 oktober 2026)
+
+- F1: elke URL-gedecodeerde JSON-laag wordt ook als JSON gecontroleerd op credentials, credentialtabellen en RPC-namen.
+- F2: credentialsleutelvarianten met camelCase, underscores en streepjes worden conservatief geredigeerd.
+- F4: geldige filters met URL-gecodeerd procentteken worden behouden zonder dubbele decode.
+- RED/GREEN en mutatietests nieuw; beide SW-caches v470275. Draft, NO MERGE/MAIN/PROD/ANDROID.
+- Rapport: docs/TK_SEC570_04_SECURITY_F1_F2_F4_20261022.md.
+
+
 ## Kandidaat — SEC-570-03A dubbele URL-codering (22 oktober 2026)
 
 - Reddingskopie: maximaal vier URL-decodeerrondes bij credentialscreening; na overschrijding conservatief overslaan met payload_unverifiable.

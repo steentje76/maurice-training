@@ -28,6 +28,9 @@
   const ENTRY_VELDEN=['storage','key','value','source','redacted','normalized'];
   const BAD_KEY=/^(token|access_token|refresh_token|id_token|session_token|password|passwd|passphrase|wachtwoord|secret|client_secret|api_key|apikey|api-key|private_key|authorization|cookie|token_hash)$/i;
   const BAD_SOURCE=/(auth_session|access[_-]?token|refresh[_-]?token|credential|oauth|secret)/i;
+  // SEC-570-04/F2: normalize casing and separators for credential-like keys.
+  const CREDENTIAL_VARIANT=/(token|secret|password|passwd|passphrase|wachtwoord|apikey|privatekey|jwt|authorization|cookie)/;
+  function variantCredentialKey(k){return typeof k==='string'&&CREDENTIAL_VARIANT.test(k.replace(/[^a-z0-9]/gi,'').toLowerCase());}
   // Tabellen waarvan een wachtrij-item credential-materiaal bevat (geheim of afgeleid): nooit in de kopie.
   const CREDENTIAL_TABELLEN=['calendar_feed_tokens','wearable_connections','wearable_oauth_state','external_connections'];
   const DATA_CATS=new Set(['duurzaam','concept','wachtrij','serverkopie','voorkeur','legacy']);
@@ -49,7 +52,7 @@
     if(Array.isArray(value))return value.map(v=>clean(v,st,depth+1));
     if(value&&typeof value==='object'){
       const out=Object.create(null);
-      for(const k of Object.keys(value)){ if(BAD_KEY.test(k)){ st.redacted=true; continue; } out[k]=clean(value[k],st,depth+1); }
+      for(const k of Object.keys(value)){ if(BAD_KEY.test(k)||(!BAD_SOURCE.test(k)&&variantCredentialKey(k))){ st.redacted=true; continue; } out[k]=clean(value[k],st,depth+1); }
       return out;
     }
     return value;
@@ -107,6 +110,27 @@
       if(v.length>MAX_WAARDE||(st.scan=(st.scan||0)+v.length)>MAX_SCAN)return NIET_TE_CONTROLEREN;
       const tekstControle=tekstNoemtGeheim(v);
       if(tekstControle)return tekstControle===NIET_TE_CONTROLEREN?NIET_TE_CONTROLEREN:IN_TEKST;
+      // SEC-570-04/F1: parse JSON on every bounded URL-decoded layer.
+      // Scanning only regex misses JSON \u-escaped credential keys.
+      if(/%[0-9A-Fa-f]{2}/.test(v)){
+        let decoded=v;
+        for(let round=0;round<MAX_URL_DECODE_RONDES;round++){
+          const next=decoded.replace(/%([0-9A-Fa-f]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+          if(next===decoded)break;
+          decoded=next;
+          if(decoded.length>MAX_WAARDE||(st.scan+=decoded.length)>MAX_SCAN)return NIET_TE_CONTROLEREN;
+          const candidate=decoded.trim();
+          if(candidate[0]==='{'||candidate[0]==='['||candidate[0]==='"'){
+            let p;
+            try{p=JSON.parse(candidate);}catch(_){
+              if(/\\u[0-9A-Fa-f]{4}/.test(candidate))return NIET_TE_CONTROLEREN;
+              continue;
+            }
+            const result=geheimIn(p,st,depth+1,true);
+            if(result)return result;
+          }
+        }
+      }
       const t=v.trim();
       if(t[0]==='{'||t[0]==='['||t[0]==='"'){
         let p; try{ p=JSON.parse(t); }catch(_){ return /\\u[0-9A-Fa-f]{4}/.test(t)?NIET_TE_CONTROLEREN:null; }
@@ -119,6 +143,7 @@
     for(const k of Object.keys(v)){
       const x=v[k];
       if(BAD_KEY.test(k)||BAD_SOURCE.test(k))return inTekst?IN_TEKST:CRED;
+      if(variantCredentialKey(k))return inTekst?IN_TEKST:CRED;
       if(k==='table'&&typeof x==='string'&&CREDENTIAL_TABELLEN.indexOf(x)>=0)return inTekst?IN_TEKST:CRED;
       if(k==='function'&&typeof x==='string'&&BAD_SOURCE.test(x))return CRED;
       const r=geheimIn(x,st,depth+1,inTekst); if(r)return r;
@@ -144,8 +169,10 @@
     if(/%[0-9A-Fa-f]{2}/.test(decoded))return ONVERIFIEERBAAR;
     for(const deel of decoded.split('&')){
       if(!deel)continue;
-      const i=deel.indexOf('='); let k,w;
-      try{ k=decodeURIComponent(i<0?deel:deel.slice(0,i)); w=i<0?'':decodeURIComponent(deel.slice(i+1)); }catch(_){ return ANDERE; }
+      // SEC-570-04/F4: percent decode of the whole filter has already happened.
+      // A second URI decode would reject a safe literal percent (e.g. 100%25).
+      const i=deel.indexOf('=');
+      const k=i<0?deel:deel.slice(0,i), w=i<0?'':deel.slice(i+1);
       if(EIGENAAR_SLEUTEL.test(k)){ if(w!=='eq.'+owner)return ANDERE; continue; }
       // Eigenaarskolom elders in het filter (or=(user_id.eq.X), not.user_id…): niet eenduidig te controleren.
       if(NOEMT_EIGENAAR.test(k)||NOEMT_EIGENAAR.test(w))return ONVERIFIEERBAAR;

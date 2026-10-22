@@ -44,6 +44,7 @@ const src = [
   slice('const IDEMPOTENT_TABELLEN_MET_CLIENT_ID', 'async function sbDelQ'),
   slice('function sbRetryable', 'async function sbFetch'),
   slice('async function sbFetch(url,o)', 'async function sbGet'),
+  slice('async function tkLeesWachtrijStrikt(){', 'async function tkUpdateGereedheid(){'),
   slice('async function flushOfflineQueue', 'function updateOfflineBadge')
 ].join('\n');
 
@@ -74,7 +75,7 @@ function buildOrderingSandbox(serverRows, netGetter, opts) {
               },
               getAll: function () {
                 const r = { onsuccess: null, onerror: null };
-                setTimeout(() => { r.result = store.slice(); if (r.onsuccess) r.onsuccess(); }, 0);
+                setTimeout(() => { r.result = store.slice(); if (r.onsuccess) r.onsuccess(); if (tx.oncomplete) tx.oncomplete(); }, 0);
                 return r;
               },
               delete: function (id) {

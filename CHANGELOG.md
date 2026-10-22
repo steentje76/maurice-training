@@ -1,5 +1,141 @@
 # Trainingskompas — Changelog
 
+## Draft kandidaat — SEC-570-04 F1/F2/F4 security- en databehoudcorrecties (22 oktober 2026)
+
+- F1: elke URL-gedecodeerde JSON-laag wordt ook als JSON gecontroleerd op credentials, credentialtabellen en RPC-namen.
+- F2: credentialsleutelvarianten met camelCase, underscores en streepjes worden conservatief geredigeerd.
+- F4: geldige filters met URL-gecodeerd procentteken worden behouden zonder dubbele decode.
+- RED/GREEN en mutatietests nieuw; beide SW-caches v470275. Draft, NO MERGE/MAIN/PROD/ANDROID.
+- Rapport: docs/TK_SEC570_04_SECURITY_F1_F2_F4_20261022.md.
+
+
+## Kandidaat — SEC-570-03A dubbele URL-codering (22 oktober 2026)
+
+- Reddingskopie: maximaal vier URL-decodeerrondes bij credentialscreening; na overschrijding conservatief overslaan met payload_unverifiable.
+- Nieuwe onafhankelijke regressie-/mutatietests; serviceworker-cache v470273. Draft, NO MERGE / NO DEPLOY.
+
+
+## Kandidaat (nog geen versie) — SEC-570-03 Geen credentials in tekstvelden van de reddingskopie (21 oktober 2026)
+
+- **Reddingskopie (SEC-570-03).** Wachtrij-items en lokale bronnen waarvan een tekst- of JSON-tekstveld (ook genest, dubbel gecodeerd of afgebroken) credentialmateriaal bevat (bv. `refresh_token`, een JWT of een Bearer-token), of met credentialachtige sleutels, komen niet meer in de kopie en zijn zichtbaar als overgeslagen. Tekst wordt nooit herschreven; de wachtrij blijft ongewijzigd. Begrensd tegen resource-uitputting.
+- **Niet gewijzigd.** Bestandsformaat, validatie, read-only herstelpreview, herstelknop (uit), schema, RLS, secrets, signing, authenticatie, versionCode. SW-cache v470272.
+- **Rapport.** `docs/TK_SEC570_HERSTEL_20261021.md` §7.
+
+## Kandidaat (nog geen versie) — SEC-570 Eigenaarscontrole serververificatie en back-upisolatie (21 oktober 2026)
+
+- **Serververificatie (SEC-570-01).** Een lokale rij waarvan het eigenaarsveld afwijkt van de opgegeven eigenaar is nooit meer "bevestigd op de server" (ook niet via het DELETE-bewijs). Een eigenaar, tabel, record-id of revisie die geen tekst of getal is, telt niet als identiteit. De de-installatiepoort telt alleen intern consistent bewijs.
+- **Reddingskopie (SEC-570-02).** Wachtrijrecords waarvan de payload (ook als JSON-tekst, genest of dubbel gecodeerd, of in een filter) een andere of niet te controleren eigenaar noemt, komen niet in de kopie en zijn zichtbaar als overgeslagen. Body/args die geen object zijn worden overgeslagen. De wachtrij zelf blijft ongewijzigd.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, authenticatie, versionCode, read-only herstelpreview. SW-cache v470271.
+- **Rapport.** `docs/TK_SEC570_HERSTEL_20261021.md`.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-32 Herstelpreview: betrouwbare inhoudsvergelijking (20 oktober 2026)
+
+- **Herstelpreview.** Gelijkheid ("staat al op dit toestel", "al op de server") wordt beslist op een volledige canonieke inhoudsvergelijking; de 32-bits vingerafdruk is alleen nog een aanduiding. Een veld `__proto__` blijft gewone data en telt mee.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470269.
+- **Documenten.** `docs/TK_HERSTELPREVIEW_CANON_HERSTEL_20261020.md`; voorstel Android-export `docs/TK_ANDROID_EXPORT_VOORSTEL_20261020.md`.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-30..31 Review reddingskopie en herstelpreview (19 oktober 2026)
+
+- **Reddingskopie gecorrigeerd (review #566).** Echte wachtrij-items komen nu in de kopie (de eerdere versie sloeg ze allemaal over); in de Android-app geen schijnsucces meer (browserdownload werkt daar niet); strikte wachtrijlezing; PBKDF2 600.000 iteraties (v1-bestanden blijven leesbaar); groottegrenzen en strikte validatie; markering van weggelaten of genormaliseerde velden.
+- **Herstelpreview.** Onder Gegevens exporteren: een kopie openen met wachtzin en per record zien wat herstelbaar is, al bestaat, conflicteert, bij een ander account hoort, onbekend of niet ondersteund is. "Dit is alleen een controle. Er worden geen gegevens teruggezet." Herstellen blijft uitgeschakeld.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470268.
+- **Documenten.** Review `docs/TK_REVIEW_PR566_REDDINGSKOPIE_20261019.md`, rapport `docs/TK_HERSTELPREVIEW_FASE4B_RAPPORT_20261019.md`, voorstel fase 4C `docs/TK_FASE4C_HERSTELVOORSTEL_20261019.md`.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-25..28 Historische inventaris en DELETE-contract (19 oktober 2026)
+
+- **DELETE-verificatie.** Een verwijdering is alleen bewezen als het DELETE-antwoord (`Prefer: return=representation`) exact die rij van die eigenaar teruggeeft. Afwezig bij teruglezen zonder dat bewijs is UNKNOWN, nooit bevestigd (RLS, andere eigenaar, verloren antwoord).
+- **Bronmanifest.** Alle lokale opslagbronnen (57) met locatie, eigenaar, identiteit, versie en categorie in `core/localInventory.js`; document gegenereerd (`docs/TK_LOKALE_BRONNEN_MANIFEST_20261019.md`).
+- **Inventaris en basismeting.** "Lokale gegevens inventariseren" in de updategereedheid: alleen lezen, hervatbaar, geen dubbele registraties, stopt bij een accountwissel. Eigen trainingen worden met de server vergeleken (gelijk = gekoppeld, geen serverbevestiging). "Veilig om te verwijderen" blijft uitgeschakeld.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470264.
+- **Rapport.** `docs/TK_HISTORISCHE_INVENTARIS_FASE3_RAPPORT_20261019.md`; migratievoorstel `docs/TK_MIGRATIEVOORSTEL_CLIENTID_EIGENAARSCHAP_20261019.md`.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-21..24 Read-after-write fase 2 (19 oktober 2026)
+
+- **Contractkern gehard.** Identiteit = tabel + record-id + eigenaar + revisie. Een leeg, defect of onvolledig register, niet-geïnventariseerde historie of een verouderde revisie is nooit veilig. Niet zichtbaar (RLS) = MISSING, niet definitief.
+- **Verificatieregister.** Aparte IndexedDB-database `tk_verificatie`; de offline-wachtrij wordt niet gewijzigd. Ondersteunde writes leggen eigenaar, tabel, record-id, verwachte inhoud, revisie en ouder vast. Een opslagfout is zichtbaar en fail-closed.
+- **Teruglezen.** Met het token van de oorspronkelijke eigenaar (`sbFetch` bindt nu ook GET); een accountwissel of leesfout levert nooit SERVER_VERIFIED of een definitieve MISSING op. Ouder-kind voor trainingen/sets, eigen trainingen/oefeningen, maaltijden/regels en activiteiten/ronden.
+- **Scherm.** "Controleren met de server" toont aantallen per status; "Veilig om te verwijderen" blijft uitgeschakeld.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470263.
+- **Rapport.** `docs/TK_SERVER_READ_AFTER_WRITE_FASE2_RAPPORT_20261019.md`.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-15..20 Resterende P1's schrijfketen (19 oktober 2026)
+
+- **Accountisolatie.** Directe REST-helpers kunnen een write binden aan de gebruiker die de handeling startte (`opts.uid`). `sbFetch` verstuurt nooit een write met een payload-`user_id` van een andere gebruiker. `sbDel` en `sbUpsert` lopen via `sbFetch`. Gebonden flows: programma opslaan en opnieuw genereren, extra oefeningen, gewicht, intake, AI-coach-chat, seed en migratie, vaste trainingen, programma verwijderen.
+- **Idempotency.**
+  - `exercises`: 409 wordt alleen na teruglezen als bevestigd geteld.
+  - `exercise_goals`: `on_conflict`.
+  - Programma opslaan is hervatbaar (vaste client-id per oefeningrij, terugleescontrole die bij twijfel weigert).
+  - Extra oefeningen worden niet dubbel toegevoegd.
+  - Hardlopen, fietsen en zwemmen afronden vangt een verloren antwoord op.
+- **Time-outs en onzekerheid.**
+  - `sbPatchQ`, `sbDelQ` en `sbRpcQ` wachten begrensd.
+  - De uitkomst onderscheidt definitief, tijdelijk en onzeker (`onzeker`).
+  - Een onzekere insert zonder idempotente sleutel wordt niet automatisch herhaald ("Toch versturen" na controle).
+  - Een latere write haalt een wachtende write op dezelfde rij niet in.
+  - De replay van een insert is een no-op.
+- **Matrix.** P1 20/20 opgelost; status per rij reproduceerbaar via `node tools/audit-matrix-status.js`.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470262.
+- **Rapport.** `docs/TK_P1_REST_SCHRIJFKETEN_20261019.md`; plan voor fase 2: `docs/TK_SERVER_READ_AFTER_WRITE_FASE2_PLAN_20261019.md`.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-07..14 P0-heracceptatie #557/#558 (19 oktober 2026)
+
+- **P0 opgelost.** Import (JSON/Concept2/HRV) bindt alle writes aan de gebruiker die de import startte; na een accountwissel wordt niets meer geschreven.
+- **P0 opgelost.** Een lopende training, begeleide training of HYROX-race wordt bij een eigenaarwissel of bevestigd uitloggen uit het geheugen gehaald; uitloggen met niet-opgeslagen lokale gegevens vraagt eerst bevestiging; een sessiewissel via een andere tab herlaadt de app.
+- **P0 opgelost.** Eerste upload van eigen trainingen gebruikt de idempotente ouder-kindroute (geen lokaal verlies bij een gedeeltelijk mislukte upload); "Weken opnieuw genereren" vervangt het schema pas na volledige generatie.
+- **P1 opgelost.** `activity_laps` replay idempotent (`on_conflict`), handmatige runs met client-id; één flush tegelijk over tabs heen (Web Locks); `sbDelQ` detail-contract.
+- **Nieuw.** Read-after-write-contract `serververify.v1` (`core/serverVerification.js`, nog niet geladen) en schrijfaanroep-matrix (`docs/audit/TK_WRITE_CALLER_MATRIX_20261019.md`).
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, versionCode. SW-cache v470260.
+- **Rapport.** `docs/TK_P0_REACCEPTANCE_557_558_20261019.md`.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-02..04 Onafhankelijke herreview: accountisolatie in auth-retry en wachtrij-UI (19 oktober 2026)
+
+- **BLOCKER opgelost.** `sbFetch()` verstuurde na een 401 + refresh een wachtrij-item van gebruiker A opnieuw met het token van een intussen ingelogde gebruiker B. De insert-trigger `set_user_id_from_auth()` maakt zo'n rij in productie eigendom van B; RLS houdt dat niet tegen. Nu: geen refresh, retry of uitlog bij een gewijzigde identiteit, en de eigenaar van een write wordt vastgelegd bij de aanroep (niet pas bij het queuen), zodat B's flush A's write nooit alsnog verstuurt.
+- **HIGH opgelost.** Een verlate refresh van A overschreef de sessie van B. `refreshAuthToken()` gooit het antwoord weg bij uitloggen of een andere gebruiker en houdt bij dezelfde gebruiker de nieuwste sessie (geen weggegooide refresh bij terugkeer naar de app).
+- **Testkwaliteit.** `fOfflineQueueCrossAccountLeakage` draaide sinds PR #555 geen asserties meer (exit 0 met hangende promise); hersteld, en elke nieuwe suite faalt nu als hij niet volledig afrondt.
+- **HIGH opgelost.** Wachtende sets, het wachtrijscherm en verwijderen respecteren nu dezelfde eigenaarsgrens als de flush; andermans/eigenaarloze items alleen als aantal, bewaard.
+- **MEDIUM opgelost.** `offlineQueueAdd/Remove` hingen bij een commit-abort; nu `false`.
+- **Gates.** `core/fAuthSwitchRetryIsolation.test.js`, `core/fQueueUiOwnerIsolation.test.js`, `core/fQueueTxAbortSettles.test.js`. Service-worker cache v470256.
+- **Niet gewijzigd.** Schema, RLS, triggers, signing, secrets, versionCode, Calculation/Decision/AI.
+- **Rapport.** `docs/TK_INDEPENDENT_REREVIEW_CLAUDE_20261019.md`.
+
+## Kandidaat (nog geen versie) — DEV-UPDATE-01 Updategereedheid en Android-praktijktest (18 oktober 2026)
+
+- **Nieuw.** Help → "Klaar voor een update?": controleert alleen-lezen de offline-wachtrij, een niet-afgeronde of lopende training, een niet-opgeslagen begeleide training en onbevestigde eigen trainingen. Een onleesbare bron = niet veilig. Met "Synchroniseren en controleren" (bestaande flush).
+- **Waarom.** Een nieuwe debug-testbuild kan alleen na verwijderen worden geïnstalleerd (andere sleutel), en verwijderen wist alle lokale data (`allowBackup=false`).
+- **Doc.** `docs/ANDROID_PRAKTIJKTEST_V1_BETA.md`: installatieprocedure en checklist sportschool; device-items OPEN.
+- **Niet gewijzigd.** Signing, secrets, workflows, applicationId, versionCode.
+- **Gate.** `core/fUpdateReadiness.test.js`.
+
+## Kandidaat (nog geen versie) — LIB-VALIDATE-01 Bibliotheekvalidatie en importgereedheid (18 oktober 2026)
+
+- **Nieuw.** `tools/library-validate.js` (alleen-lezen): oefeningencatalogus (id's, slugs, namen, metadata, relaties, kennislaag, video's, manifest + sha256, posters, Batch 002-poort), supplementen (enums, synoniemen, claims met bron, geen claimtaal) en de voedingsstatus; `--movekit-source` geeft een reproduceerbare droogloop voor een volgende batch.
+- **Rapport.** `docs/LIBRARY_VALIDATION_REPORT.md` (0 fouten; waarschuwingen: 0/226 NL-namen, 2 spiergroepen buiten de keuzelijst, 20 kennisrecords en 20 posters ontbreken) en `docs/LIBRARY_IMPORT_READINESS.md`.
+- **Niet gedaan.** Geen import, geen productie-SQL, geen app-wijziging.
+- **Gate.** `core/fLibraryValidation.test.js` (echte data, sabotage met een kapotte catalogus, droogloop schrijft niets, rapport actueel).
+
+## Kandidaat (nog geen versie) — UX-EXEC-01 Uitvoeringsketen: geen verloren oefeningen, geen dubbele rijen, handmatige trainingen offline-veilig (18 oktober 2026)
+
+- **Bevindingen (audit + browser).** Tab Trainen gaf een leeg scherm tijdens een eigen/programmatraining; een hervatte vaste training (via Preview) verloor ingewisselde oefeningen en hun sets bij afronden; opnieuw afronden na een herstart kon een tweede sessierij geven; replay van `custom_trainings` bleef op 409 hangen; handmatige trainingen verdwenen offline bij de volgende sync en verwijderde kwamen terug; permanent toevoegen wiste Builder-doelen; Preview van een lopende training koppelde haar stil aan een nieuwe instance; pauzestand lekte in eigen trainingen.
+- **Oplossing (DEC-EXEC-001).** `tkTrainScreenIdVoor()`; `resolvedWorkout` in het concept; `tkSessieRijId()`; `custom_trainings` idempotent; handmatige paden via `tkCustomTrainingPost`/`-Patch` en de wachtrij-veilige oefeningenroute; `sbDelQ` met eerlijke uitkomst en sync-filter; Preview/`startCustomTraining` keren terug naar een lopende training.
+- **Niet gewijzigd.** `core/`, schema, wachtrijsemantiek, finish-volgorde.
+- **Open.** B5/B6/B8/B11, `sbPatchQ`/`sbDelQ` zonder detail, offline programma-start (zie DEC-EXEC-001).
+- **Gate.** `core/fExecutionIntegrity.test.js` (deel 2 Chromium: offline aanmaken/verwijderen + sync, tab Trainen, herstart + hervatten, Preview van een lopende training).
+
+## Kandidaat (nog geen versie) — UX-LOG-01 Setregistratie mobiel bruikbaar, bewerkingen blijven staan (18 oktober 2026)
+
+- **Bevindingen (gereproduceerd).** kg/reps 6 px breed op 320/360 px zodra de 1RM-schatting verscheen; een afgevinkte AMRAP-set verloor `done`/`isAmrap` bij een bewerking; na oefening toevoegen/verwijderen/vervangen leken ingevulde sets leeg en werden ze bij de volgende bewerking overschreven; Guided bewaarde elke set met het laatste gewicht; de Logboek-editor schreef de RPE van set 2..n leeg weg; setadvies na RPE-wijziging gaf een NotFoundError; tabbalk en terugveeg verlieten de training zonder vraag en de klok liep daarna niet door; inconsistente profielknop en een overlappende 👥-knop op Home.
+- **Oplossing (DEC-LOG-001).** 1RM-regel onder de invoer (`.setr-e1rm`), smaller kader op ≤ 374 px, groter RPE-raakvlak; `logSet()` behoudt setvlaggen; `rerenderTrainScreenKeepLog()` voor de vier herbouwpaden; Guided `setsDone[].kg`; editor RPE per set + horizontale rij + passende knoppen; `showPostSetAdvice()` voegt in naast `.add-row`; `tkPrimaryNavGo()` + popstate-regel 2b vragen "Training verlaten?"; klok hervat in `go()`; `tkPaintHeaderAvatar()`; 👥-knop verwijderd.
+- **Niet gewijzigd.** `core/`, rekenlogica (Epley, effectief gewicht, normalisatie, PR), RPE-cascade, opslag en wachtrij.
+- **Gate.** `core/fSetLoggingUx.test.js` (deel 1 altijd; deel 2 Chromium op 320/360/390/412 px met de echte trainingsflow). Sabotage: op main 16 mislukt.
+
+## Kandidaat (nog geen versie) — UX-REC-02 Herstelcommunicatie consistent op Vandaag, Inzicht en Coach (18 oktober 2026)
+
+- **Bevinding.** Bij dagfactor 1,02 / gereedheid 85 / slaap 6u01 / spierherstel laag zei de coachzin nog "Je herstel is sterk" of "Je lichaam is klaar voor belasting", en zette Inzicht "Klaar om te trainen" naast de spierherstelring zonder herkomst. PR #540 (UX-REC-01) loste alleen de hero-subtitel op.
+- **Oplossing (DEC-REC-001).** `buildCoachAdvice()`, `buildCoachIntro()` en `buildMorningMessage()` schrijven het oordeel toe aan de dagfactor; zelfde zone en filters. "Waarom vandaag?" in de hero toont gebaseerd-op met meetmoment, telt-niet-mee, berekening en betrouwbaarheid via de nieuwe helper `tkDagfactorHerkomst()` (ook gebruikt door `renderDagfactorDetail`, geen dubbele formuletekst). Spierherstel als gemiddelde schatting met aantal spiergroepen. Hero-label "Herstel nu" → "Vandaag"; legenda benoemt de spierfiguur. Inzicht: herkomstregel onder het oordeel; spierkaart zonder data "Geen trainingsdata" i.p.v. "Klaar voor belasting". Inzicht-spierlijst: een groep zonder trainingsdata toont "—" / "Geen data" i.p.v. "100% Hersteld".
+- **Niet gewijzigd.** `core/` (0 bestanden), drempels, Decision-titel, readiness-zone, AI-payload.
+- **Open.** Kop "Goed hersteld" op de readinesskaart (DEC-REC-001-A) en herstelscore/readiness die alleen de spiergroepen van de geplande training wegen (DEC-REC-001-B): beide PO-besluit.
+- **Gate.** `core/fRecoveryCommunicationConsistency.test.js` (deel 1 altijd; deel 2 Chromium op 320/360/390/412 px, praktijkscenario 1,02 / 85 / 6u01). `core/fHomeDagfactorBasisSafety.test.js` (verwachte coachzinnen) en `core/fInzichtHerstelBelasting.test.js` (rij zonder data) bewust bijgewerkt.
+
 ## v4.70.25 — Wearable-koppeling hersteld: veilige tokenopslag, Android-app bereikt de server, eerlijke koppelstatus (gebruikerstest 11 oktober 2026)
 
 - **Bug (S8-VAULT-NAME, S8-VAULT-ORPHAN).** Koppelen eindigde op "Koppelen mislukt (opslaan)". Supabase registreerde op 11 oktober tussen 06:28 en 06:29 UTC zes keer HTTP 409 op `store_wearable_token_secret`, PostgreSQL zes keer SQLSTATE 23505 op `secrets_name_idx`.
@@ -8720,3 +8856,13 @@ Zie `docs/Sprintrapporten/Sprint3.1_Rapport.md` voor het volledige verslag.
 
 ## v3.3.25 en eerder
 Zie DECISION_LOG.md (DEC-001 t/m DEC-010) en CURRENT_STATE.md voor de volledige geschiedenis vóór dit CHANGELOG-bestand is gestart.
+
+### 18 oktober 2026 — DEC-REC-001-A/B (Draft, niet gepubliceerd)
+
+- `readiness_day.v1.1`: dagreadiness-zone `ready` communiceert **Gunstige dag** in plaats van **Goed hersteld**; numerieke dagfactor/gereedheid en oude sportdrempels ongewijzigd.
+- Alleen expliciet geplande trainingen komen in aanmerking voor een trainingsspecifieke herstelscore, en alleen met voor alle relevante spiergroepen aantoonbare historie; automatische rotatie is een suggestie, geen geplande training. Geen plan → geen trainingsherstelscore of trainingsadvies; daggereedheid blijft afzonderlijk zichtbaar.
+- Zonder spierhistorie zijn Home- en Lichaam-figuren neutraal; spierkaarten tonen geen verzonnen 100%-herstel.
+- Gedeelde Decision-, Coaching- en registry-contracten geversioneerd; service-worker CORE_SIG en caches bijgewerkt.
+- Alle wijzigingen uitsluitend op gestapelde Draft-branch; productie v4.70.25 ongewijzigd.
+
+- SEC-570-03B (kandidaat): multi-URL-gecodeerde vreemde eigenaar in offlinequeue en filters fail-closed. Tests en mutatietests toegevoegd, SW-cache v470274.

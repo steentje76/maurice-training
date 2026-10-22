@@ -37,7 +37,7 @@ const DOPERSIST = extractFn(HTML, 'doPersist');
 const FINISH = (function () { const i = HTML.indexOf('  function finish(){\n    if(!st.active)return Promise.resolve(null);'); return i < 0 ? '' : HTML.slice(i, HTML.indexOf('\n  }\n', i)); })();
 ok(/async function writeSessionRow\(row, opts\)\{ return await sbPostQ\('sessions', row, opts\); \}/.test(HTML), 'bron: writeSessionRow geeft opts door');
 ok(/const detail=!!\(opts&&opts\.detail\);/.test(POSTQ), 'bron: sbPostQ kent een optionele detail-uitkomst');
-eq((POSTQ.match(/return (?:uit|queue)\(/g) || []).length, 6, 'bron: elke uitgang van sbPostQ loopt via één uitkomst (uit(), sinds v4.70.24 ook via queue() die zelf uit() gebruikt)');
+eq((POSTQ.match(/return (?:uit|queue)\(/g) || []).length, 7, 'bron: elke uitgang van sbPostQ loopt via één uitkomst (uit(), sinds v4.70.24 ook via queue() die zelf uit() gebruikt; TK-REL-SEC-16 voegt de uitgang voor een identiteitsfout toe)');
 ok(/return detail\?tkSchrijfUitkomst\(status,http(?:,reden)?\)/.test(POSTQ), 'bron: detail geeft tkSchrijfUitkomst');
 ok(/q===true\?uit\('queued',http,reden\):uit\('failed',http,'opslag'\)/.test(POSTQ), 'bron: queued alleen als queuen zelf lukte');
 ok(/:\(status==='confirmed'\|\|status==='queued'\)/.test(POSTQ), 'bron: zonder detail true alleen bij confirmed of queued (Sprint 6, DEC-QUEUE-001)');

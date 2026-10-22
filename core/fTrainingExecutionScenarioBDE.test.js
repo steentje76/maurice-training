@@ -33,6 +33,7 @@ const src = [
   slice('const IDEMPOTENT_TABELLEN_MET_CLIENT_ID', 'async function sbDelQ'),
   slice('function sbRetryable', 'async function sbFetch'),
   slice('async function sbFetch(url,o)', 'async function sbGet'),
+  slice('async function tkLeesWachtrijStrikt(){', 'async function tkUpdateGereedheid(){'),
   slice('async function flushOfflineQueue', 'function updateOfflineBadge')
 ].join('\n');
 
@@ -61,7 +62,7 @@ function makeFakeIndexedDb() {
             txObj.objectStore = function () {
               return {
                 add: function (obj) { const row = Object.assign({}, obj, { id: obj.id != null ? obj.id : autoId++ }); list.push(row); scheduleComplete(); },
-                getAll: function () { const r = makeReq(); r.result = list.slice(); return r; },
+                getAll: function () { const r = makeReq(); r.result = list.slice(); scheduleComplete(); return r; },
                 delete: function (id) { const idx = list.findIndex((x) => x.id === id); if (idx >= 0) list.splice(idx, 1); scheduleComplete(); }
               };
             };

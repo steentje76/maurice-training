@@ -1,5 +1,24 @@
 # Trainingskompas — Changelog
 
+## Kandidaat — SEC-570-03A dubbele URL-codering (22 oktober 2026)
+
+- Reddingskopie: maximaal vier URL-decodeerrondes bij credentialscreening; na overschrijding conservatief overslaan met payload_unverifiable.
+- Nieuwe onafhankelijke regressie-/mutatietests; serviceworker-cache v470273. Draft, NO MERGE / NO DEPLOY.
+
+
+## Kandidaat (nog geen versie) — SEC-570-03 Geen credentials in tekstvelden van de reddingskopie (21 oktober 2026)
+
+- **Reddingskopie (SEC-570-03).** Wachtrij-items en lokale bronnen waarvan een tekst- of JSON-tekstveld (ook genest, dubbel gecodeerd of afgebroken) credentialmateriaal bevat (bv. `refresh_token`, een JWT of een Bearer-token), of met credentialachtige sleutels, komen niet meer in de kopie en zijn zichtbaar als overgeslagen. Tekst wordt nooit herschreven; de wachtrij blijft ongewijzigd. Begrensd tegen resource-uitputting.
+- **Niet gewijzigd.** Bestandsformaat, validatie, read-only herstelpreview, herstelknop (uit), schema, RLS, secrets, signing, authenticatie, versionCode. SW-cache v470272.
+- **Rapport.** `docs/TK_SEC570_HERSTEL_20261021.md` §7.
+
+## Kandidaat (nog geen versie) — SEC-570 Eigenaarscontrole serververificatie en back-upisolatie (21 oktober 2026)
+
+- **Serververificatie (SEC-570-01).** Een lokale rij waarvan het eigenaarsveld afwijkt van de opgegeven eigenaar is nooit meer "bevestigd op de server" (ook niet via het DELETE-bewijs). Een eigenaar, tabel, record-id of revisie die geen tekst of getal is, telt niet als identiteit. De de-installatiepoort telt alleen intern consistent bewijs.
+- **Reddingskopie (SEC-570-02).** Wachtrijrecords waarvan de payload (ook als JSON-tekst, genest of dubbel gecodeerd, of in een filter) een andere of niet te controleren eigenaar noemt, komen niet in de kopie en zijn zichtbaar als overgeslagen. Body/args die geen object zijn worden overgeslagen. De wachtrij zelf blijft ongewijzigd.
+- **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, authenticatie, versionCode, read-only herstelpreview. SW-cache v470271.
+- **Rapport.** `docs/TK_SEC570_HERSTEL_20261021.md`.
+
 ## Kandidaat (nog geen versie) — TK-REL-SEC-32 Herstelpreview: betrouwbare inhoudsvergelijking (20 oktober 2026)
 
 - **Herstelpreview.** Gelijkheid ("staat al op dit toestel", "al op de server") wordt beslist op een volledige canonieke inhoudsvergelijking; de 32-bits vingerafdruk is alleen nog een aanduiding. Een veld `__proto__` blijft gewone data en telt mee.
@@ -8836,3 +8855,5 @@ Zie DECISION_LOG.md (DEC-001 t/m DEC-010) en CURRENT_STATE.md voor de volledige 
 - Zonder spierhistorie zijn Home- en Lichaam-figuren neutraal; spierkaarten tonen geen verzonnen 100%-herstel.
 - Gedeelde Decision-, Coaching- en registry-contracten geversioneerd; service-worker CORE_SIG en caches bijgewerkt.
 - Alle wijzigingen uitsluitend op gestapelde Draft-branch; productie v4.70.25 ongewijzigd.
+
+- SEC-570-03B (kandidaat): multi-URL-gecodeerde vreemde eigenaar in offlinequeue en filters fail-closed. Tests en mutatietests toegevoegd, SW-cache v470274.

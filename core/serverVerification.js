@@ -113,10 +113,18 @@
     if (f.type) return JSON.stringify(canon(a, f.type)) === JSON.stringify(canon(b, f.type));
     return waardeGelijk(a, b);
   }
-  // TK-REL-SEC-21: samengestelde identiteit. Een lege component maakt de sleutel ongeldig (null).
+  // SEC-570-01: een identiteitscomponent (tabel, record-id, eigenaar, revisie) is alleen tekst of een eindig getal.
+  // String() van een array of object (['A'] → 'A') is geen bewijs van een identiteit; leeg is nooit een identiteit.
+  function component(x) {
+    if (typeof x === 'string') return x === '' ? null : x;
+    if (typeof x === 'number') return isFinite(x) ? String(x) : null;
+    return null;
+  }
+  // TK-REL-SEC-21: samengestelde identiteit. Een lege of niet-primitieve component maakt de sleutel ongeldig (null).
   function sleutel(tabel, recordId, eigenaar) {
-    if (leeg(tabel) || leeg(recordId) || leeg(eigenaar) || tabel === '' || recordId === '' || eigenaar === '') return null;
-    return String(tabel) + '\u001f' + String(recordId) + '\u001f' + String(eigenaar);
+    var t = component(tabel), r = component(recordId), e = component(eigenaar);
+    if (t === null || r === null || e === null) return null;
+    return t + '\u001f' + r + '\u001f' + e;
   }
   // record-id uit één of meer sleutelvelden (bv. activity_laps: activity_id + lap_index).
   function recordIdVan(rij, sleutelVelden) {
@@ -163,12 +171,21 @@
     var eigenaarVeld = (i.eigenaarVeld === null) ? null : (i.eigenaarVeld || 'user_id');
     var rid = recordIdVan(v, i.sleutelVelden);
     var eigenaarOk = eigenaarVeld !== null || i.eigenaarViaOuder === true;
-    if (!v || typeof v !== 'object' || rid === null || !i.eigenaar || (!velden.length && i.verwijderd !== true) || !i.bron || !i.tijdstip || !eigenaarOk) {
+    var eigenaar = component(i.eigenaar);
+    if (!v || typeof v !== 'object' || rid === null || eigenaar === null || (!velden.length && i.verwijderd !== true) || !i.bron || !i.tijdstip || !eigenaarOk) {
       basis.afwijkingen.push('onvolledige_invoer'); return basis;
     }
-    basis.record_id = rid; basis.owner_uid = String(i.eigenaar);
+    basis.record_id = rid; basis.owner_uid = eigenaar;
     basis.sleutel = sleutel(basis.tabel, rid, basis.owner_uid);
     basis.hash_lokaal = vingerafdruk(canoniek(v, velden));
+    // SEC-570-01: een meegegeven lokaal eigenaarsveld moet exact de opgegeven eigenaar zijn. Afwezig (undefined) is
+    // geen bewijs en geen tegenbewijs: het eigendomsbewijs komt dan uitsluitend uit de teruggelezen serverrij.
+    // Elke andere lokale waarde (andere eigenaar, null, leeg, array/object) is tegenstrijdige invoer: UNKNOWN,
+    // nooit definitief en nooit SERVER_VERIFIED, ook niet via het DELETE-bewijspad. Records zonder eigen
+    // eigenaarsveld (eigenaarVeld:null, eigendom via de ouder) vallen hier buiten.
+    if (eigenaarVeld !== null && v[eigenaarVeld] !== undefined && component(v[eigenaarVeld]) !== eigenaar) {
+      basis.afwijkingen.push('eigenaar_lokaal_tegenstrijdig'); return basis;
+    }
     if (i.server === undefined) { basis.afwijkingen.push('niet_teruggelezen'); return basis; }
     if (i.verwijderd === true) {
       // TK-REL-SEC-25: afwezig in een RLS-gefilterd leesresultaat bewijst geen verwijdering (andere eigenaar, stille
@@ -185,7 +202,7 @@
     var s = i.server;
     basis.hash_server = vingerafdruk(canoniek(s, velden));
     if (recordIdVan(s, i.sleutelVelden) !== rid) basis.afwijkingen.push('record_id');
-    if (eigenaarVeld !== null && (leeg(s[eigenaarVeld]) || String(s[eigenaarVeld]) !== basis.owner_uid)) basis.afwijkingen.push('eigenaar');
+    if (eigenaarVeld !== null && component(s[eigenaarVeld]) !== basis.owner_uid) basis.afwijkingen.push('eigenaar');
     velden.forEach(function (f) { if (!veldGelijk(f, v[f.naam], s[f.naam])) basis.afwijkingen.push('veld:' + f.naam); });
     if (basis.afwijkingen.length) { basis.status = STATUS.MISMATCH; basis.definitief = true; return basis; }
     basis.status = STATUS.SERVER_VERIFIED; basis.verified_at = String(i.tijdstip);
@@ -250,6 +267,17 @@
    *  Uitkomst: { versie, toegestaan, redenen[], telling{status:aantal}, per[] }. Toegestaan alleen als het register
    *  aanwezig en heel is, de historie volledig is geïnventariseerd, niets onleesbaar is en ELK registeritem een
    *  SERVER_VERIFIED-resultaat heeft voor exact dezelfde tabel, record-id, eigenaar én revisie. */
+  // SEC-570-01: een uitkomst telt in de poort alleen als SERVER_VERIFIED wanneer zij intern consistent is met dit
+  // contract: eigen versie, geen afwijkingen, een verificatietijdstip, een primitieve revisie en exact dezelfde
+  // samengestelde sleutel. Tegenstrijdig of onvolledig bewijs ("SERVER_VERIFIED" met afwijkingen, zonder tijdstip,
+  // met een andere sleutel) telt als UNKNOWN. Een volledig nagemaakt, consistent object is in een pure functie niet
+  // van echt te onderscheiden; de bron van de resultaten blijft daarom verifyRecord() in dezelfde sessie.
+  function bewijsStatus(r, k) {
+    if (r.status !== STATUS.SERVER_VERIFIED) return r.status;
+    var consistent = r.versie === VERSIE && Array.isArray(r.afwijkingen) && r.afwijkingen.length === 0 &&
+      typeof r.verified_at === 'string' && r.verified_at !== '' && r.sleutel === k && component(r.revisie) !== null;
+    return consistent ? STATUS.SERVER_VERIFIED : STATUS.UNKNOWN;
+  }
   function beoordeelRegister(inv) {
     var i = inv || {}, reg = i.register || {}, redenen = [], telling = {}, per = [];
     var resultaten = (Array.isArray(i.resultaten) ? i.resultaten : []).filter(function (x) { return x && typeof x === 'object'; });
@@ -266,12 +294,12 @@
     resultaten.forEach(function (r) {
       var k = sleutel(r.tabel, r.record_id, r.owner_uid);
       if (k === null || leeg(r.revisie)) return;
-      (opSleutel[k] = opSleutel[k] || []).push(r);
+      (opSleutel[k] = opSleutel[k] || []).push({ status: bewijsStatus(r, k), revisie: r.revisie });
     });
     (items || []).forEach(function (it) {
-      var k = it ? sleutel(it.tabel, it.record_id, it.eigenaar) : null;
+      var k = (it && typeof it === 'object') ? sleutel(it.tabel, it.record_id, it.eigenaar) : null;
       var status;
-      if (k === null || leeg(it.revisie)) { status = 'IDENTITEIT_ONVOLLEDIG'; redenen.push('identiteit_onvolledig'); }
+      if (k === null || component(it.revisie) === null) { status = 'IDENTITEIT_ONVOLLEDIG'; redenen.push('identiteit_onvolledig'); }
       else {
         var kandidaten = (opSleutel[k] || []).filter(function (r) { return String(r.revisie) === String(it.revisie); });
         if (!kandidaten.length) { status = (opSleutel[k] || []).length ? 'VEROUDERD' : 'NIET_GEVERIFIEERD'; redenen.push(status.toLowerCase() + ':' + k); }

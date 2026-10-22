@@ -8,6 +8,13 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## SEC-570 herstel (21 oktober 2026 — Draft-PR bovenop integratie-PR #570)
+
+- Serververificatie: een tegenstrijdige lokale eigenaar of niet-primitieve identiteit is nooit SERVER_VERIFIED; de poort telt alleen intern consistent bewijs (DEC-SEC-007).
+- Reddingskopie: wachtrijpayloads (ook JSON-tekst) met een andere of niet te controleren eigenaar worden herkenbaar overgeslagen; de wachtrij blijft ongewijzigd.
+- Reddingskopie (SEC-570-03): items en bronnen met credentialmateriaal in tekst- of JSON-tekstvelden worden herkenbaar overgeslagen; bestaande kopieën niet gemigreerd (DEC-SEC-008).
+- Read-only herstelpreview van bestaande bestanden ongewijzigd. SEC-570-01/02 geaccepteerd voor de integratiebranch; heracceptatie SEC-570-03 open. De-installatie blijft NO-GO.
+
 ## Reddingskopie en herstelpreview (19 oktober 2026 — TK-REL-SEC-29..31, Draft-PR's #566, #567 en fase 4B)
 
 - Versleutelde lokale reddingskopie (#566) na review gecorrigeerd (#567): echte wachtrij, geen schijnsucces in de Android-app, sterkere sleutelafleiding, strikte validatie.
@@ -737,3 +744,5 @@ Gecontroleerde, technische uitfasering van het legacy Gym-model, uitgevoerd na e
 **Live, zelf uitgevoerde technische risicoreparatie:** een voorgenomen `on_conflict`-upsert op `memberships` bleek onbetrouwbaar (unique constraint bevat een nullable `team_id`, NULL-waarden zijn nooit gelijk aan elkaar) — vervangen door een expliciete select-dan-patch/post, live transactioneel getest.
 
 **Tests:** `core/fCanonicalGymTrackB.test.js` (nieuw, 9/9), `core/fGymTeamSecurity.test.js` bijgewerkt (17/17), `core/fAdminAuthGymRlsHardening.test.js` 1 assertie bijgewerkt (8/8). Release gate: 230/230. Cross-domain regressie (Organization/Team/Entitlements) 0 problemen. **ACTIVE LEGACY WRITE:** alleen het bewuste, gedocumenteerde dual-write op `users.gym_role`. **STATUS: TECHNICAL FOUNDATION CLOSED — READY FOR FUTURE GYM UX.** Volledig rapport: `docs/TRACK_B_CANONICAL_GYM_MIGRATION_REPORT.md`.
+
+- SEC-570-03A (22 oktober 2026): meervoudige URL-decodering kandidaat-herstel in Draft-PR #573; heracceptatie open, geen productie/Android.

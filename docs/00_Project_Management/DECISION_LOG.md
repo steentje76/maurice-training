@@ -3333,3 +3333,28 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 4. De herstelpreview is alleen lezen. Een bestand van een ander account wordt geweigerd zonder inhoud of aantallen. HERSTELBAAR is geen toestemming tot herstellen; de herstelknop is uitgeschakeld.
 
 **Niet besloten (PO).** Fase 4C (`docs/TK_FASE4C_HERSTELVOORSTEL_20261019.md`): welke bronnen herstelbaar worden, de conflictstandaard en de native opslagroute op Android (nieuwe APK).
+
+## DEC-SEC-007 — Eigendomsbewijs is exact en tegenstrijdig bewijs telt nooit; een export bevat geen payload van een andere of onbekende eigenaar (21 oktober 2026)
+
+**Context.** De onafhankelijke eindacceptatie van integratie-PR #570 (SEC-570-01/02) vond dat `verifyRecord()` een lokale rij van eigenaar B als `SERVER_VERIFIED` voor eigenaar A accepteerde, en dat `prepare()` een wachtrijrecord van A met een JSON-tekstbody van B in de reddingskopie van A opnam. Beide bleken contract- en validatiefouten, niet bereikbaar via de normale schrijfroutes (`docs/TK_SEC570_HERSTEL_20261021.md`).
+
+**Besluit (technisch).**
+1. Een identiteitscomponent (tabel, record-id, eigenaar, revisie) is een niet-lege tekst of een eindig getal. `String()` van een array of object is nooit eigendoms- of identiteitsbewijs.
+2. Een aanwezig lokaal eigenaarsveld moet exact de opgegeven eigenaar zijn; anders UNKNOWN, niet definitief. Een afwezig lokaal eigenaarsveld is geen bewijs: het eigendom komt dan alleen uit de serverrij.
+3. De de-installatiepoort telt een uitkomst alleen als SERVER_VERIFIED wanneer zij intern consistent is (contractversie, geen afwijkingen, tijdstip, exact dezelfde sleutel en revisie).
+4. Een wachtrijrecord komt alleen in een export als `body`/`args` object zijn en geen enkele waarde, ook niet in tekst of JSON-tekst, een andere of niet te controleren eigenaar noemt. Overslaan is herkenbaar; de wachtrij zelf wordt nooit gewijzigd.
+5. De read-only herstelpreview van bestaande bestanden blijft ongewijzigd om geldige gegevens in die bestanden niet onleesbaar te maken.
+
+**Niet besloten (PO/auditor).** Of de preview bestaande bestanden met zo'n afwijkend wachtrijitem moet weigeren of het item moet markeren.
+
+## DEC-SEC-008 — Een reddingskopie bevat geen credentialmateriaal, ook niet in tekst; bij twijfel overslaan, nooit herschrijven (21 oktober 2026)
+
+**Context.** De heracceptatie van PR #573 vond SEC-570-03: `clean()` verwijderde credentialvelden alleen uit objecten, waardoor een JSON-tekst met bijvoorbeeld `refresh_token` in een wachtrij- of `localStorage`-waarde in de versleutelde kopie terechtkwam (pre-existing in #570; geen normale schrijfroute die dit maakt).
+
+**Besluit (technisch).**
+1. Na `clean()` wordt elke waarde begrensd en lineair doorzocht op credentialmateriaal in tekst en JSON-tekst (`BAD_KEY`, `BAD_SOURCE`, `CREDENTIAL_TABELLEN`, JWT, Bearer). Een treffer of een niet te controleren waarde laat het item of de bron weg met een herkenbare reden.
+2. Tekst wordt nooit herschreven om een geheim te verwijderen, zodat een JSON-tekst niet ongemerkt van betekenis verandert. Exacte credentialvelden in objecten blijven verwijderd met markering (bestaand gedrag).
+3. De echte wachtrij en lokale gegevens worden niet gewijzigd. Een kopie blijft onvolledig (`complete:false`, `restoreAllowed:false`).
+4. Bestaande kopieën worden niet gemigreerd en blijven read-only leesbaar.
+
+**Niet besloten (PO).** Hoe om te gaan met bestaande kopieën van vóór deze versie (waarschuwing of weigering bij inspectie, of verwijdering door de gebruiker), en of detectie wordt uitgebreid naar sleutelloze geheimen.

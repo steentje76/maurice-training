@@ -43,8 +43,12 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
       assert.equal(await input.inputValue(),expected);
       assert.equal(await page.evaluate(()=>sessionLog.synthetic.wu[2].kg),expected);
     }
+    await input.fill('67x5');await input.blur();
+    assert.equal(await input.getAttribute('aria-invalid'),'true');
+    assert.equal(await page.evaluate(()=>sessionLog.synthetic.wu[2].kg),'67.5','invalid input cannot overwrite the last valid weight');
     await page.evaluate(()=>{persistTrainingDraft(true);});
     assert.equal(await page.evaluate(()=>restoreTrainingDraft().sessionLog.synthetic.wu[2].kg),'67.5');
+    await input.fill('67.5');await input.blur();
     await page.screenshot({path:'android-test-evidence/decimal-warmup.png'});
     adb('shell','input','keyevent','4');
     await page.evaluate(()=>{
@@ -68,7 +72,7 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
     await page.screenshot({path:'android-test-evidence/picker-keyboard.png'});
     await page.locator('#ex-pick-list .pk-gcard').first().click();
     assert.equal(await page.locator('#m-ex-picker').evaluate(x=>x.classList.contains('open')),false);
-    fs.writeFileSync('android-test-evidence/result.json',JSON.stringify({status:'PASS',package:pkg,api:adb('shell','getprop','ro.build.version.sdk'),checks:['launch','decimal-keystrokes','draft-readback','settings-header','real-ime-picker-selection'],physicalSamsung:false,pm5:false},null,2));
+    fs.writeFileSync('android-test-evidence/result.json',JSON.stringify({status:'PASS',package:pkg,api:adb('shell','getprop','ro.build.version.sdk'),checks:['launch','decimal-keystrokes','invalid-preserves-last-valid','draft-readback','settings-header','real-ime-picker-selection'],physicalSamsung:false,pm5:false},null,2));
     console.log('TK577 ANDROID WEBVIEW PASS');
   }finally{await browser.close();}
 })().catch(e=>{fs.mkdirSync('android-test-evidence',{recursive:true});fs.writeFileSync('android-test-evidence/failure.txt',String(e.stack));console.error(e);process.exitCode=1;});

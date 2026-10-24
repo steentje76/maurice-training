@@ -53,6 +53,21 @@ test('008 editing a completed set preserves completion, AMRAP and recorded rest'
   assert.equal(ctx.sessionLog.hex.sets[0].kg,'67.5');
   assert.equal(ctx.sessionLog.hex.sets[0].done,true);assert.equal(ctx.sessionLog.hex.sets[0].isAmrap,true);assert.equal(ctx.sessionLog.hex.sets[0].rest_sec,90);
 });
+test('008 invalid typing preserves the last valid logged weight',()=>{
+  for(const value of ['67x5','501','-1']){
+    ctx.sessionLog.invalid={wu:[{kg:'67.5',reps:'2'}]};
+    const el=fields['w-invalid-1-kg']=field(value);fields['w-invalid-1-reps']=field('2');
+    const oninput=ctx.buildWarmupRow('invalid',1).match(/id="w-invalid-1-kg"[^>]*oninput="([^"]+)"/)[1];
+    ctx.el=el;vm.runInContext('(function(){'+oninput+'}).call(el)',ctx);
+    assert.equal(ctx.sessionLog.invalid.wu[0].kg,'67.5',value+' must not overwrite saved input');
+    assert.equal(ctx.warmupState.invalid.values[1].kg,value);
+    assert.equal(el.attrs['aria-invalid'],'true');
+  }
+  const el=fields['w-invalid-1-kg']=field('67x5');ctx.el=el;
+  const change=ctx.buildWarmupRow('invalid',1).match(/id="w-invalid-1-kg"[^>]*onchange="([^"]+)"/)[1];
+  vm.runInContext('(function(){'+change+'}).call(el)',ctx);
+  assert.equal(ctx.sessionLog.invalid.wu[0].kg,'67.5','blur must preserve the last valid value too');
+});
 test('008 resume rehydrates manual warm-up count and decimal values before generation',()=>{
   ctx.sessionLog.resume={wu:[{kg:'40',reps:'6'},{kg:'55',reps:'4'},{kg:'67.5',reps:'2'},{kg:'70.5',reps:'1'}]};
   for(const name of ['buildWarmupSection','buildStrengthBody'])vm.runInContext(fn(name),ctx);

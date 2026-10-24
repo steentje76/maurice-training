@@ -21,6 +21,8 @@ Kandidaat: v4.70.26; geen productievrijgave. #570/#575 en hun stacked keten zijn
 
 Deze tabel sluit #576 niet. Synthetische/browser- en emulatorproeven bewijzen geen fysieke Samsung-IME of echte PM5-werking. Definitieve bouw-SHA, CI-runs en APK-checksum worden in het PR/issue-aflevercommentaar vastgelegd.
 
+Aanvullende integriteitsregressie eerst rood: ongeldige tekst (67x5) kon een geldig opgeslagen opwarmgewicht leegmaken. Input- en change-handlers bewaren nu de laatste geldige sessiewaarde; ongeldige bewerking blijft zichtbaar gemarkeerd. Ook bovenlimiet/negatieve invoer tijdens typen, blur en draft-readback getest. Input/recovery: 13/13; Chromium: 28/28.
+
 ## Reproduceerbare controles
 
 - `node core/fTk577InputRecovery.test.js`: echte appfuncties; separators, correcties, invalid-state, catalogus-id en opslag→Calculation→Home/Inzicht.

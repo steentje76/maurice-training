@@ -2,6 +2,7 @@
 
 ## v4.70.26 — TK577 gebruikerstestkandidaat 25 oktober 2026 (geen productievrijgave)
 
+- Ongeldige opwarmgewichtsinvoer overschrijft de laatste geldige sessie- en conceptwaarde niet meer; regressie voor tekst, negatieve/bovenlimiet-invoer en blur.
 - Setintegriteit: gericht hergebruik uit #542 voorkomt dat een gewichtsedit done/AMRAP/rustduur wist; nieuw rood/groen regressiebewijs.
 - Decimale opwarmsets: separator blijft staan tijdens typen; 67,5/67.5, 77,5 en 0,5 blijven correct; ongeldige invoer wordt niet als numeriek prefix verwerkt. Geldige warm-upinvoer wordt direct in het lokale sessieconcept bewaard.
 - Mobiel: settingskop houdt statusruimte vrij; previewkaarten verdelen inhoud en acties over rijen; oefeningkiezer houdt zoekresultaten bereikbaar bij beperkte visual viewport en sluit correct als bovenste laag.

@@ -21733,7 +21733,7 @@ function buildWarmupRow(exId,i){
     <div class="wur-no">W${i}</div>
     <div class="setr-cells">
       <div class="setr-cell">
-        <input class="set-field" type="text" inputmode="decimal" placeholder="–" id="w-${exId}-${i}-kg" value="${escHtml(String(v.kg??''))}" oninput="validateSetWeightInput(this);onWarmupEdit('${exId}',${i});logSet('${exId}','wu',${i},false)" onchange="clampNumInput(this,0,500);onWarmupEdit('${exId}',${i});logSet('${exId}','wu',${i},false)">
+        <input class="set-field" type="text" inputmode="decimal" placeholder="–" id="w-${exId}-${i}-kg" value="${escHtml(String(v.kg??''))}" oninput="onWarmupEdit('${exId}',${i});if(validateSetWeightInput(this))logSet('${exId}','wu',${i},false)" onchange="clampNumInput(this,0,500);onWarmupEdit('${exId}',${i});if(validateSetWeightInput(this))logSet('${exId}','wu',${i},false)">
         <div class="setr-u">kg</div>
       </div>
       <div class="setr-cell">

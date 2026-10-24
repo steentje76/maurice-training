@@ -41,6 +41,11 @@ async function check(name,run){try{await run();pass++;console.log('PASS '+name);
           const stored=await page.evaluate(()=>{persistTrainingDraft(true);return JSON.parse(localStorage.getItem('tk_draft_training')).sessionLog.hex.wu[2].kg;});
           assert.equal(stored,expected);
         }
+        await input.fill('67x5');await input.blur();
+        assert.equal(await input.getAttribute('aria-invalid'),'true');
+        assert.equal(await page.evaluate(()=>sessionLog.hex.wu[2].kg),'67.5','invalid text must preserve logged weight');
+        assert.equal(await page.evaluate(()=>{persistTrainingDraft(true);return restoreTrainingDraft().sessionLog.hex.wu[2].kg;}),'67.5');
+        await input.fill('67.5');await input.blur();
         await page.evaluate(()=>{document.getElementById('wu-rows-hex').innerHTML=buildWarmupRow('hex',3);});
         assert.equal(await input.inputValue(),'67.5');
       });

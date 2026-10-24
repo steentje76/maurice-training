@@ -7,6 +7,7 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
   assert.equal(process.env.TK_EMULATOR_ONLY,'1','emulator execution must be explicit');
   assert(/^emulator-/.test(adb('get-serialno')),'refuse a physical device');
+  adb('shell','settings','put','secure','show_ime_with_hard_keyboard','1');
   fs.mkdirSync('android-test-evidence',{recursive:true});
   const apk=fs.readdirSync('candidate').find(x=>x.endsWith('.apk'));assert(apk);
   const pkg='com.trainingskompas.app.gebruikerstest20261025';
@@ -56,11 +57,13 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
       ensureExercisesLoaded=async()=>{};ensureFavoritesLoaded=async()=>{};getRecentExerciseIds=async()=>[];
       await openExPicker(()=>{});
     });
+    const fullHeight=await page.evaluate(()=>visualViewport.height);
     const search=page.locator('#ex-pick-search');await search.click();await search.fill('Synthetic');await search.dispatchEvent('input');
     await pause(1000);
     const visible=await page.locator('#ex-pick-list .pk-gcard').first().evaluate(el=>{
       const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:visualViewport.height,offset:visualViewport.offsetTop};
     });
+    assert(visible.height<fullHeight-80,'soft keyboard did not reduce the real visual viewport: '+JSON.stringify({fullHeight,...visible}));
     assert(visible.top>=visible.offset&&visible.bottom<=visible.offset+visible.height,JSON.stringify(visible));
     await page.screenshot({path:'android-test-evidence/picker-keyboard.png'});
     await page.locator('#ex-pick-list .pk-gcard').first().click();

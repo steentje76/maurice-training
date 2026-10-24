@@ -1,0 +1,137 @@
+name: TK577 Android Test Candidate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tk577-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tk577-user-test-20261024'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - run: npm run cap:copy
+      - name: Exact source and complete deterministic regression
+        run: |
+          git rev-parse HEAD
+          npm test
+          npm run test:native
+          node coaching.test.js
+          node scripts/tk577-browser-acceptance.cjs
+      - name: Documentation consistency
+        run: node tools/check-doc-consistency.js
+
+  apk:
+    needs: regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      source_sha: ${{ steps.provenance.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+      - run: npm ci
+      - run: npm run cap:sync
+      - run: chmod +x android/gradlew
+      - name: Build only the isolated candidate
+        working-directory: android
+        run: ./gradlew assembleGebruikerstest --no-daemon
+      - name: Verify package, signature, assets and provenance
+        id: provenance
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/gebruikerstest/app-gebruikerstest.apk
+          test -f "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > package-verification.txt
+          grep -q "package: name='com.trainingskompas.app.gebruikerstest20261025'" package-verification.txt
+          grep -q "application-label:'TK Test 25 oktober'" package-verification.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > signature-verification.txt
+          node tools/verify-ocr-packaging.js --apk "$APK"
+          mkdir -p candidate
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          NAME="Trainingskompas-v4.70.26-${SOURCE_SHA:0:9}-test25okt.apk"
+          cp "$APK" "candidate/$NAME"
+          printf '%s\n' "$SOURCE_SHA" > candidate/source-commit.txt
+          cp package-verification.txt signature-verification.txt candidate/
+          (cd candidate && sha256sum "$NAME" > "$NAME.sha256")
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tk577-android-${{ steps.provenance.outputs.source_sha }}
+          path: candidate/
+          retention-days: 14
+          if-no-files-found: error
+
+  android-webview:
+    needs: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [30, 34]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.apk.outputs.source_sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+      - uses: actions/download-artifact@v4
+        with:
+          name: tk577-android-${{ needs.apk.outputs.source_sha }}
+          path: candidate
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        env:
+          TK_EMULATOR_ONLY: '1'
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: node scripts/tk577-android-webview-acceptance.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tk577-webview-api${{ matrix.api }}-${{ needs.apk.outputs.source_sha }}
+          path: android-test-evidence/
+          if-no-files-found: warn

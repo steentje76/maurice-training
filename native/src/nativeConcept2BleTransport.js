@@ -674,25 +674,33 @@
       };
     }
 
-    // device-info: lees RAW; NIET decoderen (layouts deels UNKNOWN). Alleen voor capture/diagnostiek.
+    // Device identity is read-only, bound to the exact connection lease. Never log the serial.
     function getDeviceInfo() {
       if (!deviceId) return Promise.resolve({ deviceId: null });
+      var target = deviceId, generation = connectionGeneration;
       var svc = SERVICES.deviceInfo ? SERVICES.deviceInfo.uuid : null;
       var wanted = ['serialNumber', 'firmwareRev', 'hardwareRev', 'manufacturer', 'machineType'];
-      var raw = {};
+      var raw = {}, identity = {};
+      function current() { return deviceId === target && connectionGeneration === generation; }
       var chain = Promise.resolve();
       wanted.forEach(function (key) {
         var ch = CHARS[key];
         if (!svc || !ch) return;
         chain = chain.then(function () {
-          return Promise.resolve(gateway.read(deviceId, svc, ch.uuid))
-            .then(function (dv) { raw[key] = { hex: bytesToHex(dv), len: dataViewLength(dv), confidence: ch.confidence }; })
-            .catch(function () {});
+          if (!current()) return;
+          return Promise.resolve(gateway.read(target, svc, ch.uuid))
+            .then(function (dv) {
+              if (!current()) return;
+              raw[key] = { hex: bytesToHex(dv), len: dataViewLength(dv), confidence: ch.confidence };
+              if (key === 'serialNumber' || key === 'machineType') identity[key] = dataViewToArray(dv);
+            }).catch(function () {});
         });
       });
       return chain.then(function () {
-        // GEEN gedecodeerde velden (serial/firmware/machineType) — layout niet bevestigd.
-        return { deviceId: deviceId, machineType: machineType, rawCharacteristics: raw };
+        if (!current()) return { deviceId: null };
+        var decoded = typeof CL.decodePm5Identity === 'function' ? CL.decodePm5Identity(identity) : {};
+        return { deviceId: target, machineType: machineType, serialNumber: decoded.serialNumber || null,
+          reportedMachineType: decoded.reportedMachineType || null, rawCharacteristics: raw };
       });
     }
 

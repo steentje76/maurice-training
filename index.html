@@ -7171,9 +7171,10 @@ function _c2deviceList(exId, devs){
   var rows=devs.map(function(d,i){
     var mt=d.machineType&&d.machineType!=='unknown'? (({rowerg:'RowErg',skierg:'SkiErg',bikeerg:'BikeErg'}[d.machineType])||'Concept2 PM5') : null;
     var sig=CL?CL.signalLabel(d.rssi):''; var last4=d.id?('#'+String(d.id).slice(-4)):'';
-    var meta=[mt, sig, last4].filter(Boolean).join(' · ');
+    var serial=CL&&CL.pm5SerialFromName?CL.pm5SerialFromName(d.name):null;
+    var meta=[mt, sig, serial?'PM5 ID '+serial+' (Bluetooth-naam)':('ID nog onbekend · BLE '+last4)].filter(Boolean).join(' · ');
     return '<button onclick="tkErgSelect(\''+exId+'\','+i+')" style="display:flex;align-items:center;width:100%;text-align:left;border:1px solid var(--g2,#e3e7e9);background:#fff;border-radius:12px;padding:10px 12px;margin-top:8px;cursor:pointer">'+
-      '<div style="flex:1"><div style="font-weight:700;color:var(--g5,#1a2b33);font-size:13px">Concept2 PM5</div><div style="font-size:11px;color:var(--g4)">'+(meta||'')+'</div></div>'+
+      '<div style="flex:1"><div style="font-weight:700;color:var(--g5,#1a2b33);font-size:13px">Concept2 PM5</div><div style="font-size:11px;color:var(--g4)">'+escHtml(meta||'')+'</div></div>'+
       '<span style="color:var(--g3);font-size:18px">›</span></button>';
   }).join('');
   return '<div style="font-size:11.5px;color:var(--g4);margin-bottom:2px">Tik op je apparaat om te verbinden</div>'+rows;
@@ -7223,6 +7224,7 @@ function _c2connectedInner(exId, cm){
   if(_fz){ var _los=(typeof LOS_DOMID!=='undefined'&&exId===LOS_DOMID);
     line='<div style="font-size:12px;font-weight:700;margin-bottom:4px;color:'+(_fz.reason==='terminated'?'var(--orange,#b45309)':'var(--green)')+'">'+(_fz.reason==='terminated'?'Workout afgebroken op de PM5 — resultaat vastgelegd':'✓ Workout voltooid op de PM5')+(_los?' · tik Opslaan':' · wordt opgeslagen bij Training afronden')+'</div>'+line; }
   return '<div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px;margin-bottom:6px"><span style="color:var(--green)">🟢</span> '+(_C2ERGLBL[st.cardioType]||'Concept2')+' verbonden · <span style="font-weight:600;color:var(--g4);font-size:11px">Concept2 PM5</span></div>'+
+    (st.identityInfo?'<div style="font-size:12px;margin:6px 0">'+escHtml(st.identityInfo)+'</div>':'<div style="font-size:12px;margin:6px 0">PM5 ID niet uitgelezen</div>')+
     line+'<button class="btn btn-o btn-sm" style="font-size:12px;margin-top:8px" onclick="tkErgDisconnect(\''+exId+'\')">Verbinding verbreken</button>';
 }
 function tkErgConnectDevice(exId, idx){
@@ -7248,6 +7250,23 @@ function tkErgConnectDevice(exId, idx){
       st._connecting=false;
       if(!res||res.connected!==true){ _c2repaint(exId, _c2note('Verbinding mislukt. Probeer opnieuw.')+_c2btn(exId,'Opnieuw zoeken')); return; }
       st.connected=true; st.wasConnected=true; st.deviceId=d.id; st.lastDevice=d;
+      st.identityInfo=null;
+      // Optional read after real connect; a late result from another connection is discarded.
+      if(typeof t.getDeviceInfo==='function'){
+        const lease=typeof t.getControlContext==='function'?t.getControlContext():null;
+        Promise.resolve(t.getDeviceInfo()).then(function(info){
+          if(_c2pair[exId]!==st||!st.connected||st.deviceId!==d.id||!info||info.deviceId!==d.id)return;
+          const current=typeof t.getControlContext==='function'?t.getControlContext():null;
+          if(lease&&current&&lease.generation!==current.generation)return;
+          const parts=[info.serialNumber?'PM5 ID '+info.serialNumber+' (uitgelezen)':'PM5 ID niet beschikbaar'];
+          if(info.reportedMachineType){
+            parts.push('Apparaat: '+_c2mLabel(info.reportedMachineType));
+            if(info.reportedMachineType!==st.mt)parts.push('Ander apparaattype dan deze oefening; verbreek de verbinding en kies de juiste oefening.');
+          }else parts.push('Apparaattype niet bevestigd');
+          st.identityInfo=parts.join(' · ');
+          _c2repaint(exId,_c2connectedInner(exId,st.lastCm||null));
+        }).catch(function(){});
+      }
       // Gate A.4: één canonieke PM5-aggregator per verbinding, op dezelfde st-scope.
       // De multiplexed 0x31/0x32-events zijn partial; Concept2Live voegt ze samen en
       // mapt RAW->canonical. Geen merge- of mappinglogica hier.
@@ -7683,7 +7702,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.25';
+const APP_VER = 'v4.70.26';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

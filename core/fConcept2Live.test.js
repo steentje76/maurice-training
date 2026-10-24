@@ -13,7 +13,7 @@ function close(a, b, m, eps){ if (a!=null && Math.abs(a - b) <= (eps || 0.5)) pa
 // ── A. UUID-MATRIX (APK_OBSERVED) ──
 eq(C.CONCEPT2_BLE_UUIDS.base, 'CE060000-43E5-11E4-916C-0800200C9A66', 'A: base-UUID');
 eq(C.CONCEPT2_BLE_UUIDS.characteristics.strokeData.uuid, 'CE060035-43E5-11E4-916C-0800200C9A66', 'A: stroke_data UUID CE060035');
-eq(C.CONCEPT2_BLE_UUIDS.characteristics.machineType.uuid, 'CE060015-43E5-11E4-916C-0800200C9A66', 'A: erg_machine_type UUID CE060015');
+eq(C.CONCEPT2_BLE_UUIDS.characteristics.machineType.uuid, 'CE060016-43E5-11E4-916C-0800200C9A66', 'A: erg_machine_type UUID CE060016');
 eq(C.CONCEPT2_BLE_UUIDS.services.control.role, 'control_service_csafe', 'A: control service = CSAFE');
 ok(C.CONCEPT2_BLE_UUIDS.unknown.indexOf('CE060043') !== -1, 'A: onbekende UUID CE060043 gemarkeerd (niet gefabriceerd)');
 ok(Object.keys(C.CONCEPT2_BLE_UUIDS.characteristics).every(k=>/^CE0600[0-9A-F]{2}-43E5-11E4-916C-0800200C9A66$/.test(C.CONCEPT2_BLE_UUIDS.characteristics[k].uuid)), 'A: alle characteristic-UUIDs juiste vorm');

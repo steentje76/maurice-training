@@ -43,7 +43,7 @@ jobs:
           set -euo pipefail
           BASELINE=160fefc2e1dabc424922e907f7dc360e4f84543f
           mkdir -p "$RUNNER_TEMP/tk577-doc-baseline"
-          git archive "$BASELINE" docs tools/check-doc-consistency.js | tar -x -C "$RUNNER_TEMP/tk577-doc-baseline"
+          git archive "$BASELINE" | tar -x -C "$RUNNER_TEMP/tk577-doc-baseline"
           set +e
           node "$RUNNER_TEMP/tk577-doc-baseline/tools/check-doc-consistency.js" > baseline-doc.txt
           BEFORE=$?

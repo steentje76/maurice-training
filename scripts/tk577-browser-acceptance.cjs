@@ -27,7 +27,7 @@ async function check(name,run){try{await run();pass++;console.log('PASS '+name);
       await check(width+' -008 sequential decimal typing + autosave + rerender',async()=>{
         await page.evaluate(()=>{
           document.querySelectorAll('.scr.active').forEach(x=>x.classList.remove('active'));
-          if(!document.getElementById('s-train-b')){const screen=document.createElement('div');screen.id='s-train-b';screen.className='scr';screen.innerHTML='<div class="scroll"><div id="train-b-list"></div></div>';document.body.appendChild(screen);}
+          buildVasteTrainingScreen({id:'B',naam:'Synthetic TK577'});
           document.getElementById('s-train-b').classList.add('active');
           document.getElementById('train-b-list').innerHTML='<div id="wu-rows-hex">'+buildWarmupRow('hex',3)+'</div>';
           updateSummary=()=>{};updateProgress=()=>{};
@@ -52,6 +52,16 @@ async function check(name,run){try{await run();pass++;console.log('PASS '+name);
         const top=await page.locator('#s-settings .hdr-title').evaluate(x=>x.getBoundingClientRect().top);
         assert(top>=50,'title must start below status area, got '+top);
       });
+      await check(width+' -009 latest empty row does not hide relevant previous performance',async()=>{
+        await page.evaluate(async()=>{
+          ensureEquipmentTypesLoaded=async()=>{};loadTrainCfg=async()=>{};loadEquipment=async()=>[];
+          getSessionExs=()=>[{id:'gm',naam:'Good Morning',type:'strength',sets:4,reps:'8',wu:0}];
+          v43SafeGet=async(table)=>table==='sessions'?[{exercise_id:'gm',date:'2026-10-24',weight:null,reps:null}]:[];
+          await renderTrainScreen('B');
+        });
+        assert.equal(await page.locator('#s-gm-1-kg').inputValue(),'60');
+        assert.equal(await page.evaluate(()=>!!sessionLog.gm?.sets?.some(s=>s&&s.done)),false,'a suggestion is never a completed set');
+      });
       for(const scale of [1,1.3])await check(width+' -003 preview readable / actions reachable, text scale '+scale,async()=>{
         await page.evaluate(scale=>{
           previewCtx={def:{name:'Training B',exercises:[{exercise_id:'roeien',sets:1,reps:'1000m'},{exercise_id:'hex',sets:4,reps:'6-8',wu:3}]},
@@ -73,9 +83,10 @@ async function check(name,run){try{await run();pass++;console.log('PASS '+name);
         await page.locator('#ex-pick-search').dispatchEvent('input');
         await page.locator('#ex-pick-list .pk-gcard[onclick="selectExPickerItem(\'gm\')"]').click();
         await page.waitForTimeout(80);
-        const result=await page.evaluate(()=>({id:previewWorkingList()[1].exercise_id,original:previewCtx.def.exercises[1].exercise_id,prev:previewCtx.prevMap.gm.weight,mods:previewBuildModifications()}));
+        const result=await page.evaluate(()=>({id:previewWorkingList()[1].exercise_id,original:previewCtx.def.exercises[1].exercise_id,prev:previewCtx.prevMap.gm.weight,mods:previewBuildModifications(),resolved:buildResolvedExecutionItems(previewWorkingList()).map(x=>x.id),history:buildStrengthSessionRow('gm',[{kg:'60',effKg:60,reps:'8'}],{date:'2026-10-24'}).row.exercise_id}));
         assert.equal(result.id,'gm');assert.equal(result.original,'hex');assert.equal(result.prev,60);
         assert(result.mods.some(x=>x.type==='swap'&&x.replacement_exercise_id==='gm'));
+        assert.deepEqual(result.resolved,['roeien','gm']);assert.equal(result.history,'gm');
       });
       await check(width+' -010 keyboard-height viewport keeps first search result clickable; back closes picker',async()=>{
         await page.setViewportSize({width,height:400});

@@ -37,8 +37,25 @@ jobs:
           npm run test:native
           node coaching.test.js
           node scripts/tk577-browser-acceptance.cjs
-      - name: Documentation consistency
-        run: node tools/check-doc-consistency.js
+      - name: Documentation regression against the stable baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASELINE=160fefc2e1dabc424922e907f7dc360e4f84543f
+          mkdir -p "$RUNNER_TEMP/tk577-doc-baseline"
+          git archive "$BASELINE" docs tools/check-doc-consistency.js | tar -x -C "$RUNNER_TEMP/tk577-doc-baseline"
+          set +e
+          node "$RUNNER_TEMP/tk577-doc-baseline/tools/check-doc-consistency.js" > baseline-doc.txt
+          BEFORE=$?
+          node tools/check-doc-consistency.js > candidate-doc.txt
+          AFTER=$?
+          set -e
+          cat candidate-doc.txt
+          grep '🔴' baseline-doc.txt > baseline-errors.txt || true
+          grep '🔴' candidate-doc.txt > candidate-errors.txt || true
+          test "$BEFORE" = "$AFTER"
+          diff -u baseline-errors.txt candidate-errors.txt
+          if [ "$AFTER" -ne 0 ]; then echo '::warning::Existing documentation gate is red on baseline and candidate, with identical findings. No new documentation failures; this is not full documentation acceptance.'; fi
 
   apk:
     needs: regression

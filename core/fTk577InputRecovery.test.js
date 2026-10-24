@@ -44,4 +44,26 @@ test('007 legacy explicit mapping takes precedence and unknown stays unknown',()
   assert.deepEqual(Array.from(ctx.getExerciseMuscles('TK-GM')),['Core']);
   assert.deepEqual(Array.from(ctx.getExerciseMuscles('unknown')),[]);
 });
-console.log('Resultaat: '+pass+' geslaagd, '+fail+' mislukt');process.exitCode=fail?1:0;
+// Saved row -> serialized readback -> existing Calculation Engine -> both recovery consumers.
+(async()=>{
+  try{
+    ctx.exercises=[];
+    ctx.CalcCore=require('./calculation.js');
+    const now=new Date('2026-10-24T10:00:00Z');
+    ctx.Date=class extends Date{constructor(...args){super(...(args.length?args:[now.getTime()]));}static now(){return now.getTime();}};
+    ctx.MUSCLE_RECOVERY_HOURS={Hamstrings:72,Billen:72,Rug:72};ctx.SVG_ID_RECOVERY_HOURS={Hamstrings:72,Billen:72,Rug:72};
+    ctx.muscleNamesToSvgIds=names=>names;
+    for(const name of ['buildStrengthSessionRow','computeMuscleRecoveryPct','getRelevantMuscleRecovery','v43OverallRecovery']){
+      let source=fn(name);if(name==='getRelevantMuscleRecovery'||name==='v43OverallRecovery')source='async '+source;
+      vm.runInContext(source,ctx);
+    }
+    const saved=ctx.buildStrengthSessionRow('TK-GM',Array.from({length:4},()=>({kg:'60',effKg:60,reps:'8',rpe:'8'})),{date:'2026-10-24'}).row;
+    ctx.sbGet=ctx.v43SafeGet=async()=>JSON.parse(JSON.stringify([saved]));
+    const insight=await ctx.getRelevantMuscleRecovery(['Hamstrings','Billen','Rug']);
+    const home=await ctx.v43OverallRecovery();
+    assert.equal(saved.weight,60);assert.equal(saved.sets_detail.length,4);
+    for(const row of insight){assert.equal(row.pct,ctx.CalcCore.calculateMuscleRecoveryPct(10,72,8));assert.equal(row.pct,home.rows.find(x=>x.muscle===row.muscle).pct);}
+    assert.equal(home.hasData,true);pass++;
+  }catch(e){fail++;console.log('FAIL 007 storage-to-calculation-to-Home/Insight: '+e.stack);}
+  console.log('Resultaat: '+pass+' geslaagd, '+fail+' mislukt');process.exitCode=fail?1:0;
+})();

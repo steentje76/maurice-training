@@ -1,5 +1,15 @@
 # Trainingskompas — Changelog
 
+## v4.70.26 — TK577 gebruikerstestkandidaat 25 oktober 2026 (geen productievrijgave)
+
+- Decimale opwarmsets: separator blijft staan tijdens typen; 67,5/67.5, 77,5 en 0,5 blijven correct; ongeldige invoer wordt niet als numeriek prefix verwerkt. Geldige warm-upinvoer wordt direct in het lokale sessieconcept bewaard.
+- Mobiel: settingskop houdt statusruimte vrij; previewkaarten verdelen inhoud en acties over rijen; oefeningkiezer houdt zoekresultaten bereikbaar bij beperkte visual viewport en sluit correct als bovenste laag.
+- Vervangen: bestaande bibliotheekpicker bereikbaar naast aanbevolen alternatieven; alleen binnen hetzelfde trainingstype, zonder dubbel id of gewichtsovername. Nieuwe identiteit gebruikt eigen eerdere prestatie.
+- Historie: recentere lege sessierij maskeert de bestaande relevante previous-performance-selectie niet langer. Catalogus-only spiergroepen kunnen via exact id worden gebruikt door de bestaande herstelberekeningen; geen formulewijziging. De specifieke Good Morning-bronmelding blijft ter fysieke verificatie open.
+- Concept2: officiële serial/firmware/manufacturer/type UUID’s; volledige PM5-ID uit naam waar beschikbaar en uitgelezen serial na verbinden; geen typeclaim op basis van alleen een naam; stale device-info wordt verworpen. Intervalknop expliciet app-only; apparaatprogrammering van deze intervalflow blijft open.
+- Android: afzonderlijke variant `com.trainingskompas.app.gebruikerstest20261025`, label **TK Test 25 oktober**. Debug-ondertekening voor deze testvariant; bestaande installatie behouden. Geen DB-migratie, herstelimport of gegevenscorrectie uitgevoerd. Eigen-account/productie/signing- en fysieke Samsung/PM5-acceptatie niet vrijgegeven.
+- Bewijs en openstaande gates: `docs/TK577_USER_TEST_CANDIDATE_20261025.md`; PR #578. #576 blijft bronregistratie.
+
 ## v4.70.25 — Wearable-koppeling hersteld: veilige tokenopslag, Android-app bereikt de server, eerlijke koppelstatus (gebruikerstest 11 oktober 2026)
 
 - **Bug (S8-VAULT-NAME, S8-VAULT-ORPHAN).** Koppelen eindigde op "Koppelen mislukt (opslaan)". Supabase registreerde op 11 oktober tussen 06:28 en 06:29 UTC zes keer HTTP 409 op `store_wearable_token_secret`, PostgreSQL zes keer SQLSTATE 23505 op `secrets_name_idx`.

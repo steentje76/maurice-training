@@ -21737,7 +21737,7 @@ function buildWarmupRow(exId,i){
         <div class="setr-u">kg</div>
       </div>
       <div class="setr-cell">
-        <input class="set-field" type="number" inputmode="numeric" placeholder="–" id="w-${exId}-${i}-reps" value="${v.reps||''}" oninput="onWarmupEdit('${exId}',${i})" onchange="logSet('${exId}','wu',${i},false)">
+        <input class="set-field" type="number" inputmode="numeric" placeholder="–" id="w-${exId}-${i}-reps" value="${escHtml(String(v.reps??''))}" oninput="onWarmupEdit('${exId}',${i})" onchange="logSet('${exId}','wu',${i},false)">
         <div class="setr-u">reps</div>
       </div>
     </div>

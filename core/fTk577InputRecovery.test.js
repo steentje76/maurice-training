@@ -60,6 +60,11 @@ test('008 resume rehydrates manual warm-up count and decimal values before gener
   assert.equal(ctx.warmupState.resume.count,4);assert.equal(ctx.warmupState.resume.manual[3],true);
   assert.equal(ctx.warmupState.resume.values[3].kg,'67.5');assert(markup.includes('value="70.5"'));
 });
+test('008 restored draft text cannot create HTML attributes',()=>{
+  ctx.warmupState.escape={values:{1:{kg:'" autofocus onfocus="x',reps:'" autofocus onfocus="x'}}};
+  const markup=ctx.buildWarmupRow('escape',1);
+  assert(!markup.includes('value="" autofocus'));assert.equal((markup.match(/&quot; autofocus/g)||[]).length,2);
+});
 // Saved row -> serialized readback -> existing Calculation Engine -> both recovery consumers.
 (async()=>{
   try{

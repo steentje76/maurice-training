@@ -1,0 +1,66 @@
+name: TK577 Existing APK Android Acceptance
+
+on:
+  pull_request:
+    branches: [fix/tk577-user-test-20261024]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-existing-apk:
+    if: github.head_ref == 'test/tk577-android-webview-a5edf67' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [30, 34]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+      - uses: actions/download-artifact@v4
+        with:
+          name: tk577-android-a5edf672254e9dbab7a9585fecb2c940a53f01b3
+          path: candidate
+          run-id: 40106556121
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify immutable artifact identity before installing
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cat candidate/source-commit.txt)" = a5edf672254e9dbab7a9585fecb2c940a53f01b3
+          (cd candidate && sha256sum -c *.sha256)
+          echo '49e7160e13c770bab7f8825cbf1d8d16bed83157054a475fce885b97931048e5  candidate/Trainingskompas-v4.70.26-a5edf6722-test25okt.apk' | sha256sum -c -
+          git rev-parse HEAD > verification-harness-sha.txt
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        env:
+          TK_EMULATOR_ONLY: '1'
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: node scripts/tk577-android-webview-acceptance.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tk577-existing-apk-api${{ matrix.api }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            android-test-evidence/
+            verification-harness-sha.txt
+          if-no-files-found: error

@@ -1,7 +1,7 @@
 'use strict';
 /* Run only against a CI emulator. Installs the isolated package; never uninstalls any app. */
 const fs=require('fs'),path=require('path'),assert=require('assert'),{execFileSync}=require('child_process');
-const {chromium}=require('playwright');
+const {_android:android}=require('playwright');
 const adb=(...args)=>execFileSync('adb',args,{encoding:'utf8',timeout:120000}).trim();
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
@@ -15,17 +15,15 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
   const launch=adb('shell','am','start','-W','-n',pkg+'/com.trainingskompas.app.MainActivity');
   assert(/Status: ok/.test(launch),launch);
   fs.writeFileSync('android-test-evidence/launch.txt',launch);
-  let pid;
-  for(let i=0;i<30;i++){pid=adb('shell','pidof',pkg);if(pid)break;await pause(1000);}
-  assert(pid);
-  adb('forward','tcp:9222','localabstract:webview_devtools_remote_'+pid);
-  let browser;
-  for(let i=0;i<30;i++){
-    try{browser=await chromium.connectOverCDP('http://127.0.0.1:9222');break;}catch(_){await pause(1000);}
-  }
-  assert(browser,'WebView debugging endpoint unavailable');
+  // Official Android WebView transport, not a desktop browser CDP endpoint.
+  const devices=await android.devices({omitDriverInstall:true});
+  const device=devices.find(d=>d.serial()===adb('get-serialno'));
+  assert(device,'emulator not visible to Playwright Android');
+  device.setDefaultTimeout(45000);
+  let page;
   try{
-    const page=browser.contexts()[0].pages()[0];assert(page);
+    const webview=await device.webView({pkg},{timeout:45000});
+    page=await webview.page();assert(page);
     await page.waitForFunction(()=>typeof buildWarmupRow==='function');
     await page.evaluate(()=>{
       sbGet=async()=>[];v43SafeGet=async()=>[];sbPost=async()=>true;sbUpsert=async()=>true;
@@ -74,5 +72,12 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
     assert.equal(await page.locator('#m-ex-picker').evaluate(x=>x.classList.contains('open')),false);
     fs.writeFileSync('android-test-evidence/result.json',JSON.stringify({status:'PASS',package:pkg,api:adb('shell','getprop','ro.build.version.sdk'),checks:['launch','decimal-keystrokes','invalid-preserves-last-valid','draft-readback','settings-header','real-ime-picker-selection'],physicalSamsung:false,pm5:false},null,2));
     console.log('TK577 ANDROID WEBVIEW PASS');
-  }finally{await browser.close();}
+  }catch(error){
+    if(page)await page.screenshot({path:'android-test-evidence/failure-webview.png'}).catch(()=>{});
+    fs.writeFileSync('android-test-evidence/device-screen.png',execFileSync('adb',['exec-out','screencap','-p']));
+    for(const [name,args] of [['sockets',['shell','cat','/proc/net/unix']],['logcat',['logcat','-d','-t','300']]]){
+      try{fs.writeFileSync('android-test-evidence/'+name+'.txt',adb(...args));}catch(_){}
+    }
+    throw error;
+  }finally{await device.close();}
 })().catch(e=>{fs.mkdirSync('android-test-evidence',{recursive:true});fs.writeFileSync('android-test-evidence/failure.txt',String(e.stack));console.error(e);process.exitCode=1;});

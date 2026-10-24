@@ -914,7 +914,7 @@ body{display:flex;justify-content:center}
    Alleen presentatie; geen handlers, ID's, routing of businesslogica. */
 
 /* Compacte canonical header. */
-#s-profiel .hdr,#s-settings .hdr{padding-top:14px;padding-bottom:6px}
+#s-profiel .hdr,#s-settings .hdr{padding-top:max(52px,calc(14px + env(safe-area-inset-top,0px)));padding-bottom:6px}
 #s-profiel .hdr-title,#s-settings .hdr-title{font-size:23px;line-height:1.15}
 #s-profiel .hdr-sub,#s-settings .hdr-sub{font-size:12.5px;margin-top:2px}
 /* Canonical terugnavigatie "‹ Profiel" i.p.v. een grote X. */
@@ -1126,8 +1126,16 @@ canvas{width:100%;height:100%}
 /* Fullscreen bottomsheet: modal vult het scherm, alleen de lijst scrollt.
    Zoekbalk/filters (sticky top) en actieknoppen (sticky bottom) blijven altijd zichtbaar,
    ook wanneer het toetsenbord open staat — zie ook initExPickerKeyboardFix() in JS. */
+#m-ex-picker{z-index:1300}
+.ex-pick-filter-details{margin:0 0 8px;font-size:12px}
+.ex-pick-filter-details summary{cursor:pointer;padding:6px 0;font-weight:700}
+#m-ex-picker.ex-pick-compact .pk-pt{display:none}
+#m-ex-picker.ex-pick-compact .pk-grid{grid-template-columns:1fr;gap:6px}
+#m-ex-picker.ex-pick-compact .pk-gcard{min-height:52px;padding-right:44px}
+#m-ex-picker.ex-pick-compact .pk-nm{margin-top:4px}
+#m-ex-picker.ex-pick-compact .ex-pick-sticky-bottom{padding-top:6px;padding-bottom:6px}
 .ex-pick-modal .modal{height:100dvh;max-height:100dvh;border-radius:0;padding:0;overflow:hidden;display:flex;flex-direction:column}
-.ex-pick-sticky-top{flex-shrink:0;padding:16px 18px 0;background:var(--card)}
+.ex-pick-sticky-top{flex-shrink:0;padding:calc(12px + env(safe-area-inset-top,0px)) 18px 0;background:var(--card)}
 .ex-pick-sticky-bottom{flex-shrink:0;padding:12px 18px calc(14px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--g2)}
 .ex-pick-search{width:100%;border:1px solid var(--g2);border-radius:10px;padding:10px 12px;font-family:var(--f);font-size:15px;background:var(--g1);margin-bottom:8px}
 .ex-pick-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;max-height:98px;overflow-y:auto}
@@ -3183,7 +3191,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tpv2-ovc{flex:1;background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;padding:12px;text-align:center}
 .tpv2-ovc .v{font-size:20px;font-weight:800;color:var(--dark)}
 .tpv2-ovc .k{font-size:11px;color:var(--g4);font-weight:600;margin-top:2px}
-.tpv2-excard{display:flex;gap:11px;align-items:flex-start;background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;padding:11px;margin-bottom:9px;cursor:pointer;text-align:left;width:100%;font-family:var(--f)}
+.tpv2-excard{display:grid;grid-template-columns:52px minmax(0,1fr);gap:11px;align-items:flex-start;background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;padding:11px;margin-bottom:9px;cursor:pointer;text-align:left;width:100%;font-family:var(--f)}
 .tpv2-excard.cur{border-color:var(--teal,var(--accent));box-shadow:0 0 0 1px var(--teal,var(--accent)) inset}
 .tpv2-exthumb{width:52px;height:52px;flex-shrink:0;border-radius:11px;background:var(--g1);object-fit:cover;display:flex;align-items:center;justify-content:center;color:var(--g3);font-size:20px}
 .tpv2-exb{flex:1;min-width:0}
@@ -3191,7 +3199,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tpv2-exnm{font-size:14px;font-weight:800;color:var(--dark);margin:1px 0 4px}
 .tpv2-extags{display:flex;gap:5px;flex-wrap:wrap}
 .tpv2-tag{font-size:10px;font-weight:700;color:var(--g4);background:var(--g1);padding:2px 7px;border-radius:999px}
-.tpv2-exmeta{font-size:12px;font-weight:800;color:var(--dark);flex-shrink:0;text-align:right}
+.tpv2-exmeta{grid-column:2;font-size:12px;font-weight:800;color:var(--dark);text-align:left;overflow-wrap:anywhere}
+.tpv2-exactions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.tpv2-exactions button{min-width:44px;min-height:44px}
+.tpv2-exb{overflow-wrap:anywhere}
+.set-field[aria-invalid="true"]{outline:2px solid var(--red,#c0392b)}
 .tpv2-exwhy{font-size:11.5px;color:var(--g4);margin-top:6px;line-height:1.4}
 .tpv2-exwu{font-size:11px;font-weight:700;color:var(--teal,var(--accent));margin-top:5px}
 .tpv2-excard--prep{border-color:var(--teal,var(--accent));box-shadow:0 0 0 1px var(--teal,var(--accent)) inset;background:linear-gradient(0deg,var(--card,#fff),var(--card,#fff)) padding-box}
@@ -5738,8 +5750,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div class="modal-title">📚 Kies een oefening<span id="ex-pick-count" style="font-weight:600;font-size:12.5px;color:var(--g4);margin-left:7px"></span></div>
       <input type="text" class="ex-pick-search" id="ex-pick-search" placeholder="Zoek op naam…" oninput="renderExPickerList()">
       <div class="ex-pick-quickfilters" id="ex-pick-quickfilters"></div>
-      <div class="pk-catlbl">Categorieën</div>
-      <div class="ex-pick-filters" id="ex-pick-filters"></div>
+      <details class="ex-pick-filter-details"><summary>Filters</summary>
+      <div class="ex-pick-filters" id="ex-pick-filters"></div></details>
     </div>
     <div class="ex-pick-list" id="ex-pick-list"></div>
     <div class="ex-pick-sticky-bottom" style="display:flex;gap:8px">
@@ -10186,7 +10198,7 @@ function renderTPPlan(el){
       .map(t=>`<span class="tpv2-tag">${escHtml(t)}</span>`).join('');
     const swapped=previewCtx.swaps[it.original_exercise_id];
     const why=m.why?`<div class="tpv2-exwhy">${escHtml(m.why)}</div>`:'';
-    const adjHtml=adj?`<div style="display:flex;gap:4px;margin-left:auto" onclick="event.stopPropagation()">
+    const adjHtml=adj?`<div class="tpv2-exactions" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()">
         <button onclick="previewOpenSwapPicker('${escHtml(it.original_exercise_id)}')" title="Vervangen" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">⇄</button>
         <button onclick="previewRemoveExercise('${escHtml(it.original_exercise_id)}')" title="Overslaan" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">✕</button>
         <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',-1)" ${i===0?'disabled':''} title="Omhoog" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===0?';opacity:.35':''}">↑</button>
@@ -10364,6 +10376,8 @@ function previewOpenSwapPicker(exId){
   if(!previewCtx)return;
   previewCtx.swapPickerFor=exId;
   renderTrainingPreview();
+  const picker=document.getElementById('tp-swap-picker');
+  if(picker)picker.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 function previewRenderSwapPicker(){
   const exId=previewCtx.swapPickerFor;
@@ -10376,17 +10390,48 @@ function previewRenderSwapPicker(){
   alts=applyAthleteConstraintsCatalog(alts); // catalogusentries: naam uit identity.name (avoid-term)
   const opts=alts.length?alts.map(a=>`<div class="lrow" style="align-items:center"><div style="flex:1;font-size:13px">${escHtml(previewExerciseName(a.catalog_id))}</div><button class="btn btn-o btn-sm" onclick="previewApplySwap('${escHtml(exId)}','${escHtml(a.catalog_id)}')">Kies</button></div>`).join('')
     :'<div style="font-size:12px;color:var(--g4)">Geen alternatieven gevonden</div>';
-  return `<div style="margin-top:10px;border-top:1px solid var(--g1);padding-top:10px">
+  return `<div id="tp-swap-picker" style="margin-top:10px;border-top:1px solid var(--g1);padding-top:10px">
     <div style="font-size:11px;font-weight:800;color:var(--g4);text-transform:uppercase;margin-bottom:6px">Vervangen: ${escHtml(previewExerciseName(exId))}</div>
     ${opts}
+    <button class="btn btn-o" style="width:100%;margin-top:10px" onclick="previewChooseReplacement()">Kies zelf uit de oefeningbibliotheek</button>
     <button class="btn btn-o btn-sm" style="margin-top:6px" onclick="previewCtx.swapPickerFor=null;renderTrainingPreview()">Annuleren</button>
   </div>`;
 }
-function previewApplySwap(origExId,newExId){
-  if(!previewCtx)return;
-  previewCtx.swaps[origExId]=newExId;
-  previewCtx.swapPickerFor=null;
+// TK-UT-002: reuse the central picker; manual selection is not a recommended substitute.
+async function previewChooseReplacement(){
+  const owner=previewCtx, origId=owner&&owner.swapPickerFor;
+  if(!owner||!origId)return;
+  await openExPicker(function(ex){
+    if(previewCtx!==owner||owner.swapPickerFor!==origId)return;
+    previewApplySwap(origId,ex.id);
+  });
+}
+async function previewApplySwap(origExId,newExId){
+  const owner=previewCtx;
+  if(!owner||!owner.order.includes(origExId))return;
+  if(previewWorkingList().some(it=>it.original_exercise_id!==origExId&&it.exercise_id===newExId)){
+    toast('Deze oefening staat al in je training');return;
+  }
+  const replacement=resolvePickerEx(newExId);
+  const original=resolvePickerEx(owner.swaps[origExId]||origExId);
+  if(!replacement||replacement.active===false)return;
+  // Cardio targets (distance/time) cannot silently become strength sets or vice versa.
+  // Cross-sport replacement needs a separate prescription editor, outside this repair.
+  if((resolveCardioType(original)||null)!==(resolveCardioType(replacement)||null)){
+    toast('Kies hetzelfde trainingstype; een ander type vraagt een nieuw trainingsdoel');return;
+  }
+  owner.swaps[origExId]=newExId;
+  owner.swapPickerFor=null;
+  if(owner.overrides){delete owner.overrides[origExId];delete owner.overrides[newExId];}
   renderTrainingPreview();
+  // Resolve the NEW identity's own history, never carry over the old exercise's weight.
+  try{
+    const prev=await loadPrevPerformance(newExId);
+    if(previewCtx!==owner||owner.swaps[origExId]!==newExId)return;
+    if(!owner.prevMap)owner.prevMap={};
+    if(prev)owner.prevMap[newExId]=prev;else delete owner.prevMap[newExId];
+    renderTrainingPreview();
+  }catch(_){} // Missing history stays explicitly unknown.
 }
 
 // previewBuildModifications() → het modifications[]-array in de vorm die
@@ -13429,7 +13474,7 @@ function tkNavHuidig(){
   return el?el.id:null;
 }
 function tkNavModaalOpen(){
-  return document.querySelector('.modal-bg.open');
+  return document.querySelector('#m-ex-picker.open')||document.querySelector('.modal-bg.open');
 }
 // WAVE 1 (RC-OVL-01/RC-OVL-02, Route Map): tkNavModaalOpen() herkende alleen
 // .modal-bg.open. Twee andere, al bestaande overlay-systemen vervullen dezelfde
@@ -13442,7 +13487,7 @@ function tkNavModaalOpen(){
 // sluit alleen de bovenste overlay, precies zoals de zichtbare X/Sluiten-knop
 // dat al deed.
 function tkNavTopmostOverlay(){
-  const modaal=document.querySelector('.modal-bg.open');
+  const modaal=tkNavModaalOpen();
   if(modaal)return {el:modaal,close:function(){closeModal(modaal.id);}};
   const confirmEl=document.querySelector('.tk-confirm-bg');
   if(confirmEl)return {el:confirmEl,close:function(){
@@ -13569,6 +13614,7 @@ function openModal(id){
   if(focusables.length)focusables[0].focus();
 }
 function closeModal(id){
+  if(id==='m-ex-picker'){exPickerCallback=null;cleanupExPickerKeyboard();}
   const m=document.getElementById(id);
   m.classList.remove('open');
   m.removeAttribute('aria-modal');
@@ -17889,29 +17935,35 @@ function _pkIcon(e){
 let _exPickerVVHandler=null;
 function initExPickerKeyboardFix(){
   if(!window.visualViewport)return;
+  const vv=window.visualViewport;
   const modalEl=document.querySelector('#m-ex-picker .modal');
   const modalBg=document.getElementById('m-ex-picker');
-  if(_exPickerVVHandler)window.visualViewport.removeEventListener('resize',_exPickerVVHandler);
+  if(_exPickerVVHandler){vv.removeEventListener('resize',_exPickerVVHandler);vv.removeEventListener('scroll',_exPickerVVHandler);}
   _exPickerVVHandler=()=>{
-    if(!modalBg.classList.contains('open')){
-      window.visualViewport.removeEventListener('resize',_exPickerVVHandler);
-      modalEl.style.height='';modalEl.style.maxHeight='';
-      return;
-    }
-    const vh=window.visualViewport.height;
-    modalEl.style.height=vh+'px';
-    modalEl.style.maxHeight=vh+'px';
+    if(!modalBg.classList.contains('open')){cleanupExPickerKeyboard();return;}
+    const vh=vv.height;
+    modalBg.style.top=vv.offsetTop+'px';modalBg.style.height=vh+'px';modalBg.style.bottom='auto';
+    modalEl.style.height=vh+'px';modalEl.style.maxHeight=vh+'px';
+    modalBg.classList.toggle('ex-pick-compact',vh<600);
   };
-  window.visualViewport.addEventListener('resize',_exPickerVVHandler);
+  vv.addEventListener('resize',_exPickerVVHandler);vv.addEventListener('scroll',_exPickerVVHandler);
   _exPickerVVHandler();
+}
+function cleanupExPickerKeyboard(){
+  const vv=window.visualViewport;
+  if(vv&&_exPickerVVHandler){vv.removeEventListener('resize',_exPickerVVHandler);vv.removeEventListener('scroll',_exPickerVVHandler);}
+  _exPickerVVHandler=null;
+  const bg=document.getElementById('m-ex-picker'),modal=bg&&bg.querySelector('.modal');
+  if(bg){bg.style.top='';bg.style.height='';bg.style.bottom='';bg.classList.remove('ex-pick-compact');}
+  if(modal){modal.style.height='';modal.style.maxHeight='';}
 }
 function selectExPickerItem(id){
   const ex=resolvePickerEx(id); // F41: legacy of catalogus-fallback (behoudt catalog_id)
   if(!ex)return;
   if(exPickerCallback){
+    const callback=exPickerCallback;
     closeModal('m-ex-picker');
-    exPickerCallback(ex);
-    exPickerCallback=null;
+    callback(ex);
     return;
   }
   clearLosSessionState(); // v306.2 #12: nieuwe oefening start altijd volledig leeg
@@ -19432,7 +19484,10 @@ async function renderTrainScreen(t){
     const prev=await v43SafeGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=1');
     if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
     const eqList=await loadEquipment(ex.id);
-    return {prevS:prev[0],eqList};
+    const latest=prev[0];
+    const strength=!resolveCardioType(ex)&&ex.type!=='wod'&&ex.type!=='carry';
+    const prevS=(strength&&(!latest||!latest.weight||!latest.reps))?((await loadPrevPerformance(ex.id))||latest):latest;
+    return {prevS,eqList};
   }));
   let _pi=0;
   for(const ex of list){
@@ -19502,7 +19557,7 @@ async function renderTrainScreen(t){
         </div>
         <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
       </div>
-      ${prevBlockHtml||(prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:'')||(resolveCardioType(ex)?'':prevEmptyBlock())}
+      ${prevBlockHtml||(prevStr?`<div class="ex-prev"><strong>${escHtml(prevStr)}</strong></div>`:'')||(resolveCardioType(ex)?'':prevEmptyBlock())}
       <div class="ex-body" id="body-${ex.id}">
         ${ex.tip?`<div style="background:var(--g1);border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:var(--g4);margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
         ${buildVideoMuscle(ex)}
@@ -21654,7 +21709,7 @@ function buildWarmupRow(exId,i){
     <div class="wur-no">W${i}</div>
     <div class="setr-cells">
       <div class="setr-cell">
-        <input class="set-field" type="text" inputmode="decimal" placeholder="–" id="w-${exId}-${i}-kg" value="${v.kg||''}" oninput="clampNumInput(this,0,500);onWarmupEdit('${exId}',${i})" onchange="logSet('${exId}','wu',${i},false)">
+        <input class="set-field" type="text" inputmode="decimal" placeholder="–" id="w-${exId}-${i}-kg" value="${escHtml(String(v.kg??''))}" oninput="validateSetWeightInput(this);onWarmupEdit('${exId}',${i});logSet('${exId}','wu',${i},false)" onchange="clampNumInput(this,0,500);onWarmupEdit('${exId}',${i});logSet('${exId}','wu',${i},false)">
         <div class="setr-u">kg</div>
       </div>
       <div class="setr-cell">
@@ -21678,6 +21733,8 @@ function buildWarmupSection(exId,count){
 function onWarmupEdit(exId,i){
   if(!warmupState[exId])warmupState[exId]={count:1,manual:{},values:{}};
   warmupState[exId].manual[i]=true;
+  // TK-UT-008: keep the editable draft, including a trailing comma, across warm-up rerenders.
+  warmupState[exId].values[i]={kg:document.getElementById('w-'+exId+'-'+i+'-kg')?.value||'',reps:document.getElementById('w-'+exId+'-'+i+'-reps')?.value||''};
 }
 function addWarmupSet(exId){
   if(!warmupState[exId])warmupState[exId]={count:0,manual:{},values:{}};
@@ -22088,15 +22145,27 @@ function stepField(id,delta){
 // werd die door de browser genegeerd, waardoor "57,5" als "575" gelezen werd en tegen de
 // max-clamp aanliep). Daarom hier eerst de comma in el.value zelf vervangen, zodat het
 // zichtbare veld meteen het correcte getal toont.
+function validateSetWeightInput(el){
+  const empty=el.value.trim()==='';
+  const n=numNL(el.value);
+  const invalid=!empty&&(!Number.isFinite(n)||n<0||n>500);
+  if(el.setAttribute)el.setAttribute('aria-invalid',invalid?'true':'false');
+  if(el.setCustomValidity)el.setCustomValidity(invalid?'Voer een geldig gewicht in (komma of punt voor decimalen).':'');
+  return !invalid;
+}
 function clampNumInput(el,min,max){
   if(el.value==='')return;
-  if(el.value.indexOf(',')!==-1) el.value = el.value.replace(',','.');
-  let v=parseFloat(el.value);
-  if(isNaN(v))return;
-  if(v<min)v=min;
-  if(v>max)v=max;
-  // Voorkom oneindig lange invoer (bv. 3555) door te knippen op max digits vóór de komma
-  el.value=v;
+  // Never parse a prefix (67x5 -> 67), or remove a decimal separator while typing.
+  // Warm-up fields call this on change, just like work sets, not on each keystroke.
+  const v=numNL(el.value);
+  if(!Number.isFinite(v)){
+    if(el.setAttribute)el.setAttribute('aria-invalid','true');
+    if(el.setCustomValidity)el.setCustomValidity('Voer een geldig getal in (komma of punt voor decimalen).');
+    return;
+  }
+  el.value=Math.max(min,Math.min(max,v));
+  if(el.setAttribute)el.setAttribute('aria-invalid','false');
+  if(el.setCustomValidity)el.setCustomValidity('');
 }
 
 function buildCarryBody(exId,sets){
@@ -22367,7 +22436,7 @@ function buildIntervalSection(exId,cardioType){
         <div class="row-item"><input class="row-inp" type="number" min="0" max="1800" id="iv-cooldown-${exId}" value="${p.cooldown}"><div class="row-inp-lbl">Cooldown (sec)</div></div>
       </div>
       <button class="btn btn-r" style="width:100%;margin-top:10px" onclick="startIntervalExecution('${exId}','${cardioType}')">▶ Start intervaltraining</button>
-      <div style="font-size:11px;color:var(--g4);margin-top:6px">Werk en herstel worden automatisch afgeteld. Je kunt tijdens het werk-block desgewenst een apparaat koppelen hierboven.</div>
+      <div style="font-size:11px;color:var(--g4);margin-top:6px">Intervallen worden alleen in de app afgeteld, niet naar de PM5 gestuurd. Stel dezelfde intervallen zelf op de PM5 in. Een Bluetooth-verbinding leest metingen en programmeert deze intervallen niet.</div>
     </div>
   </div>`;
 }
@@ -32228,8 +32297,14 @@ async function refreshMuscleHeatmap(){
 
 function getExerciseMuscles(exId){
   const ex=exercises.find(e=>e.id===exId);
-  if(!ex) return [];
-  return [...(ex.muscle_primary||[]),...(ex.muscle_secondary||[])];
+  const declared=ex?[...(ex.muscle_primary||[]),...(ex.muscle_secondary||[])]:[];
+  if(declared.length)return declared;
+  // TK-UT-007: exact canonical identity only. No name matching, invented mapping or formula.
+  try{
+    const c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(exId):null;
+    if(c&&c.identity)return [...(c.identity.primary||[]),...(c.identity.secondary||[])];
+  }catch(_){}
+  return [];
 }
 
 // ══════════════════════════════════════════════════════════

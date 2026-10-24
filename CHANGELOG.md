@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## Testkandidaat 24 oktober 2026 — geïntegreerde nachtproef
+
+- #570 en native export/MIME-keten #572 samengebracht op een aparte branch; geen main/productierelease.
+- SEC-570-05: G1 tekstprefix/Unicode conservatief geweigerd; G2 malformed-JSON-regressie en vier gedode mutanten.
+- Vier wachtzinvelden met toegankelijke toon/verbergbediening, uitleg en wissen bij sluiten/achtergrond.
+- Geïsoleerd Android-pakket **TK Test 24 oktober**, exacte PR-head en APK-bewijs via CI.
+- Beperkingen en ochtendprotocol: `docs/TK_NACHTTEST_20261024.md`.
+
+
 ## Draft kandidaat — SEC-570-04 F1/F2/F4 security- en databehoudcorrecties (22 oktober 2026)
 
 - F1: elke URL-gedecodeerde JSON-laag wordt ook als JSON gecontroleerd op credentials, credentialtabellen en RPC-namen.
@@ -27,6 +36,27 @@
 - **Reddingskopie (SEC-570-02).** Wachtrijrecords waarvan de payload (ook als JSON-tekst, genest of dubbel gecodeerd, of in een filter) een andere of niet te controleren eigenaar noemt, komen niet in de kopie en zijn zichtbaar als overgeslagen. Body/args die geen object zijn worden overgeslagen. De wachtrij zelf blijft ongewijzigd.
 - **Niet gewijzigd.** Schema, RLS, triggers, secrets, signing, authenticatie, versionCode, read-only herstelpreview. SW-cache v470271.
 - **Rapport.** `docs/TK_SEC570_HERSTEL_20261021.md`.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-34 heracceptatie: testvariant TK MIME-proef (20 oktober 2026)
+
+- **Testvariant.** Buildtype `exportproefmime` met applicationId `com.trainingskompas.app.exportproefmime`, versionName-suffix `-exportproefmime` en label "TK MIME-proef"; debug-ondertekend. Naast de app en naast `…exportproef` te installeren; die blijven ongewijzigd (DEC-SEC-009).
+- **CI.** Aparte job `exportproefmime-apk`: bouw uit de PR-head-commit, controle van pakketnaam, label, opslagrechten, ondertekening en verpakt MIME-contract; artifact `trainingskompas-exportproefmime-apk`.
+- **Niet gewijzigd.** App-code, web, schema, signing credentials, versionCode, SW-cache.
+- **Documenten.** Testprotocol versie 3.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-34 Herstelpreview kiest de eigen Android-export (20 oktober 2026)
+
+- **Herstel blocker T3.** Het in de app gemaakte `.tkbackup`-bestand (type `application/octet-stream`) was in de Android-bestandskiezer van de herstelpreview uitgeschakeld: Capacitor vertaalt `.tkbackup` naar niets, waardoor alleen `application/json` overbleef. Beide bestandsinvoeren accepteren nu precies `.tkbackup`, `application/octet-stream` en `application/json`; oude en nieuwe kopieën zijn kiesbaar. Alle inhouds-, wachtzin-, eigenaar- en accountcontroles blijven verplicht; MIME of naam keurt niets goed.
+- **Exportmelding.** Na een export: aanwezige bronnen, geëxporteerd (aantal records per bron), overgeslagen met reden en niet exporteerbaar (toestel/systeem), zonder inhoud. Herstelbaarheid blijkt alleen uit de herstelpreview.
+- **Tests.** Emulator API 30 en 34 met de echte DocumentsUI (oud: uitgeschakeld, nieuw: kiesbaar). SW-cache v470271.
+- **Documenten.** `docs/TK_ANDROID_MIME_HERSTEL_20261020.md`, testprotocol versie 2.
+
+## Kandidaat (nog geen versie) — TK-REL-SEC-33 Android native export van de reddingskopie (20 oktober 2026)
+
+- **Android.** De bestaande knop "Versleuteld bestand maken" slaat in de app op via het Android-opslagdialoog (eigen plugin, Storage Access Framework, geen opslagrechten). Het bestand wordt na het schrijven volledig teruggelezen en op grootte en SHA-256 gecontroleerd; alleen dan: "Versleutelde kopie weggeschreven en teruggelezen." Annuleren, schrijf-, lees- of vergelijkingsfouten en een accountwissel worden nooit als gelukt gemeld; een onvolledig bestand wordt verwijderd.
+- **Web.** Ongewijzigd (browserdownload).
+- **Testvariant.** Buildtype `exportproef` met eigen applicationId; de bestaande app, signing en versionCode zijn ongewijzigd. SW-cache v470270.
+- **Documenten.** `docs/TK_ANDROID_NATIVE_EXPORT_RAPPORT_20261020.md`, testprotocol `docs/TK_ANDROID_EXPORT_TESTPROTOCOL_20261020.md`.
 
 ## Kandidaat (nog geen versie) — TK-REL-SEC-32 Herstelpreview: betrouwbare inhoudsvergelijking (20 oktober 2026)
 

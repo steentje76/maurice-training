@@ -10,6 +10,8 @@ public class MainActivity extends BridgeActivity {
         // super.onCreate() gebeuren (Capacitor-conventie), anders mist de
         // eerste page-load de plugin-bridge.
         registerPlugin(TkBarcodeScannerPlugin.class);
+        // TK-REL-SEC-33: native export van de versleutelde reddingskopie (Storage Access Framework).
+        registerPlugin(TkBestandOpslaanPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

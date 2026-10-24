@@ -22,6 +22,7 @@ on:
       - integration/tk-full-security-ux-20261020
       - integration/tk-sec-ux-20261019
 
+
 permissions:
   contents: read
 
@@ -77,6 +78,8 @@ jobs:
             core/fHistInventoryChromium.test.js
             core/fLocalEncryptedBackupChromium.test.js
             core/fRestorePreviewChromium.test.js
+            core/fNativeBackupExportChromium.test.js
+            core/fBackupPassphraseChromium.test.js
           )
           failures=0
           for test_file in "${tests[@]}"; do

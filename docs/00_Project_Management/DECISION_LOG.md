@@ -3358,3 +3358,37 @@ SHA van de goedgekeurde kandidaat. Alle toestelcontroles: OPEN — DEVICE VALIDA
 4. Bestaande kopieën worden niet gemigreerd en blijven read-only leesbaar.
 
 **Niet besloten (PO).** Hoe om te gaan met bestaande kopieën van vóór deze versie (waarschuwing of weigering bij inspectie, of verwijdering door de gebruiker), en of detectie wordt uitgebreid naar sleutelloze geheimen.
+
+## DEC-SEC-007 — Android-export: alleen "gelukt" na volledig teruglezen (20 oktober 2026)
+
+**Context.** In de Android-app werkt een browserdownload niet (#567, F2). De eigenaar koos D1 (eigen SAF-plugin), D2 (alleen een geïsoleerde debug-APK) en D3 (de bestaande knop kiest zelf de route).
+
+**Besluit (technisch).**
+1. De native export schrijft alleen de versleutelde envelop, in begrensde delen. Daarna volgt sync, en het bestand wordt via de ContentResolver volledig teruggelezen. Grootte en SHA-256 worden native én in de webcontrole vergeleken.
+2. Alleen VERIFIED_READBACK geldt als gelukt; de melding noemt dat dit geen garantie is voor cloudsynchronisatie. CANCELLED, WRITE_FAILED, READ_FAILED, MISMATCH en ACCOUNT_CHANGED zijn nooit gelukt. Een aangemaakt document wordt dan verwijderd, en of dat lukte wordt gemeld.
+3. Er zijn geen algemene opslagrechten, er is geen logging en er is geen opslag van inhoud. De eigenaar wordt gecontroleerd vóór de start, tussen de delen en na terugkomst.
+4. Testinstallaties gebruiken alleen de variant `com.trainingskompas.app.exportproef`.
+
+**Niet besloten (PO).** Installatie op een fysiek toestel volgens het testprotocol; Android-release.
+
+## DEC-SEC-008 — Bestandskiezer herstelpreview: expliciet MIME-contract (20 oktober 2026)
+
+**Context.** Fysieke test: het eigen exportbestand (`application/octet-stream`) was in de Android-kiezer uitgeschakeld, omdat Capacitor 6 de onbekende extensie `.tkbackup` laat wegvallen en alleen `application/json` doorgeeft.
+
+**Besluit (technisch).**
+1. Beide bestandsinvoeren: `accept=".tkbackup,application/octet-stream,application/json"`. Geen wildcard.
+2. De native export blijft `application/octet-stream` (`EXPORT_MIME`). Export als `application/json` is afgewezen: providers voegen dan `.json` toe en bestaande kopieën blijven onkiesbaar.
+3. MIME en extensie keuren niets goed; de envelop, de cryptografie, de inhoudsvalidatie en de eigenaar- en accountcontroles beslissen.
+
+**Niet besloten (PO).** Fysieke heracceptatie volgens protocol v2; Android-release.
+
+## DEC-SEC-009 — Heracceptatie MIME-herstel op een aparte testvariant (20 oktober 2026)
+
+**Context.** De eerdere testvariant `com.trainingskompas.app.exportproef` staat met proefgegevens op het fysieke toestel. Bijwerken of wissen daarvan is uitgesloten; de heracceptatie vraagt wel een schone installatie met het MIME-herstel.
+
+**Besluit (technisch).**
+1. Extra buildtype `exportproefmime`: `initWith debug`, `applicationIdSuffix ".exportproefmime"`, `versionNameSuffix "-exportproefmime"`. Eigen label "TK MIME-proef" via de bronset `src/exportproefmime` (alleen `strings.xml`: geen manifest, code of rechten).
+2. `com.trainingskompas.app`, `…exportproef`, de releaseondertekening, signing credentials en versionCode blijven ongewijzigd.
+3. Aparte CI-job bouwt uit de exacte PR-head-commit (niet de merge-commit) en controleert pakketnaam, label, opslagrechten (gelijk aan exportproef), debugondertekening en het verpakte MIME-contract; eigen artifact met SHA-256 en broncommit.
+
+**Niet besloten (PO).** Uitkomst van de fysieke heracceptatie (protocol v3); verwijderen van testvarianten; Android-release.

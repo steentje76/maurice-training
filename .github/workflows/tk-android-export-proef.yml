@@ -1,0 +1,357 @@
+name: Trainingskompas Android Export Proef
+
+# TK-REL-SEC-33: native Android-export van de versleutelde reddingskopie.
+# - native unit tests (JUnit, TkExportSessie);
+# - geïsoleerde debug-APK met eigen applicationId (com.trainingskompas.app.exportproef), debug-ondertekend;
+#   kan de bestaande app nooit overschrijven; geen productiesleutel, geen installatie op een fysiek toestel;
+# - instrumentatietests op een emulator met synthetische gegevens (ContentResolver-route: schrijven, sync, teruglezen).
+# TK-REL-SEC-34 (heracceptatie): aparte job voor de tweede geïsoleerde variant com.trainingskompas.app.exportproefmime
+#   (label "TK MIME-proef"), gebouwd uit de exacte PR-head-commit, met eigen controles en een eigen APK-artifact.
+on:
+  pull_request:
+    branches:
+      - integration/tk-full-security-ux-20261020
+      - review/claude-restore-canon-20261020
+      - review/claude-android-export-20261020
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tk-android-export-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-unit-en-apk:
+    name: Native unit tests + exportproef-APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - run: npm ci
+      - name: Sync Capacitor Android assets
+        run: npm run cap:sync
+      - run: chmod +x android/gradlew
+      - name: Native unit tests (debug)
+        working-directory: android
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+      - name: Build exportproef APK (eigen applicationId, debug-ondertekend)
+        working-directory: android
+        run: ./gradlew :app:assembleExportproef --no-daemon
+      - name: Verify isolation of the test APK
+        run: |
+          set -euo pipefail
+          APK=$(ls android/app/build/outputs/apk/exportproef/*.apk | head -n1)
+          AAPT2="$ANDROID_HOME/build-tools/36.0.0/aapt2"
+          "$AAPT2" dump badging "$APK" | tee badging.txt | head -n 3
+          grep -q "package: name='com.trainingskompas.app.exportproef'" badging.txt
+          grep -q "versionName='[0-9.]*-exportproef'" badging.txt
+          "$AAPT2" dump permissions "$APK" | tee permissions.txt
+          if grep -Eq "WRITE_EXTERNAL_STORAGE|READ_EXTERNAL_STORAGE|MANAGE_EXTERNAL_STORAGE|READ_MEDIA_" permissions.txt; then echo "::error::algemene opslagrechten in de APK"; exit 1; fi
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK" | tee certs.txt
+          grep -q "CN=Android Debug" certs.txt
+          mkdir -p dist
+          cp "$APK" "dist/Trainingskompas-exportproef-${GITHUB_SHA::9}.apk"
+          (cd dist && sha256sum *.apk > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          git rev-parse HEAD > dist/commit.txt
+          # Bewijs ook als annotatie (leesbaar via de check-run-API, zonder logtoegang).
+          echo "::notice title=exportproef-apk::$(cat dist/SHA256SUMS.txt) commit=$(cat dist/commit.txt) package=com.trainingskompas.app.exportproef"
+      - name: Report native unit test counts
+        if: always()
+        run: |
+          for f in android/app/build/test-results/testDebugUnitTest/*.xml; do
+            [ -f "$f" ] || continue
+            echo "::notice title=native-unit-tests::$(grep -o '<testsuite [^>]*' "$f" | grep -oE '(name|tests|failures|errors|skipped)="[^"]*"' | tr '\n' ' ')"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trainingskompas-exportproef-apk
+          path: dist/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-unit-test-rapport
+          path: android/app/build/reports/tests/
+          retention-days: 14
+
+  emulator-instrumentatie:
+    name: Emulator-instrumentatie API ${{ matrix.api }} (synthetische gegevens)
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Android 11 (API 30): zelfde versie als de fysieke Galaxy A70; DocumentsUI-selecteerbaarheid + ContentResolver.
+          - api: 30
+            klassen: com.trainingskompas.app.export.ContentBestemmingInstrumentedTest,com.trainingskompas.app.export.ImportKiezerSelecteerbaarheidTest
+          - api: 34
+            klassen: com.trainingskompas.app.export.ContentBestemmingInstrumentedTest,com.trainingskompas.app.export.ImportKiezerSelecteerbaarheidTest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - run: npm ci
+      - run: npm run cap:sync
+      - run: chmod +x android/gradlew
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Instrumentatietests op de emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: false
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash tools/ci/run-instrumentation.sh ${{ matrix.klassen }}
+      - name: Report instrumentation test counts
+        if: always()
+        run: |
+          found=0
+          while IFS= read -r f; do
+            [ -n "$f" ] || continue
+            found=1
+            echo "::notice title=emulator-api${{ matrix.api }}::$(grep -o '<testsuite [^>]*' "$f" | grep -oE '(name|tests|failures|errors|skipped)="[^"]*"' | tr '\n' ' ')"
+            grep -oE '<testcase [^>]*name="[^"]*"' "$f" | grep -oE 'name="[^"]*"' | sed 's/^/testcase /' || true
+            python3 tools/ci/junit-annotaties.py "$f" "emulator-api${{ matrix.api }}" || true
+          done < <(find android/app/build/outputs/androidTest-results -name '*.xml' 2>/dev/null)
+          if [ "$found" = 0 ]; then echo "::warning title=emulator-api${{ matrix.api }}::geen testresultaten gevonden"; fi
+          if [ -f instrumentatie.log ]; then
+            grep -E "error:|FAILED|What went wrong|Execution failed|AssertionError|Exception:|INSTALL_FAILED|Tests on .* failed|> Task .*FAILED" instrumentatie.log | head -n 4 | while IFS= read -r regel; do
+              echo "::error title=emulator-api${{ matrix.api }}::$(echo "$regel" | cut -c1-400)"
+            done
+            grep -E "Finished [0-9]+ tests|Tests on .* (passed|failed)|BUILD (SUCCESSFUL|FAILED)" instrumentatie.log | head -n 10 | while IFS= read -r regel; do
+              echo "::notice title=emulator-api${{ matrix.api }}::$(echo "$regel" | cut -c1-300)"
+            done
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-instrumentatie-rapport-api${{ matrix.api }}
+          path: android/app/build/reports/androidTests/
+          retention-days: 14
+
+  exportproefmime-apk:
+    name: Exportproefmime-APK (TK MIME-proef, heracceptatie)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # Bewust de exacte PR-head-commit en niet de merge-commit van GitHub: de APK moet één op één
+      # herleidbaar zijn tot een commit op de branch.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - run: npm ci
+      - name: Sync Capacitor Android assets
+        run: npm run cap:sync
+      - run: chmod +x android/gradlew
+      - name: Build exportproefmime APK (+ exportproef als vergelijking)
+        working-directory: android
+        run: ./gradlew :app:assembleExportproefmime :app:assembleExportproef --no-daemon
+      - name: Verify isolation, label, permissions, signing and MIME contract
+        run: |
+          set -euo pipefail
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          APK=$(ls android/app/build/outputs/apk/exportproefmime/*.apk | head -n1)
+          REF=$(ls android/app/build/outputs/apk/exportproef/*.apk | head -n1)
+          COMMIT=$(git rev-parse HEAD)
+          "$BT/aapt2" dump badging "$APK" > badging.txt
+          head -n 3 badging.txt
+          # Pakketnaam exact; nooit een van de bestaande pakketten.
+          grep -q "^package: name='com.trainingskompas.app.exportproefmime' " badging.txt
+          if grep -Eq "^package: name='com\.trainingskompas\.app(\.exportproef)?' " badging.txt; then echo "::error::pakketnaam valt samen met een bestaand pakket"; exit 1; fi
+          grep -q "versionName='[0-9.]*-exportproefmime'" badging.txt
+          grep -q "versionCode='47025'" badging.txt
+          grep -q "^application-label:'TK MIME-proef'$" badging.txt
+          grep -q "^launchable-activity: name='com.trainingskompas.app.MainActivity'" badging.txt
+          grep -q "debuggable" badging.txt
+          # Opslagrechten: geen algemene opslagrechten, en dezelfde rechtenset als de eerder geaccepteerde exportproef.
+          "$BT/aapt2" dump permissions "$APK" | tee permissions.txt
+          if grep -Eq "WRITE_EXTERNAL_STORAGE|READ_EXTERNAL_STORAGE|MANAGE_EXTERNAL_STORAGE|READ_MEDIA_" permissions.txt; then echo "::error::algemene opslagrechten in de APK"; exit 1; fi
+          "$BT/aapt2" dump permissions "$REF" > permissions-ref.txt
+          diff <(grep -v '^package:' permissions.txt | sed 's/com\.trainingskompas\.app\.exportproefmime/PKG/g' | sort) \
+               <(grep -v '^package:' permissions-ref.txt | sed 's/com\.trainingskompas\.app\.exportproef/PKG/g' | sort)
+          # Debugondertekening, nooit de productiesleutel.
+          "$BT/apksigner" verify --verbose --print-certs "$APK" | tee certs.txt
+          grep -q "CN=Android Debug" certs.txt
+          CERT=$(grep -m1 "certificate SHA-256 digest" certs.txt | awk '{print $NF}')
+          # MIME-herstel zit in de verpakte app: exact contract op beide bestandsinvoeren, geen wildcard.
+          unzip -p "$APK" assets/public/index.html > packaged-index.html
+          N=$(grep -o 'accept="\.tkbackup,application/octet-stream,application/json"' packaged-index.html | wc -l)
+          test "$N" -ge 2 || { echo "::error::accept-contract ontbreekt in de verpakte index.html ($N)"; exit 1; }
+          if grep -Eq 'id="tk-(backup|restore)-file"[^>]*accept="\*/\*"' packaged-index.html; then echo "::error::wildcard-accept"; exit 1; fi
+          unzip -p "$APK" 'classes*.dex' | grep -a -q 'TkBestandOpslaanPlugin'
+          VNAME=$(grep -o "versionName='[^']*'" badging.txt | cut -d"'" -f2)
+          mkdir -p dist-mime
+          NAAM="Trainingskompas-exportproefmime-${VNAME%-exportproefmime}-${COMMIT::9}.apk"
+          cp "$APK" "dist-mime/$NAAM"
+          (cd dist-mime && sha256sum "$NAAM" > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          {
+            echo "commit=$COMMIT"
+            echo "package=com.trainingskompas.app.exportproefmime"
+            echo "label=TK MIME-proef"
+            echo "versionName=$VNAME"
+            echo "signing=Android Debug (debug-sleutel van de CI-runner)"
+            echo "cert_sha256=$CERT"
+            echo "accept_contract_count=$N"
+          } > dist-mime/BUILDINFO.txt
+          cat dist-mime/BUILDINFO.txt
+          echo "::notice title=exportproefmime-apk::$(cat dist-mime/SHA256SUMS.txt) commit=$COMMIT package=com.trainingskompas.app.exportproefmime label=TK MIME-proef versionName=$VNAME cert_sha256=$CERT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trainingskompas-exportproefmime-apk
+          path: dist-mime/
+          retention-days: 14
+
+  nachtproef-apk:
+    name: Nachtproef-APK (TK Test 24 oktober)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # Bewust de exacte PR-head-commit en niet de merge-commit van GitHub: de APK moet één op één
+      # herleidbaar zijn tot een commit op de branch.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - run: npm ci
+      - name: Sync Capacitor Android assets
+        run: npm run cap:sync
+      - run: chmod +x android/gradlew
+      - name: Build nachtproef APK (+ exportproef als vergelijking)
+        working-directory: android
+        run: ./gradlew :app:testDebugUnitTest :app:assembleNachtproef :app:assembleExportproef --no-daemon
+      - name: Verify isolation, label, permissions, signing and MIME contract
+        run: |
+          set -euo pipefail
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          APK=$(ls android/app/build/outputs/apk/nachtproef/*.apk | head -n1)
+          REF=$(ls android/app/build/outputs/apk/exportproef/*.apk | head -n1)
+          COMMIT=$(git rev-parse HEAD)
+          "$BT/aapt2" dump badging "$APK" > badging.txt
+          head -n 3 badging.txt
+          # Pakketnaam exact; nooit een van de bestaande pakketten.
+          grep -q "^package: name='com.trainingskompas.app.nachtproef20261024' " badging.txt
+          if grep -Eq "^package: name='com\.trainingskompas\.app(\.exportproef)?' " badging.txt; then echo "::error::pakketnaam valt samen met een bestaand pakket"; exit 1; fi
+          grep -q "versionName='[0-9.]*-nachtproef20261024'" badging.txt
+          grep -q "versionCode='47025'" badging.txt
+          grep -q "^application-label:'TK Test 24 oktober'$" badging.txt
+          grep -q "^launchable-activity: name='com.trainingskompas.app.MainActivity'" badging.txt
+          grep -q "debuggable" badging.txt
+          # Opslagrechten: geen algemene opslagrechten, en dezelfde rechtenset als de eerder geaccepteerde exportproef.
+          "$BT/aapt2" dump permissions "$APK" | tee permissions.txt
+          if grep -Eq "WRITE_EXTERNAL_STORAGE|READ_EXTERNAL_STORAGE|MANAGE_EXTERNAL_STORAGE|READ_MEDIA_" permissions.txt; then echo "::error::algemene opslagrechten in de APK"; exit 1; fi
+          "$BT/aapt2" dump permissions "$REF" > permissions-ref.txt
+          diff <(grep -v '^package:' permissions.txt | sed 's/com\.trainingskompas\.app\.nachtproef20261024/PKG/g' | sort) \
+               <(grep -v '^package:' permissions-ref.txt | sed 's/com\.trainingskompas\.app\.exportproef/PKG/g' | sort)
+          # Debugondertekening, nooit de productiesleutel.
+          "$BT/apksigner" verify --verbose --print-certs "$APK" | tee certs.txt
+          grep -q "CN=Android Debug" certs.txt
+          CERT=$(grep -m1 "certificate SHA-256 digest" certs.txt | awk '{print $NF}')
+          # MIME-herstel zit in de verpakte app: exact contract op beide bestandsinvoeren, geen wildcard.
+          unzip -p "$APK" assets/public/index.html > packaged-index.html
+          N=$(grep -o 'accept="\.tkbackup,application/octet-stream,application/json"' packaged-index.html | wc -l)
+          test "$N" -ge 2 || { echo "::error::accept-contract ontbreekt in de verpakte index.html ($N)"; exit 1; }
+          if grep -Eq 'id="tk-(backup|restore)-file"[^>]*accept="\*/\*"' packaged-index.html; then echo "::error::wildcard-accept"; exit 1; fi
+          unzip -p "$APK" 'classes*.dex' > packaged-dex.bin
+          grep -a -q 'TkBestandOpslaanPlugin' packaged-dex.bin
+          # Controleer de daadwerkelijk verpakte code, niet alleen losse bronbestanden.
+          python3 - "$APK" <<'PYCODE'
+          import sys, zipfile
+          from pathlib import Path
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              for f in ['index.html', 'core/localBackup.js', 'core/nativeBackupExport.js']:
+                  assert z.read('assets/public/'+f) == Path('www', f).read_bytes(), f
+              h=z.read('assets/public/index.html').decode()
+              assert h.count('onclick="tkToggleBackupWachtzin(') == 4
+              assert 'Herstel uitvoeren (niet beschikbaar)' in h
+          PYCODE
+          VNAME=$(grep -o "versionName='[^']*'" badging.txt | cut -d"'" -f2)
+          mkdir -p dist-nacht
+          NAAM="Trainingskompas-nachtproef20261024-${VNAME%-nachtproef20261024}-${COMMIT::9}.apk"
+          cp "$APK" "dist-nacht/$NAAM"
+          (cd dist-nacht && sha256sum "$NAAM" > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          {
+            echo "commit=$COMMIT"
+            echo "package=com.trainingskompas.app.nachtproef20261024"
+            echo "label=TK Test 24 oktober"
+            echo "versionName=$VNAME"
+            echo "signing=Android Debug (debug-sleutel van de CI-runner)"
+            echo "cert_sha256=$CERT"
+            echo "accept_contract_count=$N"
+          } > dist-nacht/BUILDINFO.txt
+          cat dist-nacht/BUILDINFO.txt
+          echo "::notice title=exportproefmime-apk::$(cat dist-nacht/SHA256SUMS.txt) commit=$COMMIT package=com.trainingskompas.app.nachtproef20261024 label=TK Test 24 oktober versionName=$VNAME cert_sha256=$CERT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trainingskompas-nachtproef20261024-apk
+          path: dist-nacht/
+          retention-days: 14

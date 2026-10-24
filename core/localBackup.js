@@ -128,6 +128,10 @@
             }
             const result=geheimIn(p,st,depth+1,true);
             if(result)return result;
+          }else if(/\\u[0-9A-Fa-f]{4}/.test(candidate)){
+            // SEC-570-05/G1: a prefix (x={...}) prevents whole-string JSON parsing.
+            // Do not claim that hidden JSON keys were checked. Omit, never rewrite the source.
+            return NIET_TE_CONTROLEREN;
           }
         }
       }
@@ -136,6 +140,8 @@
         let p; try{ p=JSON.parse(t); }catch(_){ return /\\u[0-9A-Fa-f]{4}/.test(t)?NIET_TE_CONTROLEREN:null; }
         return geheimIn(p,st,depth+1,true);
       }
+      // Same rule for unencoded prefixed fragments; valid whole JSON above remains readable.
+      if(/\\u[0-9A-Fa-f]{4}/.test(t))return NIET_TE_CONTROLEREN;
       return null;
     }
     if(!v||typeof v!=='object')return null;

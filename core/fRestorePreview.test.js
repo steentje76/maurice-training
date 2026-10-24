@@ -27,7 +27,10 @@ const stap=async(f)=>{ try{ await f(); }catch(e){ if(!RED)throw e; console.log('
 const UA='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', UB='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', PASS='een lange wachtzin voor test';
 const BLOK2=grab('// SERVER READ-AFTER-WRITE, FASE 2','// HISTORISCHE INVENTARIS EN BASISMETING, FASE 3');
 let BLOKP=''; if(HTML.indexOf('// TK-REL-SEC-31: HERSTELPREVIEW')>=0)BLOKP=grab('// TK-REL-SEC-31: HERSTELPREVIEW','async function exportJSON(){');
-const HULP=[fn('function tkTrainingOefendoelen('),fn('function tkTrainingInhoud('),fn('function tkTrainingVanServer(')].join('\n');
+// The UI handler now calls the real passphrase concealment helper. Include that
+// production block in this extracted-function harness rather than stubbing it out.
+const WACHTZIN=grab('const TK_BACKUP_WACHTZIN_VELDEN=','let tkBackupBusy=false;');
+const HULP=[fn('function tkTrainingOefendoelen('),fn('function tkTrainingInhoud('),fn('function tkTrainingVanServer('),WACHTZIN].join('\n');
 function opslag(init){ const m=new Map(Object.entries(init||{}));
   return {get length(){return m.size;},key:i=>[...m.keys()][i]===undefined?null:[...m.keys()][i],getItem(k){ (this._gelezen=this._gelezen||[]).push(k); return m.has(k)?m.get(k):null; },
     setItem:(k,v)=>{m.set(k,String(v));},removeItem:k=>{m.delete(k);},_dump:()=>JSON.stringify([...m.entries()])}; }

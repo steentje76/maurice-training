@@ -75,6 +75,7 @@ Elke opslagsleutel of database die niet in dit manifest staat, telt bij de inven
 | namespace_migratie | localStorage | `tk_ns_migrated` | systeem | één waarde | opslagsleutel | n.v.t. | v1 | n.v.t. |  | Markering namespace-migratie |
 | builder_migratie | localStorage | `tk_wb_migrated_v1` | systeem | één waarde | opslagsleutel | n.v.t. | v1 | n.v.t. |  | Markering Builder-migratie |
 | register_defect | localStorage | `tk_verify_register_defect` | systeem | één waarde | opslagsleutel | n.v.t. | v1 | n.v.t. |  | Opslagfout in het controleregister |
+| export_bezig | localStorage | `tk_export_bezig` | systeem | één record | opslagsleutel | n.v.t. | v1 {naam, gestart} | n.v.t. |  | Markering van een lopende native export (bestandsnaam en tijdstip, geen inhoud) |
 | organisatiecontext | sessionStorage | `tk_active_org_pref_v1` | toestel | één waarde | opslagsleutel | n.v.t. | v1 | n.v.t. |  | Gekozen organisatie in deze sessie |
 | offline_wachtrij | indexedDB | `maurice_offline` | wachtrij | record per item | item-id (autoIncrement) | owner_uid per item | v1 (store queue) | nee |  | Nog niet verstuurde writes; eigenaar per item (owner_uid) |
 | controleregister | indexedDB | `tk_verificatie` | systeem | database | opslagsleutel | n.v.t. | v1 (store register) | n.v.t. |  | Verificatieregister en deze inventaris |

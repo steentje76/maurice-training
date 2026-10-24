@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- TK-REL-SEC-34: eigen, herkenbaar label voor de geïsoleerde testvariant exportproefmime
+     (com.trainingskompas.app.exportproefmime). Overschrijft alleen de labels uit src/main voor
+     deze buildtype; de bestaande app en de variant exportproef houden hun eigen label. -->
+<resources>
+    <string name="app_name">TK MIME-proef</string>
+    <string name="title_activity_main">TK MIME-proef</string>
+</resources>

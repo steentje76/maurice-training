@@ -8,12 +8,27 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## Geïsoleerde ochtendtest 24 oktober 2026 — kandidaat, nog niet fysiek geaccepteerd
+
+- Nieuwe werkbranch `fix/tk-night-test-20261023`: #570 + native export/MIME uit #572, G1/G2-herstel en toon/verberg-wachtzin.
+- Eigen pakket `com.trainingskompas.app.nachtproef20261024`, label **TK Test 24 oktober**; bestaande apps en main blijven behouden.
+- Volledige teststatus, testprotocol en resterende beperkingen: `docs/TK_NACHTTEST_20261024.md`.
+- Oudere paragrafen hieronder beschrijven hun oorspronkelijke fases. Native export is alleen in deze kandidaat/#571/#572 beschikbaar; niet op main.
+- Main/productie, werkelijke restore en uninstall blijven niet vrijgegeven; G3/G4/F3/F5/F6 blijven open.
+
 ## SEC-570 herstel (21 oktober 2026 — Draft-PR bovenop integratie-PR #570)
 
 - Serververificatie: een tegenstrijdige lokale eigenaar of niet-primitieve identiteit is nooit SERVER_VERIFIED; de poort telt alleen intern consistent bewijs (DEC-SEC-007).
 - Reddingskopie: wachtrijpayloads (ook JSON-tekst) met een andere of niet te controleren eigenaar worden herkenbaar overgeslagen; de wachtrij blijft ongewijzigd.
 - Reddingskopie (SEC-570-03): items en bronnen met credentialmateriaal in tekst- of JSON-tekstvelden worden herkenbaar overgeslagen; bestaande kopieën niet gemigreerd (DEC-SEC-008).
 - Read-only herstelpreview van bestaande bestanden ongewijzigd. SEC-570-01/02 geaccepteerd voor de integratiebranch; heracceptatie SEC-570-03 open. De-installatie blijft NO-GO.
+
+## Android native export (20 oktober 2026 — TK-REL-SEC-33, Draft-PR bovenop #569)
+
+- Reddingskopie in de Android-app via een eigen SAF-plugin met volledig teruglezen en SHA-256-controle (DEC-SEC-007); web ongewijzigd.
+- Geïsoleerde testvariant `com.trainingskompas.app.exportproef`. Fysieke test (Galaxy A70, Android 11): export geslaagd, herstelpreview kon het bestand niet kiezen (blocker T3).
+- TK-REL-SEC-34: MIME-contract van de bestandskiezer hersteld (DEC-SEC-008); emulator API 30/34 groen. Android-release en de-installatie: NO-GO.
+- Heracceptatie TK-REL-SEC-34 (Draft-PR bovenop #571): tweede geïsoleerde testvariant `com.trainingskompas.app.exportproefmime` ("TK MIME-proef", buildtype `exportproefmime`, debug-ondertekend) met eigen CI-job en artifact `trainingskompas-exportproefmime-apk` (DEC-SEC-009). Fysieke heracceptatie volgens protocol v3: open.
 
 ## Reddingskopie en herstelpreview (19 oktober 2026 — TK-REL-SEC-29..31, Draft-PR's #566, #567 en fase 4B)
 

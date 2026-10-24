@@ -13496,7 +13496,9 @@ function tkNavHuidig(){
   return el?el.id:null;
 }
 function tkNavModaalOpen(){
-  return document.querySelector('#m-ex-picker.open')||document.querySelector('.modal-bg.open');
+  const picker=document.getElementById('m-ex-picker');
+  if(picker&&picker.classList&&picker.classList.contains('open'))return picker;
+  return document.querySelector('.modal-bg.open');
 }
 // WAVE 1 (RC-OVL-01/RC-OVL-02, Route Map): tkNavModaalOpen() herkende alleen
 // .modal-bg.open. Twee andere, al bestaande overlay-systemen vervullen dezelfde

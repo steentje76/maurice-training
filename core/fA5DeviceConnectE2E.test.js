@@ -58,6 +58,7 @@ const src = [
   extract('_c2deviceList'),
   extract('tkErgPair'),
   extract('tkErgSelect'),
+  extract('tkReadPm5Identity'),
   extract('tkErgConnectDevice')
 ].join('\n');
 

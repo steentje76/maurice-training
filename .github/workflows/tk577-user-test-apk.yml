@@ -93,6 +93,8 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > package-verification.txt
           grep -q "package: name='com.trainingskompas.app.gebruikerstest20261025'" package-verification.txt
           grep -q "application-label:'TK Test 25 oktober'" package-verification.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-verification.txt
+          if grep -qE 'android:scheme.*"trainingskompas"' manifest-verification.txt; then echo 'Test app must not intercept the installed app OAuth return'; exit 1; fi
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > signature-verification.txt
           node tools/verify-ocr-packaging.js --apk "$APK"
           mkdir -p candidate
@@ -100,7 +102,7 @@ jobs:
           NAME="Trainingskompas-v4.70.26-${SOURCE_SHA:0:9}-test25okt.apk"
           cp "$APK" "candidate/$NAME"
           printf '%s\n' "$SOURCE_SHA" > candidate/source-commit.txt
-          cp package-verification.txt signature-verification.txt candidate/
+          cp package-verification.txt signature-verification.txt manifest-verification.txt candidate/
           (cd candidate && sha256sum "$NAME" > "$NAME.sha256")
           echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4

@@ -33,13 +33,15 @@ Deze tabel sluit #576 niet. Synthetische/browser- en emulatorproeven bewijzen ge
 
 Geen database-, policy-, auth-, server-write- of protected calculation/decision-corewijziging. `CORE_SIG` blijft inhoudelijk gelijk; SW-caches en APP_VER worden naar 4.70.26 bijgewerkt. Geen historische records gecorrigeerd of verwijderd.
 
+Gericht hergebruik uit PR #542 / `feat/set-logging-ux-20261018` (`8c91598dc753038e932b438b5dca8080fe105273`): uitsluitend het `logSet`-blok dat bestaande setvlaggen behoudt. Nieuwe regressie eerst rood: een gewichtsedit wiste `done`, `isAmrap` en `rest_sec`; na overname blijven ze bestaan. De overige branchwijzigingen zijn niet automatisch overgenomen.
+
 Nieuwe warm-up draft-tekst wordt bij her-renderen HTML-geëscapet. PM5-ID is alleen displayinformatie, geen autorisatiebewijs; geen nieuwe telemetry/persistence van hardware-identifiers. Device-info leest onder id+generation-lease; laat antwoord kan niet aan een volgende verbinding worden gekoppeld. Picker-callback bewaakt eigenaar en slot; selectie maakt geen voltooid trainingsrecord.
 
 Deze sessie heeft één uitvoerend model. Een afzonderlijke reviewpass, schone checkout, geautomatiseerde tegenproeven en GitHub CI vervangen **geen onafhankelijke tweede reviewer**. Die reviewgate en fysieke productacceptatie blijven open; daarom geen main-merge of productie-update op basis van deze kandidaat alleen.
 
 ## Installatie- en accountgrens
 
-Pakket: `com.trainingskompas.app.gebruikerstest20261025`; label: **TK Test 25 oktober**. Bestaande app niet verwijderen; geen gegevens wissen; geen backup-import of datamigratie. De kandidaat gebruikt eigen lokale opslag, maar bij inloggen dezelfde backend. Daarom **uitsluitend een synthetisch testaccount**, geen eigen account met bestaande trainingshistorie zolang owner-binding, server read-after-write, offlinequeue, export/restore en installatie/signinggates niet volledig zijn geaccepteerd. De losse #570/#575-gates zijn niet stilzwijgend gesloten.
+Pakket: `com.trainingskompas.app.gebruikerstest20261025`; label: **TK Test 25 oktober**. De testvariant registreert geen wearable-OAuth-return en kan die van de bestaande app niet onderscheppen. Bestaande app niet verwijderen; geen gegevens wissen; geen backup-import of datamigratie. De kandidaat gebruikt eigen lokale opslag, maar bij inloggen dezelfde backend. Daarom **uitsluitend een synthetisch testaccount**, geen eigen account met bestaande trainingshistorie zolang owner-binding, server read-after-write, offlinequeue, export/restore en installatie/signinggates niet volledig zijn geaccepteerd. De losse #570/#575-gates zijn niet stilzwijgend gesloten.
 
 ## Officiële Concept2-bron, gecontroleerd 24 oktober 2026
 

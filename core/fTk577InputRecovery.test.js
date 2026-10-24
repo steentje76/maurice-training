@@ -44,6 +44,15 @@ test('007 legacy explicit mapping takes precedence and unknown stays unknown',()
   assert.deepEqual(Array.from(ctx.getExerciseMuscles('TK-GM')),['Core']);
   assert.deepEqual(Array.from(ctx.getExerciseMuscles('unknown')),[]);
 });
+test('008 editing a completed set preserves completion, AMRAP and recorded rest',()=>{
+  Object.assign(ctx,{getEffectiveKg:()=>67.5,nearestRepBucket:()=>5,repPRCache:{},prFor:()=>100,td:()=>'2026-10-24',
+    BARBELL_EXERCISES:new Set(),updateProgress(){},updateSummary(){},scheduleAutosave(){},curT:'B'});
+  fields['s-hex-1-kg']=field('67,5');fields['s-hex-1-reps']=field('8');fields['s-hex-1-rpe']=field('8');
+  ctx.sessionLog.hex={sets:[{done:true,isAmrap:true,rest_sec:90,kg:'67',reps:'8'}]};
+  vm.runInContext(fn('logSet'),ctx);ctx.logSet('hex','work',1,true);
+  assert.equal(ctx.sessionLog.hex.sets[0].kg,'67.5');
+  assert.equal(ctx.sessionLog.hex.sets[0].done,true);assert.equal(ctx.sessionLog.hex.sets[0].isAmrap,true);assert.equal(ctx.sessionLog.hex.sets[0].rest_sec,90);
+});
 // Saved row -> serialized readback -> existing Calculation Engine -> both recovery consumers.
 (async()=>{
   try{

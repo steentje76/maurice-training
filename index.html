@@ -23413,8 +23413,13 @@ function logSet(exId,type,setNum,isWork){
   const rpe=isWork?normNumStr(document.getElementById('s-'+exId+'-'+setNum+'-rpe')?.value):null;
   // Effectief gewicht: houdt rekening met de gewicht-modus (vast/+kg/% vorige set).
   const effKg=isWork?getEffectiveKg(exId,setNum):(numNL(kg)||null);
-  if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]={kg,reps};}
-  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe,effKg};}
+  // UX-LOG-01: een bewerking vervangt alleen de invoerwaarden. Vlaggen die elders op dezelfde set
+  // zijn gezet (done/rest_sec via toggleSetDone, isAmrap via toggleAmrapSet) blijven behouden; voorheen
+  // wist elke toetsaanslag ze, waardoor een afgevinkte AMRAP-set als gewone, niet-afgevinkte set
+  // werd opgeslagen.
+  const _oud=(arr)=>(arr&&arr[setNum-1]&&typeof arr[setNum-1]==='object')?arr[setNum-1]:{};
+  if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]=Object.assign({},_oud(sessionLog[exId].wu),{kg,reps});}
+  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]=Object.assign({},_oud(sessionLog[exId].sets),{kg,reps,rpe,effKg});}
   // Check PR (per rep-bucket 1/3/5/10, plus absolute-PR fallback voor niet-rep oefeningen)
   if(isWork&&effKg){
     const exObj=exercises.find(e=>e.id===exId);

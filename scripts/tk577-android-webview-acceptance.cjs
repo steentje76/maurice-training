@@ -53,11 +53,11 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
     });
     const header=await page.locator('#s-settings .hdr-title').boundingBox();assert(header&&header.y>=50,JSON.stringify(header));
     await page.screenshot({path:'android-test-evidence/settings-safe-area.png'});
+    const fullHeight=await page.evaluate(()=>visualViewport.height);
     await page.evaluate(async()=>{
       ensureExercisesLoaded=async()=>{};ensureFavoritesLoaded=async()=>{};getRecentExerciseIds=async()=>[];
       await openExPicker(()=>{});
     });
-    const fullHeight=await page.evaluate(()=>visualViewport.height);
     const search=page.locator('#ex-pick-search');await search.click();await search.fill('Synthetic');await search.dispatchEvent('input');
     await pause(1000);
     const visible=await page.locator('#ex-pick-list .pk-gcard').first().evaluate(el=>{

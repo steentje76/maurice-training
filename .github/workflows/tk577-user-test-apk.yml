@@ -74,8 +74,31 @@ jobs:
       - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
       - run: npx playwright install --with-deps chromium
       - run: npm run cap:copy
+      - name: Reproduce four browser failures on exact stable baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$RUNNER_TEMP/tk577-browser-baseline"
+          git worktree add --detach "$BASE" 160fefc2e1dabc424922e907f7dc360e4f84543f
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$BASE/node_modules"
+          mkdir -p "$GITHUB_WORKSPACE/browser-diagnostic"
+          cd "$BASE"
+          npm run cap:copy
+          set +e
+          for SUITE in fGuidedPreviewAthleteConstraints fHomeDagfactorBasisSafety fInzichtV01BrowserRuntime fVoedingUXSetA; do
+            node "core/$SUITE.test.js" > "$GITHUB_WORKSPACE/browser-diagnostic/baseline-$SUITE.log" 2>&1
+            echo "$SUITE exit=$?" >> "$GITHUB_WORKSPACE/browser-diagnostic/baseline-status.txt"
+          done
+          cat "$GITHUB_WORKSPACE/browser-diagnostic/baseline-status.txt"
       - name: Broad browser gate (blocks production acceptance, reported even for test APK)
-        run: npm test
+        shell: bash
+        run: npm test 2>&1 | tee browser-diagnostic/candidate-full.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tk577-broad-browser-diagnostic
+          path: browser-diagnostic/
+          if-no-files-found: error
 
   apk:
     needs: regression

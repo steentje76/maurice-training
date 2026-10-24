@@ -27,6 +27,10 @@ Deze tabel sluit #576 niet. Synthetische/browser- en emulatorproeven bewijzen ge
 - `node core/fTk577Concept2Identity.test.js`: officiële UUID’s, bekende/onbekende enum, exacte serial, onzekere naamhint, stale verbinding verworpen.
 - `node scripts/tk577-browser-acceptance.cjs`: echt Chromium, 320/360/390/430px, 130% previewtekst, lokale draft-readback, lege recentere historie, gewijzigde oefening door de bestaande execution-adapter naar sessions-row, keyboard-height viewport en Back.
 - `.github/workflows/tk577-user-test-apk.yml`: volledige release-gate, native/coaching-regressie, geïsoleerde APK, pakket/label/signature/OCR-provenance en Android WebView-proeven op emulator API30/34. Alleen groen als werkelijk uitgevoerd; geen stille skip voor nieuwe browser-/deviceproeven.
+- Brede browserdiagnose op `5084a2badb71cbf30665ce6b323d5120e30ba104`, run [40085529250](https://github.com/steentje76/maurice-training/actions/runs/40085529250): **446/450 poorten groen, vier rood** met Chromium geïnstalleerd (`fGuidedPreviewAthleteConstraints`, `fHomeDagfactorBasisSafety`, `fInzichtV01BrowserRuntime`, `fVoedingUXSetA`). De normale Quality Gate is groen. Op de Windows-ontwikkelcomputer slagen Guided 29/29 en Home 186/186 op zowel ongewijzigde main als kandidaat; Voeding faalt op beide op dezelfde ontbrekende oude domeinrij. Inzicht gebruikt ook een niet-bestaand DOM-element. Dit is geen volledige browseracceptatie.
+
+De kandidaatstraat behoudt deze brede browserdiagnose als **afzonderlijke rode job zonder continue-on-error**. De geïsoleerde synthetische test-APK kan worden gebouwd na de normale core-gate en verplichte TK577-browserproeven. Een APK-build of emulator-PASS heft de brede browser-, onafhankelijke review- en productieblokkades niet op.
+
 - De documentatiecheck heeft **vier reeds bestaande fouten op de baseline** (mastersprintmetadata/validation/auditguard). Nieuwe check vergelijkt foutregels en exitstatus met de exacte baseline; bestaande fouten worden expliciet gemeld. Geen wijziging aan roadmap-evidence om een gate cosmetisch groen te maken.
 
 ## Afzonderlijke code- en securitycontrole

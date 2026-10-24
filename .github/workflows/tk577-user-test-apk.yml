@@ -27,16 +27,17 @@ jobs:
           node-version: '20'
           cache: npm
       - run: npm ci
-      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
-      - run: npx playwright install --with-deps chromium
       - run: npm run cap:copy
-      - name: Exact source and complete deterministic regression
+      - name: Exact source core gate (Quality Gate environment)
         run: |
           git rev-parse HEAD
           npm test
           npm run test:native
           node coaching.test.js
-          node scripts/tk577-browser-acceptance.cjs
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - name: Mandatory real Chromium TK577 acceptance (no skip)
+        run: node scripts/tk577-browser-acceptance.cjs
       - name: Documentation regression against the stable baseline
         shell: bash
         run: |
@@ -56,6 +57,25 @@ jobs:
           test "$BEFORE" = "$AFTER"
           diff -u baseline-errors.txt candidate-errors.txt
           if [ "$AFTER" -ne 0 ]; then echo '::warning::Existing documentation gate is red on baseline and candidate, with identical findings. No new documentation failures; this is not full documentation acceptance.'; fi
+
+  broader-browser-diagnostic:
+    needs: regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - run: npm run cap:copy
+      - name: Broad browser gate (blocks production acceptance, reported even for test APK)
+        run: npm test
 
   apk:
     needs: regression

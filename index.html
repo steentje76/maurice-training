@@ -7227,6 +7227,25 @@ function _c2connectedInner(exId, cm){
     (st.identityInfo?'<div style="font-size:12px;margin:6px 0">'+escHtml(st.identityInfo)+'</div>':'<div style="font-size:12px;margin:6px 0">PM5 ID niet uitgelezen</div>')+
     line+'<button class="btn btn-o btn-sm" style="font-size:12px;margin-top:8px" onclick="tkErgDisconnect(\''+exId+'\')">Verbinding verbreken</button>';
 }
+function tkReadPm5Identity(exId,st,t,targetId){
+      st.identityInfo=null;
+      // Optional read after real connect; a late result from another connection is discarded.
+      if(typeof t.getDeviceInfo==='function'){
+        const lease=typeof t.getControlContext==='function'?t.getControlContext():null;
+        Promise.resolve(t.getDeviceInfo()).then(function(info){
+          if(_c2pair[exId]!==st||!st.connected||st.deviceId!==targetId||!info||info.deviceId!==targetId)return;
+          const current=typeof t.getControlContext==='function'?t.getControlContext():null;
+          if(lease&&current&&lease.generation!==current.generation)return;
+          const parts=[info.serialNumber?'PM5 ID '+info.serialNumber+' (uitgelezen)':'PM5 ID niet beschikbaar'];
+          if(info.reportedMachineType){
+            parts.push('Apparaat: '+_c2mLabel(info.reportedMachineType));
+            if(info.reportedMachineType!==st.mt)parts.push('Ander apparaattype dan deze oefening; verbreek de verbinding en kies de juiste oefening.');
+          }else parts.push('Apparaattype niet bevestigd');
+          st.identityInfo=parts.join(' · ');
+          _c2repaint(exId,_c2connectedInner(exId,st.lastCm||null));
+        }).catch(function(){});
+      }
+}
 function tkErgConnectDevice(exId, idx){
   var st=_c2pair[exId]; var t=tkDeviceTransport(); if(!st||!t) return; var d=st.devices[idx]; if(!d) return;
   // A5-hardening (v4.66.0): busy-guard tegen dubbel tikken op "verbinden" (Sectie 9) --
@@ -7250,23 +7269,7 @@ function tkErgConnectDevice(exId, idx){
       st._connecting=false;
       if(!res||res.connected!==true){ _c2repaint(exId, _c2note('Verbinding mislukt. Probeer opnieuw.')+_c2btn(exId,'Opnieuw zoeken')); return; }
       st.connected=true; st.wasConnected=true; st.deviceId=d.id; st.lastDevice=d;
-      st.identityInfo=null;
-      // Optional read after real connect; a late result from another connection is discarded.
-      if(typeof t.getDeviceInfo==='function'){
-        const lease=typeof t.getControlContext==='function'?t.getControlContext():null;
-        Promise.resolve(t.getDeviceInfo()).then(function(info){
-          if(_c2pair[exId]!==st||!st.connected||st.deviceId!==d.id||!info||info.deviceId!==d.id)return;
-          const current=typeof t.getControlContext==='function'?t.getControlContext():null;
-          if(lease&&current&&lease.generation!==current.generation)return;
-          const parts=[info.serialNumber?'PM5 ID '+info.serialNumber+' (uitgelezen)':'PM5 ID niet beschikbaar'];
-          if(info.reportedMachineType){
-            parts.push('Apparaat: '+_c2mLabel(info.reportedMachineType));
-            if(info.reportedMachineType!==st.mt)parts.push('Ander apparaattype dan deze oefening; verbreek de verbinding en kies de juiste oefening.');
-          }else parts.push('Apparaattype niet bevestigd');
-          st.identityInfo=parts.join(' · ');
-          _c2repaint(exId,_c2connectedInner(exId,st.lastCm||null));
-        }).catch(function(){});
-      }
+      tkReadPm5Identity(exId,st,t,d.id);
       // Gate A.4: één canonieke PM5-aggregator per verbinding, op dezelfde st-scope.
       // De multiplexed 0x31/0x32-events zijn partial; Concept2Live voegt ze samen en
       // mapt RAW->canonical. Geen merge- of mappinglogica hier.

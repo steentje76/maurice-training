@@ -39,3 +39,47 @@ jobs:
           path: findings-evidence/
           if-no-files-found: warn
           retention-days: 14
+
+  full-browser-release:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tk-all-findings-20261101'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run cap:copy
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - name: Reproduce previously reported browser failures on canonical baseline
+        shell: bash
+        run: |
+          BASE="$RUNNER_TEMP/tk-all-baseline"
+          git worktree add --detach "$BASE" 160fefc2e1dabc424922e907f7dc360e4f84543f
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$BASE/node_modules"
+          mkdir -p "$GITHUB_WORKSPACE/full-release-evidence"
+          cd "$BASE"
+          npm run cap:copy
+          set +e
+          for SUITE in fGuidedPreviewAthleteConstraints fHomeDagfactorBasisSafety fInzichtV01BrowserRuntime fVoedingUXSetA; do
+            node "core/$SUITE.test.js" > "$GITHUB_WORKSPACE/full-release-evidence/baseline-$SUITE.txt" 2>&1
+            echo "$SUITE exit=$?" >> "$GITHUB_WORKSPACE/full-release-evidence/baseline-status.txt"
+          done
+          cat "$GITHUB_WORKSPACE/full-release-evidence/baseline-status.txt"
+      - name: Full release gate with browser prerequisites (failure remains blocking)
+        run: |
+          git rev-parse HEAD > full-release-evidence/source-commit.txt
+          node core/release-gate.js 2>&1 | tee full-release-evidence/candidate-release.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tk-all-full-release-${{ github.event.pull_request.head.sha || github.sha }}
+          path: full-release-evidence/
+          if-no-files-found: error
+          retention-days: 14

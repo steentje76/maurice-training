@@ -339,7 +339,7 @@ ok(/rest_sec:s\.rest_sec/.test(html), 'H3: buildStrengthSessionRow() geeft rest_
   let sessionLog = {}, lastSetDoneAt = {};
   const toggleSrc = extractFn('toggleSetDone');
   const mod = new Function('sessionLog','lastSetDoneAt','document','updateProgress','updateSummary','scheduleAutosave','refreshActiveSetBanner','unlockAudio','showPostSetAdvice','showSetCompletionFeedback','autoRestAfterSet','curT',
-    toggleSrc + '\nreturn toggleSetDone;'
+    'const logSet=()=>{},persistTrainingDraft=()=>{};\n'+toggleSrc + '\nreturn toggleSetDone;'
   )(sessionLog, lastSetDoneAt,
     { getElementById: () => ({ classList: { contains:()=>false, toggle:()=>{}, add:()=>{}, remove:()=>{} } }) },
     ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, 'Kracht');
@@ -516,8 +516,8 @@ const execReplaceSrc = html.slice(html.indexOf('function execReplaceExercise('),
 ok(/openExPicker\(async function\(newEx\)/.test(execReplaceSrc), 'T1 (EX-REPLACE-1): hergebruikt de bestaande, unified openExPicker() -- geen tweede picker');
 ok(/resolvePickerEx\(newEx\.id\)/.test(execReplaceSrc), 'T2 (EX-REPLACE-3): gebruikt resolvePickerEx() voor het canonieke catalog_id, exact hetzelfde pad als addExConfirm()');
 ok(/heeftData=execExerciseHasData\(exId\)/.test(execReplaceSrc), 'T3 (EX-REPLACE-2): controleert expliciet op reeds geregistreerde data vóór vervangen');
-ok(/gaan die gegevens verloren -- ze worden NIET automatisch overgezet/.test(execReplaceSrc), 'T3b: waarschuwt expliciet dat data NIET automatisch wordt omgezet -- exacte, veilige productregel uit de opdracht');
-ok(/delete sessionLog\[exId\]/.test(execReplaceSrc), 'T4: oude sessionLog-data voor de vervangen oefening wordt opgeruimd -- geen orphan/ghost-koppeling aan de nieuwe oefening');
+ok(/uitgevoerde sets blijven onder deze oefening bewaard/.test(execReplaceSrc), 'T3b TK584: meldt behoud onder oorspronkelijke oefening; geen actuals-overdracht');
+ok(!/delete sessionLog\[exId\]/.test(execReplaceSrc)&&/_retainedPerformed:true/.test(execReplaceSrc), 'T4 TK584: oude actuals blijven zichtbaar onder oorspronkelijke ID, geen ghost-koppeling');
 ok(/renderTrainScreen\(t\)/.test(execReplaceSrc), 'T5: hergebruikt de bestaande renderTrainScreen() -- geen tweede render-/execution-pad');
 
 const execRemoveSrc = html.slice(html.indexOf('async function execRemoveExercise('), html.indexOf('async function execRemoveExercise(') + 1300);

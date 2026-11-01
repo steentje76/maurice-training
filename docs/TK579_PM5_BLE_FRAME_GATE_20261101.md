@@ -49,3 +49,22 @@ PM5 identity regression PASS, `git diff --check`.
   release. Keep current app-only interval explanation truthful.
 - PR #587 remains Draft. No new APK until functional fixes, shared UX review
   and explicit release gates; no main merge or historical data mutation.
+
+## Follow-up: offline whole-command BLE frame plan
+
+`Concept2Csafe.planBleCharacteristicFrames(compiled)` is an **offline-only**
+command-boundary repacker. It checks the checksum, unstuffing and C2 wrapper
+of each compiled source frame, then builds complete, individually check-summed
+CSAFE frames with at most 20 bytes **including stuffing**. This is not raw
+payload chunking and does not change or split individual CSAFE commands.
+
+The isolated `core/fConcept2BleFramePlan.test.js` covers all three machines,
+6 x 60/60 with warm-up/cooldown, byte-for-byte command-stream equivalence,
+50-interval byte stuffing, corrupted checksums and an oversized indivisible
+command. The plan explicitly has `deviceVerified:false`,
+`requiresSequentialAck:true` and a complete-structure-readback requirement.
+
+**This does not prove PM5 acceptance of interval configuration commands
+across multiple CSAFE frames.** The planner is intentionally not connected
+to the workout start button, the native writer, a second BLE owner or
+production logging. A physical device/firmware contract is still a hard gate.

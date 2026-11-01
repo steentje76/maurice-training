@@ -260,6 +260,55 @@
     return {ok:true,workoutType:8,finite:true,intervalCount:expected.length,expected:expected,frames:frames,
       verificationRequired:['all_frame_statuses','complete_interval_structure_readback'],physicallyVerified:false};
   }
+  /* Pure, offline-only proposal: repack complete proprietary commands into
+   * BLE-value-sized CSAFE frames. Rev. 1.30 documents <=20 bytes for CE060021.
+   * Retains order and exact commands; does NOT claim the PM accepts commands
+   * split across frames, nor imply that sending them is safe or verified.
+   * No caller may write these frames until staged transfer/ACK/readback and
+   * physical firmware behavior have been independently verified. */
+  function planBleCharacteristicFrames(compiled) {
+    var MAX_BLE_CONTROL_BYTES = 20;
+    function fail(error) { return {ok:false,error:error,frames:[],deviceVerified:false}; }
+    if(!compiled||compiled.ok!==true||!Array.isArray(compiled.frames)||!compiled.frames.length)
+      return fail('compiled_frames_required');
+    var commands=[];
+    for(var k=0;k<compiled.frames.length;k++){
+      var src=compiled.frames[k];
+      if(!Array.isArray(src)||src.length<5||src[0]!==FLAG.STANDARD_START||src[src.length-1]!==FLAG.STOP)
+        return fail('invalid_source_frame');
+      var raw=unstuff(src.slice(1,-1));
+      if(!raw||raw.length<4||checksum(raw.slice(0,-1))!==raw[raw.length-1])
+        return fail('invalid_source_checksum');
+      var contents=raw.slice(0,-1);
+      if(contents[0]!==CMD.C2_PROPRIETARY_WRAPPER||contents[1]!==contents.length-2)
+        return fail('invalid_proprietary_wrapper');
+      for(var pos=2;pos<contents.length;){
+        var start=pos,opcode=contents[pos++];
+        if(opcode<0x80){
+          if(pos>=contents.length)return fail('truncated_command');
+          var count=contents[pos++];
+          if(pos+count>contents.length)return fail('partial_command');
+          pos+=count;
+        }
+        commands.push(contents.slice(start,pos));
+      }
+    }
+    var frames=[],pending=[];
+    for(var i=0;i<commands.length;i++){
+      var candidate=pending.concat(commands[i]),frame;
+      try{frame=encodeStandardFrame(encodeC2Wrapper(candidate));}catch(_e){frame=null;}
+      if(frame&&frame.length<=MAX_BLE_CONTROL_BYTES){pending=candidate;continue;}
+      if(pending.length)frames.push(encodeStandardFrame(encodeC2Wrapper(pending)));
+      pending=commands[i].slice();
+      try{frame=encodeStandardFrame(encodeC2Wrapper(pending));}catch(_e2){return fail('single_command_exceeds_ble_value_limit');}
+      if(frame.length>MAX_BLE_CONTROL_BYTES)return fail('single_command_exceeds_ble_value_limit');
+    }
+    if(pending.length)frames.push(encodeStandardFrame(encodeC2Wrapper(pending)));
+    return {ok:true,frames:frames,commandCount:commands.length,sourceFrameCount:compiled.frames.length,
+      maxBleControlValueBytes:MAX_BLE_CONTROL_BYTES,deviceVerified:false,requiresSequentialAck:true,
+      verificationRequired:['all_frame_statuses','complete_interval_structure_readback']};
+  }
+
   /* Input is the EXISTING IntervalEngineCore.normalizePrescription result. No new repeat engine.
    * Recovery becomes the preceding PM5 interval's defined rest. Warmup/cooldown remain explicit
    * intervals, so they are neither lost nor silently treated as an unbounded warmup. */
@@ -345,6 +394,7 @@
     encodeStandardFrame: encodeStandardFrame, encodeDistanceBE32: encodeDistanceBE32,
     validateDistance: validateDistance, buildFixedDistanceWorkout: buildFixedDistanceWorkout,
     buildVariableIntervals:buildVariableIntervals, compileFiniteIntervalPrescription:compileFiniteIntervalPrescription,
+    planBleCharacteristicFrames:planBleCharacteristicFrames,
     parseResponseFrame: parseResponseFrame, isProgrammingConfirmed: isProgrammingConfirmed,
     encodeShortCommand: encodeShortCommand, buildGetStatusFrame: buildGetStatusFrame,
     UNITS: UNITS

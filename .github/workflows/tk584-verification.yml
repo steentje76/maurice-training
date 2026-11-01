@@ -29,6 +29,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node scripts/tk584-browser-acceptance.cjs
   apk:
+    # APK HOLD until joint UX approval.
+    if: ${{ false }}
     needs: regression
     runs-on: ubuntu-latest
     timeout-minutes: 30

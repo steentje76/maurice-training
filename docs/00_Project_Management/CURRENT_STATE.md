@@ -8,7 +8,7 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.27
 
-TK584-testbranch, 1 november 2026: P1-herstel in review. Main/productie blijft v4.70.25; geen productie- of persoonlijk-accountvrijgave. Zie docs/TK584_PROGRAM_EXECUTION_20261101.md.
+Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle functionele bevindingen, daarna gezamenlijke UX-acceptatie, pas daarna een nieuwe APK. Richtdatum dinsdag 3 november 2026. Main/productie blijft v4.70.25; geen productie- of persoonlijk-accountvrijgave. Zie docs/TK584_PROGRAM_EXECUTION_20261101.md.
 
 ## Wearable-koppeling: tokenopslag, Android-bereikbaarheid, koppelstatus (v4.70.25, 11 oktober 2026)
 

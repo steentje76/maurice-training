@@ -39,6 +39,12 @@ android {
         }
     }
     signingConfigs {
+        gebruikerstest {
+            initWith debug
+            applicationIdSuffix ".gebruikerstest20261025"
+            versionNameSuffix "-gebruikerstest20261025"
+            matchingFallbacks = ['debug']
+        }
         release {
             if (heeftSleutel) {
                 storeFile file(ksStore)

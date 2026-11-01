@@ -18521,10 +18521,10 @@ function computeProgPrefill(ex,prevS,oneRM){
   const repsPrefill=resolvePrescriptionRepTarget(ex.reps)||repsForWeight; // startset → MAXIMUM van de range
   // DETRAINING B1: geen eigen prescription meer — delegeren aan de canonical resolver
   // (base 1RM→Brzycki × detrainingFactor(days sinds prevS.date)). Zonder 1RM: suggested=null →
-  // vorige gewicht als ruwe referentie (ongewijzigd fallback-gedrag).
+  // geen gewicht in de invoer; de vorige prestatie blijft afzonderlijk zichtbaar als referentie.
   let suggested=null, detrain=null;
   try{ const r=resolveWorkingWeight(ex.id,{reps:parseFloat(repsForWeight),rpe:ex.rpe,prev:prevS||null,oneRM:(oneRM!=null?oneRM:null)}); suggested=r.suggested; detrain={days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion,basis:r.strengthBasis||null}; }catch(e){}
-  const kg=(suggested!=null)?suggested:((prevS&&prevS.weight)?prevS.weight:'');
+  const kg=(suggested!=null)?suggested:''; // history remains visible as reference; never a new prescription without a basis
   return {kg,reps:repsPrefill,rpe:ex.rpe||'',sets:ex.sets||4,detrain};
 }
 // Pure functie — bouwt de prompt voor één week, los testbaar

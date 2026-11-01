@@ -64,7 +64,8 @@ async function check(name,run){try{await run();pass++;console.log('PASS '+name);
           v43SafeGet=async(table)=>table==='sessions'?[{exercise_id:'gm',date:'2026-10-24',weight:null,reps:null}]:[];
           await renderTrainScreen('B');
         });
-        assert.equal(await page.locator('#s-gm-1-kg').inputValue(),'60');
+        assert.equal(await page.locator('#s-gm-1-kg').inputValue(),'','no calculated basis: do not silently turn a previous performance into a prescription');
+        assert(await page.locator('#train-b-list').evaluate(el=>/60/.test(el.textContent)&&/8/.test(el.textContent)&&/Vorige/.test(el.textContent)),'relevant prior 60 kg / 8 reps stays visible despite newest empty row');
         assert.equal(await page.evaluate(()=>!!sessionLog.gm?.sets?.some(s=>s&&s.done)),false,'a suggestion is never a completed set');
       });
       for(const scale of [1,1.3])await check(width+' -003 preview readable / actions reachable, text scale '+scale,async()=>{

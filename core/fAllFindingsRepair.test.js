@@ -14,6 +14,9 @@ function load(c,names){vm.createContext(c);for(const n of names)vm.runInContext(
  assert.equal(out.rpe,'7.5','prescribed RPE wins over old actual');assert.equal(out.sets,4,'prescribed sets win over old actual');assert.equal(out.kg,80);
  out=p.strengthExecutionPrefill({id:'x',sets:4,reps:'4-6',rpe:'7.5'},{weight:85,reps:1});assert.equal(out.kg,70);assert.equal(p.resolved.reps,6,'weight delegated for target reps');
  p.resolveWorkingWeight=()=>({suggested:null});assert.equal(p.strengthExecutionPrefill({id:'x',reps:'4-6'},{weight:85,reps:1}).kg,null,'missing basis must not reuse previous 1-rep weight');
+ const pg=load({repsPrefillFromRange:()=>4,resolvePrescriptionRepTarget:()=>6,resolveWorkingWeight:()=>({suggested:null,reason:'no-base'})},['computeProgPrefill']);
+ const pgOut=pg.computeProgPrefill({id:'program-press',sets:4,reps:'4-6',rpe:7.5},{weight:85,reps:1,rpe:8.5},null);
+ assert.equal(pgOut.kg,'','program path must not turn old one-rep weight into new six-rep target');assert.equal(pgOut.reps,6);assert.equal(pgOut.rpe,7.5);assert.equal(pgOut.sets,4);
  const cc=load({},['buildPrescriptionContract']);const contract=cc.buildPrescriptionContract({sets:4,reps:'4-6',rpe:7.5,_rxRpeDelta:-0.5},{weight:85,reps:1,rpe:8},85);
  assert(!contract.coaching.includes('Iets lichter'));assert(contract.coaching.includes('niet lager'));
  const data=new Map();const e=load({tkEigenaarUid:()=> 'A',localStorage:{getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},refreshEquipmentPanel:()=>{}},['eqMemStorageKey','eqMemAll','eqMemVariant','eqMemVariantSet','eqMemEntryKey','eqMemGet','eqMemSet','eqMemFieldGet','eqMemFieldSet']);

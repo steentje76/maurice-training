@@ -19541,7 +19541,7 @@ async function renderTrainScreen(t){
     const div=document.createElement('div');
     div.className='ex-card';
 
-    let bodyHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:Math.max(ex.sets||0,sessionLog[ex.id]?.sets?.length||0)||ex.sets,prefill:prefillData});
+    let bodyHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:Math.max(ex.sets||0,sessionLog[ex.id]?._workSetCount||0,sessionLog[ex.id]?.sets?.length||0)||ex.sets,prefill:prefillData});
 
     div.innerHTML=`
       <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
@@ -19732,18 +19732,20 @@ async function execCompleteExercise(t){
   if(execCompleteBusy||t!==curT)return;
   execCompleteBusy=true;
   try{
+    const owner=typeof tkEigenaarUid==='function'?tkEigenaarUid():null;
     const list=getSessionExs(t), idx=execFocus[t]||0, ex=list[idx];
     if(!ex)return;
     if(!resolveCardioType(ex)){
       const pending=[];
-      for(let i=1;;i++){
+      const setLimit=Math.max(Number(ex.sets)||0,sessionLog[ex.id]?._workSetCount||0,sessionLog[ex.id]?.sets?.length||0);
+      for(let i=1;i<=setLimit;i++){
         const reps=document.getElementById('s-'+ex.id+'-'+i+'-reps');
-        if(!reps)break;
+        if(!reps)continue;
         if(Number(normNumStr(reps.value))>0 && !sessionLog[ex.id]?.sets?.[i-1]?.done)pending.push(i);
       }
       if(pending.length){
         const accepted=await confirmModal(pending.length+' ingevulde werksets van '+(ex.naam||ex.id)+' als uitgevoerd registreren? Pas aantallen aan of verwijder niet-uitgevoerde sets voordat je bevestigt.',{title:'Uitgevoerde sets bevestigen',okLabel:'Sets registreren',cancelLabel:'Terug naar sets'});
-        if(!accepted||t!==curT)return;
+        if(!accepted||t!==curT||(typeof tkEigenaarUid==='function'&&owner!==tkEigenaarUid()))return;
         pending.forEach(i=>{
           logSet(ex.id,'work',i,true);
           sessionLog[ex.id].sets[i-1].done=true;
@@ -19768,6 +19770,7 @@ function execFocusSkip(t){
   const list=(typeof getSessionExs==='function')?getSessionExs(t):[];
   const n=list.length; const idx=execFocus[t]||0;
   const id=list[idx]&&list[idx].id; if(id)execSkipSet(t).add(id);
+  persistTrainingDraft(true);
   // ga naar de volgende nog niet-overgeslagen oefening; is die er niet → overzicht.
   let ni=-1; for(let i=idx+1;i<n;i++){ if(!execSkipSet(t).has(list[i].id)){ ni=i; break; } }
   if(ni<0){ applyExecutionFocus(t); openExecOverview(t); return; }
@@ -23677,13 +23680,17 @@ function addWorkSet(exId,type){
   const body=document.getElementById('body-'+exId);
   if(!body)return;
   const existing=body.querySelectorAll('.set-row[id^="sr-'+exId+'"]').length;
-  const i=existing+1;
+  const highest=[...body.querySelectorAll('.set-row[id^="sr-'+exId+'-"]')].reduce((n,row)=>Math.max(n,parseInt(row.id.slice(('sr-'+exId+'-').length))||0),0);
+  const i=Math.max(existing,highest,sessionLog[exId]?._workSetCount||0)+1;
   if(type==='strength'||type==='carry'||type==='bodyweight'){
     const tmp=document.createElement('div');
     tmp.innerHTML=buildWorkSetRow(exId,i);
     const addBtn=body.querySelector('.add-row:last-of-type');
     if(addBtn)body.insertBefore(tmp.firstElementChild,addBtn);
     else body.appendChild(tmp.firstElementChild);
+    if(!sessionLog[exId])sessionLog[exId]={};
+    sessionLog[exId]._workSetCount=i;
+    persistTrainingDraft(true);
   }
 }
 
@@ -23787,7 +23794,7 @@ function execExerciseHasData(exId){
   const l=sessionLog[exId]; if(!l)return false;
   const setsData=(l.sets||[]).some(s=>s&&(s.kg||s.reps));
   const wuData=(l.wu||[]).some(s=>s&&(s.kg||s.reps));
-  return setsData||wuData;
+  return setsData||wuData||!!(l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals))||!!(typeof tkC2IsLoggableSummary==='function'&&tkC2IsLoggableSummary(l.c2));
 }
 async function execRemoveExercise(t,exId){
   const nm=(exercises.find(e=>e.id===exId)||{}).naam||'deze oefening';

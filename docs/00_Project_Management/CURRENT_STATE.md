@@ -6,7 +6,9 @@
 Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 1 augustus 2026, zie DEC-010 en `docs/Brand/BRAND_IDENTITY.md`).
 
 ## Huidige versie
-v4.70.25
+v4.70.27
+
+TK584-testbranch, 1 november 2026: P1-herstel in review. Main/productie blijft v4.70.25; geen productie- of persoonlijk-accountvrijgave. Zie docs/TK584_PROGRAM_EXECUTION_20261101.md.
 
 ## Wearable-koppeling: tokenopslag, Android-bereikbaarheid, koppelstatus (v4.70.25, 11 oktober 2026)
 

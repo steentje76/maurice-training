@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## v4.70.27 — P1-testkandidaat programma-uitvoering (1 november 2026)
+
+- Bevestigde vooraf ingevulde sets worden geregistreerd; oefening afronden vraagt expliciete bevestiging van ingevulde werksets.
+- Aangepaste uitvoering, extra setrijen en afvink-/AMRAP-/rustgegevens blijven bij hervatten behouden; vervanging bewaart eerdere actuals onder hun oorspronkelijke oefening-ID.
+- Afronden gebruikt stabiele rij-ID's voor herhalen en offline synchronisatie; gedeeltelijke fouten behouden de draft.
+- Afgeronde programmatrainingen tonen oorspronkelijke snapshot, vastgelegde aanpassingen en gekoppelde uitgevoerde sets afzonderlijk. Ontbrekende historische gegevens worden als onbekend vermeld.
+- Bestaande spierbelasting-/herstelformules ongewijzigd; bronrecords, mapping, berekeningstijd en geldende vensters worden herleidbaar gemaakt.
+- Afzonderlijk Android-pakket `com.trainingskompas.app.tk584test20261101`. Alleen synthetische testacceptatie; geen productie-/persoonlijk-accountvrijgave. Eerdere gestapelde security- en v4.70.26-UX-PR's zijn niet geïntegreerd.
+
 ## v4.70.25 — Wearable-koppeling hersteld: veilige tokenopslag, Android-app bereikt de server, eerlijke koppelstatus (gebruikerstest 11 oktober 2026)
 
 - **Bug (S8-VAULT-NAME, S8-VAULT-ORPHAN).** Koppelen eindigde op "Koppelen mislukt (opslaan)". Supabase registreerde op 11 oktober tussen 06:28 en 06:29 UTC zes keer HTTP 409 op `store_wearable_token_secret`, PostgreSQL zes keer SQLSTATE 23505 op `secrets_name_idx`.

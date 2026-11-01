@@ -90,6 +90,12 @@ function fields(c,id,kg,reps,n=3){for(let i=1;i<=n;i++){
  assert(load.provenance.calculatedAt);assert.equal(c.tkMuscleInputEvidence('muscle_load').sourceRecords[1].exerciseId,'squat');
  c.tkEigenaarUid=()=> 'synthetic-B';assert.equal(c.tkMuscleInputEvidence('muscle_load'),null);
 
+ // Adding an empty fourth set persists only row structure, never fabricates actuals.
+ c=env();const rows=[1,2,3].map(i=>({id:'sr-bench-'+i}));
+ c.elements['body-bench']={querySelectorAll:()=>rows,querySelector:()=>null,appendChild:r=>rows.push(r)};
+ c.document.createElement=()=>({firstElementChild:{id:'sr-bench-4'}});c.buildWorkSetRow=()=>'<div></div>';
+ vm.runInContext(fn('addWorkSet'),c);c.addWorkSet('bench','strength');
+ assert.equal(rows.length,4);assert.equal(c.draft.sessionLog.bench._workSetCount,4);assert(!c.sessionLog.bench.sets);
  // Real finish handler + real row builder: partial failure, process restart, stable IDs, no duplicates.
  c=env();let seq=0,failThird=true;const server=new Map();
  Object.assign(c,{finishSessionBezig:false,trainStart:0,pausedAccumMs:0,activeInstanceId:'synthetic-instance',activePlannedAssignmentId:null,

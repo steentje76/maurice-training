@@ -426,7 +426,7 @@ TK584-testbranch, 1 november 2026: P1-herstel in review. Main/productie blijft v
 
 ## 1. Verified baseline
 - **main SHA:** wordt bijgewerkt na merge (zie git log voor de actuele HEAD)
-- **APP_VER:** v4.70.25 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
+- **APP_VER:** v4.70.27 (zie "Huidige versie" hierboven — exacte kop vereist door `core/fAndroidRelease.test.js` H2, Wet 84-versiebumpcontrole; niet wijzigen zonder die test aan te passen)
 - **Datum van deze stand:** 15 september 2026 — MOVEKIT BATCH 001 CANONICAL IMPORT (Exercise Catalog 206 -> 226, TK-000207..TK-000226; assetarchitectuur bevestigd op het bestaande Sprint 11A-patroon, geen nieuwe media-infrastructuur; poster-fail-closed ongewijzigd)
 - **Deployment:** Netlify auto-deploy vanaf `main`; GitHub Actions Quality Gate (comprehensive, discovery-based) is een vereiste check op `main` (protected branch)
 

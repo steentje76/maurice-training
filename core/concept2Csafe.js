@@ -217,6 +217,78 @@
     };
   }
 
+  /* Finite variable intervals, official PM CSAFE Definition (2026-03 PDF), pp50,77-79,93-96.
+   * Pure encoding only. This does NOT assert an ACK, a readback or physical programming.
+   * Each interval's commands stay in one frame; no frame exceeds the existing 120-byte limit.
+   * Fixed-time interval type 6 is intentionally never used: it has no defined end. */
+  function buildVariableIntervals(intervals) {
+    function fail(error){ return {ok:false,error:error,frames:[]}; }
+    if(!Array.isArray(intervals)||!intervals.length||intervals.length>50)return fail('interval_count_out_of_range');
+    var groups=[],expected=[];
+    for(var i=0;i<intervals.length;i++){
+      var it=intervals[i];
+      if(!it||[0,128].indexOf(it.durationType)<0)return fail('unsupported_duration_type');
+      var d=it.duration,rest=it.restSeconds;
+      if(typeof d!=='number'||!isFinite(d)||Math.floor(d)!==d)return fail('invalid_interval_duration');
+      if((it.durationType===0&&(d<2000||d>35999900))||(it.durationType===128&&(d<100||d>999999)))return fail('interval_duration_out_of_range');
+      if(typeof rest!=='number'||!isFinite(rest)||Math.floor(rest)!==rest||rest<0||rest>595)return fail('rest_out_of_range');
+      var pace=it.targetPaceCentiseconds;
+      if(pace!=null&&(typeof pace!=='number'||!isFinite(pace)||Math.floor(pace)!==pace||pace<=0||pace>4294967295))return fail('invalid_target_pace');
+      var cmds=encodeCommand(0x18,[i]);
+      if(i===0)cmds=cmds.concat(encodeCommand(CMD.PM_SET_WORKOUTTYPE,[8]));
+      cmds=cmds.concat(encodeCommand(0x17,[it.durationType===0?0:1]),
+        encodeCommand(CMD.PM_SET_WORKOUTDURATION,[it.durationType].concat(encodeDistanceBE32(d))),
+        encodeCommand(0x04,[(rest>>>8)&255,rest&255]));
+      if(pace!=null)cmds=cmds.concat(encodeCommand(0x06,encodeDistanceBE32(pace)));
+      cmds=cmds.concat(encodeCommand(CMD.PM_CONFIGURE_WORKOUT,[1]));
+      groups.push(cmds);
+      expected.push({index:i,durationType:it.durationType,duration:d,restSeconds:rest,targetPaceCentiseconds:pace==null?null:pace});
+    }
+    groups.push(encodeCommand(0x13,[1,1])); // workout screen / prepare to row
+    var frames=[],pending=[];
+    for(var g=0;g<groups.length;g++){
+      var candidate=pending.concat(groups[g]);
+      try{encodeStandardFrame(encodeC2Wrapper(candidate));pending=candidate;}
+      catch(e){
+        if(!pending.length)return fail('interval_frame_too_large');
+        frames.push(encodeStandardFrame(encodeC2Wrapper(pending)));
+        pending=groups[g].slice();
+        try{encodeStandardFrame(encodeC2Wrapper(pending));}catch(e2){return fail('interval_frame_too_large');}
+      }
+    }
+    if(pending.length)frames.push(encodeStandardFrame(encodeC2Wrapper(pending)));
+    return {ok:true,workoutType:8,finite:true,intervalCount:expected.length,expected:expected,frames:frames,
+      verificationRequired:['all_frame_statuses','complete_interval_structure_readback'],physicallyVerified:false};
+  }
+  /* Input is the EXISTING IntervalEngineCore.normalizePrescription result. No new repeat engine.
+   * Recovery becomes the preceding PM5 interval's defined rest. Warmup/cooldown remain explicit
+   * intervals, so they are neither lost nor silently treated as an unbounded warmup. */
+  function compileFiniteIntervalPrescription(normalized){
+    function fail(error){return {ok:false,error:error,frames:[]};}
+    if(!normalized||normalized.geldig!==true||!Array.isArray(normalized.blocks)||!normalized.blocks.length||normalized.blocks.length>100)return fail('normalized_prescription_required');
+    if(['rowing','rowerg','skierg','bikeerg'].indexOf(normalized.sport)<0)return fail('unsupported_machine_sport');
+    var intervals=[],mapping=[],recoverySeen=false;
+    for(var i=0;i<normalized.blocks.length;i++){
+      var b=normalized.blocks[i],t=b&&b.termination;
+      if(!b||['warmup','work','recovery','cooldown'].indexOf(b.type)<0||!t)return fail('invalid_block');
+      if(b.target&&(b.target.pace!=null||b.target.power!=null))return fail('unsupported_device_target');
+      if(b.type==='recovery'){
+        if(!intervals.length||recoverySeen||t.type!=='time')return fail('unsupported_recovery_structure');
+        if(typeof t.seconds!=='number'||!isFinite(t.seconds)||Math.floor(t.seconds)!==t.seconds||t.seconds<=0||t.seconds>595)return fail('rest_out_of_range');
+        intervals[intervals.length-1].restSeconds=t.seconds;mapping[mapping.length-1].recoveryBlockIndex=i;recoverySeen=true;continue;
+      }
+      recoverySeen=false;var dtype,d;
+      if(t.type==='time'){
+        if(typeof t.seconds!=='number'||!isFinite(t.seconds)||Math.round(t.seconds*100)/100!==t.seconds)return fail('unsupported_time_precision');
+        dtype=0;d=Math.round(t.seconds*100);
+      }else if(t.type==='distance'){dtype=128;d=t.meters;}else return fail('unsupported_termination');
+      intervals.push({durationType:dtype,duration:d,restSeconds:0});
+      mapping.push({intervalIndex:intervals.length-1,blockIndex:i,blockType:b.type,recoveryBlockIndex:null,appTarget:b.target?{rpe:b.target.rpe||null,pace:b.target.pace||null,power:b.target.power||null}:null});
+    }
+    var result=buildVariableIntervals(intervals);if(!result.ok)return result;
+    result.blockMapping=mapping;result.sport=normalized.sport;return result;
+  }
+
   /* Response-parser. CONFIRMED-semantiek volgt Table 9: het statusbyte draagt
    * Previous Frame Status in bitmask 0x30, waarbij 0x00 = Ok. Reject/Bad/Not ready
    * bevestigen NIET. Frame-level ACK/NAK bestaat niet in dit protocol. */
@@ -272,6 +344,7 @@
     encodeCommand: encodeCommand, encodeC2Wrapper: encodeC2Wrapper,
     encodeStandardFrame: encodeStandardFrame, encodeDistanceBE32: encodeDistanceBE32,
     validateDistance: validateDistance, buildFixedDistanceWorkout: buildFixedDistanceWorkout,
+    buildVariableIntervals:buildVariableIntervals, compileFiniteIntervalPrescription:compileFiniteIntervalPrescription,
     parseResponseFrame: parseResponseFrame, isProgrammingConfirmed: isProgrammingConfirmed,
     encodeShortCommand: encodeShortCommand, buildGetStatusFrame: buildGetStatusFrame,
     UNITS: UNITS

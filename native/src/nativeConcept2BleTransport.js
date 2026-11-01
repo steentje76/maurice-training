@@ -398,6 +398,11 @@
     var connectionGeneration = 0;
     var controlResponseHandler = null;
     var controlWrites = 0;
+    // Concept2 PM BTS Interface rev. 1.30: CE060021 value is up to 20 bytes.
+    // An ATT MTU negotiation is NOT evidence that this specific value can accept
+    // longer CSAFE frames. Until an official long-write protocol is implemented,
+    // fail closed rather than sending a truncated or speculative interval frame.
+    var MAX_CONTROL_VALUE_BYTES = 20;
 
     /* Schrijft een voorgebouwd CSAFE-frame naar CE060021 op het ACTIEF verbonden
        device. Weigert zonder verbinding; er wordt nooit blind naar hardware
@@ -405,6 +410,7 @@
     function writeControlFrame(bytes) {
       if (!deviceId) return Promise.reject(new Error('not_connected'));
       if (!bytes || !bytes.length) return Promise.reject(new Error('empty_frame'));
+      if (bytes.length > MAX_CONTROL_VALUE_BYTES) return Promise.reject(new Error('csafe_frame_exceeds_ble_characteristic_limit'));
       if (!gateway || typeof gateway.write !== 'function') return Promise.reject(new Error('no_write_capability'));
       controlWrites++;
       return Promise.resolve(gateway.write(deviceId, CTRL_SERVICE_UUID, CTRL_RECEIVE_UUID, Array.prototype.slice.call(bytes)))

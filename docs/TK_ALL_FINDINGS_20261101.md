@@ -18,14 +18,16 @@ Basis: main 160fefc. Integratie van #578 (a5edf672) en #585 (c906136b), met beho
 | 25-002 Samen-shortcut | Nog uit te voeren geregistreerde plaatsingswens |
 | 25-003 Jouw ritme | Nog uit te voeren geregistreerde plaatsingswens |
 | 25-004 extra oefening Preview | Code toegevoegd: session-only add, immutable definitie, unieke ID, modifications; gerichte regressie groen |
-| 25-006 PM5-resultaatvelden | Nog uit te voeren |
-| 25-007 exacte splits | Nog uit te voeren; geschatte verdeling nooit als gemeten presenteren |
+| 25-006 PM5-resultaatvelden | Frozen eindmeting via bestaande converter zichtbaar in resultaatvelden; RPE blijft gebruikersinvoer; direct draft opslaan. Synthetische regressie groen, fysieke PM5-acceptatie open |
+| 25-007 exacte splits | Geschatte verdeling expliciet gelabeld; PM5-totaal levert geen gefabriceerde afzonderlijke splits. Exacte apparaat-splitacquisitie blijft OPEN |
 | 25-008 apparaatinstelling | Code: direct bij invoer bewaren, eigenaar en apparaatvariant scheiden; gerichte regressie groen; oorspronkelijke melding niet fysiek gereproduceerd |
 | 25-009/012 voorschrift/advies | Code: target-RPE en target-sets winnen van historische actuals; gewicht alleen uit bestaande resolver, geen hergebruik 1-rep-load voor hoger reps-doel zonder berekeningsbasis; identiek gewicht wordt niet lichter genoemd; regressie groen. Verdere integratieproef open |
-| 25-010 smalle werksetvelden | Nog uit te voeren functionele layoutcorrectie, bredere vormgeving later samen |
+| 25-010 smalle werksetvelden | e1RM eigen gridrij; 320/360/390/430px bij 100% en 130% tekstzoom: 8 browserproeven groen. Samsung-acceptatie open; bredere vormgeving later samen |
 | 25-011/013 hervatten/extra set | #585-behoud opgenomen; gecombineerde regressies groen |
 | 01-11 oorspronkelijke logging/historie | #585-code en tests opgenomen |
 
 De latere losse squat/bench/OHP-records zijn door Maurice handmatig opnieuw ingevoerd. Zij zijn geen teruggevonden oorspronkelijke registraties en blijven ongewijzigd. Geen historische DB-write of reconstructie.
 
 Status is CODE / TEST / DEVICE expliciet gescheiden. Deze tabel sluit geen bronmelding of securitygate. De bredere UX en volgende APK vereisen nog de afgesproken gezamenlijke ronde. PCC-registratie alleen geauthenticeerd.
+
+Aanvullend: equipment-memory behoudt verwijderen van lege presets; oude regressietest gebruikt nu de echte eigenaar-/variantsleutel. 23 bestaande gevallen groen. Volledige Linux Quality Gate wordt opnieuw uitgevoerd; lokale Windows-suite meldt ook platformgebonden CRLF/npm/ESM-beperkingen. Geen vrijgave op basis van alleen gerichte tests.

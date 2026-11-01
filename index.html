@@ -3510,6 +3510,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .nk-ai-typing span:nth-child(2){animation-delay:.15s}
 .nk-ai-typing span:nth-child(3){animation-delay:.3s}
 @keyframes nkTypingBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* TK582-010: input space stays stable when e1RM/AMRAP/active-set content appears. */
+.tks-setcard .set-row.setr{display:grid;grid-template-columns:26px minmax(0,1fr) 52px;align-items:start}
+.setr-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}
+.setr-cell-rpe{min-width:0}
+.setr-e1rm{grid-column:1/-1;min-width:0;overflow-wrap:anywhere}
+@media(max-width:430px){
+  .setr-cells{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .setr-cell-rpe{grid-column:1/-1;align-items:stretch;justify-self:stretch}
+  .setr-cell-rpe .rpe-stepper-v{width:100%;box-sizing:border-box}
+}
 </style>
 </head>
 <body>
@@ -4607,7 +4618,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="vd-chip" aria-pressed="false" onclick="voedingOpenPhotoUnavailable()">Foto</button>
       <button class="vd-chip" aria-pressed="false" onclick="voedingOpenCustomProductForm()">Eigen</button>
     </div>
-    
+
     <div id="voeding-search-results" aria-live="polite"></div>
     <button style="width:100%;background:var(--card);border-radius:12px;margin:4px 0 12px;padding:12px;text-align:left;border:none;font-size:14px;color:var(--color-primary);font-weight:600;cursor:pointer" onclick="voedingOpenCustomProductForm()">+ Zelf product toevoegen</button>
   </div>
@@ -21757,13 +21768,13 @@ function eqMemAll(){
 function eqMemGet(exId){const m=eqMemAll();return m[eqMemEntryKey(exId)]?.value||'';}
 function eqMemSet(exId,val){
   const key=eqMemStorageKey();if(!key)return false;
-  try{const m=eqMemAll(),id=eqMemEntryKey(exId),e=m[id]||{};e.value=String(val||'').trim();e.ts=Date.now();m[id]=e;localStorage.setItem(key,JSON.stringify(m));return true;}catch(_){return false;}
+  try{const m=eqMemAll(),id=eqMemEntryKey(exId),e=m[id]||{};e.value=String(val||'').trim();e.ts=Date.now();if(e.value||Object.values(e.fields||{}).some(Boolean))m[id]=e;else delete m[id];localStorage.setItem(key,JSON.stringify(m));return true;}catch(_){return false;}
 }
 // GESTRUCTUREERDE per-label instelling (bv. Zitting=4, Pin=12) — los van de vrije tekst en van history.
 function eqMemFieldGet(exId,label){return eqMemAll()[eqMemEntryKey(exId)]?.fields?.['f:'+label]||'';}
 function eqMemFieldSet(exId,label,val){
   const key=eqMemStorageKey();if(!key)return false;
-  try{const m=eqMemAll(),id=eqMemEntryKey(exId),e=m[id]||{};e.fields=e.fields||{};e.fields['f:'+label]=String(val||'').trim();e.ts=Date.now();m[id]=e;localStorage.setItem(key,JSON.stringify(m));return true;}catch(_){return false;}
+  try{const m=eqMemAll(),id=eqMemEntryKey(exId),e=m[id]||{};e.fields=e.fields||{};const value=String(val||'').trim();if(value)e.fields['f:'+label]=value;else delete e.fields['f:'+label];e.ts=Date.now();if(e.value||Object.values(e.fields).some(Boolean))m[id]=e;else delete m[id];localStorage.setItem(key,JSON.stringify(m));return true;}catch(_){return false;}
 }
 function buildEquipmentPanel(exId,eqList){
   const typeOptions=equipmentTypes.map(t=>`<option value="${escHtml(t.label)}">${escHtml(t.label)}</option>`).join('');
@@ -22893,6 +22904,7 @@ function numSplitsFor(exId,cfg){
 }
 function splitRowsHtml(exId,cardioType){
   const cfg=CARDIO_TYPES[cardioType];
+  if((cardioSplitMode[exId]||'auto')!=='handmatig'&&sessionLog[exId]?.cardio?.splitProvenance==='unavailable')return '<div style="grid-column:1/-1">Exacte splits niet beschikbaar.</div>';
   const mode=cardioSplitMode[exId]||'auto';
   const n=numSplitsFor(exId,cfg);
   const s=cardioSplits[exId]||{};
@@ -22911,9 +22923,10 @@ function buildSplitsSection(exId,cardioType){
   const mode=cardioSplitMode[exId]||'auto';
   return `<div style="padding:4px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Splits per ${cfg.splitDist}${cfg.unit}</div>
   <div class="rower-scroll" id="splitmode-${exId}">
-    <button class="rower-chip${mode==='auto'?' sel':''}" onclick="setCardioSplitMode('${exId}','${cardioType}','auto')">Automatisch</button>
+    <button class="rower-chip${mode==='auto'?' sel':''}" onclick="setCardioSplitMode('${exId}','${cardioType}','auto')">Geschatte verdeling</button>
     <button class="rower-chip${mode==='handmatig'?' sel':''}" onclick="setCardioSplitMode('${exId}','${cardioType}','handmatig')">Handmatig</button>
   </div>
+  <div style="padding:4px 14px;font-size:11px;color:var(--g4)">Geschatte verdeling is berekend uit het totaal; dit zijn geen gemeten afzonderlijke splits.</div>
   <div class="splits-grid" id="splitsgrid-${exId}">${splitRowsHtml(exId,cardioType)}</div>
   <div id="splitsummary-${exId}" style="padding:4px 14px 8px;font-size:11px;color:var(--g4)"></div>`;
 }
@@ -22925,7 +22938,7 @@ function renderSplitRows(exId,cardioType){
 function setCardioSplitMode(exId,cardioType,mode){
   cardioSplitMode[exId]=mode;
   const wrap=document.getElementById('splitmode-'+exId);
-  if(wrap)wrap.querySelectorAll('.rower-chip').forEach(b=>b.classList.toggle('sel',(b.textContent==='Automatisch')===(mode==='auto')));
+  if(wrap)wrap.querySelectorAll('.rower-chip').forEach(b=>b.classList.toggle('sel',(b.textContent==='Geschatte verdeling')===(mode==='auto')));
   if(mode==='auto')computeAutoSplits(exId,cardioType);
   renderSplitRows(exId,cardioType);
   updateSplitSummary(exId,cardioType);
@@ -22934,6 +22947,7 @@ function setCardioSplitMode(exId,cardioType,mode){
 // Automatisch: verdeelt de totale tijd gelijkmatig over alle intervallen.
 function computeAutoSplits(exId,cardioType){
   const cfg=CARDIO_TYPES[cardioType];
+  if(sessionLog[exId]?.cardio?.splitProvenance==='unavailable'){cardioSplits[exId]={};return;}
   const distVal=numNL(getCardioVal(exId,cfg.calc?.distField))||cfg.splitTotal; // KOMMA-VEILIG
   const timeVal=CardioEngine.parseTime(getCardioVal(exId,'time'));
   cardioSplits[exId]=timeVal?CardioEngine.autoSplits(timeVal,distVal,cfg.splitDist):{};
@@ -22950,6 +22964,7 @@ function onManualSplitChange(exId,cardioType,q){
 function updateSplitSummary(exId,cardioType){
   const cfg=CARDIO_TYPES[cardioType];
   const mode=cardioSplitMode[exId]||'auto';
+  if(mode==='auto'&&sessionLog[exId]?.cardio?.splitProvenance==='unavailable'){const e=document.getElementById('splitsummary-'+exId);if(e)e.textContent='Geen gemeten afzonderlijke splits ontvangen van de PM5.';return;}
   const n=numSplitsFor(exId,cfg);
   const s=cardioSplits[exId]||{};
   const summaryEl=document.getElementById('splitsummary-'+exId);
@@ -22968,7 +22983,7 @@ function updateSplitSummary(exId,cardioType){
       ? 'Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total)
       : agg.count+'/'+n+' splits ingevuld';
   } else {
-    if(summaryEl)summaryEl.textContent='Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total);
+    if(summaryEl)summaryEl.textContent='Geschatte gelijke verdeling; geen gemeten splits. Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total);
   }
 }
 // v306.2: centrale input-handler voor alle top-level cardiovelden — vervangt calcCardioSplit()
@@ -23174,6 +23189,41 @@ function tkC2FrozenFor(exId){
   return (typeof sessionLog!=='undefined'&&sessionLog&&sessionLog[exId]&&sessionLog[exId].c2Completed)?sessionLog[exId].c2Completed:null;
 }
 
+// TK582-006: project frozen measured actuals into the existing result form, never a second writer.
+function tkC2ReflectCompletedActual(exId,frozen){
+  const cm=frozen?.measurement;
+  if(!cm||!tkC2IsLoggableSummary(cm))return false;
+  const conv=tkC2Converter();if(!conv)return false;
+  const row=tkC2SessionRowFromLog(cm,{},conv);
+  const selected=(typeof getSessionExs==='function'&&curT)?getSessionExs(curT).find(e=>e.id===exId):null;
+  const type=selected?resolveCardioType(selected):({rowerg:'rowing',skierg:'skierg',bikeerg:'bikeerg'}[cm.machineType]||null);
+  const cfg=CARDIO_TYPES[type];if(!cfg)return false;
+  const prior=sessionLog[exId]?.cardio||{};
+  const data={...prior,type:type,source:'concept2_measured',splitProvenance:'unavailable'};
+  (cfg.fields||[]).forEach(f=>{
+    if(f==='rpe')return; // user RPE is not a device measurement
+    const spec=cfg.rowMap?.[f];if(!spec)return;
+    let value=null;
+    if(spec.col!=='extraNote'){
+      value=row[spec.col];if(value!=null&&spec.col==='distance'&&/_km$/.test(f))value=Number(value)/1000;
+    }else if(typeof spec.template==='function'){
+      const parts=String(spec.template('\u0001',{machine:''})).split('\u0001');
+      if(parts.length===2){const note=row.extraNote||'';const at=note.indexOf(parts[0].trim());if(at>=0){const rest=note.slice(at+parts[0].trim().length);const end=parts[1].trim()?rest.indexOf(parts[1].trim()):-1;value=(end>=0?rest.slice(0,end):rest.split(/[·|]/)[0]).trim();}}
+    }
+    if(value==null||value==='')return;
+    data[f]=String(value);setCardioVal(exId,f,value);
+  });
+  if(row.watt_source)data.wattSource=row.watt_source;
+  sessionLog[exId].cardio=data;
+  // A total time contains no individual 250m measurements. Do not manufacture them.
+  if(cfg.splits&&(cardioSplitMode[exId]||'auto')!=='handmatig'){
+    cardioSplits[exId]={};renderSplitRows(exId,type);
+    const el=document.getElementById('splitsummary-'+exId);if(el)el.textContent='Geen gemeten afzonderlijke splits ontvangen van de PM5.';
+  }
+  if(typeof persistTrainingDraft==='function'&&curT)persistTrainingDraft(true);
+  else if(typeof scheduleAutosave==='function')scheduleAutosave();
+  return true;
+}
 function tkErgOnCanonicalMeasurement(exId, cm){
   try{ if(typeof tkC2DiagOnCanonical==='function') tkC2DiagOnCanonical(exId, cm); }catch(_dg){} // DIAG, fail-open
   if(!exId || !cm || typeof cm!=='object') return;
@@ -23183,7 +23233,7 @@ function tkErgOnCanonicalMeasurement(exId, cm){
   // packets (13/0/nieuwe workout) overschrijven .c2 niet (de diagnostiek hierboven zag ze wel).
   if(sessionLog[exId].c2Completed){ try{ if(typeof tkC2CompletionIgnored==='function') tkC2CompletionIgnored(exId, cm); }catch(_ci){} return; }
   sessionLog[exId].c2=cm;
-  try{ var _fz=(typeof tkC2CompletionObserve==='function')?tkC2CompletionObserve(exId, cm):null; if(_fz) sessionLog[exId].c2Completed=_fz; }catch(_co){}
+  try{ var _fz=(typeof tkC2CompletionObserve==='function')?tkC2CompletionObserve(exId, cm):null; if(_fz){ sessionLog[exId].c2Completed=_fz; tkC2ReflectCompletedActual(exId,_fz); } }catch(_co){}
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -31160,7 +31210,7 @@ async function renderBodyMeasurements(){
       ${bcAanwezig.length?`<div class="bc-herkomst">${escHtml(tkMetingHerkomst(lat.date, lat.source, 'entered', null))}</div>`:''}
       ${bcOntbreekt.length?`<div style="font-size:11px;color:var(--g4);font-weight:600;margin-top:8px;line-height:1.45">Niet gemeten: ${bcOntbreekt.join(' · ')}</div>`:''}
       ${lat.edema?`<div style="background:#fff8e1;border-left:3px solid var(--y);border-radius:0 8px 8px 0;padding:8px 10px;font-size:11px;color:#666;margin-top:8px">⚠️ Oedeem: ${lat.edema} — Tanita waarden minder betrouwbaar</div>`:''}`;
-    
+
     // Afmetingen: eigen kolommen, met fallback op legacy note-veld voor oude records
     const afm = resolveAfmetingen(lat);
     const items = [

@@ -111,6 +111,9 @@ function fields(c,id,kg,reps,n=3){for(let i=1;i<=n;i++){
  for(const [id,kg,reps] of fixture)c.sessionLog[id]={sets:Array.from({length:3},()=>({kg:String(kg),reps:String(reps),done:true}))};
  for(const n of ['buildStrengthSessionRow','finishSession'])vm.runInContext(fn(n),c);
  const warn=c.console.warn;c.console={...console,warn:()=>{}};
+ c.activeInstanceId=null;c.createTrainingInstance=async()=>null;
+ await c.finishSession();assert.equal(server.size,0,'failed instance persistence cannot silently lose the original plan');assert(!c.cleared);
+ c.createTrainingInstance=async()=> 'synthetic-instance';
  await c.finishSession();assert(!c.cleared,'partial failure keeps draft');assert.equal(server.size,4);
  assert.equal(c.draft.sessionLog.ohp._sessionRowId,'row-5');
  // Simulate lost in-memory state restored from the autosaved draft.

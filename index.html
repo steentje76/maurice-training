@@ -24337,6 +24337,13 @@ async function finishSession(){
   if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
   try{
   const t=curT,list=getSessionExs(t),today=td();let saved=0,failed=0;
+  // A program finish must not discard its only plan snapshot when instance creation failed.
+  if(t.startsWith('prog_')&&!activeInstanceId){
+    if(!sessionProgramSnapshot){toast('Programmasnapshot ontbreekt; concept blijft bewaard.');return;}
+    activeInstanceId=await createTrainingInstance({snapshot:sessionProgramSnapshot});
+    if(!activeInstanceId){toast('Programma-instantie kon niet worden opgeslagen; concept blijft bewaard.');return;}
+    persistTrainingDraft(true);
+  }
   // ROADMAP POST-V1 #1 — duration_s per sessie vastleggen (RAW DATA). Hergebruikt
   // exact dezelfde formule als de al bestaande live-klok (startTrainTimer()): wall-
   // clock verstreken tijd minus geaccumuleerde pauzetijd. trainStart/pausedAccumMs

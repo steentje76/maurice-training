@@ -79,7 +79,7 @@ const INZ = tussen(HTML, '<div class="scr" id="s-inzicht">', '<div class="scr" i
   ok(!/>Herstelstatus</.test(HTML), 'K1 geen enkel zichtbaar label heet nog Herstelstatus');
   const OV = fn('inzichtRenderOverview');
   ok(/var rec=\(typeof v43OverallRecovery==='function'\)\?await v43OverallRecovery\(\):null;/.test(OV) && /<div class="lbl">Spierherstel<\/div><div class="val">'\+rec\.overall\+'<span class="unit">%<\/span>/.test(OV), 'K2 Snel overzicht: het vak Spierherstel toont rec.overall uit v43OverallRecovery() — dezelfde bron als voorheen');
-  eq((OV.match(/ovCell\('herstel','Spierherstel',/g) || []).length, 2, 'K3 ook de lege toestand van dat vak heet Spierherstel');
+  eq((OV.match(/ovCell\('herstel','Spierherstel',/g) || []).length, 4, 'K3 initial load, partial load, missing data and error all retain the Spierherstel label');
   ok(/const ov=rec\.hasData\?rec\.overall:null;/.test(fn('renderLichaamPremium')), 'K4 de ring Spierherstel leest dezelfde rec.overall');
   ok(/font-weight:600">Spierherstel<\/div>'\+\s*'<div class="big" style="color:'\+st\[1\]\+'">'\+\(rij\.pct!=null\?rij\.pct\+'%':'—'\)/.test(fn('renderLichaamSpierDetail')), 'K5 spiergroepdetail: het percentage van die spiergroep (rec.rows) heet Spierherstel');
   ok(/<div class="k">spierherstel<\/div>/.test(HTML) && /gemiddeld spierherstel <span id="v43-lich-overall">/.test(HTML), 'K6 Voortgang en het spiergroepenscherm gebruiken dezelfde naam voor hetzelfde gemiddelde');

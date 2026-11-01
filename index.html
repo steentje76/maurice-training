@@ -26694,7 +26694,20 @@ async function inzichtRenderDevelopment(renderId){
   const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
   const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var grid=document.getElementById('inzicht-summary-grid'); if(!grid) return;
-  grid.innerHTML='<div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div>';
+  var ICTREND='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>';
+  var ICCAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>';
+  var ICGOAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
+
+  function paintDevelopment(improvedHtml,trendHtml,trainingHtml,adherenceHtml){
+    if(!stillCurrent())return;
+  grid.innerHTML=
+    '<div class="tk-summary-cell">'+ICTREND+improvedHtml+'<div class="lbl">Verbeterd</div></div>'+
+    '<div class="tk-summary-cell">'+ICTREND+trendHtml+'<div class="lbl">Stijgende trends</div></div>'+
+    '<div class="tk-summary-cell">'+ICCAL+trainingHtml+'<div class="lbl">Trainingen</div></div>'+
+    '<div class="tk-summary-cell">'+ICGOAL+adherenceHtml+'<div class="lbl">Adherence</div></div>';
+  }
+  var unknown='<div class="unavailable">—</div>';
+  paintDevelopment(unknown,unknown,unknown,unknown);
   var all=await inzichtGetOrNull('sessions','&order=date.desc,created_at.desc&limit=500');
   var activities=await inzichtGetOrNull('activities','&order=date.desc&limit=200');
   var blocks=await tkOwnedProgramBlocks(authSession?.user?.id||null,'&order=planned_date.desc&limit=200',{nullOnError:true}); // GAP-P4-004: owner-scoped; null = niet beschikbaar (bestaande semantiek)
@@ -26730,15 +26743,7 @@ async function inzichtRenderDevelopment(renderId){
     }catch(_){}
   }
 
-  var ICTREND='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>';
-  var ICCAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>';
-  var ICGOAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
-
-  grid.innerHTML=
-    '<div class="tk-summary-cell">'+ICTREND+improvedHtml+'<div class="lbl">Verbeterd</div></div>'+
-    '<div class="tk-summary-cell">'+ICTREND+trendHtml+'<div class="lbl">Stijgende trends</div></div>'+
-    '<div class="tk-summary-cell">'+ICCAL+trainingHtml+'<div class="lbl">Trainingen</div></div>'+
-    '<div class="tk-summary-cell">'+ICGOAL+adherenceHtml+'<div class="lbl">Adherence</div></div>';
+  paintDevelopment(improvedHtml,trendHtml,trainingHtml,adherenceHtml);
 }
 
 /* Snel overzicht -- 5 cells, canonical health/load-bronnen. UNKNOWN != 0. */

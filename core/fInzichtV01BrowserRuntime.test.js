@@ -27,12 +27,18 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   try { browser = await chromium.launch(); }
   catch (e) { console.log('fInzichtV01BrowserRuntime: SKIP (Chromium niet beschikbaar in deze omgeving)'); process.exit(0); }
 
+  // This suite explicitly tests missing network data. Prevent delayed real backend calls
+  // from racing later synthetic DOM/style fixtures; slow-pending sections have a separate regression.
+  async function offlinePage(options){
+    const page=await browser.newPage(options);
+    await page.route('https://*.supabase.co/**',route=>route.abort());return page;
+  }
   const url = 'file://' + path.join(__dirname, '..', 'index.html');
   const viewports = [320, 360, 375, 390, 412, 430];
 
   for (const w of viewports) {
     const jsErrors = [];
-    const page = await browser.newPage({ viewport: { width: w, height: 1300 } });
+    const page = await offlinePage({ viewport: { width: w, height: 1300 } });
     page.on('pageerror', e => jsErrors.push(e.message));
     await page.goto(url);
     await page.waitForTimeout(500);
@@ -83,7 +89,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
 
   // Eenmalige, functionele checks (niet per viewport).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 1300 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 1300 } });
     await page.goto(url);
     await page.waitForTimeout(600);
 
@@ -110,7 +116,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
 
   // Eenmalige, functionele checks (niet per viewport).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 1300 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 1300 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -149,7 +155,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       );
       ok(sabotaged !== original, '18 (sabotage-setup): de sabotage-marker is gevonden en vervangen');
       fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
-      page2 = await browser.newPage({ viewport: { width: 390, height: 800 } });
+      page2 = await offlinePage({ viewport: { width: 390, height: 800 } });
       await page2.goto(url);
       await page2.waitForTimeout(500);
       await page2.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -169,7 +175,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // globaal in inzichtRenderOverview() -- een stille ReferenceError liet HRV/
   // Rusthartslag/Slaap altijd "--" tonen, ook met aantoonbaar bestaande data.
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     // A. DATA AVAILABLE: exacte, echte productiedata (incl. string-types zoals
     // Supabase teruggeeft) gemockt -- Inzicht MAG geen "--" tonen.
     await page.route('**/rest/v1/hrv_log**', route => {
@@ -201,7 +207,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // B. DATA MISSING: bevestig dat "--" (nooit 0) nog steeds correct getoond
   // wordt wanneer data werkelijk ontbreekt (lege array, geen fout).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.route('**/rest/v1/hrv_log**', route => {
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     });
@@ -217,7 +223,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // PO Round 2: Snel overzicht -- teal iconen (was zwart), eenheden zichtbaar,
   // geen tabelachtige verticale separators, responsive wrap-gedrag.
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -257,7 +263,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // Canonical Fidelity Pass: "Bekijk details", iconen in Jouw ontwikkeling,
   // herstel-ring, insight-cards (3 naast elkaar), CTA soft-teal.
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 1300 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 1300 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -324,7 +330,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // PO Round 4 (Geometry+Density): Snel overzicht moet ALTIJD één, compacte
   // rij van 5 metrics zijn, geen 3+2-wrap meer (canonical density).
   for (const w of [320, 360, 375, 390, 412, 430]) {
-    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    const page = await offlinePage({ viewport: { width: w, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -358,7 +364,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // meer -- de visual-zone blijft gereserveerd (voor alignment) maar toont
   // niets zichtbaars wanneer geen betrouwbare data bestaat.
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -386,7 +392,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // moeten op exact dezelfde verticale positie starten, ongeacht labellengte/
   // wrapping/aan- of afwezigheid van een trend-indicator.
   for (const w of [320, 390, 430]) {
-    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    const page = await offlinePage({ viewport: { width: w, height: 900 } });
     await page.route('**/rest/v1/hrv_log**', route => {
       route.fulfill({
         status: 200, contentType: 'application/json',
@@ -428,7 +434,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       );
       ok(sabotaged !== original, '41 (sabotage-setup): de min-height-regel is gevonden en tijdelijk verwijderd');
       fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
-      page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+      page = await offlinePage({ viewport: { width: 390, height: 900 } });
       await page.route('**/rest/v1/hrv_log**', route => {
         route.fulfill({
           status: 200, contentType: 'application/json',
@@ -463,7 +469,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // van de trend-tekst tegen de kaart-achtergrond (echte, gerenderde kleuren,
   // geen aanname).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.route('**/rest/v1/hrv_log**', route => {
       route.fulfill({
         status: 200, contentType: 'application/json',
@@ -502,7 +508,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // PO Mobile Visual Fidelity Pass: Recente inzichten mag titel en beschrijving
   // NOOIT aan elkaar plakken (was: "Frontsquathogere geschatte 1RM").
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -538,7 +544,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // Final Geometry/Density Pass: domain-row-hoogte en Snel-overzicht-5-op-1-rij
   // meetbaar bewaakt tegen regressie (was 77-78px, nu gescoped verkleind).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 844 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -564,7 +570,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // PO Final Visual Fidelity Rework: Jouw Ontwikkeling -- 4 KPI's op één rij,
   // zelfstandige tegels (eigen achtergrond+schaduw), waarde-top alignment.
   for (const w of [320, 390, 430]) {
-    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    const page = await offlinePage({ viewport: { width: w, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -599,7 +605,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       );
       ok(sabotaged !== original, '49 (sabotage-setup): de KPI-icon-regel is gevonden en tijdelijk uitgebreid met een afwijkende hoogte voor cel 2');
       fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
-      page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+      page = await offlinePage({ viewport: { width: 390, height: 900 } });
       await page.goto('file://' + path.join(__dirname, '..', 'index.html'));
       await page.waitForTimeout(500);
       await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });

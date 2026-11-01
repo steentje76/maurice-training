@@ -23411,6 +23411,8 @@ function copyToSets(exId, fromSet, field, val){
 
 function logSet(exId,type,setNum,isWork){
   if(!sessionLog[exId])sessionLog[exId]={wu:[],sets:[]};
+  // A retry must upsert edited actuals using the same row ID, never skip them as already saved.
+  delete sessionLog[exId]._sessionRowPersistedAt;
   const pfx=type==='wu'?'w':'s';
   // P0 (14-08): sla NL-komma genormaliseerd op ("73,5"→"73.5") zodat elke downstream-parse klopt.
   const kg=normNumStr(document.getElementById(pfx+'-'+exId+'-'+setNum+'-kg')?.value);

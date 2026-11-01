@@ -114,7 +114,11 @@ function fields(c,id,kg,reps,n=3){for(let i=1;i<=n;i++){
  await c.finishSession();assert(!c.cleared,'partial failure keeps draft');assert.equal(server.size,4);
  assert.equal(c.draft.sessionLog.ohp._sessionRowId,'row-5');
  // Simulate lost in-memory state restored from the autosaved draft.
- c.sessionLog=JSON.parse(JSON.stringify(c.draft.sessionLog));failThird=false;await c.finishSession();
+ c.sessionLog=JSON.parse(JSON.stringify(c.draft.sessionLog));
+ fields(c,'bench',57.5,12);c.logSet('bench','work',1,true);
+ assert(!c.sessionLog.bench._sessionRowPersistedAt,'editing a previously saved partial result must invalidate the acknowledgement');
+ assert(c.sessionLog.bench._sessionRowId,'edit preserves stable row identity');
+ failThird=false;await c.finishSession();
  assert(c.cleared,'only full success clears draft');assert.equal(server.size,5);
  assert.equal([...server.values()].reduce((n,r)=>n+r.sets,0),15);
  assert.equal([...server.values()].flatMap(r=>r.sets_detail).reduce((v,d)=>v+Number(d.kg)*Number(d.reps),0),8442);

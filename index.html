@@ -23211,6 +23211,7 @@ function tkC2ReflectCompletedActual(exId,frozen){
       if(parts.length===2){const note=row.extraNote||'';const at=note.indexOf(parts[0].trim());if(at>=0){const rest=note.slice(at+parts[0].trim().length);const end=parts[1].trim()?rest.indexOf(parts[1].trim()):-1;value=(end>=0?rest.slice(0,end):rest.split(/[·|]/)[0]).trim();}}
     }
     if(value==null||value==='')return;
+    if(f==='split'&&cfg.splitUnit&&String(value).endsWith(cfg.splitUnit))value=String(value).slice(0,-cfg.splitUnit.length).trim();
     data[f]=String(value);setCardioVal(exId,f,value);
   });
   if(row.watt_source)data.wattSource=row.watt_source;

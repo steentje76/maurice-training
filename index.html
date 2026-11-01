@@ -26684,14 +26684,15 @@ async function renderInzicht(){
   if(sportSel && sportSel.options.length<=1 && typeof SPORT_BLOCKS!=='undefined'){
     Object.keys(SPORT_BLOCKS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=SPORT_BLOCKS[k].naam||k;sportSel.appendChild(o);});
   }
-  await inzichtRenderDevelopment();
-  await inzichtRenderOverview();
-  await inzichtRenderDomains();
-  await inzichtRenderRecent();
+  const renderId=(window._inzichtRenderId||0)+1;window._inzichtRenderId=renderId;
+  // Independent sections: delayed queries must not withhold navigation or unrelated data.
+  await Promise.allSettled([inzichtRenderDevelopment(renderId),inzichtRenderOverview(renderId),inzichtRenderDomains(renderId),inzichtRenderRecent(renderId)]);
 }
 
 /* Jouw ontwikkeling -- 4 summary cells, uitsluitend canonical bronnen. */
-async function inzichtRenderDevelopment(){
+async function inzichtRenderDevelopment(renderId){
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var grid=document.getElementById('inzicht-summary-grid'); if(!grid) return;
   grid.innerHTML='<div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div>';
   var all=await inzichtGetOrNull('sessions','&order=date.desc,created_at.desc&limit=500');
@@ -26700,6 +26701,7 @@ async function inzichtRenderDevelopment(){
 
   var improvedHtml='<div class="unavailable">—</div>', trendHtml='<div class="unavailable">—</div>', trainingHtml='<div class="unavailable">—</div>', adherenceHtml='<div class="unavailable">—</div>';
 
+  if(!stillCurrent())return;
   if(all!==null){
     try{
       var digest=(typeof CoachingCore!=='undefined')?CoachingCore.improvementsDigest(buildImprovementItems(all)):null;
@@ -26740,7 +26742,9 @@ async function inzichtRenderDevelopment(){
 }
 
 /* Snel overzicht -- 5 cells, canonical health/load-bronnen. UNKNOWN != 0. */
-async function inzichtRenderOverview(){
+async function inzichtRenderOverview(renderId){
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var grid=document.getElementById('inzicht-overview-grid'); if(!grid) return;
   // PRODUCTION DATA REGRESSION FIX: 'dc' is GEEN globale variabele -- het is
   // een lokale alias (var dc=DeviceCore) die alleen binnen andere, specifieke
@@ -26760,7 +26764,9 @@ async function inzichtRenderOverview(){
     return '<div class="tk-overview-cell'+(unavailable?' is-unavailable':'')+'"><span class="ic-wrap">'+tkIcon(icon,{size:'standard'})+'</span><div class="lbl">'+lbl+'</div>'+inner+'</div>';
   }
   var icons={HRV:'hartslag',Rusthartslag:'hartslag',Slaap:'slaap'};
+  grid.innerHTML=['HRV','Rusthartslag','Slaap'].map(lbl=>ovCell(icons[lbl],lbl,'<div class="unavailable">—</div>',true)).concat([ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true),ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true)]).join('');
   var rows=await inzichtGetOrNull('hrv_log','&order=date.desc,created_at.desc&limit=400');
+  if(!stillCurrent())return;
   if(rows===null){
     ['HRV','Rusthartslag','Slaap'].forEach(function(lbl){ cells.push(ovCell(icons[lbl],lbl,'<div class="unavailable">—</div>',true)); });
   } else {
@@ -26790,6 +26796,7 @@ async function inzichtRenderOverview(){
       }catch(_){ cells.push(ovCell(icons[v.lbl],v.lbl,'<div class="unavailable">—</div>',true)); }
     });
   }
+  grid.innerHTML=cells.concat([ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true),ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true)]).join('');
   // Spierherstel: bestaande, canonieke v43OverallRecovery() hergebruikt (dezelfde
   // functie als Home/Lichaam) -- bron: gemiddeld spierherstelpercentage over alle
   // spiergroepen (computeMuscleRecoveryPct), 0-100%, 100% = volledig hersteld.
@@ -26803,6 +26810,8 @@ async function inzichtRenderOverview(){
       cells.push(ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true));
     }
   }catch(_){ cells.push(ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true)); }
+  if(!stillCurrent())return;
+  grid.innerHTML=cells.concat([ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true)]).join('');
   // Belasting: bestaande, canonieke tkCoachBelasting() hergebruikt (zelfde functie
   // als Coach). Bron: rollend 7-daags krachtvolume (AC.rollingSum), eenheid 'kg'
   // (AC.MODALITEITEN.strength.eenheid) -- nu expliciet getoond, was eerder een
@@ -26822,7 +26831,7 @@ async function inzichtRenderOverview(){
       cells.push(ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true));
     }
   }catch(_){ cells.push(ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true)); }
-  grid.innerHTML=cells.join('');
+  if(stillCurrent())grid.innerHTML=cells.join('');
 }
 
 /* Domeinen -- 6 rijen, elk een bewezen, bestaand entry-point (Functional
@@ -26847,7 +26856,9 @@ function inzichtMiniViz(values,color){
   }).join(' ');
   return '<svg class="miniviz" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
-async function inzichtRenderDomains(){
+async function inzichtRenderDomains(renderId){
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var el=document.getElementById('inzicht-domain-list'); if(!el) return;
   var domains=[
     {icon:'prestaties',title:'Prestaties',sub:"PR's, 1RM, krachtverhoudingen, cardio",go:'s-stats',fn:'goInzichtPrestaties',viz:''},
@@ -26858,6 +26869,12 @@ async function inzichtRenderDomains(){
     {icon:'verbanden',title:'Verbanden',sub:'Wat lijkt bij jou samen te hangen?',go:'s-lich-verbanden',viz:''},
     {icon:'doel',title:'Doelen',sub:'Actieve doelen en challenges',go:'s-stats',fn:'goInzichtDoelen',viz:''}
   ];
+  el.innerHTML=domains.map(function(d,i){
+    var vizHtml=d.viz
+      ? '<span class="miniviz-wrap">'+d.viz+'</span>'
+      : '<span class="miniviz-wrap" style="width:44px" aria-hidden="true"></span>';
+    return '<button class="row tk-domain-row" onclick="'+(d.fn?d.fn+'()':"go('"+d.go+"')")+'" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span>'+vizHtml+'<span class="ar">›</span></button>';
+  }).join('');
   // Herstel: REAL DATA READY -- v43OverallRecovery().rows (per-spiergroep %),
   // bestaande, ongewijzigde functie (zelfde als Home/Lichaam).
   try{
@@ -26876,19 +26893,19 @@ async function inzichtRenderDomains(){
       if(weights.length>1) domains[3].viz=inzichtMiniViz(weights,'#00B894');
     }
   }catch(_){}
-  el.innerHTML=domains.map(function(d,i){
-    var vizHtml=d.viz
-      ? '<span class="miniviz-wrap">'+d.viz+'</span>'
-      : '<span class="miniviz-wrap" style="width:44px" aria-hidden="true"></span>';
-    return '<button class="row tk-domain-row" onclick="'+(d.fn?d.fn+'()':"go('"+d.go+"')")+'" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span>'+vizHtml+'<span class="ar">›</span></button>';
-  }).join('');
+  if(!stillCurrent())return;
+  domains.forEach(function(d,i){if(!d.viz)return;var slot=el.children[i]?.querySelector('.miniviz-wrap');if(slot)slot.innerHTML=d.viz;});
 }
 
 /* Recente inzichten -- PO2: GEEN ranking, deterministische recentheid van
    bestaande, gevalideerde canonical signalen. GEEN AI-score. */
-async function inzichtRenderRecent(){
+async function inzichtRenderRecent(renderId){
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var el=document.getElementById('inzicht-recent-list'); if(!el) return;
+  el.innerHTML='<div style="color:var(--color-text-muted)">Recente inzichten laden…</div>';
   var all=await inzichtGetOrNull('sessions','&order=date.desc,created_at.desc&limit=500');
+  if(!stillCurrent())return;
   if(all===null){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--color-text-muted);font-size:13px">Kon recente inzichten niet ophalen.</div>'; return; }
   try{
     var digest=(typeof CoachingCore!=='undefined')?CoachingCore.improvementsDigest(buildImprovementItems(all)):null;

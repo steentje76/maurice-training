@@ -53,3 +53,11 @@ De bestaande Concept2Csafe-module bevat nu buildVariableIntervals en compileFini
 Officiële voorbeeldpayload op gedrukte pagina 96 is byte-exact gereproduceerd. Er is een expliciete erratumtest: de PDF drukt C6 als checksum af, terwijl XOR van precies die afgedrukte payload 09 is. De encoder volgt de checksumregel en produceert 09; hij is niet aangepast aan het inconsistente voorbeeld. PDF visueel geverifieerd. Dit is dus geen claim dat de volledige gedrukte framevector correct is.
 
 BELANGRIJK: dit is een geteste protocolvoorbereiding, geen voltooide apparaatprogrammering. De API schrijft geen BLE, verstuurt geen frames, bevestigt geen ACK/readback en is niet aan de intervalstartknop gekoppeld. De bestaande fixed-distance-controller is ongewijzigd. Het nog vereiste werk is gecontroleerde sequentiële verzending met generatie/device-binding, actieve-workoutguard, volledig bewijs van de ingestelde intervalstructuur en fysieke acceptatie. #579 blijft OPEN. Cache-identiteit is aangepast; app/APK-versie ongewijzigd.
+
+## Inzicht — blocking load chain found during broad release verification
+
+De zeven domeinlinks en vijf overzichtscellen konden geheel ontbreken tijdens een trage/mislukte data-aanroep. renderInzicht wachtte secties sequentieel af; de domeinlinks werden bovendien pas na optionele herstel-/gewichtgrafieken opgebouwd. Reproduceerbaar vóór herstel: fInzichtV01BrowserRuntime lokaal 146 geslaagd/26 mislukt, VoedingUX 9/1. Dit is een functionele laadfout, geen nieuwe schermindeling.
+
+Herstel: de bestaande secties starten onafhankelijk; domeinlinks zijn direct beschikbaar en worden niet opnieuw vervangen voor grafiekjes. Vijf echte onbekend-placeholders verschijnen vóór netwerkresultaten, HRV/slaap kunnen apart verschijnen terwijl de overige berekeningen nog laden. De bestaande Calculation/Context/Decision-uitkomsten blijven de enige bron. Owner- en rendergenerationcontrole voorkomt dat een oud antwoord een nieuwe gebruiker/schermverversing overschrijft. Gerichte deferred-promise-regressie toont het defect vóór herstel en slaagt na herstel. Browserherhaling en volledige releasecontrole blijven vereist.
+
+PCC-route opnieuw gecontroleerd: huidige cloudsessie toont Inloggen, dus geen PCC-write uitgevoerd. API/securitypoorten niet omzeild. Nieuwe broncommits veranderen geen historische gebruikersgegevens en bouwen geen APK.

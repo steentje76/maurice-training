@@ -7082,7 +7082,7 @@ var _c2pair={}, _c2liveLast={};
    de fysieke verbinding (generation + deviceId), niet die van de UI. Geen tweede source of
    truth: _c2pair blijft eigenaar van de presentatie, _c2rt uitsluitend van de runtime. */
 var _c2rt={};
-function _c2rtSet(exId, generation, deviceId, prog, agg){ _c2rt[exId]={ generation:generation, deviceId:deviceId, prog:prog, agg:agg }; }
+function _c2rtSet(exId, generation, deviceId, prog, agg){ _c2rt[exId]={ generation:generation, deviceId:deviceId, prog:prog, agg:agg, ownerUid:(typeof tkEigenaarUid==='function'?tkEigenaarUid():null) }; }
 /* Levert de runtime alleen wanneer generation EN device overeenkomen; anders is het een
    andere verbinding of een ander PM5 en mag de oude runtime nooit hergebruikt worden. */
 function _c2rtGet(exId, generation, deviceId){
@@ -7311,6 +7311,7 @@ function tkErgConnectDevice(exId, idx){
         else if(e&&e.state==='connected') _c2repaint(exId, _c2connectedInner(exId, st.lastCm||null));
       });
       st._unsubMetrics=t.subscribeMetrics(function(evt){
+        if(evt&&evt.metrics&&evt.metrics.kind==='pm5_split'){try{if(typeof tkErgOnMeasuredSplit==='function')tkErgOnMeasuredSplit(exId,evt.metrics,t.getControlContext());}catch(_){}return;}
         var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
              : (st._agg?st._agg.push((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
         if(!cm) return; st.lastCm=cm;
@@ -18152,6 +18153,7 @@ async function saveLosOefening(btnEl){
     const _losInst=(typeof tkErgProtocolInstanceId==='function')?tkErgProtocolInstanceId(LOS_DOMID):null;
     if(_losProj){ row.protocol_type=_losProj.protocol_type; row.protocol_value=_losProj.protocol_value; }
     if(_losInst) row.training_instance_id=_losInst;
+    if(sessionLog[LOS_DOMID]?.intervalsDetail)row.intervals_detail=sessionLog[LOS_DOMID].intervalsDetail;
   } else if(ex.type==='wod'){
     const fmtEl=document.getElementById(domId+'-wodfmt');
     const fmt=fmtEl?fmtEl.value:(ex.wod_format||'for_time');
@@ -22715,7 +22717,7 @@ async function finishIntervalExecution(vroegtijdigGestopt){
   // canonieke meting is (geen prescribed->actual, geen verzonnen telemetrie, geen RPM-in-stroke_rate).
   if(_ivExec.canonical&&_ivExec.laps.length){
     if(!sessionLog[exId])sessionLog[exId]={};
-    sessionLog[exId].intervalsDetail={version:TK_ERG_INTERVALS_VERSION,sport:_ivExec.sport,blocks:_ivExec.laps.slice(),aborted:!!_ivExec.aborted};
+    sessionLog[exId].intervalsDetail={...(sessionLog[exId].intervalsDetail||{}),version:TK_ERG_INTERVALS_VERSION,sport:_ivExec.sport,blocks:_ivExec.laps.slice(),aborted:!!_ivExec.aborted};
   }
   closeModal('m-interval-exec');
   if(workSecondsTotaal>0){
@@ -22784,6 +22786,7 @@ function buildCardioBody(exId, cardioType){
   h+='</div>';
 
   h+=buildSplitsSection(exId,cardioType);
+  h+='<div id="pm5splits-'+exId+'">'+tkPm5MeasuredSplitsHtml(sessionLog[exId]?.intervalsDetail)+'</div>';
   if(typeof enhanceCardioPrev==='function'){ setTimeout(function(){ enhanceCardioPrev(exId,cardioType); },0); }
   return h;
 }
@@ -23189,6 +23192,33 @@ function tkC2FrozenFor(exId){
   return (typeof sessionLog!=='undefined'&&sessionLog&&sessionLog[exId]&&sessionLog[exId].c2Completed)?sessionLog[exId].c2Completed:null;
 }
 
+// Received PM5 splits share the connection owner and the existing session writer.
+function tkErgOnMeasuredSplit(exId,raw,ctx){
+  const rt=_c2rtGet(exId,ctx?.generation,ctx?.deviceId),uid=tkEigenaarUid();
+  if(!uid||!rt||rt.ownerUid!==uid||!ctx?.connected||!sessionLog[exId]||(!curT&&(typeof LOS_DOMID==='undefined'||exId!==LOS_DOMID)))return false;
+  const l=sessionLog[exId],cm=l.c2Completed?.measurement||l.c2;
+  if(!cm||!tkC2IsLoggableSummary(cm)||raw?.kind!=='pm5_split'||raw.multiplexedId!=='0x37')return false;
+  if(![0,1,3,4,6,7,8,9,255].includes(raw.intervalType)||!Number.isInteger(raw.intervalNumber))return false;
+  if(![raw.splitTimeS,raw.splitDistanceM,raw.elapsedTimeS,raw.distanceM].every(v=>Number.isFinite(v)&&v>0))return false;
+  if(raw.splitTimeS>raw.elapsedTimeS||raw.splitDistanceM>raw.distanceM)return false;
+  if(l.c2Completed&&(raw.elapsedTimeS>cm.elapsedTimeS||raw.distanceM>cm.distanceM))return false;
+  const det=l.intervalsDetail||{version:'pm5_measured_splits.v1'},rows=det.pm5_splits||[];
+  const old=rows.find(r=>r.number===raw.intervalNumber);
+  if(old&&(old.elapsed_s!==raw.elapsedTimeS||old.distance_total_m!==raw.distanceM))return false;
+  if(old)return true;
+  const record={number:raw.intervalNumber,duration_s:raw.splitTimeS,distance_m:raw.splitDistanceM,
+    elapsed_s:raw.elapsedTimeS,distance_total_m:raw.distanceM,interval_type:raw.intervalType,
+    source:'concept2_pm5',packet_id:'0x37',packet_seq:raw.packetSeq,device_id:ctx.deviceId,generation:ctx.generation,received_at:Date.now()};
+  det.pm5_splits=rows.concat([record]).sort((a,b)=>a.number-b.number);l.intervalsDetail=det;
+  delete l._sessionRowPersistedAt;
+  persistTrainingDraft(true);
+  const slot=document.getElementById('pm5splits-'+exId);if(slot)slot.innerHTML=tkPm5MeasuredSplitsHtml(det);
+  return true;
+}
+function tkPm5MeasuredSplitsHtml(det){
+  const rows=(det?.pm5_splits||[]).filter(r=>r.source==='concept2_pm5'&&r.duration_s>0&&r.distance_m>0);if(!rows.length)return '';
+  return '<div style="font-size:12px;padding:8px 0"><b>Gemeten PM5-splits</b>'+rows.map((r,i)=>'<div>'+'PM5 #'+Number(r.number)+': '+Number(r.distance_m)+' m · '+CardioEngine.formatTime(r.duration_s)+'</div>').join('')+'<div>Alleen ontvangen apparaatmetingen; ontbrekende splits worden niet aangevuld.</div></div>';
+}
 // TK582-006: project frozen measured actuals into the existing result form, never a second writer.
 function tkC2ReflectCompletedActual(exId,frozen){
   const cm=frozen?.measurement;
@@ -23281,7 +23311,7 @@ function tkC2SessionRowFromLog(c2s, ctx, convert){
 function logCardio(exId, cardioType){
   const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
   if(!sessionLog[exId]) sessionLog[exId]={};
-  const data={type:cardioType,machine:localStorage.getItem('sel_'+cardioType)||''};
+  const data={...(sessionLog[exId].cardio||{}),type:cardioType,machine:localStorage.getItem('sel_'+cardioType)||''};
   cfg.fields.forEach(f=>{data[f]=getCardioVal(exId,f);});
   // GAP-P2-013: watt-herkomst meenemen (geen zichtbaar veld -- alleen
   // relevant voor apparaten waar watt daadwerkelijk een veld is).
@@ -26147,7 +26177,7 @@ async function loadHistory(append=false){
           const clickAttr=s._pending?`onclick='toast("Wachtend op sync — bewerken kan zodra online")'`:`onclick='openEditSess(${JSON.stringify(s.id)},${JSON.stringify(n)},${JSON.stringify(s)})'`;
           return `<div class="lg-ex" ${clickAttr}>
             <span class="lg-ex-th${poster?' has':''}">${thumb}</span>
-            <div class="lg-ex-b"><div class="lg-ex-nm">${pendingTag}${escHtml(n)}</div><div class="lg-ex-did">${v}</div>${prog}${evBtn}<div id="ergiv-${s.id}"></div></div>
+            <div class="lg-ex-b"><div class="lg-ex-nm">${pendingTag}${escHtml(n)}</div><div class="lg-ex-did">${v}</div>${prog}${evBtn}${tkPm5MeasuredSplitsHtml(s.intervals_detail)}<div id="ergiv-${s.id}"></div></div>
             <div class="lg-ex-a">${s._pending?'':`<span class="lg-ex-i">${LI.edit}</span>`}<button class="del" onclick="event.stopPropagation();deleteSessionDirect(${JSON.stringify(s.id)})" aria-label="Verwijderen">${LI.trash}</button></div>
           </div>`;
         }).join('')}

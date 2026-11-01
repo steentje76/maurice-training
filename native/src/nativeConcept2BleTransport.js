@@ -256,7 +256,7 @@
       }
     }
     function emitMetrics(raw) {
-      lastMetrics = raw;
+      if(raw.kind!=='pm5_split')lastMetrics = raw;
       for (var i = 0; i < metricListeners.length; i++) {
         try { metricListeners[i]({ metrics: raw }); } catch (e) {}
       }
@@ -276,12 +276,13 @@
     //  identifier byte. The total length of the data packet is N+1 bytes."
     // De multiplexed layouts zijn NIET identiek aan de individuele characteristics; daarom
     // eigen decoders en géén slice(1) op een individuele decoder.
-    var MUX_ID = { GENERAL_STATUS: 0x31, ADDITIONAL_STATUS_1: 0x32 };
+    var MUX_ID = { GENERAL_STATUS: 0x31, ADDITIONAL_STATUS_1: 0x32, SPLIT_INTERVAL: 0x37 };
     var MUX_LEN = {};
     MUX_LEN[MUX_ID.GENERAL_STATUS] = 19;
+    MUX_LEN[MUX_ID.SPLIT_INTERVAL] = 18;
     MUX_LEN[MUX_ID.ADDITIONAL_STATUS_1] = 19;
     // Identifiers die de spec kent maar die wij (nog) niet decoderen: wel tellen, nooit raden.
-    var MUX_RECOGNIZED = [0x33, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C];
+    var MUX_RECOGNIZED = [0x33, 0x35, 0x36, 0x38, 0x39, 0x3A, 0x3B, 0x3C];
 
     var muxDiag = { byId: {}, decoded: 0, decodeFailures: 0, unknownIds: 0, lastDecodedId: null,
                     // DIAG: globale multiplexed sequence (elke CE060080-notificatie, ook onbekend/kort)
@@ -333,6 +334,14 @@
         ergMachineType: u8(dv, o + 18)
       };
     }
+    // Official PM CSAFE Definition, March 2026 PDF, p37: multiplexed 0x0037 (18 data bytes).
+    // Separate from live totals: an observed split, never a manufactured 250m estimate.
+    function decodeMux37(dv,o){
+      return {kind:'pm5_split',elapsedTimeS:le24(dv,o)*0.01,distanceM:le24(dv,o+3)*0.1,
+        splitTimeS:le24(dv,o+6)*0.1,splitDistanceM:le24(dv,o+9),
+        restTimeS:le16(dv,o+12),restDistanceM:le16(dv,o+14),
+        intervalType:u8(dv,o+16),intervalNumber:u8(dv,o+17)};
+    }
     // Pure router: identifier -> decoder. Geen fake metric, geen crash bij onbekend/kort pakket.
     function decodeMultiplexed(dv) {
       var total = dataViewLength(dv);
@@ -349,14 +358,14 @@
       e.lastLen = total;
       if (total < need + 1) { e.failed++; muxDiag.decodeFailures++; return null; } // truncated
       var raw = null;
-      try { raw = (id === MUX_ID.GENERAL_STATUS) ? decodeMux31(dv, 1) : decodeMux32(dv, 1); }
+      try { raw = (id === MUX_ID.GENERAL_STATUS) ? decodeMux31(dv, 1) : (id === MUX_ID.SPLIT_INTERVAL ? decodeMux37(dv,1) : decodeMux32(dv, 1)); }
       catch (err) { raw = null; }
       if (!raw) { e.failed++; muxDiag.decodeFailures++; return null; }
       e.decoded++; muxDiag.decoded++; muxDiag.lastDecodedId = '0x' + id.toString(16);
       // DIAG: kopie van de productie-decoderoutput + packet seq/tijd. Fail-open.
       try {
         var snap = { seq: muxDiag.globalSeq, at: now(), fields: JSON.parse(JSON.stringify(raw)) };
-        if (id === MUX_ID.GENERAL_STATUS) muxDiag.last31 = snap; else muxDiag.last32 = snap;
+        if (id === MUX_ID.GENERAL_STATUS) muxDiag.last31 = snap; else if(id === MUX_ID.ADDITIONAL_STATUS_1) muxDiag.last32 = snap;
       } catch (_d) {}
       raw.multiplexedId = '0x' + id.toString(16);
       /* FIX 3 (functioneel): monotone packet-sequence van deze CE060080-notificatie. De
@@ -586,6 +595,7 @@
               var pres = presenceFromServices(services);
               connDiag.discovery = { ok: !!pres, serviceCount: pres ? pres.services.length : 0, at: now() };
               connDiag.discoveredServices = pres ? pres.services : [];
+              var subscriptionGeneration=connectionGeneration;
               var plan = planSubscriptions(pres ? pres.present : null);
               connDiag.strategy = { mode: plan.mode, selected: plan.selected, reason: plan.reason, control: plan.control, data: plan.data,
                                     order: plan.order.map(function (nc) { return nc.key; }) };
@@ -599,7 +609,7 @@
                   var rec = { order: idx + 1, uuid: lc(nc.uuid), key: nc.key, service: lc(nc.service), attempted: true, ok: null, at: null, error: null };
                   connDiag.subscriptions.push(rec);
                   return Promise.resolve(
-                    gateway.startNotifications(id, nc.service, nc.uuid, function (dv) { onNotification(nc.uuid, dv); })
+                    gateway.startNotifications(id, nc.service, nc.uuid, function (dv) { if(deviceId!==id||connectionGeneration!==subscriptionGeneration)return;onNotification(nc.uuid, dv); })
                   ).then(function () { rec.ok = true; rec.at = now(); connDiag.lastSubscriptionBeforeDisconnect = nc.key; })
                    .catch(function (e) { rec.ok = false; rec.at = now(); rec.error = (e && (e.message || e.code)) ? String(e.message || e.code) : 'unknown'; });
                 });

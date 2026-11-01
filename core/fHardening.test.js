@@ -590,7 +590,14 @@ ok(!calcSrcV.includes('openRecoveryDetail') && !calcSrcV.includes('consistentieB
 
 /* ── W. A5 — DEVICE CONNECT HARDENING (v4.66.0) — mid-workout connect, geen state loss ── */
 console.log('\nW. A5: device-connect-hardening -- geen gestapelde subscriptions, geen dubbel-tik-race, geen aanraking van trainingsstaat');
-const connDevSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 6600);
+// Parse the complete function: a fixed character window can omit error exits as wiring grows.
+function hardeningFunctionSource(name){
+  const start=html.indexOf('function '+name+'(');if(start<0)throw Error(name);
+  for(let end=html.indexOf('}',start);end>=0;end=html.indexOf('}',end+1)){
+    const candidate=html.slice(start,end+1);try{new Function('return ('+candidate+')');return candidate;}catch(_){}
+  }throw Error('Incomplete '+name);
+}
+const connDevSrc = hardeningFunctionSource('tkErgConnectDevice');
 ok(/typeof st\._unsubMetrics==='function'/.test(connDevSrc), 'W1 (bewezen bug, gerepareerd): ruimt vóór elke nieuwe subscribeMetrics()-aanroep de eerder VASTGELEGDE, exercise-specifieke unsubscribe-functie op -- voorkomt gestapelde listeners bij dubbel verbinden');
 ok(/typeof st\._unsubConn==='function'/.test(connDevSrc), 'W2: idem voor de connection-listener (subscribeConnection)');
 ok(/st\._unsubConn=t\.subscribeConnection\(/.test(connDevSrc), 'W3: legt de door subscribeConnection() teruggegeven unsubscribe-functie vast -- niet alleen aanroepen en negeren');

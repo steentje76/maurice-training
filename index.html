@@ -18138,7 +18138,7 @@ async function saveLosOefening(btnEl){
     const _losConv=(typeof tkC2Converter==='function')?tkC2Converter():null;
     let cRow;
     if(_losConv&&typeof tkC2IsLoggableSummary==='function'&&tkC2IsLoggableSummary(_losC2)){
-      cRow=tkC2SessionRowFromLog(_losC2,{date:row.date,training_type:null,training_instance_id:null},_losConv);
+      cRow=tkC2SessionRowFromLog(_losC2,{date:row.date,training_type:null,training_instance_id:null,actualRpe:val('rpe')},_losConv);
     } else {
       const d={machine:localStorage.getItem('sel_'+cardioType)||''};
       CARDIO_TYPES[cardioType].fields.forEach(f=>{d[f]=val(f);});
@@ -23302,6 +23302,11 @@ function tkC2SessionRowFromLog(c2s, ctx, convert){
     heart_rate_bpm:(c2s.heart_rate_bpm!=null?c2s.heart_rate_bpm:c2s.heartRateBPM),
     drag_factor:(c2s.drag_factor!=null?c2s.drag_factor:c2s.dragFactor) };
   var row=convert(sum, ctx||{}).row;
+  // PM5 cannot measure perceived effort. Only explicit user-entered actual RPE is merged here.
+  if(ctx?.actualRpe!=null&&String(ctx.actualRpe).trim()!==''){
+    var actualRpe=Number(String(ctx.actualRpe).replace(',','.'));
+    if(Number.isFinite(actualRpe)&&actualRpe>=0&&actualRpe<=10)row.rpe=actualRpe;
+  }
   delete row.date; delete row.exercise_id; delete row.training_type; delete row.training_instance_id;
   row.extraNote=row.note; delete row.note;
   return row;
@@ -24619,7 +24624,7 @@ async function finishSession(){
       try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,_c2ok?'c2_eligible':'c2_not_eligible_manual_path'); }catch(_dfp){} // DIAG, fail-open
       var cRow;
       if(_c2ok){
-        cRow=tkC2SessionRowFromLog(_c2s,{date:today,training_type:t,training_instance_id:activeInstanceId||null},_c2conv); // = Concept2Live.liveWorkoutToActual
+        cRow=tkC2SessionRowFromLog(_c2s,{date:today,training_type:t,training_instance_id:activeInstanceId||null,actualRpe:l.cardio?.rpe},_c2conv); // = Concept2Live.liveWorkoutToActual
         try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'liveWorkoutToActual_reached'); }catch(_dfl){} // DIAG, fail-open
         // date/exercise_id/training_type/instance levert de omliggende write; note -> extraNote (zie tkC2SessionRowFromLog).
       } else {

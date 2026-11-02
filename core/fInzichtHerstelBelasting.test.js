@@ -183,7 +183,7 @@ const FIXTURE = function () {
       eq(bel.verwacht.slice(0, 2), [['Billen', '11 sets', 'Gemiddeld', 'var(--load-2)'], ['Core', '11 sets', 'Gemiddeld', 'var(--load-2)']], w + 'px G2 de vaste invoer telt op zoals verwacht (5 + 6 sets squat)');
       ok(bel.front && bel.back, w + 'px G3 beide figuren zijn identiek aan de bestaande renderer met load.setsBySvgId');
       eq([bel.legenda, bel.tabs], [['Hoog', 'Gemiddeld', 'Laag', 'Rustdag'], ['false', 'true']], w + 'px G4 legenda en schakelaar volgen de modus');
-      ok(bel.nieuw.length === 1 && /^sessions&date=gte\.[0-9-]+&weight=not\.is\.null&sets=not\.is\.null&reps=not\.is\.null$/.test(bel.nieuw[0]), w + 'px G5 omschakelen doet precies één bestaand verzoek (muscleLoadBySvgId), geen tweede dataketen: ' + JSON.stringify(bel.nieuw));
+      ok(bel.nieuw.length === 1 && /^sessions&date=gte\.[0-9-]+&sets=not\.is\.null&reps=not\.is\.null$/.test(bel.nieuw[0]), w + 'px G5 omschakelen doet precies één bestaand verzoek (muscleLoadBySvgId), geen tweede dataketen: ' + JSON.stringify(bel.nieuw));
       await page.evaluate(function () { lichSetMode('rec'); });
       await page.waitForFunction(function () { const p = document.querySelector('#lich-muslist .pc'); return p && /%$/.test(p.textContent); }, null, { timeout: 10000 });
       eq(await lijst(page), her.verwacht, w + 'px G6 terugschakelen toont weer exact dezelfde herstelrijen');

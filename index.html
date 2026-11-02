@@ -7353,7 +7353,7 @@ function tkErgConnectDevice(exId, idx){
             var _rawPm5=tkC2ReadbackFromPacket(evt,_vctx); // actual packet, never merged state
             // #579: recently received idle readback is the preflight for the explicit PM5 test.
             if(_vctx.packetId==='0x31'){
-              _rt.finitePreflight=(Number(_rawPm5.workoutState)===0)?{
+              _rt.finitePreflight=(_rawPm5.workoutState!=null&&Number(_rawPm5.workoutState)===0)?{
                 source:'pm5_0x31',workoutState:0,deviceId:_vctx.deviceId,
                 generation:_vctx.generation,observedAt:Date.now()}:null;
               if(_rawPm5.workoutState!=null&&Number(_rawPm5.workoutState)!==0&&

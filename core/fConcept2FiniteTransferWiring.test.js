@@ -35,6 +35,7 @@ const make=extra=>{
  assert(html.includes('r.finiteTx.cancel(reason||\'teardown\')'),'disconnect cancels transfer');
  assert(html.includes("_vctx.packetId==='0x31'"),'only raw 0x31 allows idle preflight');
  assert(html.includes("source:'pm5_0x31'"),'hardware status tagged');
+ assert(html.includes('_rawPm5.workoutState!=null&&Number(_rawPm5.workoutState)===0'),'missing PM5 state cannot be mistaken for WAITTOBEGIN');
  assert(html.includes("tkErgSendFiniteTest('${exId}','${cardioType}')"),'button wires explicit click');
  assert(!/tkErgSendFiniteTest\(/.test(takeFunction('startIntervalExecution')),'normal start remains app-only');
  const okay=make();await okay.exec('EX','rowing');

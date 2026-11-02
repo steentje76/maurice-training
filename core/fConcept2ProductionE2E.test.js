@@ -201,7 +201,7 @@ async function run() {
     h.fireTimeout(); await started;
     eq(h.exec.starts, 0, 'L6: 0 Execution na generatie-mismatch'); }
   // ══ STATISCHE INVARIANT: productie bedraadt identiek ══
-  ok(/_rt\.prog\.verifyFromTelemetry\(tkC2ReadbackFromPacket\(evt,_vctx\), _vctx\)/.test(html), 'W1: productie voedt de read-back van het packet zelf aan de verificatie');
+  ok(/var _rawPm5=tkC2ReadbackFromPacket\(evt,_vctx\)/.test(html) && /_rt\.prog\.verifyFromTelemetry\(_rawPm5, _vctx\)/.test(html), 'W1: productie voedt de read-back van het packet zelf aan de verificatie');
   ok(!/verifyFromTelemetry\(_rt\.agg\.getMergedRaw\(\)/.test(html), 'W1b: geen merged-state read-back meer (stale 0x31 via verse 0x32)');
   ok(/vctx\.packetId=/.test(html) && /vctx\.packetSeq=/.test(html) && /function tkC2ReadbackFromPacket\(evt, vctx\)/.test(html), 'W1c: packet-identiteit gaat mee naar de verificatie (via tkC2ReadbackFromPacket)');
   ok(/const rt=\(typeof _c2rtGet==='function'\)\?_c2rtGet\(/.test(html), 'W2: start-handler leest de runtime uit _c2rt');

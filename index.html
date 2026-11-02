@@ -32600,10 +32600,14 @@ function tkMuscleInputEvidence(calculationId){
   return item&&typeof tkEigenaarUid==='function'&&item.owner===tkEigenaarUid()?item.evidence:null;
 }
 async function muscleLoadBySvgId(){
+  const readOwner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate()-7);
   const dateStr = weekAgo.toISOString().split('T')[0];
   const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
+  // Never interpret A's completed request after switching to B's account.
+  if(typeof tkEigenaarUid==='function'&&tkEigenaarUid()!==readOwner)
+    return {setsBySvgId:{},setsByMuscle:{},provenance:null};
   const setsBySvgId = {}, setsByMuscle = {};
   (ss||[]).forEach(s=>{
     const names = getExerciseMuscles(s.exercise_id);
@@ -32647,9 +32651,11 @@ function computeMuscleRecoveryPct(hoursSince, baseHours, rpe){ return CalcCore.c
 // spieren die vandaag's programmatraining raakt — voor de coach-check-in (v311).
 async function getRelevantMuscleRecovery(muscleNames){
   if(!muscleNames||!muscleNames.length)return [];
+  const readOwner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
   const twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr=twoWeeksAgo.toISOString().split('T')[0];
   const ss=await sbGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  if(typeof tkEigenaarUid==='function'&&tkEigenaarUid()!==readOwner)return [];
   tkRememberMuscleInputs('program_recovery',ss,14);
   const lastHit={};
   ss.forEach(s=>{
@@ -32668,6 +32674,7 @@ async function getRelevantMuscleRecovery(muscleNames){
 function computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle){ return DecisionCore.computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle); } /* F1.7: canonical Decision Core (progression_adjust.v1) */
 
 async function refreshMuscleRecovery(){
+  const readOwner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
   const el = document.getElementById('stats-recovery-content');
   if(!el) return;
   const twoWeeksAgo = new Date();
@@ -32677,6 +32684,7 @@ async function refreshMuscleRecovery(){
   // structureel uit van spierherstel, ook als ze getagd zijn. Herstel kijkt naar tijd
   // sinds laatste sessie + RPE, niet naar setvolume — dus alle sessietypen tellen mee.
   const ss = await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  if(typeof tkEigenaarUid==='function'&&tkEigenaarUid()!==readOwner)return;
   tkRememberMuscleInputs('recovery_list',ss,14);
   const lastHit = {};
   ss.forEach(s=>{
@@ -32857,9 +32865,12 @@ function v43SafeGet(table,q,ms){
   ]).catch(()=>[]);
 }
 async function v43OverallRecovery(){
+  const readOwner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
   const twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr=twoWeeksAgo.toISOString().split('T')[0];
   let ss=await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  if(typeof tkEigenaarUid==='function'&&tkEigenaarUid()!==readOwner)
+    return {overall:null,rows:[],pctBySvgId:{},hasData:false};
   if(!Array.isArray(ss))ss=[];
   const lastHit={},lastHitSvg={};
   ss.forEach(s=>{

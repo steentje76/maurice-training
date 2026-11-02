@@ -6581,6 +6581,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/concept2Live.js"></script>
 <script src="core/concept2Csafe.js"></script>
 <script src="core/concept2Programming.js"></script>
+<script src="core/concept2FiniteTransfer.js"></script>
 <script src="core/weather.js"></script>
 <script src="core/cycle.js"></script>
 <script src="core/cycleTraining.js"></script>
@@ -7094,6 +7095,7 @@ function _c2rtGet(exId, generation, deviceId){
 function _c2rtTeardown(exId, reason){
   var r=_c2rt[exId]; if(!r) return;
   try{ if(r.prog) r.prog.cancel(reason||'teardown'); }catch(_e){}
+  try{ if(r.finiteTx) r.finiteTx.cancel(reason||'teardown'); }catch(_e){}
   try{ if(r.agg) r.agg.reset(); }catch(_e){}
   delete _c2rt[exId];
 }
@@ -7295,12 +7297,33 @@ function tkErgConnectDevice(exId, idx){
       try{
         if(typeof Concept2Programming!=='undefined'&&Concept2Programming.createProgrammingController&&typeof t.writeControlFrame==='function'){
           st._prog=Concept2Programming.createProgrammingController({ write:function(b){ return t.writeControlFrame(b); } });
-          if(typeof t.setControlResponseHandler==='function') t.setControlResponseHandler(function(bytes,ctx){ if(st._prog) st._prog.handleControlResponse(bytes,ctx); });
+          if(typeof t.setControlResponseHandler==='function') t.setControlResponseHandler(function(bytes,ctx){
+            if(st._prog) st._prog.handleControlResponse(bytes,ctx);
+            var runtime=_c2rtGet(exId,_ctx0.generation,d.id);
+            if(runtime&&runtime.finiteTx){
+              if(runtime.ownerUid!==(typeof tkEigenaarUid==='function'?tkEigenaarUid():null))runtime.finiteTx.cancel('owner_changed');
+              else runtime.finiteTx.handleControlResponse(bytes,ctx);
+            }
+          });
         }
           // Developer Mode leest de diagnostiek uit DEZE controller (geen statisch object).
           try{ if(window.TKDeveloperMode&&window.TKDeveloperMode.setProgrammingSource) window.TKDeveloperMode.setProgrammingSource(function(){ return st._prog; }); }catch(_e2){}
       }catch(_e){ st._prog=null; }
       if(typeof _c2rtSet==='function') _c2rtSet(exId, _ctx0.generation, d.id, st._prog, st._agg);
+      // #579: a single finite-interval transfer on the SAME device/session owner.
+      // No workout-success claim: structure readback is not yet supported.
+      try{
+        if(typeof Concept2FiniteTransfer!=='undefined'&&typeof t.writeControlFrame==='function'){
+          var _finiteRt=_c2rtGet(exId,_ctx0.generation,d.id);
+          if(_finiteRt)_finiteRt.finiteTx=Concept2FiniteTransfer.createFiniteIntervalTransfer({write:function(b){
+            var live=(typeof t.getControlContext==='function')?t.getControlContext():null;
+            if(!live||!live.connected||live.deviceId!==d.id||live.generation!==_ctx0.generation||
+                _finiteRt.ownerUid!==(typeof tkEigenaarUid==='function'?tkEigenaarUid():null))
+              return Promise.reject(new Error('stale_device_lease'));
+            return t.writeControlFrame(b);
+          }});
+        }
+      }catch(_finiteErr){}
       _c2repaint(exId, _c2connectedInner(exId, null));
       // connectie-events uit het transport (geen fake). Fase B: het transport emit bij een echte
       // plugin-disconnect 'disconnected' (nooit meer 'reconnecting' zonder reconnect-mechanisme);
@@ -7327,7 +7350,16 @@ function tkErgConnectDevice(exId, idx){
           var _rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,null,null):null;
           if(_rt&&_rt.prog&&_rt.agg&&typeof _rt.prog.verifyFromTelemetry==='function'){
             var _vctx=(typeof t.getControlContext==='function')?t.getControlContext():{};
-            var _vres=_rt.prog.verifyFromTelemetry(tkC2ReadbackFromPacket(evt,_vctx), _vctx); // FIX 3: alleen DIT packet
+            var _rawPm5=tkC2ReadbackFromPacket(evt,_vctx); // actual packet, never merged state
+            // #579: recently received idle readback is the preflight for the explicit PM5 test.
+            if(_vctx.packetId==='0x31'){
+              _rt.finitePreflight=(_rawPm5.workoutState!=null&&Number(_rawPm5.workoutState)===0)?{
+                source:'pm5_0x31',workoutState:0,deviceId:_vctx.deviceId,
+                generation:_vctx.generation,observedAt:Date.now()}:null;
+              if(_rawPm5.workoutState!=null&&Number(_rawPm5.workoutState)!==0&&
+                  _rt.finiteTx&&_rt.finiteTx.isPending())_rt.finiteTx.cancel('pm5_no_longer_idle');
+            }
+            var _vres=_rt.prog.verifyFromTelemetry(_rawPm5, _vctx); // FIX 3: alleen DIT packet
             try{ if(typeof tkC2DiagVerifyCall==='function') tkC2DiagVerifyCall(exId,_vres,t); }catch(_dv){} // DIAG, fail-open
           }
         }catch(_ev){}
@@ -22520,6 +22552,7 @@ async function tkErgProgramPm5IfNeeded(exId,protocolType,meters){
   const rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,ctx0.generation,st.deviceId||ctx0.deviceId):null;
   // FAIL CLOSED: PM5 verbonden en een afstandsdoel gevraagd, maar geen programmeerruntime.
   // Nooit stilzwijgend doorvallen alsof de PM5 is ingesteld.
+  if(rt&&rt.finiteTx&&rt.finiteTx.isPending())return {attempted:true,confirmed:false,state:'UNAVAILABLE',message:'Een PM5-intervaltest is nog bezig.'};
   if(!rt||!rt.prog) return {attempted:true,unavailable:true,confirmed:false,state:'UNAVAILABLE',
                             message:'Training kon niet op de PM5 worden ingesteld (programmering niet beschikbaar).'};
   const t=(typeof tkDeviceTransport==='function')?tkDeviceTransport():null;
@@ -22598,7 +22631,8 @@ function buildIntervalSection(exId,cardioType){
         <div class="row-item"><input class="row-inp" type="number" min="0" max="1800" id="iv-cooldown-${exId}" value="${p.cooldown}"><div class="row-inp-lbl">Cooldown (sec)</div></div>
       </div>
       <button class="btn btn-r" style="width:100%;margin-top:10px" onclick="startIntervalExecution('${exId}','${cardioType}')">▶ Start intervaltraining</button>
-      <div style="font-size:11px;color:var(--g4);margin-top:6px">Intervallen worden alleen in de app afgeteld, niet naar de PM5 gestuurd. Stel dezelfde intervallen zelf op de PM5 in. Een Bluetooth-verbinding leest metingen en programmeert deze intervallen niet.</div>
+      <button class="btn btn-o" style="width:100%;margin-top:8px" onclick="tkErgSendFiniteTest('${exId}','${cardioType}')">PM5-intervalprogrammering testen (experimenteel)</button>
+      <div style="font-size:11px;color:var(--g4);margin-top:6px">Normale start telt intervallen alleen in de app af. De aparte PM5-test verstuurt na jouw bevestiging commando's naar een verbonden PM5 die nog niet aan een training is begonnen. Verzending is geen bewijs dat alle intervallen op de monitor juist zijn ingesteld: controleer ze daar zelf. De PM5-test start geen training of logboekregistratie.</div>
     </div>
   </div>`;
 }
@@ -22624,6 +22658,40 @@ function buildIntervalPrescriptionFromForm(exId,cardioType){
   ]});
   if(cooldown>0)blocks.push({type:'cooldown',termination:{type:'time',seconds:cooldown}});
   return IntervalEngineCore.normalizePrescription({sport:cardioType,blocks});
+}
+// #579 physical-test entry point. Never called by ordinary app-side interval start.
+// Requires real 0x31 wait-to-begin telemetry, the current BLE lease, and a user
+// confirmation before ANY write. Transfer completion is not PM5 readback.
+async function tkErgSendFiniteTest(exId,cardioType){
+  const st=_c2pair[exId],t=tkDeviceTransport();
+  if(!st||!st.connected||!t||typeof t.getControlContext!=='function'){
+    toast('Verbind eerst met je PM5.');return;
+  }
+  const ctx=t.getControlContext(),rt=_c2rtGet(exId,ctx.generation,ctx.deviceId);
+  if(!rt||!rt.finiteTx||rt.ownerUid!==(typeof tkEigenaarUid==='function'?tkEigenaarUid():null)){
+    toast('Geen geldige PM5-programmeerverbinding.');return;
+  }
+  if(rt.finiteTx.isPending()||(rt.prog&&rt.prog.isPending())){
+    toast('Er loopt al een PM5-programmeeractie.');return;
+  }
+  if(!rt.finitePreflight||rt.finitePreflight.source!=='pm5_0x31'||
+      Date.now()-rt.finitePreflight.observedAt>15000){
+    toast('Wacht op een recente PM5-status in rust; er is niets verstuurd.');return;
+  }
+  const normalized=buildIntervalPrescriptionFromForm(exId,cardioType);
+  if(!normalized.geldig){toast('Ongeldige intervaltraining; niets verstuurd.');return;}
+  if(typeof window.confirm!=='function'||!window.confirm(
+    'EXPERIMENTELE PM5-TEST. Dit kan een bestaande ingestelde training op de PM5 vervangen. '+
+    'Controleer dat je niet traint. Er is nog geen volledige readback van de intervalstructuur. '+
+    'Wil je de geselecteerde intervallen naar deze PM5 versturen?'))return;
+  let r;
+  try{r=await rt.finiteTx.start(normalized,{...ctx,now:Date.now(),userConfirmed:true,preflight:rt.finitePreflight});}
+  catch(_){r={transferred:false,reason:'unexpected_transfer_error'};}
+  if(r&&r.transferred){
+    toast('Testcommando\'s verzonden. Controleer ALLE werk-, rust- en herhalingswaarden op de PM5; nog niet bevestigd.');
+  }else{
+    toast('PM5-test niet bevestigd ('+String(r&&r.reason||'onbekend')+'). Controleer je PM5, ook na een gedeeltelijke verzending.');
+  }
 }
 function startIntervalExecution(exId,cardioType){
   // B3: canonieke structured Erg-start leest de prescriptie UITSLUITEND uit het gepersisteerde

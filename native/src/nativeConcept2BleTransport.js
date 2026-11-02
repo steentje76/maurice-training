@@ -397,6 +397,7 @@
     var CTRL_SERVICE_UUID = 'ce060020-43e5-11e4-916c-0800200c9a66';
     var connectionGeneration = 0;
     var controlResponseHandler = null;
+    var controlResponseSeq = 0; // monotone CE060022 notification sequence (per adapter)
     var controlWrites = 0;
     // Concept2 PM BTS Interface rev. 1.30: CE060021 value is up to 20 bytes.
     // An ATT MTU negotiation is NOT evidence that this specific value can accept
@@ -423,7 +424,7 @@
     function getControlContext() {
       /* muxSeq: laatst ontvangen CE060080-sequence (FIX 3). Notificaties worden serieel
          verwerkt, dus elke 0x31 met een hogere sequence kwam ná dit moment binnen. */
-      return { connected: !!deviceId, deviceId: deviceId, generation: connectionGeneration, muxSeq: muxDiag.globalSeq };
+      return { connected: !!deviceId, deviceId: deviceId, generation: connectionGeneration, muxSeq: muxDiag.globalSeq, controlResponseSeq: controlResponseSeq };
     }
 
     function onNotification(uuid, dv) {
@@ -437,6 +438,7 @@
       // 1b) CE060022 is de CSAFE-responskant: doorgeven aan de programming controller.
       //     CE060080 blijft uitsluitend live telemetry; geen cross-routing.
       if (nk === CTRL_TRANSMIT_UUID && controlResponseHandler) {
+        controlResponseSeq++;
         try { controlResponseHandler(dataViewToArray(dv), getControlContext()); } catch (e) {}
       }
       // 2) decode ALLEEN als er een BEVESTIGDE decoder is (anders UNKNOWN → niets emitten)

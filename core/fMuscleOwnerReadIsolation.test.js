@@ -22,8 +22,8 @@ const ctx=vm.createContext({
  computeMuscleRecoveryPct:()=>55
 });
 for(const f of ['muscleLoadBySvgId','getRelevantMuscleRecovery','v43OverallRecovery','refreshMuscleRecovery'])vm.runInContext(extract(f),ctx);
-async function test(name,check){
- owner='A';pending=null;remember=0;
+async function test(name,check,startOwner='A'){
+ owner=startOwner;pending=null;remember=0;
  const result=ctx[name]===ctx.getRelevantMuscleRecovery?ctx[name](['Quadriceps']):ctx[name]();
  assert.equal(typeof pending,'function','fetch should have started');
  owner='B';pending([row]);const data=await result;check(data);
@@ -35,6 +35,9 @@ async function test(name,check){
  await test('v43OverallRecovery',r=>{assert.equal(r.hasData,false);assert.equal(r.rows.length,0);});
  recoveryElement.innerHTML='B-OWNED-CONTENT';
  await test('refreshMuscleRecovery',()=>{assert.equal(recoveryElement.innerHTML,'B-OWNED-CONTENT');});
+ // An anonymous/expired owner must also never hand its response to a new login.
+ await test('muscleLoadBySvgId',r=>{assert.deepEqual(Object.keys(r.setsByMuscle),[]);},null);
+ await test('v43OverallRecovery',r=>{assert.equal(r.hasData,false);},null);
  // Same-owner positive check must still use the real deterministic muscle calculation.
  owner='A';remember=0;pending=null;
  const p=ctx.muscleLoadBySvgId();pending([row]);const normal=await p;

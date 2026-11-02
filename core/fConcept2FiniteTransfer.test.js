@@ -25,7 +25,7 @@ const next=()=>new Promise(r=>setImmediate(r));
  const frameCount=tx.getDiagnostics().frameCount;
  assert(frameCount>6,'finite workout needs multiple BLE frames');
  let seq=0;
- for(let i=0;i<frameCount;i++){ 
+ for(let i=0;i<frameCount;i++){
    assert.equal(tx.getDiagnostics().state,'WAIT_DIRECT');
    assert.equal(writes[i*2].length<=20,true);
    assert.equal(tx.handleControlResponse(reply,{...ctx,generation:6}).handled,false,'ignore stale connection');

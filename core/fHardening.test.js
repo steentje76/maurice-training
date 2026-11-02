@@ -612,7 +612,7 @@ const pairSrc = html.slice(html.indexOf('function tkErgPair('), html.indexOf('fu
 ok(/if\(st\._scanning\)return/.test(pairSrc.replace(/\s/g,'')), 'W10 (Sectie 9): dubbel tikken op "apparaat koppelen" tijdens het scannen wordt genegeerd -- geen twee overlappende discover()-aanroepen');
 ok((pairSrc.match(/_scanning=false/g)||[]).length>=3, 'W11: de scan-busy-guard wordt in alle uitgangen correct teruggezet');
 
-const normalizeSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 5600);
+const normalizeSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgDisconnectAll(')); // omvat volledige connect-handler, ook na uitbreiding met #579 BLE-routing
 ok(/Concept2Live\.createPm5LiveAggregator/.test(normalizeSrc) && /st\._agg\.push\(/.test(normalizeSrc), 'W12 (Sectie 18, live metric ownership): ruwe device-events gaan UITSLUITEND via de Concept2Live PM5-aggregator (die intern normalizeLiveMetric aanroept) naar een canoniek object -- nooit ongefilterd RAW naar de UI/sessionLog');
 
 /* ── X. A5-VERVOLG (v4.67.0) — device-cleanup bij discard/finish (Prioriteiten 9/10) ── */

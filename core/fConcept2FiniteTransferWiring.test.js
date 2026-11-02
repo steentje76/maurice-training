@@ -31,6 +31,7 @@ const make=extra=>{
 (async()=>{
  assert(html.includes('core/concept2FiniteTransfer.js'),'browser loads core');
  assert(html.includes('runtime.finiteTx.handleControlResponse(bytes,ctx)'),'BLE CE060022 routes to transfer');
+ assert(html.includes("new Error('stale_device_lease')"),'every frame write checks current device, generation and account');
  assert(html.includes('r.finiteTx.cancel(reason||\'teardown\')'),'disconnect cancels transfer');
  assert(html.includes("_vctx.packetId==='0x31'"),'only raw 0x31 allows idle preflight');
  assert(html.includes("source:'pm5_0x31'"),'hardware status tagged');

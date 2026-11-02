@@ -7315,7 +7315,13 @@ function tkErgConnectDevice(exId, idx){
       try{
         if(typeof Concept2FiniteTransfer!=='undefined'&&typeof t.writeControlFrame==='function'){
           var _finiteRt=_c2rtGet(exId,_ctx0.generation,d.id);
-          if(_finiteRt)_finiteRt.finiteTx=Concept2FiniteTransfer.createFiniteIntervalTransfer({write:function(b){return t.writeControlFrame(b);}});
+          if(_finiteRt)_finiteRt.finiteTx=Concept2FiniteTransfer.createFiniteIntervalTransfer({write:function(b){
+            var live=(typeof t.getControlContext==='function')?t.getControlContext():null;
+            if(!live||!live.connected||live.deviceId!==d.id||live.generation!==_ctx0.generation||
+                _finiteRt.ownerUid!==(typeof tkEigenaarUid==='function'?tkEigenaarUid():null))
+              return Promise.reject(new Error('stale_device_lease'));
+            return t.writeControlFrame(b);
+          }});
         }
       }catch(_finiteErr){}
       _c2repaint(exId, _c2connectedInner(exId, null));

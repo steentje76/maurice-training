@@ -49,8 +49,11 @@ function createFiniteIntervalTransfer(deps){
     var n=op.index;
     if(n>=op.frames.length){finish(STATE.TRANSFERRED_UNVERIFIED,'complete_structure_readback_required');return;}
     op.attempted++;
-    Promise.resolve().then(function(){return write(op.frames[n]);}).then(function(){
+    Promise.resolve().then(function(){return write(op.frames[n]);}).then(function(writeResult){
       if(active!==op||op.index!==n)return;
+      if(writeResult===false||(writeResult&&writeResult.ok===false)){
+        finish(STATE.FAILED,'frame_write_rejected');return;
+      }
       if(state===STATE.WRITING){state=STATE.WAIT_DIRECT;timer(op);}
     }).catch(function(e){if(active===op)finish(STATE.FAILED,'frame_write_failed');});
   }
@@ -59,8 +62,11 @@ function createFiniteIntervalTransfer(deps){
     state=STATE.WRITING_ACK;
     timer(op);
     var f=csafe.buildGetStatusFrame();
-    Promise.resolve().then(function(){return write(f.frame);}).then(function(){
+    Promise.resolve().then(function(){return write(f.frame);}).then(function(writeResult){
       if(active!==op)return;
+      if(writeResult===false||(writeResult&&writeResult.ok===false)){
+        finish(STATE.FAILED,'ack_probe_write_rejected');return;
+      }
       state=STATE.WAIT_ACK;timer(op);
     }).catch(function(){
       if(active===op)finish(STATE.FAILED,'ack_probe_write_failed');

@@ -1,0 +1,83 @@
+{
+  "schema": "tk504-movekit-v2-terminology/1.0",
+  "status": "PROPOSED_NOT_APPROVED",
+  "note": "Keep MoveKit source terms immutable. These codes are namespaced and are not approved replacements for Trainingskompas app taxonomy.",
+  "muscles": {
+    "Forearms": {
+      "code": "movekit:muscle:forearms",
+      "label_nl": "Onderarmen"
+    },
+    "Lower Back": {
+      "code": "movekit:muscle:lower_back",
+      "label_nl": "Onderrug"
+    },
+    "Neck": {
+      "code": "movekit:muscle:neck",
+      "label_nl": "Nekspieren"
+    },
+    "Tibialis": {
+      "code": "movekit:muscle:tibialis",
+      "label_nl": "Tibialis"
+    },
+    "Adductors": {
+      "code": "movekit:muscle:adductors",
+      "label_nl": "Adductoren"
+    }
+  },
+  "equipment": {
+    "Backpack": {
+      "code": "movekit:equipment:backpack",
+      "label_nl": "Rugzak"
+    },
+    "Battle Ropes": {
+      "code": "movekit:equipment:battle_ropes",
+      "label_nl": "Battle ropes"
+    },
+    "Bench": {
+      "code": "movekit:equipment:bench",
+      "label_nl": "Trainingsbank"
+    },
+    "Dowel": {
+      "code": "movekit:equipment:dowel",
+      "label_nl": "Stok"
+    },
+    "Foam Roller": {
+      "code": "movekit:equipment:foam_roller",
+      "label_nl": "Foamroller"
+    },
+    "Medicine Ball": {
+      "code": "movekit:equipment:medicine_ball",
+      "label_nl": "Medicijnbal"
+    },
+    "Sled": {
+      "code": "movekit:equipment:sled",
+      "label_nl": "Slede"
+    },
+    "Slider": {
+      "code": "movekit:equipment:slider",
+      "label_nl": "Slider"
+    },
+    "Stability Ball": {
+      "code": "movekit:equipment:stability_ball",
+      "label_nl": "Stability ball"
+    },
+    "TRX": {
+      "code": "movekit:equipment:trx",
+      "label_nl": "TRX"
+    },
+    "Towel": {
+      "code": "movekit:equipment:towel",
+      "label_nl": "Handdoek"
+    },
+    "Weight Plate": {
+      "code": "movekit:equipment:weight_plate",
+      "label_nl": "Gewichtsschijf"
+    },
+    "Wrist Roller": {
+      "code": "movekit:equipment:wrist_roller",
+      "label_nl": "Wrist roller"
+    }
+  },
+  "review_required": true,
+  "runtime_activation": false
+}

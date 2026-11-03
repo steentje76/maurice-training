@@ -1,0 +1,26 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const start=html.indexOf('async function refreshTrainContext(){');
+const end=html.indexOf('async function refreshHome(){',start);
+assert(start>=0&&end>start,'canonical training context refresh found');
+assert(/function renderV43Train\(\)\s*\{\s*refreshTrainContext\(\)/.test(html),'Trainen must refresh its own rhythm');
+const source=html.slice(start,end);
+const deferred=()=>{let resolve,reject;const promise=new Promise((res,rej)=>{resolve=res;reject=rej;});return {promise,resolve,reject};};
+(async()=>{
+ const calls=[],pending=[];
+ const c={authSession:{user:{id:'account-A'}},renderHomeContextCard:(value)=>calls.push(value),v43SafeGet:(table)=>{assert.equal(table,'training_context');const p=deferred();pending.push(p);return p.promise;}};
+ vm.createContext(c);vm.runInContext(source,c);
+ const old=c.refreshTrainContext();
+ c.authSession={user:{id:'account-B'}};
+ pending.shift().resolve([{frequency:3}]);await old;
+ assert.equal(calls.length,0,'stale A response not rendered for B');
+ const current=c.refreshTrainContext();
+ pending.shift().resolve([{frequency:4}]);await current;
+ assert.equal(calls.length,1);assert.equal(calls[0].frequency,4,'current account context rendered');
+ const unauth=c.refreshTrainContext();
+ c.authSession={user:{id:'account-C'}};
+ pending.shift().resolve([{frequency:5}]);await unauth;
+ assert.equal(calls.length,1,'B response not leaked to C');
+ console.log('Trainingsritme: fresh Trainen load + cross-account response isolation PASS');
+})().catch(e=>{console.error(e);process.exitCode=1;});

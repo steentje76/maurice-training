@@ -24995,14 +24995,22 @@ function renderHomeContextCard(tc){
   h+='</div></div>';
   el.innerHTML=h; el.style.display='block';
 }
+async function refreshTrainContext(){
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const stillCurrent=()=>ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
+  try{
+    const rows=await v43SafeGet('training_context','&limit=1');
+    if(stillCurrent())renderHomeContextCard(rows&&rows[0]);
+  }catch(_){if(stillCurrent())renderHomeContextCard(null);}
+}
 async function refreshHome(){
   const hq=tkHealthQualified(await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));
   const hd=hq.rows;
   const lh=hd[0];
   // Sprint 2 — Home-personalisatie: 'Jouw ritme' uit training_context (onboarding).
   // Alleen tonen wanneer de data echt bestaat; geen fake planning.
-  try{ const tcRows=await v43SafeGet('training_context','&limit=1'); renderHomeContextCard(tcRows&&tcRows[0]); }
-  catch(e){ renderHomeContextCard(null); }
+  // Trainingsritme wordt nu op Trainen getoond; cache wordt bij openen opnieuw geladen
+  // en tegen accountwissel beschermd door refreshTrainContext().
   let dfInfo=null,nextT=null;
   if(lh){
     const hrvComponent=hrvDagFactorPersonal(hd);
@@ -33314,6 +33322,7 @@ function v43RenderPlan(elId,nextT,opts){
   </div>`;
 }
 function renderV43Train(){
+  refreshTrainContext();
   v43RenderPlan('v43-train-plan',window.homeNextT,{detailsButton:true,compact:true});
   // Trainen-specifieke empty state (additief, Trainen v0.2 runtime-fix). De
   // gedeelde v43RenderPlan()-functie zelf blijft ongewijzigd (ook door Home

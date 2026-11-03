@@ -3061,6 +3061,14 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #s-inzicht .inzicht-context-list .lich-goto:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
 #s-inzicht .inzicht-context-list .lich-goto .ic{background:var(--color-primary-soft);color:var(--color-primary)}
 #s-inzicht .inzicht-context-list .lich-goto .ic svg{width:20px;height:20px;stroke:currentColor}
+/* Inzicht V2 — Verbanden: afzonderlijke kaarten met vaste ruimte en de primaire mintkleur.
+   Alleen presentatie: geen aanpassing aan evidence/selectie of berekening. */
+#s-inzicht #lich-relations{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+#s-inzicht #lich-relations>.lich-vrow{margin-bottom:0}
+#s-inzicht #lich-relations .lich-vrow .cls.s3,
+#s-inzicht #lich-relations .lich-vrow .cls.s2{background:var(--color-primary-soft);color:var(--color-primary)}
+#s-inzicht #lich-relations+.lich-goto .ic{background:var(--color-primary-soft);color:var(--color-primary)}
+#s-inzicht #lich-relations+.lich-goto .ic svg{width:20px;height:20px;stroke:currentColor}
 /* Anatomiekaart op het overzicht — beide zijden tegelijk, direct zichtbaar. */
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anatcard{padding:12px 12px 10px}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-seg{display:flex;background:var(--g1);border-radius:999px;padding:3px;gap:2px;margin-bottom:10px}
@@ -4560,8 +4568,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="inzicht-context-list" role="group" aria-label="Gegevens en context">
     <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="3"/><path d="M8 21l1-8-3-3 2-2m8 13-1-8 3-3-2-2M9 12h6"/></svg></span><span class="b"><b>Lichaamssamenstelling</b><s>Metingen, samenstelling, historie</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="go('s-lich-gegevens')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="6" height="10" rx="1"/><rect x="14" y="5" width="6" height="13" rx="1"/><path d="M7 18v2M17 18v2"/></svg></span><span class="b"><b>Gezondheidsgegevens &amp; koppelingen</b><s>Waar je gegevens vandaan komen en wat er gekoppeld is</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="go('s-lich-cyclus')"><span class="ic">🌙</span><span class="b"><b>Cyclus</b><s>Optioneel: menstruatie registreren als trainingscontext</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="go('s-nutrition')"><span class="ic">🍽️</span><span class="b"><b>Voeding rond je training</b><s>Vrije invoer van kcal en macro's, zonder product</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-cyclus')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5 8.5 8.5 0 1 0 20.5 14.6Z"/></svg></span><span class="b"><b>Cyclus</b><s>Optioneel: menstruatie registreren als trainingscontext</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-nutrition')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M16 3c3 2 4 5 4 8v2h-5V8c0-2 .4-4 1-5ZM20 13v8"/></svg></span><span class="b"><b>Voeding rond je training</b><s>Vrije invoer van kcal en macro's, zonder product</s></span><span class="chev">›</span></button>
 
     </div>
     <div class="v43-lbl" style="margin:18px 0 10px">Recente inzichten</div>

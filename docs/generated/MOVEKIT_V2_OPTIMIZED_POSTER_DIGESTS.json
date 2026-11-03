@@ -1,0 +1,4665 @@
+{
+  "schema": "trainingskompas-movekit-v2-optimized-poster-digests/1.0",
+  "status": "STAGING_INDEX_NOT_RELEASE_APPROVAL",
+  "golden_inventory_sha256": "ca02f2cf71f4764a1b7fad97e34992ed5590a0c78e5cd93cbcf1601737bac6d1",
+  "count": 582,
+  "total_bytes": 9634714,
+  "items": [
+    {
+      "catalog_id": "TK-000001",
+      "provider_id": "abdominals-stretch-variation-four",
+      "path": "movekit/v2/poster-optimized/abdominals-stretch-variation-four.webp",
+      "sha256": "19aae204a1f39a3883db74f22a9989fc214cbabacdaae04665e947c51217e9ce",
+      "bytes": 18556,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000002",
+      "provider_id": "abdominals-stretch-variation-one",
+      "path": "movekit/v2/poster-optimized/abdominals-stretch-variation-one.webp",
+      "sha256": "d36ddb2fd7ceb40189c7fb369f72b23beb8e1ba3f83f7107bac4e68fdbc5e603",
+      "bytes": 14528,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000003",
+      "provider_id": "abdominals-stretch-variation-three",
+      "path": "movekit/v2/poster-optimized/abdominals-stretch-variation-three.webp",
+      "sha256": "fcc316de45c822a34b08f4600f08d41de4835c2eb549ea1fa1de9517c0fab75c",
+      "bytes": 8020,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000004",
+      "provider_id": "abdominals-stretch-variation-two",
+      "path": "movekit/v2/poster-optimized/abdominals-stretch-variation-two.webp",
+      "sha256": "8e74ece7336e330ffd378b52da9dc8114f79af8e48f27a3e522164f031caf946",
+      "bytes": 9116,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000005",
+      "provider_id": "band-curl",
+      "path": "movekit/v2/poster-optimized/band-curl.webp",
+      "sha256": "a43424c5d0e5c3a21fa5a5fe3401a53c95634bd15b1d719c7e3f7bbc0a336796",
+      "bytes": 12046,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000006",
+      "provider_id": "band-high-face-pull",
+      "path": "movekit/v2/poster-optimized/band-high-face-pull.webp",
+      "sha256": "4860913322f6fe7aa9ada08151d16aa4ec8f64a668f1228c16b1f7d990df770a",
+      "bytes": 19266,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000007",
+      "provider_id": "band-hip-abduction",
+      "path": "movekit/v2/poster-optimized/band-hip-abduction.webp",
+      "sha256": "d97e4efe39968a907f8e0d0ced80ac62deb2b46e527d80ac2e2a4b47d4868d93",
+      "bytes": 21576,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000008",
+      "provider_id": "band-kneeling-pulldown",
+      "path": "movekit/v2/poster-optimized/band-kneeling-pulldown.webp",
+      "sha256": "f757ed71b66e7cdae978f03d8911c490329be8580b80201982d984d07f5868e0",
+      "bytes": 25960,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000009",
+      "provider_id": "band-lateral-raise",
+      "path": "movekit/v2/poster-optimized/band-lateral-raise.webp",
+      "sha256": "b2f1033de93099cd794d935a2c986ebc340e74c0644abf4499eee0a10386afcf",
+      "bytes": 12800,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000010",
+      "provider_id": "band-pullover",
+      "path": "movekit/v2/poster-optimized/band-pullover.webp",
+      "sha256": "dba9ba0f7e7078761301ebc1875c6d576a25cf594f1a5524321ce2493899d53e",
+      "bytes": 19380,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000011",
+      "provider_id": "band-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/band-romanian-deadlift.webp",
+      "sha256": "026697325f6ea9c4fe517a6ec7f1b0f4a62eeeeae9cf4bda671ac9bac897a1ee",
+      "bytes": 9648,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000012",
+      "provider_id": "band-row",
+      "path": "movekit/v2/poster-optimized/band-row.webp",
+      "sha256": "8c44f8c63d114e501dde3bac896ffe2699dc5b4f85a59b02e74aa7c4152d5eae",
+      "bytes": 12962,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000013",
+      "provider_id": "band-seated-pulldown",
+      "path": "movekit/v2/poster-optimized/band-seated-pulldown.webp",
+      "sha256": "4bfda4e255f4e79485251fd794e973c53ea7b4ec95e3e13ed37d7728a60b83ab",
+      "bytes": 22696,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000014",
+      "provider_id": "band-shrug",
+      "path": "movekit/v2/poster-optimized/band-shrug.webp",
+      "sha256": "7141f7d6c79f857c39563561600a96922af786493e40d6d7c0d7f25c54433e15",
+      "bytes": 14348,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000015",
+      "provider_id": "band-single-arm-lateral-raise",
+      "path": "movekit/v2/poster-optimized/band-single-arm-lateral-raise.webp",
+      "sha256": "7244290d6f433a9b5b54848145ae5f996628c9de94ccf346444ecd35fad37d51",
+      "bytes": 15028,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000016",
+      "provider_id": "band-wood-chopper",
+      "path": "movekit/v2/poster-optimized/band-wood-chopper.webp",
+      "sha256": "c834a39c37bdb576eca0e3f597818ae9fe492ae60a6b93f31bb39f8a5f4d75f2",
+      "bytes": 15590,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000017",
+      "provider_id": "barbell-banded-back-squat",
+      "path": "movekit/v2/poster-optimized/barbell-banded-back-squat.webp",
+      "sha256": "ad70ed01363cf5a0698bdccf32d1592d1216699a7476651f1f696660ed7fc6da",
+      "bytes": 21518,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000018",
+      "provider_id": "barbell-behind-the-back-30-degree-shrug",
+      "path": "movekit/v2/poster-optimized/barbell-behind-the-back-30-degree-shrug.webp",
+      "sha256": "69785f69a1b91140c83968e8f8c0b21ac2c30ea4ed6a18e2ac6f98ee9a727efd",
+      "bytes": 13252,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000019",
+      "provider_id": "barbell-bench-press",
+      "path": "movekit/v2/poster-optimized/barbell-bench-press.webp",
+      "sha256": "9d7d1bb7cd16ef7396fd50d2927a355e4322eef1c17c890900fb85a8c3b147f6",
+      "bytes": 20968,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000020",
+      "provider_id": "barbell-bent-over-row",
+      "path": "movekit/v2/poster-optimized/barbell-bent-over-row.webp",
+      "sha256": "16ec9248b254f74059c0183487c71e94653723595bfb035dedfc311b2a608e68",
+      "bytes": 17058,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000021",
+      "provider_id": "barbell-clean-and-press",
+      "path": "movekit/v2/poster-optimized/barbell-clean-and-press.webp",
+      "sha256": "615181210a76079f330363f526b9547c897e98933c1cb5f23d97af437777b68a",
+      "bytes": 11916,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000022",
+      "provider_id": "barbell-close-grip-bench-press",
+      "path": "movekit/v2/poster-optimized/barbell-close-grip-bench-press.webp",
+      "sha256": "0d49051b4d22f706500fd04b5d53f16805dcf189b3a6b8d7d1753988c044bdc1",
+      "bytes": 27240,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000023",
+      "provider_id": "barbell-curl",
+      "path": "movekit/v2/poster-optimized/barbell-curl.webp",
+      "sha256": "3ad66be21f2ff82b2574d87cf3ecf248bf1a15e20ea3e00c04b2d3c3cd3154b6",
+      "bytes": 13676,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000024",
+      "provider_id": "barbell-deadlift",
+      "path": "movekit/v2/poster-optimized/barbell-deadlift.webp",
+      "sha256": "3782fdadd55987a1844574270c82d496c82dbabb157d25323b2a760a8c02d2d8",
+      "bytes": 12116,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000025",
+      "provider_id": "barbell-drag-curl",
+      "path": "movekit/v2/poster-optimized/barbell-drag-curl.webp",
+      "sha256": "49f14c5fd9b088a8b580de9bd03ee8c0c3fe85bb3dbb552d6e0bc2ebfa1a7262",
+      "bytes": 13248,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000026",
+      "provider_id": "barbell-front-rack-step-up-knee-drive",
+      "path": "movekit/v2/poster-optimized/barbell-front-rack-step-up-knee-drive.webp",
+      "sha256": "f700e41edad126db5a284ba6659fdc9523304f310cd5e433d28974ce353741cf",
+      "bytes": 10308,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000027",
+      "provider_id": "barbell-high-incline-bench-press",
+      "path": "movekit/v2/poster-optimized/barbell-high-incline-bench-press.webp",
+      "sha256": "ac7298aa2fa7a9547d3167f1d776a541a097f82a59536e022a47df8e692acc2a",
+      "bytes": 17368,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000028",
+      "provider_id": "barbell-incline-bench-press",
+      "path": "movekit/v2/poster-optimized/barbell-incline-bench-press.webp",
+      "sha256": "18a3a81ea33ad770c4a1954b7d295c5838f11453966dfaf33d178ab8cf3e92d7",
+      "bytes": 23230,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000029",
+      "provider_id": "barbell-muscle-snatch",
+      "path": "movekit/v2/poster-optimized/barbell-muscle-snatch.webp",
+      "sha256": "55c5a3fd509451646e6538d0f05331f6dbc9f9ae0f442ddd2972c17bafba9044",
+      "bytes": 9438,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000030",
+      "provider_id": "barbell-overhead-press",
+      "path": "movekit/v2/poster-optimized/barbell-overhead-press.webp",
+      "sha256": "1adec3d7b75ec54ef282f41fe5bab6f9fb26091b106aabc589d90239399c8a1f",
+      "bytes": 10964,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000031",
+      "provider_id": "barbell-power-snatch",
+      "path": "movekit/v2/poster-optimized/barbell-power-snatch.webp",
+      "sha256": "784645eaa2279e73912867efa51a49091090dac106aaf9705afee7bf543facc0",
+      "bytes": 12822,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000032",
+      "provider_id": "barbell-pullover",
+      "path": "movekit/v2/poster-optimized/barbell-pullover.webp",
+      "sha256": "be18e10e3df790af72d710b4d2f1bfa31cb82822cbad52322c99c79775e0e94f",
+      "bytes": 17876,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000033",
+      "provider_id": "barbell-rack-pull",
+      "path": "movekit/v2/poster-optimized/barbell-rack-pull.webp",
+      "sha256": "2805d50cf48dfaec0a337e4343ea8a607ea23bcb5a3e302eeb2d235137ffe485",
+      "bytes": 22424,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000034",
+      "provider_id": "barbell-shrug",
+      "path": "movekit/v2/poster-optimized/barbell-shrug.webp",
+      "sha256": "2f499a83a9a3a52b13892e9c2ef9338506a33761bde7309bde1932d8983111af",
+      "bytes": 16384,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000035",
+      "provider_id": "barbell-snatch",
+      "path": "movekit/v2/poster-optimized/barbell-snatch.webp",
+      "sha256": "1fef33b6c88a7b020af44f58f8b3f0e156e1d433f14842eb7f378f67431cdad9",
+      "bytes": 12872,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000036",
+      "provider_id": "barbell-spinal-jefferson-curl",
+      "path": "movekit/v2/poster-optimized/barbell-spinal-jefferson-curl.webp",
+      "sha256": "061e9dd61a3fa7f67d2e2bb6cfdfb0ede08de8213773cbc4ee82b97543d1eb92",
+      "bytes": 8694,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000037",
+      "provider_id": "barbell-split-squat",
+      "path": "movekit/v2/poster-optimized/barbell-split-squat.webp",
+      "sha256": "6cf1f7fa50c897a2a3ed32b70ede1bbfe1afd88f4b30114e85c09899d9917e07",
+      "bytes": 17958,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000038",
+      "provider_id": "barbell-squat",
+      "path": "movekit/v2/poster-optimized/barbell-squat.webp",
+      "sha256": "39031a94f8bd8470c0cd1b56bf1af3a8cb4555d32c40b4d7684e207de8eb0f21",
+      "bytes": 11876,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000039",
+      "provider_id": "barbell-step-up-knee-drive",
+      "path": "movekit/v2/poster-optimized/barbell-step-up-knee-drive.webp",
+      "sha256": "286f181bd7e61afed07b0fde849d97c947fbfbddd2bfb3934e16087a5e2e5619",
+      "bytes": 11560,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000040",
+      "provider_id": "barbell-stiff-leg-deadlifts",
+      "path": "movekit/v2/poster-optimized/barbell-stiff-leg-deadlifts.webp",
+      "sha256": "f2527481b706ea761dc8ae4bad29a9e07bec0feacb0cb707d83ef27d022b1f45",
+      "bytes": 11942,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000041",
+      "provider_id": "barbell-thruster",
+      "path": "movekit/v2/poster-optimized/barbell-thruster.webp",
+      "sha256": "03be977151f7fc917da3a5a1e928b6c8076054a9b943776cc622211b8273bd9a",
+      "bytes": 9678,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000042",
+      "provider_id": "barbell-upright-row",
+      "path": "movekit/v2/poster-optimized/barbell-upright-row.webp",
+      "sha256": "7afc6c434ed5e7240b2da79fc5d8cfc893352872735160171e17c32aa73c157c",
+      "bytes": 13522,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000043",
+      "provider_id": "barbell-wrist-curl",
+      "path": "movekit/v2/poster-optimized/barbell-wrist-curl.webp",
+      "sha256": "6e459bb9dd85f506a59cde41e96fcbc4320ab661ff2940c0504f9db040adf8bf",
+      "bytes": 20232,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000044",
+      "provider_id": "bench-dips",
+      "path": "movekit/v2/poster-optimized/bench-dips.webp",
+      "sha256": "8fb41e4331fd536acf392356334befaf6140482ce0b9d5387fc1d191202b44b4",
+      "bytes": 18920,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000045",
+      "provider_id": "bodyweight-alternating-lateral-lunge",
+      "path": "movekit/v2/poster-optimized/bodyweight-alternating-lateral-lunge.webp",
+      "sha256": "143eec21b9832a4b8c2e6bdd04f98aba149a5c533389384258fa1f027b1f8794",
+      "bytes": 11548,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000046",
+      "provider_id": "bodyweight-alternating-reverse-lunges",
+      "path": "movekit/v2/poster-optimized/bodyweight-alternating-reverse-lunges.webp",
+      "sha256": "c5ca7729cbcece2ba1b7ad92411d404a08196c824cd2fce1f4319151435fb593",
+      "bytes": 11576,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000047",
+      "provider_id": "bodyweight-box-squat",
+      "path": "movekit/v2/poster-optimized/bodyweight-box-squat.webp",
+      "sha256": "5b8163be42a62efb05097d56d92aabb1375a714dfe0b8c2d51c19826e69f8ec7",
+      "bytes": 13184,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000048",
+      "provider_id": "bodyweight-deadlift",
+      "path": "movekit/v2/poster-optimized/bodyweight-deadlift.webp",
+      "sha256": "e971b431ad1ec0c741fc028624f9542c0dcb630e782d25415a42d1d02ec5083f",
+      "bytes": 9130,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000049",
+      "provider_id": "bodyweight-donkey-calf-raise",
+      "path": "movekit/v2/poster-optimized/bodyweight-donkey-calf-raise.webp",
+      "sha256": "7263fb505a92e8d4ad47d02d7f242d1ab37b39ec972dbbd928f1b3426c02379c",
+      "bytes": 11516,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000050",
+      "provider_id": "bodyweight-elevated-push-up",
+      "path": "movekit/v2/poster-optimized/bodyweight-elevated-push-up.webp",
+      "sha256": "4cbb0bc3096418df9b40457ec9082b76124684c121496cb594c7837be95ab3f5",
+      "bytes": 18880,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000051",
+      "provider_id": "bodyweight-hip-abduction",
+      "path": "movekit/v2/poster-optimized/bodyweight-hip-abduction.webp",
+      "sha256": "49c8172451d170048a7422f5c71d86152495cc102e305ba658cd434ca776dcc8",
+      "bytes": 11652,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000052",
+      "provider_id": "bodyweight-knee-push-ups",
+      "path": "movekit/v2/poster-optimized/bodyweight-knee-push-ups.webp",
+      "sha256": "9f7adae02d1628f2f28af7f66cbec24b0d5aca94c8a11eec95171030fb2806c3",
+      "bytes": 21066,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000053",
+      "provider_id": "bodyweight-reverse-lunge",
+      "path": "movekit/v2/poster-optimized/bodyweight-reverse-lunge.webp",
+      "sha256": "7e2af2d330c755ed4f0d9273bbe1b45d4b60a4e15b35a0e7a39c8da86c65b62b",
+      "bytes": 10874,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000054",
+      "provider_id": "bodyweight-russian-twist",
+      "path": "movekit/v2/poster-optimized/bodyweight-russian-twist.webp",
+      "sha256": "8ca0bf36f9327a3240e1e17fbd4437cacb09158972f9951ebf6980c0fc814d99",
+      "bytes": 21636,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000055",
+      "provider_id": "bodyweight-spinal-jefferson-curl",
+      "path": "movekit/v2/poster-optimized/bodyweight-spinal-jefferson-curl.webp",
+      "sha256": "8cdd2e79a3c22a939db0c79ab9b47caec8229273decf0e6b926c72a6f9be2f9a",
+      "bytes": 9662,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000056",
+      "provider_id": "bodyweight-squat",
+      "path": "movekit/v2/poster-optimized/bodyweight-squat.webp",
+      "sha256": "03a16af4a44c092ffb0a844ccc4b9252768220f9e7d17a8ef6cedb8937d6520c",
+      "bytes": 12462,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000057",
+      "provider_id": "box-jump",
+      "path": "movekit/v2/poster-optimized/box-jump.webp",
+      "sha256": "73a69cbea40e62f52a2843e8d7db8e54f3d6e2437ff187430a5ee9b68d3f2674",
+      "bytes": 9754,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000058",
+      "provider_id": "bulgarian-split-squat",
+      "path": "movekit/v2/poster-optimized/bulgarian-split-squat.webp",
+      "sha256": "e37e7074b10a9e6511dea3e9feca89d54122c0c864fe0811fb4da5e1d7e6cb49",
+      "bytes": 15444,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000059",
+      "provider_id": "burpee",
+      "path": "movekit/v2/poster-optimized/burpee.webp",
+      "sha256": "ea52419ca90b75ca26b201d84dcbe884ca578b3b89c692dd731db865552cd62f",
+      "bytes": 9318,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000060",
+      "provider_id": "cable-30-degree-shrug",
+      "path": "movekit/v2/poster-optimized/cable-30-degree-shrug.webp",
+      "sha256": "97e92640d87f657a96739de62a9b9aa2cc04146f5476f9e9f9e61c1236cd4833",
+      "bytes": 37260,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000061",
+      "provider_id": "cable-bar-curl",
+      "path": "movekit/v2/poster-optimized/cable-bar-curl.webp",
+      "sha256": "635a1624d56f5c3c625f7a0593e71fea8e50355d0ec38bfd51397e4cd5b2e469",
+      "bytes": 18100,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000062",
+      "provider_id": "cable-bar-face-pull",
+      "path": "movekit/v2/poster-optimized/cable-bar-face-pull.webp",
+      "sha256": "dd6bdd963fc96d6747b850b1bcf9fb944aaa6b90bb6e83d5c684c3b6a66b0168",
+      "bytes": 15684,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000063",
+      "provider_id": "cable-bar-pushdown",
+      "path": "movekit/v2/poster-optimized/cable-bar-pushdown.webp",
+      "sha256": "e9f9c09bfcf46d409d9b6ffacaa8592d496628582bfb516ebbcf9febe585f5ae",
+      "bytes": 14868,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000064",
+      "provider_id": "cable-bench-chest-fly",
+      "path": "movekit/v2/poster-optimized/cable-bench-chest-fly.webp",
+      "sha256": "9ae25521f4ab41e153efc72506c2be42b028dd7a99af5782442536f654bd8c7c",
+      "bytes": 24138,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000065",
+      "provider_id": "cable-bench-press",
+      "path": "movekit/v2/poster-optimized/cable-bench-press.webp",
+      "sha256": "f6fabba632c8f64141c6f93a47af5206798481213010a387fa4ede6304aa7bca",
+      "bytes": 35088,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000066",
+      "provider_id": "cable-bench-straight-leg-kickback",
+      "path": "movekit/v2/poster-optimized/cable-bench-straight-leg-kickback.webp",
+      "sha256": "827202d1f77fea507059ebf944081a2b94238e34b06c9beee71af7ac08028414",
+      "bytes": 18400,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000067",
+      "provider_id": "cable-chest-press",
+      "path": "movekit/v2/poster-optimized/cable-chest-press.webp",
+      "sha256": "5d56255c22b72178867e368c626ffa5e0b754cd0e9b5452c7e80927e38b14522",
+      "bytes": 31126,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000068",
+      "provider_id": "cable-decline-bench-press",
+      "path": "movekit/v2/poster-optimized/cable-decline-bench-press.webp",
+      "sha256": "ab316a2d328b530dd94acddbff98c920ef6ea4a8762be840ddbaae75afb3cf59",
+      "bytes": 38794,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000069",
+      "provider_id": "cable-incline-bench-press",
+      "path": "movekit/v2/poster-optimized/cable-incline-bench-press.webp",
+      "sha256": "2ee0182dc559e04f1e6674cd8788386ebbbda330b9fa5249fb7771dcd58e6df5",
+      "bytes": 39446,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000070",
+      "provider_id": "cable-overhead-press",
+      "path": "movekit/v2/poster-optimized/cable-overhead-press.webp",
+      "sha256": "873d66c5937a17167437e0f033e967009c648e13d377a6d7fb0db149e26f24a8",
+      "bytes": 17092,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000071",
+      "provider_id": "cable-pec-fly",
+      "path": "movekit/v2/poster-optimized/cable-pec-fly.webp",
+      "sha256": "4b7ef25d6e690b1db9c50fe71fe3db09c6f9534a43ec31e4a86e93f8d0295d26",
+      "bytes": 25080,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000072",
+      "provider_id": "cable-rope-kneeling-face-pull",
+      "path": "movekit/v2/poster-optimized/cable-rope-kneeling-face-pull.webp",
+      "sha256": "383c3e6f6c222f1b4e792068ba59d0c7c10c3cdd8551d0d9c78d550e60ae2661",
+      "bytes": 23038,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000073",
+      "provider_id": "cable-rope-pushdown",
+      "path": "movekit/v2/poster-optimized/cable-rope-pushdown.webp",
+      "sha256": "d377718170e67ca1e754b28206230ebe90ca3528af1793e7d6ff66430407dff3",
+      "bytes": 16698,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000074",
+      "provider_id": "cable-row-bar-standing-row",
+      "path": "movekit/v2/poster-optimized/cable-row-bar-standing-row.webp",
+      "sha256": "9bc253dd7a9e03e11d90742ef999d2d9e38dd6d99cd33e1217cf9ae5b9760af1",
+      "bytes": 17128,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000075",
+      "provider_id": "cable-seated-rope-face-pull",
+      "path": "movekit/v2/poster-optimized/cable-seated-rope-face-pull.webp",
+      "sha256": "9da14d67b7021b5f284b7c96b8ad5ea86a5661711146e4579c1a6dff8c74f42d",
+      "bytes": 20090,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000076",
+      "provider_id": "cable-side-bend",
+      "path": "movekit/v2/poster-optimized/cable-side-bend.webp",
+      "sha256": "eabd30ed64da761be7671149651b3d4efaccc55e2aa7e963f27c3bbdac02ee26",
+      "bytes": 34784,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000077",
+      "provider_id": "cable-single-arm-neutral-grip-row",
+      "path": "movekit/v2/poster-optimized/cable-single-arm-neutral-grip-row.webp",
+      "sha256": "86a757133b48cbe2c20786fdfab9d38287529811ea5f470368958ccb4940dc29",
+      "bytes": 28350,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000078",
+      "provider_id": "cable-single-arm-rope-pushdown",
+      "path": "movekit/v2/poster-optimized/cable-single-arm-rope-pushdown.webp",
+      "sha256": "53e5824716719fd4e7ac06d4165d6d8f53baa933652341b76cebb016584d754d",
+      "bytes": 12750,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000079",
+      "provider_id": "cable-single-arm-underhand-grip-row",
+      "path": "movekit/v2/poster-optimized/cable-single-arm-underhand-grip-row.webp",
+      "sha256": "801ae67ff0d04c4666d57c0865acbbe28064ec6a544ecfb9cce89713dd264d83",
+      "bytes": 12438,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000080",
+      "provider_id": "cable-standing-low-to-high-wood-chopper",
+      "path": "movekit/v2/poster-optimized/cable-standing-low-to-high-wood-chopper.webp",
+      "sha256": "3e8a9b45f3f4b8b810c883b040ac8c267541cb7aca40aad6adb021baf7874847",
+      "bytes": 19400,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000081",
+      "provider_id": "cable-standing-single-arm-chest-press",
+      "path": "movekit/v2/poster-optimized/cable-standing-single-arm-chest-press.webp",
+      "sha256": "e196ebb74e07ffed8a86f3529aa4b66e03e45c4a4e468666aa1e1283a18fe427",
+      "bytes": 30762,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000082",
+      "provider_id": "cable-supinating-row",
+      "path": "movekit/v2/poster-optimized/cable-supinating-row.webp",
+      "sha256": "de519ceec30f4d806189ad034cc9c1bfe8e9bd7564bc8b24337d9b395ca37662",
+      "bytes": 22956,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000083",
+      "provider_id": "cable-wood-chopper",
+      "path": "movekit/v2/poster-optimized/cable-wood-chopper.webp",
+      "sha256": "0bae588c29ca978388f221ff2cd23dc5c6bf9c7f1625d496726f53c509890d96",
+      "bytes": 17114,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000084",
+      "provider_id": "chin-ups",
+      "path": "movekit/v2/poster-optimized/chin-ups.webp",
+      "sha256": "d491a0ce8ae79a62b6d84784da0e2dd3658a99b8e077e134fd0f2e718199288b",
+      "bytes": 16726,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000085",
+      "provider_id": "decline-push-up",
+      "path": "movekit/v2/poster-optimized/decline-push-up.webp",
+      "sha256": "007b31ea2465d253d87ab8b5a0546ee7b33eef2460319ed3f3ea76a9f3323506",
+      "bytes": 24388,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000086",
+      "provider_id": "diamond-push-ups",
+      "path": "movekit/v2/poster-optimized/diamond-push-ups.webp",
+      "sha256": "51d0e1a8b0983fc3e5ab9187fe7684e815c5ac619a7f69e815829f1aea18d51b",
+      "bytes": 23258,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000087",
+      "provider_id": "dumbbell-alternating-forward-lunge",
+      "path": "movekit/v2/poster-optimized/dumbbell-alternating-forward-lunge.webp",
+      "sha256": "25d8a92878de7a3bbb115ff453eb2d80173b5f675f9600e596db319fa96f73fa",
+      "bytes": 11574,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000088",
+      "provider_id": "dumbbell-bench-press",
+      "path": "movekit/v2/poster-optimized/dumbbell-bench-press.webp",
+      "sha256": "13b53175a760baf2ecc4e50bdbfc72b7d273e2b494965ba0466dba1e878da023",
+      "bytes": 20470,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000089",
+      "provider_id": "dumbbell-bulgarian-split-squat",
+      "path": "movekit/v2/poster-optimized/dumbbell-bulgarian-split-squat.webp",
+      "sha256": "f49e03cd800fdf0df48ebb90e40fe84951c2236dcd266e2f74362e4cb2664929",
+      "bytes": 17146,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000090",
+      "provider_id": "dumbbell-chest-fly",
+      "path": "movekit/v2/poster-optimized/dumbbell-chest-fly.webp",
+      "sha256": "804db0d34cf05ebc7a0b0ef0b495076fa411e295a33e8ff58cdbed44be050e00",
+      "bytes": 20578,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000091",
+      "provider_id": "dumbbell-concentration-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-concentration-curl.webp",
+      "sha256": "045a99f9c7c331f4cf56c662d217baf9b516dd4a72ccacf2e0ea5fded4a16a77",
+      "bytes": 14702,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000092",
+      "provider_id": "dumbbell-cross-body-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/dumbbell-cross-body-romanian-deadlift.webp",
+      "sha256": "c17676719556a74a4be03d5a508130e0c0db00c5a04f452ddbaf0519f2ae1c60",
+      "bytes": 13764,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000093",
+      "provider_id": "dumbbell-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-curl.webp",
+      "sha256": "ff0c6f9dea6874343e8200402edad429c5b5f83e8b94fa31ebe265b5ce828dcd",
+      "bytes": 10754,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000094",
+      "provider_id": "dumbbell-decline-bench-press",
+      "path": "movekit/v2/poster-optimized/dumbbell-decline-bench-press.webp",
+      "sha256": "a115b014aa9b37a28eae6fb8b854c309ce463eb7af0b7fd6f15d897dc40ea3c0",
+      "bytes": 20260,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000095",
+      "provider_id": "dumbbell-decline-chest-fly",
+      "path": "movekit/v2/poster-optimized/dumbbell-decline-chest-fly.webp",
+      "sha256": "e23969690e9e6f42666afb39140c02d397998e9b5c91a256c7c2877fd6903c2a",
+      "bytes": 21188,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000096",
+      "provider_id": "dumbbell-decline-skullcrusher",
+      "path": "movekit/v2/poster-optimized/dumbbell-decline-skullcrusher.webp",
+      "sha256": "91376f1da6c58ebdbb2643013c5e4fc8392383d24b0eecd4a09fc02d1e9372b5",
+      "bytes": 20400,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000097",
+      "provider_id": "dumbbell-feet-elevated-glute-bridge",
+      "path": "movekit/v2/poster-optimized/dumbbell-feet-elevated-glute-bridge.webp",
+      "sha256": "d3ebfb9d2593df14aa50ccf006a422d455fab4720b4d583e39ddc827ba557389",
+      "bytes": 21148,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000098",
+      "provider_id": "dumbbell-figure-four-heels-elevated-hip-thrust",
+      "path": "movekit/v2/poster-optimized/dumbbell-figure-four-heels-elevated-hip-thrust.webp",
+      "sha256": "4c677436c82a2792daab295848b709736d5f032beff6718bf76964b4b9beebc0",
+      "bytes": 20482,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000099",
+      "provider_id": "dumbbell-front-raise",
+      "path": "movekit/v2/poster-optimized/dumbbell-front-raise.webp",
+      "sha256": "f75ae7cb4ba4b9014154b06c1fd4ce1980b907cc944548aba934a5b80abfec99",
+      "bytes": 11322,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000100",
+      "provider_id": "dumbbell-goblet-alternating-curtsy-lunge",
+      "path": "movekit/v2/poster-optimized/dumbbell-goblet-alternating-curtsy-lunge.webp",
+      "sha256": "f8aa99b2da38c0a9c0c2d11bfb73c3dee0df99fa9ef4792d57e357f022d20c13",
+      "bytes": 9778,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000101",
+      "provider_id": "dumbbell-goblet-bulgarian-split-squat",
+      "path": "movekit/v2/poster-optimized/dumbbell-goblet-bulgarian-split-squat.webp",
+      "sha256": "88ddc3ea803f425cbf21443d22b8320f822acd7d1f221122b077d26bc437d211",
+      "bytes": 13396,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000102",
+      "provider_id": "dumbbell-goblet-forward-lunge",
+      "path": "movekit/v2/poster-optimized/dumbbell-goblet-forward-lunge.webp",
+      "sha256": "ad874078be10564558b5d77d7a6ba71b38aad85c6b593adc87159b1d2deef459",
+      "bytes": 10300,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000103",
+      "provider_id": "dumbbell-goblet-reverse-lunge",
+      "path": "movekit/v2/poster-optimized/dumbbell-goblet-reverse-lunge.webp",
+      "sha256": "e1bed05cfe751d6e942a5f9408741acd08fbeeedfae44ae98f3c7d738b436da1",
+      "bytes": 11684,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000104",
+      "provider_id": "dumbbell-goblet-split-squat",
+      "path": "movekit/v2/poster-optimized/dumbbell-goblet-split-squat.webp",
+      "sha256": "685496d53e7ffd61c60f3848321721882fe7616a832200ca41edcdf8b7c0cbca",
+      "bytes": 12886,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000105",
+      "provider_id": "dumbbell-goblet-squat",
+      "path": "movekit/v2/poster-optimized/dumbbell-goblet-squat.webp",
+      "sha256": "d686f87364ac6e1341e12fd878f8e3eab2c993f65acf5dbcecbc9bf52dc0d95b",
+      "bytes": 8632,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000106",
+      "provider_id": "dumbbell-hammer-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-hammer-curl.webp",
+      "sha256": "186bcadc0aaa52f116d12801b8d389e76f416e307c56cf85a98a99e88e17ca0a",
+      "bytes": 8286,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000107",
+      "provider_id": "dumbbell-heels-elevated-hip-thrust",
+      "path": "movekit/v2/poster-optimized/dumbbell-heels-elevated-hip-thrust.webp",
+      "sha256": "c66112987488238dec555c1a7533a69c1ce2ab74548898eb65bfbee96aeede11",
+      "bytes": 18876,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000108",
+      "provider_id": "dumbbell-incline-bench-press",
+      "path": "movekit/v2/poster-optimized/dumbbell-incline-bench-press.webp",
+      "sha256": "17787e2a35b5ea55739c2b04b7d51c5a3114039a21cf48ba3503ca3823d98e4d",
+      "bytes": 18648,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000109",
+      "provider_id": "dumbbell-incline-chest-fly",
+      "path": "movekit/v2/poster-optimized/dumbbell-incline-chest-fly.webp",
+      "sha256": "460f6f3d2ce28ec1c1c20304182256d53f97954f9770561488e1f16408a41e47",
+      "bytes": 16362,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000110",
+      "provider_id": "dumbbell-incline-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-incline-curl.webp",
+      "sha256": "e57b289777b9b41ef78dabd03dd337e8a49af1c6f1af930fdc78536032131e66",
+      "bytes": 13616,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000111",
+      "provider_id": "dumbbell-incline-front-raise",
+      "path": "movekit/v2/poster-optimized/dumbbell-incline-front-raise.webp",
+      "sha256": "0cd2cf0eb660386a4858455c9771a3fb7ba553bb02a3ab129be0ce0dcb6eec42",
+      "bytes": 11058,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000112",
+      "provider_id": "dumbbell-incline-hammer-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-incline-hammer-curl.webp",
+      "sha256": "37b1c5d1646976d13c69c9f36b9550045feb773b13ed106c566f72428c058c86",
+      "bytes": 18744,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000113",
+      "provider_id": "dumbbell-lateral-raise",
+      "path": "movekit/v2/poster-optimized/dumbbell-lateral-raise.webp",
+      "sha256": "6ef2b49bf53df1e4998b9b4bed9f38a29ed6469b6949342f2e363574b64d3a0a",
+      "bytes": 10600,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000114",
+      "provider_id": "dumbbell-laying-reverse-fly",
+      "path": "movekit/v2/poster-optimized/dumbbell-laying-reverse-fly.webp",
+      "sha256": "df5c3b884245c3199dd56e572affc17f0b4d9e13d0e13472efa491b9891234e1",
+      "bytes": 23584,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000115",
+      "provider_id": "dumbbell-leg-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-leg-curl.webp",
+      "sha256": "f1c670bd68a1591f1a2f0f8999f2a36b5a5da8eae89b267521c8a353425ef437",
+      "bytes": 18108,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000116",
+      "provider_id": "dumbbell-preacher-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-preacher-curl.webp",
+      "sha256": "ea20007f3072767edd2dedd3933a9d7e611cdc50451ada2d14752b76da683636",
+      "bytes": 19414,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000117",
+      "provider_id": "dumbbell-rear-delt-fly",
+      "path": "movekit/v2/poster-optimized/dumbbell-rear-delt-fly.webp",
+      "sha256": "86ab23c775d6d575d4929c3d30da516e745215fa5fc2f63f2e74d6c3ff3d75ed",
+      "bytes": 16216,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000118",
+      "provider_id": "dumbbell-row-bilateral",
+      "path": "movekit/v2/poster-optimized/dumbbell-row-bilateral.webp",
+      "sha256": "d0bf58d66db7457b5b4476039a71f8bcc9f47843db3665ec57af0b43c0494269",
+      "bytes": 14802,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000119",
+      "provider_id": "dumbbell-row-unilateral",
+      "path": "movekit/v2/poster-optimized/dumbbell-row-unilateral.webp",
+      "sha256": "8e77534c284e2857f4936bd03f750f59e104a497546dc5b8dccde9d44ce7fe78",
+      "bytes": 19748,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000120",
+      "provider_id": "dumbbell-russian-twist",
+      "path": "movekit/v2/poster-optimized/dumbbell-russian-twist.webp",
+      "sha256": "23f0251d7fa7489c2dd2bfaa0ec2bab5afadeca275640fde75b51f6e8fe53256",
+      "bytes": 24196,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000121",
+      "provider_id": "dumbbell-seated-overhead-press",
+      "path": "movekit/v2/poster-optimized/dumbbell-seated-overhead-press.webp",
+      "sha256": "3474c30d786d831bbec4cfcd8e521e55082d6eb268b9dba07ebaba61aeb407d0",
+      "bytes": 16318,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000122",
+      "provider_id": "dumbbell-seated-overhead-tricep-extension",
+      "path": "movekit/v2/poster-optimized/dumbbell-seated-overhead-tricep-extension.webp",
+      "sha256": "56f570f05a0a38c227d7c8733f23b0227d8451dcaa675cfe5754f1980d224dc5",
+      "bytes": 12698,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000123",
+      "provider_id": "dumbbell-seated-rear-delt-fly",
+      "path": "movekit/v2/poster-optimized/dumbbell-seated-rear-delt-fly.webp",
+      "sha256": "a69e5dd41ef539cc8c90b6449bab01e7da8c787d14635a0988ee0ec2bd23a5b4",
+      "bytes": 17794,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000124",
+      "provider_id": "dumbbell-seated-shrug",
+      "path": "movekit/v2/poster-optimized/dumbbell-seated-shrug.webp",
+      "sha256": "6893cb8c5b882fcc1aae802310ec29439f40a43a0073d2fc2abe149056a84fbe",
+      "bytes": 16930,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000125",
+      "provider_id": "dumbbell-shrug",
+      "path": "movekit/v2/poster-optimized/dumbbell-shrug.webp",
+      "sha256": "01ea466dd58db620c9dc19eaef9744ab5c749d38546f088d3f4575ce5e6b541b",
+      "bytes": 13052,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000126",
+      "provider_id": "dumbbell-side-bend",
+      "path": "movekit/v2/poster-optimized/dumbbell-side-bend.webp",
+      "sha256": "8c5aaddee8e9858038ac798591b9ec1927c49af12c06f72e9d5310bd730e331e",
+      "bytes": 10846,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000127",
+      "provider_id": "dumbbell-single-arm-chest-press",
+      "path": "movekit/v2/poster-optimized/dumbbell-single-arm-chest-press.webp",
+      "sha256": "bbcf84398a940930a3564364e6beb8cc63c3e47194b944575f418186aaf564e9",
+      "bytes": 17608,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000128",
+      "provider_id": "dumbbell-single-arm-clean-and-press",
+      "path": "movekit/v2/poster-optimized/dumbbell-single-arm-clean-and-press.webp",
+      "sha256": "949fa9a902ce5ef2eef096cdaf77f8e0c0293bdfe78ab4cb44eed2a73e790537",
+      "bytes": 12122,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000129",
+      "provider_id": "dumbbell-single-arm-row",
+      "path": "movekit/v2/poster-optimized/dumbbell-single-arm-row.webp",
+      "sha256": "f252d566942a2a1eabc9cbe8a27eb25e3d338d8803f1c9fbee660400a14d9c37",
+      "bytes": 19634,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000130",
+      "provider_id": "dumbbell-single-leg-calf-raise",
+      "path": "movekit/v2/poster-optimized/dumbbell-single-leg-calf-raise.webp",
+      "sha256": "c313b1bbb8b42eb518c55549e9e49e22b4b2b4d36d847d8aa6e64c8a78085808",
+      "bytes": 14824,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000131",
+      "provider_id": "dumbbell-situp",
+      "path": "movekit/v2/poster-optimized/dumbbell-situp.webp",
+      "sha256": "bcbae33ab96aad5482bf8db948f602dbb76bd9d148e9f5f4261c22e101caa53b",
+      "bytes": 17646,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000132",
+      "provider_id": "dumbbell-skullcrusher",
+      "path": "movekit/v2/poster-optimized/dumbbell-skullcrusher.webp",
+      "sha256": "3f6b1ff5c63855c411b2dfd15656d82a1dd7395a585fe8716aa84f5e681929b9",
+      "bytes": 21254,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000133",
+      "provider_id": "dumbbell-spinal-jefferson-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-spinal-jefferson-curl.webp",
+      "sha256": "d2486c512faf761a3d91147c3a19654053e94c41450674fdb7e34b20f1256ff6",
+      "bytes": 7740,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000134",
+      "provider_id": "dumbbell-standing-single-arm-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-standing-single-arm-curl.webp",
+      "sha256": "6027d693361c1fe128c20c45a88182ccb5c5fe67d1693071d587c57f542a6b0c",
+      "bytes": 11738,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000135",
+      "provider_id": "dumbbell-standing-single-arm-hammer-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-standing-single-arm-hammer-curl.webp",
+      "sha256": "7b055197b73e66b61bcb945a5f13a0547425dce3789d5b876358f4bf93da8d01",
+      "bytes": 10636,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000136",
+      "provider_id": "dumbbell-sumo-squat",
+      "path": "movekit/v2/poster-optimized/dumbbell-sumo-squat.webp",
+      "sha256": "80f055a7c874afdaa3f8f0844dd0e9bf60a629bda1e00665f292f5464a361792",
+      "bytes": 11854,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000137",
+      "provider_id": "dumbbell-superman",
+      "path": "movekit/v2/poster-optimized/dumbbell-superman.webp",
+      "sha256": "a07e2f6fc71506b1d2163ee259517f20249a9833b3e34167ae4464a1b33f516c",
+      "bytes": 16204,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000138",
+      "provider_id": "dumbbell-thruster",
+      "path": "movekit/v2/poster-optimized/dumbbell-thruster.webp",
+      "sha256": "051f4e7d367ccccdd122d9f7177abe27f536a57f1e330bf6e248e5e818de1ec8",
+      "bytes": 10238,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000139",
+      "provider_id": "dumbbell-tricep-kickback",
+      "path": "movekit/v2/poster-optimized/dumbbell-tricep-kickback.webp",
+      "sha256": "47960c76339e3ca29779939f8b1477a345d8526f3ee71f041fe5f77e46f3faf5",
+      "bytes": 14978,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000140",
+      "provider_id": "dumbbell-upright-row",
+      "path": "movekit/v2/poster-optimized/dumbbell-upright-row.webp",
+      "sha256": "108f7b14a70c9dcb587244599965dda10a08a334c248fea707dab715b4325565",
+      "bytes": 11102,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000141",
+      "provider_id": "dumbbell-wrist-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-wrist-curl.webp",
+      "sha256": "5a4df0edbac169049e84a695b0f4ddbab3b41e518081579e15d1a27c48aa763e",
+      "bytes": 17772,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000142",
+      "provider_id": "dumbbell-wrist-extension",
+      "path": "movekit/v2/poster-optimized/dumbbell-wrist-extension.webp",
+      "sha256": "8a977412af7181463906a69063f9359408d5e6476d7f828f0cdd7c2aafca7e40",
+      "bytes": 16942,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000143",
+      "provider_id": "elbow-side-plank",
+      "path": "movekit/v2/poster-optimized/elbow-side-plank.webp",
+      "sha256": "fd566ac381c56f227b54f2ca751b86c49fdbcaf51506c85da092023b80446620",
+      "bytes": 18726,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000144",
+      "provider_id": "ez-bar-preacher-curl",
+      "path": "movekit/v2/poster-optimized/ez-bar-preacher-curl.webp",
+      "sha256": "c72727ef22794d2d4b3541739d259b5a1f2ba5fe1a2026cf382a92b6c0a6cc97",
+      "bytes": 16390,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000145",
+      "provider_id": "ez-bar-reverse-preacher-curl",
+      "path": "movekit/v2/poster-optimized/ez-bar-reverse-preacher-curl.webp",
+      "sha256": "995eaa9e123c86cff8033d50f5bc23b22473506b6d1a8ec75126c252a2a086e6",
+      "bytes": 20608,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000146",
+      "provider_id": "forward-lunge",
+      "path": "movekit/v2/poster-optimized/forward-lunge.webp",
+      "sha256": "57571d05a4fef63602c9b4e1c3e60e2b038ec09bc4b725ffe2be01164ec5dd3e",
+      "bytes": 9362,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000147",
+      "provider_id": "good-mornings",
+      "path": "movekit/v2/poster-optimized/good-mornings.webp",
+      "sha256": "836719ac675753e5be40d171054eb92e7c7c485355174bc6746739b04a8b499f",
+      "bytes": 11172,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000148",
+      "provider_id": "hand-plank",
+      "path": "movekit/v2/poster-optimized/hand-plank.webp",
+      "sha256": "3a533568863cd560bcc10784e394fb79f827c33397c3d261c4140dd8eb5d4d78",
+      "bytes": 19660,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000149",
+      "provider_id": "hanging-knee-raises",
+      "path": "movekit/v2/poster-optimized/hanging-knee-raises.webp",
+      "sha256": "780cf17568489e49e9f7904fda2ff8c691d0885b3c730774c14e378a256c83dd",
+      "bytes": 15308,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000150",
+      "provider_id": "incline-push-up",
+      "path": "movekit/v2/poster-optimized/incline-push-up.webp",
+      "sha256": "d92fe9867c00c426ba3ccea1995631f41b120779bd7e06c19f9f412c8326ae87",
+      "bytes": 17816,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000151",
+      "provider_id": "inverted-row",
+      "path": "movekit/v2/poster-optimized/inverted-row.webp",
+      "sha256": "b0dc3a5aa64fd2cf1bb665f3f7d3f3a351583520644610d47a8be89f78d53909",
+      "bytes": 15298,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000152",
+      "provider_id": "jump-squats",
+      "path": "movekit/v2/poster-optimized/jump-squats.webp",
+      "sha256": "b7a969ca495aee1541cfacf9539638c1be1ba201e8d934e090f9f5246388a477",
+      "bytes": 9400,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000153",
+      "provider_id": "kettlebell-alternating-curtsy-lunge",
+      "path": "movekit/v2/poster-optimized/kettlebell-alternating-curtsy-lunge.webp",
+      "sha256": "de325b8bd6f2c6ae93cfa3fe354f69af425565ed7c629d546d24b2ee39c089b3",
+      "bytes": 10958,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000154",
+      "provider_id": "kettlebell-assisted-bulgarian-split-squat",
+      "path": "movekit/v2/poster-optimized/kettlebell-assisted-bulgarian-split-squat.webp",
+      "sha256": "02d2a94ef07d6bbb800571283941318619ccadafe3c32e39f545e867fb3aeab6",
+      "bytes": 13086,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000155",
+      "provider_id": "kettlebell-bench-press",
+      "path": "movekit/v2/poster-optimized/kettlebell-bench-press.webp",
+      "sha256": "22e966f9399b3ffea11e51ea7983c8261caab0581dcfe9c0ceae449777d5d22c",
+      "bytes": 16642,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000156",
+      "provider_id": "kettlebell-calf-raise",
+      "path": "movekit/v2/poster-optimized/kettlebell-calf-raise.webp",
+      "sha256": "6b005c4bb4aec2bfd5d57084b172ba8d5213029a255458bcf12e61f250132cdf",
+      "bytes": 13432,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000157",
+      "provider_id": "kettlebell-curl",
+      "path": "movekit/v2/poster-optimized/kettlebell-curl.webp",
+      "sha256": "e1c14379295d68dcee1a6cfa767dc12a59c9b3647a0ed6a7631e3d6757c4aa01",
+      "bytes": 11482,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000158",
+      "provider_id": "kettlebell-farmers-carry",
+      "path": "movekit/v2/poster-optimized/kettlebell-farmers-carry.webp",
+      "sha256": "90e4f38ef6e47ea3cf101c4976d98bf5c0adcd6ff8c23f9ab5552a42b2e47888",
+      "bytes": 10202,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000159",
+      "provider_id": "kettlebell-front-raise",
+      "path": "movekit/v2/poster-optimized/kettlebell-front-raise.webp",
+      "sha256": "83f9a55c3bd15bf202c3c1c28a5cf0d933f6df50c5e1b728c7f95ac31dc4fbbe",
+      "bytes": 11230,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000160",
+      "provider_id": "kettlebell-goblet-curl",
+      "path": "movekit/v2/poster-optimized/kettlebell-goblet-curl.webp",
+      "sha256": "f713a1fae3cda2170723c4a8814f83ae7efec7a057baedeb391b4b5799ecab9c",
+      "bytes": 11234,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000161",
+      "provider_id": "kettlebell-gorilla-row",
+      "path": "movekit/v2/poster-optimized/kettlebell-gorilla-row.webp",
+      "sha256": "9b4126208841b84f1b71106e9268e317172554807d9f4d43525a729022f282bd",
+      "bytes": 14894,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000162",
+      "provider_id": "kettlebell-hip-thrust",
+      "path": "movekit/v2/poster-optimized/kettlebell-hip-thrust.webp",
+      "sha256": "197d8b10af43d3ad2635c150619842c62c72bba721c9d1a0c9f38c6d4065409f",
+      "bytes": 23754,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000163",
+      "provider_id": "kettlebell-incline-bench-press",
+      "path": "movekit/v2/poster-optimized/kettlebell-incline-bench-press.webp",
+      "sha256": "5f24e2502cc91f4d8ecc39d984e9a4966f12c1eadcec5b66c83e877710bbb7a0",
+      "bytes": 18506,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000164",
+      "provider_id": "kettlebell-push-press",
+      "path": "movekit/v2/poster-optimized/kettlebell-push-press.webp",
+      "sha256": "3cfd86866f39cfb1283d9a3b04a61f9aabc55e23ec5b2d295f5b2784fa430118",
+      "bytes": 8056,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000165",
+      "provider_id": "kettlebell-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/kettlebell-romanian-deadlift.webp",
+      "sha256": "c348761385b1d114dbb3f33e0253dc96ef19b77709bfcb6f9d14dfe2918a0bfd",
+      "bytes": 10052,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000166",
+      "provider_id": "kettlebell-row",
+      "path": "movekit/v2/poster-optimized/kettlebell-row.webp",
+      "sha256": "50d2b1b332c14a2d66853b8799174f9b7706a7f95303f2db7eb32e8ee503f651",
+      "bytes": 16368,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000167",
+      "provider_id": "kettlebell-row-single",
+      "path": "movekit/v2/poster-optimized/kettlebell-row-single.webp",
+      "sha256": "5e209e1c3853980b75c2396eafc42138c5d8d94297f0ba26d7b3d2242a09f8fd",
+      "bytes": 12928,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000168",
+      "provider_id": "kettlebell-seated-overhead-press",
+      "path": "movekit/v2/poster-optimized/kettlebell-seated-overhead-press.webp",
+      "sha256": "a5a521875c5904e35c8d4164ff5220e6c9a84ded43ee9f73f9ffae9459586a21",
+      "bytes": 14490,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000169",
+      "provider_id": "kettlebell-shrug",
+      "path": "movekit/v2/poster-optimized/kettlebell-shrug.webp",
+      "sha256": "580e5186eacfb24f794a687920e8ce17c2c20a920513dc8e1fae9aec16eaa01b",
+      "bytes": 11412,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000170",
+      "provider_id": "kettlebell-single-arm-row",
+      "path": "movekit/v2/poster-optimized/kettlebell-single-arm-row.webp",
+      "sha256": "76d4284a7f733b2476b4ed9856abc0c9b28e86b7908d904a066cb3cb8dd57919",
+      "bytes": 16806,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000171",
+      "provider_id": "kettlebell-spinal-jefferson-curl",
+      "path": "movekit/v2/poster-optimized/kettlebell-spinal-jefferson-curl.webp",
+      "sha256": "b259e595b170dc4fbf2f5c5f9187d0c4d4375ac3f36054a36cdc29e8f4afd4a0",
+      "bytes": 12056,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000172",
+      "provider_id": "kettlebell-sumo-deadlift",
+      "path": "movekit/v2/poster-optimized/kettlebell-sumo-deadlift.webp",
+      "sha256": "20b214e20aee330d0c0533c1151444a824ead2cf451a66a742f799dfac13a0c5",
+      "bytes": 10826,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000173",
+      "provider_id": "kettlebell-swing",
+      "path": "movekit/v2/poster-optimized/kettlebell-swing.webp",
+      "sha256": "6fee8b4e217a1ae8d8354b856b8338ee6328105d9fc69dab726d8f5849f5374a",
+      "bytes": 10214,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000174",
+      "provider_id": "kettlebell-thruster",
+      "path": "movekit/v2/poster-optimized/kettlebell-thruster.webp",
+      "sha256": "fd5c6eff629aa1e7e489e10cbaf62f61cbebb6c11526a7ae63687619bac2bb8d",
+      "bytes": 12522,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000175",
+      "provider_id": "kettlebell-windmill",
+      "path": "movekit/v2/poster-optimized/kettlebell-windmill.webp",
+      "sha256": "8ffa66c9bd08dfe0211a74ddef3bf5266d1e031c546318e6d2937731ed7a46d9",
+      "bytes": 10028,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000176",
+      "provider_id": "landmine-t-bar-rows",
+      "path": "movekit/v2/poster-optimized/landmine-t-bar-rows.webp",
+      "sha256": "4315ff74cdadae5bf034fdc87960355ec1d529145cc7334a70b662c365860e51",
+      "bytes": 17504,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000177",
+      "provider_id": "lunge-walking",
+      "path": "movekit/v2/poster-optimized/lunge-walking.webp",
+      "sha256": "3016ec9c7fb702e711acb3a679a239ada93dc82323357a3e509c0f86fae11b43",
+      "bytes": 11216,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000178",
+      "provider_id": "machine-45-degree-back-extension",
+      "path": "movekit/v2/poster-optimized/machine-45-degree-back-extension.webp",
+      "sha256": "c2f5d7c5b7b924fef7418c8ef259b5e7097d243626c311292024ed75474a19ca",
+      "bytes": 17596,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000179",
+      "provider_id": "machine-cable-v-bar-push-downs",
+      "path": "movekit/v2/poster-optimized/machine-cable-v-bar-push-downs.webp",
+      "sha256": "e05eee81439c25204f2835745f876921fb9cdd1ee98839b4893ccbc6314ddc02",
+      "bytes": 15024,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000180",
+      "provider_id": "machine-chest-press",
+      "path": "movekit/v2/poster-optimized/machine-chest-press.webp",
+      "sha256": "14a4e27c104c86f16b6784510dc55b8c54df77d86c5ed2da396b1e7b71797e49",
+      "bytes": 22924,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000181",
+      "provider_id": "machine-crunch",
+      "path": "movekit/v2/poster-optimized/machine-crunch.webp",
+      "sha256": "1cc26af551ba8cd14843478c11b355a62b32f898ac80e01944491f931504d689",
+      "bytes": 25240,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000182",
+      "provider_id": "machine-dips",
+      "path": "movekit/v2/poster-optimized/machine-dips.webp",
+      "sha256": "8028a81402decacb833b14a7ac32b00f630f36d3223f4c138970e80f8b173cee",
+      "bytes": 28124,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000183",
+      "provider_id": "machine-face-pulls",
+      "path": "movekit/v2/poster-optimized/machine-face-pulls.webp",
+      "sha256": "1a013c4eeeaa63ec687af7fadf0dedaabd989065199ed4581d287c96b1cffb81",
+      "bytes": 19364,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000184",
+      "provider_id": "machine-front-military-press",
+      "path": "movekit/v2/poster-optimized/machine-front-military-press.webp",
+      "sha256": "08a99f5ff57be275a1bbe0aefa9fae9bfca0f96d0fea16372d2cf44fdb26eeb9",
+      "bytes": 27468,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000185",
+      "provider_id": "machine-leg-extension",
+      "path": "movekit/v2/poster-optimized/machine-leg-extension.webp",
+      "sha256": "b92fd3ea4d6d696c3cb64461c9b0309138cb64f77de0d51733f09ebe8b4f98cd",
+      "bytes": 23714,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000186",
+      "provider_id": "machine-leg-press",
+      "path": "movekit/v2/poster-optimized/machine-leg-press.webp",
+      "sha256": "1345a5c39857f8a82fd11bebc8f4cfed46efe515ae49c0df18203f2dbc9276ac",
+      "bytes": 33440,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000187",
+      "provider_id": "machine-neutral-row",
+      "path": "movekit/v2/poster-optimized/machine-neutral-row.webp",
+      "sha256": "c5df9189cad73ba0b9753e1d06a11e84fc92ffbfafcbcb041b0a042d038e128d",
+      "bytes": 21722,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000188",
+      "provider_id": "machine-pec-fly",
+      "path": "movekit/v2/poster-optimized/machine-pec-fly.webp",
+      "sha256": "65a25b4a97fb183391bc253f6b471b3a23e1342ad7bccf4c7387d9d30992a620",
+      "bytes": 20874,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000189",
+      "provider_id": "machine-plate-loaded-leg-extension",
+      "path": "movekit/v2/poster-optimized/machine-plate-loaded-leg-extension.webp",
+      "sha256": "a2bf192c48130e9e62194303df0d0d77f6e60a5f9543a80a39dcdb185e8183e5",
+      "bytes": 22852,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000190",
+      "provider_id": "machine-plate-loaded-t-bar-row",
+      "path": "movekit/v2/poster-optimized/machine-plate-loaded-t-bar-row.webp",
+      "sha256": "d8932bf032c98089f31a39697cffa00d750d7cb75474682b538292faaf8370af",
+      "bytes": 24464,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000191",
+      "provider_id": "machine-pulldown",
+      "path": "movekit/v2/poster-optimized/machine-pulldown.webp",
+      "sha256": "f4fdfe7b7815f65ec558ccfb7fb52f7ac8b06bb7453949e39f229da6cd0aadb9",
+      "bytes": 19254,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000192",
+      "provider_id": "machine-seated-cable-row",
+      "path": "movekit/v2/poster-optimized/machine-seated-cable-row.webp",
+      "sha256": "17175213b23baa15eaa56cf1c0b6f3d19341280b03c8502813acfc4725fd45a7",
+      "bytes": 25500,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000193",
+      "provider_id": "machine-underhand-row",
+      "path": "movekit/v2/poster-optimized/machine-underhand-row.webp",
+      "sha256": "cdb1365b130a630eb852b29bb8903ca92caab9725cf82b8071f6c9ac47a0df38",
+      "bytes": 32956,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000194",
+      "provider_id": "mountain-climber",
+      "path": "movekit/v2/poster-optimized/mountain-climber.webp",
+      "sha256": "8793589e54718baa4381839805e987c9c87520ff941abb40c7aea75ec6110726",
+      "bytes": 16642,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000195",
+      "provider_id": "narrow-pulldown",
+      "path": "movekit/v2/poster-optimized/narrow-pulldown.webp",
+      "sha256": "7213b3baf0d7183f2dab788d7be0f5b7b03cd960075ff7a3fa9ba77db54c3962",
+      "bytes": 23916,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000196",
+      "provider_id": "parralel-bar-dips",
+      "path": "movekit/v2/poster-optimized/parralel-bar-dips.webp",
+      "sha256": "3d920fd580641cb7274db2290f0c6362b853adc3a8ebfd2b785b2930da9e2602",
+      "bytes": 12500,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000197",
+      "provider_id": "plate-forward-lunge",
+      "path": "movekit/v2/poster-optimized/plate-forward-lunge.webp",
+      "sha256": "c732471d5ae0e92e9ebf537d92625c377bbf5b0f5c00c17e2108310d16c13b68",
+      "bytes": 11148,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000198",
+      "provider_id": "pull-ups",
+      "path": "movekit/v2/poster-optimized/pull-ups.webp",
+      "sha256": "612a869dfc2b1388c5c45d2d233632f1459e87ef2a91c4425d7df0d7297b53dc",
+      "bytes": 10862,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000199",
+      "provider_id": "push-up",
+      "path": "movekit/v2/poster-optimized/push-up.webp",
+      "sha256": "bc1b678ec35be45a534fc5e50f751b277ba9bb693b57170573bde3b9f330e408",
+      "bytes": 22716,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000200",
+      "provider_id": "single-legged-romanian-deadlifts",
+      "path": "movekit/v2/poster-optimized/single-legged-romanian-deadlifts.webp",
+      "sha256": "727dafc459768a9ac99919bad20097a4df7c55f8257e8cd452c99aa3bac2fdbd",
+      "bytes": 11886,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000201",
+      "provider_id": "smith-machine-close-grip-bench-press",
+      "path": "movekit/v2/poster-optimized/smith-machine-close-grip-bench-press.webp",
+      "sha256": "bbead63a86d49847637a4e613b4e8d9793dab515e934fd7b58bf3def35aacfa9",
+      "bytes": 33722,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000202",
+      "provider_id": "smith-machine-incline-bench-press",
+      "path": "movekit/v2/poster-optimized/smith-machine-incline-bench-press.webp",
+      "sha256": "ba54ec05ea92d4974efe5d087f87c038d0652ae0e3332bd9ed2cbfa1ca5c5fc3",
+      "bytes": 28012,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000203",
+      "provider_id": "smith-machine-standing-shrugs",
+      "path": "movekit/v2/poster-optimized/smith-machine-standing-shrugs.webp",
+      "sha256": "c9893874209f499e596c30a505f9c5ea5e4581cdc89aee222fff426317ac109e",
+      "bytes": 18342,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000204",
+      "provider_id": "smith-machine-sumo-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/smith-machine-sumo-romanian-deadlift.webp",
+      "sha256": "5c22977ee1eed0c5331feba1f6578422a95df4fafcf1047399b5603f78323250",
+      "bytes": 25372,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000205",
+      "provider_id": "supermans",
+      "path": "movekit/v2/poster-optimized/supermans.webp",
+      "sha256": "f884d63ec93ff2e74255975819c427427c64169a9f96d37c13260b7f8a6aaa7d",
+      "bytes": 19878,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000206",
+      "provider_id": "wall-sit",
+      "path": "movekit/v2/poster-optimized/wall-sit.webp",
+      "sha256": "a12f0dd6e248e4ea404c84a0f1493d424a40356a31a42036327ad63e77fd75ac",
+      "bytes": 12956,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000207",
+      "provider_id": "cable-low-single-arm-lateral-raise",
+      "path": "movekit/v2/poster-optimized/cable-low-single-arm-lateral-raise.webp",
+      "sha256": "863aa1608f03a5920e819e54cbf4fdebe8e86892e6240dab3eaefc3b5c632464",
+      "bytes": 19424,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000208",
+      "provider_id": "cable-low-to-high-fly",
+      "path": "movekit/v2/poster-optimized/cable-low-to-high-fly.webp",
+      "sha256": "ecfbc7cca5463e2213ba8ee8e358787a7c493f96b3928ffccf0eec8b2e4facaa",
+      "bytes": 28686,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000209",
+      "provider_id": "cable-pull-through",
+      "path": "movekit/v2/poster-optimized/cable-pull-through.webp",
+      "sha256": "b687547529a291fd40d5c8fe052e5f78324dbdf931ee0db7c7aedb073b61ca18",
+      "bytes": 19968,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000210",
+      "provider_id": "cable-rope-hammer-curl",
+      "path": "movekit/v2/poster-optimized/cable-rope-hammer-curl.webp",
+      "sha256": "59bce303c0645c3f3c732ef5fff8a92f1efcc49505916c6793ab7506c6950df0",
+      "bytes": 17328,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000211",
+      "provider_id": "cable-rope-overhead-tricep-extension",
+      "path": "movekit/v2/poster-optimized/cable-rope-overhead-tricep-extension.webp",
+      "sha256": "3c5d8d80a3ba83838ed580668e5fa0874171edfae0fe14191452cd622bfe9515",
+      "bytes": 17972,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000212",
+      "provider_id": "cable-rope-pullover",
+      "path": "movekit/v2/poster-optimized/cable-rope-pullover.webp",
+      "sha256": "702faf823e383cde53bc7dac7af327fb71d97222721524d1940e49a119b2a653",
+      "bytes": 20942,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000213",
+      "provider_id": "cable-single-leg-laying-leg-curl",
+      "path": "movekit/v2/poster-optimized/cable-single-leg-laying-leg-curl.webp",
+      "sha256": "6e17abde2756c9ce76767d4884d5172aa1c0e77ed6550f0ef3257472b58513fc",
+      "bytes": 24810,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000214",
+      "provider_id": "cable-wrist-curl",
+      "path": "movekit/v2/poster-optimized/cable-wrist-curl.webp",
+      "sha256": "d9ecfb1c827a25dad238424569c91dd0ce107a3b9e93e07455cee4ff9117912b",
+      "bytes": 14382,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000215",
+      "provider_id": "captains-chair-knee-raise",
+      "path": "movekit/v2/poster-optimized/captains-chair-knee-raise.webp",
+      "sha256": "590e02b87eb8a10bf9f63ffc25c3666b8cbd2e427dd965b5536f43dfe3af63ae",
+      "bytes": 15850,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000216",
+      "provider_id": "chest-supported-dumbbell-row",
+      "path": "movekit/v2/poster-optimized/chest-supported-dumbbell-row.webp",
+      "sha256": "96a318d846fe4b71b74602cbecb0410496ca018f02050b5cb85f0773b7c451a2",
+      "bytes": 13784,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000217",
+      "provider_id": "chest-supported-t-bar-row",
+      "path": "movekit/v2/poster-optimized/chest-supported-t-bar-row.webp",
+      "sha256": "77a73ecc81690afa96b3020b640585a8814815b7b04b4372e2ada0e9fde65b74",
+      "bytes": 17674,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000218",
+      "provider_id": "close-grip-barbell-curl",
+      "path": "movekit/v2/poster-optimized/close-grip-barbell-curl.webp",
+      "sha256": "7fc62b775c724d76ea505f551b015f27b9e275e6b5c194378de981bc798eb03b",
+      "bytes": 14300,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000219",
+      "provider_id": "cossack-squat",
+      "path": "movekit/v2/poster-optimized/cossack-squat.webp",
+      "sha256": "721bfafc536e3a710628c29911ff8a1881d6882213f050b7777327cb5113e89d",
+      "bytes": 12536,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000220",
+      "provider_id": "cross-body-hammer-curl",
+      "path": "movekit/v2/poster-optimized/cross-body-hammer-curl.webp",
+      "sha256": "499f08bf3559630b7fb514ed1a5bf2689d32160976f7dc2398627ebe4709500d",
+      "bytes": 11018,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000221",
+      "provider_id": "cuban-press",
+      "path": "movekit/v2/poster-optimized/cuban-press.webp",
+      "sha256": "655763b1480f30b1322c3c31b6cea0f779a0e6e5742c645ce74440eb56a8d9a0",
+      "bytes": 9628,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000222",
+      "provider_id": "cycling-cooldown",
+      "path": "movekit/v2/poster-optimized/cycling-cooldown.webp",
+      "sha256": "17159847fbd436c449803d4ce6cf7d54ccccaa7bad3f460bd0b7dae432d427a2",
+      "bytes": 28626,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000223",
+      "provider_id": "cycling-intervals",
+      "path": "movekit/v2/poster-optimized/cycling-intervals.webp",
+      "sha256": "29d005816b1dea6999f844f46950939be88225b3433dce07c63061b74b8ba77b",
+      "bytes": 29614,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000224",
+      "provider_id": "cycling-sprint",
+      "path": "movekit/v2/poster-optimized/cycling-sprint.webp",
+      "sha256": "29d005816b1dea6999f844f46950939be88225b3433dce07c63061b74b8ba77b",
+      "bytes": 29614,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000225",
+      "provider_id": "cycling-warmup",
+      "path": "movekit/v2/poster-optimized/cycling-warmup.webp",
+      "sha256": "21e99857bae93e85daf119cdeb96eb3163cd38fd3f38645ecc7a2a4d364e33ad",
+      "bytes": 30274,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000226",
+      "provider_id": "dead-bug",
+      "path": "movekit/v2/poster-optimized/dead-bug.webp",
+      "sha256": "cbfc3a4297f5199064c6c0cf23240788b6166c416d7fd5ff98b51d05013c7e52",
+      "bytes": 14936,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000227",
+      "provider_id": "90-90-hip-switches",
+      "path": "movekit/v2/poster-optimized/90-90-hip-switches.webp",
+      "sha256": "cc006e005c3916ce2d475253f6586f25fc2501096e01ab33e05e08a8422016aa",
+      "bytes": 17578,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000228",
+      "provider_id": "adductor-groin-stretch",
+      "path": "movekit/v2/poster-optimized/adductor-groin-stretch.webp",
+      "sha256": "35dd83fc17061e65cf4966f2b44d4b18b2dd1f93cca9a1c19ab643d7e564fbb1",
+      "bytes": 19704,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000229",
+      "provider_id": "alternating-hammer-curl",
+      "path": "movekit/v2/poster-optimized/alternating-hammer-curl.webp",
+      "sha256": "397bce52d74fca31388caf67aac014f949731eb16005eeb1144e45a04b32f388",
+      "bytes": 11522,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000230",
+      "provider_id": "anti-gravity-press",
+      "path": "movekit/v2/poster-optimized/anti-gravity-press.webp",
+      "sha256": "9b1fe86f109904ae4d557435ccf5b8da75e862db155c0677921b1190f8a4b6c3",
+      "bytes": 22752,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000231",
+      "provider_id": "arc-trainer",
+      "path": "movekit/v2/poster-optimized/arc-trainer.webp",
+      "sha256": "2b1a8558952d8d3bd6920b4b565bab7a7a11488948bef716a99160860a1f6a79",
+      "bytes": 21086,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000232",
+      "provider_id": "archer-push-up",
+      "path": "movekit/v2/poster-optimized/archer-push-up.webp",
+      "sha256": "c873038f239af0612f4d6f105bde47adb187a18112dd769207ab0f9623fb8dcb",
+      "bytes": 18324,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000233",
+      "provider_id": "arm-circles-front-back",
+      "path": "movekit/v2/poster-optimized/arm-circles-front-back.webp",
+      "sha256": "d807355fb55ebf51940820e02f7f1f4a34356bd0460dcfb365aacf0d89b1da59",
+      "bytes": 8724,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000234",
+      "provider_id": "arnold-press",
+      "path": "movekit/v2/poster-optimized/arnold-press.webp",
+      "sha256": "cd7e14113c8a634e49b8335d2ad71e9436a5808f3354ae19ba78d60d359a10d7",
+      "bytes": 22104,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000235",
+      "provider_id": "assault-bike",
+      "path": "movekit/v2/poster-optimized/assault-bike.webp",
+      "sha256": "1c6509f34a2c3cd4e3b89453a1903956f12f5690f48c3a91a39d8ddb3321c25a",
+      "bytes": 30538,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000236",
+      "provider_id": "assisted-pistol-squat",
+      "path": "movekit/v2/poster-optimized/assisted-pistol-squat.webp",
+      "sha256": "0156ebec36ca2e9764d645d1bd8ce7cac9556e8834276d6eafd471f8ee749c6c",
+      "bytes": 12270,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000237",
+      "provider_id": "b-stance-hip-thrust",
+      "path": "movekit/v2/poster-optimized/b-stance-hip-thrust.webp",
+      "sha256": "5b2798d8439e28436128cd6a99914094f87564b69d4fae2bead12e4b1ea86e99",
+      "bytes": 20546,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000238",
+      "provider_id": "back-extension",
+      "path": "movekit/v2/poster-optimized/back-extension.webp",
+      "sha256": "dd238442cd112ea84395a94fe4fd0c6e845b327c3d8d07a432e900e00071bf89",
+      "bytes": 11920,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000239",
+      "provider_id": "backpack-curls",
+      "path": "movekit/v2/poster-optimized/backpack-curls.webp",
+      "sha256": "37d273648855929bf88b3d9c4c5b74cb5478d36890055aadcdff7950f6f7d32c",
+      "bytes": 17758,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000240",
+      "provider_id": "backpack-row",
+      "path": "movekit/v2/poster-optimized/backpack-row.webp",
+      "sha256": "80f440a977f4583f66bcd7cda97e92a0d9c9c2f7b03ba6959b6eba2cb8dc9355",
+      "bytes": 16564,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000241",
+      "provider_id": "backstroke-swim",
+      "path": "movekit/v2/poster-optimized/backstroke-swim.webp",
+      "sha256": "f5b5260546fe5737bdc840c0ddf02fd98a0ec815d59b28ac031e53f5513145aa",
+      "bytes": 24824,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000242",
+      "provider_id": "band-assisted-pull-up",
+      "path": "movekit/v2/poster-optimized/band-assisted-pull-up.webp",
+      "sha256": "10cb48598ce6a2fcbe956d5e80e9ec3b8cb7ed3214fb66cbbc436fd000a27a8a",
+      "bytes": 16546,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000243",
+      "provider_id": "band-external-rotation",
+      "path": "movekit/v2/poster-optimized/band-external-rotation.webp",
+      "sha256": "ff2056f0fe92e04a72445336c435a6f3856c6407aa225a06db869d18ff6202d4",
+      "bytes": 9992,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000244",
+      "provider_id": "band-glute-bridge",
+      "path": "movekit/v2/poster-optimized/band-glute-bridge.webp",
+      "sha256": "043f5bd1e35d4d1e45e56fa6d5c26b1292aa6d6e94e5fa72225432c87ba94db4",
+      "bytes": 16190,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000245",
+      "provider_id": "band-good-morning",
+      "path": "movekit/v2/poster-optimized/band-good-morning.webp",
+      "sha256": "a7f66cba6741e77b37847c8c0e520427d8e0f48da030dbca8fc5905a4624b116",
+      "bytes": 13562,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000246",
+      "provider_id": "band-leg-curl",
+      "path": "movekit/v2/poster-optimized/band-leg-curl.webp",
+      "sha256": "4fc758f21623461c9b0c86b0761910c25012eaebf139a994a12be5f696bc7fa2",
+      "bytes": 17352,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000247",
+      "provider_id": "band-overhead-press",
+      "path": "movekit/v2/poster-optimized/band-overhead-press.webp",
+      "sha256": "b6e9f4b5911aff85a7a34db0f43fe0971fb6053b476af19335078a298321cbf5",
+      "bytes": 10954,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000248",
+      "provider_id": "band-pull-through",
+      "path": "movekit/v2/poster-optimized/band-pull-through.webp",
+      "sha256": "9f17fa701da1ce01f8b7be17c880a2953a42bc3ad0f20f785cb6348585f5495e",
+      "bytes": 18200,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000249",
+      "provider_id": "band-shoulder-dislocates",
+      "path": "movekit/v2/poster-optimized/band-shoulder-dislocates.webp",
+      "sha256": "9aceda09f6b90d4728a5387ca7d70fc0cb41fc304950182c85d8483d1b079269",
+      "bytes": 10942,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000250",
+      "provider_id": "band-squat",
+      "path": "movekit/v2/poster-optimized/band-squat.webp",
+      "sha256": "d249303edd0cc9e422fa21509c6bd283198bcf9e680c4cc9ea231f073439b88e",
+      "bytes": 10208,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000251",
+      "provider_id": "band-straight-arm-pulldown",
+      "path": "movekit/v2/poster-optimized/band-straight-arm-pulldown.webp",
+      "sha256": "eec72e03d7a74a46ae8f540e16fe432116fe018121b2fbb2b1c52a6478c6bc05",
+      "bytes": 11420,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000252",
+      "provider_id": "band-tricep-kickbacks",
+      "path": "movekit/v2/poster-optimized/band-tricep-kickbacks.webp",
+      "sha256": "d0ebcd3c3d026fa4572e3dd57418fdb4087111918e2efeda4ec393b08cff939e",
+      "bytes": 13944,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000253",
+      "provider_id": "banded-ankle-dorsiflexion-mobilization",
+      "path": "movekit/v2/poster-optimized/banded-ankle-dorsiflexion-mobilization.webp",
+      "sha256": "7fd3fd76597db6d46854c77f67d6c1cb688fe9097233921e64cc92eae9b4e687",
+      "bytes": 22654,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000254",
+      "provider_id": "banded-clamshell",
+      "path": "movekit/v2/poster-optimized/banded-clamshell.webp",
+      "sha256": "50547791a77fa59826dbf4d815609732cd243e6d1d3209a57019f9189f22c512",
+      "bytes": 22010,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000255",
+      "provider_id": "banded-eccentric-tibialis-raise",
+      "path": "movekit/v2/poster-optimized/banded-eccentric-tibialis-raise.webp",
+      "sha256": "e8deb2fc4880362dd440b905f5be4617cfa7db2ca63a09b377dd40d66026161c",
+      "bytes": 20978,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000256",
+      "provider_id": "barbell-bent-over-row-overhand",
+      "path": "movekit/v2/poster-optimized/barbell-bent-over-row-overhand.webp",
+      "sha256": "bc73f29a99bab66cfb5688ebfa31a2db3752d75f7f1d4fdc4ef7dfb067254e82",
+      "bytes": 16044,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000257",
+      "provider_id": "barbell-clean-and-jerk",
+      "path": "movekit/v2/poster-optimized/barbell-clean-and-jerk.webp",
+      "sha256": "ef196ce950461ab7030b703092ae89b5633030212fb9223696074aedc1a837f9",
+      "bytes": 8742,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000258",
+      "provider_id": "barbell-floor-press",
+      "path": "movekit/v2/poster-optimized/barbell-floor-press.webp",
+      "sha256": "414c8486d9a9155808b71ec1d859b85d7629d2da44dac96c209cae841ac536b7",
+      "bytes": 22232,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000259",
+      "provider_id": "barbell-glute-bridge",
+      "path": "movekit/v2/poster-optimized/barbell-glute-bridge.webp",
+      "sha256": "88052197199efb77007813aa31b984086872755c08e737fec7fb535509c556bc",
+      "bytes": 12404,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000260",
+      "provider_id": "barbell-hack-squat",
+      "path": "movekit/v2/poster-optimized/barbell-hack-squat.webp",
+      "sha256": "d33041c49d540157e3087b66257041c10490606583c2d40d4ed616099b893edf",
+      "bytes": 11252,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000261",
+      "provider_id": "barbell-hip-thrust",
+      "path": "movekit/v2/poster-optimized/barbell-hip-thrust.webp",
+      "sha256": "906633cbd13a3b488d553c0caee3396b78e521d44d0770fdd8935789b6ce287f",
+      "bytes": 25452,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000262",
+      "provider_id": "barbell-landmine-row",
+      "path": "movekit/v2/poster-optimized/barbell-landmine-row.webp",
+      "sha256": "1d8abfb0bcd87db88ca1de77ae0cd8027ec3db85153045ef6e3564fa402b42f7",
+      "bytes": 21328,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000263",
+      "provider_id": "barbell-lunge",
+      "path": "movekit/v2/poster-optimized/barbell-lunge.webp",
+      "sha256": "2e04651f088c4edd0cf5c984972bc119ca381f624436f5eba042526b336acaff",
+      "bytes": 10948,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000264",
+      "provider_id": "barbell-rear-delt-row",
+      "path": "movekit/v2/poster-optimized/barbell-rear-delt-row.webp",
+      "sha256": "b69d73f143e3ac61c6bb22b397f6dc18fafb2f8132bae4cd04c5640b3507b81b",
+      "bytes": 16030,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000265",
+      "provider_id": "barbell-reverse-lunge",
+      "path": "movekit/v2/poster-optimized/barbell-reverse-lunge.webp",
+      "sha256": "7f3674ed247caf010f5326c5f3b1574e1814d79f03008fbd5b8b749a086c8243",
+      "bytes": 13038,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000266",
+      "provider_id": "barbell-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/barbell-romanian-deadlift.webp",
+      "sha256": "21209e0f3acf2d8ad60129e90cccd4801c5b0a1c66be0d64ce63cfd13aecb849",
+      "bytes": 14036,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000267",
+      "provider_id": "barbell-skullcrusher",
+      "path": "movekit/v2/poster-optimized/barbell-skullcrusher.webp",
+      "sha256": "c4d3b10b513ddc490d2ac22a0c2085caef961f21921b5bb292b4ba0b7f98a515",
+      "bytes": 19088,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000268",
+      "provider_id": "barbell-walking-lunge",
+      "path": "movekit/v2/poster-optimized/barbell-walking-lunge.webp",
+      "sha256": "7b8122a702633752d666030f0ca7d8e8e3ed892a4277d22597b2641237be11b2",
+      "bytes": 10812,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000269",
+      "provider_id": "battle-ropes",
+      "path": "movekit/v2/poster-optimized/battle-ropes.webp",
+      "sha256": "fbf798f4465e62897512dce50f4dc3a4c041faf144be8e5d90fa8cfbe7be7337",
+      "bytes": 16458,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000270",
+      "provider_id": "bayesian-curl",
+      "path": "movekit/v2/poster-optimized/bayesian-curl.webp",
+      "sha256": "f96dc763bfe70c7fec92ee70a5c4dd7fdc95ef544bf330df338c618818c6ff04",
+      "bytes": 16912,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000271",
+      "provider_id": "bear-crawl",
+      "path": "movekit/v2/poster-optimized/bear-crawl.webp",
+      "sha256": "31bd18d32d48436b8cd93205875ca1b9cb4cc969a5dccb10fe62e94571544ce6",
+      "bytes": 21562,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000272",
+      "provider_id": "behind-the-neck-press",
+      "path": "movekit/v2/poster-optimized/behind-the-neck-press.webp",
+      "sha256": "9e107410bb304b0046c49872d5b66b60de7240fc0d1729a8f4833abd7de6f520",
+      "bytes": 11058,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000273",
+      "provider_id": "belt-squat",
+      "path": "movekit/v2/poster-optimized/belt-squat.webp",
+      "sha256": "fa8a034846e4421e0c8446700063c638c466bf21a30f87817d3f4dbf450db663",
+      "bytes": 29318,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000274",
+      "provider_id": "bent-knee-soleus-raise",
+      "path": "movekit/v2/poster-optimized/bent-knee-soleus-raise.webp",
+      "sha256": "1adbf2f560347da0f5d28dd482ae7f79805b5f1d7fcda4a90a615a53babb77b4",
+      "bytes": 9842,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000275",
+      "provider_id": "bicycle-crunches",
+      "path": "movekit/v2/poster-optimized/bicycle-crunches.webp",
+      "sha256": "7ff969785812e24ac1911ed96e026cbc2d3da3fa88c07afcd2224dea9f362b77",
+      "bytes": 13452,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000276",
+      "provider_id": "bird-dog",
+      "path": "movekit/v2/poster-optimized/bird-dog.webp",
+      "sha256": "32cade449a790d924f4d1bf7674f54fc4dc3b68d1896b2913c28a0fc2e53a639",
+      "bytes": 21562,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000277",
+      "provider_id": "bodyweight-deficit-reverse-lunge",
+      "path": "movekit/v2/poster-optimized/bodyweight-deficit-reverse-lunge.webp",
+      "sha256": "29a64bd403fab7d9585fdaeeb80bf916680559d3d14c12b39cca5c154460d3d3",
+      "bytes": 13406,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000278",
+      "provider_id": "bodyweight-squat-to-stand",
+      "path": "movekit/v2/poster-optimized/bodyweight-squat-to-stand.webp",
+      "sha256": "794c1786eea40788e1adfbc136cd8d0b4bc0e7bb6ae50698baaa1018723dabd5",
+      "bytes": 15562,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000279",
+      "provider_id": "bounds",
+      "path": "movekit/v2/poster-optimized/bounds.webp",
+      "sha256": "431baa84b8bd689f2f2eea2ed35f71fcad5d579e77d7e8ea3f176a30ab6b6ca8",
+      "bytes": 10084,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000280",
+      "provider_id": "bradford-press",
+      "path": "movekit/v2/poster-optimized/bradford-press.webp",
+      "sha256": "d729a20f9032569bb7d58f7ff50ab025d27b57b2c4a05b3b7e7352080559165f",
+      "bytes": 11054,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000281",
+      "provider_id": "breaststroke-swim",
+      "path": "movekit/v2/poster-optimized/breaststroke-swim.webp",
+      "sha256": "91daa38a2258dd3646e04060d9c103b064c6da9e590280da139cc87f640136be",
+      "bytes": 14190,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000282",
+      "provider_id": "broad-jump",
+      "path": "movekit/v2/poster-optimized/broad-jump.webp",
+      "sha256": "86ccab779d8041da8504b7db86c175e5c0ebcb787130c95311781370a5acd2af",
+      "bytes": 8528,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000283",
+      "provider_id": "broomstick-pass-throughs",
+      "path": "movekit/v2/poster-optimized/broomstick-pass-throughs.webp",
+      "sha256": "7377e7c8e8ab7cfa5ad1507eb380c7fa562240719ba3e1af73b26f6debe90b0b",
+      "bytes": 10136,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000284",
+      "provider_id": "butterfly-swim",
+      "path": "movekit/v2/poster-optimized/butterfly-swim.webp",
+      "sha256": "0705de9c77e840bc642ae0452c59aaeb8daebdf240f5949dd4d2a910f0030d70",
+      "bytes": 18636,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000285",
+      "provider_id": "cable-chop",
+      "path": "movekit/v2/poster-optimized/cable-chop.webp",
+      "sha256": "e3f18b150199be668440f692292c3ace09460fbe5cec2011e9f30937fc95b503",
+      "bytes": 23290,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000286",
+      "provider_id": "cable-external-rotation",
+      "path": "movekit/v2/poster-optimized/cable-external-rotation.webp",
+      "sha256": "dd1769274cb819b1b0a4d5d253e7bd10de72388f88ec06a2bbe6e73b0366fbd3",
+      "bytes": 16720,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000287",
+      "provider_id": "cable-front-raise",
+      "path": "movekit/v2/poster-optimized/cable-front-raise.webp",
+      "sha256": "7854ac704aea1f79b4a9e6734b350060e369972a1556346efe46dc7535e349ab",
+      "bytes": 17328,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000288",
+      "provider_id": "cable-high-to-low-fly",
+      "path": "movekit/v2/poster-optimized/cable-high-to-low-fly.webp",
+      "sha256": "460b3ff8c23f30de2b1fb0a84de4405ee71019900a541f42a8839a49e5ce2371",
+      "bytes": 18908,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000289",
+      "provider_id": "cable-hip-abduction",
+      "path": "movekit/v2/poster-optimized/cable-hip-abduction.webp",
+      "sha256": "3187d2b79ea2ca9ee341810a2b54f9a1694a0663c67c47e77a29dc08847ff91a",
+      "bytes": 25748,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000290",
+      "provider_id": "cable-kickback",
+      "path": "movekit/v2/poster-optimized/cable-kickback.webp",
+      "sha256": "b6a4c78167050e79eed9c125c60cb52dbfa152f0354a8d7f836998f7a95bd50b",
+      "bytes": 19812,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000291",
+      "provider_id": "cable-overhead-straight-bar-extensions",
+      "path": "movekit/v2/poster-optimized/cable-overhead-straight-bar-extensions.webp",
+      "sha256": "2478e4e6e5381aa03f5fedbb29fb7c02ae2134a3b941869c7b58b9c02849661e",
+      "bytes": 19536,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000292",
+      "provider_id": "cable-pallof-press",
+      "path": "movekit/v2/poster-optimized/cable-pallof-press.webp",
+      "sha256": "18d97dc2ac096b0588327ee1f988dc1fc676eaeeb7286499bb8cffadc2d4df61",
+      "bytes": 19332,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000293",
+      "provider_id": "cable-single-arm-rear-delt-row",
+      "path": "movekit/v2/poster-optimized/cable-single-arm-rear-delt-row.webp",
+      "sha256": "6a836749f30dc44c27907d444f6de7235a8cd28a9f4662925143cf7551e08fff",
+      "bytes": 13504,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000294",
+      "provider_id": "cable-tricep-kickback",
+      "path": "movekit/v2/poster-optimized/cable-tricep-kickback.webp",
+      "sha256": "212fc9a7603d35c9b1875d4b38264904b71a91b768c475c91ce11c55ac889435",
+      "bytes": 13706,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000295",
+      "provider_id": "cat-camel",
+      "path": "movekit/v2/poster-optimized/cat-camel.webp",
+      "sha256": "a89ef9e69b5c3dabf94165a8bf8b7890515ecf25e7526d28b5e46720bcb294fe",
+      "bytes": 17104,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000296",
+      "provider_id": "close-grip-incline-push-up",
+      "path": "movekit/v2/poster-optimized/close-grip-incline-push-up.webp",
+      "sha256": "7ae4588c83b9429820c63bebd90710fa0d44b1da9244495a0b1138595204f393",
+      "bytes": 13410,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000297",
+      "provider_id": "controlled-forearm-pronation-supination",
+      "path": "movekit/v2/poster-optimized/controlled-forearm-pronation-supination.webp",
+      "sha256": "3689670afb407004fa742d429cff3cddd1ba15415d749fb13a867c3ab291224d",
+      "bytes": 10126,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000298",
+      "provider_id": "copenhagen-plank",
+      "path": "movekit/v2/poster-optimized/copenhagen-plank.webp",
+      "sha256": "c8dbecfaadde685365ec2e7d15c2465827601ff6ba1a5d7dec1bcab7a19e02b3",
+      "bytes": 15412,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000299",
+      "provider_id": "cross-body-cable-tricep-extension",
+      "path": "movekit/v2/poster-optimized/cross-body-cable-tricep-extension.webp",
+      "sha256": "76c5dbcb3c6c23308112d24943f863a4c8a5a76df8f5ab341610aacada63108a",
+      "bytes": 17220,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000300",
+      "provider_id": "crunches",
+      "path": "movekit/v2/poster-optimized/crunches.webp",
+      "sha256": "745fbe0e7c9b1ea519eaba656c73ba6abb065ea806c7f65c5111e80c6635d707",
+      "bytes": 17530,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000301",
+      "provider_id": "dead-bug-weighted",
+      "path": "movekit/v2/poster-optimized/dead-bug-weighted.webp",
+      "sha256": "68aec76619a75da22af2d76059a7072fb8bd7b6bfa5438bf6c95dc4ab7763b20",
+      "bytes": 15840,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000302",
+      "provider_id": "dead-hang",
+      "path": "movekit/v2/poster-optimized/dead-hang.webp",
+      "sha256": "096e51eab96c8a15035718b3981c002211469345a5be5d98e6d9a37cb0cc644d",
+      "bytes": 10916,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000303",
+      "provider_id": "decline-barbell-bench-press",
+      "path": "movekit/v2/poster-optimized/decline-barbell-bench-press.webp",
+      "sha256": "76a4f68b6400fb163fbd6a1c156f9efb9efa8dcdec2fa5d855eb2b732fc6494e",
+      "bytes": 18632,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000304",
+      "provider_id": "decline-crunch",
+      "path": "movekit/v2/poster-optimized/decline-crunch.webp",
+      "sha256": "078bf650de4fafd58dca88401a1fec2c0001f2b57df1eb16b09d7ffd46dcdcbd",
+      "bytes": 23012,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000305",
+      "provider_id": "decline-machine-chest-press",
+      "path": "movekit/v2/poster-optimized/decline-machine-chest-press.webp",
+      "sha256": "ba40ee6c589dbd52dfaf34c842b25b69d7863e5fce3be03f1c618e153a70e07f",
+      "bytes": 21434,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000306",
+      "provider_id": "decline-sit-up",
+      "path": "movekit/v2/poster-optimized/decline-sit-up.webp",
+      "sha256": "20a6c4ef030922e4987ca987716f4f487b60fc628c8869dc2605ece8fd015a56",
+      "bytes": 14496,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000307",
+      "provider_id": "deficit-barbell-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/deficit-barbell-romanian-deadlift.webp",
+      "sha256": "856e1d7aee8165b9c07d4c06b62eba60a9ee4f97464c5e478ff130515e7bfdbf",
+      "bytes": 14104,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000308",
+      "provider_id": "deficit-deadlift",
+      "path": "movekit/v2/poster-optimized/deficit-deadlift.webp",
+      "sha256": "0c866ccc0df498ecb5d1371a5e4f5137ad5523ea261d4115787658fb01a420b9",
+      "bytes": 14834,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000309",
+      "provider_id": "deficit-dumbbell-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/deficit-dumbbell-romanian-deadlift.webp",
+      "sha256": "d7eec818e460e485967f386bbbac066e136ac800ebfd30dbaf54c12ac38996ed",
+      "bytes": 8514,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000310",
+      "provider_id": "double-kettlebell-clean-and-press",
+      "path": "movekit/v2/poster-optimized/double-kettlebell-clean-and-press.webp",
+      "sha256": "749c24dcf367fd84c77bbc46f85200c420ae58c021f4d821dd43d65423a72c9e",
+      "bytes": 8102,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000311",
+      "provider_id": "dumbbell-back-extension",
+      "path": "movekit/v2/poster-optimized/dumbbell-back-extension.webp",
+      "sha256": "a96f77c5091e2a2f7eec373b72504ed1b82f823a0fe2f996c64f0ec50bf1a59c",
+      "bytes": 12470,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000312",
+      "provider_id": "dumbbell-close-grip-push-up",
+      "path": "movekit/v2/poster-optimized/dumbbell-close-grip-push-up.webp",
+      "sha256": "f28b2ed9337e587d7a34ba3eeddf83a5487845ccfa43d3e389927d3ed729bf68",
+      "bytes": 18778,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000313",
+      "provider_id": "dumbbell-cossack-squat",
+      "path": "movekit/v2/poster-optimized/dumbbell-cossack-squat.webp",
+      "sha256": "ca275b879409a5938c8d0ce16d4777ac29fb5c17bbe7ef588c54ae152d8955fe",
+      "bytes": 11600,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000314",
+      "provider_id": "dumbbell-deadlift",
+      "path": "movekit/v2/poster-optimized/dumbbell-deadlift.webp",
+      "sha256": "b9ea4c6d49993abcd8e1ed1b0022fcbaa1b82051e211ab00269a6773cc64ae0d",
+      "bytes": 8638,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000315",
+      "provider_id": "dumbbell-decline-crunch-behind-head",
+      "path": "movekit/v2/poster-optimized/dumbbell-decline-crunch-behind-head.webp",
+      "sha256": "d2c7ef2b080cd53ababd95ee1f52c34eb7f3a17e3f63469a225e9bdbb30c8407",
+      "bytes": 14142,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000316",
+      "provider_id": "dumbbell-farmer-carry",
+      "path": "movekit/v2/poster-optimized/dumbbell-farmer-carry.webp",
+      "sha256": "8e869d5d2a04a0c10fb368ca182bed0e789c667b73f736b0540ea3d5b515b17d",
+      "bytes": 12282,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000317",
+      "provider_id": "dumbbell-front-squat",
+      "path": "movekit/v2/poster-optimized/dumbbell-front-squat.webp",
+      "sha256": "a12fd5c6757841704aa2d28114b468c2b2a889a3c83d90bf77748bf9214438dd",
+      "bytes": 9458,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000318",
+      "provider_id": "dumbbell-front-squat-tempo",
+      "path": "movekit/v2/poster-optimized/dumbbell-front-squat-tempo.webp",
+      "sha256": "67556e568246f3157d4670d91cd28d873fd1007e7cc3df5358f1267ce3b56235",
+      "bytes": 11020,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000319",
+      "provider_id": "dumbbell-halo",
+      "path": "movekit/v2/poster-optimized/dumbbell-halo.webp",
+      "sha256": "4d2a29804983bb509b23eb0112568838fd80440549b539f04c265c78fa8f64d9",
+      "bytes": 14392,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000320",
+      "provider_id": "dumbbell-hammer-preacher-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-hammer-preacher-curl.webp",
+      "sha256": "ebc4dfd757386f7b6d5d4e0f750e12208286f9710f326726afe85a28b5c7ad90",
+      "bytes": 19004,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000321",
+      "provider_id": "dumbbell-incline-row",
+      "path": "movekit/v2/poster-optimized/dumbbell-incline-row.webp",
+      "sha256": "9bc161f8d5921bf3245d3c8e8e1b5ad33e0c551fda0e4b95f7d04fc90c195b67",
+      "bytes": 21668,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000322",
+      "provider_id": "dumbbell-lateral-lunge",
+      "path": "movekit/v2/poster-optimized/dumbbell-lateral-lunge.webp",
+      "sha256": "8743dd2e98894afd01544d67ac11bcfaff64bcfb20598068c5872056aa12acf8",
+      "bytes": 10042,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000323",
+      "provider_id": "dumbbell-lying-single-arm-rear-lateral-raise",
+      "path": "movekit/v2/poster-optimized/dumbbell-lying-single-arm-rear-lateral-raise.webp",
+      "sha256": "2089ab23d9a285e769462b9c07a90147cf84d232e4f0ba7c5c4a8a12bd63d16b",
+      "bytes": 14988,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000324",
+      "provider_id": "dumbbell-neutral-grip-bent-over-row",
+      "path": "movekit/v2/poster-optimized/dumbbell-neutral-grip-bent-over-row.webp",
+      "sha256": "ade5a07b55330949e61c882362f1d6ca57e6c10852462b60ec3559b64545eec5",
+      "bytes": 13804,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000325",
+      "provider_id": "dumbbell-neutral-high-incline-bench-press",
+      "path": "movekit/v2/poster-optimized/dumbbell-neutral-high-incline-bench-press.webp",
+      "sha256": "cb08b815c71a1a28d6a04d90c61958ece740bf468a19ad10d4be1ff59c1b7267",
+      "bytes": 16492,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000326",
+      "provider_id": "dumbbell-overhead-squat",
+      "path": "movekit/v2/poster-optimized/dumbbell-overhead-squat.webp",
+      "sha256": "40c5da3a88b3752861c8a5862a5b01277e1c6609bdbd2e3bfe715e9129656d6c",
+      "bytes": 10546,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000327",
+      "provider_id": "dumbbell-pullover",
+      "path": "movekit/v2/poster-optimized/dumbbell-pullover.webp",
+      "sha256": "ea0b8d53222ecda2873e719bbb8544f44ccdce19d0915457595a8a55f93552ed",
+      "bytes": 15044,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000328",
+      "provider_id": "dumbbell-push-press",
+      "path": "movekit/v2/poster-optimized/dumbbell-push-press.webp",
+      "sha256": "326ad1be924feae9f92b92314f3167b2755bc005c7c9c6df034abe3450fc79d2",
+      "bytes": 8846,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000329",
+      "provider_id": "dumbbell-reverse-lunge",
+      "path": "movekit/v2/poster-optimized/dumbbell-reverse-lunge.webp",
+      "sha256": "32a0064fd8d49c464f901d0f78dd5157052bc9cda35fb6c73c024765894650a2",
+      "bytes": 11402,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000330",
+      "provider_id": "dumbbell-seated-full-lateral-raise",
+      "path": "movekit/v2/poster-optimized/dumbbell-seated-full-lateral-raise.webp",
+      "sha256": "c1819e9cead211ce587502bc87806f3c3efd8a695f31672a87c01c1d12736cbf",
+      "bytes": 11572,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000331",
+      "provider_id": "dumbbell-seated-lateral-raises",
+      "path": "movekit/v2/poster-optimized/dumbbell-seated-lateral-raises.webp",
+      "sha256": "773598df2589c57a89d377493c2dfb21edb7a49fb75337059ac460dbc952f9b0",
+      "bytes": 19508,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000332",
+      "provider_id": "dumbbell-side-plank",
+      "path": "movekit/v2/poster-optimized/dumbbell-side-plank.webp",
+      "sha256": "1468a353ae7f97a6ecc3f5840aca9230a08702ad47931f7f73a6ec48db4b0e89",
+      "bytes": 14874,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000333",
+      "provider_id": "dumbbell-single-arm-incline-bench-preacher-curl",
+      "path": "movekit/v2/poster-optimized/dumbbell-single-arm-incline-bench-preacher-curl.webp",
+      "sha256": "114a672f6e83f61e82e09c9fe9f0520adbf56fc699c00a2bc689b4ffd430bedb",
+      "bytes": 17712,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000334",
+      "provider_id": "dumbbell-single-arm-neutral-overhead-press",
+      "path": "movekit/v2/poster-optimized/dumbbell-single-arm-neutral-overhead-press.webp",
+      "sha256": "6ec3e337d723a5c9778ba81180bf67b47faddaae4d19d412efe4c35df323e5fb",
+      "bytes": 9182,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000335",
+      "provider_id": "dumbbell-single-arm-upright-row",
+      "path": "movekit/v2/poster-optimized/dumbbell-single-arm-upright-row.webp",
+      "sha256": "912d15ce371790415ca5be01fe04817ee7bae46eac5f029dea32cd43dd9ca272",
+      "bytes": 12026,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000336",
+      "provider_id": "dumbbell-single-leg-hip-thrust",
+      "path": "movekit/v2/poster-optimized/dumbbell-single-leg-hip-thrust.webp",
+      "sha256": "1f53bc17656ba4e2feb5d30fe7877d809f407de0cc53440918b838d2c0ec6057",
+      "bytes": 21262,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000337",
+      "provider_id": "dumbbell-squat",
+      "path": "movekit/v2/poster-optimized/dumbbell-squat.webp",
+      "sha256": "ec35ac99ca521138cd198e94b0a7ddba27819b3a7f63a2268aa74c7610a6f241",
+      "bytes": 12654,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000338",
+      "provider_id": "dumbbell-step-up-low",
+      "path": "movekit/v2/poster-optimized/dumbbell-step-up-low.webp",
+      "sha256": "2e51d26b984a061ddf90dc4604746857e32a2a904834e15f87a8ab1e69e15554",
+      "bytes": 9744,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000339",
+      "provider_id": "dumbbell-stiff-leg-deadlift",
+      "path": "movekit/v2/poster-optimized/dumbbell-stiff-leg-deadlift.webp",
+      "sha256": "affc70e95cfde71a9fdb2de49278cf0913a1762a93ddd2bd2dd7cf3b94469a6f",
+      "bytes": 13608,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000340",
+      "provider_id": "dumbbell-suitcase-carry",
+      "path": "movekit/v2/poster-optimized/dumbbell-suitcase-carry.webp",
+      "sha256": "7e0621cf0edf84b39e57380b3d3040d292ec6edab8050b53eca11fd085a0315b",
+      "bytes": 9120,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000341",
+      "provider_id": "dumbbell-tibialis-raise",
+      "path": "movekit/v2/poster-optimized/dumbbell-tibialis-raise.webp",
+      "sha256": "d112af6c8cbb4f20479983b5033d1cbe7b3afff5052a002383c7007088b2e154",
+      "bytes": 16100,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000342",
+      "provider_id": "dumbbell-turkish-get-up",
+      "path": "movekit/v2/poster-optimized/dumbbell-turkish-get-up.webp",
+      "sha256": "76c068bb0625554f1a964eed5d2b28f9a7e2476c0fdb2225f46761a3c3f7acce",
+      "bytes": 7988,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000343",
+      "provider_id": "dumbbell-walking-lunges",
+      "path": "movekit/v2/poster-optimized/dumbbell-walking-lunges.webp",
+      "sha256": "802b843b0df1c35e167bcfbae9cefafc9a8b115ed4eefdcf43e7b20eeaa2f108",
+      "bytes": 9474,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000344",
+      "provider_id": "dumbbell-windmill",
+      "path": "movekit/v2/poster-optimized/dumbbell-windmill.webp",
+      "sha256": "7cdab424a658f6c42588ff88d932c5ee15d77f82beada9921e888c6006866e28",
+      "bytes": 9986,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000345",
+      "provider_id": "eccentric-calf-lowers",
+      "path": "movekit/v2/poster-optimized/eccentric-calf-lowers.webp",
+      "sha256": "3949cf3fc44810c1262f7d632f57aae08ba46b2208d59e0344b72c2dda21ab57",
+      "bytes": 12908,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000346",
+      "provider_id": "elliptical",
+      "path": "movekit/v2/poster-optimized/elliptical.webp",
+      "sha256": "867bd4cf72958d23139f6185f170cc14bdfed444dada5c1e53a990d05b655c46",
+      "bytes": 20940,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000347",
+      "provider_id": "ez-bar-skullcrusher",
+      "path": "movekit/v2/poster-optimized/ez-bar-skullcrusher.webp",
+      "sha256": "f8936ee9ca105770b0ec6c0b6451d85c399ecdc83944769d076868af91dfa6ad",
+      "bytes": 14498,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000348",
+      "provider_id": "fire-hydrants",
+      "path": "movekit/v2/poster-optimized/fire-hydrants.webp",
+      "sha256": "a207e8004496ab29b0761eab76c300e6c01ab1137122dce677bc1a651a447114",
+      "bytes": 18204,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000349",
+      "provider_id": "floor-press",
+      "path": "movekit/v2/poster-optimized/floor-press.webp",
+      "sha256": "f3236d98bd1ebe8eaeb69c2b7d3e55e4a40b31a5a31d3d4932a74d86d8b996f9",
+      "bytes": 18364,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000350",
+      "provider_id": "freestyle-swim",
+      "path": "movekit/v2/poster-optimized/freestyle-swim.webp",
+      "sha256": "c8de6fa4fc6ccf75b3270804865144be6486d197c25a40642809eeb56d91660d",
+      "bytes": 19518,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000351",
+      "provider_id": "frog-pump",
+      "path": "movekit/v2/poster-optimized/frog-pump.webp",
+      "sha256": "858affb8c8038dd98d1be4dcebf446c7d617820f6583f9aff037ca0271863c24",
+      "bytes": 21952,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000352",
+      "provider_id": "frog-rock-backs",
+      "path": "movekit/v2/poster-optimized/frog-rock-backs.webp",
+      "sha256": "ff0f5b5ef29f688968d1ce670dcf8859606ca86cf9736ceffd389edcdf7a4231",
+      "bytes": 24934,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000353",
+      "provider_id": "front-foot-elevated-split-squat",
+      "path": "movekit/v2/poster-optimized/front-foot-elevated-split-squat.webp",
+      "sha256": "9255b087999be513c6cffe36925c3cc58522b906432ca71abe34b9aba727d204",
+      "bytes": 10434,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000354",
+      "provider_id": "front-plank",
+      "path": "movekit/v2/poster-optimized/front-plank.webp",
+      "sha256": "0c8ef0c652d3b23d53fa37f7d95fe41f2b0ffb19d02af0c23a0fd69bef464fbb",
+      "bytes": 17914,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000355",
+      "provider_id": "front-raise-and-pullover",
+      "path": "movekit/v2/poster-optimized/front-raise-and-pullover.webp",
+      "sha256": "cfb17c3223115787a3fdbda2c4dd0afc77a5f138aac88bd1d8f5a7e2bdfa2d77",
+      "bytes": 18286,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000356",
+      "provider_id": "front-squat",
+      "path": "movekit/v2/poster-optimized/front-squat.webp",
+      "sha256": "8ad683b3a873ab1fcc72f4666f9549978decec584a5285856e1aa3a133767102",
+      "bytes": 11058,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000357",
+      "provider_id": "glute-bridge",
+      "path": "movekit/v2/poster-optimized/glute-bridge.webp",
+      "sha256": "3c8b7b6c34dbaf1617fa6fbe0a5b5c8094f35b3eb40ce8e0ccd68943ace76a78",
+      "bytes": 20422,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000358",
+      "provider_id": "glute-kickback-machine",
+      "path": "movekit/v2/poster-optimized/glute-kickback-machine.webp",
+      "sha256": "67acc453e90205602874c1bc9404c461a316244668ac92851749640660931630",
+      "bytes": 22836,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000359",
+      "provider_id": "goblet-squat-prying-hold",
+      "path": "movekit/v2/poster-optimized/goblet-squat-prying-hold.webp",
+      "sha256": "1990f36be00aeabbda376476bad5934f38d0fd4aa5417a64b7aa75d5c4555e4b",
+      "bytes": 16848,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000360",
+      "provider_id": "half-kneeling-hip-flexor-rock",
+      "path": "movekit/v2/poster-optimized/half-kneeling-hip-flexor-rock.webp",
+      "sha256": "dfbe4caee7ec90a8fc3ea1870a3ad7c9756ce98d483486b3610d75344575240a",
+      "bytes": 11840,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000361",
+      "provider_id": "hammer-strength-high-row",
+      "path": "movekit/v2/poster-optimized/hammer-strength-high-row.webp",
+      "sha256": "5dd9e2271c224b3f2fdb58a08cd9461a500ecc7a1efa724ff30a8eee918c7aef",
+      "bytes": 27678,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000362",
+      "provider_id": "hammer-strength-iso-lateral-row",
+      "path": "movekit/v2/poster-optimized/hammer-strength-iso-lateral-row.webp",
+      "sha256": "9f9ffc7cd82c85d1e1a01e2ef4a89e2e45952481108db5c10674381cf603049c",
+      "bytes": 29180,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000363",
+      "provider_id": "hamstring-curl",
+      "path": "movekit/v2/poster-optimized/hamstring-curl.webp",
+      "sha256": "2a57232e74f02a2231f38bf4cb10f547773e819b7fa43e3fa1cad565631c9284",
+      "bytes": 19204,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000364",
+      "provider_id": "hang-clean",
+      "path": "movekit/v2/poster-optimized/hang-clean.webp",
+      "sha256": "094f5689cb5d069c206a7217ce9c56ff68d7a21180bb79c4f77c4b6a46861539",
+      "bytes": 14882,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000365",
+      "provider_id": "hang-power-clean",
+      "path": "movekit/v2/poster-optimized/hang-power-clean.webp",
+      "sha256": "e17b445fd020cc653fba9a9fa6f8c6650f4e1a5ff8e8e8126ddcea3ef6293a59",
+      "bytes": 11900,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000366",
+      "provider_id": "hang-snatch",
+      "path": "movekit/v2/poster-optimized/hang-snatch.webp",
+      "sha256": "f1856eb9f5d589fca42e274bf95cc4939e8222678c6aae23a0134abf514709dc",
+      "bytes": 13708,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000367",
+      "provider_id": "heel-and-toe-walks",
+      "path": "movekit/v2/poster-optimized/heel-and-toe-walks.webp",
+      "sha256": "5f9c25d4cc219735c84fbce67bf0c7c64b7ae99965fb66dc407ca737862ab5c0",
+      "bytes": 8528,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000368",
+      "provider_id": "heel-elevated-dumbbell-front-squat",
+      "path": "movekit/v2/poster-optimized/heel-elevated-dumbbell-front-squat.webp",
+      "sha256": "3f3355b5d6135428d2640ecbd71e0b661bafd49047de1d96735cb48c705547f8",
+      "bytes": 11882,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000369",
+      "provider_id": "hiking",
+      "path": "movekit/v2/poster-optimized/hiking.webp",
+      "sha256": "167e893bd286abed774c9795d6e883d2b681876a1f5e5c64b79682d31518dd22",
+      "bytes": 13586,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000370",
+      "provider_id": "hill-climb-repeats",
+      "path": "movekit/v2/poster-optimized/hill-climb-repeats.webp",
+      "sha256": "29d005816b1dea6999f844f46950939be88225b3433dce07c63061b74b8ba77b",
+      "bytes": 29614,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000371",
+      "provider_id": "hip-circles",
+      "path": "movekit/v2/poster-optimized/hip-circles.webp",
+      "sha256": "13df3f2e8848670c820465eb5c8644c65d4d195b85105b455234dcb500913ce7",
+      "bytes": 10884,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000372",
+      "provider_id": "hip-hinge-drill",
+      "path": "movekit/v2/poster-optimized/hip-hinge-drill.webp",
+      "sha256": "dddfe7365a42b01d32a400d18974eef6444da81fec62bf01ef12126910fbb5a0",
+      "bytes": 9132,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000373",
+      "provider_id": "hip-hinge-speed-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/hip-hinge-speed-romanian-deadlift.webp",
+      "sha256": "8cb8d74e71a4dc523de8c0549c79ed9f2c7e467ddf50af22eb4e8b25180a00fe",
+      "bytes": 13590,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000374",
+      "provider_id": "horizontal-leg-press-calf-press",
+      "path": "movekit/v2/poster-optimized/horizontal-leg-press-calf-press.webp",
+      "sha256": "ab172dbaa35b461d909e3f1fbe7ad1c3606102ff21ad17e2411ade650baede9f",
+      "bytes": 29322,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000375",
+      "provider_id": "incline-dumbbell-fly-with-twist",
+      "path": "movekit/v2/poster-optimized/incline-dumbbell-fly-with-twist.webp",
+      "sha256": "3d3bd47804485f9daf6ee95777f6d6129c075d60a5711418b98b1aa3e98f01c8",
+      "bytes": 16658,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000376",
+      "provider_id": "incline-machine-chest-press",
+      "path": "movekit/v2/poster-optimized/incline-machine-chest-press.webp",
+      "sha256": "0fee1b1922a578da543e1423276d9c08b22b83ebe57cbe8ec6f8d788a703d68d",
+      "bytes": 21124,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000377",
+      "provider_id": "incline-push-up-depth-jump",
+      "path": "movekit/v2/poster-optimized/incline-push-up-depth-jump.webp",
+      "sha256": "aeef53890c15d6b10f4025d10eaf064cb182230ec8f74faf78cb80a1f7a74659",
+      "bytes": 21044,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000378",
+      "provider_id": "incline-treadmill-walk",
+      "path": "movekit/v2/poster-optimized/incline-treadmill-walk.webp",
+      "sha256": "fddd1e1c7f5d79859943d98a2e9f3160b060df8bb9edd345055ee256f868b416",
+      "bytes": 19526,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000379",
+      "provider_id": "indoor-cycling-spin",
+      "path": "movekit/v2/poster-optimized/indoor-cycling-spin.webp",
+      "sha256": "8747f511ba9904d8f03ff230a8685761823488bb109207bf71345fbd87b633c6",
+      "bytes": 17222,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000380",
+      "provider_id": "jm-press",
+      "path": "movekit/v2/poster-optimized/jm-press.webp",
+      "sha256": "bd308615ed7dcf2ca7b8480877ac284d508b0689bbfa7425765c5f526d62daf2",
+      "bytes": 17878,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000381",
+      "provider_id": "jump-rope",
+      "path": "movekit/v2/poster-optimized/jump-rope.webp",
+      "sha256": "76910f1ebe37b04f600108dfdfc2ae70f38bbeabbeb47fae9f40b423c164b324",
+      "bytes": 12892,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000382",
+      "provider_id": "jumping-jack",
+      "path": "movekit/v2/poster-optimized/jumping-jack.webp",
+      "sha256": "971a22c82c20d9a38290ab7f2ab6f70264d4aefd49ef56ae605323e7b70d8c37",
+      "bytes": 12854,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000383",
+      "provider_id": "kettlebell-goblet-squat",
+      "path": "movekit/v2/poster-optimized/kettlebell-goblet-squat.webp",
+      "sha256": "300e7288b1325bb0af368d7efad594f46d38646373cf5a1196662145027790ab",
+      "bytes": 11130,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000384",
+      "provider_id": "kettlebell-halo",
+      "path": "movekit/v2/poster-optimized/kettlebell-halo.webp",
+      "sha256": "2f2f84dd6c99409d86d8745fc600a43c184519009100d4ca1af40aad535c12aa",
+      "bytes": 11288,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000385",
+      "provider_id": "kettlebell-renegade-rows",
+      "path": "movekit/v2/poster-optimized/kettlebell-renegade-rows.webp",
+      "sha256": "1b3e11bf77466a56f18fafe419d279b32125fd2d7641df6c66604ccd46043684",
+      "bytes": 12804,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000386",
+      "provider_id": "kettlebell-suitcase-carry",
+      "path": "movekit/v2/poster-optimized/kettlebell-suitcase-carry.webp",
+      "sha256": "af67ebd52cbc9f103f1d0c9a2170ab737791a77992bc904e0f13b55eb29c463d",
+      "bytes": 5300,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000387",
+      "provider_id": "kettlebell-turkish-get-up",
+      "path": "movekit/v2/poster-optimized/kettlebell-turkish-get-up.webp",
+      "sha256": "e79c07abeb6c703fb48d8d9e38e911b46735aa71a14b8027f436778e51ac6fae",
+      "bytes": 10870,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000388",
+      "provider_id": "kettlebell-walking-lunges",
+      "path": "movekit/v2/poster-optimized/kettlebell-walking-lunges.webp",
+      "sha256": "0d46d8a8468aa6d491fe4f7195eb82a9515e5602f23e2f339ccb0576dfd74d58",
+      "bytes": 10096,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000389",
+      "provider_id": "kickstand-dumbbell-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/kickstand-dumbbell-romanian-deadlift.webp",
+      "sha256": "e6c64016d52d748338a7045d8864e2b78319225f500de5daddd7c260fd0e857f",
+      "bytes": 11120,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000390",
+      "provider_id": "kneeling-cable-crunch",
+      "path": "movekit/v2/poster-optimized/kneeling-cable-crunch.webp",
+      "sha256": "4f0c4f891a714528703439eb00a562f9f8ccbe2fbc5c510fd9875802aa46591e",
+      "bytes": 16336,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000391",
+      "provider_id": "landmine-press",
+      "path": "movekit/v2/poster-optimized/landmine-press.webp",
+      "sha256": "de3c8371455c90adeacb54f27e1b33df79cee8c7a11957628cb7f6f191d12750",
+      "bytes": 11178,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000392",
+      "provider_id": "lat-pulldown",
+      "path": "movekit/v2/poster-optimized/lat-pulldown.webp",
+      "sha256": "0409000fe4f90f9f693bf98f1928fece6c6b499707afdc17d486ed6117b1db45",
+      "bytes": 25128,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000393",
+      "provider_id": "lateral-raise-to-front-raise",
+      "path": "movekit/v2/poster-optimized/lateral-raise-to-front-raise.webp",
+      "sha256": "a35b9164928dcf66a45161e62638c3db682f0730ea95c5ac9b12c121cd7e283a",
+      "bytes": 11510,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000394",
+      "provider_id": "leaning-cable-lateral-raise",
+      "path": "movekit/v2/poster-optimized/leaning-cable-lateral-raise.webp",
+      "sha256": "3f638ac8ecb8dba2b7a302664173043f06e5b632294e9cec47ba975b3590d652",
+      "bytes": 18362,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000395",
+      "provider_id": "leaning-single-arm-dumbbell-lateral-raise",
+      "path": "movekit/v2/poster-optimized/leaning-single-arm-dumbbell-lateral-raise.webp",
+      "sha256": "7205a08743e0ac3bff6320bd9a2cc7be698f389b27c9875807e88350dc688583",
+      "bytes": 11922,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000396",
+      "provider_id": "leg-press-calf-raise",
+      "path": "movekit/v2/poster-optimized/leg-press-calf-raise.webp",
+      "sha256": "1b6e3c4aefc5d52dcef8397ae2e38d87cc1e4cf40e6fba539688fc1c65681ad9",
+      "bytes": 28264,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000397",
+      "provider_id": "leg-swings-front-to-back",
+      "path": "movekit/v2/poster-optimized/leg-swings-front-to-back.webp",
+      "sha256": "9da79ac1e7bee5c1fb6b94014d26c6cbb41c930caa8213a755a86c25d7282e2b",
+      "bytes": 15672,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000398",
+      "provider_id": "lever-lateral-wide-pulldown",
+      "path": "movekit/v2/poster-optimized/lever-lateral-wide-pulldown.webp",
+      "sha256": "2ea0256a2a63616509209a9a04983d79d8cab1027266eab75e39d637d625d021",
+      "bytes": 18234,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000399",
+      "provider_id": "loaded-wrist-extensor-eccentric",
+      "path": "movekit/v2/poster-optimized/loaded-wrist-extensor-eccentric.webp",
+      "sha256": "2342408a55b697adbfd40a8b5f68d0dd81e4db51d8c2741c20672738910336c0",
+      "bytes": 28624,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000400",
+      "provider_id": "loaded-wrist-flexor-eccentric",
+      "path": "movekit/v2/poster-optimized/loaded-wrist-flexor-eccentric.webp",
+      "sha256": "189b17fc1c32fb1bee8a1133b4991611bc69ea21b7ae121f0ac380985d2e3cd0",
+      "bytes": 16070,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000401",
+      "provider_id": "long-run",
+      "path": "movekit/v2/poster-optimized/long-run.webp",
+      "sha256": "8943c4026ffaae9f8c8e3daf425fce14b23532408cc1f5e017bd94c157ebe22e",
+      "bytes": 16764,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000402",
+      "provider_id": "lunge-sprint",
+      "path": "movekit/v2/poster-optimized/lunge-sprint.webp",
+      "sha256": "55697dae33652004b218db25adefa3e435b9f0df4470e27ab90a9a89bb127e2b",
+      "bytes": 11152,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000403",
+      "provider_id": "lying-cambered-barbell-row",
+      "path": "movekit/v2/poster-optimized/lying-cambered-barbell-row.webp",
+      "sha256": "fe466a900dd80a2dba0c348c130c41857ce8452bd3819dab6af223ac756dee19",
+      "bytes": 20460,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000404",
+      "provider_id": "lying-leg-curl",
+      "path": "movekit/v2/poster-optimized/lying-leg-curl.webp",
+      "sha256": "f8e6522dbef3f7f6c97813ac08bb0e475166a485fc115d715cf542fd8b1413ad",
+      "bytes": 23200,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000405",
+      "provider_id": "lying-single-arm-lateral-raise",
+      "path": "movekit/v2/poster-optimized/lying-single-arm-lateral-raise.webp",
+      "sha256": "169ac71517f9da412bd18a24eb69d0beb4641e13210c7d670eeedbd78f2cafe1",
+      "bytes": 18456,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000406",
+      "provider_id": "machine-assisted-pull-up",
+      "path": "movekit/v2/poster-optimized/machine-assisted-pull-up.webp",
+      "sha256": "de99eccbf79bc16409c87e8345ba1bc05f8294edfade7c9c1f5a43079a832480",
+      "bytes": 22634,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000407",
+      "provider_id": "machine-back-extension",
+      "path": "movekit/v2/poster-optimized/machine-back-extension.webp",
+      "sha256": "37af6c1a9da2841fe7ac70c6ec416ea3a73d530946ce3491213d297c3639062f",
+      "bytes": 24004,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000408",
+      "provider_id": "machine-goblet-sissy-squat",
+      "path": "movekit/v2/poster-optimized/machine-goblet-sissy-squat.webp",
+      "sha256": "dff405e5a591089124f766f927ef6250462085040f01ac35643219497f37adbf",
+      "bytes": 12104,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000409",
+      "provider_id": "machine-hack-squat",
+      "path": "movekit/v2/poster-optimized/machine-hack-squat.webp",
+      "sha256": "dc7fc1a5976f24a85e83abcc9eb22bc6f81a273885815c0cc648b39cd4f94fd4",
+      "bytes": 28370,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000410",
+      "provider_id": "machine-hip-abduction",
+      "path": "movekit/v2/poster-optimized/machine-hip-abduction.webp",
+      "sha256": "6ad5a626dd73c7293d0b6ae662f5b16d922499de68418ff190f386389eb98cd3",
+      "bytes": 19962,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000411",
+      "provider_id": "machine-hip-adduction",
+      "path": "movekit/v2/poster-optimized/machine-hip-adduction.webp",
+      "sha256": "aaedf2c569515e29d5d148a21f85dc14811da330107e16874c573c74d790edcb",
+      "bytes": 23740,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000412",
+      "provider_id": "machine-hip-thrust",
+      "path": "movekit/v2/poster-optimized/machine-hip-thrust.webp",
+      "sha256": "8382fdbde4496a0910f158039d9e3a1f74f19bf09c2b683cfb6d08caf0c9ddd9",
+      "bytes": 29366,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000413",
+      "provider_id": "machine-horizontal-leg-press",
+      "path": "movekit/v2/poster-optimized/machine-horizontal-leg-press.webp",
+      "sha256": "0cb024ecae346a83940f4728bcc7e041604456b41958817e9591172720b2276e",
+      "bytes": 27884,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000414",
+      "provider_id": "machine-lat-pullover",
+      "path": "movekit/v2/poster-optimized/machine-lat-pullover.webp",
+      "sha256": "d4329f7b377650b344c290151ef9a8a2e39aeb86838ff17a1cc4aff104403591",
+      "bytes": 26096,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000415",
+      "provider_id": "machine-lateral-raise",
+      "path": "movekit/v2/poster-optimized/machine-lateral-raise.webp",
+      "sha256": "7d3b18f784cba42f311b7a0cb18e0e4cc98e11453854c8d3d5cfb8c9d922f322",
+      "bytes": 20070,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000416",
+      "provider_id": "machine-preacher-curl",
+      "path": "movekit/v2/poster-optimized/machine-preacher-curl.webp",
+      "sha256": "9a33c26b67d2e18c798ee3939af6e37d3e71388df3d71bc4819d69ae0150b36b",
+      "bytes": 15598,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000417",
+      "provider_id": "machine-tricep-extension",
+      "path": "movekit/v2/poster-optimized/machine-tricep-extension.webp",
+      "sha256": "e8c8448a3f8a6493ac1ebfcbdb85c19c7d37cc1578edb3abade8f07043f64983",
+      "bytes": 18928,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000418",
+      "provider_id": "man-maker",
+      "path": "movekit/v2/poster-optimized/man-maker.webp",
+      "sha256": "9a9c6632c1db778699ed9d88ff68a8c5077f3c1b98aa33348180015fca37c23c",
+      "bytes": 11668,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000419",
+      "provider_id": "meadows-row",
+      "path": "movekit/v2/poster-optimized/meadows-row.webp",
+      "sha256": "a2d59316a86787ba3d5fd8192c1f86e8119ae27dad30b2a218d25448841c770a",
+      "bytes": 17170,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000420",
+      "provider_id": "medicine-ball-throw",
+      "path": "movekit/v2/poster-optimized/medicine-ball-throw.webp",
+      "sha256": "15923a001ff50b0fae7e4198159860f8bf3065366fbc29a7a50fd5f643057605",
+      "bytes": 12210,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000421",
+      "provider_id": "muscle-up",
+      "path": "movekit/v2/poster-optimized/muscle-up.webp",
+      "sha256": "5bbab66b1dc0a505498c150aa52bd6d077900f617fbcec1b3c755c866fb4016a",
+      "bytes": 9234,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000422",
+      "provider_id": "neck-curl",
+      "path": "movekit/v2/poster-optimized/neck-curl.webp",
+      "sha256": "77df57a66ff8bafc327d7b53ff9a2b3a3d0fa5c9a608e9fcfb6161a6c559eca3",
+      "bytes": 15988,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000423",
+      "provider_id": "neck-extension",
+      "path": "movekit/v2/poster-optimized/neck-extension.webp",
+      "sha256": "a8078f9a5c70d48eba07fdda79f9bedf65b34afdc7eaadfee1cb6c2a80f1fef8",
+      "bytes": 15816,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000424",
+      "provider_id": "neutral-grip-dumbbell-bench-press",
+      "path": "movekit/v2/poster-optimized/neutral-grip-dumbbell-bench-press.webp",
+      "sha256": "536fa89b7af6ce19ec713dd6fab7baa5dde962ca67cb5bf807e8183132303b58",
+      "bytes": 17314,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000425",
+      "provider_id": "neutral-grip-lat-pulldown",
+      "path": "movekit/v2/poster-optimized/neutral-grip-lat-pulldown.webp",
+      "sha256": "d175e8d5f76a9983739890ad689a2594a7b5cbe8ceae490043aca0fcd057c8ce",
+      "bytes": 18722,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000426",
+      "provider_id": "neutral-grip-pull-up",
+      "path": "movekit/v2/poster-optimized/neutral-grip-pull-up.webp",
+      "sha256": "455416b865c78f4bb52fe50bf9b04d71e539e5cce777fe1c07856800f7009ea0",
+      "bytes": 25352,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000427",
+      "provider_id": "nordic-hamstring-curl",
+      "path": "movekit/v2/poster-optimized/nordic-hamstring-curl.webp",
+      "sha256": "069c6f5ef61720366aa062214205a8aabbc1d8aea65b1b4e411f334a7856c0dc",
+      "bytes": 13978,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000428",
+      "provider_id": "open-book-rotation",
+      "path": "movekit/v2/poster-optimized/open-book-rotation.webp",
+      "sha256": "9ed99ed2e5c3294852ff1331a9f6682b625a83e87dc670f59ef6ea106333d75c",
+      "bytes": 23982,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000429",
+      "provider_id": "open-book-rotations",
+      "path": "movekit/v2/poster-optimized/open-book-rotations.webp",
+      "sha256": "9ed99ed2e5c3294852ff1331a9f6682b625a83e87dc670f59ef6ea106333d75c",
+      "bytes": 23982,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000430",
+      "provider_id": "pallof-press",
+      "path": "movekit/v2/poster-optimized/pallof-press.webp",
+      "sha256": "39fa1a0141671aa2f18a0c2904a480e3065958a717c0cc428c84e82688c81ab0",
+      "bytes": 14608,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000431",
+      "provider_id": "pause-squat",
+      "path": "movekit/v2/poster-optimized/pause-squat.webp",
+      "sha256": "2d45bdea1c166edc6959574fd31cb5fedb85b893834b7a7a478c7cad38aca331",
+      "bytes": 9384,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000432",
+      "provider_id": "pendlay-row",
+      "path": "movekit/v2/poster-optimized/pendlay-row.webp",
+      "sha256": "23eb089ee244765a632ddeae2371d6480c5a2d3a26e92e510e1cd571b91433c7",
+      "bytes": 21962,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000433",
+      "provider_id": "pendulum-squat-v-squat",
+      "path": "movekit/v2/poster-optimized/pendulum-squat-v-squat.webp",
+      "sha256": "aa5a519b7c3c1fd5ee7293c36c6cfacb46241c38dea691e0369eb280cbb021b0",
+      "bytes": 24512,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000434",
+      "provider_id": "pike-push-up",
+      "path": "movekit/v2/poster-optimized/pike-push-up.webp",
+      "sha256": "c72bc1dab60d62610cc3e23707594a503b6e7846561e90f399630831449dc8ca",
+      "bytes": 17108,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000435",
+      "provider_id": "pistol-squat",
+      "path": "movekit/v2/poster-optimized/pistol-squat.webp",
+      "sha256": "f7fea7939c900c0412290a946d174d13ac7b4ff28e68460b03db4da190529ab6",
+      "bytes": 12806,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000436",
+      "provider_id": "plate-front-raise",
+      "path": "movekit/v2/poster-optimized/plate-front-raise.webp",
+      "sha256": "dbd335ba36bfd93216c5cd2f9b734b754f48d34f09de79af618e8c2ee8d79d8b",
+      "bytes": 11974,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000437",
+      "provider_id": "plate-pinch",
+      "path": "movekit/v2/poster-optimized/plate-pinch.webp",
+      "sha256": "697a8c14db3ee71d3a9cad1c367d43621cc3f2f231d23d6bec9d755fda108ae2",
+      "bytes": 11792,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000438",
+      "provider_id": "plyometric-kettlebell-push-up",
+      "path": "movekit/v2/poster-optimized/plyometric-kettlebell-push-up.webp",
+      "sha256": "74c99c97040d622ac81227efaf8360c94994f9c31c594bd4eab24e0370390029",
+      "bytes": 11418,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000439",
+      "provider_id": "pogo-hops",
+      "path": "movekit/v2/poster-optimized/pogo-hops.webp",
+      "sha256": "054dc1a000ee957917850b2c3c43c113b5317c239b7ac56aef3ddc6d89df57b2",
+      "bytes": 10448,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000440",
+      "provider_id": "power-clean",
+      "path": "movekit/v2/poster-optimized/power-clean.webp",
+      "sha256": "782d9b116283931acbe032517531e8f60daffbc209d0aa416979add087f17fd1",
+      "bytes": 12190,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000441",
+      "provider_id": "press-sit-up",
+      "path": "movekit/v2/poster-optimized/press-sit-up.webp",
+      "sha256": "9e7d431e3d5ca37b9d99f8de206f3be4d2f52c8a772a2c3f0072f341cb05e703",
+      "bytes": 18088,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000442",
+      "provider_id": "prone-lateral-raises",
+      "path": "movekit/v2/poster-optimized/prone-lateral-raises.webp",
+      "sha256": "525818a5588762bd84143586e28dd0384f702873948dd80111dfa00f25d26000",
+      "bytes": 18842,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000443",
+      "provider_id": "prone-y-t-raises",
+      "path": "movekit/v2/poster-optimized/prone-y-t-raises.webp",
+      "sha256": "562658005e68f12affa8e41bd692175b416d0d24361791dc7552c0c78d35c01a",
+      "bytes": 14854,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000444",
+      "provider_id": "prying-goblet-squat",
+      "path": "movekit/v2/poster-optimized/prying-goblet-squat.webp",
+      "sha256": "7881faa1c50c7d88fe0b5147f913796f39815c99e84b7a058e0c22bc022df7d5",
+      "bytes": 9822,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000445",
+      "provider_id": "push-jerk",
+      "path": "movekit/v2/poster-optimized/push-jerk.webp",
+      "sha256": "4291a520bc6d3d30a4fa0b0aaf08a2d6bb6da31418999c5b0d56724974ba551c",
+      "bytes": 11684,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000446",
+      "provider_id": "quadruped-thoracic-rotation",
+      "path": "movekit/v2/poster-optimized/quadruped-thoracic-rotation.webp",
+      "sha256": "a3816ebd4272de82da4d35c83e14bb03154725c7d752f0339412c9592fa73e1b",
+      "bytes": 14774,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000447",
+      "provider_id": "reverse-crunch",
+      "path": "movekit/v2/poster-optimized/reverse-crunch.webp",
+      "sha256": "7a7724ceccb9d858b3ca5ba522eb2fa6ef64a088c8347c0a853a429c15288001",
+      "bytes": 15116,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000448",
+      "provider_id": "reverse-grip-barbell-bench-press",
+      "path": "movekit/v2/poster-optimized/reverse-grip-barbell-bench-press.webp",
+      "sha256": "ee3f82d3066be8637ba3e9e480e4a34816e51e913395061cde21ba6b69bf7da3",
+      "bytes": 19588,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000449",
+      "provider_id": "reverse-grip-barbell-curl",
+      "path": "movekit/v2/poster-optimized/reverse-grip-barbell-curl.webp",
+      "sha256": "98fc7ada0d524a9a890b10a49ef0cb0e88f34d64c0e57311278ee3e0f0fb04a1",
+      "bytes": 19728,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000450",
+      "provider_id": "reverse-grip-incline-push-up",
+      "path": "movekit/v2/poster-optimized/reverse-grip-incline-push-up.webp",
+      "sha256": "3a371df4585ca5a649181e7e9253b231c5b7798aa925d2ed390999291b596e4f",
+      "bytes": 26438,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000451",
+      "provider_id": "reverse-grip-tricep-pushdown",
+      "path": "movekit/v2/poster-optimized/reverse-grip-tricep-pushdown.webp",
+      "sha256": "02292b72b93fb072f85f5483c39367dfcd732fbca26fb8e0a20b1da10f30a773",
+      "bytes": 16386,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000452",
+      "provider_id": "reverse-hack-squat",
+      "path": "movekit/v2/poster-optimized/reverse-hack-squat.webp",
+      "sha256": "54ec4cb531d36fdea5bd0635784d15b1aaadb1a9a3bbe6c40357d5ab9394ac1a",
+      "bytes": 30562,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000453",
+      "provider_id": "reverse-hyperextension",
+      "path": "movekit/v2/poster-optimized/reverse-hyperextension.webp",
+      "sha256": "50202c71f7019ea8e5b2ea1ad3821f1b70c799dc10fd8b8f96f05038a5602281",
+      "bytes": 21018,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000454",
+      "provider_id": "reverse-pec-deck",
+      "path": "movekit/v2/poster-optimized/reverse-pec-deck.webp",
+      "sha256": "14da91fd73d9ac568a296672985c1079718a1ce32afe3eb2403af9f09581d085",
+      "bytes": 19768,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000455",
+      "provider_id": "rkc-plank",
+      "path": "movekit/v2/poster-optimized/rkc-plank.webp",
+      "sha256": "0fdefd98ea3300d77696d6e92e270d747eb9d23d60d9f19f44f393b1ef9753c6",
+      "bytes": 17902,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000456",
+      "provider_id": "romanian-deadlift-hamstring-sweeps",
+      "path": "movekit/v2/poster-optimized/romanian-deadlift-hamstring-sweeps.webp",
+      "sha256": "069fbe1881a16707f2948748d72fb5bab323418fb9509fa9a327ccb947d62702",
+      "bytes": 8452,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000457",
+      "provider_id": "rowing-intervals",
+      "path": "movekit/v2/poster-optimized/rowing-intervals.webp",
+      "sha256": "88e49384ffcbbef564cb17db7c9685dac63d8b51241bd9b27226d621211e3a83",
+      "bytes": 23054,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000458",
+      "provider_id": "rowing-machine-steady-state",
+      "path": "movekit/v2/poster-optimized/rowing-machine-steady-state.webp",
+      "sha256": "dace229eb728368e204e10cc22e639fc3deab1ec5d2e969e47428c7b7ae4869f",
+      "bytes": 27582,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000459",
+      "provider_id": "rowing-sprint",
+      "path": "movekit/v2/poster-optimized/rowing-sprint.webp",
+      "sha256": "f518deb2793fcb7ca19ef8e6fd4d4c9cef4673dd7789c40ce458d9648945d6f6",
+      "bytes": 24226,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000460",
+      "provider_id": "running-cooldown",
+      "path": "movekit/v2/poster-optimized/running-cooldown.webp",
+      "sha256": "9b419fffe2eb0027fbd05a94322567b7568892d91592388f61ccd48d2baadf0f",
+      "bytes": 12672,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000461",
+      "provider_id": "running-intervals",
+      "path": "movekit/v2/poster-optimized/running-intervals.webp",
+      "sha256": "e8232979477c81ff781a2df1b661c31ca7bc5d438a433cde1fe6a9fb037c11d8",
+      "bytes": 14946,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000462",
+      "provider_id": "scapular-pull-up",
+      "path": "movekit/v2/poster-optimized/scapular-pull-up.webp",
+      "sha256": "2e1b75071c0fee7687d82a43778a2b6b67df5e7520855e49c25742507840f98c",
+      "bytes": 13084,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000463",
+      "provider_id": "seal-row",
+      "path": "movekit/v2/poster-optimized/seal-row.webp",
+      "sha256": "f1d43aff2abf35e9bc4f87a8a7221f8e9d6be028ab415896d938a132594d8b82",
+      "bytes": 15546,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000464",
+      "provider_id": "seated-ankle-circles",
+      "path": "movekit/v2/poster-optimized/seated-ankle-circles.webp",
+      "sha256": "1639f8f7166a0e3aa378849f6ca58ee9a321ad3405dd2f0c3e389be1831210cc",
+      "bytes": 11520,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000465",
+      "provider_id": "seated-barbell-military-press",
+      "path": "movekit/v2/poster-optimized/seated-barbell-military-press.webp",
+      "sha256": "a86887624807c5b67211e545146099b039ff5ef8d6c95b0ecc1bac12c2070886",
+      "bytes": 18966,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000466",
+      "provider_id": "seated-calf-raise",
+      "path": "movekit/v2/poster-optimized/seated-calf-raise.webp",
+      "sha256": "1db9f72604f1862440339cfe4eef79d415e67de888c7b0a611a01b4b476f7679",
+      "bytes": 13672,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000467",
+      "provider_id": "seated-chin-tuck-neck-retraction",
+      "path": "movekit/v2/poster-optimized/seated-chin-tuck-neck-retraction.webp",
+      "sha256": "12208cccfc301f2b64a5c0ae8cae8aad9acf69b2c5dc2622b6f3ba67000b8523",
+      "bytes": 13140,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000468",
+      "provider_id": "seated-dumbbell-curl",
+      "path": "movekit/v2/poster-optimized/seated-dumbbell-curl.webp",
+      "sha256": "d3ed0c245f78492749729e0a4c2e47fca1137f0553489acccc9efec801a09236",
+      "bytes": 19138,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000469",
+      "provider_id": "seated-lateral-neck-flexion-hold",
+      "path": "movekit/v2/poster-optimized/seated-lateral-neck-flexion-hold.webp",
+      "sha256": "2c4ac7b7fb655d68f21a8d13331842b5c46d1eb581c2caa12ad55c47f7801d7d",
+      "bytes": 13474,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000470",
+      "provider_id": "seated-leg-curl",
+      "path": "movekit/v2/poster-optimized/seated-leg-curl.webp",
+      "sha256": "eb141585a6ac2f075e656027fb987143d662ba0a41c2cd287effb6ccec6a83ad",
+      "bytes": 22340,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000471",
+      "provider_id": "seated-pelvic-tilt-anterior-posterior",
+      "path": "movekit/v2/poster-optimized/seated-pelvic-tilt-anterior-posterior.webp",
+      "sha256": "d081dc370038b0f6ee7aa0f19e5433132a8848f06c7fdd01b0f9b12f42af2f2e",
+      "bytes": 12500,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000472",
+      "provider_id": "seated-shoulder-rolls-scapular-retraction",
+      "path": "movekit/v2/poster-optimized/seated-shoulder-rolls-scapular-retraction.webp",
+      "sha256": "a448173949b2bbcf6541b5cf5db558cece04d15d2643231854bbc308a3ca5968",
+      "bytes": 16716,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000473",
+      "provider_id": "seated-thoracic-extension-chest-opener",
+      "path": "movekit/v2/poster-optimized/seated-thoracic-extension-chest-opener.webp",
+      "sha256": "fdea75df6cc4a5df5c6f5ec3dad1a484ec3f7ab9db1eb5201da944504f6a41d2",
+      "bytes": 11818,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000474",
+      "provider_id": "seated-wrist-flexor-stretch",
+      "path": "movekit/v2/poster-optimized/seated-wrist-flexor-stretch.webp",
+      "sha256": "dbda59456dc16ad51acfed973013dc43e26ea79047eaaddffdf212c08a085d53",
+      "bytes": 14458,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000475",
+      "provider_id": "selectorized-overhead-press-machine",
+      "path": "movekit/v2/poster-optimized/selectorized-overhead-press-machine.webp",
+      "sha256": "15e4285c28a5246938bac180b3502e51560842d1c0220e377bd119b3c5562d0b",
+      "bytes": 22048,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000476",
+      "provider_id": "selectorized-torso-rotation-machine",
+      "path": "movekit/v2/poster-optimized/selectorized-torso-rotation-machine.webp",
+      "sha256": "86c6b0dad4265ef8341c7517db205b58dcbca7a3463a38d962a8056f9bf6003e",
+      "bytes": 15600,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000477",
+      "provider_id": "shadow-boxing",
+      "path": "movekit/v2/poster-optimized/shadow-boxing.webp",
+      "sha256": "d381012c461cc60340716ac3203ebde03876b4f0e001a7ba78d51a84e9619f19",
+      "bytes": 12366,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000478",
+      "provider_id": "side-plank-lateral-raise",
+      "path": "movekit/v2/poster-optimized/side-plank-lateral-raise.webp",
+      "sha256": "166c67d544a2eda3d7529f9dd79dfee8995400f0b5dc16e7ecef676b581e7f0a",
+      "bytes": 16680,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000479",
+      "provider_id": "single-arm-cable-fly",
+      "path": "movekit/v2/poster-optimized/single-arm-cable-fly.webp",
+      "sha256": "c14cca095629200a270c170930b441c9ee1fe0cdaeda8c31f42c886e2aae127e",
+      "bytes": 13090,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000480",
+      "provider_id": "single-arm-dumbbell-bench-press",
+      "path": "movekit/v2/poster-optimized/single-arm-dumbbell-bench-press.webp",
+      "sha256": "ecc44371a98a3177c502118a82da8ac4bff4585b2227eb6aa6bc30f89b9cfdb2",
+      "bytes": 12200,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000481",
+      "provider_id": "single-arm-dumbbell-overhead-press",
+      "path": "movekit/v2/poster-optimized/single-arm-dumbbell-overhead-press.webp",
+      "sha256": "149c9d50d7eeb2a8aba859747070f5c17f177ff461bd13f3c04da8cc81440ced",
+      "bytes": 9194,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000482",
+      "provider_id": "single-arm-incline-lateral-raise",
+      "path": "movekit/v2/poster-optimized/single-arm-incline-lateral-raise.webp",
+      "sha256": "a028f291c8e9e96debd2dd078fd602bc7a62217855624ea98263aa77f096bc3d",
+      "bytes": 13792,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000483",
+      "provider_id": "single-arm-kettlebell-military-press-to-side",
+      "path": "movekit/v2/poster-optimized/single-arm-kettlebell-military-press-to-side.webp",
+      "sha256": "0c1a4418cf560c0f2040fb3a73d02067b5c37604fb3cf471b38dc283867120ea",
+      "bytes": 6984,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000484",
+      "provider_id": "single-arm-landmine-press",
+      "path": "movekit/v2/poster-optimized/single-arm-landmine-press.webp",
+      "sha256": "586e049e995f544731be17f6f9f885f5020d487a213c66d979c377e42026e5d6",
+      "bytes": 15272,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000485",
+      "provider_id": "single-arm-landmine-row",
+      "path": "movekit/v2/poster-optimized/single-arm-landmine-row.webp",
+      "sha256": "fc2cdfd319f553e2bb75413e80b1874735a210836b4a442c9a2ef0240b96ddca",
+      "bytes": 14160,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000486",
+      "provider_id": "single-arm-lat-pulldown",
+      "path": "movekit/v2/poster-optimized/single-arm-lat-pulldown.webp",
+      "sha256": "876153d39f5e211e8c493d830bfd95f8937cb4a6b35f1cb0c4195405ca0379f3",
+      "bytes": 16808,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000487",
+      "provider_id": "single-arm-overhead-cable-extension",
+      "path": "movekit/v2/poster-optimized/single-arm-overhead-cable-extension.webp",
+      "sha256": "229285faa8bdec5652ebd1b84b74c73e3c529432ead266b436a599a092714e06",
+      "bytes": 15800,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000488",
+      "provider_id": "single-arm-tricep-extension",
+      "path": "movekit/v2/poster-optimized/single-arm-tricep-extension.webp",
+      "sha256": "afa04fdb2b0ddb5df8f58e87b9671efd1d05bbb0a5452734a1559159029beb25",
+      "bytes": 12862,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000489",
+      "provider_id": "single-leg-back-extension",
+      "path": "movekit/v2/poster-optimized/single-leg-back-extension.webp",
+      "sha256": "8920c265e3b9d9602da9e2d5f54a6968774f5922a0f7c777e3bc6b673ee8e684",
+      "bytes": 13472,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000490",
+      "provider_id": "single-leg-balance",
+      "path": "movekit/v2/poster-optimized/single-leg-balance.webp",
+      "sha256": "4df55a8fda9f817c6d63fa028accf6e7280eef07bff35702d0be99627eeeafbc",
+      "bytes": 12536,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000491",
+      "provider_id": "single-leg-balance-reach",
+      "path": "movekit/v2/poster-optimized/single-leg-balance-reach.webp",
+      "sha256": "caafd8bb08b73a8e65c293fd7d9ab1cebc043552b235c64d30d2b7a9247d94ad",
+      "bytes": 11472,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000492",
+      "provider_id": "single-leg-barbell-squat",
+      "path": "movekit/v2/poster-optimized/single-leg-barbell-squat.webp",
+      "sha256": "64e960ce412410bf244c7a724037396e51d65d1d7a3f53546304e1791bfc9b15",
+      "bytes": 15916,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000493",
+      "provider_id": "single-leg-bound",
+      "path": "movekit/v2/poster-optimized/single-leg-bound.webp",
+      "sha256": "ea24ffff5c0334211c1b3256c3c8facbfa7af1aa5b020417e3d9cc7883e304f8",
+      "bytes": 7872,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000494",
+      "provider_id": "single-leg-dumbbell-romanian-deadlift",
+      "path": "movekit/v2/poster-optimized/single-leg-dumbbell-romanian-deadlift.webp",
+      "sha256": "da50c405a1291380f3fcfa7a9f1d9334eb1851dbe8c209defc498530a73e27d3",
+      "bytes": 11240,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000495",
+      "provider_id": "single-leg-glute-bridge",
+      "path": "movekit/v2/poster-optimized/single-leg-glute-bridge.webp",
+      "sha256": "2ee7a110ae3440a2867311a5351149fe74b93b5faa91c396aaa485d7ec4128e3",
+      "bytes": 13696,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000496",
+      "provider_id": "single-leg-hip-thrust",
+      "path": "movekit/v2/poster-optimized/single-leg-hip-thrust.webp",
+      "sha256": "e94c1cfa9e45aa16d598e3c14ed4810f52b45825334fa83a5aaf65a7b1996eb2",
+      "bytes": 18174,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000497",
+      "provider_id": "single-leg-hop",
+      "path": "movekit/v2/poster-optimized/single-leg-hop.webp",
+      "sha256": "85ab89bca763852cb55bf86eb4c302f4ebf4625d34ee54abcc01c3514c509673",
+      "bytes": 14868,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000498",
+      "provider_id": "single-leg-kettlebell-romanian-deadlift-deficit",
+      "path": "movekit/v2/poster-optimized/single-leg-kettlebell-romanian-deadlift-deficit.webp",
+      "sha256": "6ab07d40fa4eef5f23602ebd1cdf20dcbf6880e1fd58f7fdf8b8c79f8f9219ec",
+      "bytes": 11450,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000499",
+      "provider_id": "single-leg-press",
+      "path": "movekit/v2/poster-optimized/single-leg-press.webp",
+      "sha256": "5548c3f4600a1229c369b679e2f2291d265022370b055db28971835b6e724409",
+      "bytes": 40034,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000500",
+      "provider_id": "single-leg-standing-calf-raise",
+      "path": "movekit/v2/poster-optimized/single-leg-standing-calf-raise.webp",
+      "sha256": "b7c9a09f7f3610d241754f065b2980597e1da34bd095ff1e1634e148afb2336a",
+      "bytes": 13736,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000501",
+      "provider_id": "single-leg-step-down",
+      "path": "movekit/v2/poster-optimized/single-leg-step-down.webp",
+      "sha256": "b806c3de6659f82fd59b154acc28da43cfc65796d8f5d7fab559f04e534e3d94",
+      "bytes": 9592,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000502",
+      "provider_id": "sissy-squat",
+      "path": "movekit/v2/poster-optimized/sissy-squat.webp",
+      "sha256": "53274827d84f1a3a55cffe07be47f89a409fbfe8344d96ed2ec6daecd1aacee8",
+      "bytes": 12394,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000503",
+      "provider_id": "sit-up",
+      "path": "movekit/v2/poster-optimized/sit-up.webp",
+      "sha256": "b06a3b63853a226893b450d7a8cd36b955616c8d7a63fe62e9eadb9ec19b4610",
+      "bytes": 21596,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000504",
+      "provider_id": "skater-bound",
+      "path": "movekit/v2/poster-optimized/skater-bound.webp",
+      "sha256": "c9565423deef8df97130fee93e5906f9de38b1ec53c746b9cb5480ef3ea423a0",
+      "bytes": 11486,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000505",
+      "provider_id": "ski-erg",
+      "path": "movekit/v2/poster-optimized/ski-erg.webp",
+      "sha256": "c0d28bb91752a79b61d9caa4ac3f9defa9f03c55cada7540bc42d45fe6380e21",
+      "bytes": 18088,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000506",
+      "provider_id": "sled-pull",
+      "path": "movekit/v2/poster-optimized/sled-pull.webp",
+      "sha256": "dfb429cf4a27ca02b91af2bac0dd492fa486075e5415b094e3b638aa1b6bc8a7",
+      "bytes": 11774,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000507",
+      "provider_id": "sled-push",
+      "path": "movekit/v2/poster-optimized/sled-push.webp",
+      "sha256": "824f38e3470e23b7f244f8782e7824711347c25b35fd536f595c94fdc5a1839d",
+      "bytes": 13840,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000508",
+      "provider_id": "slider-leg-curl",
+      "path": "movekit/v2/poster-optimized/slider-leg-curl.webp",
+      "sha256": "ebd993670b52d44283201eb0df6b1e933ef99d85196d30fec7d5be62e0781ff4",
+      "bytes": 21506,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000509",
+      "provider_id": "smith-machine-bench-press",
+      "path": "movekit/v2/poster-optimized/smith-machine-bench-press.webp",
+      "sha256": "4e587920212a3d04216898dafe2da3d7172dde4c058bc21c455c22abd9a2adae",
+      "bytes": 27866,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000510",
+      "provider_id": "smith-machine-bent-over-row",
+      "path": "movekit/v2/poster-optimized/smith-machine-bent-over-row.webp",
+      "sha256": "96cb3b54625cf19835a076280d5afef5fc435f4f7d0e56ceb48aa95ff26f9b37",
+      "bytes": 22012,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000511",
+      "provider_id": "smith-machine-calf-raise",
+      "path": "movekit/v2/poster-optimized/smith-machine-calf-raise.webp",
+      "sha256": "adc044229a5fa3f8cdb246976dcefd8e48c4e8b4be9c7c2eab90fd11cc1f979b",
+      "bytes": 24466,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000512",
+      "provider_id": "smith-machine-decline-bench-press",
+      "path": "movekit/v2/poster-optimized/smith-machine-decline-bench-press.webp",
+      "sha256": "cfd5b90b0ef40776ad4c3e9993deea4623af6701cffc91d37acc81c4a4f4776d",
+      "bytes": 34490,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000513",
+      "provider_id": "smith-machine-front-squat",
+      "path": "movekit/v2/poster-optimized/smith-machine-front-squat.webp",
+      "sha256": "eddc77de5b8e57a80fa9a3e19c48f4b22e76ab80bad3644edcc2cadb6ba14c64",
+      "bytes": 24598,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000514",
+      "provider_id": "smith-machine-overhead-press",
+      "path": "movekit/v2/poster-optimized/smith-machine-overhead-press.webp",
+      "sha256": "af48b8f7ec20edb8fedb5f51e99459ae7bf45ba4a9c054034fb0ac014668d3fe",
+      "bytes": 25046,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000515",
+      "provider_id": "smith-machine-seated-overhead-press",
+      "path": "movekit/v2/poster-optimized/smith-machine-seated-overhead-press.webp",
+      "sha256": "a60b2094b02a4ae11c97b90411152df6b5d61be40cd2bb5362e8ae7d29126fa3",
+      "bytes": 21126,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000516",
+      "provider_id": "smith-machine-squat",
+      "path": "movekit/v2/poster-optimized/smith-machine-squat.webp",
+      "sha256": "196299652e326af01e7a2fb12aae83c5794e2cc699e74789a48b1be628b5cdfc",
+      "bytes": 18230,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000517",
+      "provider_id": "snap-down-landing",
+      "path": "movekit/v2/poster-optimized/snap-down-landing.webp",
+      "sha256": "839abfee6e5d7a6ebf8f01b6a65bef1c031b28a2520aafae19b938bdfee9c415",
+      "bytes": 9486,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000518",
+      "provider_id": "snatch-grip-deadlift",
+      "path": "movekit/v2/poster-optimized/snatch-grip-deadlift.webp",
+      "sha256": "0c57359682d57c857264f0b3c4ceca1b54b7a9d07a05fe052906c4e4c72a147f",
+      "bytes": 13766,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000519",
+      "provider_id": "snatch-grip-high-pull",
+      "path": "movekit/v2/poster-optimized/snatch-grip-high-pull.webp",
+      "sha256": "684b0480066f244d1cda88dd1bfe763df521cf9a002e3eb0fbb188bf57eececa",
+      "bytes": 13654,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000520",
+      "provider_id": "snatch-pull",
+      "path": "movekit/v2/poster-optimized/snatch-pull.webp",
+      "sha256": "80de4bf5acc3bfd931c96b329db3cb8e37252c434ca11ee1280302d48b401cee",
+      "bytes": 13368,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000521",
+      "provider_id": "spider-curl",
+      "path": "movekit/v2/poster-optimized/spider-curl.webp",
+      "sha256": "50892e52a08053e2ab649dbde3877eef4035ebed7fb0ab46f6fe7fd9ce0b2e48",
+      "bytes": 18102,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000522",
+      "provider_id": "spiderman-stretch",
+      "path": "movekit/v2/poster-optimized/spiderman-stretch.webp",
+      "sha256": "61e3c3fcf55d4b5d74bdf09b33d4706a93745c60dc19b059bfae6334711a7482",
+      "bytes": 16178,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000523",
+      "provider_id": "split-jerk",
+      "path": "movekit/v2/poster-optimized/split-jerk.webp",
+      "sha256": "a2f8aec12d925e5bbff58aef587338b8a7f2a7d635e2f18059c09052d5600175",
+      "bytes": 13486,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000524",
+      "provider_id": "split-squat-isometric-hold",
+      "path": "movekit/v2/poster-optimized/split-squat-isometric-hold.webp",
+      "sha256": "41243e8198d2988dc1b3c74b1d5ab6229d20ecc20e20df63ead2f7dd30358bf8",
+      "bytes": 10558,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000525",
+      "provider_id": "squat-thrusts",
+      "path": "movekit/v2/poster-optimized/squat-thrusts.webp",
+      "sha256": "cc7b4f434df92a95589bbddd563c0c82dadc6e345a9e25b5184af850fd93a10c",
+      "bytes": 6828,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000526",
+      "provider_id": "stability-ball-leg-curl",
+      "path": "movekit/v2/poster-optimized/stability-ball-leg-curl.webp",
+      "sha256": "98e601bda2a0ca1b04255517eda560fd39300527915ddd0e746d0d21423fd1bf",
+      "bytes": 18042,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000527",
+      "provider_id": "stair-climber",
+      "path": "movekit/v2/poster-optimized/stair-climber.webp",
+      "sha256": "f896cb242ba99d7b91ef17b88c635752393e1f86eb8d52ea1f43310b6bdb57cb",
+      "bytes": 17714,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000528",
+      "provider_id": "standing-alternating-dumbbell-overhead-press",
+      "path": "movekit/v2/poster-optimized/standing-alternating-dumbbell-overhead-press.webp",
+      "sha256": "c0dfec280f23956d769affdfd64065657778c3a9b8946dfdfa77673cd9c9de53",
+      "bytes": 9920,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000529",
+      "provider_id": "standing-cable-hip-abduction",
+      "path": "movekit/v2/poster-optimized/standing-cable-hip-abduction.webp",
+      "sha256": "a48fdccb6dd97e6094df820f7e86a6e26f012a25431f936efd2ad4887e986e77",
+      "bytes": 15508,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000530",
+      "provider_id": "standing-calf-raise-machine",
+      "path": "movekit/v2/poster-optimized/standing-calf-raise-machine.webp",
+      "sha256": "9283a3d658e27027282935b4317a70b120d59118310fde8febaabca37907e824",
+      "bytes": 23238,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000531",
+      "provider_id": "standing-dumbbell-overhead-press",
+      "path": "movekit/v2/poster-optimized/standing-dumbbell-overhead-press.webp",
+      "sha256": "31716ebbf7bf453631aa669781967a3fe757a3a4171a8f449f68d169f558b00c",
+      "bytes": 9798,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000532",
+      "provider_id": "standing-neutral-grip-dumbbell-overhead-press",
+      "path": "movekit/v2/poster-optimized/standing-neutral-grip-dumbbell-overhead-press.webp",
+      "sha256": "8da32005aa34cdaf52175cfe73e5d5fe78286a4c1fe7e945db92378411abdc38",
+      "bytes": 9356,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000533",
+      "provider_id": "standing-wall-shoulder-opening-stretch",
+      "path": "movekit/v2/poster-optimized/standing-wall-shoulder-opening-stretch.webp",
+      "sha256": "66a4c9da94f7dff27317af1a4e58d6c5ae8a3cad76974473e365e1a239ca838b",
+      "bytes": 11888,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000534",
+      "provider_id": "steady-state-ride",
+      "path": "movekit/v2/poster-optimized/steady-state-ride.webp",
+      "sha256": "c4413f40a6554135a56de647ebb2fa04dcaeb9be6f439d481f71406681b851d8",
+      "bytes": 32432,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000535",
+      "provider_id": "step-down-to-balance",
+      "path": "movekit/v2/poster-optimized/step-down-to-balance.webp",
+      "sha256": "a6ec4b8799371197d5574ddf6e2c0c7122db63dc565c415dcb6af2afcf42f6f4",
+      "bytes": 9282,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000536",
+      "provider_id": "straight-arm-lat-pulldown",
+      "path": "movekit/v2/poster-optimized/straight-arm-lat-pulldown.webp",
+      "sha256": "82d42ba96147d1cc6967eb6dcad07c7631fb859102c32164929a1956d79b4a63",
+      "bytes": 17208,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000537",
+      "provider_id": "straight-arm-rope-pulldown-light",
+      "path": "movekit/v2/poster-optimized/straight-arm-rope-pulldown-light.webp",
+      "sha256": "c32602a8f62ecee0344d1b588e45df400df07c905e6270024abf57350c5981db",
+      "bytes": 13856,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000538",
+      "provider_id": "straight-bar-bench-mid-row",
+      "path": "movekit/v2/poster-optimized/straight-bar-bench-mid-row.webp",
+      "sha256": "1a51ceeea8ee11b59403e1e4fba63275d5e90abb3ba308c019138e2517aee235",
+      "bytes": 11788,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000539",
+      "provider_id": "sumo-deadlift",
+      "path": "movekit/v2/poster-optimized/sumo-deadlift.webp",
+      "sha256": "77214bd39207e6011f812da8abe357f6fdeda2b3aacdb8108271ba5704e60a36",
+      "bytes": 12956,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000540",
+      "provider_id": "swim-kick-drill",
+      "path": "movekit/v2/poster-optimized/swim-kick-drill.webp",
+      "sha256": "601373d84a9a5054e3574fc82ad073928f7908c3b7f3d5004535fa1d4d1f6737",
+      "bytes": 25222,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000541",
+      "provider_id": "swim-pull-drill",
+      "path": "movekit/v2/poster-optimized/swim-pull-drill.webp",
+      "sha256": "dd118bd75bae5fc600bb48b87b213992330c188e576d4e2c5814c7ac9fb0e521",
+      "bytes": 20520,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000542",
+      "provider_id": "swim-sprint-intervals",
+      "path": "movekit/v2/poster-optimized/swim-sprint-intervals.webp",
+      "sha256": "4ec09151927fd2713ecb3fb38b35038ae9358e9882ae234a88dcda077175ef40",
+      "bytes": 24194,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000543",
+      "provider_id": "tate-press",
+      "path": "movekit/v2/poster-optimized/tate-press.webp",
+      "sha256": "9fa7a01644e4008434bb73d98e455ed3bd689f9a099f259f0e401b85e76f0c6b",
+      "bytes": 19272,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000544",
+      "provider_id": "tempo-run",
+      "path": "movekit/v2/poster-optimized/tempo-run.webp",
+      "sha256": "fcaec4cd50c25c7a32cbd5afa93a6f328cdbe24ecfbc75bfb97578ccf7ce807f",
+      "bytes": 17082,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000545",
+      "provider_id": "thoracic-extension-over-foam-roller",
+      "path": "movekit/v2/poster-optimized/thoracic-extension-over-foam-roller.webp",
+      "sha256": "2a80eff8ca4cc5a5ceffe3c43c16577de90a1dc1d79cd066b2e15ad6db10dd97",
+      "bytes": 17806,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000546",
+      "provider_id": "tibialis-raise",
+      "path": "movekit/v2/poster-optimized/tibialis-raise.webp",
+      "sha256": "342b8de76840b4cf6740cfa4aa1d121e6a7fc0dd509941296b27618cb65adbbd",
+      "bytes": 9516,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000547",
+      "provider_id": "toes-to-bar",
+      "path": "movekit/v2/poster-optimized/toes-to-bar.webp",
+      "sha256": "af4118bfc0e6d67434db2b3208d9c6a423e193775baa4c005d36c0f13fdc0484",
+      "bytes": 10356,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000548",
+      "provider_id": "towel-doorframe-row",
+      "path": "movekit/v2/poster-optimized/towel-doorframe-row.webp",
+      "sha256": "5c717b89812653b86a034f3638c86ef2b99bda4753338837e8e010b46b22a5ba",
+      "bytes": 15946,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000549",
+      "provider_id": "towel-isometric-curls",
+      "path": "movekit/v2/poster-optimized/towel-isometric-curls.webp",
+      "sha256": "d56b5d6162965f3489d4e211a97bcaccd5313900b7e04b3386b388888ad2f0e2",
+      "bytes": 23742,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000550",
+      "provider_id": "towel-slide-leg-curl",
+      "path": "movekit/v2/poster-optimized/towel-slide-leg-curl.webp",
+      "sha256": "04e1e5c42fc8b039776116a25e8d2bad025da994829a4abc88cd25332f2cc309",
+      "bytes": 16828,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000551",
+      "provider_id": "trail-run",
+      "path": "movekit/v2/poster-optimized/trail-run.webp",
+      "sha256": "032e6b13e5d460511e35f8bb980f90fd1d08db91deb4ec8d4afbc520c890aa95",
+      "bytes": 11978,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000552",
+      "provider_id": "trap-bar-carry",
+      "path": "movekit/v2/poster-optimized/trap-bar-carry.webp",
+      "sha256": "0dc71ee77ccd0a64097f34dc425264483218148e731addd3e3854b64efe98b6f",
+      "bytes": 15004,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000553",
+      "provider_id": "trap-bar-deadlift",
+      "path": "movekit/v2/poster-optimized/trap-bar-deadlift.webp",
+      "sha256": "9f330c693799b0159602aea6570112415340231421e088cd4fb5d837b85ef630",
+      "bytes": 14044,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000554",
+      "provider_id": "trap-bar-shrug",
+      "path": "movekit/v2/poster-optimized/trap-bar-shrug.webp",
+      "sha256": "d8097438f956c1f3099d50ef372cef0ed739571ae9cf46a5fcac782f62ccf4b4",
+      "bytes": 14420,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000555",
+      "provider_id": "treadmill-run",
+      "path": "movekit/v2/poster-optimized/treadmill-run.webp",
+      "sha256": "f251b9099c19bfe099a8fc6278ca2447aaf10c76a899b0cf20b5d01092512aa1",
+      "bytes": 17006,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000556",
+      "provider_id": "trx-row",
+      "path": "movekit/v2/poster-optimized/trx-row.webp",
+      "sha256": "c877352600fc9dda93af352a79eccd80e0555037b7f1eb984ba8e552906c0af0",
+      "bytes": 14452,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000557",
+      "provider_id": "trx-squat",
+      "path": "movekit/v2/poster-optimized/trx-squat.webp",
+      "sha256": "3992aca89f8f0735d513b81e31e827af51b2004a3e2a18bcc9b90fbe0eee7fab",
+      "bytes": 10814,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000558",
+      "provider_id": "tuck-jump",
+      "path": "movekit/v2/poster-optimized/tuck-jump.webp",
+      "sha256": "6ff6fc607fde98aab79d677c04e68d02888c2ece19084a26421cca559b5750f3",
+      "bytes": 10990,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000559",
+      "provider_id": "turkish-get-up",
+      "path": "movekit/v2/poster-optimized/turkish-get-up.webp",
+      "sha256": "d591d7c3e631acbc29b2b5102c924aa4ba84f94c6951434fe9eb3aece851945d",
+      "bytes": 9470,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000560",
+      "provider_id": "two-arm-kettlebell-military-press",
+      "path": "movekit/v2/poster-optimized/two-arm-kettlebell-military-press.webp",
+      "sha256": "bfcf0acf86b1b81f90513a6b427eaa8d9e1c81e6ba870dc183df1648364bae08",
+      "bytes": 7720,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000561",
+      "provider_id": "underhand-barbell-row",
+      "path": "movekit/v2/poster-optimized/underhand-barbell-row.webp",
+      "sha256": "2522f7799d0363a506378f18a7b10dd9d2b9510f859e331917a04afc366c86ab",
+      "bytes": 13748,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000562",
+      "provider_id": "v-up",
+      "path": "movekit/v2/poster-optimized/v-up.webp",
+      "sha256": "b8bc05ebe58dead1534e67052d6aed75e887a9927430dd0738ca5b4f32488a54",
+      "bytes": 14732,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000563",
+      "provider_id": "versaclimber",
+      "path": "movekit/v2/poster-optimized/versaclimber.webp",
+      "sha256": "ccde54c8a667282232039bf4bd397ea063c0542c8fda6a7db34ae32ace28c8c7",
+      "bytes": 15154,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000564",
+      "provider_id": "walking-knee-hugs",
+      "path": "movekit/v2/poster-optimized/walking-knee-hugs.webp",
+      "sha256": "3ff863e911bd1692d7d21aa94c373b2e50f10bff122639d7b78fdbc1bd6d4703",
+      "bytes": 10646,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000565",
+      "provider_id": "walking-lunge-with-twist",
+      "path": "movekit/v2/poster-optimized/walking-lunge-with-twist.webp",
+      "sha256": "979632bbe1f442d250b49a95586b01ab4ea6c9c61efcf365146fe8ab11bc0a7e",
+      "bytes": 8564,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000566",
+      "provider_id": "wall-ball",
+      "path": "movekit/v2/poster-optimized/wall-ball.webp",
+      "sha256": "a1ab8cd2fb11524d55eb2c8524bbd178fc10111d533a8058708020a6ff077452",
+      "bytes": 14188,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000567",
+      "provider_id": "weighted-parallel-bar-straight-leg-raise",
+      "path": "movekit/v2/poster-optimized/weighted-parallel-bar-straight-leg-raise.webp",
+      "sha256": "909dc13b29dfab621dfcfea4e94d9ec2894bd94894e93a1808346061c627b7fd",
+      "bytes": 9538,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000568",
+      "provider_id": "weighted-pull-ups",
+      "path": "movekit/v2/poster-optimized/weighted-pull-ups.webp",
+      "sha256": "975cc51e7fc1f7911df5b322ec19e6e2b25eafb7cf8953e9a72e6634bdfa62a6",
+      "bytes": 12582,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000569",
+      "provider_id": "wide-grip-barbell-bench-press",
+      "path": "movekit/v2/poster-optimized/wide-grip-barbell-bench-press.webp",
+      "sha256": "6e5503fb4eb4bd2a733cd9ec05787d156a101f06f10d472585e30e87d90a76bf",
+      "bytes": 17068,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000570",
+      "provider_id": "wide-grip-barbell-curl",
+      "path": "movekit/v2/poster-optimized/wide-grip-barbell-curl.webp",
+      "sha256": "8da73f58c2a41faef30e838edfef677f29b61492e91285a5fac8e7f3b58c399f",
+      "bytes": 13262,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000571",
+      "provider_id": "wide-grip-lat-pulldown",
+      "path": "movekit/v2/poster-optimized/wide-grip-lat-pulldown.webp",
+      "sha256": "0409000fe4f90f9f693bf98f1928fece6c6b499707afdc17d486ed6117b1db45",
+      "bytes": 25128,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000572",
+      "provider_id": "wide-grip-pull-up",
+      "path": "movekit/v2/poster-optimized/wide-grip-pull-up.webp",
+      "sha256": "e7eeaff9abdb4c687c440371f71d29f20b3a4f2554623d4d2bb18cfbbe15c8d6",
+      "bytes": 26450,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000573",
+      "provider_id": "wide-grip-seated-cable-row",
+      "path": "movekit/v2/poster-optimized/wide-grip-seated-cable-row.webp",
+      "sha256": "4888d4197157e909408b9803a582193741e53bcdec2de0233543fbcc5923087e",
+      "bytes": 33926,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000574",
+      "provider_id": "wide-incline-push-up",
+      "path": "movekit/v2/poster-optimized/wide-incline-push-up.webp",
+      "sha256": "73fca55bed2d952a266748621a03ce7a7178c111900b54674d8ba3a5aa479c88",
+      "bytes": 16770,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000575",
+      "provider_id": "wide-push-up",
+      "path": "movekit/v2/poster-optimized/wide-push-up.webp",
+      "sha256": "fe764c9951aba1c050b60a54166efc47fb510d9afc4a7419607f09e1e3c1be82",
+      "bytes": 19540,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000576",
+      "provider_id": "wide-push-ups",
+      "path": "movekit/v2/poster-optimized/wide-push-ups.webp",
+      "sha256": "038d87249788bcda9146423072025158eacfaddda5758a983018de0ed57f58c4",
+      "bytes": 15926,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000577",
+      "provider_id": "worlds-greatest-stretch",
+      "path": "movekit/v2/poster-optimized/worlds-greatest-stretch.webp",
+      "sha256": "2ddc23e379b75479ec48e7923e7c770adebdd3fc929a8029486883f32a88d168",
+      "bytes": 14472,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000578",
+      "provider_id": "wrist-roller",
+      "path": "movekit/v2/poster-optimized/wrist-roller.webp",
+      "sha256": "be5c752358b6ac6c6e0ae0f7bc7b3551e169d5a89df9f7fdefca79f75cb0be27",
+      "bytes": 11130,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000579",
+      "provider_id": "yates-row",
+      "path": "movekit/v2/poster-optimized/yates-row.webp",
+      "sha256": "30410bf1cc77a14a6ac3be83acc214bbb70f5bb7328026effdad35b42f0d9306",
+      "bytes": 14020,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000580",
+      "provider_id": "z-press",
+      "path": "movekit/v2/poster-optimized/z-press.webp",
+      "sha256": "e13a6ed1091cbcc1e9d7d64d80d43189408a5307d9b221203d1e455dccbefefa",
+      "bytes": 16514,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000581",
+      "provider_id": "zercher-squat",
+      "path": "movekit/v2/poster-optimized/zercher-squat.webp",
+      "sha256": "fce55f4a64476547e532de82559ece5b5cae2a0fd7eea1af1e1a9fb5d9a28688",
+      "bytes": 11116,
+      "mime": "image/webp"
+    },
+    {
+      "catalog_id": "TK-000582",
+      "provider_id": "zottman-curl",
+      "path": "movekit/v2/poster-optimized/zottman-curl.webp",
+      "sha256": "d84b44bc4c047b07a87d8075eef31cf767c45acbafe76dc1204c8da2bb52c503",
+      "bytes": 12892,
+      "mime": "image/webp"
+    }
+  ]
+}

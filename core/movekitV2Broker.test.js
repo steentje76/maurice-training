@@ -4,6 +4,7 @@
 const assert = require('node:assert/strict');
 const broker = require('../netlify/functions/exercise-media-v2-url.js')._internal;
 const inventory = require('../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json');
+const posters = require('../docs/generated/MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.json');
 const defaultRelease = require('../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
 
 const ownerA = '12345678-1234-4234-8234-123456789abc';
@@ -19,9 +20,19 @@ const approved = Object.freeze({
   review_reference: 'TK504-20261103-001',
   upload_reference: 'TK504-20261103-002'
 });
+const approvedPoster = Object.freeze({
+  catalog_id: video.catalog_id, media_type: 'poster',
+  storage_path: posters.items.find(x => x.catalog_id === video.catalog_id).path,
+  sha256: posters.items.find(x => x.catalog_id === video.catalog_id).sha256,
+  bytes: posters.items.find(x => x.catalog_id === video.catalog_id).bytes,
+  reviewed: true, upload_verified: true,
+  review_reference: 'TK504-20261103-003',
+  upload_reference: 'TK504-20261103-004'
+});
 const release = Object.freeze({
   schema: broker.SCHEMA, status: 'RELEASE_APPROVED',
-  inventory_sha256: broker.inventorySha, entries: [approved]
+  inventory_sha256: broker.inventorySha,
+  poster_digest_sha256: broker.posterSha, entries: [approved, approvedPoster]
 });
 const env = Object.freeze({
   SUPABASE_URL: broker.BASE,
@@ -29,7 +40,8 @@ const env = Object.freeze({
   SUPABASE_SERVICE_ROLE_KEY: 'fake-service-only',
   MOVEKIT_V2_SIGNING_ENABLED: 'true',
   MOVEKIT_V2_PERMISSION_REVIEWED: 'true',
-  MOVEKIT_V2_PRIVATE_UPLOAD_VERIFIED: 'true'
+  MOVEKIT_V2_PRIVATE_UPLOAD_VERIFIED: 'true',
+  MOVEKIT_V2_POSTER_UPLOAD_VERIFIED: 'true'
 });
 const validGrant = Object.freeze({
   user_id: ownerA, scope: broker.SCOPE, active: true,
@@ -56,10 +68,11 @@ function backend(options = {}) {
       return { ok: true, json: async () => options.grants === undefined
         ? [validGrant] : options.grants };
     }
-    if (url === broker.BASE + '/storage/v1/object/sign/' + broker.BUCKET + '/' + video.video.path) {
+    if (url === broker.BASE + '/storage/v1/object/sign/' + broker.BUCKET + '/' + video.video.path ||
+        url === broker.BASE + '/storage/v1/object/sign/' + broker.POSTER_BUCKET + '/' + approvedPoster.storage_path) {
       if (options.signDown) return { ok: false, status: 404 };
       return { ok: true, json: async () => ({ signedURL:
-        options.signUrl === undefined ? signed : options.signUrl }) };
+        options.signUrl === undefined ? url.slice(broker.BASE.length) + '?token=fake-signed-token' : options.signUrl }) };
     }
     throw new Error('UNEXPECTED_NETWORK_REQUEST:' + url);
   };
@@ -100,9 +113,34 @@ function check(label, func) {
     const r = await invoke(event(), { release: { ...release, inventory_sha256: '0'.repeat(64) } });
     assert.equal(r.resp.statusCode, 503);
   });
+  await check('optimized poster source digest is also release-bound', async () => {
+    const r = await invoke(event(), { release: { ...release, poster_digest_sha256: '0'.repeat(64) } });
+    assert.equal(r.resp.statusCode, 503);
+    assert.equal(r.calls.length, 0);
+  });
+  await check('poster media requires explicit independent server gate', async () => {
+    const e = event(); e.body = JSON.stringify({catalog_id:video.catalog_id,type:'poster',version:'v2'});
+    const r = await invoke(e, {env:{...env,MOVEKIT_V2_POSTER_UPLOAD_VERIFIED:'false'}});
+    assert.equal(r.resp.statusCode, 503);
+    assert.equal(r.calls.length,0);
+  });
+  await check('poster matching canonical hash is authorized with independent DB grant', async () => {
+    const e = event(); e.body = JSON.stringify({catalog_id:video.catalog_id,type:'poster',version:'v2'});
+    const r = await invoke(e);
+    assert.equal(r.resp.statusCode,200);
+    assert.equal(r.data.type,'poster');
+    assert.equal(r.data.url,broker.BASE+'/storage/v1/object/sign/'+broker.POSTER_BUCKET+'/'+approvedPoster.storage_path+'?token=fake-signed-token');
+    assert.equal(r.calls.length,3);
+  });
+  await check('optimized poster hash mismatch blocks signing', async () => {
+    const e = event(); e.body = JSON.stringify({catalog_id:video.catalog_id,type:'poster',version:'v2'});
+    const r = await invoke(e,{release:{...release,entries:[approved,{...approvedPoster,sha256:'0'.repeat(64)}]}});
+    assert.equal(r.resp.statusCode,404);
+    assert.equal(r.calls.length,0);
+  });
   await check('empty or too-large approval lists are blocked', async () => {
     assert.equal(broker.releaseConfigured({ ...release, entries: [] }, env), false);
-    assert.equal(broker.releaseConfigured({ ...release, entries: new Array(583).fill(approved) }, env), false);
+    assert.equal(broker.releaseConfigured({ ...release, entries: new Array(1165).fill(approved) }, env), false);
   });
   await check('untrusted browser origin blocked', async () => {
     const ev = event(); ev.headers.origin = 'https://evil.example';
@@ -125,8 +163,8 @@ function check(label, func) {
     const r = await invoke(ev); assert.equal(r.resp.statusCode, 400);
     assert.equal(r.calls.length, 0);
   });
-  await check('poster mode rejected while bucket is MP4 only', async () => {
-    const ev = event(); ev.body = JSON.stringify({ catalog_id: video.catalog_id, type: 'poster', version: 'v2' });
+  await check('unapproved or invalid media type rejected', async () => {
+    const ev = event(); ev.body = JSON.stringify({ catalog_id: video.catalog_id, type: 'raw', version: 'v2' });
     const r = await invoke(ev); assert.equal(r.resp.statusCode, 400);
   });
   await check('unknown exercise not approved', async () => {

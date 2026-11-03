@@ -1,12 +1,10 @@
 'use strict';
 // MoveKit Golden V2, isolated draft broker. Never enabled without explicit
 // independent catalogue, entitlement, upload-integrity and license approvals.
-// NO private media uploaded, no external media release from this branch.
-const crypto = require('node:crypto');
-const fs = require('node:fs');
-const path = require('node:path');
+// Private V2 media is stored in Supabase, but no end-user media release is approved.
 
 const BUCKET = 'exercise-media';
+const POSTER_BUCKET = 'exercise-posters';
 const SCOPE = 'movekit_v2';
 const BASE = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SCHEMA = 'trainingskompas-movekit-v2-release/1.0';
@@ -24,12 +22,15 @@ const ALLOWED_ORIGINS = new Set([
   'capacitor://localhost'
 ]);
 
-const invPath = path.resolve(__dirname, '../../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json');
-const releasePath = path.resolve(__dirname, '../../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
-const inventoryBytes = fs.readFileSync(invPath);
-const inventory = JSON.parse(inventoryBytes.toString('utf8'));
-const inventorySha = crypto.createHash('sha256').update(inventoryBytes).digest('hex');
+// Static requires are bundled into Netlify Functions by esbuild.
+// Runtime fs.readFileSync would fail after deployment unless special file
+// inclusion rules were configured. These immutable source-byte SHA pins are
+// independently checked against the JSON files in the test/Quality Gate.
+const inventory = require('../../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json');
+const posterRegistry = require('../../docs/generated/MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.json');
 const release = require('../../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
+const inventorySha = 'ca02f2cf71f4764a1b7fad97e34992ed5590a0c78e5cd93cbcf1601737bac6d1';
+const posterSha = '7512ec4c8679e8cda6ecad068fd4888b82785f9ceb5d4976dd49f627bbd3f099';
 const byId = new Map();
 if (inventory.schema !== 'trainingskompas-movekit-golden-inventory/2.0' ||
     inventory.status !== 'STAGING_ONLY_DO_NOT_ACTIVATE' ||
@@ -45,6 +46,31 @@ for (const item of inventory.items) {
     throw new Error('MOVEKIT_GOLDEN_ITEM_INVALID');
   }
   byId.set(item.catalog_id, item);
+}
+const postersById = new Map();
+if (posterRegistry.schema !== 'trainingskompas-movekit-v2-optimized-poster-digests/1.0' ||
+    posterRegistry.status !== 'STAGING_INDEX_NOT_RELEASE_APPROVAL' ||
+    posterRegistry.golden_inventory_sha256 !== inventorySha ||
+    !Array.isArray(posterRegistry.items) || posterRegistry.items.length !== 582 ||
+    posterRegistry.count !== 582 || posterRegistry.total_bytes !== 9634714) {
+  throw new Error('MOVEKIT_OPTIMIZED_POSTER_REGISTRY_INVALID');
+}
+let posterTotal = 0;
+for (const poster of posterRegistry.items) {
+  const golden = poster && byId.get(poster.catalog_id);
+  if (!poster || !golden || postersById.has(poster.catalog_id) ||
+      poster.provider_id !== golden.provider_id ||
+      poster.mime !== 'image/webp' ||
+      poster.path !== 'movekit/v2/poster-optimized/' + golden.provider_id + '.webp' ||
+      !SHA.test(poster.sha256) || !Number.isSafeInteger(poster.bytes) ||
+      poster.bytes < 1 || poster.bytes > 1048576) {
+    throw new Error('MOVEKIT_OPTIMIZED_POSTER_MAPPING_INVALID');
+  }
+  postersById.set(poster.catalog_id, poster);
+  posterTotal += poster.bytes;
+}
+if (postersById.size !== byId.size || posterTotal !== 9634714) {
+  throw new Error('MOVEKIT_OPTIMIZED_POSTER_SET_INCOMPLETE');
 }
 
 function cors(event) {
@@ -83,27 +109,30 @@ function releaseConfigured(config, env, sha = inventorySha) {
     config && config.schema === SCHEMA &&
     config.status === 'RELEASE_APPROVED' &&
     config.inventory_sha256 === sha &&
+    config.poster_digest_sha256 === posterSha &&
     Array.isArray(config.entries) &&
     config.entries.length > 0 &&
-    config.entries.length <= 582);
+    config.entries.length <= 1164);
 }
 function descriptor(catalogId, mediaType, config) {
-  if (!CID.test(catalogId) || mediaType !== 'video' ||
+  if (typeof catalogId !== 'string' || !CID.test(catalogId) ||
+      (mediaType !== 'video' && mediaType !== 'poster') ||
       !config || !Array.isArray(config.entries)) return null;
   const canonical = byId.get(catalogId);
-  if (!canonical) return null;
+  const expected = mediaType === 'video' ? canonical && canonical.video : postersById.get(catalogId);
+  if (!canonical || !expected) return null;
   const rows = config.entries.filter(x => x && x.catalog_id === catalogId && x.media_type === mediaType);
   if (rows.length !== 1) return null;
   const approved = rows[0];
   if (approved.reviewed !== true || approved.upload_verified !== true ||
       !REVIEW.test(approved.review_reference) ||
       !REVIEW.test(approved.upload_reference) ||
-      approved.storage_path !== canonical.video.path ||
-      approved.sha256 !== canonical.video.sha256 ||
-      approved.bytes !== canonical.video.bytes) return null;
+      approved.storage_path !== expected.path ||
+      approved.sha256 !== expected.sha256 ||
+      approved.bytes !== expected.bytes) return null;
   return Object.freeze({
-    catalog_id: catalogId, type: 'video', version: 'v2',
-    bucket: BUCKET, path: canonical.video.path
+    catalog_id: catalogId, type: mediaType, version: 'v2',
+    bucket: mediaType === 'video' ? BUCKET : POSTER_BUCKET, path: expected.path
   });
 }
 async function identifyUser(header, anonKey, fetchFn) {
@@ -206,8 +235,11 @@ async function handle(event, deps = {}) {
       Object.keys(body).length !== 3 || !Object.hasOwn(body, 'catalog_id') ||
       !Object.hasOwn(body, 'type') || !Object.hasOwn(body, 'version') ||
       typeof body.catalog_id !== 'string' || !CID.test(body.catalog_id) ||
-      body.type !== 'video' || body.version !== 'v2') {
+      (body.type !== 'video' && body.type !== 'poster') || body.version !== 'v2') {
     return failure(event, 400, 'INVALID_REQUEST');
+  }
+  if (body.type === 'poster' && env.MOVEKIT_V2_POSTER_UPLOAD_VERIFIED !== 'true') {
+    return failure(event, 503, 'POSTERS_NOT_RELEASED');
   }
   const desc = descriptor(body.catalog_id, body.type, activeRelease);
   if (!desc) return failure(event, 404, 'MEDIA_NOT_APPROVED');
@@ -229,4 +261,5 @@ async function handle(event, deps = {}) {
 }
 exports.handler = event => handle(event, { env: process.env, fetch: globalThis.fetch, now: Date.now });
 exports._internal = { handle, releaseConfigured, descriptor, identifyUser, verifyEntitlement,
-  signedUrl, sign, inventorySha, BUCKET, SCOPE, BASE, TTL_SECONDS, SCHEMA };
+  signedUrl, sign, inventorySha, posterSha, byId, postersById,
+  BUCKET, POSTER_BUCKET, SCOPE, BASE, TTL_SECONDS, SCHEMA };

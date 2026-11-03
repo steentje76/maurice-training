@@ -567,7 +567,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
-  // PO Final Visual Fidelity Rework: Jouw Ontwikkeling -- 4 KPI's op één rij,
+  // PO-goedgekeurde Inzicht V2: Jouw Ontwikkeling -- 3 KPI's op één rij,
   // zelfstandige tegels (eigen achtergrond+schaduw), waarde-top alignment.
   for (const w of [320, 390, 430]) {
     const page = await offlinePage({ viewport: { width: w, height: 900 } });
@@ -582,8 +582,8 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       const rows = [...new Set(cells.map(c => Math.round(c.getBoundingClientRect().top)))].length;
       return { count: cells.length, rows, maxDelta: Math.max(...tops)-Math.min(...tops), bgs };
     });
-    ok(info.count === 4 && info.rows === 1, w + 'px 46: alle 4 KPI-tegels (Jouw Ontwikkeling) staan op exact 1 rij, geen 2+2-wrap');
-    ok(info.maxDelta <= 1, w + 'px 47: de 4 KPI-hoofdwaarden staan binnen 1px verticale tolerantie op dezelfde baseline (delta=' + info.maxDelta + 'px)');
+    ok(info.count === 3 && info.rows === 1, w + 'px 46: alle 3 KPI-tegels (Jouw Ontwikkeling) staan op exact 1 rij, geen 2+2-wrap');
+    ok(info.maxDelta <= 1, w + 'px 47: de 3 KPI-hoofdwaarden staan binnen 1px verticale tolerantie op dezelfde baseline (delta=' + info.maxDelta + 'px)');
     ok(info.bgs.every(b => b !== 'rgba(0, 0, 0, 0)' && b !== 'transparent'), w + 'px 48: elke KPI-tegel heeft een eigen, zichtbare achtergrond (zelfstandige tegeltaal, geen tekstkolom in een gedeelde kaart)');
     await page.close();
   }

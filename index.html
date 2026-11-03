@@ -2208,7 +2208,7 @@ html[data-theme="dark"] .v43-hero{box-shadow:0 18px 40px rgba(0,0,0,.5)}
    .quick-act (Trainen v0.2): eigen achtergrond+schaduw i.p.v. tekstkolommen
    in één grote, witte kaart. Vaste zones (icoon/waarde/label/context) zodat
    tekstlengte geen verticale verschuiving veroorzaakt. */
-.tk-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tk-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .tk-summary-cell{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;padding:12px 4px;background:var(--card);border-radius:14px;box-shadow:var(--shadow);min-width:0}
 .tk-summary-cell .ic{width:18px;height:18px;color:var(--color-primary)}
 .tk-summary-cell .num{font-size:19px;font-weight:800;color:var(--color-text-primary);line-height:1.1;min-height:22px;display:flex;align-items:center}
@@ -26773,30 +26773,27 @@ async function renderInzicht(){
   await Promise.allSettled([inzichtRenderDevelopment(renderId),inzichtRenderOverview(renderId),inzichtRenderDomains(renderId),inzichtRenderRecent(renderId)]);
 }
 
-/* Jouw ontwikkeling -- 4 summary cells, uitsluitend canonical bronnen. */
+/* Jouw ontwikkeling -- 3 compacte kernmetingen, uitsluitend canonical bronnen. */
 async function inzichtRenderDevelopment(renderId){
   const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
   const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var grid=document.getElementById('inzicht-summary-grid'); if(!grid) return;
   var ICTREND='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>';
-  var ICCAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>';
   var ICGOAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
 
-  function paintDevelopment(improvedHtml,trendHtml,trainingHtml,adherenceHtml){
+  function paintDevelopment(improvedHtml,trendHtml,adherenceHtml){
     if(!stillCurrent())return;
   grid.innerHTML=
     '<div class="tk-summary-cell">'+ICTREND+improvedHtml+'<div class="lbl">Verbeterd</div></div>'+
     '<div class="tk-summary-cell">'+ICTREND+trendHtml+'<div class="lbl">Stijgende trends</div></div>'+
-    '<div class="tk-summary-cell">'+ICCAL+trainingHtml+'<div class="lbl">Trainingen</div></div>'+
     '<div class="tk-summary-cell">'+ICGOAL+adherenceHtml+'<div class="lbl">Adherence</div></div>';
   }
   var unknown='<div class="unavailable">—</div>';
-  paintDevelopment(unknown,unknown,unknown,unknown);
+  paintDevelopment(unknown,unknown,unknown);
   var all=await inzichtGetOrNull('sessions','&order=date.desc,created_at.desc&limit=500');
-  var activities=await inzichtGetOrNull('activities','&order=date.desc&limit=200');
   var blocks=await tkOwnedProgramBlocks(authSession?.user?.id||null,'&order=planned_date.desc&limit=200',{nullOnError:true}); // GAP-P4-004: owner-scoped; null = niet beschikbaar (bestaande semantiek)
 
-  var improvedHtml='<div class="unavailable">—</div>', trendHtml='<div class="unavailable">—</div>', trainingHtml='<div class="unavailable">—</div>', adherenceHtml='<div class="unavailable">—</div>';
+  var improvedHtml='<div class="unavailable">—</div>', trendHtml='<div class="unavailable">—</div>', adherenceHtml='<div class="unavailable">—</div>';
 
   if(!stillCurrent())return;
   if(all!==null){
@@ -26809,14 +26806,6 @@ async function inzichtRenderDevelopment(renderId){
     }catch(_){}
   }
 
-  // Trainingen: canonical, gededupliceerd per bron -- sessions (kracht/WOD/ergometer)
-  // en activities (standalone endurance) zijn architecturaal gescheiden (B9-H6B),
-  // dus een simpele optelling van beide tellingen dubbelt niet. UNKNOWN != 0: als
-  // een van beide bronnen faalde (null), is de totale telling onbetrouwbaar --
-  // toon dan "--", nooit een gedeeltelijke, mogelijk te lage telling als feit.
-  if(all!==null && activities!==null){
-    trainingHtml='<div class="num">'+(all.length+activities.length)+'</div>';
-  }
 
   if(blocks!==null){
     try{
@@ -26827,7 +26816,7 @@ async function inzichtRenderDevelopment(renderId){
     }catch(_){}
   }
 
-  paintDevelopment(improvedHtml,trendHtml,trainingHtml,adherenceHtml);
+  paintDevelopment(improvedHtml,trendHtml,adherenceHtml);
 }
 
 /* Snel overzicht -- 5 cells, canonical health/load-bronnen. UNKNOWN != 0. */

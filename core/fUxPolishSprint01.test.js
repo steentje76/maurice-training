@@ -43,7 +43,7 @@ LICHAAM_BLOK = LICHAAM_BLOK.replace(/<div class="tk-card[^>]*id="inzicht-domain-
 ['🔗', '🤖', '🏋️', '📈', '⚖️', '＋'].forEach(function (em) {
   ok(LICHAAM_BLOK.indexOf(em) === -1, 'C: emoji "' + em + '" komt niet meer voor op het Lichaam-hoofdscherm');
 });
-ok((LICHAAM_BLOK.match(/<span class="ic"><svg/g) || []).length >= 4, 'C-svg: de vier knoppen met een canonical inline-SVG-icoon (Verbanden, Coach, Training, Gegevens) gebruiken geen emoji');
+ok((LICHAAM_BLOK.match(/<span class="ic"><svg/g) || []).length >= 3, 'C-svg: verbanden, lichaamssamenstelling en gegevens gebruiken inline lijniconen; Coach/Trainen zijn via de primaire tabs bereikbaar');
 // 🌙 (Cyclus) en 🍽️ (Voeding-snelkoppeling) hebben bewust geen canonical
 // equivalent in de icon-registry en zijn NIET aangepast (zie eindrapport) --
 // dit wordt hier bevestigd, niet verzwegen.

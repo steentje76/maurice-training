@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
-const start=html.indexOf('async function refreshTrainContext(){');
+const start=html.indexOf('let tkContextRequestEpoch=0;');
 const end=html.indexOf('async function refreshHome(){',start);
 assert(start>=0&&end>start,'canonical training context refresh found');
 assert(/function renderV43Train\(\)\s*\{\s*refreshTrainContext\(\)/.test(html),'Trainen must refresh its own rhythm');
@@ -22,5 +22,14 @@ const deferred=()=>{let resolve,reject;const promise=new Promise((res,rej)=>{res
  c.authSession={user:{id:'account-C'}};
  pending.shift().resolve([{frequency:5}]);await unauth;
  assert.equal(calls.length,1,'B response not leaked to C');
- console.log('Trainingsritme: fresh Trainen load + cross-account response isolation PASS');
+ c.authSession={user:{id:'account-C'}};
+ const sameOld=c.refreshTrainContext();
+ const sameNew=c.refreshTrainContext();
+ // Complete newest first: older request may not overwrite more recent context.
+ pending[1].resolve([{frequency:6}]);await sameNew;
+ pending[0].resolve([{frequency:2}]);await sameOld;
+ pending.length=0;
+ assert.equal(calls.length,2,'stale same-account response suppressed');
+ assert.equal(calls.at(-1).frequency,6,'newest same-account result wins');
+ console.log('Trainingsritme: account isolation and latest-request-wins PASS');
 })().catch(e=>{console.error(e);process.exitCode=1;});

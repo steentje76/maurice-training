@@ -24998,9 +24998,11 @@ function renderHomeContextCard(tc){
   h+='</div></div>';
   el.innerHTML=h; el.style.display='block'; if(heading)heading.style.display='';
 }
+let tkContextRequestEpoch=0; // latest training-context request wins, even for same account
 async function refreshTrainContext(){
+  const requestEpoch=++tkContextRequestEpoch;
   const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
-  const stillCurrent=()=>ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
+  const stillCurrent=()=>requestEpoch===tkContextRequestEpoch&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   try{
     const rows=await v43SafeGet('training_context','&limit=1');
     if(stillCurrent())renderHomeContextCard(rows&&rows[0]);
@@ -25014,8 +25016,9 @@ async function refreshHome(){
   // Alleen tonen wanneer de data echt bestaat; geen fake planning.
   // Behoud de Home-contextcache voor bestaande plannings- en coachfuncties.
   // De zichtbare kaart staat nu onder Trainen en wordt daar ook zelfstandig geladen.
+  const ctxRequestEpoch=++tkContextRequestEpoch;
   const ctxOwner=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
-  const ctxCurrent=()=>ctxOwner===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
+  const ctxCurrent=()=>ctxRequestEpoch===tkContextRequestEpoch&&ctxOwner===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   try{const tcRows=await v43SafeGet('training_context','&limit=1');if(ctxCurrent())renderHomeContextCard(tcRows&&tcRows[0]);}
   catch(_){if(ctxCurrent())renderHomeContextCard(null);}
   let dfInfo=null,nextT=null;

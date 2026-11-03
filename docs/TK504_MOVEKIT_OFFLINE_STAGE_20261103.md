@@ -15,15 +15,16 @@ Source: [MoveKit License Agreement v1.0 section 3](https://movekit.com/license).
 1. `tools/movekit-golden-inventory.py`: reproducible SHA-256, size, mapping and complete-source checks. `docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json` is staging evidence, not the live catalog.
 2. `core/offlineMoveKitPackCore.js`: deterministic selected-workout media size estimate and account-scoped **instruction-only** guide packs. Rejects invalid IDs, duplicate catalog identities, traversal, unlicensed or unverified raw media downloads and cross-account writes. The download gate always remains closed at v0.1 even if all browser flags are set.
 3. `core/offlineMoveKitIndexedDB.js`: persistent app-origin scoped **guide metadata** (no MP4, poster bytes, signed URLs or tokens). Uses account-prefixed keys; account ownership is checked on writes/reads/listing.
-4. `core/privateMoveKitMediaClient.js`: staging-only client for the existing Netlify signing broker. It checks authenticated ownership before/after the request, restricts URL host/path/token/TTL, never persists signed links and fails closed on expiry/invalid URLs. **Not wired into `<video>` UI**.
-5. `core/offlineMoveKitPackCore.test.js`: 48 deterministic core checks. `core/privateMoveKitMediaClient.test.js`: 24 broker-client/security checks. `core/offlineMoveKitIndexedDB.browser.cjs`: real-browser persistence, restart and account-isolation test, invoked separately with Playwright.
+4. `core/privateMoveKitMediaClient.js`: staging-only client for the existing Netlify signing broker. On Android `https://localhost` (and `capacitor://localhost`), it selects the allowlisted HTTPS Netlify broker instead of the non-existent local function. It checks authenticated ownership before/after the request, restricts signing to the current **V1 (226 exercises) path** and URL host/path/token/TTL, never persists signed links, disallows redirects and fails closed on expiry/invalid URLs. **Not wired into `<video>` UI**.
+5. `core/offlineMoveKitWorkoutProjector.js`: strict read-only adapter from the **existing** `snapshotFromVasteTraining` / `snapshotFromCustomTraining` `items[].exercise_id` shape to explicitly mapped `exerciseRows[].catalog_id`. No name/position inference; missing mappings are reported as PARTIAL/NONE rather than fictional offline readiness.
+6. Tests: `core/offlineMoveKitPackCore.test.js` 48, `core/privateMoveKitMediaClient.test.js` 29, `core/privateMoveKitMediaContract.test.js` 12 against the **real existing server handler**, `core/offlineMoveKitWorkoutProjector.test.js` 27, plus a separately executed Chromium IndexedDB reload/owner-isolation test. This is **116** direct deterministic checks plus the browser acceptance test.
 
 **Not yet wired into the end-user app**: offline pack UI, downloads, native protected video playback. No retroactive claim that Android can cache video after first viewing.
 
 ## Required follow-on delivery gates
 1. Supplier clarification for in-app offline encrypted cache (not raw user-downloadable files). If denied, use **online streaming + offline poster/instruction fallback only**.
 2. Private storage of versioned Golden videos in `exercise-media` with idempotent uploads and per-object SHA-256 integrity proof; separate private/optimized poster strategy, not 1.68GB raw PNG in APK.
-3. Server-verified entitlement/account scope for temporary signed streams, expiry, CORS, Range 206 and seek, without exposure to anonymous callers.
+3. Server-verified entitlement/account scope for temporary signed streams, expiry, CORS, Range 206 and seek, without exposure to anonymous callers. **Existing deployed broker only validates JWT and serves V1 (226 IDs); no verified commercial entitlement and no V2 catalog mapping yet**. Staged client must not claim support for V2 playback until a separately reviewed versioned server cutover.
 4. If licensed, an approved Android **app-private secure media adapter** with encryption, owner separation, capacity/quota and cleanup on logout. Keep source files inaccessible through share/export routes; verify offline playback without network on physical Samsung, not merely browser emulation.
 5. Workout-level Wi-Fi-first explicit download with visible MB budget and offline readiness (never download all 582 videos by default). No cellular download without express consent; no silently recurring data usage.
 6. Existing offline exercise execution and session queue must pass flight-mode, restart, retry, account switching and reconnect tests independently; no change to Calculation/Context/Decision Engines.
@@ -34,6 +35,8 @@ Source: [MoveKit License Agreement v1.0 section 3](https://movekit.com/license).
 python tools/movekit-golden-inventory.py --source C:\movikit
 node core/offlineMoveKitPackCore.test.js
 node core/privateMoveKitMediaClient.test.js
+node core/privateMoveKitMediaContract.test.js
+node core/offlineMoveKitWorkoutProjector.test.js
 # On a machine with Playwright and Chrome:
 $env:TK_CHROME_PATH='C:\Program Files\Google\Chrome\Application\chrome.exe'
 node core/offlineMoveKitIndexedDB.browser.cjs

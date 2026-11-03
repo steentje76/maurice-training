@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const C=require('./privateMoveKitMediaClient.js');
 const A='12345678-1234-4234-8234-123456789abc';
 const B='12345678-1234-4234-8234-123456789def';
-const URL_OK=C.STORAGE_ORIGIN+'/storage/v1/object/sign/exercise-media/movekit/v2/video/wall-sit.mp4?token=temporary';
+const URL_OK=C.STORAGE_ORIGIN+'/storage/v1/object/sign/exercise-media/movekit/v1/video/wall-sit.mp4?token=temporary';
 let calls=0,owner=A,passed=0;
 const response=(url,cat,status)=>({ok:!status,status:status||200,json:async()=>({ok:true,catalog_id:cat||'TK-000206',type:'video',expires_in:300,url:url||URL_OK})});
 const client=C.create({
@@ -11,6 +11,7 @@ const client=C.create({
    calls++;
    assert.equal(path,'/.netlify/functions/exercise-media-url');
    assert.equal(opts.method,'POST');assert.equal(opts.cache,'no-store');
+   assert.equal(opts.credentials,'omit');assert.equal(opts.redirect,'error');
    assert.equal(opts.headers.Authorization,'Bearer temporary-user-token');
    assert.equal(JSON.parse(opts.body).type,'video');
    assert(!JSON.stringify(opts.body).includes('/video/'));
@@ -21,16 +22,26 @@ const client=C.create({
 (async()=>{
  const result=await client.get('TK-000206',A);
  assert.equal(result.url,URL_OK);passed++;
- assert.equal(result.expiresAt,301000);passed++;
+ assert.equal(result.expiresAt,272000);passed++;
  assert.equal(result.catalogId,'TK-000206');passed++;
  assert.equal(client.offlineVideoDownloadAllowed,false);passed++;
  assert.equal(calls,1);passed++;
  await assert.rejects(()=>client.get('../../file.mp4',A),/INVALID_CATALOG_ID/);passed++;
  await assert.rejects(()=>client.get('TK-000206',B),/ACCOUNT_MISMATCH/);passed++;
  assert.equal(calls,1);passed++;
+ const native=C.create({origin:'https://localhost',fetch:async(path,opts)=>{assert.equal(path,C.REMOTE_BROKER);assert.equal(opts.credentials,'omit');return response();},tokenProvider:async()=> 'temporary-user-token',ownerProvider:()=>A});
+ assert.equal(native.brokerPath,C.REMOTE_BROKER);passed++;
+ assert.equal((await native.get('TK-000206',A)).catalogId,'TK-000206');passed++;
+ const ionic=C.create({origin:'capacitor://localhost',fetch:async()=>response(),tokenProvider:async()=> 'temporary-user-token',ownerProvider:()=>A});
+ assert.equal(ionic.brokerPath,C.REMOTE_BROKER);passed++;
+ assert.throws(()=>C.create({origin:'https://evil.example',fetch:async()=>response(),tokenProvider:async()=> 'temporary-user-token',ownerProvider:()=>A}),/UNTRUSTED_APP_ORIGIN/);passed++;
+ assert.throws(()=>C.create({origin:'http://localhost',fetch:async()=>response(),tokenProvider:async()=> 'temporary-user-token',ownerProvider:()=>A}),/UNTRUSTED_APP_ORIGIN/);passed++;
+ const web=C.create({origin:'https://trainingskompas.com',fetch:async()=>response(),tokenProvider:async()=> 'temporary-user-token',ownerProvider:()=>A});
+ assert.equal(web.brokerPath,C.BROKER);passed++;
  const badUrls=[
  'http://mhfxhzkdmgkaplicdszg.supabase.co/storage/v1/object/sign/exercise-media/movekit/v2/video/x.mp4?token=x',
  'https://evil.example/storage/v1/object/sign/exercise-media/movekit/v2/video/x.mp4?token=x',
+ C.STORAGE_ORIGIN+'/storage/v1/object/sign/exercise-media/movekit/v2/video/x.mp4?token=x',
  C.STORAGE_ORIGIN+'/storage/v1/object/public/exercise-media/movekit/v2/video/x.mp4?token=x',
  C.STORAGE_ORIGIN+'/storage/v1/object/sign/exercise-media/movekit/v2/video/x.mp4',
  C.STORAGE_ORIGIN+'/storage/v1/object/sign/exercise-media/movekit/v2/video/x.mp4?token=x&download=1',

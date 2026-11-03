@@ -12,7 +12,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(TkBarcodeScannerPlugin.class);
         // MoveKit #504 — staged encrypted offline native video capability.
         // Plugin itself fails closed in release; no UI is activated yet.
-        registerPlugin(TkOfflineMediaPlugin.class);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            registerPlugin(TkOfflineMediaPlugin.class);
+        }
         super.onCreate(savedInstanceState);
     }
 }

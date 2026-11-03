@@ -30,6 +30,7 @@ ok(/allowBackup="false"/.test(manifest),'backup disabled');
 ok(/android\.permission\.ACCESS_NETWORK_STATE/.test(manifest),'Wi-Fi/metered detection permission');
 ok(!/no-backup-path/.test(fs.readFileSync(path.join(root,'android/app/src/main/res/xml/file_paths.xml'),'utf8')),'no FileProvider export of secure storage');
 ok(/registerPlugin\(TkOfflineMediaPlugin\.class\)/.test(activity),'registered before superclass');
+ok(/Build\.VERSION\.SDK_INT >= android\.os\.Build\.VERSION_CODES\.M/.test(activity),'Android API22 does not register API23-only media classes');
 ok(/BuildConfig\.DEBUG/.test(plugin),'staged only in DEBUG builds');
 ok(/buildFeatures\s*\{\s*buildConfig true\s*\}/.test(gradle),'BuildConfig debug/release difference available');
 ok(/getNoBackupFilesDir\(\)/.test(vault),'isolated no-backup private storage');

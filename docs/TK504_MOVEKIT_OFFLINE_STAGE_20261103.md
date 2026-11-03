@@ -47,3 +47,10 @@ node core/offlineMoveKitIndexedDB.browser.cjs
 ```
 
 The manifest's candidate IDs are **not authoritative public exercise IDs** until reviewed and versioned with the catalog; preserve every preexisting TK ID and programme reference.
+
+## Local-only catalog expansion review (follow-up, 3 November 2026)
+- Added tools/movekit-catalog-stage.py to build an exact 582-entry LOCAL PRIVATE review catalog from the existing 226-entry catalog, the hashed Golden V2 inventory and the locally held licensed supplier metadata. It preserves every existing catalog object without mutation and stages 356 proposed entries, with stable IDs, duplicate/missing-reference rejection and no source-to-runtime DB writes.
+- Existing 226 entries are copied as-is. New entries retain source-provided name, muscle/equipment/difficulty fields and original instructions/mistakes for PRIVATE REVIEW ONLY. Their category/type require explicit review; fatigue, recovery and confidence are null. No progressions, relationships, verified injury flags or media URLs are fabricated.
+- This repository is PUBLIC. The staging generator and synthetic tests contain no supplier instructions or licensed video/poster bytes. Any output containing supplier text is constrained to C:\movikit\.tk-private-review\ (never inside the Git repository), and requires an explicit output argument. Keep the output local; do not commit the generated private JSON or copy it into public GitHub/Netlify.
+- Validated with python tools/test_movekit_catalog_stage.py (10 synthetic security/identity tests) and real desktop python tools/movekit-catalog-stage.py --source C:\movikit (226 retained + 356 candidates = 582). Output remains PRIVATE_LOCAL_REVIEW_ONLY_NOT_ACTIVE. Existing pack, projector and private media-client/broker tests also pass.
+- Next gates: structured category/identity review, authoritative app exercise-ID bindings, licensed server-side entitlement and V2 media migration, production integration/regression/device acceptance. No main merge or APK from this step.

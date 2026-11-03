@@ -113,12 +113,11 @@ final class TkOfflineVideoPlayer {
             }
             source.close();
         });
-        dialog.show();
+        // Mark the window secure BEFORE showing the first video frame.
         Window w=dialog.getWindow();
-        if(w!=null){
-            w.setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE);
-            w.setLayout(-1,-1);
-        }
+        if(w!=null)w.setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE);
+        dialog.show();
+        if(w!=null)w.setLayout(-1,-1);
         return dialog;
     }
 }

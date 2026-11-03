@@ -45,6 +45,8 @@ ok(/setDataSource\(source\)/.test(player),'native player uses encrypted data sou
 ok(/FLAG_SECURE/.test(player),'native playback screen capture guard');
 ok(/new URL\(raw\)/.test(plugin)&&/TRUSTED_HOST/.test(plugin)&&/setInstanceFollowRedirects\(false\)/.test(plugin),'signed URL and redirect strict checks');
 ok(/hasTransport\(NetworkCapabilities\.TRANSPORT_WIFI\)/.test(plugin),'Wi-Fi preferred');
+ok(/wifi\.openConnection\(url\)/.test(plugin),'Wi-Fi-only download is network-pinned, never falls back to cellular');
+ok(player.indexOf('w.setFlags(WindowManager.LayoutParams.FLAG_SECURE')<player.indexOf('dialog.show()'),'screen protected before first video frame');
 ok(/allowMetered/.test(plugin)&&/WIFI_REQUIRED/.test(plugin),'metered network requires explicit choice');
 ok(/logoutAndWipe/.test(plugin)&&/vault\(\)\.clearOwner\(owner\)/.test(plugin),'wipe encrypted files + key on logout');
 ok(!/@PluginMethod[^{]*void\s+(readBytes|export|share|downloadPlain)\s*\(/.test(plugin),'no raw video interface for JS');

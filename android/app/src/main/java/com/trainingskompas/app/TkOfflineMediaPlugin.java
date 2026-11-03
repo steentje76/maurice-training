@@ -57,14 +57,15 @@ public class TkOfflineMediaPlugin extends Plugin {
         if(id==null||version==null)throw new SecurityException("MISSING_MEDIA_ID");
         return reg().find(id,version);
     }
-    private boolean isWifi(){
+    private Network wifiNetwork(){
         ConnectivityManager cm=(ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        if(cm==null)return false;
+        if(cm==null)return null;
         Network n=cm.getActiveNetwork();
         NetworkCapabilities cap=n==null?null:cm.getNetworkCapabilities(n);
         return cap!=null&&cap.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                &&cap.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+                &&cap.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)?n:null;
     }
+    private boolean isWifi(){return wifiNetwork()!=null;}
     private static URL validateSigned(String raw,TkMediaIntegrity.Entry entry)throws Exception {
         if(raw==null||raw.length()<90||raw.length()>8192)throw new SecurityException("INVALID_MEDIA_URL");
         URL u=new URL(raw);
@@ -119,12 +120,13 @@ public class TkOfflineMediaPlugin extends Plugin {
         final String owner;
         final TkMediaIntegrity.Entry entry;
         final URL url;
+        final boolean allowMetered;
         try{
             needEnabled(call);
             owner=checkActive();
             entry=descriptor(call);
-            if(!isWifi()&&!Boolean.TRUE.equals(call.getBoolean("allowMetered",false)))
-                throw new SecurityException("WIFI_REQUIRED");
+            allowMetered=Boolean.TRUE.equals(call.getBoolean("allowMetered",false));
+            if(!isWifi()&&!allowMetered)throw new SecurityException("WIFI_REQUIRED");
             // Signed URL comes from authenticated Netlify broker, not an arbitrary
             // user download URL. Native integrity digest is in packaged manifest.
             url=validateSigned(call.getString("signedUrl"),entry);
@@ -136,7 +138,12 @@ public class TkOfflineMediaPlugin extends Plugin {
                 if(vault().has(owner,entry)){
                     JSObject r=new JSObject();r.put("cached",true);r.put("downloadedBytes",0);call.resolve(r);return;
                 }
-                conn=(HttpURLConnection)url.openConnection();
+                // Pin Wi-Fi-only transfers to the Android Wi-Fi Network itself.
+                // If Wi-Fi vanishes mid-download, the request fails instead of
+                // silently switching to costly cellular data.
+                Network wifi=wifiNetwork();
+                if(!allowMetered&&wifi==null)throw new SecurityException("WIFI_REQUIRED");
+                conn=(HttpURLConnection)(wifi!=null?wifi.openConnection(url):url.openConnection());
                 conn.setInstanceFollowRedirects(false);
                 conn.setConnectTimeout(15000);conn.setReadTimeout(45000);
                 conn.setRequestProperty("Accept-Encoding","identity");

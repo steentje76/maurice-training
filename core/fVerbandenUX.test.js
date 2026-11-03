@@ -292,7 +292,7 @@ t('de slaapreeks wordt genormaliseerd via de bestaande eenheidsregel', function 
 });
 
 t('het Lichaam-overzicht toont hooguit een kort lijstje', function () {
-  assert.ok(/TK_REL_HOME_MAX\s*=\s*3/.test(HTML), 'geen begrenzing op het Lichaam-overzicht');
+  assert.ok(/TK_REL_HOME_MAX\s*=\s*2/.test(HTML), 'goedgekeurde Inzicht V2 toont maximaal twee gevalideerde patronen');
   var bron = pak('renderLichaamVerbanden');
   assert.ok(bron.indexOf('TK_REL_HOME_MAX') > 0);
   assert.ok(bron.indexOf('is_patroon') > 0, 'het korte lijstje toont ook niet-patronen');

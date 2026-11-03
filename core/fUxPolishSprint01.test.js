@@ -44,11 +44,12 @@ LICHAAM_BLOK = LICHAAM_BLOK.replace(/<div class="tk-card[^>]*id="inzicht-domain-
   ok(LICHAAM_BLOK.indexOf(em) === -1, 'C: emoji "' + em + '" komt niet meer voor op het Lichaam-hoofdscherm');
 });
 ok((LICHAAM_BLOK.match(/<span class="ic"><svg/g) || []).length >= 3, 'C-svg: verbanden, lichaamssamenstelling en gegevens gebruiken inline lijniconen; Coach/Trainen zijn via de primaire tabs bereikbaar');
-// 🌙 (Cyclus) en 🍽️ (Voeding-snelkoppeling) hebben bewust geen canonical
-// equivalent in de icon-registry en zijn NIET aangepast (zie eindrapport) --
-// dit wordt hier bevestigd, niet verzwegen.
-ok(LICHAAM_BLOK.indexOf('🌙') > -1, 'C-debt1: Cyclus-emoji is bewust nog aanwezig (geen canonical icoon beschikbaar, gerapporteerd als resterende debt)');
-ok(LICHAAM_BLOK.indexOf('🍽️') > -1, 'C-debt2: Voeding-snelkoppeling-emoji is bewust nog aanwezig (geen canonical icoon beschikbaar, gerapporteerd als resterende debt)');
+// PO-feedback 3 november: vroegere icon-debt is opgelost met dezelfde
+// turquoise lijn-SVG als de overige Gegevens & context-acties.
+ok(!LICHAAM_BLOK.includes('🌙') && /onclick="go\('s-lich-cyclus'\)"><span class="ic"><svg/.test(LICHAAM_BLOK),
+  'C-cyclus: geen gekleurde emoji meer; Cyclus gebruikt een lijn-SVG met dezelfde bestemming');
+ok(!LICHAAM_BLOK.includes('🍽️') && /onclick="go\('s-nutrition'\)"><span class="ic"><svg/.test(LICHAAM_BLOK),
+  'C-voeding: geen gekleurde emoji meer; Voeding gebruikt een lijn-SVG met dezelfde bestemming');
 
 /* ══ D. Entry-precisie (RC-IA-01): Prestaties/Trainingsbelasting/Doelen ══ */
 console.log('D. Entry-precisie (RC-IA-01)');

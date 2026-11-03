@@ -90,3 +90,57 @@ The manifest's candidate IDs are **not authoritative public exercise IDs** until
 - Inspected live storage.objects RLS: enabled, and existing storage.objects policies were scoped to `bucket_id='avatars'`; new MoveKit buckets have no ordinary user write/read policy. Server-only signed-url delivery remains strictly gated and inactive.
 - The new bucket's creation is mirrored by idempotent migration `supabase/migrations/20261103162918_tk504_private_poster_bucket.sql`, created using the Supabase CLI for repeatable fresh environments. The remote bucket is already provisioned, but migration history was not updated and other staged migrations were NOT applied to live.
 - Browser Dashboard login on MedscanMaurice is separate from CLI login on desktop `DESKTOP-DP6BUNC`. Supabase project connector is authenticated, but the desktop CLI has no access token; do not attempt authenticated Storage CLI transfer until a separate explicit desktop CLI OAuth flow is completed. No secrets requested or recorded in chat.
+
+## TK504 — PRIVATE MOVekit V2 STORAGE TRANSFER COMPLETED (3 November 2026)
+
+**Latest live state; supersedes earlier no-media-upload staging notes.**
+The existing hosted Supabase production project's PRIVATE storage received the
+licensed V2 assets. Main, the workout/exercise database, the production app,
+Netlify activation, entitlement migrations and APK were NOT changed.
+
+- Supabase project: Maurice training, mhfxhzkdmgkaplicdszg.
+- exercise-media: 582/582 MP4 videos, 2,047,785,201 bytes, private=true.
+  Exact prefix: movekit/v2/video/. All video file sizes within bucket 32 MiB cap.
+- exercise-posters: 582/582 optimized WebP posters, 9,634,714 bytes,
+  private=true. Exact prefix: movekit/v2/poster-optimized/.
+- Total: **1,164 private objects = 2,057,419,915 bytes**. Server-side SQL
+  confirms counts, exact total byte sums, MIME and 0 unexpected media paths.
+- All 1,164 exact remote object names compared with the private Golden
+  manifest via tools/movekit-v2-verify-remote-paths.py:
+  EXACT_REMOTE_PATH_SET_MATCH. Private manifest SHA-256:
+  6513fc8f804b7ab543e0275a6b9ca9b1a50c355d7fe5bb9db9cbe00964a2f358.
+- Full SHA-256 re-download checks passed for **219 distinct WebP posters**
+  and **7 V2 MP4 videos** (first pilot + six spread over the inventory).
+  All 1,164 original local source file SHA-256 checks passed before upload.
+  Do NOT claim 1,164 remote objects received a full re-download hash test;
+  all remote paths/metadata and overall byte totals were checked.
+- The CLI on Windows initially rejected absolute source paths. Switching
+  to relative paths fixed uploads. Recursive cp includes the source folder
+  basename; two misplaced pilot-only paths were detected and deleted, then
+  transferred to the intended canonical V2 folder. No stray paths remain.
+- First poster batch stopped after 426 objects because PowerShell interpreted
+  CLI informational stderr as an exception. A fresh listing was reconciled
+  with the manifest; exactly 156 missing posters were privately hardlinked
+  and uploaded without overwriting existing objects. Videos: 581 remaining
+  video files uploaded in a single bounded-parallel batch, plus first pilot.
+- A four-connection poster verification DOWNLOAD hit Supabase HTTP 429
+  too_many_connections after 219 local output entries. 215 were SHA-correct.
+  Four zero-byte incomplete local download placeholders were individually
+  retried (sequential downloads) and then passed full SHA-256; no evidence
+  of corrupted uploads. Avoid 4-way verification downloads until throttling/
+  connection pooling is addressed.
+- Supabase CLI 3.0.0 with explicit --remote project, --experimental, --yes,
+  and correctly prefixed folders used for storage operations. All Golden
+  license files, media manifests, transfer logs and temporary hardlinks stay
+  privately in C:\Movikit\.tk-private-review. No licensed assets or secret
+  credentials were placed in public Git.
+- Both buckets remain private, with storage.objects RLS and no added
+  client-facing object policies. The new V2 grant schema has NOT been
+  applied to the live database; V2 signer release approval registry remains
+  BLOCKED and the V2 app is unwired. Storage success is NOT an entitlement
+  or application release.
+- Outstanding release gates: documented supplier license/commercial review,
+  per-user grant and catalog binding, reconcile staged V2 client/server
+  contract, versioned reviewed release registry for both media types,
+  physical Android offline/Range/seek/account-switch tests and all prior
+  #577/#582/#584/#579 fixes plus joint UX review. NO APK yet.

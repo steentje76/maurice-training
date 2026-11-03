@@ -137,7 +137,18 @@
         return rows.filter(function(v){return v.ownerId===uid&&safe(v.data,uid);})
           .map(function(v){return JSON.parse(JSON.stringify(v.data));});
       },
-      remove:async function(uid,wid){await adapter.delete(key(uid,wid));return true;}
+      remove:async function(uid,wid){await adapter.delete(key(uid,wid));return true;},
+      // Caller must invoke on account logout/revoke. Per-owner keys alone are not
+      // encryption and do not erase personal workout names on a shared device.
+      clearOwner:async function(uid){
+        uid=owner(uid);
+        var prefix=uid+'|';
+        var rows=await adapter.list(prefix);
+        var keys=rows.filter(function(v){return v&&v.ownerId===uid&&typeof v.key==='string'&&v.key.indexOf(prefix)===0;})
+          .map(function(v){return v.key;});
+        for(var i=0;i<keys.length;i++)await adapter.delete(keys[i]);
+        return keys.length;
+      }
     };
   }
   function memoryAdapter(){

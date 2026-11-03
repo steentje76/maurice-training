@@ -55,16 +55,24 @@ const guide={schema:'trainingskompas-offline-guide/1.0',ownerId:ownerA,workoutId
    const noRaw=JSON.stringify(fromDisk).indexOf('mp4')===-1&&JSON.stringify(fromDisk).indexOf('https:')===-1;
    await store.remove(b,'leg-day-1'); // another owner's key is distinct
    const preserved=await store.get(a,'leg-day-1');
-   await store.remove(a,'leg-day-1');
+   const bGuide={...fromDisk,ownerId:b,workoutId:'b-guide'};
+   await store.save(b,bGuide);
+   const deleted=await store.clearOwner(a);
    const erased=await store.get(a,'leg-day-1');
+   const bPreserved=await store.get(b,'b-guide');
+   await store.clearOwner(b);
+   const bErased=await store.get(b,'b-guide');
    await adapter.close();
-   return {fromDisk,cross,noRaw,preserved,erased};
+   return {fromDisk,cross,noRaw,preserved,erased,deleted,bPreserved,bErased};
   },{a:ownerA,b:ownerB});
   assert.deepEqual(after.fromDisk,guide);
   assert.equal(after.cross,null);
   assert.equal(after.noRaw,true);
   assert.deepEqual(after.preserved,guide);
   assert.equal(after.erased,null);
-  console.log('Chrome IndexedDB offline guide persistence: PASS; restart, account isolation, no raw media, removal');
+  assert.equal(after.deleted,1);
+  assert.equal(after.bPreserved.ownerId,ownerB);
+  assert.equal(after.bErased,null);
+  console.log('Chrome IndexedDB offline guide persistence: PASS; restart, owner isolation, per-account logout cleanup, no raw media');
  }finally{await context.close();await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e.stack||e);process.exitCode=1;});

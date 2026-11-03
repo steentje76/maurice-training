@@ -4956,7 +4956,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
 
     <!-- SECTION 2 — Jouw training: Mijn trainingen / Programma's / Planning (Level 3). -->
-    <div class="v43-lbl" style="margin:20px 0 8px">Trainingsritme</div>
+    <div class="v43-lbl" id="trainen-ritme-heading" style="display:none;margin:20px 0 8px">Trainingsritme</div>
     <div id="home-context" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <div class="v43-lbl" style="margin:20px 0 8px">Jouw training</div>
     <div class="tk-card tk-card-l3" style="display:flex;padding:0">
@@ -24978,16 +24978,17 @@ let tkTrainingCtx=null; // globale cache van training_context (row | false=geen 
 function renderHomeContextCard(tc){
   tkTrainingCtx = tc || false;
   const el=document.getElementById('home-context'); if(!el)return;
-  if(!tc){el.style.display='none'; el.innerHTML=''; return;}
+  const heading=document.getElementById('trainen-ritme-heading');
+  if(!tc){el.style.display='none'; el.innerHTML=''; if(heading)heading.style.display='none'; return;}
   const bits=[];
-  if(tc.frequency!=null) bits.push('Je traint meestal <b>'+tc.frequency+'× per week</b>');
-  if(tc.duration_min!=null) bits.push('sessies van <b>'+tc.duration_min+' min</b>');
+  if(tc.frequency!=null) bits.push('Je traint meestal <b>'+escHtml(String(tc.frequency))+'× per week</b>');
+  if(tc.duration_min!=null) bits.push('sessies van <b>'+escHtml(String(tc.duration_min))+' min</b>');
   if(tc.location) bits.push('locatie <b>'+escHtml(String(tc.location))+'</b>');
   const line1=bits.join(' · ');
   const daysTxt=(tc.days&&tc.days.length)?tc.days.join(' · '):'';
   const equip=(tc.equipment&&tc.equipment.length)?tc.equipment.join(', '):'';
   const avoid=(tc.avoid_exercises&&tc.avoid_exercises.length)?tc.avoid_exercises.join(', '):'';
-  if(!line1 && !daysTxt && !equip && !avoid){el.style.display='none'; el.innerHTML=''; return;}
+  if(!line1 && !daysTxt && !equip && !avoid){el.style.display='none'; el.innerHTML=''; if(heading)heading.style.display='none'; return;}
   let h='<div class="card"><div class="card-body" style="padding-top:14px">';
   h+='<div style="font-size:12px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Jouw ritme</div>';
   if(line1) h+='<div style="font-size:14px;color:var(--dark);line-height:1.5">'+line1+'.</div>';
@@ -24995,7 +24996,7 @@ function renderHomeContextCard(tc){
   if(equip) h+='<div style="font-size:13px;color:var(--g4);margin-top:2px">Materiaal: '+escHtml(equip)+'</div>';
   if(avoid) h+='<div style="font-size:13px;color:var(--g4);margin-top:2px">Vermijdt: '+escHtml(avoid)+'</div>';
   h+='</div></div>';
-  el.innerHTML=h; el.style.display='block';
+  el.innerHTML=h; el.style.display='block'; if(heading)heading.style.display='';
 }
 async function refreshTrainContext(){
   const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;

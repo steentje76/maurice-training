@@ -41,6 +41,14 @@ python -m unittest discover -s tools -p "test_movekit_v2_taxonomy_preflight.py" 
 - Persoonlijke eigenaarfeedback en volledige leverancierbeschrijvingen staan **uitsluitend lokaal**; er worden geen privé-outputbestanden, MP4 of WebP in Git opgenomen.
 - De privépreview is een testomgeving voor inhoud en UX, niet hetzelfde als een geïntegreerde gebruikersapplicatie.
 
+## Defensie-in-diepte voor private media — 3 november 2026
+
+- In `core/movekitV2ExerciseMediaBridge.js` is het pad naar de ondertekenende media-client verder beperkt: een catalogus met `_status=PRIVATE_REVIEW_NOT_RELEASED` levert **0** toegelaten media-identiteiten op, ook niet voor de bestaande 226 records. Buiten die privécontext worden individuele `_review`-records en `pending_review`-categorieën expliciet overgeslagen.
+- Unieke catalogus-ID's worden afzonderlijk bijgehouden zodat ook dubbele IDs in *overgeslagen* privérecords worden afgewezen.
+- `core/movekitV2ExerciseMediaBridgePending.test.js` controleert een volledig synthetisch 582-record-dataset, duplicate-ID, duplicate-slug, unknown status, pending marker/category, zero signing callbacks en ongewijzigde 226 gepubliceerde codepath: **14/14 PASS**.
+- De echte offline ECS-smoketest controleert nu ook: **0** request-geschikte privé-media-identiteiten en **0** calls naar signing client met de 582 private catalogus. Dit geldt alleen voor de staged media-bridge en is geen security assurance voor de hele productieketen.
+- Bestaande mediabridge-regressies **29/29 PASS**, zonder live rechten of endpoints aan te raken.
+
 ## Releasegates blijven open
 
 - De nieuwe 18 termen moeten nog versioneerbaar worden opgenomen in de uiteindelijke catalogus-/UI-/filter- en spierbelastingcontracten, zonder te vervallen in onnauwkeurige synoniemen.

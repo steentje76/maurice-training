@@ -26,6 +26,12 @@ assert(forearms.length>0&&lower.length>0&&bench.length>0);
 for(const item of forearms)assert(item.identity.primary.concat(item.identity.secondary).includes('Forearms'));
 for(const item of lower)assert(item.identity.primary.concat(item.identity.secondary).includes('Lower Back'));
 for(const item of bench)assert(item.identity.equipment.includes('Bench'));
+const mediaBridge=require('../core/movekitV2ExerciseMediaBridge.js');
+let mediaCalls=0;
+const media=mediaBridge.create({catalog:stage,mediaClient:{get:async()=>{mediaCalls++;return null;},invalidate:()=>{}}});
+assert.equal(media.registeredMoveKitExercises,0,'PRIVATE_REVIEW_MEDIA_DENY_ALL');
+assert.equal(media.resolve({catalog_id:'TK-000001'}),null,'PRIVATE_STAGE_MUST_NOT_USE_BASELINE_FOR_SIGNING');
+assert.equal(mediaCalls,0,'MEDIA_SIGNING_CLIENT_NEVER_CALLED');
 console.log(JSON.stringify({status:'REAL_ECS_PRIVATE_REVIEW_PASS',catalog:582,
  newPending:356,forearms:forearms.length,lowerBack:lower.length,bench:bench.length,
  indexIntegrity:true,dbWrites:0,activated:false,licensedTextLogged:false}));

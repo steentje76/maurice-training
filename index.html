@@ -3772,7 +3772,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div id="v43-home-head"></div>
     <div id="offline-badge" style="display:none;margin-top:8px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
-    <button class="ibtn" onclick="go('s-social')" aria-label="Naar Sociaal" style="position:absolute;top:12px;right:12px">👥</button>
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
     <div id="home-dash" style="display:none"></div>
@@ -3783,7 +3782,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <!-- Sprint 14 — readiness van de dag: tussen het coachbericht en het trainingsplan, zodat de
          sporter eerst leest wat vandaag betekent en dan direct doorkan naar de training. -->
     <div id="home-readiness"></div>
-    <div id="home-context" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <!-- GAP-P2-008 — hervatbare training: staat bewust VOOR "Vandaag gepland". Een lopende
          sessie afmaken gaat voor een nieuwe starten. Geen kaart wanneer niets hervatbaar is. -->
     <div id="home-resume"></div>
@@ -3798,7 +3796,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="home-f7-attention" class="hcoach-item" style="margin-bottom:14px"></div>
     <!-- S1 — "Recente vooruitgang": bestaande improvementsDigest (tot nu alleen op Stats) nu ook op Home. Presentatie-only, verschijnt alleen bij echte vooruitgang. -->
     <div id="home-improve" class="hcoach-item" style="margin-bottom:14px"></div>
-    <div id="home-motivatie" class="hcoach-item" style="margin-bottom:4px"></div>
     <div class="v43-lbl" style="margin:20px 2px 10px">Snelacties</div>
     <div id="home-quick" style="margin-bottom:8px"></div>
     <!-- Verborgen, behouden voor render/tests — wonen op Home v2 niet meer (bereikbaar via Training/Logboek/Lichaam) -->
@@ -4557,6 +4554,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <!-- Routes die geen eigen domein hebben. Stonden op het vroegere Lichaam-scherm. -->
     <div class="v43-lbl" style="margin:18px 0 10px">Gegevens &amp; context</div>
+    <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic">&#9823;</span><span class="b"><b>Lichaamssamenstelling</b><s>Metingen, samenstelling, historie</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="go('s-lich-cyclus')"><span class="ic">🌙</span><span class="b"><b>Cyclus</b><s>Optioneel: menstruatie registreren als trainingscontext</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="go('s-lich-gegevens')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="6" height="10" rx="1"/><rect x="14" y="5" width="6" height="13" rx="1"/><path d="M7 18v2M17 18v2"/></svg></span><span class="b"><b>Gezondheidsgegevens &amp; koppelingen</b><s>Waar je gegevens vandaan komen en wat er gekoppeld is</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="go('s-nutrition')"><span class="ic">🍽️</span><span class="b"><b>Voeding rond je training</b><s>Vrije invoer van kcal en macro's, zonder product</s></span><span class="chev">›</span></button>
@@ -4952,6 +4950,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
 
     <!-- SECTION 2 — Jouw training: Mijn trainingen / Programma's / Planning (Level 3). -->
+    <div class="v43-lbl" style="margin:20px 0 8px">Trainingsritme</div>
+    <div id="home-context" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <div class="v43-lbl" style="margin:20px 0 8px">Jouw training</div>
     <div class="tk-card tk-card-l3" style="display:flex;padding:0">
       <button onclick="go('s-train-mine')" style="flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 10px;border:none;background:none;cursor:pointer;font-family:var(--f);text-align:left"><span class="tk-icon-box tk-icon-box-sm"><svg class="tk-icon" data-icon="programma" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--color-text-primary)">Mijn trainingen<svg class="tk-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--color-text-muted)"><path d="M9 5l7 7-7 7"/></svg></span><span style="font-size:11px;color:var(--color-text-secondary);display:block">Schema's &amp; eigen workouts</span></button>
@@ -26937,7 +26937,6 @@ async function inzichtRenderDomains(renderId){
     {icon:'prestaties',title:'Prestaties',sub:"PR's, 1RM, krachtverhoudingen, cardio",go:'s-stats',fn:'goInzichtPrestaties',viz:''},
     {icon:'herstel',title:'Herstel',sub:'Anatomie, hersteltrends, HRV/slaap',go:'s-lich-health',viz:''},
     {icon:'belasting',title:'Trainingsbelasting',sub:'Historisch volume, frequentie en consistentie',go:'s-stats',fn:'goInzichtTrainingsbelasting',viz:''},
-    {icon:'lichaam',title:'Lichaam',sub:'Metingen, samenstelling, historie',go:'s-lich-metingen',viz:''},
     {icon:'voeding',title:'Voeding',sub:'Inname, energie, voedingsstoffen',go:'s-voeding',viz:''},
     {icon:'verbanden',title:'Verbanden',sub:'Wat lijkt bij jou samen te hangen?',go:'s-lich-verbanden',viz:''},
     {icon:'doel',title:'Doelen',sub:'Actieve doelen en challenges',go:'s-stats',fn:'goInzichtDoelen',viz:''}
@@ -26955,15 +26954,6 @@ async function inzichtRenderDomains(renderId){
     if(rec && rec.hasData && rec.rows && rec.rows.length>1){
       var pcts=rec.rows.map(function(r){return r.pct;}).slice(0,8).reverse();
       domains[1].viz=inzichtMiniViz(pcts,'#00B894');
-    }
-  }catch(_){}
-  // Lichaam: REAL DATA READY -- recente gewichtsmetingen (weight_log), geen
-  // nieuwe calculation, puur de ruwe, chronologische reeks gevisualiseerd.
-  try{
-    var wl=await inzichtGetOrNull('weight_log','&order=date.asc&limit=8');
-    if(wl && wl.length>1){
-      var weights=wl.map(function(r){return Number(r.gewicht||r.weight||r.value);}).filter(function(v){return isFinite(v);});
-      if(weights.length>1) domains[3].viz=inzichtMiniViz(weights,'#00B894');
     }
   }catch(_){}
   if(!stillCurrent())return;
@@ -32982,7 +32972,6 @@ function v43HomeHeader(dfInfo,checkinVandaag){
       ${dstr?`<div class="v43-hh-date">${V43I.cal} ${escHtml(dstr)}</div>`:''}
     </div>
     <div class="v43-hh-r">
-      <button class="v43-bell" onclick="openModal('m-hrv')" aria-label="Dagelijkse check-in">${V43I.pulse}${needCheckin?'<span class="bdot"></span>':''}</button>
       <button class="v43-avatar" onclick="go('s-profiel')" aria-label="Profiel">${avatarInner}</button>
     </div>
   </div>`;

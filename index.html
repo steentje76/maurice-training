@@ -3054,6 +3054,21 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-goto b{display:block;font-size:13.5px;font-weight:800;color:var(--dark);line-height:1.3}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-goto s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--g4);margin-top:2px;line-height:1.35}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-goto .chev{font-size:19px;font-weight:700;color:var(--g3);flex:0 0 auto}
+/* Compacte contextlijst op Inzicht: een kaart met vier bestaande detailroutes. */
+#s-inzicht .inzicht-context-list{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:2px 12px;overflow:hidden}
+#s-inzicht .inzicht-context-list .lich-goto{min-height:54px;margin:0;border-radius:0;box-shadow:none;padding:11px 4px;background:transparent}
+#s-inzicht .inzicht-context-list .lich-goto+.lich-goto{border-top:1px solid var(--color-border)}
+#s-inzicht .inzicht-context-list .lich-goto:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
+#s-inzicht .inzicht-context-list .lich-goto .ic{background:var(--color-primary-soft);color:var(--color-primary)}
+#s-inzicht .inzicht-context-list .lich-goto .ic svg{width:20px;height:20px;stroke:currentColor}
+/* Inzicht V2 — Verbanden: afzonderlijke kaarten met vaste ruimte en de primaire mintkleur.
+   Alleen presentatie: geen aanpassing aan evidence/selectie of berekening. */
+#s-inzicht #lich-relations{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+#s-inzicht #lich-relations>.lich-vrow{margin-bottom:0}
+#s-inzicht #lich-relations .lich-vrow .cls.s3,
+#s-inzicht #lich-relations .lich-vrow .cls.s2{background:var(--color-primary-soft);color:var(--color-primary)}
+#s-inzicht #lich-relations+.lich-goto .ic{background:var(--color-primary-soft);color:var(--color-primary)}
+#s-inzicht #lich-relations+.lich-goto .ic svg{width:20px;height:20px;stroke:currentColor}
 /* Anatomiekaart op het overzicht — beide zijden tegelijk, direct zichtbaar. */
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anatcard{padding:12px 12px 10px}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-seg{display:flex;background:var(--g1);border-radius:999px;padding:3px;gap:2px;margin-bottom:10px}
@@ -3772,7 +3787,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div id="v43-home-head"></div>
     <div id="offline-badge" style="display:none;margin-top:8px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
-    <button class="ibtn" onclick="go('s-social')" aria-label="Naar Sociaal" style="position:absolute;top:12px;right:12px">👥</button>
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
     <div id="home-dash" style="display:none"></div>
@@ -3783,7 +3797,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <!-- Sprint 14 — readiness van de dag: tussen het coachbericht en het trainingsplan, zodat de
          sporter eerst leest wat vandaag betekent en dan direct doorkan naar de training. -->
     <div id="home-readiness"></div>
-    <div id="home-context" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <!-- GAP-P2-008 — hervatbare training: staat bewust VOOR "Vandaag gepland". Een lopende
          sessie afmaken gaat voor een nieuwe starten. Geen kaart wanneer niets hervatbaar is. -->
     <div id="home-resume"></div>
@@ -3798,7 +3811,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="home-f7-attention" class="hcoach-item" style="margin-bottom:14px"></div>
     <!-- S1 — "Recente vooruitgang": bestaande improvementsDigest (tot nu alleen op Stats) nu ook op Home. Presentatie-only, verschijnt alleen bij echte vooruitgang. -->
     <div id="home-improve" class="hcoach-item" style="margin-bottom:14px"></div>
-    <div id="home-motivatie" class="hcoach-item" style="margin-bottom:4px"></div>
     <div class="v43-lbl" style="margin:20px 2px 10px">Snelacties</div>
     <div id="home-quick" style="margin-bottom:8px"></div>
     <!-- Verborgen, behouden voor render/tests — wonen op Home v2 niet meer (bereikbaar via Training/Logboek/Lichaam) -->
@@ -4520,8 +4532,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
          rechtstreeks onder Inzicht. Zelfde element-id's en dezelfde renderer (renderLichaam), dus
          geen tweede dataketen. -->
     <div id="inzicht-herstel" style="margin-top:18px">
-    <div id="lich-hero"></div>
-    <div id="lich-checkin"></div>
+    <!-- Dagadvies en dagelijkse check-in zijn exclusief op Vandaag/Home. -->
     <div id="lich-datastatus"></div>
 
     <div class="v43-lbl" style="margin:12px 0 8px">Herstel &amp; belasting</div>
@@ -4547,9 +4558,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-relations"></div>
     <button class="lich-goto" onclick="go('s-lich-verbanden')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="7" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="17" r="2"/><path d="M7.8 8.2L11 15.3M16.4 7.3L13 15.3"/></svg></span><span class="b"><b>Alle verbanden</b><s>Wat lijkt bij jou samen te hangen?</s></span><span class="chev">›</span></button>
 
-    <div class="v43-lbl" style="margin:16px 0 10px">Wat betekent dit?</div>
-    <button class="lich-goto" onclick="go('s-coach')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.2 3.2L16.4 7.6 13.2 8.8 12 12l-1.2-3.2L7.6 7.6l3.2-1.2z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/></svg></span><span class="b"><b>Wat betekent dit voor vandaag?</b><s>De coach legt uit en adviseert</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11M4 4l3 3M20 20l-3-3M2 8l4-4M22 16l-4 4M14 4l3 3-8 8-3-3z"/></svg></span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
     </div>
 
     <div class="v43-lbl" style="margin:18px 0 10px">Domeinen</div>
@@ -4557,10 +4565,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <!-- Routes die geen eigen domein hebben. Stonden op het vroegere Lichaam-scherm. -->
     <div class="v43-lbl" style="margin:18px 0 10px">Gegevens &amp; context</div>
-    <button class="lich-goto" onclick="go('s-lich-cyclus')"><span class="ic">🌙</span><span class="b"><b>Cyclus</b><s>Optioneel: menstruatie registreren als trainingscontext</s></span><span class="chev">›</span></button>
+    <div class="inzicht-context-list" role="group" aria-label="Gegevens en context">
+    <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="3"/><path d="M8 21l1-8-3-3 2-2m8 13-1-8 3-3-2-2M9 12h6"/></svg></span><span class="b"><b>Lichaamssamenstelling</b><s>Metingen, samenstelling, historie</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="go('s-lich-gegevens')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="6" height="10" rx="1"/><rect x="14" y="5" width="6" height="13" rx="1"/><path d="M7 18v2M17 18v2"/></svg></span><span class="b"><b>Gezondheidsgegevens &amp; koppelingen</b><s>Waar je gegevens vandaan komen en wat er gekoppeld is</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="go('s-nutrition')"><span class="ic">🍽️</span><span class="b"><b>Voeding rond je training</b><s>Vrije invoer van kcal en macro's, zonder product</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-cyclus')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5 8.5 8.5 0 1 0 20.5 14.6Z"/></svg></span><span class="b"><b>Cyclus</b><s>Optioneel: menstruatie registreren als trainingscontext</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-nutrition')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M16 3c3 2 4 5 4 8v2h-5V8c0-2 .4-4 1-5ZM20 13v8"/></svg></span><span class="b"><b>Voeding rond je training</b><s>Vrije invoer van kcal en macro's, zonder product</s></span><span class="chev">›</span></button>
 
+    </div>
     <div class="v43-lbl" style="margin:18px 0 10px">Recente inzichten</div>
     <div id="inzicht-recent-list"></div>
 
@@ -4952,6 +4963,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
 
     <!-- SECTION 2 — Jouw training: Mijn trainingen / Programma's / Planning (Level 3). -->
+    <div class="v43-lbl" id="trainen-ritme-heading" style="display:none;margin:20px 0 8px">Trainingsritme</div>
+    <div id="home-context" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <div class="v43-lbl" style="margin:20px 0 8px">Jouw training</div>
     <div class="tk-card tk-card-l3" style="display:flex;padding:0">
       <button onclick="go('s-train-mine')" style="flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 10px;border:none;background:none;cursor:pointer;font-family:var(--f);text-align:left"><span class="tk-icon-box tk-icon-box-sm"><svg class="tk-icon" data-icon="programma" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--color-text-primary)">Mijn trainingen<svg class="tk-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--color-text-muted)"><path d="M9 5l7 7-7 7"/></svg></span><span style="font-size:11px;color:var(--color-text-secondary);display:block">Schema's &amp; eigen workouts</span></button>
@@ -24972,16 +24985,17 @@ let tkTrainingCtx=null; // globale cache van training_context (row | false=geen 
 function renderHomeContextCard(tc){
   tkTrainingCtx = tc || false;
   const el=document.getElementById('home-context'); if(!el)return;
-  if(!tc){el.style.display='none'; el.innerHTML=''; return;}
+  const heading=document.getElementById('trainen-ritme-heading');
+  if(!tc){el.style.display='none'; el.innerHTML=''; if(heading)heading.style.display='none'; return;}
   const bits=[];
-  if(tc.frequency!=null) bits.push('Je traint meestal <b>'+tc.frequency+'× per week</b>');
-  if(tc.duration_min!=null) bits.push('sessies van <b>'+tc.duration_min+' min</b>');
+  if(tc.frequency!=null) bits.push('Je traint meestal <b>'+escHtml(String(tc.frequency))+'× per week</b>');
+  if(tc.duration_min!=null) bits.push('sessies van <b>'+escHtml(String(tc.duration_min))+' min</b>');
   if(tc.location) bits.push('locatie <b>'+escHtml(String(tc.location))+'</b>');
   const line1=bits.join(' · ');
   const daysTxt=(tc.days&&tc.days.length)?tc.days.join(' · '):'';
   const equip=(tc.equipment&&tc.equipment.length)?tc.equipment.join(', '):'';
   const avoid=(tc.avoid_exercises&&tc.avoid_exercises.length)?tc.avoid_exercises.join(', '):'';
-  if(!line1 && !daysTxt && !equip && !avoid){el.style.display='none'; el.innerHTML=''; return;}
+  if(!line1 && !daysTxt && !equip && !avoid){el.style.display='none'; el.innerHTML=''; if(heading)heading.style.display='none'; return;}
   let h='<div class="card"><div class="card-body" style="padding-top:14px">';
   h+='<div style="font-size:12px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Jouw ritme</div>';
   if(line1) h+='<div style="font-size:14px;color:var(--dark);line-height:1.5">'+line1+'.</div>';
@@ -24989,7 +25003,19 @@ function renderHomeContextCard(tc){
   if(equip) h+='<div style="font-size:13px;color:var(--g4);margin-top:2px">Materiaal: '+escHtml(equip)+'</div>';
   if(avoid) h+='<div style="font-size:13px;color:var(--g4);margin-top:2px">Vermijdt: '+escHtml(avoid)+'</div>';
   h+='</div></div>';
-  el.innerHTML=h; el.style.display='block';
+  el.innerHTML=h; el.style.display='block'; if(heading)heading.style.display='';
+}
+let tkContextRequestEpoch=0; // latest training-context request wins, even for same account
+let tkContextDisplayOwnerId=null; // clear stale rhythm immediately when user switches
+async function refreshTrainContext(){
+  const requestEpoch=++tkContextRequestEpoch;
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  if(tkContextDisplayOwnerId!==ownerId){tkContextDisplayOwnerId=ownerId;renderHomeContextCard(null);}
+  const stillCurrent=()=>requestEpoch===tkContextRequestEpoch&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
+  try{
+    const rows=await v43SafeGet('training_context','&limit=1');
+    if(stillCurrent())renderHomeContextCard(rows&&rows[0]);
+  }catch(_){if(stillCurrent())renderHomeContextCard(null);}
 }
 async function refreshHome(){
   const hq=tkHealthQualified(await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));
@@ -24997,8 +25023,14 @@ async function refreshHome(){
   const lh=hd[0];
   // Sprint 2 — Home-personalisatie: 'Jouw ritme' uit training_context (onboarding).
   // Alleen tonen wanneer de data echt bestaat; geen fake planning.
-  try{ const tcRows=await v43SafeGet('training_context','&limit=1'); renderHomeContextCard(tcRows&&tcRows[0]); }
-  catch(e){ renderHomeContextCard(null); }
+  // Behoud de Home-contextcache voor bestaande plannings- en coachfuncties.
+  // De zichtbare kaart staat nu onder Trainen en wordt daar ook zelfstandig geladen.
+  const ctxRequestEpoch=++tkContextRequestEpoch;
+  const ctxOwner=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  if(tkContextDisplayOwnerId!==ctxOwner){tkContextDisplayOwnerId=ctxOwner;renderHomeContextCard(null);}
+  const ctxCurrent=()=>ctxRequestEpoch===tkContextRequestEpoch&&ctxOwner===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
+  try{const tcRows=await v43SafeGet('training_context','&limit=1');if(ctxCurrent())renderHomeContextCard(tcRows&&tcRows[0]);}
+  catch(_){if(ctxCurrent())renderHomeContextCard(null);}
   let dfInfo=null,nextT=null;
   if(lh){
     const hrvComponent=hrvDagFactorPersonal(hd);
@@ -26757,7 +26789,7 @@ async function renderInzicht(){
   await Promise.allSettled([inzichtRenderDevelopment(renderId),inzichtRenderOverview(renderId),inzichtRenderDomains(renderId),inzichtRenderRecent(renderId)]);
 }
 
-/* Jouw ontwikkeling -- 4 summary cells, uitsluitend canonical bronnen. */
+/* Jouw ontwikkeling -- originele 4 indicatoren, uitsluitend canonical bronnen. */
 async function inzichtRenderDevelopment(renderId){
   const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
   const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
@@ -26793,11 +26825,9 @@ async function inzichtRenderDevelopment(renderId){
     }catch(_){}
   }
 
-  // Trainingen: canonical, gededupliceerd per bron -- sessions (kracht/WOD/ergometer)
-  // en activities (standalone endurance) zijn architecturaal gescheiden (B9-H6B),
-  // dus een simpele optelling van beide tellingen dubbelt niet. UNKNOWN != 0: als
-  // een van beide bronnen faalde (null), is de totale telling onbetrouwbaar --
-  // toon dan "--", nooit een gedeeltelijke, mogelijk te lage telling als feit.
+
+  // Originele trainingsindicator telt de gescheiden sessions- en activities-bronnen.
+  // B9-H6B: geen dubbeltelling; bij een ontbrekende bron blijft de waarde onbekend.
   if(all!==null && activities!==null){
     trainingHtml='<div class="num">'+(all.length+activities.length)+'</div>';
   }
@@ -26937,7 +26967,6 @@ async function inzichtRenderDomains(renderId){
     {icon:'prestaties',title:'Prestaties',sub:"PR's, 1RM, krachtverhoudingen, cardio",go:'s-stats',fn:'goInzichtPrestaties',viz:''},
     {icon:'herstel',title:'Herstel',sub:'Anatomie, hersteltrends, HRV/slaap',go:'s-lich-health',viz:''},
     {icon:'belasting',title:'Trainingsbelasting',sub:'Historisch volume, frequentie en consistentie',go:'s-stats',fn:'goInzichtTrainingsbelasting',viz:''},
-    {icon:'lichaam',title:'Lichaam',sub:'Metingen, samenstelling, historie',go:'s-lich-metingen',viz:''},
     {icon:'voeding',title:'Voeding',sub:'Inname, energie, voedingsstoffen',go:'s-voeding',viz:''},
     {icon:'verbanden',title:'Verbanden',sub:'Wat lijkt bij jou samen te hangen?',go:'s-lich-verbanden',viz:''},
     {icon:'doel',title:'Doelen',sub:'Actieve doelen en challenges',go:'s-stats',fn:'goInzichtDoelen',viz:''}
@@ -26955,15 +26984,6 @@ async function inzichtRenderDomains(renderId){
     if(rec && rec.hasData && rec.rows && rec.rows.length>1){
       var pcts=rec.rows.map(function(r){return r.pct;}).slice(0,8).reverse();
       domains[1].viz=inzichtMiniViz(pcts,'#00B894');
-    }
-  }catch(_){}
-  // Lichaam: REAL DATA READY -- recente gewichtsmetingen (weight_log), geen
-  // nieuwe calculation, puur de ruwe, chronologische reeks gevisualiseerd.
-  try{
-    var wl=await inzichtGetOrNull('weight_log','&order=date.asc&limit=8');
-    if(wl && wl.length>1){
-      var weights=wl.map(function(r){return Number(r.gewicht||r.weight||r.value);}).filter(function(v){return isFinite(v);});
-      if(weights.length>1) domains[3].viz=inzichtMiniViz(weights,'#00B894');
     }
   }catch(_){}
   if(!stillCurrent())return;
@@ -32982,7 +33002,6 @@ function v43HomeHeader(dfInfo,checkinVandaag){
       ${dstr?`<div class="v43-hh-date">${V43I.cal} ${escHtml(dstr)}</div>`:''}
     </div>
     <div class="v43-hh-r">
-      <button class="v43-bell" onclick="openModal('m-hrv')" aria-label="Dagelijkse check-in">${V43I.pulse}${needCheckin?'<span class="bdot"></span>':''}</button>
       <button class="v43-avatar" onclick="go('s-profiel')" aria-label="Profiel">${avatarInner}</button>
     </div>
   </div>`;
@@ -33321,6 +33340,7 @@ function v43RenderPlan(elId,nextT,opts){
   </div>`;
 }
 function renderV43Train(){
+  refreshTrainContext();
   v43RenderPlan('v43-train-plan',window.homeNextT,{detailsButton:true,compact:true});
   // Trainen-specifieke empty state (additief, Trainen v0.2 runtime-fix). De
   // gedeelde v43RenderPlan()-functie zelf blijft ongewijzigd (ook door Home
@@ -34823,7 +34843,7 @@ function tkRelPeriodeZet(d){ tkRelPeriode=Number(d)||90; renderLichaamVerbandDet
    staan alleen de sterkste bevindingen, de volledige lijst zit achter "Alle verbanden".
    Is er niets gevonden, dan blijft de bestaande veilige lege toestand staan — die
    wordt hier niet vervangen maar overgeslagen. */
-const TK_REL_HOME_MAX = 3;
+const TK_REL_HOME_MAX = 2;
 async function renderLichaamVerbanden(){
   const el=document.getElementById('lich-relations'); if(!el) return;
   let uit=null;

@@ -52,11 +52,11 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     const overflow = await page.evaluate(() => { const el = document.getElementById('s-inzicht'); return el.scrollWidth > el.clientWidth + 2; });
     ok(!overflow, w + 'px 4: geen horizontale overflow');
     const summaryCells = await page.evaluate(() => document.querySelectorAll('#inzicht-summary-grid .tk-summary-cell').length);
-    ok(summaryCells === 4, w + 'px 5: exact 4 Jouw ontwikkeling-cellen (Verbeterd/Stijgende trends/Trainingen/Adherence)');
+    ok(summaryCells === 4, w + 'px 5: exact 4 originele Jouw ontwikkeling-cellen (Verbeterd/Stijgende trends/Trainingen/Adherence)');
     const overviewCells = await page.evaluate(() => document.querySelectorAll('#inzicht-overview-grid .tk-overview-cell').length);
     ok(overviewCells === 5, w + 'px 6: exact 5 Snel overzicht-cellen');
     const domainRows = await page.evaluate(() => document.querySelectorAll('#inzicht-domain-list .row').length);
-    ok(domainRows === 7, w + 'px 7: exact 7 domain-rows (Prestaties/Herstel/Belasting/Lichaam/Voeding/Verbanden/Doelen)');
+    ok(domainRows === 6, w + 'px 7: exact 6 domeinen zonder Lichaam; Lichaamssamenstelling hoort in Gegevens & context');
     const periodBtns = await page.evaluate(() => document.querySelectorAll('#s-inzicht .tk-period-selector button[role="tab"]').length);
     ok(periodBtns === 3, w + 'px 8: Period Selector heeft exact 3 opties (7 dagen/4 weken/3 maanden)');
     const filterChip = await page.evaluate(() => !!document.querySelector('#s-inzicht .tk-filter-chip select'));
@@ -135,7 +135,8 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     const prestatiesFnGoesToStats = await page.evaluate(() => typeof goInzichtPrestaties === 'function' && goInzichtPrestaties.toString().includes("go('s-stats')"));
     ok(prestatiesFnGoesToStats, '14b: goInzichtPrestaties() navigeert intern nog steeds naar het bestaande s-stats-scherm');
     ok(targets.some(t => /s-lich-health/.test(t)), '15: Herstel-domeincard navigeert naar het bestaande s-lich-health-scherm');
-    ok(targets.some(t => /s-lich-metingen/.test(t)), '16: Lichaam-domeincard navigeert naar het bestaande s-lich-metingen-scherm');
+    const bodyContext=await page.evaluate(()=>{const c=document.querySelector('#s-inzicht .inzicht-context-list');const b=Array.from(c?.querySelectorAll('button')||[]).find(b=>b.textContent.includes('Lichaamssamenstelling'));return {exists:!!b,route:b?.getAttribute('onclick')};});
+    ok(bodyContext.exists && /s-lich-metingen/.test(bodyContext.route), '16: Lichaamssamenstelling in Gegevens & context navigeert naar bestaand s-lich-metingen-scherm');
     ok(targets.some(t => /s-lich-verbanden/.test(t)), '17: Verbanden-domeincard navigeert naar het bestaande s-lich-verbanden-scherm');
 
     // Sabotage: introduceer opnieuw een letterlijke ${...} in de statische
@@ -273,7 +274,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     ok(detailsBtn, '30: "Bekijk details"-knop is aanwezig bij Jouw ontwikkeling, conform canonical');
 
     const devIcons = await page.evaluate(() => document.querySelectorAll('#inzicht-summary-grid .tk-summary-cell .ic').length);
-    ok(devIcons === 4, '31: alle 4 Jouw-ontwikkeling-cellen hebben een icoon boven het cijfer, conform canonical');
+    ok(devIcons === 4, '31: alle 4 originele Jouw-ontwikkeling-cellen hebben een icoon boven het cijfer');
 
     // Herstel-ring: functioneel getest met echte ring-wiskunde (zelfde
     // patroon als de bestaande _radial()-functie elders in de app).
@@ -567,7 +568,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
-  // PO Final Visual Fidelity Rework: Jouw Ontwikkeling -- 4 KPI's op één rij,
+  // PO-gecorrigeerde Inzicht V2: de oorspronkelijke 4 KPI's op één rij,
   // zelfstandige tegels (eigen achtergrond+schaduw), waarde-top alignment.
   for (const w of [320, 390, 430]) {
     const page = await offlinePage({ viewport: { width: w, height: 900 } });

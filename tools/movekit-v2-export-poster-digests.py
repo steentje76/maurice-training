@@ -19,6 +19,14 @@ SHA = re.compile(r"^[a-f0-9]{64}$")
 SCHEMA = "trainingskompas-movekit-v2-optimized-poster-digests/1.0"
 
 
+def canonical_json_bytes(source):
+    """Hash UTF-8 JSON in repository LF form, independent of Windows checkout."""
+    data = Path(source).read_bytes()
+    if b"\r" in data.replace(b"\r\n", b""):
+        raise ValueError("UNSUPPORTED_BARE_CR_IN_JSON")
+    return data.replace(b"\r\n", b"\n")
+
+
 def sha(path):
     h = hashlib.sha256()
     with path.open("rb") as fd:
@@ -28,7 +36,7 @@ def sha(path):
 
 
 def build(public_inventory, private_registry, check_files=True):
-    source_bytes = Path(public_inventory).read_bytes()
+    source_bytes = canonical_json_bytes(public_inventory)
     inventory = json.loads(source_bytes)
     private_registry = Path(private_registry).resolve(strict=True)
     if private_registry.name != "catalog-poster-registry.json" or (
@@ -94,7 +102,9 @@ def main():
     output = args.output.resolve()
     if output.name != "MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.json" or output.parent.name != "generated" or output.parent.parent.name != "docs":
         raise ValueError("PUBLIC_DIGEST_OUTPUT_PATH_INVALID")
-    output.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    # write_bytes preserves LF on Windows and Linux; checkout conversion does
+    # not affect the content-addressed digest used by the Netlify broker.
+    output.write_bytes((json.dumps(result, indent=2, ensure_ascii=False) + "\n").encode("utf-8"))
     print(json.dumps({"poster_digests": result["count"],
                       "source_bytes": result["total_bytes"],
                       "status": result["status"],

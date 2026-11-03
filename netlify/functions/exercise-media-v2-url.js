@@ -29,8 +29,8 @@ const ALLOWED_ORIGINS = new Set([
 const inventory = require('../../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json');
 const posterRegistry = require('../../docs/generated/MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.json');
 const release = require('../../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
-const inventorySha = 'ca02f2cf71f4764a1b7fad97e34992ed5590a0c78e5cd93cbcf1601737bac6d1';
-const posterSha = '7512ec4c8679e8cda6ecad068fd4888b82785f9ceb5d4976dd49f627bbd3f099';
+const inventorySha = 'a8500ce902bbea4f1ff5ad0be6576f70b44616f8803367a27122e5449c815a66';
+const posterSha = '07fe0762c6eb5814d03d006e060b8eec0dd4e47cd053a3d3846ff003cc8559a4';
 const byId = new Map();
 if (inventory.schema !== 'trainingskompas-movekit-golden-inventory/2.0' ||
     inventory.status !== 'STAGING_ONLY_DO_NOT_ACTIVATE' ||

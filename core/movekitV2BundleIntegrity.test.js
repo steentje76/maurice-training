@@ -10,7 +10,15 @@ const paths = {
   inventory: path.resolve(__dirname, '../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json'),
   posters: path.resolve(__dirname, '../docs/generated/MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.json')
 };
-const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+// Git stores these UTF-8 JSON files with LF; Windows checkout may be CRLF.
+// Normalize only line endings, never JSON values or object ordering.
+function canonicalBytes(file) {
+  const raw = fs.readFileSync(file);
+  const normalized = raw.toString('utf8').replace(/\r\n/g,'\n');
+  assert.equal(normalized.includes('\r'), false, 'bare CR in immutable JSON');
+  return Buffer.from(normalized,'utf8');
+}
+const sha = p => crypto.createHash('sha256').update(canonicalBytes(p)).digest('hex');
 const actualInventory = sha(paths.inventory);
 const actualPosters = sha(paths.posters);
 assert.equal(actualInventory, broker.inventorySha, 'public Golden source changed without server source SHA pin');

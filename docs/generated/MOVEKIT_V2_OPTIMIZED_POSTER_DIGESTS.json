@@ -1,7 +1,7 @@
 {
   "schema": "trainingskompas-movekit-v2-optimized-poster-digests/1.0",
   "status": "STAGING_INDEX_NOT_RELEASE_APPROVAL",
-  "golden_inventory_sha256": "ca02f2cf71f4764a1b7fad97e34992ed5590a0c78e5cd93cbcf1601737bac6d1",
+  "golden_inventory_sha256": "a8500ce902bbea4f1ff5ad0be6576f70b44616f8803367a27122e5449c815a66",
   "count": 582,
   "total_bytes": 9634714,
   "items": [

@@ -173,7 +173,7 @@ LICH_SCREENS.forEach(id => {
 });
 
 // Verplaatste blokken mogen niet gedupliceerd raken: één element-id, één renderer.
-['lich-hero','lich-checkin','lich-metrics','lich-relations','lich-belasting','lich-history',
+['lich-metrics','lich-relations','lich-belasting','lich-history',
  'lich-fig-front','lich-fig-back','lich-legend','lich-muslist','lich-anatfoot-t',
  'lich-bodymetrics','lich-history-health','v43-lich-figbox','v43-lich-list','v43-lich-overall',
  'muscle-heatmap-container','profiel-bc-card','profiel-w-chart','profiel-history'].forEach(id => {
@@ -198,8 +198,12 @@ targets.forEach(t => ok(html.indexOf('<div class="scr" id="' + t + '">') >= 0,
   'route ' + t + ' verwijst naar een bestaand scherm'));
 
 // Check-in: route naar de BESTAANDE modal, geen nieuwe flow.
-ok(/lich-checkin/.test(html) && /class="lich-strip todo" onclick="openModal\('m-hrv'\)"/.test(html),
-  'de check-instrip opent de bestaande check-in (m-hrv)');
+const inzichtHtml = html.slice(html.indexOf('<div class="scr" id="s-inzicht">'), html.indexOf('<div class="scr" id="s-library">'));
+ok(!inzichtHtml.includes('id="lich-hero"') && !inzichtHtml.includes('id="lich-checkin"') &&
+   inzichtHtml.includes('id="lich-mode-rec"') && inzichtHtml.includes('id="lich-mode-load"'),
+  'het dubbele dagadvies en check-in ontbreken op Inzicht; de oorspronkelijke Herstel/Spierbelasting-bediening blijft');
+ok(html.includes("document.getElementById('home-hrv-card')") && html.includes("openModal('m-hrv')"),
+  'dagelijkse check-in blijft via Home beschikbaar, zonder tweede kaart op Inzicht');
 ok(html.indexOf('id="m-hrv"') >= 0, 'de check-in-modal m-hrv is ongewijzigd aanwezig');
 
 // Gemeten versus berekend.

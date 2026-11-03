@@ -18,7 +18,7 @@ ok(!/inzichtSrc.*avgStep\s*=|percentage\s*=\s*Math\.round\(\(.*completed.*\/.*el
 ok(inzichtSrc.includes('dc.healthSeries') && inzichtSrc.includes('dc.healthTrend') && inzichtSrc.includes('dc.qualifySeries'), '4: HRV/Rusthartslag/Slaap gebruiken uitsluitend de bestaande dc.health*-functies');
 ok(!/inzichtRender[A-Za-z]*\(\)[\s\S]{0,2000}?\bavgStep\s*=\s*\(/.test(inzichtSrc), '5: geen lokale trend-slope-berekening binnen de Inzicht-renderfuncties zelf');
 const developmentSrc=html.slice(html.indexOf('async function inzichtRenderDevelopment(renderId)'),html.indexOf('async function inzichtRenderOverview(renderId)'));
-ok(!developmentSrc.includes('trainingHtml') && !developmentSrc.includes("inzichtGetOrNull('activities'") && !developmentSrc.includes('<div class="lbl">Trainingen</div>'), '6: de verwijderde Trainingen-tegel voegt geen sessions/activities samen en toont geen ongedocumenteerde telling');
+ok(developmentSrc.includes('B9-H6B') && developmentSrc.includes("inzichtGetOrNull('activities'") && developmentSrc.includes("inzichtGetOrNull('sessions'") && /if\(all!==null && activities!==null\)/.test(developmentSrc), '6: originele Trainingen-tegel leest gescheiden sessions/activities, zonder verzonnen partiële telling bij ontbrekende data');
 const aiRankingLanguage = /\bAI\b[\s\S]{0,200}\brank/i; // whole word AI: never match the 'ai' inside 'domains'
 ok(!aiRankingLanguage.test(inzichtSrc), '7: geen AI-ranking-taal in de Inzicht-code (PO2: deterministische recentheid, geen AI-score)');
 ok(aiRankingLanguage.test('AI-ranking') && !aiRankingLanguage.test('domains.forEach(); /* GEEN ranking */'), '7a: testguard herkent echte AI-ranking maar niet de letters ai binnen domains');

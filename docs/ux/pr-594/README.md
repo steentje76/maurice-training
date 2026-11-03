@@ -1,6 +1,6 @@
 # Trainingskompas PR #594 — visuele acceptatie Inzicht V2
 
-**Status:** concept ter beoordeling van de product owner. Deze screenshots komen uit een *offline, niet-ingelogde* Chrome-run op de geïsoleerde UX-branch. Er is geen echte sporter- of accountdata geladen. Onbekende waarden verschijnen bewust als '—' of 'niet gemeten'.
+**Status:** gecorrigeerde UX volgens product-ownerfeedback van 3 november 2026; de eerdere screenshotset is vervangen door nieuwe echte renderings. Deze screenshots komen uit een *offline, niet-ingelogde* Chrome-run op de geïsoleerde UX-branch. Er is geen echte sporter- of accountdata geladen. Onbekende waarden verschijnen bewust als '—' of 'niet gemeten'.
 
 | Begin van Inzicht | Herstel en spierbelasting | Domeinen en gegevens |
 |---|---|---|
@@ -8,15 +8,15 @@
 
 ## Te beoordelen
 
-- Zijn de drie KPI's en de volgorde duidelijk?
-- Is het herstelscherm compact genoeg, of zijn nog delen dubbelop?
+- De vier oorspronkelijke KPI's (Verbeterd, Stijgende trends, Trainingen, Adherence) zijn hersteld. Klopt hun presentatie?
+- De dubbele donkere daggereedheid/check-in is verwijderd van Inzicht en blijft op Home; oorspronkelijke Herstel & Spierbelasting (voorzijde/achterzijde, herstelpercentages en tabs) is ongewijzigd behouden.
 - Vallen **Lichaamssamenstelling** en de vier contextacties logisch onder één kaart?
 - Moet de navigatie visueel verder worden vereenvoudigd?
 
 ## Reeds geautomatiseerd gecontroleerd
 
 - Geen horizontale overflow op 320, 360, 390, 430 px.
-- Drie KPI's en zes domeinen renderen op elke gecontroleerde breedte.
+- Vier oorspronkelijke KPI's en zes domeinen renderen; Lichaamssamenstelling blijft onder Gegevens & context.
 - Alle vier contextacties bestaan en de route naar lichaamsmetingen werkt.
 - Trainen blijft bereikbaar, trainingsritme wordt accountgebonden ververst en wist gegevens van een oud account direct bij switch.
 - Deze screenshots tonen geen live synchronisatie, eigenaarshistorie of fysieke Android-toesteltest.

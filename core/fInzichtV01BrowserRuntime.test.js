@@ -52,7 +52,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     const overflow = await page.evaluate(() => { const el = document.getElementById('s-inzicht'); return el.scrollWidth > el.clientWidth + 2; });
     ok(!overflow, w + 'px 4: geen horizontale overflow');
     const summaryCells = await page.evaluate(() => document.querySelectorAll('#inzicht-summary-grid .tk-summary-cell').length);
-    ok(summaryCells === 3, w + 'px 5: exact 3 Jouw ontwikkeling-cellen (Verbeterd/Stijgende trends/Adherence)');
+    ok(summaryCells === 4, w + 'px 5: exact 4 originele Jouw ontwikkeling-cellen (Verbeterd/Stijgende trends/Trainingen/Adherence)');
     const overviewCells = await page.evaluate(() => document.querySelectorAll('#inzicht-overview-grid .tk-overview-cell').length);
     ok(overviewCells === 5, w + 'px 6: exact 5 Snel overzicht-cellen');
     const domainRows = await page.evaluate(() => document.querySelectorAll('#inzicht-domain-list .row').length);
@@ -274,7 +274,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     ok(detailsBtn, '30: "Bekijk details"-knop is aanwezig bij Jouw ontwikkeling, conform canonical');
 
     const devIcons = await page.evaluate(() => document.querySelectorAll('#inzicht-summary-grid .tk-summary-cell .ic').length);
-    ok(devIcons === 3, '31: alle 3 Jouw-ontwikkeling-cellen hebben een icoon boven het cijfer, conform goedgekeurd ontwerp');
+    ok(devIcons === 4, '31: alle 4 originele Jouw-ontwikkeling-cellen hebben een icoon boven het cijfer');
 
     // Herstel-ring: functioneel getest met echte ring-wiskunde (zelfde
     // patroon als de bestaande _radial()-functie elders in de app).
@@ -568,7 +568,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
-  // PO-goedgekeurde Inzicht V2: Jouw Ontwikkeling -- 3 KPI's op één rij,
+  // PO-gecorrigeerde Inzicht V2: de oorspronkelijke 4 KPI's op één rij,
   // zelfstandige tegels (eigen achtergrond+schaduw), waarde-top alignment.
   for (const w of [320, 390, 430]) {
     const page = await offlinePage({ viewport: { width: w, height: 900 } });
@@ -583,8 +583,8 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       const rows = [...new Set(cells.map(c => Math.round(c.getBoundingClientRect().top)))].length;
       return { count: cells.length, rows, maxDelta: Math.max(...tops)-Math.min(...tops), bgs };
     });
-    ok(info.count === 3 && info.rows === 1, w + 'px 46: alle 3 KPI-tegels (Jouw Ontwikkeling) staan op exact 1 rij, geen 2+2-wrap');
-    ok(info.maxDelta <= 1, w + 'px 47: de 3 KPI-hoofdwaarden staan binnen 1px verticale tolerantie op dezelfde baseline (delta=' + info.maxDelta + 'px)');
+    ok(info.count === 4 && info.rows === 1, w + 'px 46: alle 4 KPI-tegels (Jouw Ontwikkeling) staan op exact 1 rij, geen 2+2-wrap');
+    ok(info.maxDelta <= 1, w + 'px 47: de 4 KPI-hoofdwaarden staan binnen 1px verticale tolerantie op dezelfde baseline (delta=' + info.maxDelta + 'px)');
     ok(info.bgs.every(b => b !== 'rgba(0, 0, 0, 0)' && b !== 'transparent'), w + 'px 48: elke KPI-tegel heeft een eigen, zichtbare achtergrond (zelfstandige tegeltaal, geen tekstkolom in een gedeelde kaart)');
     await page.close();
   }

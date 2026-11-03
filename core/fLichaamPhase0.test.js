@@ -226,8 +226,8 @@ ok(html.indexOf('id="lich-coach"') < 0, 'het coachblok is verwijderd');
 const lichBody = extractFn('renderLichaamPremium');
 ok(lichBody.indexOf('homeCoachText') < 0, 'de Lichaam-renderer leest de coachtekst van Home niet meer over');
 ok(lichBody.indexOf('homeNextT') < 0, 'de Lichaam-renderer leest de training van vandaag niet meer over');
-ok(/onclick="go\('s-coach'\)"><span class="ic"><svg/.test(html), 'er staat een verwijskaart naar Coach (canonical lijnicoon, UX Polish Sprint 01)');
-ok(/Welke training past hierbij\?/.test(html), 'er staat een verwijskaart naar Training');
+ok(/\{id:'coach',label:'Coach',target:'s-coach'/.test(html) && /<div class="scr" id="s-coach">/.test(html), 'Coach blijft bereikbaar via de primaire Coach-tab na UX-hergroepering');
+ok(/\{id:'trainen',label:'Trainen',[\s\S]*?target:function\(\)\{[\s\S]*?'s-train-mgr'/.test(html) && /<div class="scr" id="s-train-mgr">/.test(html), 'Training blijft bereikbaar via de primaire Trainen-tab na UX-hergroepering');
 
 // Geen dode stijlen van de verwijderde blokken.
 ok(html.indexOf('.lich-adv{') < 0 && html.indexOf('.lich-ccard{') < 0, 'de stijlen van de verwijderde blokken zijn opgeruimd');

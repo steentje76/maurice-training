@@ -152,4 +152,72 @@ test('invalid or activated registry cannot become a filter',()=>{
 test('review bridge is not imported in index.html nor production config',()=>{
   assert(!html.includes('movekitV2EcsReviewAdapter'));
 });
+const mk=(s)=>()=>createReviewSearch({stage:s,catalogService:engine,registry});
+test('duplicate catalog ids are rejected',()=>{
+  const s=freshStage();s.catalog[300].catalog_id=s.catalog[299].catalog_id;
+  assert.throws(mk(s),/SEARCH_CATALOG_SOURCE_MISMATCH/);
+});
+test('malformed stage/entries fail closed with controlled errors',()=>{
+  for(const bad of [null,undefined,[],'x',{}]) {
+    assert.throws(()=>createReviewSearch({stage:bad,catalogService:engine,registry}),/NOT_VERIFIED_PRIVATE_STAGE/);
+  }
+  assert.throws(()=>createReviewSearch(),/NOT_VERIFIED_PRIVATE_STAGE/);
+  const a=freshStage();a.catalog[10]=null;
+  assert.throws(mk(a),/SEARCH_CATALOG_SOURCE_MISMATCH/);
+  const b=freshStage();b.catalog[10].catalog_id='tk-10';
+  assert.throws(mk(b),/SEARCH_CATALOG_SOURCE_MISMATCH/);
+  const c=freshStage();c.catalog[300].identity.primary='Forearms';
+  assert.throws(mk(c),/SEARCH_CATALOG_SOURCE_MISMATCH/);
+  assert.throws(()=>createReviewSearch({stage:freshStage(),catalogService:{search(){}},registry}),/INCOMPATIBLE_CANONICAL_SEARCH/);
+});
+test('altered provider slug or provider name is rejected',()=>{
+  for(const p of ['MoveKit','other','']) {
+    const s=freshStage();s.catalog[300].source.provider=p;
+    assert.throws(mk(s),/SEARCH_CATALOG_SOURCE_MISMATCH/);
+  }
+});
+test('stale or tampered review status on pending items is rejected',()=>{
+  const muts=[
+    e=>{e._review.status='PUBLISHED';},
+    e=>{e._review.confirmed_by_authenticated_reviewer=true;},
+    e=>{e._review.integration_status='APPROVED';},
+    e=>{delete e._review;},
+    e=>{e.identity.category='strength';},
+    e=>{e.assets=[{type:'video'}];},
+  ];
+  for(const m of muts){const s=freshStage();m(s.catalog[400]);
+    assert.throws(mk(s),/NEW_CATALOG_ITEM_PREMATURE_RELEASE/);}
+});
+test('changed review route counts are rejected',()=>{
+  const s=freshStage();s._review_counts.OWNER_FEEDBACK_PENDING_CONTENT_REVIEW=25;
+  assert.throws(mk(s),/STAGE_REVIEW_COUNTS_CHANGED/);
+});
+test('mutating stage/registry after creation cannot change the view',()=>{
+  const s=freshStage(),r=JSON.parse(JSON.stringify(registry));
+  const b=createReviewSearch({stage:s,catalogService:engine,registry:r});
+  s.count=1;s._app_activated=true;s.catalog[226].identity.primary=['Grip'];
+  r.muscles.Forearms.code='movekit:muscle:hacked';
+  assert.equal(b.total,582);
+  assert.equal(b.sourceFacets('TK-000227').muscles[0].code,'movekit:muscle:forearms');
+  assert.equal(b.sourceFacets('TK-000227').approved,false);
+  assert.deepEqual(Array.from(b.search('',{[FILTERS.muscle]:'movekit:muscle:forearms'}),x=>x.catalog_id),['TK-000227']);
+  assert.equal(b.sourceFacets({}),null);
+});
+test('activation/media attempts on the view are impossible',()=>{
+  for(const k of ['productionEnabled','approved','status','displayOnly']) {
+    assert.throws(()=>{bridge[k]=k==='status'?'ACTIVE':true;},TypeError);
+  }
+  assert.throws(()=>{bridge.activate=()=>{};},TypeError);
+  assert.throws(()=>{bridge.filterKeys.muscle='x';},TypeError);
+  for(const k of Object.keys(bridge)) assert(!/sign|media|grant|url|write|save|import/i.test(k),k);
+  assert.equal(bridge.sourceFacets('TK-000227').runtimeActivation,false);
+});
+test('private stage still yields zero media-signing identities',()=>{
+  const media=require('./movekitV2ExerciseMediaBridge.js');
+  let calls=0;
+  const mb=media.create({catalog:freshStage(),mediaClient:{get(){calls++;},invalidate(){calls++;}}});
+  assert.equal(mb.registeredMoveKitExercises,0);
+  assert.equal(mb.resolve({catalog_id:'TK-000001'}),null);
+  assert.equal(calls,0);
+});
 console.log('MoveKit V2 real-ECS review search: '+pass+' checks, exit '+(process.exitCode||0));

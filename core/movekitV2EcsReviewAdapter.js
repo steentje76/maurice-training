@@ -71,6 +71,10 @@ function validateStage(stage, catalogService, registry) {
 function createReviewSearch({stage, catalogService, registry} = {}) {
   validateStage(stage, catalogService, registry);
   const index = new Map();
+  // Snapshot at validation time: later mutation of stage/registry by a caller
+  // must not change what this review view reports (TOCTOU hardening).
+  const facetsById = new Map();
+  const total = stage.count;
   for (const c of stage.catalog) {
     const identity = c.identity;
     const projected = projectSourceFacets({
@@ -78,6 +82,7 @@ function createReviewSearch({stage, catalogService, registry} = {}) {
       muscles: identity.primary.concat(identity.secondary),
       equipment: identity.equipment,
     }, registry);
+    facetsById.set(c.catalog_id, projected);
     const codes = Object.freeze({
       muscle: Object.freeze(projected.muscles.filter(f => f.code).map(f => f.code)),
       equipment: Object.freeze(projected.equipment.filter(f => f.code).map(f => f.code)),
@@ -111,18 +116,12 @@ function createReviewSearch({stage, catalogService, registry} = {}) {
     });
   }
   function sourceFacets(id) {
-    const c = stage.catalog.find(x => x.catalog_id === id);
-    if (!c) return null;
-    return projectSourceFacets({
-      provider:c.source.provider,
-      muscles:c.identity.primary.concat(c.identity.secondary),
-      equipment:c.identity.equipment,
-    }, registry);
+    return (typeof id === 'string' && facetsById.get(id)) || null;
   }
   return Object.freeze({
     status:'REVIEW_ONLY_NOT_ACTIVATED',
     displayOnly:true, productionEnabled:false, approved:false,
-    total:stage.count, registryTerms:v.termCount,
+    total, registryTerms:v.termCount,
     filterKeys:FILTERS,
     choices:Object.freeze({muscles:muscleChoices, equipment:equipmentChoices}),
     search, sourceFacets,

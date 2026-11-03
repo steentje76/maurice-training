@@ -144,7 +144,11 @@ t('C4: alleen de rechten die de app echt gebruikt', function () {
                     // Kit barcode-scanning) -- geen achtergrond-/gevoelig recht, hier
                     // expliciet, bewust aan de allowlist toegevoegd (niet stilzwijgend
                     // uitgebreid) exact conform het doel van deze test.
-                    'CAMERA'];
+                    'CAMERA',
+                    // MoveKit #504: observe Wi-Fi vs metered network so 250-MB
+                    // encrypted offline downloads NEVER silently use mobile data.
+                    // Normal protection-level permission, no location data.
+                    'ACCESS_NETWORK_STATE'];
   var onverwacht = rechten.filter(function (r) { return toegestaan.indexOf(r) < 0; });
   assert.deepStrictEqual(onverwacht, [],
     'onverwachte rechten (elk recht kost uitleg in de Play-datavragenlijst): ' + onverwacht.join(', '));

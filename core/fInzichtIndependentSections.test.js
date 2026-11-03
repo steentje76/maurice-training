@@ -11,7 +11,8 @@ function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {
  const recovery=deferred(),domain={innerHTML:'',children:[]},d={authSession:{user:{id:'synthetic-A'}},window:{_inzichtRenderId:1},document:{getElementById:()=>domain},v43OverallRecovery:()=>recovery.promise,inzichtGetOrNull:async()=>[],tkIcon:()=>'',escHtml:String,inzichtMiniViz:()=>'<svg></svg>'};
  vm.createContext(d);vm.runInContext(fn('inzichtRenderDomains'),d);const domains=d.inzichtRenderDomains(1);
  assert(domain.innerHTML.includes('Voeding')&&domain.innerHTML.includes('goInzichtPrestaties()'),'navigation must exist before recovery query completes');
- assert.equal((domain.innerHTML.match(/tk-domain-row/g)||[]).length,7);
+ assert.equal((domain.innerHTML.match(/tk-domain-row/g)||[]).length,6,'six domain routes remain; Lichaam moves to context');
+ assert(html.includes('onclick="go(\'s-lich-metingen\')"')&&html.includes('<b>Lichaamssamenstelling</b>'),'body measurements remain available under context');
  const before=domain.innerHTML;recovery.resolve({hasData:false});await domains;assert.equal(domain.innerHTML,before,'optional charts must not replace navigation/focus');
  const health=deferred(),grid={innerHTML:''},o={authSession:{user:{id:'synthetic-A'}},window:{_inzichtRenderId:1},document:{getElementById:()=>grid},inzichtGetOrNull:()=>health.promise,tkIcon:()=>'',escHtml:String};
  vm.createContext(o);vm.runInContext(fn('inzichtRenderOverview'),o);const overview=o.inzichtRenderOverview(1);
@@ -19,5 +20,5 @@ function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {
  assert(!grid.innerHTML.includes('class="val">0'),'missing input is not fabricated zero');
  const unknown=grid.innerHTML;o.authSession={user:{id:'synthetic-B'}};o.window._inzichtRenderId=2;health.resolve(null);await overview;
  assert.equal(grid.innerHTML,unknown,'stale owner/generation cannot overwrite current section');
- console.log('Inzicht: independent sections, immediate seven navigation links/five unknown metrics, no synthetic zero, stable navigation and owner/generation guard PASS');
+ console.log('Inzicht: independent sections, immediate six domain links plus body-context route/five unknown metrics, no synthetic zero, stable navigation and owner/generation guard PASS');
 })().catch(e=>{console.error(e);process.exitCode=1;});

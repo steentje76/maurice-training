@@ -162,8 +162,11 @@ ok(html.indexOf('id="s-lich-metric"') >= 0 && html.indexOf('function renderLicha
 ok(html.indexOf("fetch(tkApiUrl('/.netlify/functions/wearable-sync')") >= 0, 'G5: de Fitbit-sync is ongewijzigd');
 ok(html.indexOf('function upsertHrvLog') >= 0, 'G6: de v4.29.1-dataverliesfix is intact');
 ok(html.indexOf('calculateMuscleRecoveryPct') >= 0, 'G7: de bestaande herstelberekening bestaat nog');
-ok(html.indexOf('id="lich-hero"') >= 0 && html.indexOf('id="lich-checkin"') >= 0,
-   'G8: de goedgekeurde overzichtsblokken staan er nog');
+const inzichtHtml = html.slice(html.indexOf('<div class="scr" id="s-inzicht">'),html.indexOf('<div class="scr" id="s-library">'));
+ok(!inzichtHtml.includes('id="lich-hero"') && !inzichtHtml.includes('id="lich-checkin"') &&
+   inzichtHtml.includes('id="lich-mode-rec"') && inzichtHtml.includes('id="lich-mode-load"') &&
+   inzichtHtml.includes('id="lich-fig-front"') && inzichtHtml.includes('id="lich-fig-back"'),
+   'G8: dubbele Home-check-in ontbreekt op Inzicht, originele Herstel/Spierbelasting en voor-/achterzijde blijven bereikbaar');
 
 console.log('\n========================================================');
 console.log('RESULTAAT: ' + pass + ' geslaagd, ' + fail + ' mislukt');

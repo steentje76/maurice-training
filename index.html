@@ -24999,9 +24999,11 @@ function renderHomeContextCard(tc){
   el.innerHTML=h; el.style.display='block'; if(heading)heading.style.display='';
 }
 let tkContextRequestEpoch=0; // latest training-context request wins, even for same account
+let tkContextDisplayOwnerId=null; // clear stale rhythm immediately when user switches
 async function refreshTrainContext(){
   const requestEpoch=++tkContextRequestEpoch;
   const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  if(tkContextDisplayOwnerId!==ownerId){tkContextDisplayOwnerId=ownerId;renderHomeContextCard(null);}
   const stillCurrent=()=>requestEpoch===tkContextRequestEpoch&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   try{
     const rows=await v43SafeGet('training_context','&limit=1');
@@ -25018,6 +25020,7 @@ async function refreshHome(){
   // De zichtbare kaart staat nu onder Trainen en wordt daar ook zelfstandig geladen.
   const ctxRequestEpoch=++tkContextRequestEpoch;
   const ctxOwner=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  if(tkContextDisplayOwnerId!==ctxOwner){tkContextDisplayOwnerId=ctxOwner;renderHomeContextCard(null);}
   const ctxCurrent=()=>ctxRequestEpoch===tkContextRequestEpoch&&ctxOwner===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   try{const tcRows=await v43SafeGet('training_context','&limit=1');if(ctxCurrent())renderHomeContextCard(tcRows&&tcRows[0]);}
   catch(_){if(ctxCurrent())renderHomeContextCard(null);}

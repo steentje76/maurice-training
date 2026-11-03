@@ -28,10 +28,10 @@ const INZ = tussen(HTML, '<div class="scr" id="s-inzicht">', '<div class="scr" i
   const volgorde = ['>Snel overzicht</div>', 'id="inzicht-herstel"', 'id="lich-hero"', 'id="lich-checkin"', 'id="lich-datastatus"',
     '>Herstel &amp; belasting</div>', 'id="lich-mode-rec"', 'id="lich-mode-load"', 'id="lich-fig-front"', 'id="lich-fig-back"',
     'id="lich-legend"', 'id="lich-muslist"', '>Hersteltrends<', 'id="lich-metrics"', '>Verbanden</div>', 'id="lich-relations"',
-    '>Wat betekent dit?</div>', '>Domeinen</div>', 'id="inzicht-domain-list"', '>Gegevens &amp; context</div>', '>Recente inzichten</div>'];
+    '>Domeinen</div>', 'id="inzicht-domain-list"', '>Gegevens &amp; context</div>', '>Recente inzichten</div>'];
   const pos = volgorde.map(function (x) { return INZ.indexOf(x); });
   ok(pos.every(function (p) { return p >= 0; }), 'A1 alle onderdelen staan op het Inzicht-scherm (ontbreekt: ' + volgorde.filter(function (x, i) { return pos[i] < 0; }).join(', ') + ')');
-  ok(pos.every(function (p, i) { return i === 0 || p > pos[i - 1]; }), 'A2 volgorde: samenvatting, datastatus, Herstel & belasting, Hersteltrends, Verbanden, uitleg, en pas daarna Domeinen');
+  ok(pos.every(function (p, i) { return i === 0 || p > pos[i - 1]; }), 'A2 volgorde: samenvatting, datastatus, Herstel & belasting, Hersteltrends, Verbanden, Domeinen');
   ok(/id="lich-mode-rec" class="on" role="tab" aria-selected="true" onclick="lichSetMode\('rec'\)">Herstel<\/button>\s*<button id="lich-mode-load" role="tab" aria-selected="false" onclick="lichSetMode\('load'\)">Spierbelasting<\/button>/.test(INZ), 'A3 schakelaar Herstel | Spierbelasting, Herstel standaard actief');
   ok(/>Voorzijde<\/div>[\s\S]{0,200}>Achterzijde<\/div>/.test(INZ), 'A4 voor- en achterzijde staan naast elkaar met bijschrift');
   ['inzicht-herstel', 'lich-hero', 'lich-checkin', 'lich-datastatus', 'lich-mode-rec', 'lich-mode-load', 'lich-fig-front', 'lich-fig-back', 'lich-legend', 'lich-muslist', 'lich-anatfoot-t', 'lich-metrics', 'lich-relations'].forEach(function (id) {

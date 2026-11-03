@@ -19,4 +19,6 @@ assert(!domains.includes("title:'Lichaam'"), 'body not top-level domain');
 assert(domains.includes("title:'Herstel'"), 'recovery retained');
 assert(domains.includes("title:'Prestaties'"), 'performance retained');
 assert(!html.includes('domains[3].viz=inzichtMiniViz(weights'), 'no stale body-domain index use');
-console.log('UX Inzicht/Home structural regressions PASS (13 assertions)');
+assert(html.includes('const TK_REL_HOME_MAX = 2;'), 'only two related patterns on overview');
+assert(!insight.includes('>Wat betekent dit?</div>'), 'duplicate Coach section removed');
+console.log('UX Inzicht/Home structural regressions PASS (15 assertions)');

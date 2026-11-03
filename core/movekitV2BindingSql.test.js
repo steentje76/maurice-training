@@ -1,0 +1,42 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('fs'),path=require('path');
+const {PGlite}=require('@electric-sql/pglite');
+const migration=fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261103184053_tk504_canonical_exercise_bindings.sql'),'utf8');
+(async()=>{
+ const db=new PGlite();
+ await db.exec(`create role anon;create role authenticated;create role service_role;
+ create table public.exercises(id text primary key,name text not null,type text not null,category text not null,
+ scope text not null,user_id uuid,created_by uuid,muscle_primary text[],muscle_secondary text[],active boolean default true);
+ insert into exercises(id,name,type,category,scope)values('legacy','Original','strength','strength','personal');
+ `);
+ await db.exec(migration);await db.exec(migration);
+ const seed="insert into exercises(id,name,type,category,scope) values('movekit-v2-TK-000001','Synthetic','strength','strength','global')";
+ await db.exec(seed);
+ const bind="insert into movekit_exercise_bindings(catalog_id,exercise_id,provider_id,inventory_sha256) values('TK-000001','movekit-v2-TK-000001','synthetic',repeat('a',64))";
+ await db.exec(bind);
+ const reject=async(sql,pattern)=>{await assert.rejects(db.exec(sql),pattern);};
+ await reject(bind,/duplicate key/);
+ await reject("update exercises set scope='personal' where id='movekit-v2-TK-000001'",/OWNERLESS_GLOBAL/);
+ await reject("update exercises set user_id='11111111-1111-4111-8111-111111111111' where id='movekit-v2-TK-000001'",/OWNERLESS_GLOBAL/);
+ await reject("update exercises set id='renamed' where id='movekit-v2-TK-000001'",/IMMUTABLE/);
+ await reject("delete from exercises where id='movekit-v2-TK-000001'",/foreign key/);
+ await reject("update movekit_exercise_bindings set approved=true",/check constraint/);
+ await db.exec("update movekit_exercise_bindings set approved=true,review_ref='synthetic-review',reviewer_kind='ai',reviewed_at=now()");
+ await db.exec("update exercises set muscle_primary=array['synthetic-muscle'] where id='movekit-v2-TK-000001'");
+ assert.equal((await db.query("select approved from movekit_exercise_bindings")).rows[0].approved,false);
+ assert.equal((await db.query("select review_ref from movekit_exercise_bindings")).rows[0].review_ref,'synthetic-review');
+ await reject("update movekit_exercise_bindings set exercise_id='legacy'",/OWNERLESS_GLOBAL/);
+ await db.exec("update exercises set name='Unrelated personal change' where id='legacy'");
+ assert.equal((await db.query("select name from exercises where id='legacy'")).rows[0].name,'Unrelated personal change');
+ for(const role of ['anon','authenticated','service_role']){
+   const r=(await db.query("select has_table_privilege($1,'public.movekit_exercise_bindings','INSERT') as write", [role])).rows[0];
+   assert.equal(r.write,false);
+ }
+ assert.equal((await db.query("select relrowsecurity as rls from pg_class where oid='public.movekit_exercise_bindings'::regclass")).rows[0].rls,true);
+ await db.exec('begin;update exercises set active=false;rollback;');
+ assert.equal((await db.query("select count(*)::int as n from exercises where active")).rows[0].n,2);
+ await db.exec(fs.readFileSync(path.join(__dirname,'../tools/movekit-v2-binding-rollback.sql'),'utf8'));
+ assert.equal((await db.query("select count(*)::int as n from exercises")).rows[0].n,2);
+ await db.close();
+ console.log('MoveKit crosswalk SQL PASS: repeat migration, collisions, owner guards, permissions, unrelated updates, rollback; synthetic PostgreSQL/PGlite only');
+})().catch(e=>{console.error(e);process.exitCode=1});

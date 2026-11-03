@@ -20,17 +20,35 @@ const migration=fs.readFileSync(path.join(__dirname,'../supabase/migrations/2026
  await reject("update exercises set user_id='11111111-1111-4111-8111-111111111111' where id='movekit-v2-TK-000001'",/OWNERLESS_GLOBAL/);
  await reject("update exercises set id='renamed' where id='movekit-v2-TK-000001'",/IMMUTABLE/);
  await reject("delete from exercises where id='movekit-v2-TK-000001'",/foreign key/);
- await reject("update movekit_exercise_bindings set approved=true",/check constraint/);
- await db.exec("update movekit_exercise_bindings set approved=true,review_ref='synthetic-review',reviewer_kind='ai',reviewed_at=now()");
+ await reject("update movekit_exercise_bindings set approved=true",/APPROVAL_REQUIRES_HUMAN_REVIEW/);
+ const hash=async()=> (await db.query("select public.tk504_canonical_taxonomy_sha256('movekit-v2-TK-000001') as digest")).rows[0].digest;
+ const h1=await hash(); assert.match(h1,/^[a-f0-9]{64}$/);
+ await reject("update movekit_exercise_bindings set approved=true,review_ref='synthetic-review',reviewer_kind='ai',reviewed_at=now(),reviewed_taxonomy_sha256='"+h1+"'",/APPROVAL_REQUIRES_HUMAN_REVIEW/);
+ await reject("update movekit_exercise_bindings set approved=true,review_ref='synthetic-review',reviewer_kind='human',reviewed_at=now(),reviewed_taxonomy_sha256='"+('a'.repeat(64))+"'",/STALE_OR_INACTIVE_TAXONOMY/);
+ await db.exec("update movekit_exercise_bindings set approved=true,review_ref='synthetic-review',reviewer_kind='human',reviewed_at=now(),reviewed_taxonomy_sha256='"+h1+"'");
+ assert.equal((await db.query("select approved from movekit_exercise_bindings")).rows[0].approved,true);
  await db.exec("update exercises set muscle_primary=array['synthetic-muscle'] where id='movekit-v2-TK-000001'");
  assert.equal((await db.query("select approved from movekit_exercise_bindings")).rows[0].approved,false);
  assert.equal((await db.query("select review_ref from movekit_exercise_bindings")).rows[0].review_ref,'synthetic-review');
+ await reject("update movekit_exercise_bindings set approved=true",/STALE_OR_INACTIVE_TAXONOMY/);
+ const h2=await hash(); assert.notEqual(h1,h2);
+ await reject("update movekit_exercise_bindings set approved=true,reviewed_taxonomy_sha256='"+h2+"'",/REAPPROVAL_REQUIRES_NEW_REVIEW/);
+ await db.exec("update movekit_exercise_bindings set approved=true,review_ref='synthetic-review-v2',reviewed_at=reviewed_at+interval '1 second',reviewed_taxonomy_sha256='"+h2+"'");
+ await db.exec("update exercises set active=false where id='movekit-v2-TK-000001'");
+ assert.equal((await db.query("select approved from movekit_exercise_bindings")).rows[0].approved,false);
+ assert.equal(await hash(),null);
+ await reject("update movekit_exercise_bindings set approved=true",/STALE_OR_INACTIVE_TAXONOMY/);
+ await db.exec("update exercises set active=true where id='movekit-v2-TK-000001'");
+ await db.exec("update exercises set scope='global' where id='legacy'");
+ await reject("update exercises set id='movekit-v2-TK-000222' where id='legacy'",/IDENTITY_INSERT_ONLY/);
+ await db.exec("update exercises set scope='personal' where id='legacy'");
  await reject("update movekit_exercise_bindings set exercise_id='legacy'",/OWNERLESS_GLOBAL/);
  await db.exec("update exercises set name='Unrelated personal change' where id='legacy'");
  assert.equal((await db.query("select name from exercises where id='legacy'")).rows[0].name,'Unrelated personal change');
  for(const role of ['anon','authenticated','service_role']){
    const r=(await db.query("select has_table_privilege($1,'public.movekit_exercise_bindings','INSERT') as write", [role])).rows[0];
    assert.equal(r.write,false);
+   assert.equal((await db.query("select has_function_privilege($1,'public.tk504_canonical_taxonomy_sha256(text)','EXECUTE') as allowed",[role])).rows[0].allowed,false);
  }
  assert.equal((await db.query("select relrowsecurity as rls from pg_class where oid='public.movekit_exercise_bindings'::regclass")).rows[0].rls,true);
  await db.exec('begin;update exercises set active=false;rollback;');
@@ -38,5 +56,5 @@ const migration=fs.readFileSync(path.join(__dirname,'../supabase/migrations/2026
  await db.exec(fs.readFileSync(path.join(__dirname,'../tools/movekit-v2-binding-rollback.sql'),'utf8'));
  assert.equal((await db.query("select count(*)::int as n from exercises")).rows[0].n,2);
  await db.close();
- console.log('MoveKit crosswalk SQL PASS: repeat migration, collisions, owner guards, permissions, unrelated updates, rollback; synthetic PostgreSQL/PGlite only');
+ console.log('MoveKit crosswalk SQL PASS: human-only current-taxonomy approval, stale/active invalidation, legacy rename, roles, rollback; synthetic PostgreSQL/PGlite only');
 })().catch(e=>{console.error(e);process.exitCode=1});

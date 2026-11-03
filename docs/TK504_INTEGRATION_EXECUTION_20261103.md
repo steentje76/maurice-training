@@ -38,3 +38,28 @@ PR #595 remains based on recovery PR #587. No merge, app activation or APK.
   preserve pending/uncertain status, and obtain necessary license/acceptance gates.
 - Media grants, deployment flags, server/client integration, execution regression, joint UX and
   physical Android acceptance remain separate gates. No production migration performed.
+
+
+## Additional staged approval integrity — 3 November 2026
+
+The staged crosswalk migration now requires HUMAN (not AI) reviewer provenance,
+a SHA-256 of the *current* canonical exercise taxonomy, and a fresh review
+reference/timestamp for any reapproval after correction or withdrawal.
+Canonical taxonomy corrections and deactivation revoke approval, and legacy IDs
+cannot be renamed into the reserved movekit-v2 namespace. The fingerprint SQL
+helper is SECURITY INVOKER and has no anon/authenticated/service_role EXECUTE grant.
+An asserted HUMAN review is **not** proof of actual reviewer identity or a MoveKit
+license/media entitlement. The private review ledger and release approvals remain
+separate; this change does not make any exercise live.
+
+Synthetic real PostgreSQL 17 tests ran in a network-isolated Docker container
+with repeated migration, stale/AI review rejection, reapproval freshness,
+personal/legacy guards, role privilege checks, rollback, and two original
+exercise rows retained. PGlite binding regression also passed. Both tests
+were local and synthetic; no hosted database migration, exercise import,
+grant, deployment or APK resulted.
+
+Still required: a privileged transactional import/approval writer with consistent
+exercise-before-binding lock ordering and deadlock retry; pinned inventory
+provider reconciliation; verified human approval authority; live policy
+compatibility check; classification decisions; and device acceptance.

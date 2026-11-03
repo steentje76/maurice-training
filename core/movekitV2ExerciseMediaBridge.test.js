@@ -26,6 +26,12 @@ function ok(condition,desc){assert.ok(condition,desc);passes++;}
      'legacy TEXT row allowed only with explicit catalog id');
   ok(bridge.resolve({id:'legacy_squat'})===null,'no inference from legacy database id');
   ok(bridge.resolve({id:'abcd-uuid'})===null,'uuid not guessed to catalog id');
+  ok(bridge.resolve({id:valid.catalog_id,scope:'personal',user_id:'another-user'})===null,
+     'personal Supabase row with same canonical ID never auto-bound');
+  ok(bridge.resolve({id:valid.catalog_id,scope:'global'})===null,
+     'global Supabase row also needs reviewed explicit mapping rather than id-only trust');
+  ok(bridge.resolve({id:valid.catalog_id,user_id:null})===null,
+     'any DB owner marker blocks direct catalog binding');
   ok(bridge.resolve({catalog_id:pending.catalog_id})===null,'unreviewed proposed 356 blocked');
   ok(bridge.resolve({catalog_id:valid.catalog_id,
     source:{provider:'movekit',provider_id:'wrong-exercise'}})===null,'source slug must match');

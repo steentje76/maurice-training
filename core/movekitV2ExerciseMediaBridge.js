@@ -43,6 +43,12 @@
     }
     function resolve(exercise){
       if(!exercise||typeof exercise!=='object'||Array.isArray(exercise))return null;
+      // Supabase exercises can have personal-scope rows reusing canonical TK IDs.
+      // Those DB rows require an explicit, reviewed owner-bound crosswalk, and
+      // must never be treated as published catalog entries merely by id/name.
+      if(Object.prototype.hasOwnProperty.call(exercise,'scope') ||
+         Object.prototype.hasOwnProperty.call(exercise,'user_id') ||
+         Object.prototype.hasOwnProperty.call(exercise,'owner_id'))return null;
       const id=typeof exercise.catalog_id==='string' ? exercise.catalog_id
         : (typeof exercise.id==='string'&&ID.test(exercise.id) ? exercise.id : null);
       if(!id||!ID.test(id))return null;

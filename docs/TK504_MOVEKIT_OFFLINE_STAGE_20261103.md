@@ -15,7 +15,8 @@ Source: [MoveKit License Agreement v1.0 section 3](https://movekit.com/license).
 1. `tools/movekit-golden-inventory.py`: reproducible SHA-256, size, mapping and complete-source checks. `docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json` is staging evidence, not the live catalog.
 2. `core/offlineMoveKitPackCore.js`: deterministic selected-workout media size estimate and account-scoped **instruction-only** guide packs. Rejects invalid IDs, duplicate catalog identities, traversal, unlicensed or unverified raw media downloads and cross-account writes. The download gate always remains closed at v0.1 even if all browser flags are set.
 3. `core/offlineMoveKitIndexedDB.js`: persistent app-origin scoped **guide metadata** (no MP4, poster bytes, signed URLs or tokens). Uses account-prefixed keys; account ownership is checked on writes/reads/listing.
-4. `core/offlineMoveKitPackCore.test.js`: deterministic core tests. `core/offlineMoveKitIndexedDB.browser.cjs`: real-browser persistence, restart and account-isolation test, invoked separately with Playwright.
+4. `core/privateMoveKitMediaClient.js`: staging-only client for the existing Netlify signing broker. It checks authenticated ownership before/after the request, restricts URL host/path/token/TTL, never persists signed links and fails closed on expiry/invalid URLs. **Not wired into `<video>` UI**.
+5. `core/offlineMoveKitPackCore.test.js`: 48 deterministic core checks. `core/privateMoveKitMediaClient.test.js`: 24 broker-client/security checks. `core/offlineMoveKitIndexedDB.browser.cjs`: real-browser persistence, restart and account-isolation test, invoked separately with Playwright.
 
 **Not yet wired into the end-user app**: offline pack UI, downloads, native protected video playback. No retroactive claim that Android can cache video after first viewing.
 
@@ -32,6 +33,7 @@ Source: [MoveKit License Agreement v1.0 section 3](https://movekit.com/license).
 ```powershell
 python tools/movekit-golden-inventory.py --source C:\movikit
 node core/offlineMoveKitPackCore.test.js
+node core/privateMoveKitMediaClient.test.js
 # On a machine with Playwright and Chrome:
 $env:TK_CHROME_PATH='C:\Program Files\Google\Chrome\Application\chrome.exe'
 node core/offlineMoveKitIndexedDB.browser.cjs

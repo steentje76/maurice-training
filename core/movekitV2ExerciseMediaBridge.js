@@ -49,8 +49,9 @@
       if(Object.prototype.hasOwnProperty.call(exercise,'scope') ||
          Object.prototype.hasOwnProperty.call(exercise,'user_id') ||
          Object.prototype.hasOwnProperty.call(exercise,'owner_id'))return null;
-      const id=typeof exercise.catalog_id==='string' ? exercise.catalog_id
-        : (typeof exercise.id==='string'&&ID.test(exercise.id) ? exercise.id : null);
+      // `id` alone is the Supabase TEXT primary key, NOT proof of a canonical
+      // catalog binding, even if it happens to match a TK-XXXXXX value.
+      const id=typeof exercise.catalog_id==='string' ? exercise.catalog_id : null;
       if(!id||!ID.test(id))return null;
       if(typeof exercise.id==='string'&&ID.test(exercise.id)&&exercise.id!==id)return null;
       const desc=byCatalogId.get(id);

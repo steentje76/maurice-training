@@ -21,7 +21,9 @@ function ok(condition,desc){assert.ok(condition,desc);passes++;}
   ok(bridge.workoutLogWrites===false,'no database writes');
   ok(bridge.unreviewedCatalogCandidatesVisible===false,'no unreviewed 356');
   ok(bridge.resolve(valid).catalogId===valid.catalog_id,'canonical id by full object');
-  ok(bridge.resolve({id:valid.catalog_id}).catalogId===valid.catalog_id,'canonical fallback when id really TK');
+  ok(bridge.resolve({id:valid.catalog_id})===null,'Supabase TEXT id alone is never a trusted catalog binding');
+  ok(bridge.resolve({catalog_id:valid.catalog_id}).catalogId===valid.catalog_id,
+     'explicit canonical catalog field remains eligible');
   ok(bridge.resolve({catalog_id:valid.catalog_id,id:'legacy_squat'}).catalogId===valid.catalog_id,
      'legacy TEXT row allowed only with explicit catalog id');
   ok(bridge.resolve({id:'legacy_squat'})===null,'no inference from legacy database id');

@@ -10,6 +10,9 @@ public class MainActivity extends BridgeActivity {
         // super.onCreate() gebeuren (Capacitor-conventie), anders mist de
         // eerste page-load de plugin-bridge.
         registerPlugin(TkBarcodeScannerPlugin.class);
+        // MoveKit #504 — staged encrypted offline native video capability.
+        // Plugin itself fails closed in release; no UI is activated yet.
+        registerPlugin(TkOfflineMediaPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

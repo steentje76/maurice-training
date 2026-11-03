@@ -1,0 +1,5662 @@
+{
+  "schema": "tk-secure-media-integrity/1",
+  "status": "OFFLINE_MEDIA_STAGED",
+  "items": [
+    {
+      "catalogId": "TK-000001",
+      "version": "v1",
+      "slug": "abdominals-stretch-variation-four",
+      "sha256": "63f1198dc44e2fff699de4d8015ec6e2d0d029760d1c92ced58694db2042aa78",
+      "bytes": 2872373
+    },
+    {
+      "catalogId": "TK-000001",
+      "version": "v2",
+      "slug": "abdominals-stretch-variation-four",
+      "sha256": "0e5eea10ed438ef8299da71a2f00d652f108338a689ad918563a931b09f32073",
+      "bytes": 3595677
+    },
+    {
+      "catalogId": "TK-000002",
+      "version": "v1",
+      "slug": "abdominals-stretch-variation-one",
+      "sha256": "5b4808db553f18f05a3b43c0d26d242ddf3061ed08a2c26ef74ea5eb5c59de61",
+      "bytes": 2249464
+    },
+    {
+      "catalogId": "TK-000002",
+      "version": "v2",
+      "slug": "abdominals-stretch-variation-one",
+      "sha256": "77c06ca7ece7243ce6fd9e2004d31be9140a87b9086d3ae134bc458675b36db0",
+      "bytes": 3826368
+    },
+    {
+      "catalogId": "TK-000003",
+      "version": "v1",
+      "slug": "abdominals-stretch-variation-three",
+      "sha256": "15aab22ace1b158c2aae9b7f261241ff1f001d7a51d1746983589c987cdf070e",
+      "bytes": 2558680
+    },
+    {
+      "catalogId": "TK-000003",
+      "version": "v2",
+      "slug": "abdominals-stretch-variation-three",
+      "sha256": "9e4fddc2236378050153d1d408efb91b999958ef7bc09f769303229cb4eda763",
+      "bytes": 3160199
+    },
+    {
+      "catalogId": "TK-000004",
+      "version": "v1",
+      "slug": "abdominals-stretch-variation-two",
+      "sha256": "0e7071661ba6944684e626873f19551f261280448831aa5d305931d4e45f68a5",
+      "bytes": 2664615
+    },
+    {
+      "catalogId": "TK-000004",
+      "version": "v2",
+      "slug": "abdominals-stretch-variation-two",
+      "sha256": "7d7c8cb8be48cafa18d49d859c2a1c232cdadd80102df33b42985dd18658e636",
+      "bytes": 5454882
+    },
+    {
+      "catalogId": "TK-000005",
+      "version": "v1",
+      "slug": "band-curl",
+      "sha256": "ae2fd923f1289ba87aa1c07201eb566decbc745c9285e703597b6636bebf572c",
+      "bytes": 1886881
+    },
+    {
+      "catalogId": "TK-000005",
+      "version": "v2",
+      "slug": "band-curl",
+      "sha256": "3a9d52c7ead2c2ebf763f92a0afa6e4d339185cecca9a8e7bb80dfa6f2f8f255",
+      "bytes": 2899486
+    },
+    {
+      "catalogId": "TK-000006",
+      "version": "v1",
+      "slug": "band-high-face-pull",
+      "sha256": "76f79a4b90d0cd47bf13bb6b09bbac5c62b24658985dbfee765183f690eda31e",
+      "bytes": 2235144
+    },
+    {
+      "catalogId": "TK-000006",
+      "version": "v2",
+      "slug": "band-high-face-pull",
+      "sha256": "fafdb640f1248ae1cedb3265558dfe22ada9da4d3b2b1456c2042200b9c89f57",
+      "bytes": 3475809
+    },
+    {
+      "catalogId": "TK-000007",
+      "version": "v1",
+      "slug": "band-hip-abduction",
+      "sha256": "9d32c0111b5a2ac8efe577f4283fa72e76b44f3794b5782579da25755285d849",
+      "bytes": 1977147
+    },
+    {
+      "catalogId": "TK-000007",
+      "version": "v2",
+      "slug": "band-hip-abduction",
+      "sha256": "79863450c0dc77be5b1b72661c590a649b67df3bdd61aef2fcfed5dbfee9867f",
+      "bytes": 2979721
+    },
+    {
+      "catalogId": "TK-000008",
+      "version": "v1",
+      "slug": "band-kneeling-pulldown",
+      "sha256": "a5ac14f69671d9a3ea87ca55618dc2e5ebee6491ad7e8c1ca28feb580dde34d4",
+      "bytes": 1088281
+    },
+    {
+      "catalogId": "TK-000008",
+      "version": "v2",
+      "slug": "band-kneeling-pulldown",
+      "sha256": "4f70ad606484efe91f86d05534cfdb4fa4e131d2b2d1a9fc57c579220c8e3e85",
+      "bytes": 1674070
+    },
+    {
+      "catalogId": "TK-000009",
+      "version": "v1",
+      "slug": "band-lateral-raise",
+      "sha256": "de88c9630913d842fadfbf4c9b2cf642144c26ba429766e1a83a259d4a9a7691",
+      "bytes": 2120140
+    },
+    {
+      "catalogId": "TK-000009",
+      "version": "v2",
+      "slug": "band-lateral-raise",
+      "sha256": "b554e6f753a138243ac9bb0579fcdbb122aaa935a1b6d082d6fc5a65e2f90042",
+      "bytes": 3095823
+    },
+    {
+      "catalogId": "TK-000010",
+      "version": "v1",
+      "slug": "band-pullover",
+      "sha256": "21612a986b4d8d6d19384a1813610d0af9bd0079ec710817c46a72f9f302145a",
+      "bytes": 1256550
+    },
+    {
+      "catalogId": "TK-000010",
+      "version": "v2",
+      "slug": "band-pullover",
+      "sha256": "fb7e7ebe23a2ad09838ad027e664c17cbc7155d4076bea93858611803d81f204",
+      "bytes": 1907129
+    },
+    {
+      "catalogId": "TK-000011",
+      "version": "v1",
+      "slug": "band-romanian-deadlift",
+      "sha256": "41c20fd606f216a6d280867cd6b564ae9fb2a156b74ba1d1998ac1fab4b49ea3",
+      "bytes": 1232611
+    },
+    {
+      "catalogId": "TK-000011",
+      "version": "v2",
+      "slug": "band-romanian-deadlift",
+      "sha256": "eda72f669db5cd5570ff0a7db6e7451421f26de7b4ef64e47c1dde1550002a9a",
+      "bytes": 2458613
+    },
+    {
+      "catalogId": "TK-000012",
+      "version": "v1",
+      "slug": "band-row",
+      "sha256": "2c7efc45493c95d3015663fa3f827830ed2a2b2be291d6ddc8e3231c8724899a",
+      "bytes": 924141
+    },
+    {
+      "catalogId": "TK-000012",
+      "version": "v2",
+      "slug": "band-row",
+      "sha256": "9cdd30e0293a694f5368c0e5be84b6575bedce4458cf4cf705a3d0d2bac635eb",
+      "bytes": 1686635
+    },
+    {
+      "catalogId": "TK-000013",
+      "version": "v1",
+      "slug": "band-seated-pulldown",
+      "sha256": "24e4508890c563026076ef80c8f2bdd162154bfa62e3db0e625586fd21d72755",
+      "bytes": 1346030
+    },
+    {
+      "catalogId": "TK-000013",
+      "version": "v2",
+      "slug": "band-seated-pulldown",
+      "sha256": "14cfbfe3a525a7523738575f7de63baa9f3851e4345ebcab237350aa3653354e",
+      "bytes": 2042109
+    },
+    {
+      "catalogId": "TK-000014",
+      "version": "v1",
+      "slug": "band-shrug",
+      "sha256": "aca1f8f9fcc1597309b0aaaf42220a604d0264a0e9effae20ea6c7b9ad4e272c",
+      "bytes": 802112
+    },
+    {
+      "catalogId": "TK-000014",
+      "version": "v2",
+      "slug": "band-shrug",
+      "sha256": "6a942060d4c0cb48f080010de5179adbdb32e3641e5952444fc51b7bfd939bf0",
+      "bytes": 1655393
+    },
+    {
+      "catalogId": "TK-000015",
+      "version": "v1",
+      "slug": "band-single-arm-lateral-raise",
+      "sha256": "f13440e67d106650fb909092cd85c454c5868472f6546a8c63888de27fc2136c",
+      "bytes": 996504
+    },
+    {
+      "catalogId": "TK-000015",
+      "version": "v2",
+      "slug": "band-single-arm-lateral-raise",
+      "sha256": "06facce614b104d2859691c819e292cc348f02d87930b1256b071757db9c63e0",
+      "bytes": 2028237
+    },
+    {
+      "catalogId": "TK-000016",
+      "version": "v1",
+      "slug": "band-wood-chopper",
+      "sha256": "2008ca6b3c3136003e05e8d33689b79ace8f444e7d533a067800844becec0ea3",
+      "bytes": 1262351
+    },
+    {
+      "catalogId": "TK-000016",
+      "version": "v2",
+      "slug": "band-wood-chopper",
+      "sha256": "524a6018af02af36f78af89ea2c2593c00f8de6f2c4e6a2032db8ed17ae2b152",
+      "bytes": 2116904
+    },
+    {
+      "catalogId": "TK-000017",
+      "version": "v1",
+      "slug": "barbell-banded-back-squat",
+      "sha256": "185f2c692120ee175c2aaf31c72015701657703c786fbcaf1d4dc3df511fcd4c",
+      "bytes": 1315161
+    },
+    {
+      "catalogId": "TK-000017",
+      "version": "v2",
+      "slug": "barbell-banded-back-squat",
+      "sha256": "e74e2b9a5e861a208e72ee1232bc978cfc2a8386555d5c9ded3cc6915dd821ff",
+      "bytes": 3161055
+    },
+    {
+      "catalogId": "TK-000018",
+      "version": "v1",
+      "slug": "barbell-behind-the-back-30-degree-shrug",
+      "sha256": "08564f79b57289c13faa4de9b12a6bec1bb0b919a49ff601217d15f9fd6f79c5",
+      "bytes": 1093252
+    },
+    {
+      "catalogId": "TK-000018",
+      "version": "v2",
+      "slug": "barbell-behind-the-back-30-degree-shrug",
+      "sha256": "2fc10a424887cf2898462e939174e18253b9bd988d9613e8cd368ce76024664e",
+      "bytes": 1716635
+    },
+    {
+      "catalogId": "TK-000019",
+      "version": "v1",
+      "slug": "barbell-bench-press",
+      "sha256": "9a4de93ffdfd6001f5c15697e59e97d9701d3388c6751bbe0eab88b5a43bbbbf",
+      "bytes": 2285112
+    },
+    {
+      "catalogId": "TK-000019",
+      "version": "v2",
+      "slug": "barbell-bench-press",
+      "sha256": "36ae1d3ffc6d8de78be3b5cd5da2db8805c5a4a33fc161279bb7bd5f3d1eb337",
+      "bytes": 3757741
+    },
+    {
+      "catalogId": "TK-000020",
+      "version": "v1",
+      "slug": "barbell-bent-over-row",
+      "sha256": "e4004e42bce213865000f275ecf83e9f6a489ff2b87541a9a3198b7c39b2e82f",
+      "bytes": 1959146
+    },
+    {
+      "catalogId": "TK-000020",
+      "version": "v2",
+      "slug": "barbell-bent-over-row",
+      "sha256": "14ad3ab40382567b9a09bc67e43e183a71a342d0961abe219d652109b53d14e2",
+      "bytes": 2856311
+    },
+    {
+      "catalogId": "TK-000021",
+      "version": "v1",
+      "slug": "barbell-clean-and-press",
+      "sha256": "68f0e852bc086be4ae3593e6b5325eee58f68d188197c8a026f4295740f155b4",
+      "bytes": 3952309
+    },
+    {
+      "catalogId": "TK-000021",
+      "version": "v2",
+      "slug": "barbell-clean-and-press",
+      "sha256": "967e3d8cb4ef87319e7682b332d5cca92a98f362045e4824e799eae84de57ea1",
+      "bytes": 6884453
+    },
+    {
+      "catalogId": "TK-000022",
+      "version": "v1",
+      "slug": "barbell-close-grip-bench-press",
+      "sha256": "4458d6efe23a7198a3378f83bcf663db8f7f68763791c81629c2d98075bf779e",
+      "bytes": 2160936
+    },
+    {
+      "catalogId": "TK-000022",
+      "version": "v2",
+      "slug": "barbell-close-grip-bench-press",
+      "sha256": "7ba43d77aaec672ccc055171a6be506f7bdf7a13f764ccab9a6df02a55dcb247",
+      "bytes": 2904310
+    },
+    {
+      "catalogId": "TK-000023",
+      "version": "v1",
+      "slug": "barbell-curl",
+      "sha256": "a4ba3e9382caafcc8b62e6beefdad19375e57f62c798bede67ef7894432fd1c7",
+      "bytes": 2038311
+    },
+    {
+      "catalogId": "TK-000023",
+      "version": "v2",
+      "slug": "barbell-curl",
+      "sha256": "74446b90b4bc5a0108ce609105d696d4def08792dccac0b57105ada3d07a1db8",
+      "bytes": 3159408
+    },
+    {
+      "catalogId": "TK-000024",
+      "version": "v1",
+      "slug": "barbell-deadlift",
+      "sha256": "c241d1ef10db7886e12bf2d6e52be0a9d5220fb797d52a238bf9aba3c4a359fc",
+      "bytes": 2803570
+    },
+    {
+      "catalogId": "TK-000024",
+      "version": "v2",
+      "slug": "barbell-deadlift",
+      "sha256": "c6bca8b6acc0c4ee820e65ea627613418a1a879de60a41491e6308563005b8b7",
+      "bytes": 2272333
+    },
+    {
+      "catalogId": "TK-000025",
+      "version": "v1",
+      "slug": "barbell-drag-curl",
+      "sha256": "fb1119fbd54a5f380ec68cb445aa3b6311596a5c84a74f2654c60cbcb1c6dac4",
+      "bytes": 2311838
+    },
+    {
+      "catalogId": "TK-000025",
+      "version": "v2",
+      "slug": "barbell-drag-curl",
+      "sha256": "a9c32903b0564f4dc35535fef72dbf37aa351cf3c2b16f2f2d2143646cb15afe",
+      "bytes": 4620458
+    },
+    {
+      "catalogId": "TK-000026",
+      "version": "v1",
+      "slug": "barbell-front-rack-step-up-knee-drive",
+      "sha256": "2c998a03ea1ba8c352493cde6db0d205468d09eda8de8a37e1fc762f0eb96dd2",
+      "bytes": 1385985
+    },
+    {
+      "catalogId": "TK-000026",
+      "version": "v2",
+      "slug": "barbell-front-rack-step-up-knee-drive",
+      "sha256": "2de0a5e49de9a0e38013f46543752c3a061eeaae168e6fc7e210ec9a8624bf16",
+      "bytes": 2294794
+    },
+    {
+      "catalogId": "TK-000027",
+      "version": "v1",
+      "slug": "barbell-high-incline-bench-press",
+      "sha256": "dc23aad45776703c9c2e7bfb02b002c066d326bb34e0a1985227b8f0751a246a",
+      "bytes": 715908
+    },
+    {
+      "catalogId": "TK-000027",
+      "version": "v2",
+      "slug": "barbell-high-incline-bench-press",
+      "sha256": "4e56e92d93a52d4cee6105e25e38190b428f21d58b21b0ef81b36f65ef226d3e",
+      "bytes": 1148130
+    },
+    {
+      "catalogId": "TK-000028",
+      "version": "v1",
+      "slug": "barbell-incline-bench-press",
+      "sha256": "98747b5306328550dfd0bfb5d9556603aa074a4c9c5abab8ac7210fb5912871c",
+      "bytes": 2017171
+    },
+    {
+      "catalogId": "TK-000028",
+      "version": "v2",
+      "slug": "barbell-incline-bench-press",
+      "sha256": "3bf3ed04858add332b584388e49a51e6f8fad05e1e12049ab954f05e47ce8e21",
+      "bytes": 3361700
+    },
+    {
+      "catalogId": "TK-000029",
+      "version": "v1",
+      "slug": "barbell-muscle-snatch",
+      "sha256": "2ef1d166c47853d0fa31e8d5818adb6c107a96c076d48a71838c00febac514f0",
+      "bytes": 1438826
+    },
+    {
+      "catalogId": "TK-000029",
+      "version": "v2",
+      "slug": "barbell-muscle-snatch",
+      "sha256": "716378e5cd88bda3b9407baecbc56e5b300eb10e80b1157cd5b23f9bb9c55067",
+      "bytes": 4385787
+    },
+    {
+      "catalogId": "TK-000030",
+      "version": "v1",
+      "slug": "barbell-overhead-press",
+      "sha256": "aa52a70ea2bdd6becce70237e7757665f1af43a3162fa8364b4dbd931bb3f57c",
+      "bytes": 2296677
+    },
+    {
+      "catalogId": "TK-000030",
+      "version": "v2",
+      "slug": "barbell-overhead-press",
+      "sha256": "2c1145eaeeab9327b42f0ce676028a59b9a0e0d92fa9eabd3baf0f72c24f3844",
+      "bytes": 3810121
+    },
+    {
+      "catalogId": "TK-000031",
+      "version": "v1",
+      "slug": "barbell-power-snatch",
+      "sha256": "07b78a26417d4fe6e52bc5cef64afddf1dec3223d99a9ce92346439eb1a610e3",
+      "bytes": 1797954
+    },
+    {
+      "catalogId": "TK-000031",
+      "version": "v2",
+      "slug": "barbell-power-snatch",
+      "sha256": "847d67b333ba68d4d27b98499e29bc8fa53b48393383906cc7e2d159d00a56cd",
+      "bytes": 2885644
+    },
+    {
+      "catalogId": "TK-000032",
+      "version": "v1",
+      "slug": "barbell-pullover",
+      "sha256": "be7c5b8de08546e306bcc578d2357d1f22e0d91bf738ce128dc71b2379541064",
+      "bytes": 1334280
+    },
+    {
+      "catalogId": "TK-000032",
+      "version": "v2",
+      "slug": "barbell-pullover",
+      "sha256": "68a6fbc98828941f41cef8741cf1aa00f161a3295967359501902a43977141f5",
+      "bytes": 1845558
+    },
+    {
+      "catalogId": "TK-000033",
+      "version": "v1",
+      "slug": "barbell-rack-pull",
+      "sha256": "343a176ab765f95bfcc2e6560073849ca6e969b834689b2332314e3238784f66",
+      "bytes": 2248323
+    },
+    {
+      "catalogId": "TK-000033",
+      "version": "v2",
+      "slug": "barbell-rack-pull",
+      "sha256": "1b414f8b70b52582450ab4159a216194564a60f57489076cefdf906ba5f1d50d",
+      "bytes": 2989747
+    },
+    {
+      "catalogId": "TK-000034",
+      "version": "v1",
+      "slug": "barbell-shrug",
+      "sha256": "c14eb902b054175a3c4c1cd32d7b0a5cf637f643ccdd3f8015d7b3dac960a476",
+      "bytes": 3193430
+    },
+    {
+      "catalogId": "TK-000034",
+      "version": "v2",
+      "slug": "barbell-shrug",
+      "sha256": "26bba6e72b856b3a7613ec9f4ad15a68483b8ea78bd18853469c95290ac078fd",
+      "bytes": 5023987
+    },
+    {
+      "catalogId": "TK-000035",
+      "version": "v1",
+      "slug": "barbell-snatch",
+      "sha256": "1c9d1f0ad00f7daa1c91efa316fc14f474e338096d3fe69940182b10b223fede",
+      "bytes": 2347759
+    },
+    {
+      "catalogId": "TK-000035",
+      "version": "v2",
+      "slug": "barbell-snatch",
+      "sha256": "c0cfe1aff574c0f15166e083709aa3ded1ecdfbb118fdb15710f3c2d27328701",
+      "bytes": 3532297
+    },
+    {
+      "catalogId": "TK-000036",
+      "version": "v1",
+      "slug": "barbell-spinal-jefferson-curl",
+      "sha256": "24c52671926bef602a7b3742bc65fb925530569e89793b203dfbbfe909b23cc3",
+      "bytes": 1656891
+    },
+    {
+      "catalogId": "TK-000036",
+      "version": "v2",
+      "slug": "barbell-spinal-jefferson-curl",
+      "sha256": "8c3e976824fec611aed778737c568c70966a3b3bb455b011a96a571c81e0418e",
+      "bytes": 2412384
+    },
+    {
+      "catalogId": "TK-000037",
+      "version": "v1",
+      "slug": "barbell-split-squat",
+      "sha256": "497fe10d171cc36a010081a51b345167d6a76acbe02b13308f6fcea73de56ee5",
+      "bytes": 3302266
+    },
+    {
+      "catalogId": "TK-000037",
+      "version": "v2",
+      "slug": "barbell-split-squat",
+      "sha256": "c2aeea7c60ebba4420e20f5168be56f36f1d2365cabd7c5482103bb782291921",
+      "bytes": 4953140
+    },
+    {
+      "catalogId": "TK-000038",
+      "version": "v1",
+      "slug": "barbell-squat",
+      "sha256": "6690d3c11538342cf5028c083b1568bce78a70af6484d702dc095c52d5a79e78",
+      "bytes": 2437859
+    },
+    {
+      "catalogId": "TK-000038",
+      "version": "v2",
+      "slug": "barbell-squat",
+      "sha256": "aa2767889dfb9da46dea2d2a31cd0c8dba92de4d6151257cc0b2770bbc97d3f6",
+      "bytes": 4113590
+    },
+    {
+      "catalogId": "TK-000039",
+      "version": "v1",
+      "slug": "barbell-step-up-knee-drive",
+      "sha256": "e6b462303f39ff879effc633d1da961f7bb7a19ff315edfb7270f98c52e3522a",
+      "bytes": 1333241
+    },
+    {
+      "catalogId": "TK-000039",
+      "version": "v2",
+      "slug": "barbell-step-up-knee-drive",
+      "sha256": "e4324ba6e44ae82abf6728730addf73d2d4e0707a269bcd79f25bb135e111e39",
+      "bytes": 2304799
+    },
+    {
+      "catalogId": "TK-000040",
+      "version": "v1",
+      "slug": "barbell-stiff-leg-deadlifts",
+      "sha256": "4e62e9aa3a47d736ae74d7e590ade885b33cd3ae63622c805f6c9bfbe5e38083",
+      "bytes": 2589053
+    },
+    {
+      "catalogId": "TK-000040",
+      "version": "v2",
+      "slug": "barbell-stiff-leg-deadlifts",
+      "sha256": "542d81bf1f4158dac63e52a3053f62526224d36c6c3f58caaadbb00fc9b6788c",
+      "bytes": 1879252
+    },
+    {
+      "catalogId": "TK-000041",
+      "version": "v1",
+      "slug": "barbell-thruster",
+      "sha256": "ed74df9d48cae1f00567729e42b482d5638137f711283b6c8187c31bbe5c96dd",
+      "bytes": 3188593
+    },
+    {
+      "catalogId": "TK-000041",
+      "version": "v2",
+      "slug": "barbell-thruster",
+      "sha256": "5f4ecfad9a34de27ddae9d44427e9fd81b26d7c0c3b9cb042fdc9a7f87d33c09",
+      "bytes": 4063041
+    },
+    {
+      "catalogId": "TK-000042",
+      "version": "v1",
+      "slug": "barbell-upright-row",
+      "sha256": "0bdd000ecbe2de7be099160ec755ea399dda0ccc158c7a23fe3e098db3497b46",
+      "bytes": 2037409
+    },
+    {
+      "catalogId": "TK-000042",
+      "version": "v2",
+      "slug": "barbell-upright-row",
+      "sha256": "56347af109284ebd7961f01641239b238733a42cef1c14619a82696923ef2a85",
+      "bytes": 3329442
+    },
+    {
+      "catalogId": "TK-000043",
+      "version": "v1",
+      "slug": "barbell-wrist-curl",
+      "sha256": "c34996faff7cb5dc582eda62d441c28f55357b86107b574c9a4f79adc0757e45",
+      "bytes": 1733402
+    },
+    {
+      "catalogId": "TK-000043",
+      "version": "v2",
+      "slug": "barbell-wrist-curl",
+      "sha256": "fc14dfc22e186b87bf6776e1786afad3652181518559cb1d4d77c72c79f8b5f6",
+      "bytes": 2286113
+    },
+    {
+      "catalogId": "TK-000044",
+      "version": "v1",
+      "slug": "bench-dips",
+      "sha256": "ae72999cab9f1c8c93facbaade68c67ac4ccce78800be4a05995a6f8e783a6ee",
+      "bytes": 1847205
+    },
+    {
+      "catalogId": "TK-000044",
+      "version": "v2",
+      "slug": "bench-dips",
+      "sha256": "e4831e2d2d76bea8bde63be39d9f8fe1b9ab7fff64389147f92203c40a0d50ad",
+      "bytes": 2649183
+    },
+    {
+      "catalogId": "TK-000045",
+      "version": "v1",
+      "slug": "bodyweight-alternating-lateral-lunge",
+      "sha256": "5564f392316f3761f779d35dad20850adf40444b1ec5d04b6f5b9e25f250d003",
+      "bytes": 1577955
+    },
+    {
+      "catalogId": "TK-000045",
+      "version": "v2",
+      "slug": "bodyweight-alternating-lateral-lunge",
+      "sha256": "c3aad51597fa3a9618087137e8054a9aa9fd106b6d11581fbd6679f10c5d54db",
+      "bytes": 2578264
+    },
+    {
+      "catalogId": "TK-000046",
+      "version": "v1",
+      "slug": "bodyweight-alternating-reverse-lunges",
+      "sha256": "e8b597e4101190d876f4fa89542cd83d60016b6ef0d33013b1f63a68a56f766e",
+      "bytes": 2756230
+    },
+    {
+      "catalogId": "TK-000046",
+      "version": "v2",
+      "slug": "bodyweight-alternating-reverse-lunges",
+      "sha256": "12c1ff3558ede4c115966b794c667b8cf252fe711d7e8517b0845f7111d799ef",
+      "bytes": 4292650
+    },
+    {
+      "catalogId": "TK-000047",
+      "version": "v1",
+      "slug": "bodyweight-box-squat",
+      "sha256": "5d3997cc91cf34753b7beb03e11d43aed6146f00995e9d68f15df1c247b35a9d",
+      "bytes": 1384257
+    },
+    {
+      "catalogId": "TK-000047",
+      "version": "v2",
+      "slug": "bodyweight-box-squat",
+      "sha256": "0d549efdf8a440a6ad377193ce1800db89f853f92da6ac2078edde6c3a0e53b4",
+      "bytes": 2294972
+    },
+    {
+      "catalogId": "TK-000048",
+      "version": "v1",
+      "slug": "bodyweight-deadlift",
+      "sha256": "16c652930148c8611d10caecf40f4cc5ea20cec51cc558f47fed602f08661a5a",
+      "bytes": 1417534
+    },
+    {
+      "catalogId": "TK-000048",
+      "version": "v2",
+      "slug": "bodyweight-deadlift",
+      "sha256": "69e5d1d99fca7491fa1b6329390b0382c4603846d10bf4bf691fd9943eb3aa8f",
+      "bytes": 2632186
+    },
+    {
+      "catalogId": "TK-000049",
+      "version": "v1",
+      "slug": "bodyweight-donkey-calf-raise",
+      "sha256": "f469808623589057c495c1fbaab58aff0b9bdde7eea3c264cd4fbeb63ff21fec",
+      "bytes": 1143172
+    },
+    {
+      "catalogId": "TK-000049",
+      "version": "v2",
+      "slug": "bodyweight-donkey-calf-raise",
+      "sha256": "c7c05d0dfdf30adafa691df3c70c884dd57d56d97e070a01536ff1fbd3e2728a",
+      "bytes": 3550540
+    },
+    {
+      "catalogId": "TK-000050",
+      "version": "v1",
+      "slug": "bodyweight-elevated-push-up",
+      "sha256": "8e5fcd1199d17fb13faaac55b032baa1970ff69fe864259c106575c236f64d33",
+      "bytes": 3153143
+    },
+    {
+      "catalogId": "TK-000050",
+      "version": "v2",
+      "slug": "bodyweight-elevated-push-up",
+      "sha256": "743dbfd93d5b58782420852f319d2ab67990a2165a27718578def0820c39c3cf",
+      "bytes": 4698343
+    },
+    {
+      "catalogId": "TK-000051",
+      "version": "v1",
+      "slug": "bodyweight-hip-abduction",
+      "sha256": "9650765a5de30ddd17fc3968c50f41b19e5d6c40fb121ed79cfe685161c47f7e",
+      "bytes": 1453036
+    },
+    {
+      "catalogId": "TK-000051",
+      "version": "v2",
+      "slug": "bodyweight-hip-abduction",
+      "sha256": "d4ac1c93bc684f513d1f8392f22c1d353e2400a67b6d2799f8a1b1ecde3d94fa",
+      "bytes": 2996557
+    },
+    {
+      "catalogId": "TK-000052",
+      "version": "v1",
+      "slug": "bodyweight-knee-push-ups",
+      "sha256": "2e1cffa7fa3522b665569b469e1dbd379f93f21dda7629ef5bdedeb39f6be59e",
+      "bytes": 4113243
+    },
+    {
+      "catalogId": "TK-000052",
+      "version": "v2",
+      "slug": "bodyweight-knee-push-ups",
+      "sha256": "9eb6c5fa3944f22d563daee17fcee6eee51fa4834e1812ff91eba38b48aedb4f",
+      "bytes": 6176859
+    },
+    {
+      "catalogId": "TK-000053",
+      "version": "v1",
+      "slug": "bodyweight-reverse-lunge",
+      "sha256": "7a9821d7477592218b76f2d7fb5fffc6aa67e41096a75eb5418e77cab7f7a3f1",
+      "bytes": 2174712
+    },
+    {
+      "catalogId": "TK-000053",
+      "version": "v2",
+      "slug": "bodyweight-reverse-lunge",
+      "sha256": "6a1f9748d19b75ad240d828593737d781895da4f44f8a83c0d0a51a5e4175f00",
+      "bytes": 4733218
+    },
+    {
+      "catalogId": "TK-000054",
+      "version": "v1",
+      "slug": "bodyweight-russian-twist",
+      "sha256": "91aa2fd2c3e33efef9188a37cc1eb91c6fdfa524496a8043a790179c9b75eb68",
+      "bytes": 4618402
+    },
+    {
+      "catalogId": "TK-000054",
+      "version": "v2",
+      "slug": "bodyweight-russian-twist",
+      "sha256": "8dfcdea5951eab29750827ae91e1f362f7a8bbbcf9103eaac160159754ccae8a",
+      "bytes": 6799063
+    },
+    {
+      "catalogId": "TK-000055",
+      "version": "v1",
+      "slug": "bodyweight-spinal-jefferson-curl",
+      "sha256": "620c5afc5c068f4c3d9f6375f4ca5f9bd83837b3bc692803f5dece1229d9af67",
+      "bytes": 2678533
+    },
+    {
+      "catalogId": "TK-000055",
+      "version": "v2",
+      "slug": "bodyweight-spinal-jefferson-curl",
+      "sha256": "9f4952f685d104512ae1125b88a6e4883fb0c86d265e809962fae21d6ddf662c",
+      "bytes": 3033263
+    },
+    {
+      "catalogId": "TK-000056",
+      "version": "v1",
+      "slug": "bodyweight-squat",
+      "sha256": "e3ecff4be9994743e4c84e75fe28982d3f3f2974c963571342eba5731e1af808",
+      "bytes": 2676889
+    },
+    {
+      "catalogId": "TK-000056",
+      "version": "v2",
+      "slug": "bodyweight-squat",
+      "sha256": "c57966605e0d8fc06d01ada5bfcfe965faffcf13433eb524e53eb8e47e2439db",
+      "bytes": 4306402
+    },
+    {
+      "catalogId": "TK-000057",
+      "version": "v1",
+      "slug": "box-jump",
+      "sha256": "eb68501005ba867122c60212547e92f5ff12c6e3e994d2ae2e25dbae3d40119e",
+      "bytes": 3581245
+    },
+    {
+      "catalogId": "TK-000057",
+      "version": "v2",
+      "slug": "box-jump",
+      "sha256": "cd53bc23816046bcad4a628427965cb41233644d7ade28a901b56fd24adb11cd",
+      "bytes": 3730764
+    },
+    {
+      "catalogId": "TK-000058",
+      "version": "v1",
+      "slug": "bulgarian-split-squat",
+      "sha256": "9ea19d295bcbac9cdb2b530d993526a4e32eb31896f648c7ed766b19a03af013",
+      "bytes": 2230189
+    },
+    {
+      "catalogId": "TK-000058",
+      "version": "v2",
+      "slug": "bulgarian-split-squat",
+      "sha256": "4346eb93d82113b568e9787cf367a71aecbecab3465f5a98c39a243731ee882a",
+      "bytes": 3505932
+    },
+    {
+      "catalogId": "TK-000059",
+      "version": "v1",
+      "slug": "burpee",
+      "sha256": "a8b779fc3773769120b753c7b69c52e92d598ae4e8df77eb28be6521537dde6f",
+      "bytes": 4254182
+    },
+    {
+      "catalogId": "TK-000059",
+      "version": "v2",
+      "slug": "burpee",
+      "sha256": "173a7ee06b69b47e6a46088a3e0314672aa708185cc53f80243b08103196376b",
+      "bytes": 3810937
+    },
+    {
+      "catalogId": "TK-000060",
+      "version": "v1",
+      "slug": "cable-30-degree-shrug",
+      "sha256": "919e65fe81839d398a22f5a58631e833a800c7d770c4f1fa128e7ca4856bdf7a",
+      "bytes": 1433212
+    },
+    {
+      "catalogId": "TK-000060",
+      "version": "v2",
+      "slug": "cable-30-degree-shrug",
+      "sha256": "40aca3843ddd677a7dd3a01ab2918f66b2d3a69715ec1d4ecf3b8aeaa35015b4",
+      "bytes": 1492277
+    },
+    {
+      "catalogId": "TK-000061",
+      "version": "v1",
+      "slug": "cable-bar-curl",
+      "sha256": "aa52fd6cc2d6d7d1db891414b7637adb99fc4d4ce9db512c426504123836bced",
+      "bytes": 1600500
+    },
+    {
+      "catalogId": "TK-000061",
+      "version": "v2",
+      "slug": "cable-bar-curl",
+      "sha256": "6578b28b6dc8d69b69648d2c57d60fda4f5842e183d464d4b20f80a2a411378f",
+      "bytes": 3222054
+    },
+    {
+      "catalogId": "TK-000062",
+      "version": "v1",
+      "slug": "cable-bar-face-pull",
+      "sha256": "d24f86fb3e42d8d92d31074bd887645b85d9c9adb83360d12378005deca90c35",
+      "bytes": 1468817
+    },
+    {
+      "catalogId": "TK-000062",
+      "version": "v2",
+      "slug": "cable-bar-face-pull",
+      "sha256": "7f8d79bf96a5a590b7f0a798e0e9bc9cf6aada89a214cc31be20b89d3f5a21bc",
+      "bytes": 2192990
+    },
+    {
+      "catalogId": "TK-000063",
+      "version": "v1",
+      "slug": "cable-bar-pushdown",
+      "sha256": "542419c9ed8246f39f1a3dc1fa27147e30bb301ca20e8310ce597a1b24f29797",
+      "bytes": 1688303
+    },
+    {
+      "catalogId": "TK-000063",
+      "version": "v2",
+      "slug": "cable-bar-pushdown",
+      "sha256": "0e3ddeb2870c2d635caa350e7de0e44b1546aeda34c6eaaa8e13dca413673dc9",
+      "bytes": 3002471
+    },
+    {
+      "catalogId": "TK-000064",
+      "version": "v1",
+      "slug": "cable-bench-chest-fly",
+      "sha256": "6ef29c7318297f2bd06cecc4b91cf8eeda9580e3dfa68bb85f5c79bcb84c91b1",
+      "bytes": 2219896
+    },
+    {
+      "catalogId": "TK-000064",
+      "version": "v2",
+      "slug": "cable-bench-chest-fly",
+      "sha256": "c60897ba74ae28748345ce87201c99bc905663a73be68b1b0f7ce3949cb4c4ab",
+      "bytes": 3494996
+    },
+    {
+      "catalogId": "TK-000065",
+      "version": "v1",
+      "slug": "cable-bench-press",
+      "sha256": "0f1b27a670a6b7e2ce4206f84811b459426d0d3f865b8f81ac9c63936cb11b05",
+      "bytes": 2649856
+    },
+    {
+      "catalogId": "TK-000065",
+      "version": "v2",
+      "slug": "cable-bench-press",
+      "sha256": "c4c7aa3ecbebf94f4032eca06b4f1d823440b2834d72b7ef8360270aa62f682f",
+      "bytes": 4128527
+    },
+    {
+      "catalogId": "TK-000066",
+      "version": "v1",
+      "slug": "cable-bench-straight-leg-kickback",
+      "sha256": "1c9ec26bbb1da0d44133539ae6a57c3591111c338a4a7a850eb06c43bc86236c",
+      "bytes": 2859522
+    },
+    {
+      "catalogId": "TK-000066",
+      "version": "v2",
+      "slug": "cable-bench-straight-leg-kickback",
+      "sha256": "a6f71392ee7cac15afc5088f3ea8369b9e46a6d971729b6180ee70761b089122",
+      "bytes": 3174090
+    },
+    {
+      "catalogId": "TK-000067",
+      "version": "v1",
+      "slug": "cable-chest-press",
+      "sha256": "a501f394a644a3e1c53d2b163bb1b9ac73c3dec81838dcfb683fb198c8ce0eba",
+      "bytes": 1811063
+    },
+    {
+      "catalogId": "TK-000067",
+      "version": "v2",
+      "slug": "cable-chest-press",
+      "sha256": "9907ba7bef9e65f1a8087cd1fd824eee5f38c6dccd6da8e4a2bb6aed22c3b1ff",
+      "bytes": 1999658
+    },
+    {
+      "catalogId": "TK-000068",
+      "version": "v1",
+      "slug": "cable-decline-bench-press",
+      "sha256": "719167c83c91aac127e8126f1cde7a5bee5418588f348c35412ceab43b4aa0fb",
+      "bytes": 3289605
+    },
+    {
+      "catalogId": "TK-000068",
+      "version": "v2",
+      "slug": "cable-decline-bench-press",
+      "sha256": "0f1dd01f508adec8a93891c7580da349fa90864b0a035a436d85f01831370b79",
+      "bytes": 5236753
+    },
+    {
+      "catalogId": "TK-000069",
+      "version": "v1",
+      "slug": "cable-incline-bench-press",
+      "sha256": "aea9315b73ca61496da1382d3b3c141f00e0cfb95351351588f2838c67b3e06a",
+      "bytes": 2609526
+    },
+    {
+      "catalogId": "TK-000069",
+      "version": "v2",
+      "slug": "cable-incline-bench-press",
+      "sha256": "a53d89b1806e0ba1e1ef8cf0fafc9fd9395118cbdb5a063e783d44009e3189eb",
+      "bytes": 4041540
+    },
+    {
+      "catalogId": "TK-000070",
+      "version": "v1",
+      "slug": "cable-overhead-press",
+      "sha256": "2127b4fc7d5b11df302916209a3d7115a44fe65c2e4a7300beb528a2bc73412b",
+      "bytes": 2335091
+    },
+    {
+      "catalogId": "TK-000070",
+      "version": "v2",
+      "slug": "cable-overhead-press",
+      "sha256": "0dd3cfacfa0692bba5e97d6c71deb21c713b39ab12e1c87115c779389bbc8dbb",
+      "bytes": 891680
+    },
+    {
+      "catalogId": "TK-000071",
+      "version": "v1",
+      "slug": "cable-pec-fly",
+      "sha256": "7cd7c152877520cdfa48f9e08157508bb4a211e448759dd1ded0ae1b36e99e32",
+      "bytes": 2296587
+    },
+    {
+      "catalogId": "TK-000071",
+      "version": "v2",
+      "slug": "cable-pec-fly",
+      "sha256": "600e7be6ef0ea1e9dcafab2d17a6cd7a01947d2166057b19db0d4fec0b61ff8c",
+      "bytes": 4839709
+    },
+    {
+      "catalogId": "TK-000072",
+      "version": "v1",
+      "slug": "cable-rope-kneeling-face-pull",
+      "sha256": "80cf6602480afa4c693e639618ade85537a0b95afb3089db83a700013d80ccc5",
+      "bytes": 2066870
+    },
+    {
+      "catalogId": "TK-000072",
+      "version": "v2",
+      "slug": "cable-rope-kneeling-face-pull",
+      "sha256": "1e2a2cdeafd830a5b71c0db1f8fc2c20060faa4c9b87ac9ae587a74d647acf0e",
+      "bytes": 4577913
+    },
+    {
+      "catalogId": "TK-000073",
+      "version": "v1",
+      "slug": "cable-rope-pushdown",
+      "sha256": "0bee5216d1f11ffcbc7b0a77e2227a462158a8ee2f5c72260c66c807947f42c6",
+      "bytes": 1975038
+    },
+    {
+      "catalogId": "TK-000073",
+      "version": "v2",
+      "slug": "cable-rope-pushdown",
+      "sha256": "095ec897112c1b744e374d4cceb86607a3da065b2f02e0459433da7200a484af",
+      "bytes": 3296113
+    },
+    {
+      "catalogId": "TK-000074",
+      "version": "v1",
+      "slug": "cable-row-bar-standing-row",
+      "sha256": "973f7471ddc66f4efb21d02d613f90caafb9a45d69e6df81a53b92a5a759ed7d",
+      "bytes": 1678554
+    },
+    {
+      "catalogId": "TK-000074",
+      "version": "v2",
+      "slug": "cable-row-bar-standing-row",
+      "sha256": "0f54f340ed9551cec0db957de26c021aa0a04ba9221080ac05810894ce19d5eb",
+      "bytes": 1754884
+    },
+    {
+      "catalogId": "TK-000075",
+      "version": "v1",
+      "slug": "cable-seated-rope-face-pull",
+      "sha256": "98a955cf034d2e3f8d8d3e68b4b659eccf0f0ea7d7d485c45c8a49e487819518",
+      "bytes": 688899
+    },
+    {
+      "catalogId": "TK-000075",
+      "version": "v2",
+      "slug": "cable-seated-rope-face-pull",
+      "sha256": "8aeddce1f339d920875d9394cfde92f3634bc7946bb8010d5176b1d342139357",
+      "bytes": 2795599
+    },
+    {
+      "catalogId": "TK-000076",
+      "version": "v1",
+      "slug": "cable-side-bend",
+      "sha256": "f7f9e20304efcb4bd52ab7e6979ec7d68ba350e2deb383d43eeedca1bc3a869c",
+      "bytes": 2113449
+    },
+    {
+      "catalogId": "TK-000076",
+      "version": "v2",
+      "slug": "cable-side-bend",
+      "sha256": "1dc222ed0e8f0bddfc413c07473bbe497c73f33586964053f0d4cf976b618dcc",
+      "bytes": 3056201
+    },
+    {
+      "catalogId": "TK-000077",
+      "version": "v1",
+      "slug": "cable-single-arm-neutral-grip-row",
+      "sha256": "02afae50c2b6885b325a6cb5232065b695862c6083442ab6d1bdb024ed7cfa89",
+      "bytes": 2503525
+    },
+    {
+      "catalogId": "TK-000077",
+      "version": "v2",
+      "slug": "cable-single-arm-neutral-grip-row",
+      "sha256": "e64220844928b4fa2b2aac556f10a918306bc83e5005dff6916ea8c86d7065d0",
+      "bytes": 2233961
+    },
+    {
+      "catalogId": "TK-000078",
+      "version": "v1",
+      "slug": "cable-single-arm-rope-pushdown",
+      "sha256": "809969654296fc70e01412fef08ad5ee699a11629f234eaa9aa3c47d70e9148e",
+      "bytes": 1059268
+    },
+    {
+      "catalogId": "TK-000078",
+      "version": "v2",
+      "slug": "cable-single-arm-rope-pushdown",
+      "sha256": "b30c5b6e0868f8115c1d3b21186e2bea803656ef661af73cf0437d59e78a771f",
+      "bytes": 2213929
+    },
+    {
+      "catalogId": "TK-000079",
+      "version": "v1",
+      "slug": "cable-single-arm-underhand-grip-row",
+      "sha256": "01b8576fd1497433d3b95a0e7a7e9cc0b10311be32a9afb2d379316ceee55259",
+      "bytes": 1843860
+    },
+    {
+      "catalogId": "TK-000079",
+      "version": "v2",
+      "slug": "cable-single-arm-underhand-grip-row",
+      "sha256": "e69fa92d71dda936eb7fe20ed21c7abe3e76356735e5edc8cd1670c12ebb3bec",
+      "bytes": 1986528
+    },
+    {
+      "catalogId": "TK-000080",
+      "version": "v1",
+      "slug": "cable-standing-low-to-high-wood-chopper",
+      "sha256": "7ccd4d84f5066477d638191d4dee27ec3153ae166aa575bb30c781d51a19595f",
+      "bytes": 2026328
+    },
+    {
+      "catalogId": "TK-000080",
+      "version": "v2",
+      "slug": "cable-standing-low-to-high-wood-chopper",
+      "sha256": "3490464c536b3b25cf46654cfa5e778c04d06d361f928081e21713e695e5d1d1",
+      "bytes": 3516287
+    },
+    {
+      "catalogId": "TK-000081",
+      "version": "v1",
+      "slug": "cable-standing-single-arm-chest-press",
+      "sha256": "08ca0ffc7c23f5b59211485c83a3ae0058bc17c662a0b1eb2ae2f983c56b5bac",
+      "bytes": 1536335
+    },
+    {
+      "catalogId": "TK-000081",
+      "version": "v2",
+      "slug": "cable-standing-single-arm-chest-press",
+      "sha256": "7cd559aef02b5675c939a6c6bd026cb582604cdff41dc5734d36bb6205fb468b",
+      "bytes": 1300048
+    },
+    {
+      "catalogId": "TK-000082",
+      "version": "v1",
+      "slug": "cable-supinating-row",
+      "sha256": "9dbae7650b752c0ece36b0dfaa3d49ef2023862758b4e5e5b232383a2d56ee8a",
+      "bytes": 2725049
+    },
+    {
+      "catalogId": "TK-000082",
+      "version": "v2",
+      "slug": "cable-supinating-row",
+      "sha256": "e557ef2b76ed03415875f0f9958d2777b259343fb8dc61d339add0aa74077297",
+      "bytes": 2112294
+    },
+    {
+      "catalogId": "TK-000083",
+      "version": "v1",
+      "slug": "cable-wood-chopper",
+      "sha256": "c0d9376356608d0a389250252117144bdfa5c3ff9d51f7276ec748535f956b18",
+      "bytes": 2193296
+    },
+    {
+      "catalogId": "TK-000083",
+      "version": "v2",
+      "slug": "cable-wood-chopper",
+      "sha256": "a50b7302a1a56f5bb74d8cb3c3db735009410540420974c6a7e9d9d08693d8f9",
+      "bytes": 3466892
+    },
+    {
+      "catalogId": "TK-000084",
+      "version": "v1",
+      "slug": "chin-ups",
+      "sha256": "9e2bcc20f5fb8c4eefecf04f896a88b0ff222593f108330c80121c0a15bc0138",
+      "bytes": 2110959
+    },
+    {
+      "catalogId": "TK-000084",
+      "version": "v2",
+      "slug": "chin-ups",
+      "sha256": "57a0d63c0c7f3d62e61d9a9ab5ad842cd15d52f10fe869ba91ca48c78302ffdd",
+      "bytes": 2947656
+    },
+    {
+      "catalogId": "TK-000085",
+      "version": "v1",
+      "slug": "decline-push-up",
+      "sha256": "73ee831d80c0d9de08003a12bd9cd8be4bd050920b76f1eb09a28c04b7c3f910",
+      "bytes": 3380028
+    },
+    {
+      "catalogId": "TK-000085",
+      "version": "v2",
+      "slug": "decline-push-up",
+      "sha256": "fcebb8604336fc5a2adb3c5a0accc2cd8fb32111b1cc4bab9b9e3618928350a2",
+      "bytes": 5023438
+    },
+    {
+      "catalogId": "TK-000086",
+      "version": "v1",
+      "slug": "diamond-push-ups",
+      "sha256": "a4b5d9b4556a2a9e1aec1e93bd6029c935f863eff567caa3d1948af1358b8194",
+      "bytes": 3624632
+    },
+    {
+      "catalogId": "TK-000086",
+      "version": "v2",
+      "slug": "diamond-push-ups",
+      "sha256": "8b084ee6d63ead04d883d86a9b2514d4c6a5390afe75848aa5218f78da74646f",
+      "bytes": 5344133
+    },
+    {
+      "catalogId": "TK-000087",
+      "version": "v1",
+      "slug": "dumbbell-alternating-forward-lunge",
+      "sha256": "fd283ca2195f2e4a90681055e3e877de0b8f18a6f610afdd57918ffe9f08224f",
+      "bytes": 3354102
+    },
+    {
+      "catalogId": "TK-000087",
+      "version": "v2",
+      "slug": "dumbbell-alternating-forward-lunge",
+      "sha256": "408e3ac73cbd8224add94c06eabfcf930fa00854557e3bd3896ad34ebd313a12",
+      "bytes": 5187752
+    },
+    {
+      "catalogId": "TK-000088",
+      "version": "v1",
+      "slug": "dumbbell-bench-press",
+      "sha256": "9e99dba95de123b4a138ef83bb1604f1bae6d8994acc94db20067353c2745da9",
+      "bytes": 3108816
+    },
+    {
+      "catalogId": "TK-000088",
+      "version": "v2",
+      "slug": "dumbbell-bench-press",
+      "sha256": "a08dcfee29fd7b9b554341aadc8d0a6988a558c665f90492bca9ba1a78b113c9",
+      "bytes": 5534508
+    },
+    {
+      "catalogId": "TK-000089",
+      "version": "v1",
+      "slug": "dumbbell-bulgarian-split-squat",
+      "sha256": "b8438f4f67d5efe9df207805c9384e3057fde50b4a6d7a3b682c05013bf9e3a9",
+      "bytes": 2160198
+    },
+    {
+      "catalogId": "TK-000089",
+      "version": "v2",
+      "slug": "dumbbell-bulgarian-split-squat",
+      "sha256": "bf4ce8d6fc60a4412b60dcd20f1da70cc4b4091f48ebfae873118ce2f862a846",
+      "bytes": 3220736
+    },
+    {
+      "catalogId": "TK-000090",
+      "version": "v1",
+      "slug": "dumbbell-chest-fly",
+      "sha256": "7906ea73d1ed07aec8fbf4824b58b3479909e867aaf12eaff4cca14d93f4ff08",
+      "bytes": 2927175
+    },
+    {
+      "catalogId": "TK-000090",
+      "version": "v2",
+      "slug": "dumbbell-chest-fly",
+      "sha256": "fd43ab8f3e04da9574d3c182ea26afd6d0273708067f52f0bddd483eb7c999b7",
+      "bytes": 4806510
+    },
+    {
+      "catalogId": "TK-000091",
+      "version": "v1",
+      "slug": "dumbbell-concentration-curl",
+      "sha256": "5ba645a8f6c86c9a8882f34e6d9ec2a34f578517e720de6ec5fc53f6a8375a4e",
+      "bytes": 3319699
+    },
+    {
+      "catalogId": "TK-000091",
+      "version": "v2",
+      "slug": "dumbbell-concentration-curl",
+      "sha256": "4d2a871eb5082094ea86129d856ceb33cf09b1ddb1b3a8aa2fbabd9d023b9ad6",
+      "bytes": 5712668
+    },
+    {
+      "catalogId": "TK-000092",
+      "version": "v1",
+      "slug": "dumbbell-cross-body-romanian-deadlift",
+      "sha256": "611455c17595ea24d9b0b3f085e96579cbaca7af93070ffd535170729454af2e",
+      "bytes": 1647574
+    },
+    {
+      "catalogId": "TK-000092",
+      "version": "v2",
+      "slug": "dumbbell-cross-body-romanian-deadlift",
+      "sha256": "529aa0bf868929c6662249cc8b243ee4fd3083524e2ff6a4beaf1a3d615c6b05",
+      "bytes": 3968506
+    },
+    {
+      "catalogId": "TK-000093",
+      "version": "v1",
+      "slug": "dumbbell-curl",
+      "sha256": "3c453fa0d380740275a9997fd050c668d8e5a0e645e4d203ee2a5af80ee15f34",
+      "bytes": 1755482
+    },
+    {
+      "catalogId": "TK-000093",
+      "version": "v2",
+      "slug": "dumbbell-curl",
+      "sha256": "15ea9f51e16153f7a54259d39b1afff9b7f023b31930c09de7cf94b0e1bc3d8b",
+      "bytes": 2891882
+    },
+    {
+      "catalogId": "TK-000094",
+      "version": "v1",
+      "slug": "dumbbell-decline-bench-press",
+      "sha256": "94a305fa1655611247108490622479ecc767ceb237510ba5ccee6d9b14dbfbd8",
+      "bytes": 2088464
+    },
+    {
+      "catalogId": "TK-000094",
+      "version": "v2",
+      "slug": "dumbbell-decline-bench-press",
+      "sha256": "47c931c13d862463b200814eb795e15a8b6a634a7564c9e5937891b6ad6bd49c",
+      "bytes": 3398287
+    },
+    {
+      "catalogId": "TK-000095",
+      "version": "v1",
+      "slug": "dumbbell-decline-chest-fly",
+      "sha256": "ff7155925c233a8db28877b6a0555779505e205f27668a113729b82a335d76d0",
+      "bytes": 3193245
+    },
+    {
+      "catalogId": "TK-000095",
+      "version": "v2",
+      "slug": "dumbbell-decline-chest-fly",
+      "sha256": "3758aec43264a7627388b21b03a9a6433396e4fce19b79bf518457f72924aae8",
+      "bytes": 4898810
+    },
+    {
+      "catalogId": "TK-000096",
+      "version": "v1",
+      "slug": "dumbbell-decline-skullcrusher",
+      "sha256": "e3040d9ffc44dfcc4e29119095003c880757a4cbd879d4f7da267e58b95490f8",
+      "bytes": 2682611
+    },
+    {
+      "catalogId": "TK-000096",
+      "version": "v2",
+      "slug": "dumbbell-decline-skullcrusher",
+      "sha256": "d6e905ed0346c692e97c4adb9c138dabc17ec34cee6c4e2cdd6f8c6c9c3a656a",
+      "bytes": 6147397
+    },
+    {
+      "catalogId": "TK-000097",
+      "version": "v1",
+      "slug": "dumbbell-feet-elevated-glute-bridge",
+      "sha256": "e8d5f121ccdeee73df10473fd8b9114fa293b94e2a3f44e78b6e2956e64f9a64",
+      "bytes": 3059083
+    },
+    {
+      "catalogId": "TK-000097",
+      "version": "v2",
+      "slug": "dumbbell-feet-elevated-glute-bridge",
+      "sha256": "1665be1122764875c12b5fff410bdc7c9d8beb29f030b2ef9c650b894d2dc8c1",
+      "bytes": 2425036
+    },
+    {
+      "catalogId": "TK-000098",
+      "version": "v1",
+      "slug": "dumbbell-figure-four-heels-elevated-hip-thrust",
+      "sha256": "ddbbfcd7d80dcbb37957b25b2759f400f188da3c8889f202534527d84912ccbb",
+      "bytes": 1669527
+    },
+    {
+      "catalogId": "TK-000098",
+      "version": "v2",
+      "slug": "dumbbell-figure-four-heels-elevated-hip-thrust",
+      "sha256": "79a304f40cf29b39f80756d0c3710f43736c0b31573c74b1923f91443142e158",
+      "bytes": 2189276
+    },
+    {
+      "catalogId": "TK-000099",
+      "version": "v1",
+      "slug": "dumbbell-front-raise",
+      "sha256": "e32465d56c96aef16e14c67960aeb1b00c8be9f7085083991b16b2d94d5c9860",
+      "bytes": 1600517
+    },
+    {
+      "catalogId": "TK-000099",
+      "version": "v2",
+      "slug": "dumbbell-front-raise",
+      "sha256": "0a58dca22d465700acf9045b6d575094c1b579666705fe83dd890f76f53c7306",
+      "bytes": 2677449
+    },
+    {
+      "catalogId": "TK-000100",
+      "version": "v1",
+      "slug": "dumbbell-goblet-alternating-curtsy-lunge",
+      "sha256": "b83bb02aaa988b8dd233e589270ea5a3021422a3ffbf8e32e62f905cd85aedf3",
+      "bytes": 2863005
+    },
+    {
+      "catalogId": "TK-000100",
+      "version": "v2",
+      "slug": "dumbbell-goblet-alternating-curtsy-lunge",
+      "sha256": "f349c2fe9d7ef57de5b18948cdf5a92337d5c7210b2ce5563e4dc5caa99ee7a1",
+      "bytes": 4404502
+    },
+    {
+      "catalogId": "TK-000101",
+      "version": "v1",
+      "slug": "dumbbell-goblet-bulgarian-split-squat",
+      "sha256": "11dd742290ec172840869edd994bbc991af15586780c5990d9bd0c445f090813",
+      "bytes": 2562075
+    },
+    {
+      "catalogId": "TK-000101",
+      "version": "v2",
+      "slug": "dumbbell-goblet-bulgarian-split-squat",
+      "sha256": "1ca5dc99c86a2959bc113d06e23cf522ccb6908adb8c2fe1b0191358d674ae04",
+      "bytes": 4065449
+    },
+    {
+      "catalogId": "TK-000102",
+      "version": "v1",
+      "slug": "dumbbell-goblet-forward-lunge",
+      "sha256": "d20a0fc2de36a730109b5a988a26a875d8283f32d905eca87df1814cfe757326",
+      "bytes": 1628854
+    },
+    {
+      "catalogId": "TK-000102",
+      "version": "v2",
+      "slug": "dumbbell-goblet-forward-lunge",
+      "sha256": "97cdad93919889a63b9c73dc199bb41eb459e5ded9de832227f2a801a06946c7",
+      "bytes": 2996806
+    },
+    {
+      "catalogId": "TK-000103",
+      "version": "v1",
+      "slug": "dumbbell-goblet-reverse-lunge",
+      "sha256": "02b7b89948134873fd80ae4883ec320962eb6171f14b4f24e7248eda5386c0a7",
+      "bytes": 1589562
+    },
+    {
+      "catalogId": "TK-000103",
+      "version": "v2",
+      "slug": "dumbbell-goblet-reverse-lunge",
+      "sha256": "92213ce2b2ac54caf3cf6589a8519ba4b3a81f8da73502f29b27d45910b79875",
+      "bytes": 2589981
+    },
+    {
+      "catalogId": "TK-000104",
+      "version": "v1",
+      "slug": "dumbbell-goblet-split-squat",
+      "sha256": "0c451f1a25fe28f6c4f0482d28815d4f3929935a71331984194fda81984678bf",
+      "bytes": 1984037
+    },
+    {
+      "catalogId": "TK-000104",
+      "version": "v2",
+      "slug": "dumbbell-goblet-split-squat",
+      "sha256": "159be2ad1ff3b3fe64bc09767b4d00879190d2786eef8ba2f3a6521fd54c2488",
+      "bytes": 3913122
+    },
+    {
+      "catalogId": "TK-000105",
+      "version": "v1",
+      "slug": "dumbbell-goblet-squat",
+      "sha256": "77266b0a9c51c58bacec4bde7a107eb80f8ed4e7bb2007453ba71e89f23f0a51",
+      "bytes": 2438336
+    },
+    {
+      "catalogId": "TK-000105",
+      "version": "v2",
+      "slug": "dumbbell-goblet-squat",
+      "sha256": "872d7667b22c76aec80f077c60ff4871e319ec6c01745e3503880ba8102532c8",
+      "bytes": 3061530
+    },
+    {
+      "catalogId": "TK-000106",
+      "version": "v1",
+      "slug": "dumbbell-hammer-curl",
+      "sha256": "3813f58000a21a6da0265382da75591833f627adfb9fbc95875417f3f40c17a1",
+      "bytes": 2603351
+    },
+    {
+      "catalogId": "TK-000106",
+      "version": "v2",
+      "slug": "dumbbell-hammer-curl",
+      "sha256": "5595b149aa83a425fd852432d698c6b843c4961c35aa5756b259d9ad894490da",
+      "bytes": 4295165
+    },
+    {
+      "catalogId": "TK-000107",
+      "version": "v1",
+      "slug": "dumbbell-heels-elevated-hip-thrust",
+      "sha256": "abbeaba3eb60ccfe6fd18fd10472bdadd38e3470592d236727d86e23b32701e9",
+      "bytes": 1524708
+    },
+    {
+      "catalogId": "TK-000107",
+      "version": "v2",
+      "slug": "dumbbell-heels-elevated-hip-thrust",
+      "sha256": "6d1fd84245a4164ab40f97f9ea5683c2870d9ff65b3fcd1e74093f38a974fffe",
+      "bytes": 3621692
+    },
+    {
+      "catalogId": "TK-000108",
+      "version": "v1",
+      "slug": "dumbbell-incline-bench-press",
+      "sha256": "a150cc90e6397a607255574fdba72f74371586c06fb60a51930e6973afb787f8",
+      "bytes": 3304822
+    },
+    {
+      "catalogId": "TK-000108",
+      "version": "v2",
+      "slug": "dumbbell-incline-bench-press",
+      "sha256": "d9e2555dc3a3ab19bcec90434368550c7494a34445c65dd91031b2a8ac87655b",
+      "bytes": 3118841
+    },
+    {
+      "catalogId": "TK-000109",
+      "version": "v1",
+      "slug": "dumbbell-incline-chest-fly",
+      "sha256": "b680ec4ed8d26816efe0e3ae4991f6e4774aa5682837b93f1098adb39c76992a",
+      "bytes": 2587586
+    },
+    {
+      "catalogId": "TK-000109",
+      "version": "v2",
+      "slug": "dumbbell-incline-chest-fly",
+      "sha256": "2d747eb56a0819902a37f0aac36b7ba2e19f72a6c6fe24bfabcea93157d7a405",
+      "bytes": 4805242
+    },
+    {
+      "catalogId": "TK-000110",
+      "version": "v1",
+      "slug": "dumbbell-incline-curl",
+      "sha256": "e04d4b85ab33a9128f6ceed9a761c7cf8f704596a4c05f3a9f55244775e82baf",
+      "bytes": 2098958
+    },
+    {
+      "catalogId": "TK-000110",
+      "version": "v2",
+      "slug": "dumbbell-incline-curl",
+      "sha256": "aaa2652ef3726169e24bab76a7e081ce506b2b8488d1c5cc12e84ff68adceffe",
+      "bytes": 3443134
+    },
+    {
+      "catalogId": "TK-000111",
+      "version": "v1",
+      "slug": "dumbbell-incline-front-raise",
+      "sha256": "35d4d96ee982433a673b90d63af6166910bd71058a1aeae424396043b38c7eb2",
+      "bytes": 2266371
+    },
+    {
+      "catalogId": "TK-000111",
+      "version": "v2",
+      "slug": "dumbbell-incline-front-raise",
+      "sha256": "e1dc30e0073232632ab827cc400975d42177cccffd1b9d2a0b11d5626eb90ef3",
+      "bytes": 3798459
+    },
+    {
+      "catalogId": "TK-000112",
+      "version": "v1",
+      "slug": "dumbbell-incline-hammer-curl",
+      "sha256": "e91afe0890e045a96feee61f528f0fc123d77eb081b2edf79b2694ca74193f23",
+      "bytes": 1993127
+    },
+    {
+      "catalogId": "TK-000112",
+      "version": "v2",
+      "slug": "dumbbell-incline-hammer-curl",
+      "sha256": "19ecd2ea95be67a55d21a1b57698f4e9b53408b0a9e9ef831a844323a76c57bb",
+      "bytes": 4036110
+    },
+    {
+      "catalogId": "TK-000113",
+      "version": "v1",
+      "slug": "dumbbell-lateral-raise",
+      "sha256": "5d822ad1d4aff7007402dec250f9bb27752f8aa2d5357ebffcb5fe02965ea442",
+      "bytes": 2109719
+    },
+    {
+      "catalogId": "TK-000113",
+      "version": "v2",
+      "slug": "dumbbell-lateral-raise",
+      "sha256": "101b6c9ca381feeb4252885220c44d4f4ec51d67fca027baa2bd7d950c3ea94b",
+      "bytes": 3579735
+    },
+    {
+      "catalogId": "TK-000114",
+      "version": "v1",
+      "slug": "dumbbell-laying-reverse-fly",
+      "sha256": "9487a8d0df6f10d62086e9000e0d5c3a253ca360816a778571681751970d7ed9",
+      "bytes": 3393216
+    },
+    {
+      "catalogId": "TK-000114",
+      "version": "v2",
+      "slug": "dumbbell-laying-reverse-fly",
+      "sha256": "a19bded2dccf640ce303ef83490c0a3aa173e50d1ab0b8755d3fc3525801fc62",
+      "bytes": 5325027
+    },
+    {
+      "catalogId": "TK-000115",
+      "version": "v1",
+      "slug": "dumbbell-leg-curl",
+      "sha256": "3938e64fe16451ac6296a6320dd48c68d30b90f38babc58263c5dfa36fff196c",
+      "bytes": 2522584
+    },
+    {
+      "catalogId": "TK-000115",
+      "version": "v2",
+      "slug": "dumbbell-leg-curl",
+      "sha256": "a1d0a5f3406909225f73f2e830fab43a17c7a301639865a1b5d6e541e8586a53",
+      "bytes": 4299531
+    },
+    {
+      "catalogId": "TK-000116",
+      "version": "v1",
+      "slug": "dumbbell-preacher-curl",
+      "sha256": "3476a84dde58a12d8384cd9cac2f573c341d018417d6a9163b5b97b16f0e20b7",
+      "bytes": 2044336
+    },
+    {
+      "catalogId": "TK-000116",
+      "version": "v2",
+      "slug": "dumbbell-preacher-curl",
+      "sha256": "8902552472edb5d7ca44475ea7d2c5bc491a087ec6fe688ea06fdbdf0a2eec2b",
+      "bytes": 3612269
+    },
+    {
+      "catalogId": "TK-000117",
+      "version": "v1",
+      "slug": "dumbbell-rear-delt-fly",
+      "sha256": "2c1ac08f663ab91a4501a8e8ce493250b318f1d6b010bc10c4b9f083e8951843",
+      "bytes": 1600959
+    },
+    {
+      "catalogId": "TK-000117",
+      "version": "v2",
+      "slug": "dumbbell-rear-delt-fly",
+      "sha256": "6be1ebcbf00f429ac89348af3fa450c7ca49cd52e4f6c07087913e75047ea9e7",
+      "bytes": 2366585
+    },
+    {
+      "catalogId": "TK-000118",
+      "version": "v1",
+      "slug": "dumbbell-row-bilateral",
+      "sha256": "ad4b003febc25a16360b06ad3392a072af4bbc61f3d2c1bd7b0bad66a7ed2783",
+      "bytes": 1389899
+    },
+    {
+      "catalogId": "TK-000118",
+      "version": "v2",
+      "slug": "dumbbell-row-bilateral",
+      "sha256": "2badcb44fb8308d2738bf0e66bf0cbccf21a0a63d3bc3e8576b85b798ca54c81",
+      "bytes": 2163472
+    },
+    {
+      "catalogId": "TK-000119",
+      "version": "v1",
+      "slug": "dumbbell-row-unilateral",
+      "sha256": "690782b28e6f6865d8af16b449d9526c76479be4337760b70cd370530da66941",
+      "bytes": 2426376
+    },
+    {
+      "catalogId": "TK-000119",
+      "version": "v2",
+      "slug": "dumbbell-row-unilateral",
+      "sha256": "cd33c2267505ff1440c920c54de7e77dcff611db6c3e7767b978168dbba50775",
+      "bytes": 4497161
+    },
+    {
+      "catalogId": "TK-000120",
+      "version": "v1",
+      "slug": "dumbbell-russian-twist",
+      "sha256": "0553f8e2a4f1fcabd6a8ded239edc39046027a5264b71e114f40f229ef47675a",
+      "bytes": 5227221
+    },
+    {
+      "catalogId": "TK-000120",
+      "version": "v2",
+      "slug": "dumbbell-russian-twist",
+      "sha256": "b31ef92f2fbb305f80d9fc79b14ea8b00f0b7e64161554c7f87863a45ea72a1a",
+      "bytes": 8062956
+    },
+    {
+      "catalogId": "TK-000121",
+      "version": "v1",
+      "slug": "dumbbell-seated-overhead-press",
+      "sha256": "62729773e89ecb6b9a732f79497a4c9d6e3f22da1ef0ccd9b284bf1a169ddafe",
+      "bytes": 2688095
+    },
+    {
+      "catalogId": "TK-000121",
+      "version": "v2",
+      "slug": "dumbbell-seated-overhead-press",
+      "sha256": "58ee9fdbc03144b6f08c982a2ecd302569609f06686bf12baf7752eb91e5fa67",
+      "bytes": 4988148
+    },
+    {
+      "catalogId": "TK-000122",
+      "version": "v1",
+      "slug": "dumbbell-seated-overhead-tricep-extension",
+      "sha256": "35cbc35cb3948280d4915eedeb21514a6fe748a34650bb71ef9348a393d242f0",
+      "bytes": 2491648
+    },
+    {
+      "catalogId": "TK-000122",
+      "version": "v2",
+      "slug": "dumbbell-seated-overhead-tricep-extension",
+      "sha256": "413562ed3cdbc475f3d357767039e5ad73a2e2000d7045384737562e3f355332",
+      "bytes": 4071321
+    },
+    {
+      "catalogId": "TK-000123",
+      "version": "v1",
+      "slug": "dumbbell-seated-rear-delt-fly",
+      "sha256": "c6891ef6c70582728d5823cfbf1a7e7928fc73ce7cf32f6768ee5bccd8d7736b",
+      "bytes": 3740518
+    },
+    {
+      "catalogId": "TK-000123",
+      "version": "v2",
+      "slug": "dumbbell-seated-rear-delt-fly",
+      "sha256": "dbff2e6b15739ed2c0036afe3c41c81636002fa2981f90bebc2554d6cd16a338",
+      "bytes": 6377275
+    },
+    {
+      "catalogId": "TK-000124",
+      "version": "v1",
+      "slug": "dumbbell-seated-shrug",
+      "sha256": "6a138e0aea4088f773426031c328e74dc65cca86b14d1d85b2146ceddcb27e37",
+      "bytes": 1914621
+    },
+    {
+      "catalogId": "TK-000124",
+      "version": "v2",
+      "slug": "dumbbell-seated-shrug",
+      "sha256": "d470cd113b24c1b2492ffc1fcebd7a225de6ce394274ecfbebe5b266e14582b1",
+      "bytes": 3122844
+    },
+    {
+      "catalogId": "TK-000125",
+      "version": "v1",
+      "slug": "dumbbell-shrug",
+      "sha256": "bbaabdcef93fbf89182468cef09c16130d0fea38089380349d2bcb2efe909d38",
+      "bytes": 1392360
+    },
+    {
+      "catalogId": "TK-000125",
+      "version": "v2",
+      "slug": "dumbbell-shrug",
+      "sha256": "0b58838d5f4296ea858ca889267b9180d117953513b6b1890b07e4ff71c99b24",
+      "bytes": 2429591
+    },
+    {
+      "catalogId": "TK-000126",
+      "version": "v1",
+      "slug": "dumbbell-side-bend",
+      "sha256": "eec9bc38b2ab746fd9a9a10f77f0820343e5cad3eacf9b4c6c380a50401ddbd9",
+      "bytes": 2195187
+    },
+    {
+      "catalogId": "TK-000126",
+      "version": "v2",
+      "slug": "dumbbell-side-bend",
+      "sha256": "54f97b12cc29119cbb12ba295941d70bb227fb5fe63653dc00e0b8a9466a7e7c",
+      "bytes": 3721872
+    },
+    {
+      "catalogId": "TK-000127",
+      "version": "v1",
+      "slug": "dumbbell-single-arm-chest-press",
+      "sha256": "5787e40dac1ffe979aaec288df793bff15a5b6c5bfcf988373eba4d135d90bb6",
+      "bytes": 984964
+    },
+    {
+      "catalogId": "TK-000127",
+      "version": "v2",
+      "slug": "dumbbell-single-arm-chest-press",
+      "sha256": "135b2fe0d0ecc5e38ff9b09ba188fad29a1256a1f7e40a677f106deb0bf47f57",
+      "bytes": 1608255
+    },
+    {
+      "catalogId": "TK-000128",
+      "version": "v1",
+      "slug": "dumbbell-single-arm-clean-and-press",
+      "sha256": "ea91d23344459ec600a8338f9bbf145a43f3a56413a7c98dd9c043e16a3c342b",
+      "bytes": 2636090
+    },
+    {
+      "catalogId": "TK-000128",
+      "version": "v2",
+      "slug": "dumbbell-single-arm-clean-and-press",
+      "sha256": "32b0c6337ac14a460b9b2439e968c32866246ec776d408b5805239a3290d8fea",
+      "bytes": 4174056
+    },
+    {
+      "catalogId": "TK-000129",
+      "version": "v1",
+      "slug": "dumbbell-single-arm-row",
+      "sha256": "70ba9df91b4f579bc09078c8c1742d4315ff9c161448bf211aa5bb6929900324",
+      "bytes": 1295930
+    },
+    {
+      "catalogId": "TK-000129",
+      "version": "v2",
+      "slug": "dumbbell-single-arm-row",
+      "sha256": "44c7064758c8f3a58630a1b11591d2ead9a65247c1569fbf8c41b20e54d9b1e1",
+      "bytes": 2072251
+    },
+    {
+      "catalogId": "TK-000130",
+      "version": "v1",
+      "slug": "dumbbell-single-leg-calf-raise",
+      "sha256": "1c23838bcb2f3635cee12516e76618f93788483825f1932121aacb10f6f6fe27",
+      "bytes": 1398421
+    },
+    {
+      "catalogId": "TK-000130",
+      "version": "v2",
+      "slug": "dumbbell-single-leg-calf-raise",
+      "sha256": "71e0841d2f34cf359d588d41d47eb90cf1f8f32779bea544a70579eff6b3b058",
+      "bytes": 3453007
+    },
+    {
+      "catalogId": "TK-000131",
+      "version": "v1",
+      "slug": "dumbbell-situp",
+      "sha256": "baa88555c09d6b50e845879080ab77f9998506a2df062c7ca1b2f6dd092279ae",
+      "bytes": 2221888
+    },
+    {
+      "catalogId": "TK-000131",
+      "version": "v2",
+      "slug": "dumbbell-situp",
+      "sha256": "6122b6ed29b68e5e0126e85705bd9446f97fcbb74cb99c6e9860ebb1c6e44128",
+      "bytes": 3415294
+    },
+    {
+      "catalogId": "TK-000132",
+      "version": "v1",
+      "slug": "dumbbell-skullcrusher",
+      "sha256": "b106455a70c7b298182894ecd4240625f7fb786eab071ae6ca049736874efcf7",
+      "bytes": 3552481
+    },
+    {
+      "catalogId": "TK-000132",
+      "version": "v2",
+      "slug": "dumbbell-skullcrusher",
+      "sha256": "ec4cce4fb131994dc2846259893d862258a642d2484b84ff642c66a17c6019c2",
+      "bytes": 5632905
+    },
+    {
+      "catalogId": "TK-000133",
+      "version": "v1",
+      "slug": "dumbbell-spinal-jefferson-curl",
+      "sha256": "b00cd2d26cbea0c365e18aef84adccb94176ea061350f222c4eb8e2dc05d9a39",
+      "bytes": 1468904
+    },
+    {
+      "catalogId": "TK-000133",
+      "version": "v2",
+      "slug": "dumbbell-spinal-jefferson-curl",
+      "sha256": "8084cd668c6082fb43ca6a0a9426e108f9b67415f465411583305d9d61aa68bc",
+      "bytes": 2537782
+    },
+    {
+      "catalogId": "TK-000134",
+      "version": "v1",
+      "slug": "dumbbell-standing-single-arm-curl",
+      "sha256": "ff46088634437c149a0fa23c28b5cd4c20ea5dbab830dea6801998dda4047afa",
+      "bytes": 657876
+    },
+    {
+      "catalogId": "TK-000134",
+      "version": "v2",
+      "slug": "dumbbell-standing-single-arm-curl",
+      "sha256": "fb78d996887db7dc7146eb92a6f9d405f99baf2c8fb254f697d9ecf1d4d35816",
+      "bytes": 1425262
+    },
+    {
+      "catalogId": "TK-000135",
+      "version": "v1",
+      "slug": "dumbbell-standing-single-arm-hammer-curl",
+      "sha256": "275231ec54ea06ebf70c8f0f4b3b47c19fb089e5d41202b0c16c97d3d1100702",
+      "bytes": 566300
+    },
+    {
+      "catalogId": "TK-000135",
+      "version": "v2",
+      "slug": "dumbbell-standing-single-arm-hammer-curl",
+      "sha256": "11fb80d8517cb6ef90a752d1660662d83266ec301309af1c52f68b836c4d2fdc",
+      "bytes": 928571
+    },
+    {
+      "catalogId": "TK-000136",
+      "version": "v1",
+      "slug": "dumbbell-sumo-squat",
+      "sha256": "2786b3d06d0b61436cde84248c4f8c6e0c4d946b3bcc30db73ad763bfe7a27ab",
+      "bytes": 3087176
+    },
+    {
+      "catalogId": "TK-000136",
+      "version": "v2",
+      "slug": "dumbbell-sumo-squat",
+      "sha256": "7ead2d4fbcf3946e4de1360758098d9db9e81080f84962babc12f8ebc257aceb",
+      "bytes": 3681968
+    },
+    {
+      "catalogId": "TK-000137",
+      "version": "v1",
+      "slug": "dumbbell-superman",
+      "sha256": "836f74055a8b6ea0742e9c702ba525b82bd54fb2941cac065822eba18d0fd36f",
+      "bytes": 3155006
+    },
+    {
+      "catalogId": "TK-000137",
+      "version": "v2",
+      "slug": "dumbbell-superman",
+      "sha256": "918aed453e49dd57071fc745d561c42e514b3a90acd1dff756fa86f5473026fa",
+      "bytes": 4012789
+    },
+    {
+      "catalogId": "TK-000138",
+      "version": "v1",
+      "slug": "dumbbell-thruster",
+      "sha256": "9cf38d9e32cb72e4f4bb0d39289cc02e8823ebbf79a7fb51e3955b78601c8e4f",
+      "bytes": 2346677
+    },
+    {
+      "catalogId": "TK-000138",
+      "version": "v2",
+      "slug": "dumbbell-thruster",
+      "sha256": "c059bb7a3c832c1793a29397d1c0b327d0d20a47d3c3ad0c6376fffd4f824909",
+      "bytes": 3718220
+    },
+    {
+      "catalogId": "TK-000139",
+      "version": "v1",
+      "slug": "dumbbell-tricep-kickback",
+      "sha256": "e94c8aa3c4d6e54310808088d9947c40df8eae62d9984c55c70c899438cb27c0",
+      "bytes": 2478508
+    },
+    {
+      "catalogId": "TK-000139",
+      "version": "v2",
+      "slug": "dumbbell-tricep-kickback",
+      "sha256": "680e50fc4a2e6c1f407a16f42150f57dc80f8e91b4dd61aa3b97bef1cb4a7443",
+      "bytes": 3290177
+    },
+    {
+      "catalogId": "TK-000140",
+      "version": "v1",
+      "slug": "dumbbell-upright-row",
+      "sha256": "daf5f1f5c68c80283db83bc403b521493cba95bc5eecf4675736fee15e1b0465",
+      "bytes": 2469174
+    },
+    {
+      "catalogId": "TK-000140",
+      "version": "v2",
+      "slug": "dumbbell-upright-row",
+      "sha256": "34ac4aa42ec022d505f1f1b76c0945da98bf454e128f0226897b55e06e4c0df8",
+      "bytes": 3770508
+    },
+    {
+      "catalogId": "TK-000141",
+      "version": "v1",
+      "slug": "dumbbell-wrist-curl",
+      "sha256": "91b59e1009b2d83c3f39bf89de88950cb5715ae520544bd5b9323abe7c68d937",
+      "bytes": 844063
+    },
+    {
+      "catalogId": "TK-000141",
+      "version": "v2",
+      "slug": "dumbbell-wrist-curl",
+      "sha256": "9b12e73d15631c8e1126455004668f0778f8863d00cc5cea24423ddfbc362ff0",
+      "bytes": 1981999
+    },
+    {
+      "catalogId": "TK-000142",
+      "version": "v1",
+      "slug": "dumbbell-wrist-extension",
+      "sha256": "bd6c0d6bea4d0f0c6d866ec23575964cd4796dc6aff9ab8be4736ff82a98b60b",
+      "bytes": 993078
+    },
+    {
+      "catalogId": "TK-000142",
+      "version": "v2",
+      "slug": "dumbbell-wrist-extension",
+      "sha256": "cbf96b3144f9ce4f9da91e20500a23accaab8af6e77a671f033d220d9af44304",
+      "bytes": 1609808
+    },
+    {
+      "catalogId": "TK-000143",
+      "version": "v1",
+      "slug": "elbow-side-plank",
+      "sha256": "62ec6d94d582b2c7e9cc1b0c02e04df026e1c1e4746f51544e042c92e74ae026",
+      "bytes": 2028215
+    },
+    {
+      "catalogId": "TK-000143",
+      "version": "v2",
+      "slug": "elbow-side-plank",
+      "sha256": "cba8ec2ccef935b08208c993882603771a56b8159c6bd5554eda86203f1a0b53",
+      "bytes": 2940457
+    },
+    {
+      "catalogId": "TK-000144",
+      "version": "v1",
+      "slug": "ez-bar-preacher-curl",
+      "sha256": "45ebd3a1537c9ff523a9cf042dc645437f8cec7f9d1c180a114b9783311e40d7",
+      "bytes": 1420976
+    },
+    {
+      "catalogId": "TK-000144",
+      "version": "v2",
+      "slug": "ez-bar-preacher-curl",
+      "sha256": "f578b1d66eb9a826c6b59ae1f133ac6b6483a72b4177f28d8a097bc7966d8cec",
+      "bytes": 4588245
+    },
+    {
+      "catalogId": "TK-000145",
+      "version": "v1",
+      "slug": "ez-bar-reverse-preacher-curl",
+      "sha256": "83bbfb24fae137b109454e27847f97974143a627044a9f3b9dce3137912346bc",
+      "bytes": 2125329
+    },
+    {
+      "catalogId": "TK-000145",
+      "version": "v2",
+      "slug": "ez-bar-reverse-preacher-curl",
+      "sha256": "33d85ad558fce783d43a828bc9b3321a6f42641dab1eccd8d78b53877b7881a2",
+      "bytes": 2026217
+    },
+    {
+      "catalogId": "TK-000146",
+      "version": "v1",
+      "slug": "forward-lunge",
+      "sha256": "8d315e723d87122b80e86314fffa83087410979aacaa88503b18261f865b844d",
+      "bytes": 2257613
+    },
+    {
+      "catalogId": "TK-000146",
+      "version": "v2",
+      "slug": "forward-lunge",
+      "sha256": "5c7add61334802e8ed55d6367c10124e9317408b17d0b627a14a7dbe06cf3a1d",
+      "bytes": 3620898
+    },
+    {
+      "catalogId": "TK-000147",
+      "version": "v1",
+      "slug": "good-mornings",
+      "sha256": "c323e22e6303dbfc1fc59d62eee9018097cd657491efcd2eefd08eca68fdd0c7",
+      "bytes": 2121602
+    },
+    {
+      "catalogId": "TK-000147",
+      "version": "v2",
+      "slug": "good-mornings",
+      "sha256": "69288fb1ceecd6b7b26ef56d74483aefcb790e80a9d39ad6f3f3733c400f5b77",
+      "bytes": 3431714
+    },
+    {
+      "catalogId": "TK-000148",
+      "version": "v1",
+      "slug": "hand-plank",
+      "sha256": "6081cb8602a58b2713d6599175e8da504bfec60a0a0c5b4e8de53cb608d784d7",
+      "bytes": 3102823
+    },
+    {
+      "catalogId": "TK-000148",
+      "version": "v2",
+      "slug": "hand-plank",
+      "sha256": "2901804de76a800f03542f37a1f9b509b2f4989dc5116b3eedf297b4ec31d2d9",
+      "bytes": 2376859
+    },
+    {
+      "catalogId": "TK-000149",
+      "version": "v1",
+      "slug": "hanging-knee-raises",
+      "sha256": "a1e6ed4ec4e4eb3e4f5d270cafad99e275b532c7d22ee3973c00e94e4594b444",
+      "bytes": 2576240
+    },
+    {
+      "catalogId": "TK-000149",
+      "version": "v2",
+      "slug": "hanging-knee-raises",
+      "sha256": "ea735016afd894ad9f4990459f18bc56a1bc201fd38ee0e8bf758ea0ed12d130",
+      "bytes": 4084315
+    },
+    {
+      "catalogId": "TK-000150",
+      "version": "v1",
+      "slug": "incline-push-up",
+      "sha256": "7d290003f8fe7b6d1b33f224bee1cd6ed36cad1af0acc207227f07d502d9b6e3",
+      "bytes": 2964285
+    },
+    {
+      "catalogId": "TK-000150",
+      "version": "v2",
+      "slug": "incline-push-up",
+      "sha256": "9a7661c0b167ef67790930a4921af83025eac5c1fdb643b15252a31f0f623896",
+      "bytes": 4405051
+    },
+    {
+      "catalogId": "TK-000151",
+      "version": "v1",
+      "slug": "inverted-row",
+      "sha256": "47e3cdc2888458c428122e626a075ae5518c34a17f114443185e64d8140bed75",
+      "bytes": 2947237
+    },
+    {
+      "catalogId": "TK-000151",
+      "version": "v2",
+      "slug": "inverted-row",
+      "sha256": "11640f313b993f41518761fbcc734ba074cff7442a966ab6cd1f3de0b7e01ac3",
+      "bytes": 2725069
+    },
+    {
+      "catalogId": "TK-000152",
+      "version": "v1",
+      "slug": "jump-squats",
+      "sha256": "a4120ae5bcba375cfd0052d7fc4af83e25cfc1490a6c2c1ebca2d03a197059c1",
+      "bytes": 1781214
+    },
+    {
+      "catalogId": "TK-000152",
+      "version": "v2",
+      "slug": "jump-squats",
+      "sha256": "55c8a388dcfea19b28a7a8cd7e1b860d4631e9b8dedd879adf5ef8108758a0eb",
+      "bytes": 2744363
+    },
+    {
+      "catalogId": "TK-000153",
+      "version": "v1",
+      "slug": "kettlebell-alternating-curtsy-lunge",
+      "sha256": "e8db71315643b0adbe5cb5381c80852170c3a7738485876e6e6471da2d4ee6b7",
+      "bytes": 3060474
+    },
+    {
+      "catalogId": "TK-000153",
+      "version": "v2",
+      "slug": "kettlebell-alternating-curtsy-lunge",
+      "sha256": "e3ef05fd9e7de9482a48139a8c1409cd57c0162092f8e46c5dacb7aab8ef1398",
+      "bytes": 4772906
+    },
+    {
+      "catalogId": "TK-000154",
+      "version": "v1",
+      "slug": "kettlebell-assisted-bulgarian-split-squat",
+      "sha256": "af82620292a3d0a606d61a441ed0ecc48705aa54137907de30300b3e7e156ed1",
+      "bytes": 1663328
+    },
+    {
+      "catalogId": "TK-000154",
+      "version": "v2",
+      "slug": "kettlebell-assisted-bulgarian-split-squat",
+      "sha256": "d4a634c37de319b1d223ad365d56377000d66ba47caaa2a52cb42dd9aa9af76b",
+      "bytes": 2765435
+    },
+    {
+      "catalogId": "TK-000155",
+      "version": "v1",
+      "slug": "kettlebell-bench-press",
+      "sha256": "ee04436d8c31d4d1246b5772556c76985fe58ed4335a57a40b992d1ed630d5d9",
+      "bytes": 2294807
+    },
+    {
+      "catalogId": "TK-000155",
+      "version": "v2",
+      "slug": "kettlebell-bench-press",
+      "sha256": "50d7f234c23817b6512cf118d3a6e0872397d8dccccca879ce90e95aaf81c4f9",
+      "bytes": 3638979
+    },
+    {
+      "catalogId": "TK-000156",
+      "version": "v1",
+      "slug": "kettlebell-calf-raise",
+      "sha256": "998ced15ee9755af6bb4fecb6cec12ba3b6ee554a1b3e818f08898990fa6e55c",
+      "bytes": 1102954
+    },
+    {
+      "catalogId": "TK-000156",
+      "version": "v2",
+      "slug": "kettlebell-calf-raise",
+      "sha256": "1bbe502fdbcf4cf0308e8470c2b2bb58d583b2a31bfcf6ff887464fc18e7f0cf",
+      "bytes": 2266625
+    },
+    {
+      "catalogId": "TK-000157",
+      "version": "v1",
+      "slug": "kettlebell-curl",
+      "sha256": "34f0ac83e02398e7c6a1d688e10c93c87e7735948e5154ece7ae5f76ade90556",
+      "bytes": 1579239
+    },
+    {
+      "catalogId": "TK-000157",
+      "version": "v2",
+      "slug": "kettlebell-curl",
+      "sha256": "06f6eeef7961763f98be957c2203db76e08ba3c8c6a8e9a1f8cd7054473dba71",
+      "bytes": 2524090
+    },
+    {
+      "catalogId": "TK-000158",
+      "version": "v1",
+      "slug": "kettlebell-farmers-carry",
+      "sha256": "18a748b087c7b6c34642d1c5b2fe1d6ba444154c69e5dcc0bad6a66b19228611",
+      "bytes": 5925815
+    },
+    {
+      "catalogId": "TK-000158",
+      "version": "v2",
+      "slug": "kettlebell-farmers-carry",
+      "sha256": "1634fce262e1096cdf3d84592670e33e793be16983a6844a96956997e084eecd",
+      "bytes": 2806830
+    },
+    {
+      "catalogId": "TK-000159",
+      "version": "v1",
+      "slug": "kettlebell-front-raise",
+      "sha256": "327268442c08ee137d82ae41e54fe6626bb15a48f5c788cd3438ec5160b3f473",
+      "bytes": 1888913
+    },
+    {
+      "catalogId": "TK-000159",
+      "version": "v2",
+      "slug": "kettlebell-front-raise",
+      "sha256": "63888ede57b2e0139e92c46998c67cff71dce8dd11326f68e04d86430875bae7",
+      "bytes": 3028476
+    },
+    {
+      "catalogId": "TK-000160",
+      "version": "v1",
+      "slug": "kettlebell-goblet-curl",
+      "sha256": "5ba8c93619850036689051d1571fe5c9efa661b8eea4372c727c8096377dfb79",
+      "bytes": 1474853
+    },
+    {
+      "catalogId": "TK-000160",
+      "version": "v2",
+      "slug": "kettlebell-goblet-curl",
+      "sha256": "d8910649cd6eef8d91db4d4848187c602e8844bfd3054b43b615ea7d51835851",
+      "bytes": 2334896
+    },
+    {
+      "catalogId": "TK-000161",
+      "version": "v1",
+      "slug": "kettlebell-gorilla-row",
+      "sha256": "0c1eedf93ccd61ab444049a252f844874531a1adb09003b96570a1a4cf61a811",
+      "bytes": 3402935
+    },
+    {
+      "catalogId": "TK-000161",
+      "version": "v2",
+      "slug": "kettlebell-gorilla-row",
+      "sha256": "1969c5f1d7265d87e92c5827e03190decba6b37aee74c54790f453b7ea86a6df",
+      "bytes": 5177668
+    },
+    {
+      "catalogId": "TK-000162",
+      "version": "v1",
+      "slug": "kettlebell-hip-thrust",
+      "sha256": "7ef576cd6be5c4f9c165ffedeabc0d8fe3070a2ce842b79ebd929bee43772904",
+      "bytes": 2385813
+    },
+    {
+      "catalogId": "TK-000162",
+      "version": "v2",
+      "slug": "kettlebell-hip-thrust",
+      "sha256": "d15331d49221bbcb5279a29b1ca2096afa27291940f2c7a800954daf8dc0a55e",
+      "bytes": 4071876
+    },
+    {
+      "catalogId": "TK-000163",
+      "version": "v1",
+      "slug": "kettlebell-incline-bench-press",
+      "sha256": "e92550dd31dfa1eb061bc10458b301e951c4fd03a32a782f033b4f9ae359d391",
+      "bytes": 1166672
+    },
+    {
+      "catalogId": "TK-000163",
+      "version": "v2",
+      "slug": "kettlebell-incline-bench-press",
+      "sha256": "39387a9692cf194e26fc4cc4bcc6b62e0a426f05429675f30ab9896809a51b3b",
+      "bytes": 2092479
+    },
+    {
+      "catalogId": "TK-000164",
+      "version": "v1",
+      "slug": "kettlebell-push-press",
+      "sha256": "401931320f92c4b0f595a546f7e3b2fce35fc3526fdb074dee5b5f612a6891ad",
+      "bytes": 1128045
+    },
+    {
+      "catalogId": "TK-000164",
+      "version": "v2",
+      "slug": "kettlebell-push-press",
+      "sha256": "85bc046ce6cffa3bde4cf6c1e6321140c51f2a23d461c8e7ebb98b1decca026a",
+      "bytes": 1937993
+    },
+    {
+      "catalogId": "TK-000165",
+      "version": "v1",
+      "slug": "kettlebell-romanian-deadlift",
+      "sha256": "5e7587bfedc7d3c49f4d68f0162180f697174dc949d5f175e309cd85815c3803",
+      "bytes": 2257037
+    },
+    {
+      "catalogId": "TK-000165",
+      "version": "v2",
+      "slug": "kettlebell-romanian-deadlift",
+      "sha256": "c9e7fb67bf05394cf03d576b667e701f7fd4de4ca934d5119c790f23c14b3956",
+      "bytes": 3328477
+    },
+    {
+      "catalogId": "TK-000166",
+      "version": "v1",
+      "slug": "kettlebell-row",
+      "sha256": "2c782065e324fbb9806ebd803883f4fcc3d539b80ead9979f519e342d3ac2899",
+      "bytes": 1943888
+    },
+    {
+      "catalogId": "TK-000166",
+      "version": "v2",
+      "slug": "kettlebell-row",
+      "sha256": "af26c969e8f90697c36497f3830c89ab9bc412781b199b883c03de88b5afd017",
+      "bytes": 3322932
+    },
+    {
+      "catalogId": "TK-000167",
+      "version": "v1",
+      "slug": "kettlebell-row-single",
+      "sha256": "c4cd4e549b8b70246b7376860fcd319fb6ce5cdff4001d14a3c3bf0560011276",
+      "bytes": 1415740
+    },
+    {
+      "catalogId": "TK-000167",
+      "version": "v2",
+      "slug": "kettlebell-row-single",
+      "sha256": "f6fa8076d4154417b400a58bdf0fb83ea69c051871b280c45758e57d6a8023bf",
+      "bytes": 2151507
+    },
+    {
+      "catalogId": "TK-000168",
+      "version": "v1",
+      "slug": "kettlebell-seated-overhead-press",
+      "sha256": "c0780be3be944718a695bc47c06850c063ddb1a66633d77cf1d580c33518dda9",
+      "bytes": 1374795
+    },
+    {
+      "catalogId": "TK-000168",
+      "version": "v2",
+      "slug": "kettlebell-seated-overhead-press",
+      "sha256": "e8b4fb7573cfe23d7e40d51a698f4495c87024b2d0dc7ce8ce1e9e3e2f4ecdd5",
+      "bytes": 2240947
+    },
+    {
+      "catalogId": "TK-000169",
+      "version": "v1",
+      "slug": "kettlebell-shrug",
+      "sha256": "7be5d502925dc776cd2e9d7a20663a98628815ffc14625d2d72f377eac88202e",
+      "bytes": 1002144
+    },
+    {
+      "catalogId": "TK-000169",
+      "version": "v2",
+      "slug": "kettlebell-shrug",
+      "sha256": "d0583f29c526f96ea2f0e79f4195c9ca3c9af8991b05e9923971514fa8fc4b53",
+      "bytes": 1481341
+    },
+    {
+      "catalogId": "TK-000170",
+      "version": "v1",
+      "slug": "kettlebell-single-arm-row",
+      "sha256": "8e538a918073d8230ce69be16e27e847ca6660bcb5c4d2307084b58ed0aa6b13",
+      "bytes": 2590816
+    },
+    {
+      "catalogId": "TK-000170",
+      "version": "v2",
+      "slug": "kettlebell-single-arm-row",
+      "sha256": "06d228c9c5d20eb86709621161b90cf0db1b90048924d3757129c5ec3d0383a9",
+      "bytes": 4126055
+    },
+    {
+      "catalogId": "TK-000171",
+      "version": "v1",
+      "slug": "kettlebell-spinal-jefferson-curl",
+      "sha256": "db03ca12e072b9475cfb2b700fed826e2aa3dfde55ee9e7706af0204a494fa34",
+      "bytes": 1555785
+    },
+    {
+      "catalogId": "TK-000171",
+      "version": "v2",
+      "slug": "kettlebell-spinal-jefferson-curl",
+      "sha256": "280bd8c8717352316ea24cda91598bf64c971ee3c0e4e879c8ab27f8d2d69ae4",
+      "bytes": 3135765
+    },
+    {
+      "catalogId": "TK-000172",
+      "version": "v1",
+      "slug": "kettlebell-sumo-deadlift",
+      "sha256": "21fc800aec2b6264c13974b0d94885b90537a8d339aa8e4303f0ec0086c34fe6",
+      "bytes": 1711710
+    },
+    {
+      "catalogId": "TK-000172",
+      "version": "v2",
+      "slug": "kettlebell-sumo-deadlift",
+      "sha256": "47f620242be7e8ca28b24fa0e06ecd28e9040d520547538b7ddbf0380c0d6def",
+      "bytes": 2692465
+    },
+    {
+      "catalogId": "TK-000173",
+      "version": "v1",
+      "slug": "kettlebell-swing",
+      "sha256": "2e45c764bca2d4e2807542b636c587e7ec60167ffd1cd74311320677e02e4752",
+      "bytes": 2957560
+    },
+    {
+      "catalogId": "TK-000173",
+      "version": "v2",
+      "slug": "kettlebell-swing",
+      "sha256": "bdc4ae6a2dd208a50b93e379154889a5915b513f1ad8dd345c5ccb51b3f9704b",
+      "bytes": 2213844
+    },
+    {
+      "catalogId": "TK-000174",
+      "version": "v1",
+      "slug": "kettlebell-thruster",
+      "sha256": "598990e76f421991148f98ac79a7ef7a43d5e173b72db20fc15084e7c44b853c",
+      "bytes": 1901797
+    },
+    {
+      "catalogId": "TK-000174",
+      "version": "v2",
+      "slug": "kettlebell-thruster",
+      "sha256": "aa19a7958dfda9d090d23a732626fee3e622a20f810fabcaaf6030910de77629",
+      "bytes": 4063723
+    },
+    {
+      "catalogId": "TK-000175",
+      "version": "v1",
+      "slug": "kettlebell-windmill",
+      "sha256": "caa02daf4e1ddec800b251ce97fba21f75d38f6734b2e7d6d7207f5bd52998fe",
+      "bytes": 3070611
+    },
+    {
+      "catalogId": "TK-000175",
+      "version": "v2",
+      "slug": "kettlebell-windmill",
+      "sha256": "dad032b92725138a0617032fc8157ed9f3dafa4652b60380ae30c5e8626fbfe1",
+      "bytes": 4786168
+    },
+    {
+      "catalogId": "TK-000176",
+      "version": "v1",
+      "slug": "landmine-t-bar-rows",
+      "sha256": "4dd2c8c2f3dc3bbea4f29953e8119dfe7e106980e82ca0e91e8d23e56f3b3d26",
+      "bytes": 2493257
+    },
+    {
+      "catalogId": "TK-000176",
+      "version": "v2",
+      "slug": "landmine-t-bar-rows",
+      "sha256": "defb569414dcebf8ebd9c607862a84194c698b75f9cf58a21c404bc7401eb8f3",
+      "bytes": 3755002
+    },
+    {
+      "catalogId": "TK-000177",
+      "version": "v1",
+      "slug": "lunge-walking",
+      "sha256": "297517d69d70f34e90ecd1afb93c2b90b96e203a3fd3fe3c03b7ee5768e80cd6",
+      "bytes": 3996115
+    },
+    {
+      "catalogId": "TK-000177",
+      "version": "v2",
+      "slug": "lunge-walking",
+      "sha256": "a7d1a3bf01acdc3d92a8340a43257d0ef64d110a85f910a04a76d24bd21b97c5",
+      "bytes": 5841302
+    },
+    {
+      "catalogId": "TK-000178",
+      "version": "v1",
+      "slug": "machine-45-degree-back-extension",
+      "sha256": "84efc741a48571c675b716f40f1b1d251d8ac621acac5be49fe5b148f16c6c9e",
+      "bytes": 2027669
+    },
+    {
+      "catalogId": "TK-000178",
+      "version": "v2",
+      "slug": "machine-45-degree-back-extension",
+      "sha256": "eb0b33007cd7b11532e1aeec7c3a5fb816344c8805124bf27712f9ccec93f8f7",
+      "bytes": 2806532
+    },
+    {
+      "catalogId": "TK-000179",
+      "version": "v1",
+      "slug": "machine-cable-v-bar-push-downs",
+      "sha256": "8738ad3a8e4a323f02bf4646b672745b9fffc918e21b6ab53d07f3ab1f76f50d",
+      "bytes": 2022814
+    },
+    {
+      "catalogId": "TK-000179",
+      "version": "v2",
+      "slug": "machine-cable-v-bar-push-downs",
+      "sha256": "14eb77d092eda000bac4d6ac89b93b02c6aeac86f10331b0235f7346d0754f2c",
+      "bytes": 3355396
+    },
+    {
+      "catalogId": "TK-000180",
+      "version": "v1",
+      "slug": "machine-chest-press",
+      "sha256": "5ba898834f0713e2bb28d51914ec095b4cd8b2b2ad7046ae5be4ce00c6cd9d37",
+      "bytes": 3363046
+    },
+    {
+      "catalogId": "TK-000180",
+      "version": "v2",
+      "slug": "machine-chest-press",
+      "sha256": "9fbded535375d7fbaae0f204a3cbc06e038b92055f975cbcc36aa36861a4b440",
+      "bytes": 5785393
+    },
+    {
+      "catalogId": "TK-000181",
+      "version": "v1",
+      "slug": "machine-crunch",
+      "sha256": "858607182620cc3ba2dc6b7723c42157312928d1a490cbf2f7a1681e4866e61e",
+      "bytes": 2314269
+    },
+    {
+      "catalogId": "TK-000181",
+      "version": "v2",
+      "slug": "machine-crunch",
+      "sha256": "4431fe4c70e1039269aa7f8731a30be446b18734e9edbba68e5a3a7226cb0a39",
+      "bytes": 3625565
+    },
+    {
+      "catalogId": "TK-000182",
+      "version": "v1",
+      "slug": "machine-dips",
+      "sha256": "b8c08768b278880167a9533fea29d1cc6a197ad5324cbf650488a858fa5ac979",
+      "bytes": 2174628
+    },
+    {
+      "catalogId": "TK-000182",
+      "version": "v2",
+      "slug": "machine-dips",
+      "sha256": "9a7e2213d22ef8112eaf9433f374460755025ed31bcb599aa7d7f663fe99b93c",
+      "bytes": 3590679
+    },
+    {
+      "catalogId": "TK-000183",
+      "version": "v1",
+      "slug": "machine-face-pulls",
+      "sha256": "09d9848b17b6855b50c935cfed92476f88a1bb309ab5385eeef66ca04fd74bd9",
+      "bytes": 2804082
+    },
+    {
+      "catalogId": "TK-000183",
+      "version": "v2",
+      "slug": "machine-face-pulls",
+      "sha256": "4a0bcdfeee40ef95533c29e88699e3ee1729fadd31847673ea3e7042b87f84fb",
+      "bytes": 4331809
+    },
+    {
+      "catalogId": "TK-000184",
+      "version": "v1",
+      "slug": "machine-front-military-press",
+      "sha256": "5b14fde25e7d2bac5b05996ec67c018c204e14ac53e3bb19561e03b668873d2a",
+      "bytes": 2025632
+    },
+    {
+      "catalogId": "TK-000184",
+      "version": "v2",
+      "slug": "machine-front-military-press",
+      "sha256": "6ad464361d63eb256971109a38c3924707bf79bff1b2d09ecdb0bd9e9c3ea0a8",
+      "bytes": 3392820
+    },
+    {
+      "catalogId": "TK-000185",
+      "version": "v1",
+      "slug": "machine-leg-extension",
+      "sha256": "8ad794c94946fc395780f9a7ebb99969f7e5d1478f53013b0b3b5b07f874c58c",
+      "bytes": 3167842
+    },
+    {
+      "catalogId": "TK-000185",
+      "version": "v2",
+      "slug": "machine-leg-extension",
+      "sha256": "e6c25ee5e727a9858550b795ba3aa2ea377da1f493fe52302e19ba2bc570f88d",
+      "bytes": 5258439
+    },
+    {
+      "catalogId": "TK-000186",
+      "version": "v1",
+      "slug": "machine-leg-press",
+      "sha256": "e6a13ecbb4d9b104a36121c547f3770d300a6765718a9806192ce8ba53b9a758",
+      "bytes": 3644360
+    },
+    {
+      "catalogId": "TK-000186",
+      "version": "v2",
+      "slug": "machine-leg-press",
+      "sha256": "fd5ade8c38867e6448bc897ce6165b9aac2be79ca553347c0cf98faa2de12491",
+      "bytes": 3156544
+    },
+    {
+      "catalogId": "TK-000187",
+      "version": "v1",
+      "slug": "machine-neutral-row",
+      "sha256": "bc05d7ae7fbc8d159edab20840532d52e58ae2a647e67707960268006242870e",
+      "bytes": 2153819
+    },
+    {
+      "catalogId": "TK-000187",
+      "version": "v2",
+      "slug": "machine-neutral-row",
+      "sha256": "a5525bd12798704ac7e73b1fe6a18270f64bcc1a4a9aa101ea4add5209395398",
+      "bytes": 2599550
+    },
+    {
+      "catalogId": "TK-000188",
+      "version": "v1",
+      "slug": "machine-pec-fly",
+      "sha256": "b8d8349ddec9de5a3285d31aba8f341b4adaacae25d2d1059d9871fce351fb6d",
+      "bytes": 2044346
+    },
+    {
+      "catalogId": "TK-000188",
+      "version": "v2",
+      "slug": "machine-pec-fly",
+      "sha256": "faea589fba1d3357fd1f201bf8f842a482cd92a07d7f7b42df22b9c619af5df7",
+      "bytes": 3374361
+    },
+    {
+      "catalogId": "TK-000189",
+      "version": "v1",
+      "slug": "machine-plate-loaded-leg-extension",
+      "sha256": "b0e3356041ac191fcc34a62c623620598ab02b8d12a29d7271dfdd1f1a2b0f73",
+      "bytes": 1066515
+    },
+    {
+      "catalogId": "TK-000189",
+      "version": "v2",
+      "slug": "machine-plate-loaded-leg-extension",
+      "sha256": "1b98a9a71e77887feb2d2a573aba30a91adcb5922dd436e9c475b37ad7218a9f",
+      "bytes": 1626010
+    },
+    {
+      "catalogId": "TK-000190",
+      "version": "v1",
+      "slug": "machine-plate-loaded-t-bar-row",
+      "sha256": "34c0c6a8b27373dc4143ecf8cb1b3e902626562182cf1585e06752a50f7c0d71",
+      "bytes": 1614202
+    },
+    {
+      "catalogId": "TK-000190",
+      "version": "v2",
+      "slug": "machine-plate-loaded-t-bar-row",
+      "sha256": "bde34943cb57a9863a86342bdb65ebfdbb99262ee0f43117ef1dc28a1eb88cee",
+      "bytes": 4479958
+    },
+    {
+      "catalogId": "TK-000191",
+      "version": "v1",
+      "slug": "machine-pulldown",
+      "sha256": "df70893bca56bf8d33b34e5011571353afb4f6a4f690b0417a930c25063e3b5e",
+      "bytes": 2925858
+    },
+    {
+      "catalogId": "TK-000191",
+      "version": "v2",
+      "slug": "machine-pulldown",
+      "sha256": "c858388e2bd8c91b2f47160a9d43e39c4c7525446f623556f49dcb0f6653d7c6",
+      "bytes": 5075145
+    },
+    {
+      "catalogId": "TK-000192",
+      "version": "v1",
+      "slug": "machine-seated-cable-row",
+      "sha256": "5ea50601fd7756faff17938d7d9fcfc83196adfbde349bacd98db0d7a0f54f1f",
+      "bytes": 2865000
+    },
+    {
+      "catalogId": "TK-000192",
+      "version": "v2",
+      "slug": "machine-seated-cable-row",
+      "sha256": "9be50cb4cb87e0f9d1114173631b66988197ec110a432959169a568292cb5e2f",
+      "bytes": 4837255
+    },
+    {
+      "catalogId": "TK-000193",
+      "version": "v1",
+      "slug": "machine-underhand-row",
+      "sha256": "50c86d7789dabaafeee0945d1a630f504d8b36e0de8362ddd9d50a8fed146058",
+      "bytes": 2092325
+    },
+    {
+      "catalogId": "TK-000193",
+      "version": "v2",
+      "slug": "machine-underhand-row",
+      "sha256": "2493c28581559f71a7ae531fea22fceba655872b86bd8b37e99d0d3324e95a35",
+      "bytes": 3145485
+    },
+    {
+      "catalogId": "TK-000194",
+      "version": "v1",
+      "slug": "mountain-climber",
+      "sha256": "caf8a4ef3d2fe1efc594d87a52b44ff4a28f7a8a8934fa7479de02894dcd44c4",
+      "bytes": 3872325
+    },
+    {
+      "catalogId": "TK-000194",
+      "version": "v2",
+      "slug": "mountain-climber",
+      "sha256": "43b2265d7298d53ce8361e4567bd3d6f61218b78a1d02b38f3f6611589278812",
+      "bytes": 5800440
+    },
+    {
+      "catalogId": "TK-000195",
+      "version": "v1",
+      "slug": "narrow-pulldown",
+      "sha256": "4f8d063423301e49b517e643becb3eaf41110ef55b666346117b9c0eb7c72684",
+      "bytes": 2822578
+    },
+    {
+      "catalogId": "TK-000195",
+      "version": "v2",
+      "slug": "narrow-pulldown",
+      "sha256": "c0ee92749ed268ea470a260e3bc34c5fbcbcecf0c2b08fe7c782d166308632d2",
+      "bytes": 2760725
+    },
+    {
+      "catalogId": "TK-000196",
+      "version": "v1",
+      "slug": "parralel-bar-dips",
+      "sha256": "b8236e918675caa323e62ad4cb8bb0e032f8dbc539528d7e845ac3d19ed8912f",
+      "bytes": 1829499
+    },
+    {
+      "catalogId": "TK-000196",
+      "version": "v2",
+      "slug": "parralel-bar-dips",
+      "sha256": "2fa918580ad8878938a57d2b9a7e4d113c1b58804b932aeba9c5171843247ee7",
+      "bytes": 2804873
+    },
+    {
+      "catalogId": "TK-000197",
+      "version": "v1",
+      "slug": "plate-forward-lunge",
+      "sha256": "35270f1e3ee7d003c60316ebc20078d74044a9817b02b1dc58f23bc387695a94",
+      "bytes": 2229869
+    },
+    {
+      "catalogId": "TK-000197",
+      "version": "v2",
+      "slug": "plate-forward-lunge",
+      "sha256": "d210b411b85302f1f65f3b6b900b04d2bc0a5ead622392abf4b318ab53859f30",
+      "bytes": 3395879
+    },
+    {
+      "catalogId": "TK-000198",
+      "version": "v1",
+      "slug": "pull-ups",
+      "sha256": "27b8ab04ea2bc4afbcae80b0dc7557d5b7859dfe91ec099ba58aec543ce38096",
+      "bytes": 1921630
+    },
+    {
+      "catalogId": "TK-000198",
+      "version": "v2",
+      "slug": "pull-ups",
+      "sha256": "6e7cd4634b0e53e04bc74f68a10bab760c10f6cc10b7563d78b0425a8f5be647",
+      "bytes": 3200261
+    },
+    {
+      "catalogId": "TK-000199",
+      "version": "v1",
+      "slug": "push-up",
+      "sha256": "e662facdfa017b384af98c50d9f55e710d0f36fb2bea71db9f43c7c5d9699f4e",
+      "bytes": 2633258
+    },
+    {
+      "catalogId": "TK-000199",
+      "version": "v2",
+      "slug": "push-up",
+      "sha256": "8a5c05f44c91ff5a59893b2807e3403e05a7d125ea412e9f0e70dc0aab361b15",
+      "bytes": 6133860
+    },
+    {
+      "catalogId": "TK-000200",
+      "version": "v1",
+      "slug": "single-legged-romanian-deadlifts",
+      "sha256": "4170bc056a81c96a059e0f6326bf1a1ed47c6ee7ab64931c67d04e8ee0e267f4",
+      "bytes": 2015762
+    },
+    {
+      "catalogId": "TK-000200",
+      "version": "v2",
+      "slug": "single-legged-romanian-deadlifts",
+      "sha256": "6b627e2301330370d406adacbc6156256798053653bacb162575034a5003b73d",
+      "bytes": 3278682
+    },
+    {
+      "catalogId": "TK-000201",
+      "version": "v1",
+      "slug": "smith-machine-close-grip-bench-press",
+      "sha256": "00f0cc97881cb70f59f9c315096ed3d8b2dcb6b520b676cc2c0808ace4489e71",
+      "bytes": 2602488
+    },
+    {
+      "catalogId": "TK-000201",
+      "version": "v2",
+      "slug": "smith-machine-close-grip-bench-press",
+      "sha256": "037908d596a22761cca6c7186b510ff29e880dceb141f7abe1f953292370abee",
+      "bytes": 2476199
+    },
+    {
+      "catalogId": "TK-000202",
+      "version": "v1",
+      "slug": "smith-machine-incline-bench-press",
+      "sha256": "386b078fe14368a034c63ab06c4f016afcd6b2756aad2a298916368d073fdaa2",
+      "bytes": 2778991
+    },
+    {
+      "catalogId": "TK-000202",
+      "version": "v2",
+      "slug": "smith-machine-incline-bench-press",
+      "sha256": "bc24a698e8fef33b8171319a9ded8d4cec4243c8fde210f275a9b496376cace4",
+      "bytes": 4307491
+    },
+    {
+      "catalogId": "TK-000203",
+      "version": "v1",
+      "slug": "smith-machine-standing-shrugs",
+      "sha256": "37264ed0a567c48adc53efdaa71931be8abff630645387d9336ae57a310ef9da",
+      "bytes": 1355309
+    },
+    {
+      "catalogId": "TK-000203",
+      "version": "v2",
+      "slug": "smith-machine-standing-shrugs",
+      "sha256": "27b316aec76bcf6890c70b66788ee3e13a8c618114a406996b68f678c3a2ced5",
+      "bytes": 2476948
+    },
+    {
+      "catalogId": "TK-000204",
+      "version": "v1",
+      "slug": "smith-machine-sumo-romanian-deadlift",
+      "sha256": "a55f4f0b2d1a5d0eb22d2f4d3867672e1ab4289d68f0be180c6c3ec918a07397",
+      "bytes": 2429899
+    },
+    {
+      "catalogId": "TK-000204",
+      "version": "v2",
+      "slug": "smith-machine-sumo-romanian-deadlift",
+      "sha256": "f33b7aaa39e3d101077626e80b515568904ee26e1b023a5ef14a2843a1743b20",
+      "bytes": 4572501
+    },
+    {
+      "catalogId": "TK-000205",
+      "version": "v1",
+      "slug": "supermans",
+      "sha256": "b593cb6874b82f2d65d9a279b15bd7aec2db0ef8e8ad311d1dd77d904e2b9484",
+      "bytes": 2878268
+    },
+    {
+      "catalogId": "TK-000205",
+      "version": "v2",
+      "slug": "supermans",
+      "sha256": "7265e0180727db589394db2cec424dd7bc5cdda08d79856fdbeccf8e10aa8258",
+      "bytes": 3820468
+    },
+    {
+      "catalogId": "TK-000206",
+      "version": "v1",
+      "slug": "wall-sit",
+      "sha256": "0bb2fcc03c014410b43de91f2e8baadf897c4b30f9447501f2eca1c0853f98d1",
+      "bytes": 744680
+    },
+    {
+      "catalogId": "TK-000206",
+      "version": "v2",
+      "slug": "wall-sit",
+      "sha256": "b00a1c187afbd3965c9a7d59ea12e870c4d13183cc26d6fc9afdc271a76cf5d2",
+      "bytes": 931250
+    },
+    {
+      "catalogId": "TK-000207",
+      "version": "v1",
+      "slug": "cable-low-single-arm-lateral-raise",
+      "sha256": "38d446a2621e0aa797a901192476a9d7be91dfbb0b22fc593bc4ebacd2c245cd",
+      "bytes": 4332499
+    },
+    {
+      "catalogId": "TK-000207",
+      "version": "v2",
+      "slug": "cable-low-single-arm-lateral-raise",
+      "sha256": "38d446a2621e0aa797a901192476a9d7be91dfbb0b22fc593bc4ebacd2c245cd",
+      "bytes": 4332499
+    },
+    {
+      "catalogId": "TK-000208",
+      "version": "v1",
+      "slug": "cable-low-to-high-fly",
+      "sha256": "bfb13b993bcb4b28e5881d295474f8dd778b141faca7816cc9b2731a2873914c",
+      "bytes": 3154693
+    },
+    {
+      "catalogId": "TK-000208",
+      "version": "v2",
+      "slug": "cable-low-to-high-fly",
+      "sha256": "bfb13b993bcb4b28e5881d295474f8dd778b141faca7816cc9b2731a2873914c",
+      "bytes": 3154693
+    },
+    {
+      "catalogId": "TK-000209",
+      "version": "v1",
+      "slug": "cable-pull-through",
+      "sha256": "0bea3cf13c547d37c0b61b7e080b59e7b7c1c39c666b4df31942eb024bf3d598",
+      "bytes": 1764027
+    },
+    {
+      "catalogId": "TK-000209",
+      "version": "v2",
+      "slug": "cable-pull-through",
+      "sha256": "4dc15db41f889c9a2a7cdf8c5c0d16e034b1bd079e42dad6188ca28d3f29d81f",
+      "bytes": 3005713
+    },
+    {
+      "catalogId": "TK-000210",
+      "version": "v1",
+      "slug": "cable-rope-hammer-curl",
+      "sha256": "7bd2f691c8239e89ba97aec9360bf0bb22cfabe7864ecdcb259d49339a9993ae",
+      "bytes": 2308839
+    },
+    {
+      "catalogId": "TK-000210",
+      "version": "v2",
+      "slug": "cable-rope-hammer-curl",
+      "sha256": "8500889aa17fd708b31ccac778b24658a6cfd0aa7087b3c26250cc085451123d",
+      "bytes": 1581952
+    },
+    {
+      "catalogId": "TK-000211",
+      "version": "v1",
+      "slug": "cable-rope-overhead-tricep-extension",
+      "sha256": "84d4e77c3cf7f79100ed4e19b78ec3d51eb2deae7a0c8579314647893a8927d0",
+      "bytes": 1764164
+    },
+    {
+      "catalogId": "TK-000211",
+      "version": "v2",
+      "slug": "cable-rope-overhead-tricep-extension",
+      "sha256": "84d4e77c3cf7f79100ed4e19b78ec3d51eb2deae7a0c8579314647893a8927d0",
+      "bytes": 1764164
+    },
+    {
+      "catalogId": "TK-000212",
+      "version": "v1",
+      "slug": "cable-rope-pullover",
+      "sha256": "092bb2454f0f4a45843b06801dfc119b847995ffde3315e9a880769419ed688f",
+      "bytes": 3587676
+    },
+    {
+      "catalogId": "TK-000212",
+      "version": "v2",
+      "slug": "cable-rope-pullover",
+      "sha256": "092bb2454f0f4a45843b06801dfc119b847995ffde3315e9a880769419ed688f",
+      "bytes": 3587676
+    },
+    {
+      "catalogId": "TK-000213",
+      "version": "v1",
+      "slug": "cable-single-leg-laying-leg-curl",
+      "sha256": "bf4cef27bf1a61de7c8f3ea72463c03be9a32ebb869238c2083b7b349906a696",
+      "bytes": 3363605
+    },
+    {
+      "catalogId": "TK-000213",
+      "version": "v2",
+      "slug": "cable-single-leg-laying-leg-curl",
+      "sha256": "bf4cef27bf1a61de7c8f3ea72463c03be9a32ebb869238c2083b7b349906a696",
+      "bytes": 3363605
+    },
+    {
+      "catalogId": "TK-000214",
+      "version": "v1",
+      "slug": "cable-wrist-curl",
+      "sha256": "4f3b327e0ac81d499b5f40f88adba5fa3926fb4476dc46cf9ced5198e16cfe5f",
+      "bytes": 2393618
+    },
+    {
+      "catalogId": "TK-000214",
+      "version": "v2",
+      "slug": "cable-wrist-curl",
+      "sha256": "4f3b327e0ac81d499b5f40f88adba5fa3926fb4476dc46cf9ced5198e16cfe5f",
+      "bytes": 2393618
+    },
+    {
+      "catalogId": "TK-000215",
+      "version": "v1",
+      "slug": "captains-chair-knee-raise",
+      "sha256": "ff214e0b83bdfd24d3ee90d06a37a55dc8c9c5fb5fef9dd2db60eac50187b070",
+      "bytes": 5453453
+    },
+    {
+      "catalogId": "TK-000215",
+      "version": "v2",
+      "slug": "captains-chair-knee-raise",
+      "sha256": "ff214e0b83bdfd24d3ee90d06a37a55dc8c9c5fb5fef9dd2db60eac50187b070",
+      "bytes": 5453453
+    },
+    {
+      "catalogId": "TK-000216",
+      "version": "v1",
+      "slug": "chest-supported-dumbbell-row",
+      "sha256": "5624d796d299d10ca31339158bfce5f4c2a768b15dbeed05aa3778e2ac882432",
+      "bytes": 2880027
+    },
+    {
+      "catalogId": "TK-000216",
+      "version": "v2",
+      "slug": "chest-supported-dumbbell-row",
+      "sha256": "5624d796d299d10ca31339158bfce5f4c2a768b15dbeed05aa3778e2ac882432",
+      "bytes": 2880027
+    },
+    {
+      "catalogId": "TK-000217",
+      "version": "v1",
+      "slug": "chest-supported-t-bar-row",
+      "sha256": "3aa3aabf97cfd7ebcc14edf43438e2c1d52beeabc37eaca61ee99e11cb6d9e2a",
+      "bytes": 3353057
+    },
+    {
+      "catalogId": "TK-000217",
+      "version": "v2",
+      "slug": "chest-supported-t-bar-row",
+      "sha256": "3aa3aabf97cfd7ebcc14edf43438e2c1d52beeabc37eaca61ee99e11cb6d9e2a",
+      "bytes": 3353057
+    },
+    {
+      "catalogId": "TK-000218",
+      "version": "v1",
+      "slug": "close-grip-barbell-curl",
+      "sha256": "6d388ab247cd3013e63690cf5f100649dffdc09fe6a014c6a44958f080bd149a",
+      "bytes": 2200299
+    },
+    {
+      "catalogId": "TK-000218",
+      "version": "v2",
+      "slug": "close-grip-barbell-curl",
+      "sha256": "6d388ab247cd3013e63690cf5f100649dffdc09fe6a014c6a44958f080bd149a",
+      "bytes": 2200299
+    },
+    {
+      "catalogId": "TK-000219",
+      "version": "v1",
+      "slug": "cossack-squat",
+      "sha256": "02f235337570f0e54102b5d97453bff9d7ec0eebe24248484a4be6d7786f3cb8",
+      "bytes": 5818034
+    },
+    {
+      "catalogId": "TK-000219",
+      "version": "v2",
+      "slug": "cossack-squat",
+      "sha256": "02f235337570f0e54102b5d97453bff9d7ec0eebe24248484a4be6d7786f3cb8",
+      "bytes": 5818034
+    },
+    {
+      "catalogId": "TK-000220",
+      "version": "v1",
+      "slug": "cross-body-hammer-curl",
+      "sha256": "c5354f239d92da97db425849501e50ddf9f6a929dddc400e506ec81e86f35fbe",
+      "bytes": 2931943
+    },
+    {
+      "catalogId": "TK-000220",
+      "version": "v2",
+      "slug": "cross-body-hammer-curl",
+      "sha256": "c5354f239d92da97db425849501e50ddf9f6a929dddc400e506ec81e86f35fbe",
+      "bytes": 2931943
+    },
+    {
+      "catalogId": "TK-000221",
+      "version": "v1",
+      "slug": "cuban-press",
+      "sha256": "6fcb9965892644439afcb0ca992312075a468a4ff50eeab18b53c730eaa6a522",
+      "bytes": 2333950
+    },
+    {
+      "catalogId": "TK-000221",
+      "version": "v2",
+      "slug": "cuban-press",
+      "sha256": "6fcb9965892644439afcb0ca992312075a468a4ff50eeab18b53c730eaa6a522",
+      "bytes": 2333950
+    },
+    {
+      "catalogId": "TK-000222",
+      "version": "v1",
+      "slug": "cycling-cooldown",
+      "sha256": "2aa41f6b54ba75303363fa334c4bf648776ae0b9f1c2bb17c003d3699b420102",
+      "bytes": 3616556
+    },
+    {
+      "catalogId": "TK-000222",
+      "version": "v2",
+      "slug": "cycling-cooldown",
+      "sha256": "62fed9390e7dccd705b46e0edc05459f5f3a2275a5e8cd32e2ce91166a93485b",
+      "bytes": 6585723
+    },
+    {
+      "catalogId": "TK-000223",
+      "version": "v1",
+      "slug": "cycling-intervals",
+      "sha256": "d72f16615772124ac1d6892f95723b5138ca231f74ce3dc4154baef0f80df2c6",
+      "bytes": 5924849
+    },
+    {
+      "catalogId": "TK-000223",
+      "version": "v2",
+      "slug": "cycling-intervals",
+      "sha256": "d72f16615772124ac1d6892f95723b5138ca231f74ce3dc4154baef0f80df2c6",
+      "bytes": 5924849
+    },
+    {
+      "catalogId": "TK-000224",
+      "version": "v1",
+      "slug": "cycling-sprint",
+      "sha256": "36d4d970ea8356749e7194533fa8afc11d728f205e722eab6eb164cc6cb5430c",
+      "bytes": 8514448
+    },
+    {
+      "catalogId": "TK-000224",
+      "version": "v2",
+      "slug": "cycling-sprint",
+      "sha256": "36d4d970ea8356749e7194533fa8afc11d728f205e722eab6eb164cc6cb5430c",
+      "bytes": 8514448
+    },
+    {
+      "catalogId": "TK-000225",
+      "version": "v1",
+      "slug": "cycling-warmup",
+      "sha256": "23ad002cc0e07697cc4918114cc1955e4535d70243471316d4f616e74bb4e104",
+      "bytes": 2610633
+    },
+    {
+      "catalogId": "TK-000225",
+      "version": "v2",
+      "slug": "cycling-warmup",
+      "sha256": "d2387e7135771bce5809b415e7cf887508398d60eaab0cf24acbd70686b9eb19",
+      "bytes": 4809229
+    },
+    {
+      "catalogId": "TK-000226",
+      "version": "v1",
+      "slug": "dead-bug",
+      "sha256": "f7cc772c82b76bc0abb787cd4b3ea2522b057454e1c2d5c36bbd191fcf085eb0",
+      "bytes": 2681073
+    },
+    {
+      "catalogId": "TK-000226",
+      "version": "v2",
+      "slug": "dead-bug",
+      "sha256": "f7cc772c82b76bc0abb787cd4b3ea2522b057454e1c2d5c36bbd191fcf085eb0",
+      "bytes": 2681073
+    },
+    {
+      "catalogId": "TK-000227",
+      "version": "v2",
+      "slug": "90-90-hip-switches",
+      "sha256": "5609ac513f9ad7576ba3730bdfd47c5a294beb164909a7ff0b9de643b6202b12",
+      "bytes": 3592023
+    },
+    {
+      "catalogId": "TK-000228",
+      "version": "v2",
+      "slug": "adductor-groin-stretch",
+      "sha256": "1ec62dc014c2ae880b2c699cf0ff5b81265e7e40bcea51e763089d192f581480",
+      "bytes": 2270293
+    },
+    {
+      "catalogId": "TK-000229",
+      "version": "v2",
+      "slug": "alternating-hammer-curl",
+      "sha256": "b305d12f0cb30712336f596f6df48ea8230c1e939be544cd9a11175a0c6e00d6",
+      "bytes": 3889193
+    },
+    {
+      "catalogId": "TK-000230",
+      "version": "v2",
+      "slug": "anti-gravity-press",
+      "sha256": "efcbc023982b3793ad6a595ce7e336f574fda41e3771ff8a4218c87f3545bedd",
+      "bytes": 4673848
+    },
+    {
+      "catalogId": "TK-000231",
+      "version": "v2",
+      "slug": "arc-trainer",
+      "sha256": "aa8e84ff6fc0c7fec9314e91f51c80208a36a0e940d13c814c1470c4cff605d7",
+      "bytes": 3126054
+    },
+    {
+      "catalogId": "TK-000232",
+      "version": "v2",
+      "slug": "archer-push-up",
+      "sha256": "237461a314fbaa43e8946f2ec5c1bfae6f453a97cb059deb645d9f631738025f",
+      "bytes": 6709315
+    },
+    {
+      "catalogId": "TK-000233",
+      "version": "v2",
+      "slug": "arm-circles-front-back",
+      "sha256": "42f1eb72076ccaa4b7257126dc2c061d0c527ea92f072ee9171c8280c0b9e846",
+      "bytes": 3330649
+    },
+    {
+      "catalogId": "TK-000234",
+      "version": "v2",
+      "slug": "arnold-press",
+      "sha256": "a263e773040c4c07c8edcd2a7e9cf082356b6899ce9d180bbd3004fdcd9ac3c6",
+      "bytes": 1593469
+    },
+    {
+      "catalogId": "TK-000235",
+      "version": "v2",
+      "slug": "assault-bike",
+      "sha256": "1503a9cdb43ceac03f054acf3dd7f01099cd8db7e7bea63cc83dafefdd10cf9a",
+      "bytes": 4632797
+    },
+    {
+      "catalogId": "TK-000236",
+      "version": "v2",
+      "slug": "assisted-pistol-squat",
+      "sha256": "efff617734da7ff5177ce148b819a85b9e66f35b21c141a813ef2390194a04e6",
+      "bytes": 3819757
+    },
+    {
+      "catalogId": "TK-000237",
+      "version": "v2",
+      "slug": "b-stance-hip-thrust",
+      "sha256": "08d141ac91f868fae155bff716a704c67319c80c072d7ab8f6071f6beaf61459",
+      "bytes": 2834746
+    },
+    {
+      "catalogId": "TK-000238",
+      "version": "v2",
+      "slug": "back-extension",
+      "sha256": "823d015ef35c82468071637cb4b83abf6e29e2b0ac48bbf9a77ed6fa8184b18d",
+      "bytes": 3581091
+    },
+    {
+      "catalogId": "TK-000239",
+      "version": "v2",
+      "slug": "backpack-curls",
+      "sha256": "0ab939a65d7945ee8ab0411f16c7a3dcb599efec46973aa1cbc0a31594d9bafc",
+      "bytes": 3098431
+    },
+    {
+      "catalogId": "TK-000240",
+      "version": "v2",
+      "slug": "backpack-row",
+      "sha256": "dbb7396ec40fb85a36f8cd45c2b143f8f097400c7f8662c8032f3797a8291805",
+      "bytes": 5624016
+    },
+    {
+      "catalogId": "TK-000241",
+      "version": "v2",
+      "slug": "backstroke-swim",
+      "sha256": "255ab5cceb5eb75a1df7565f3607589d6b7f472851f804d54d1ac7bec36aa118",
+      "bytes": 4294582
+    },
+    {
+      "catalogId": "TK-000242",
+      "version": "v2",
+      "slug": "band-assisted-pull-up",
+      "sha256": "e9efdd81729e207b1b9fd7e40c77151246d96f074a66ad663c300bdb9a4858ae",
+      "bytes": 2198467
+    },
+    {
+      "catalogId": "TK-000243",
+      "version": "v2",
+      "slug": "band-external-rotation",
+      "sha256": "f6c782ba30a1ed6e121173e103d3b661e53ed32d42af24da6d932e0cbb42d051",
+      "bytes": 2303536
+    },
+    {
+      "catalogId": "TK-000244",
+      "version": "v2",
+      "slug": "band-glute-bridge",
+      "sha256": "a6c8576f913521c6b06b87cd1c2d173a1d865a536ebde0c3e3a4dec089ab8584",
+      "bytes": 2257951
+    },
+    {
+      "catalogId": "TK-000245",
+      "version": "v2",
+      "slug": "band-good-morning",
+      "sha256": "8a6ee66b9ad49d991aeef4565d007de369cc9784bb12018890749293adc2f7ff",
+      "bytes": 5149045
+    },
+    {
+      "catalogId": "TK-000246",
+      "version": "v2",
+      "slug": "band-leg-curl",
+      "sha256": "3a303ce07b3daeba012db351f36afa07b57d21f48e6d0bc6435cba0ec2e482a9",
+      "bytes": 3829306
+    },
+    {
+      "catalogId": "TK-000247",
+      "version": "v2",
+      "slug": "band-overhead-press",
+      "sha256": "c4aa09f9210164a02a0176cf4c93dec930fa80e31d9151353162e71b4b0dd555",
+      "bytes": 2051991
+    },
+    {
+      "catalogId": "TK-000248",
+      "version": "v2",
+      "slug": "band-pull-through",
+      "sha256": "17623fd91406165a808c8f06cc7b3fe1b1da9cbf533e8e3f6e7419264fbfc51f",
+      "bytes": 3264045
+    },
+    {
+      "catalogId": "TK-000249",
+      "version": "v2",
+      "slug": "band-shoulder-dislocates",
+      "sha256": "141704f6ecc59d930d314b5b006719a09718b45f7f2fa7053927fb4f20e5579c",
+      "bytes": 2978082
+    },
+    {
+      "catalogId": "TK-000250",
+      "version": "v2",
+      "slug": "band-squat",
+      "sha256": "f7265e683e0849707c39fdabaacf1de5e4eded5bbe10cc71a4b8bff14a0bf493",
+      "bytes": 2519949
+    },
+    {
+      "catalogId": "TK-000251",
+      "version": "v2",
+      "slug": "band-straight-arm-pulldown",
+      "sha256": "f2e7399b253b79d43eaaa56de615b24a8948b282618370d1feb48f641e8b9505",
+      "bytes": 2034753
+    },
+    {
+      "catalogId": "TK-000252",
+      "version": "v2",
+      "slug": "band-tricep-kickbacks",
+      "sha256": "6532bfb9a7e7a0e7bf048be9eecb2fe067cb4940a75d0c6f8d19a0d487c0b992",
+      "bytes": 1491895
+    },
+    {
+      "catalogId": "TK-000253",
+      "version": "v2",
+      "slug": "banded-ankle-dorsiflexion-mobilization",
+      "sha256": "5287a351f93cebe0f303548378bb7b9f225b38fe80f84da7fc50723eef2bb076",
+      "bytes": 2642039
+    },
+    {
+      "catalogId": "TK-000254",
+      "version": "v2",
+      "slug": "banded-clamshell",
+      "sha256": "ccd898bba6e7ca7ea7d455e2e367250a16dbd71f5f796b63b8d0e0ed2d8b5514",
+      "bytes": 2754298
+    },
+    {
+      "catalogId": "TK-000255",
+      "version": "v2",
+      "slug": "banded-eccentric-tibialis-raise",
+      "sha256": "4ae60fff3ba4fa229733886084f01eb48342bef0550ed301c49b2bcf0fbb6aa8",
+      "bytes": 1970385
+    },
+    {
+      "catalogId": "TK-000256",
+      "version": "v2",
+      "slug": "barbell-bent-over-row-overhand",
+      "sha256": "7cf95c3ff3fe5a9b04788ca565bd18cd90c36084a547e711649f625a45e24749",
+      "bytes": 4045297
+    },
+    {
+      "catalogId": "TK-000257",
+      "version": "v2",
+      "slug": "barbell-clean-and-jerk",
+      "sha256": "13febe56579e1733f51ee2d233bc77272d5bbba3d036b7124c8e284afd2ac9cb",
+      "bytes": 3989516
+    },
+    {
+      "catalogId": "TK-000258",
+      "version": "v2",
+      "slug": "barbell-floor-press",
+      "sha256": "888d8841ffcf079c2edb36f672e68c83b008c0523cfc71c205da3acd7bfaf388",
+      "bytes": 2486436
+    },
+    {
+      "catalogId": "TK-000259",
+      "version": "v2",
+      "slug": "barbell-glute-bridge",
+      "sha256": "08d99f2cd4b5486348134e23ff970ba5d9e2715c8dfc2281dfedfe3066fc63bd",
+      "bytes": 3798895
+    },
+    {
+      "catalogId": "TK-000260",
+      "version": "v2",
+      "slug": "barbell-hack-squat",
+      "sha256": "ca59be711b9a121f2d09971ac16a562be797380d65dcbba4ddafd01f266d4215",
+      "bytes": 3799261
+    },
+    {
+      "catalogId": "TK-000261",
+      "version": "v2",
+      "slug": "barbell-hip-thrust",
+      "sha256": "503a79df766c3dc7b96a0e63edf6f717af47e56a475d986e8be13fc625b36bfe",
+      "bytes": 2965330
+    },
+    {
+      "catalogId": "TK-000262",
+      "version": "v2",
+      "slug": "barbell-landmine-row",
+      "sha256": "d99a6280ca8fca72875edcabc15e058263c263dbe6146732458541b0fa8797e3",
+      "bytes": 5026414
+    },
+    {
+      "catalogId": "TK-000263",
+      "version": "v2",
+      "slug": "barbell-lunge",
+      "sha256": "f03f5fe26ba59a4d3bd670c7fc34de1a81cf79ea0fe4dcecc36d5400f65bf4bf",
+      "bytes": 3659021
+    },
+    {
+      "catalogId": "TK-000264",
+      "version": "v2",
+      "slug": "barbell-rear-delt-row",
+      "sha256": "61ff3509569286d13a35136c5cf5fb3dd447eddc2f580f4d7a0cf0efdfee3046",
+      "bytes": 3312262
+    },
+    {
+      "catalogId": "TK-000265",
+      "version": "v2",
+      "slug": "barbell-reverse-lunge",
+      "sha256": "f57f5cfe8ebd542e97448ebeaed103e74a3329bfc398520f57332484605e2f0a",
+      "bytes": 4115427
+    },
+    {
+      "catalogId": "TK-000266",
+      "version": "v2",
+      "slug": "barbell-romanian-deadlift",
+      "sha256": "cddb0870d979cf889cfefa3e92a40f246413f6542ba0fe3e11533872fe391e2f",
+      "bytes": 1752542
+    },
+    {
+      "catalogId": "TK-000267",
+      "version": "v2",
+      "slug": "barbell-skullcrusher",
+      "sha256": "0d7a835f5a3cbfead2a7e69a24b86973bbba2fe82f0324dc13fb116341c95eb8",
+      "bytes": 2425908
+    },
+    {
+      "catalogId": "TK-000268",
+      "version": "v2",
+      "slug": "barbell-walking-lunge",
+      "sha256": "2e6f6de4b2f5ce624dc7bed4e5e433e2bceaee6dcad7dea711b09394f30c15e5",
+      "bytes": 2905932
+    },
+    {
+      "catalogId": "TK-000269",
+      "version": "v2",
+      "slug": "battle-ropes",
+      "sha256": "d583e4777ed1532489eadd996b1328423560abf857336b899bd0ce885eb394dc",
+      "bytes": 5464460
+    },
+    {
+      "catalogId": "TK-000270",
+      "version": "v2",
+      "slug": "bayesian-curl",
+      "sha256": "a3556432cc58cb8ed0bf4a55da33a298ba566de5d895da8f3d8e6e4eebcf29d7",
+      "bytes": 2152885
+    },
+    {
+      "catalogId": "TK-000271",
+      "version": "v2",
+      "slug": "bear-crawl",
+      "sha256": "9ee9e02a07ad7766a9994b0cd76335a381813e08217f5bbe823406fe280aab1b",
+      "bytes": 9451756
+    },
+    {
+      "catalogId": "TK-000272",
+      "version": "v2",
+      "slug": "behind-the-neck-press",
+      "sha256": "e6254648a53247d5377f1b51b6527d3693adefa2087eb17a82dab816dac508e6",
+      "bytes": 2178768
+    },
+    {
+      "catalogId": "TK-000273",
+      "version": "v2",
+      "slug": "belt-squat",
+      "sha256": "2ed5801c38748cf38e5e556c35ef560760c1743fb6f34f2d3736724e25b9ea53",
+      "bytes": 5270094
+    },
+    {
+      "catalogId": "TK-000274",
+      "version": "v2",
+      "slug": "bent-knee-soleus-raise",
+      "sha256": "355f34280e7eadec409373931aaf860678ae6936dbd58f4e6a1266b73227a922",
+      "bytes": 4223256
+    },
+    {
+      "catalogId": "TK-000275",
+      "version": "v2",
+      "slug": "bicycle-crunches",
+      "sha256": "2bd845982d4ebdfdc45244b012f051174e1b242344f3aa7c1bee0630edaada2e",
+      "bytes": 3540867
+    },
+    {
+      "catalogId": "TK-000276",
+      "version": "v2",
+      "slug": "bird-dog",
+      "sha256": "06007a844f9c7aa106055517aee384015b79dfbbf8248dcf115a89c70ee7746a",
+      "bytes": 5532937
+    },
+    {
+      "catalogId": "TK-000277",
+      "version": "v2",
+      "slug": "bodyweight-deficit-reverse-lunge",
+      "sha256": "3762e7a970404be4cad1704e8feb5edad10c66f15c2ce05bb76c911e66d2d704",
+      "bytes": 2948343
+    },
+    {
+      "catalogId": "TK-000278",
+      "version": "v2",
+      "slug": "bodyweight-squat-to-stand",
+      "sha256": "e0b147db551cf3d31df6b1f75f557d8d180902e5ec2da86af33881461c8b1a3a",
+      "bytes": 4954990
+    },
+    {
+      "catalogId": "TK-000279",
+      "version": "v2",
+      "slug": "bounds",
+      "sha256": "4f170fd8309cb46a0def1e28acbf61a986ff565d83ce615f6aa69da6350ea164",
+      "bytes": 1267712
+    },
+    {
+      "catalogId": "TK-000280",
+      "version": "v2",
+      "slug": "bradford-press",
+      "sha256": "7a78167f4054786c83554ce2aaf0b2ea05f635d1146e40ebf70259481eacb2ca",
+      "bytes": 4332920
+    },
+    {
+      "catalogId": "TK-000281",
+      "version": "v2",
+      "slug": "breaststroke-swim",
+      "sha256": "961fee296f8310c09428e824b0fb4d05cb6b03b4140d2b4aa407fd36e15b1d6c",
+      "bytes": 4434734
+    },
+    {
+      "catalogId": "TK-000282",
+      "version": "v2",
+      "slug": "broad-jump",
+      "sha256": "00da1da5c24ea6a460bc0d0ebabe186c6c1911e4ea2c804f5a659d62cbb9102f",
+      "bytes": 1338971
+    },
+    {
+      "catalogId": "TK-000283",
+      "version": "v2",
+      "slug": "broomstick-pass-throughs",
+      "sha256": "e8f9f600911f01f672f47f450fd96bdf061dff4b77b2076e30b5ea23417bddfc",
+      "bytes": 3574912
+    },
+    {
+      "catalogId": "TK-000284",
+      "version": "v2",
+      "slug": "butterfly-swim",
+      "sha256": "1c7862ade3ab082d74ff507e0000b7c1d2d4e21cbce961aed2e0b6375bf4299b",
+      "bytes": 3958593
+    },
+    {
+      "catalogId": "TK-000285",
+      "version": "v2",
+      "slug": "cable-chop",
+      "sha256": "131ed6c824e40fdbce8dbd220e8a2ec539d9493c237b44fd4a355d6c30706d6e",
+      "bytes": 4459437
+    },
+    {
+      "catalogId": "TK-000286",
+      "version": "v2",
+      "slug": "cable-external-rotation",
+      "sha256": "f005692ff7e693014c051f7e20ea9e6d7fd0629083a4a1fce6740eac1b86263a",
+      "bytes": 1000816
+    },
+    {
+      "catalogId": "TK-000287",
+      "version": "v2",
+      "slug": "cable-front-raise",
+      "sha256": "00748f1c72346003d6f24b77e82f780d7cc13e782708310329efc465c4646f43",
+      "bytes": 3155572
+    },
+    {
+      "catalogId": "TK-000288",
+      "version": "v2",
+      "slug": "cable-high-to-low-fly",
+      "sha256": "0230f25ded1fd5a3722f4d2e430d3f0b2ff8bd391fa36cb0c109bb3b4d9f25d7",
+      "bytes": 3055636
+    },
+    {
+      "catalogId": "TK-000289",
+      "version": "v2",
+      "slug": "cable-hip-abduction",
+      "sha256": "22dc30bc5b040c0cac2c59686713315a5ef7b9031b1db4e3d4d583a91fe9bddb",
+      "bytes": 3875142
+    },
+    {
+      "catalogId": "TK-000290",
+      "version": "v2",
+      "slug": "cable-kickback",
+      "sha256": "9f72016748ad94fe0d0f79f56403dce8770b40d58d48ec79f221b2e597345073",
+      "bytes": 2120080
+    },
+    {
+      "catalogId": "TK-000291",
+      "version": "v2",
+      "slug": "cable-overhead-straight-bar-extensions",
+      "sha256": "9d839f3e24cd2227bb13cdac3905fbe3fa9aed172d25e31c949dd7393bda2553",
+      "bytes": 1403284
+    },
+    {
+      "catalogId": "TK-000292",
+      "version": "v2",
+      "slug": "cable-pallof-press",
+      "sha256": "de3704199e90aa4c31268fef660374dfe14204764598737bbfa9a26d724bd3f7",
+      "bytes": 3957777
+    },
+    {
+      "catalogId": "TK-000293",
+      "version": "v2",
+      "slug": "cable-single-arm-rear-delt-row",
+      "sha256": "c6bb9ef7005bffe30e92b9b7e9f1f478e3ddc073f43e63790b87a4c95eca9911",
+      "bytes": 3963415
+    },
+    {
+      "catalogId": "TK-000294",
+      "version": "v2",
+      "slug": "cable-tricep-kickback",
+      "sha256": "1d42224b4d3d07476928aae6905f6cbca481374000eea5a8536454cdf298a34a",
+      "bytes": 2200509
+    },
+    {
+      "catalogId": "TK-000295",
+      "version": "v2",
+      "slug": "cat-camel",
+      "sha256": "b0efc1c3140a621f18696cf80d105d9be33bdca2ddb0cacaf5c61e9857dab299",
+      "bytes": 5081601
+    },
+    {
+      "catalogId": "TK-000296",
+      "version": "v2",
+      "slug": "close-grip-incline-push-up",
+      "sha256": "a1884d45331c7749f235d16a59a96a9838ee41ed8632b3ec0fc8964cf305d86f",
+      "bytes": 3657340
+    },
+    {
+      "catalogId": "TK-000297",
+      "version": "v2",
+      "slug": "controlled-forearm-pronation-supination",
+      "sha256": "83cde519555554844626b01608ad5ab3a0b21c20f9d57263546e84bf35e39fd2",
+      "bytes": 3021619
+    },
+    {
+      "catalogId": "TK-000298",
+      "version": "v2",
+      "slug": "copenhagen-plank",
+      "sha256": "087397d119ab924c4e6d7096fcb9ff3f18d90ceff286d85ec7a14efe88d8fb2a",
+      "bytes": 4346637
+    },
+    {
+      "catalogId": "TK-000299",
+      "version": "v2",
+      "slug": "cross-body-cable-tricep-extension",
+      "sha256": "43f2d83643ff2f6e7a1b97965ec81efbd3a0bc35db32f963686542be7f7c8d7a",
+      "bytes": 3153709
+    },
+    {
+      "catalogId": "TK-000300",
+      "version": "v2",
+      "slug": "crunches",
+      "sha256": "d581c192985bdb7b3e6df9ec5c2a364a7b8c5b34152e4228172437da98ec76b5",
+      "bytes": 4546946
+    },
+    {
+      "catalogId": "TK-000301",
+      "version": "v2",
+      "slug": "dead-bug-weighted",
+      "sha256": "d50911f1b9312a19ffccfca7dc46f293345a7f0e1f7c9c49dbd50d9a3089b717",
+      "bytes": 8571338
+    },
+    {
+      "catalogId": "TK-000302",
+      "version": "v2",
+      "slug": "dead-hang",
+      "sha256": "58a202ce141dc1ddf2fb216930896b15f07cd2b0fa4450dc17bc75d67ae39843",
+      "bytes": 1901147
+    },
+    {
+      "catalogId": "TK-000303",
+      "version": "v2",
+      "slug": "decline-barbell-bench-press",
+      "sha256": "61b839fa98bd9efb0785948cad1cf0f29c271293a5b84ecd20d795e5a5dd0ad3",
+      "bytes": 2613443
+    },
+    {
+      "catalogId": "TK-000304",
+      "version": "v2",
+      "slug": "decline-crunch",
+      "sha256": "47e2baad8570a34a3ba4c2a7dae7d77a4be2c59500b635d34cfb9ef1eb61a49a",
+      "bytes": 3506385
+    },
+    {
+      "catalogId": "TK-000305",
+      "version": "v2",
+      "slug": "decline-machine-chest-press",
+      "sha256": "39f93d110de53cc90148d73b356c911b4bb0b3057b051ba17114630f06b3f883",
+      "bytes": 4610153
+    },
+    {
+      "catalogId": "TK-000306",
+      "version": "v2",
+      "slug": "decline-sit-up",
+      "sha256": "dfb8bbf9861e417b880a7c6f7a012a51c9410196e9bb8d53a7d50bad5322c704",
+      "bytes": 4100770
+    },
+    {
+      "catalogId": "TK-000307",
+      "version": "v2",
+      "slug": "deficit-barbell-romanian-deadlift",
+      "sha256": "449942b712c23156530f044edd28229e8be777e18dc8028348ba0069c4a260b0",
+      "bytes": 3681635
+    },
+    {
+      "catalogId": "TK-000308",
+      "version": "v2",
+      "slug": "deficit-deadlift",
+      "sha256": "9ffb7bb5c824a82f7b573e1225ee74c77c52e823757d9ed8cdbf55e6484ea63b",
+      "bytes": 3828444
+    },
+    {
+      "catalogId": "TK-000309",
+      "version": "v2",
+      "slug": "deficit-dumbbell-romanian-deadlift",
+      "sha256": "ee0304720304afdd853cda33f895a1adf31b5052ad4d142abbbce7f375e1bd49",
+      "bytes": 4383606
+    },
+    {
+      "catalogId": "TK-000310",
+      "version": "v2",
+      "slug": "double-kettlebell-clean-and-press",
+      "sha256": "96fa544b1745a8db72f792c56360ca8c35ebb1ee8888174612b4ca3c4ff6d7b7",
+      "bytes": 7084478
+    },
+    {
+      "catalogId": "TK-000311",
+      "version": "v2",
+      "slug": "dumbbell-back-extension",
+      "sha256": "5a5a243c557602375dc5e43961293cc6bc5065c16ded59f55b7da2a5ea5ae499",
+      "bytes": 3608232
+    },
+    {
+      "catalogId": "TK-000312",
+      "version": "v2",
+      "slug": "dumbbell-close-grip-push-up",
+      "sha256": "816667f81b98aaa8a07c6eda7b77c9be269b51c9988bafdfa2847bd7a524d9f3",
+      "bytes": 3893927
+    },
+    {
+      "catalogId": "TK-000313",
+      "version": "v2",
+      "slug": "dumbbell-cossack-squat",
+      "sha256": "0aa66bceb8136af5c1617a0390205469e2078be65432823c5033961215fdc7b0",
+      "bytes": 4181406
+    },
+    {
+      "catalogId": "TK-000314",
+      "version": "v2",
+      "slug": "dumbbell-deadlift",
+      "sha256": "19f9d467a2e20d8b2761bccdae8eb452df04620b77ca3e0f7f2dcc8d1d941a0f",
+      "bytes": 1546693
+    },
+    {
+      "catalogId": "TK-000315",
+      "version": "v2",
+      "slug": "dumbbell-decline-crunch-behind-head",
+      "sha256": "e3b6ab3148583751d1326632f96d35e8accc38374f3f449158b5819bbf9037fa",
+      "bytes": 1969719
+    },
+    {
+      "catalogId": "TK-000316",
+      "version": "v2",
+      "slug": "dumbbell-farmer-carry",
+      "sha256": "65933147fa3036152b419f8af4d1a9e0315a09c8f95cc4525862cbeea6dbc8cd",
+      "bytes": 2271631
+    },
+    {
+      "catalogId": "TK-000317",
+      "version": "v2",
+      "slug": "dumbbell-front-squat",
+      "sha256": "17b2263d722ec80de8a56d0cd71161dc93447dabdeb18e885847dc3c0cb196ff",
+      "bytes": 1480090
+    },
+    {
+      "catalogId": "TK-000318",
+      "version": "v2",
+      "slug": "dumbbell-front-squat-tempo",
+      "sha256": "cc48b33ba3e83a30f3b9f430d35b64d058b6d47cc0e559b88471a65997ed69d6",
+      "bytes": 3655664
+    },
+    {
+      "catalogId": "TK-000319",
+      "version": "v2",
+      "slug": "dumbbell-halo",
+      "sha256": "e8d3b50d8340d27adee43919117fdecbf09690a64727c091289969ee39785feb",
+      "bytes": 3520376
+    },
+    {
+      "catalogId": "TK-000320",
+      "version": "v2",
+      "slug": "dumbbell-hammer-preacher-curl",
+      "sha256": "82fcede8b6be0230cbcd8a182b432472846696daf7ecd482e86c6f1909bc8fb5",
+      "bytes": 2153324
+    },
+    {
+      "catalogId": "TK-000321",
+      "version": "v2",
+      "slug": "dumbbell-incline-row",
+      "sha256": "7228002e103de1d0df46da696da34be3f309b2a1f8a6dbaf807d2118044a17b3",
+      "bytes": 2976097
+    },
+    {
+      "catalogId": "TK-000322",
+      "version": "v2",
+      "slug": "dumbbell-lateral-lunge",
+      "sha256": "5ae12d077e52ea368d739fbac1c4c021601776e586bb20afe712a15cb801ff13",
+      "bytes": 4267260
+    },
+    {
+      "catalogId": "TK-000323",
+      "version": "v2",
+      "slug": "dumbbell-lying-single-arm-rear-lateral-raise",
+      "sha256": "059de8fbabc1b5144af3f9d0ba88c950aad3306941c5cecd12565112398b5e61",
+      "bytes": 1776232
+    },
+    {
+      "catalogId": "TK-000324",
+      "version": "v2",
+      "slug": "dumbbell-neutral-grip-bent-over-row",
+      "sha256": "fa46034af2061b93a74602f9fb2e5a59681876215c1501cb7f2cd572b0e054eb",
+      "bytes": 3282822
+    },
+    {
+      "catalogId": "TK-000325",
+      "version": "v2",
+      "slug": "dumbbell-neutral-high-incline-bench-press",
+      "sha256": "fb55c1c22b879d188fed593eb278a3b9ce0f8c02991f3f17c05a6d0d42164d27",
+      "bytes": 1891200
+    },
+    {
+      "catalogId": "TK-000326",
+      "version": "v2",
+      "slug": "dumbbell-overhead-squat",
+      "sha256": "5af3b800d712f20383a671eb6308c14939941e6c289386000358889a685e8e44",
+      "bytes": 3176809
+    },
+    {
+      "catalogId": "TK-000327",
+      "version": "v2",
+      "slug": "dumbbell-pullover",
+      "sha256": "ef111086355a74096143f3018ba46a1a49f85d1258f40aab515bd8b29b1611ec",
+      "bytes": 5120214
+    },
+    {
+      "catalogId": "TK-000328",
+      "version": "v2",
+      "slug": "dumbbell-push-press",
+      "sha256": "4a2a26f8bf468f0a3085d1254921ba660638dc4a5376343e73753e736b4e750a",
+      "bytes": 3201312
+    },
+    {
+      "catalogId": "TK-000329",
+      "version": "v2",
+      "slug": "dumbbell-reverse-lunge",
+      "sha256": "7fd837809c50346e833ca6c990e4d38c1031d43618272e92267a000f8c516de4",
+      "bytes": 3444855
+    },
+    {
+      "catalogId": "TK-000330",
+      "version": "v2",
+      "slug": "dumbbell-seated-full-lateral-raise",
+      "sha256": "160e6546ed1c92b9e7ee6d02918f97108373f4723739a457fc4e15fb922b3185",
+      "bytes": 2970160
+    },
+    {
+      "catalogId": "TK-000331",
+      "version": "v2",
+      "slug": "dumbbell-seated-lateral-raises",
+      "sha256": "7925da8f01d34883180bc105772dca9f00787d9db375c666fe6999f76f16c11a",
+      "bytes": 2843817
+    },
+    {
+      "catalogId": "TK-000332",
+      "version": "v2",
+      "slug": "dumbbell-side-plank",
+      "sha256": "6a02a79becd6e40461549c3ef3a2aa46c73c97656fc04b1f9ab2b6d319d61521",
+      "bytes": 3956921
+    },
+    {
+      "catalogId": "TK-000333",
+      "version": "v2",
+      "slug": "dumbbell-single-arm-incline-bench-preacher-curl",
+      "sha256": "1c5842ae4e9c2aa0e12c6426052e3903cef628c7f55d7360d18f093eb00b6c8a",
+      "bytes": 2223519
+    },
+    {
+      "catalogId": "TK-000334",
+      "version": "v2",
+      "slug": "dumbbell-single-arm-neutral-overhead-press",
+      "sha256": "bb140cc97a25339a7864395dd8416479816d19fa526a43bbabecf831baeca2b0",
+      "bytes": 3708343
+    },
+    {
+      "catalogId": "TK-000335",
+      "version": "v2",
+      "slug": "dumbbell-single-arm-upright-row",
+      "sha256": "a656289826d5d63f88b15835d82a490209ba81d79403526ce881b22d24fa2b95",
+      "bytes": 3647488
+    },
+    {
+      "catalogId": "TK-000336",
+      "version": "v2",
+      "slug": "dumbbell-single-leg-hip-thrust",
+      "sha256": "33f2e36ca7403003b814b3a99bcd25d0ca764157d2a2d9e917d617cf74e49e09",
+      "bytes": 2250271
+    },
+    {
+      "catalogId": "TK-000337",
+      "version": "v2",
+      "slug": "dumbbell-squat",
+      "sha256": "61ea87ec842b9b6232fc0fd75132e821872b604312fd43ff6c30a25fbdcb65d3",
+      "bytes": 3236462
+    },
+    {
+      "catalogId": "TK-000338",
+      "version": "v2",
+      "slug": "dumbbell-step-up-low",
+      "sha256": "abd274f309f655cad0c98adb27ceb6e992e9559d7d2133a76c1f6687de42822a",
+      "bytes": 1742197
+    },
+    {
+      "catalogId": "TK-000339",
+      "version": "v2",
+      "slug": "dumbbell-stiff-leg-deadlift",
+      "sha256": "1dca4dcb8ad556a9bce9d50d45303986f30c93b67d953c7b395dab32b82746bb",
+      "bytes": 3247901
+    },
+    {
+      "catalogId": "TK-000340",
+      "version": "v2",
+      "slug": "dumbbell-suitcase-carry",
+      "sha256": "c61898520a9fc8814eafa64f0e2e19d7fb763a2df156f2a288e0a88d3d9fb446",
+      "bytes": 1687150
+    },
+    {
+      "catalogId": "TK-000341",
+      "version": "v2",
+      "slug": "dumbbell-tibialis-raise",
+      "sha256": "50aafbc3fd42a2bd6b5a5ea2079b2474f08dd816186e433e17dc376822425503",
+      "bytes": 3642679
+    },
+    {
+      "catalogId": "TK-000342",
+      "version": "v2",
+      "slug": "dumbbell-turkish-get-up",
+      "sha256": "0d8c6740c09bb4471bc5f093574dbbaaa3b0da3727e0f8f99ffd71e9083ac464",
+      "bytes": 4816992
+    },
+    {
+      "catalogId": "TK-000343",
+      "version": "v2",
+      "slug": "dumbbell-walking-lunges",
+      "sha256": "fc3e64bb916aa53f0cda04ea734bb923209d82c7bcfe33fb80e5cacc088d51fc",
+      "bytes": 3113363
+    },
+    {
+      "catalogId": "TK-000344",
+      "version": "v2",
+      "slug": "dumbbell-windmill",
+      "sha256": "d95a541b50fb2c8031ebb74a96c54c3fcd36a474b521bf0f50c7f397dab79988",
+      "bytes": 3425362
+    },
+    {
+      "catalogId": "TK-000345",
+      "version": "v2",
+      "slug": "eccentric-calf-lowers",
+      "sha256": "df54a59d1e59e128e23a53addd1c7f58848c2f4d4b3ee40ffeb16c9e3a611584",
+      "bytes": 3158160
+    },
+    {
+      "catalogId": "TK-000346",
+      "version": "v2",
+      "slug": "elliptical",
+      "sha256": "79ccda3e83a7c4195a08204c3162ee2ebe441a92c2732f4d059674bee8a2711a",
+      "bytes": 5356433
+    },
+    {
+      "catalogId": "TK-000347",
+      "version": "v2",
+      "slug": "ez-bar-skullcrusher",
+      "sha256": "9144aad8be7dcc4d7fd6582b19e1fc7c617f781d6033880f67990c1d1ec0b051",
+      "bytes": 3489041
+    },
+    {
+      "catalogId": "TK-000348",
+      "version": "v2",
+      "slug": "fire-hydrants",
+      "sha256": "7582f374c494c7777e0f51c7c0e11b37c60b8a1630798caa5cb20dbde915e844",
+      "bytes": 4321117
+    },
+    {
+      "catalogId": "TK-000349",
+      "version": "v2",
+      "slug": "floor-press",
+      "sha256": "1bdf752d46b9aac48744dfb511d43f74cead08fcb3391a2608b069975600bb7d",
+      "bytes": 3512286
+    },
+    {
+      "catalogId": "TK-000350",
+      "version": "v2",
+      "slug": "freestyle-swim",
+      "sha256": "c2cca1a72c016445ac7548c84d53f0b671b621f07699f3fda08a85f98c259731",
+      "bytes": 3511079
+    },
+    {
+      "catalogId": "TK-000351",
+      "version": "v2",
+      "slug": "frog-pump",
+      "sha256": "468098b3e08e1c12c7c045ba4eaf2ea2b93d8f50134553c545950d78c3f27060",
+      "bytes": 3358439
+    },
+    {
+      "catalogId": "TK-000352",
+      "version": "v2",
+      "slug": "frog-rock-backs",
+      "sha256": "8cb8a38b0c0e79793e18be9afefbb789f0a5afb033be1c6f9890863592abe8e5",
+      "bytes": 4478969
+    },
+    {
+      "catalogId": "TK-000353",
+      "version": "v2",
+      "slug": "front-foot-elevated-split-squat",
+      "sha256": "3aa23d4bc2eb3985c074946730981b7359ccc01d8d9492cd264d1849d29a9f3c",
+      "bytes": 3728373
+    },
+    {
+      "catalogId": "TK-000354",
+      "version": "v2",
+      "slug": "front-plank",
+      "sha256": "0bbe1c9cb6fd7bec38135ea24284bf85e02212da235b49f03b6f97f42f776d21",
+      "bytes": 1190362
+    },
+    {
+      "catalogId": "TK-000355",
+      "version": "v2",
+      "slug": "front-raise-and-pullover",
+      "sha256": "6885b7dd5a17eab99a2bbabbaf33cefd0e4c1a9dd377dde4b47a932c128f33fc",
+      "bytes": 4920836
+    },
+    {
+      "catalogId": "TK-000356",
+      "version": "v2",
+      "slug": "front-squat",
+      "sha256": "ef683d15c88199d8cc5999e910b561f1f4a327e9336ffdbddb2318cb4af36e50",
+      "bytes": 4165725
+    },
+    {
+      "catalogId": "TK-000357",
+      "version": "v2",
+      "slug": "glute-bridge",
+      "sha256": "1a2fd579a6bdb1f43340c01efd330672f3a21032e4a7cb6b3b720381b43bbdae",
+      "bytes": 3056850
+    },
+    {
+      "catalogId": "TK-000358",
+      "version": "v2",
+      "slug": "glute-kickback-machine",
+      "sha256": "fb3fe859a479a531156eee4c8cecd00bf01b6938982cf9d0799a896084b3a986",
+      "bytes": 3625698
+    },
+    {
+      "catalogId": "TK-000359",
+      "version": "v2",
+      "slug": "goblet-squat-prying-hold",
+      "sha256": "11c6b7beea18a24ebba923c3af66bd8fbd0f85be62434728ccf9f61503cce82d",
+      "bytes": 4060759
+    },
+    {
+      "catalogId": "TK-000360",
+      "version": "v2",
+      "slug": "half-kneeling-hip-flexor-rock",
+      "sha256": "229a746d60b09e96b331aafa85b730196abfa271c1823b7463791c42b5a81c5a",
+      "bytes": 3304932
+    },
+    {
+      "catalogId": "TK-000361",
+      "version": "v2",
+      "slug": "hammer-strength-high-row",
+      "sha256": "66bc4c08eb6da9a7b82e0710052b00e98c0f6de43e299613c19bdc40631549ab",
+      "bytes": 2911953
+    },
+    {
+      "catalogId": "TK-000362",
+      "version": "v2",
+      "slug": "hammer-strength-iso-lateral-row",
+      "sha256": "70015af2dc496f9d906391365a727e2ed93a6bc1be6dcbbeb40b37410f7cd689",
+      "bytes": 4017033
+    },
+    {
+      "catalogId": "TK-000363",
+      "version": "v2",
+      "slug": "hamstring-curl",
+      "sha256": "d2384dac0cbc0ccc754db454f53fd574b33e26ab1807208b64fff2da5e23dfae",
+      "bytes": 4013282
+    },
+    {
+      "catalogId": "TK-000364",
+      "version": "v2",
+      "slug": "hang-clean",
+      "sha256": "dc6273a3f1b14f9c94d366ce033ca79a5963de6d04d2e102ae9f91b62848438b",
+      "bytes": 6114778
+    },
+    {
+      "catalogId": "TK-000365",
+      "version": "v2",
+      "slug": "hang-power-clean",
+      "sha256": "a066cbec4581a1ca916c29ad1c12651b5e368cfb6447e1df5f985ce292898c82",
+      "bytes": 3146358
+    },
+    {
+      "catalogId": "TK-000366",
+      "version": "v2",
+      "slug": "hang-snatch",
+      "sha256": "a60c368ea2d005817edb9e2a0aaa817a051400029fbab17becf70ca37236788f",
+      "bytes": 5466303
+    },
+    {
+      "catalogId": "TK-000367",
+      "version": "v2",
+      "slug": "heel-and-toe-walks",
+      "sha256": "540ef35d9064e10edf0861ed9bc60a330808156a286892790799c30a094b084d",
+      "bytes": 9731972
+    },
+    {
+      "catalogId": "TK-000368",
+      "version": "v2",
+      "slug": "heel-elevated-dumbbell-front-squat",
+      "sha256": "b935fdd701e6574ca079785fe030eeb3236d80bf9edb43ab14b672ab7a25206f",
+      "bytes": 4492208
+    },
+    {
+      "catalogId": "TK-000369",
+      "version": "v2",
+      "slug": "hiking",
+      "sha256": "304987a3ca28c4efb0ee94f9e7d79424b1f2e3f7183bdf0a7dc99e5baea14ab8",
+      "bytes": 6099565
+    },
+    {
+      "catalogId": "TK-000370",
+      "version": "v2",
+      "slug": "hill-climb-repeats",
+      "sha256": "48f1e16342c7c0514b4b6ab69eb7767d9a9e21b609cc671684eb5045e771d217",
+      "bytes": 2313748
+    },
+    {
+      "catalogId": "TK-000371",
+      "version": "v2",
+      "slug": "hip-circles",
+      "sha256": "7fd8fe8ff85b9b26f55551a3958e868866b8e11375ab24229814592fe9de7be1",
+      "bytes": 2870602
+    },
+    {
+      "catalogId": "TK-000372",
+      "version": "v2",
+      "slug": "hip-hinge-drill",
+      "sha256": "e8abb20e0a52c5713e8ab6545d1544929fc576a3a47589ce6ea0c7f656808d47",
+      "bytes": 3538902
+    },
+    {
+      "catalogId": "TK-000373",
+      "version": "v2",
+      "slug": "hip-hinge-speed-romanian-deadlift",
+      "sha256": "72b5e8e8e89dbc7474184345de6edbfb367955019c508895164f304d9a192ef6",
+      "bytes": 2598774
+    },
+    {
+      "catalogId": "TK-000374",
+      "version": "v2",
+      "slug": "horizontal-leg-press-calf-press",
+      "sha256": "cf920b24c3678d1adc83e604bfbec2bfe78314d3cd777eb49883f6f80669a557",
+      "bytes": 1834154
+    },
+    {
+      "catalogId": "TK-000375",
+      "version": "v2",
+      "slug": "incline-dumbbell-fly-with-twist",
+      "sha256": "2c89eefcfdfceffefe8304b0b02ba1d662effca3c5121f33296569ceb6c25d64",
+      "bytes": 3186763
+    },
+    {
+      "catalogId": "TK-000376",
+      "version": "v2",
+      "slug": "incline-machine-chest-press",
+      "sha256": "202968a026b2471b28b01925481cdf65b4a3930af8ccc3619db5e2250761fb19",
+      "bytes": 4232824
+    },
+    {
+      "catalogId": "TK-000377",
+      "version": "v2",
+      "slug": "incline-push-up-depth-jump",
+      "sha256": "67f5e7fbc571ee4fdc5b94e55491838f8083416024de10dab9e8e47100f0891c",
+      "bytes": 5213198
+    },
+    {
+      "catalogId": "TK-000378",
+      "version": "v2",
+      "slug": "incline-treadmill-walk",
+      "sha256": "a8f9aef7b1a6b372c098867a6293a61e00de3fdbc7c85275fbc1fd07a1ec7035",
+      "bytes": 4654141
+    },
+    {
+      "catalogId": "TK-000379",
+      "version": "v2",
+      "slug": "indoor-cycling-spin",
+      "sha256": "be379aba6f1866ffbbb8676011bca686e80fd5f01a0b150f6498a6931c51414b",
+      "bytes": 4284793
+    },
+    {
+      "catalogId": "TK-000380",
+      "version": "v2",
+      "slug": "jm-press",
+      "sha256": "9acd604083a4586e4471695f597a5a98fdcf76c05b864062bc9756a0a45b1c49",
+      "bytes": 4723649
+    },
+    {
+      "catalogId": "TK-000381",
+      "version": "v2",
+      "slug": "jump-rope",
+      "sha256": "8b4916c3bb7cbd55943d83817313cb7e0609632d13081c2fdd427f07be45549b",
+      "bytes": 3082656
+    },
+    {
+      "catalogId": "TK-000382",
+      "version": "v2",
+      "slug": "jumping-jack",
+      "sha256": "dfde9ce938c2a431a5656c5d5b2125f2fb6df630a08d481bb730bcd9742db2ac",
+      "bytes": 4028009
+    },
+    {
+      "catalogId": "TK-000383",
+      "version": "v2",
+      "slug": "kettlebell-goblet-squat",
+      "sha256": "34f4bcbb2d01baaceb8f5271d5f5e6fc053c367c3be2ddec27ab2bf6d8c7e34f",
+      "bytes": 2743347
+    },
+    {
+      "catalogId": "TK-000384",
+      "version": "v2",
+      "slug": "kettlebell-halo",
+      "sha256": "0f72c2abe7373fad8e695bb24db2c5fcf436e103ca2a4bd99cc1abdb1a76de62",
+      "bytes": 4338671
+    },
+    {
+      "catalogId": "TK-000385",
+      "version": "v2",
+      "slug": "kettlebell-renegade-rows",
+      "sha256": "d4f538206c954377c8d6077f4c72f2e32d51ade32d5041d0fdd61b97a025d321",
+      "bytes": 4405579
+    },
+    {
+      "catalogId": "TK-000386",
+      "version": "v2",
+      "slug": "kettlebell-suitcase-carry",
+      "sha256": "21fb38800beb409ddb92eb2aa6a3eddcd572c5fa40fcd1ee6934e5b6597d5556",
+      "bytes": 961955
+    },
+    {
+      "catalogId": "TK-000387",
+      "version": "v2",
+      "slug": "kettlebell-turkish-get-up",
+      "sha256": "a489028f08f6028cdb3ac00fd330d9a8f970ffc84f3d49c4dbc5af34507f51a4",
+      "bytes": 5011249
+    },
+    {
+      "catalogId": "TK-000388",
+      "version": "v2",
+      "slug": "kettlebell-walking-lunges",
+      "sha256": "3e817dc4f267797784ad5a2fc9bad0467c253390fa9f2fafe1de6e32667618fb",
+      "bytes": 3084138
+    },
+    {
+      "catalogId": "TK-000389",
+      "version": "v2",
+      "slug": "kickstand-dumbbell-romanian-deadlift",
+      "sha256": "44a4b5941d23558f6492cbe458fdae4bda18a97088dafa87cc8fc6c989376be2",
+      "bytes": 4983524
+    },
+    {
+      "catalogId": "TK-000390",
+      "version": "v2",
+      "slug": "kneeling-cable-crunch",
+      "sha256": "b33ad64174d3ca01e6d0944f60324350c53f66035e5dae4533c81fc5e31da23d",
+      "bytes": 4277225
+    },
+    {
+      "catalogId": "TK-000391",
+      "version": "v2",
+      "slug": "landmine-press",
+      "sha256": "33ad43e1856ca2aaba2665d9d3654bc553a0becbb42ca625edb3739042b414f7",
+      "bytes": 2535081
+    },
+    {
+      "catalogId": "TK-000392",
+      "version": "v2",
+      "slug": "lat-pulldown",
+      "sha256": "18a83f4867525414e9272629efb23708cc5578c67da8932a7478a32beed6ed42",
+      "bytes": 4101656
+    },
+    {
+      "catalogId": "TK-000393",
+      "version": "v2",
+      "slug": "lateral-raise-to-front-raise",
+      "sha256": "92a64491f53369432ebc9f312a9c9f71d31359cf9158b7cc94ab9cf4204d9621",
+      "bytes": 3690263
+    },
+    {
+      "catalogId": "TK-000394",
+      "version": "v2",
+      "slug": "leaning-cable-lateral-raise",
+      "sha256": "6b1a2bcd8ffc6a7b71495a5f184310b06336965d5157004496b07b4460c09e6f",
+      "bytes": 1697030
+    },
+    {
+      "catalogId": "TK-000395",
+      "version": "v2",
+      "slug": "leaning-single-arm-dumbbell-lateral-raise",
+      "sha256": "ea05aae9c7d6e72d7e251f5e96c6fc5dd01c3aa69fe42ca315b647b7a4b2be8d",
+      "bytes": 2803270
+    },
+    {
+      "catalogId": "TK-000396",
+      "version": "v2",
+      "slug": "leg-press-calf-raise",
+      "sha256": "401e54583c5985efb8d83722fc086d7a3b1ea32d8ac768415688e6cbc43ccd1e",
+      "bytes": 2369331
+    },
+    {
+      "catalogId": "TK-000397",
+      "version": "v2",
+      "slug": "leg-swings-front-to-back",
+      "sha256": "747082b31828476c42caca0ec2f0b0114bd4e5bc248387de3ad8255c49843053",
+      "bytes": 5347038
+    },
+    {
+      "catalogId": "TK-000398",
+      "version": "v2",
+      "slug": "lever-lateral-wide-pulldown",
+      "sha256": "4aedbfc21f3704eaeb6477becc4715e87a0d86d6038e3c2a19b36a62aef6e820",
+      "bytes": 980137
+    },
+    {
+      "catalogId": "TK-000399",
+      "version": "v2",
+      "slug": "loaded-wrist-extensor-eccentric",
+      "sha256": "48824996290feabec527e696e41019dce5cd14e99184b93f772d2b54e1b9afaa",
+      "bytes": 4164764
+    },
+    {
+      "catalogId": "TK-000400",
+      "version": "v2",
+      "slug": "loaded-wrist-flexor-eccentric",
+      "sha256": "b9ebeab31add43c07534c1b80e65626704caa72688c45419c3d10c4665e5b9df",
+      "bytes": 4070449
+    },
+    {
+      "catalogId": "TK-000401",
+      "version": "v2",
+      "slug": "long-run",
+      "sha256": "a0aaa0f620ed210ae977c19e29e061d01013bc7603e2a6c6cc537d166fc701a2",
+      "bytes": 5611025
+    },
+    {
+      "catalogId": "TK-000402",
+      "version": "v2",
+      "slug": "lunge-sprint",
+      "sha256": "d15393f496c0a6c48d5427bd20fd5cae85cd9384b63df258dbd6f11394b8a318",
+      "bytes": 3993305
+    },
+    {
+      "catalogId": "TK-000403",
+      "version": "v2",
+      "slug": "lying-cambered-barbell-row",
+      "sha256": "ff9e6ff8e852583c47315318cc1aa639a4825018b9206b7355021ddf61a1f6fc",
+      "bytes": 1771464
+    },
+    {
+      "catalogId": "TK-000404",
+      "version": "v2",
+      "slug": "lying-leg-curl",
+      "sha256": "c522a331aa5d2f566eb0e194426867f4baca832d555ba742cf63f0b8cda19051",
+      "bytes": 3391520
+    },
+    {
+      "catalogId": "TK-000405",
+      "version": "v2",
+      "slug": "lying-single-arm-lateral-raise",
+      "sha256": "730a1fecfdfae7a2b7b37e368b5170d0c9ee5dde3784bf6b5e0d3ac1d2e564c4",
+      "bytes": 3964904
+    },
+    {
+      "catalogId": "TK-000406",
+      "version": "v2",
+      "slug": "machine-assisted-pull-up",
+      "sha256": "681af4e89e1bfb4eb70c49ce5eb3c6cb1206df61be14de0ab91f26c1b3f92f91",
+      "bytes": 2367136
+    },
+    {
+      "catalogId": "TK-000407",
+      "version": "v2",
+      "slug": "machine-back-extension",
+      "sha256": "57df32efa8022ba3251320ea797146ccfc0c30eb2bee855c202d76c47984fd0c",
+      "bytes": 2264402
+    },
+    {
+      "catalogId": "TK-000408",
+      "version": "v2",
+      "slug": "machine-goblet-sissy-squat",
+      "sha256": "d05db17be743cf48f73e8e5b64ff866f3101f3c10e5ecea04a71d6d17a6cf22e",
+      "bytes": 4391664
+    },
+    {
+      "catalogId": "TK-000409",
+      "version": "v2",
+      "slug": "machine-hack-squat",
+      "sha256": "de75fcd03e0eb06567c19a39b4e5800a68289fcdf668814d8234f8597c469b3f",
+      "bytes": 3331692
+    },
+    {
+      "catalogId": "TK-000410",
+      "version": "v2",
+      "slug": "machine-hip-abduction",
+      "sha256": "48af316c93e2409e7f05e7b360b82722079159daf7a911d513e000433700d0cc",
+      "bytes": 1625490
+    },
+    {
+      "catalogId": "TK-000411",
+      "version": "v2",
+      "slug": "machine-hip-adduction",
+      "sha256": "bfc0a44c85c6835c935a2ac9f2150b15a6b2fdf5a4f200c608060eac438839d4",
+      "bytes": 2224890
+    },
+    {
+      "catalogId": "TK-000412",
+      "version": "v2",
+      "slug": "machine-hip-thrust",
+      "sha256": "975a2a8095c86af46ee09a47c0c99ae86f70f8bd510c142e6118ed2a71ef4918",
+      "bytes": 4392653
+    },
+    {
+      "catalogId": "TK-000413",
+      "version": "v2",
+      "slug": "machine-horizontal-leg-press",
+      "sha256": "9814d350278912e4ace19c09d7d581a6b822e7f9ed1d7cbca8fcc4a81e9a3157",
+      "bytes": 5519895
+    },
+    {
+      "catalogId": "TK-000414",
+      "version": "v2",
+      "slug": "machine-lat-pullover",
+      "sha256": "82984238af5dd368d4ba62902ce437210a60f1c66ed9f54fbca7a9ff8a1035b9",
+      "bytes": 5132478
+    },
+    {
+      "catalogId": "TK-000415",
+      "version": "v2",
+      "slug": "machine-lateral-raise",
+      "sha256": "90b104669debbf61292de82618b5416d647b54f768839663252d742887d6285b",
+      "bytes": 2381397
+    },
+    {
+      "catalogId": "TK-000416",
+      "version": "v2",
+      "slug": "machine-preacher-curl",
+      "sha256": "376911a5dd9f3915e9395aeebfd6cc5780e0eb89791806bbe80171cdc57e82c4",
+      "bytes": 2198308
+    },
+    {
+      "catalogId": "TK-000417",
+      "version": "v2",
+      "slug": "machine-tricep-extension",
+      "sha256": "e2d97256bd81f4af79d4eb45b11e7822244be159e228b18d705c5d68582cccb9",
+      "bytes": 2565220
+    },
+    {
+      "catalogId": "TK-000418",
+      "version": "v2",
+      "slug": "man-maker",
+      "sha256": "06f6e077a01ed9da8a088d01763518aa9c1bc4a862237ca378c9688e357bbe5f",
+      "bytes": 3228132
+    },
+    {
+      "catalogId": "TK-000419",
+      "version": "v2",
+      "slug": "meadows-row",
+      "sha256": "f0dd2681a4076780a3cda223d44f0655ac8f6386e1cd32f981c7084b329b6112",
+      "bytes": 4854199
+    },
+    {
+      "catalogId": "TK-000420",
+      "version": "v2",
+      "slug": "medicine-ball-throw",
+      "sha256": "fd8eea2a885acbea9f9ca163a854c481554cb2eed0c35888e3135421d19d7060",
+      "bytes": 5286317
+    },
+    {
+      "catalogId": "TK-000421",
+      "version": "v2",
+      "slug": "muscle-up",
+      "sha256": "a3fcc122a8212ad32d945eef90ade34d61ca5b2e2a49997130b413aba87f0719",
+      "bytes": 1559633
+    },
+    {
+      "catalogId": "TK-000422",
+      "version": "v2",
+      "slug": "neck-curl",
+      "sha256": "23849c315b3f363fc31b370897929444d91ec4290c63500fa246610d6668036d",
+      "bytes": 3480884
+    },
+    {
+      "catalogId": "TK-000423",
+      "version": "v2",
+      "slug": "neck-extension",
+      "sha256": "0c5d43e2d41bde870b9bbafc67eb310a53fd094067de3b377bd64c1c0eb727f7",
+      "bytes": 3150735
+    },
+    {
+      "catalogId": "TK-000424",
+      "version": "v2",
+      "slug": "neutral-grip-dumbbell-bench-press",
+      "sha256": "8a040d0fc9eb62e5e6271d50917b348dd66eb93f6a5b912e9d4578f1ac9e9263",
+      "bytes": 3256120
+    },
+    {
+      "catalogId": "TK-000425",
+      "version": "v2",
+      "slug": "neutral-grip-lat-pulldown",
+      "sha256": "03935e0a54d2a94e8196e45bbe7df56f7123f772fe3ce29ad2298453e2f6090c",
+      "bytes": 3409200
+    },
+    {
+      "catalogId": "TK-000426",
+      "version": "v2",
+      "slug": "neutral-grip-pull-up",
+      "sha256": "1f63d534079b730dc06618ba23488bae26aa6a690e3a47e58a79db3f1917dc9a",
+      "bytes": 2594042
+    },
+    {
+      "catalogId": "TK-000427",
+      "version": "v2",
+      "slug": "nordic-hamstring-curl",
+      "sha256": "95de1cea85164766f440669b6a2f4798c300130c6eb73dd6986633cc223a704b",
+      "bytes": 4977992
+    },
+    {
+      "catalogId": "TK-000428",
+      "version": "v2",
+      "slug": "open-book-rotation",
+      "sha256": "6dd17ecee888c6c961b15d673c6fe8d2e423e76c89bb2c697859f1f875c1ff39",
+      "bytes": 6032963
+    },
+    {
+      "catalogId": "TK-000429",
+      "version": "v2",
+      "slug": "open-book-rotations",
+      "sha256": "6dd17ecee888c6c961b15d673c6fe8d2e423e76c89bb2c697859f1f875c1ff39",
+      "bytes": 6032963
+    },
+    {
+      "catalogId": "TK-000430",
+      "version": "v2",
+      "slug": "pallof-press",
+      "sha256": "bd67d2125c4dc3619bbf1b66f5e6c1febc89d01ef560ad82182e1be8509f2c81",
+      "bytes": 2508138
+    },
+    {
+      "catalogId": "TK-000431",
+      "version": "v2",
+      "slug": "pause-squat",
+      "sha256": "99919184136a4d31180d2ff8bc7ca06477aefe66e23cdd2c0ea0937d78660d54",
+      "bytes": 3637322
+    },
+    {
+      "catalogId": "TK-000432",
+      "version": "v2",
+      "slug": "pendlay-row",
+      "sha256": "10711cc207de044d78ad9463a79b66c5ffa103a83972a1df05e748fea96d2593",
+      "bytes": 7410036
+    },
+    {
+      "catalogId": "TK-000433",
+      "version": "v2",
+      "slug": "pendulum-squat-v-squat",
+      "sha256": "b44c002177b033198db74e9817393381d502d9fe0f5964c5b4bc8b95e1a3e162",
+      "bytes": 4056243
+    },
+    {
+      "catalogId": "TK-000434",
+      "version": "v2",
+      "slug": "pike-push-up",
+      "sha256": "406ba2d423c2985b03507cdfe821e950e6c456086439bbeb63abbdf12ee8da77",
+      "bytes": 3218355
+    },
+    {
+      "catalogId": "TK-000435",
+      "version": "v2",
+      "slug": "pistol-squat",
+      "sha256": "f2524707620885ef0e601dce8371edcff77f50ecbc323ec25a606d9ffe42d5bd",
+      "bytes": 1851409
+    },
+    {
+      "catalogId": "TK-000436",
+      "version": "v2",
+      "slug": "plate-front-raise",
+      "sha256": "67dcc1d368af5e89e53f089bd5d6a64e39a0e999f6f1f50f42adf69829a2c87c",
+      "bytes": 3522559
+    },
+    {
+      "catalogId": "TK-000437",
+      "version": "v2",
+      "slug": "plate-pinch",
+      "sha256": "f74a0b18783c3057f7fd7f9731169e7f010ad46310e125c21d7ff4549c91eb80",
+      "bytes": 1686543
+    },
+    {
+      "catalogId": "TK-000438",
+      "version": "v2",
+      "slug": "plyometric-kettlebell-push-up",
+      "sha256": "8ccbf581aec2b97ff15de4e69a6410a6cc9ba1d0a1b2b3b23658247d308de4f9",
+      "bytes": 5234351
+    },
+    {
+      "catalogId": "TK-000439",
+      "version": "v2",
+      "slug": "pogo-hops",
+      "sha256": "82c2c582b2e0d28aed6bc0199e860c261d700eba8f421dee57489be25dffa7e9",
+      "bytes": 3224509
+    },
+    {
+      "catalogId": "TK-000440",
+      "version": "v2",
+      "slug": "power-clean",
+      "sha256": "9937c78ac088805e93ba29afdc20b790020d4e21542009ddae0728309c217246",
+      "bytes": 5157214
+    },
+    {
+      "catalogId": "TK-000441",
+      "version": "v2",
+      "slug": "press-sit-up",
+      "sha256": "733b1f253e8fda76b61b6f87236903c473bd1f52509524ae61a328da17599995",
+      "bytes": 3856858
+    },
+    {
+      "catalogId": "TK-000442",
+      "version": "v2",
+      "slug": "prone-lateral-raises",
+      "sha256": "44f44c06dd8cddad5fbb1dc5725bc215f8e8245fdbb3de8069d3949c6d9de51a",
+      "bytes": 5693818
+    },
+    {
+      "catalogId": "TK-000443",
+      "version": "v2",
+      "slug": "prone-y-t-raises",
+      "sha256": "6db95ede061ab51ebd7273d07191da0ae1af1ce1910fa573cb04652bfbbb0067",
+      "bytes": 6945773
+    },
+    {
+      "catalogId": "TK-000444",
+      "version": "v2",
+      "slug": "prying-goblet-squat",
+      "sha256": "14e798926d49b448d0452ef0ab666bd3aa1edca203eda29339172bb11a4d6393",
+      "bytes": 3341575
+    },
+    {
+      "catalogId": "TK-000445",
+      "version": "v2",
+      "slug": "push-jerk",
+      "sha256": "544ad2077b6518c960669c780b55f5610d7b4335672ab59b649a89203b64b664",
+      "bytes": 3775707
+    },
+    {
+      "catalogId": "TK-000446",
+      "version": "v2",
+      "slug": "quadruped-thoracic-rotation",
+      "sha256": "ef9ea1e198475d3302a3a675f7eb00bc4426ed96da0ca7898485757cfef6f78c",
+      "bytes": 5128761
+    },
+    {
+      "catalogId": "TK-000447",
+      "version": "v2",
+      "slug": "reverse-crunch",
+      "sha256": "41689610dd90be8c3cc853ae8f665a02d0480788334fe9672fec4fcd498c3ba4",
+      "bytes": 3433195
+    },
+    {
+      "catalogId": "TK-000448",
+      "version": "v2",
+      "slug": "reverse-grip-barbell-bench-press",
+      "sha256": "57fb9eabcbfc5cea632b6bdabb8e5bf758c681bd3f2940bf5417345a6a8c2a17",
+      "bytes": 2790322
+    },
+    {
+      "catalogId": "TK-000449",
+      "version": "v2",
+      "slug": "reverse-grip-barbell-curl",
+      "sha256": "e8284b0def849cfb00b7df17ae9f947b1803c9a121c7ef9ebcd7fc8aa19ae28d",
+      "bytes": 2574737
+    },
+    {
+      "catalogId": "TK-000450",
+      "version": "v2",
+      "slug": "reverse-grip-incline-push-up",
+      "sha256": "952d9f10e3d4ff3ed33939df0a8aecd05c1f866f3c2bacc5dcc58433817a8fff",
+      "bytes": 5420399
+    },
+    {
+      "catalogId": "TK-000451",
+      "version": "v2",
+      "slug": "reverse-grip-tricep-pushdown",
+      "sha256": "8ba36f8719d5dfa404a6ccc5517ea2721cea2ba9311b34ccc7b4f187f9068254",
+      "bytes": 2337787
+    },
+    {
+      "catalogId": "TK-000452",
+      "version": "v2",
+      "slug": "reverse-hack-squat",
+      "sha256": "4628eb9890a8fefe7432984a5e11cc532d90a8e0dddd3dbb11f5e70cf4ef9974",
+      "bytes": 4342862
+    },
+    {
+      "catalogId": "TK-000453",
+      "version": "v2",
+      "slug": "reverse-hyperextension",
+      "sha256": "5bbd1895444c4def2848e5562c3a0f22f78a8b76eee8ab6654cf862c1bea0b6d",
+      "bytes": 2012708
+    },
+    {
+      "catalogId": "TK-000454",
+      "version": "v2",
+      "slug": "reverse-pec-deck",
+      "sha256": "09ba6a6d8ad111e778bb4a47be7c908cf10a21ce5fcc8267d391f798b00d0c70",
+      "bytes": 4100099
+    },
+    {
+      "catalogId": "TK-000455",
+      "version": "v2",
+      "slug": "rkc-plank",
+      "sha256": "aeb8a415c402f30f54bf3722359bbf355d6903495178fd0c66d65d71499bd91a",
+      "bytes": 2133023
+    },
+    {
+      "catalogId": "TK-000456",
+      "version": "v2",
+      "slug": "romanian-deadlift-hamstring-sweeps",
+      "sha256": "4702e44b1a6feb2a2b37b080f1ab12d328110fe7cfcfd4824d25815f98077ce9",
+      "bytes": 3514556
+    },
+    {
+      "catalogId": "TK-000457",
+      "version": "v2",
+      "slug": "rowing-intervals",
+      "sha256": "d404a86e93aee66cc34f0e53d5ea8d5b71b5b55d1e81a812d5d12113d408f011",
+      "bytes": 2896080
+    },
+    {
+      "catalogId": "TK-000458",
+      "version": "v2",
+      "slug": "rowing-machine-steady-state",
+      "sha256": "de361f2bfc7e0abfb975a8037f9bb152711250c36e5cd49a13d17dd53150fd51",
+      "bytes": 3244138
+    },
+    {
+      "catalogId": "TK-000459",
+      "version": "v2",
+      "slug": "rowing-sprint",
+      "sha256": "37c46f37ac1516f3d1a22e1bfc9b8caa9195097214023f841d12587cb92d5e0b",
+      "bytes": 3376239
+    },
+    {
+      "catalogId": "TK-000460",
+      "version": "v2",
+      "slug": "running-cooldown",
+      "sha256": "c36a563c86be6ff4b9eccfaec55b23d8fdfe5cfc11ea5341a8d32b794d3ba9bd",
+      "bytes": 4387537
+    },
+    {
+      "catalogId": "TK-000461",
+      "version": "v2",
+      "slug": "running-intervals",
+      "sha256": "58402aa409e27189315144c855efae3e53c16c94b44a2749721edb66a0b4408e",
+      "bytes": 4073808
+    },
+    {
+      "catalogId": "TK-000462",
+      "version": "v2",
+      "slug": "scapular-pull-up",
+      "sha256": "df2e7568316f5240d3be0c68fb27f7b83d80d057494f3293a34f78a038e32002",
+      "bytes": 1715290
+    },
+    {
+      "catalogId": "TK-000463",
+      "version": "v2",
+      "slug": "seal-row",
+      "sha256": "46d181a5c6205ba00ee875ece3150729a7d80e1300e515eea9e16b0d039c90a3",
+      "bytes": 3652665
+    },
+    {
+      "catalogId": "TK-000464",
+      "version": "v2",
+      "slug": "seated-ankle-circles",
+      "sha256": "fd94cc4c348305be32556c0a2fa5680fe16482a37ef39030a4080f550fa36910",
+      "bytes": 2463486
+    },
+    {
+      "catalogId": "TK-000465",
+      "version": "v2",
+      "slug": "seated-barbell-military-press",
+      "sha256": "94ac2bd4d339c1bb844de628ff9e956b1aef314e850b643b0f6bdbcd82f83e9c",
+      "bytes": 2783419
+    },
+    {
+      "catalogId": "TK-000466",
+      "version": "v2",
+      "slug": "seated-calf-raise",
+      "sha256": "8f8f8479cb2798a6d6f4dc35d0cef82072b779603ba36c715a76e9e0e23df7b2",
+      "bytes": 5663936
+    },
+    {
+      "catalogId": "TK-000467",
+      "version": "v2",
+      "slug": "seated-chin-tuck-neck-retraction",
+      "sha256": "5a4c46a19bd83e61f347fc5ac38f3206c0f874ed3c91d12dc363b65a0f1830a7",
+      "bytes": 2205985
+    },
+    {
+      "catalogId": "TK-000468",
+      "version": "v2",
+      "slug": "seated-dumbbell-curl",
+      "sha256": "7d5bba248d2351dfecefc504072524bb006948972d4fe5d3f0470b6db9c1473b",
+      "bytes": 2620025
+    },
+    {
+      "catalogId": "TK-000469",
+      "version": "v2",
+      "slug": "seated-lateral-neck-flexion-hold",
+      "sha256": "15c289877ae05d43c5e94749710371821cee219d249cc3f8cf97ff4a3ac9dae2",
+      "bytes": 4295639
+    },
+    {
+      "catalogId": "TK-000470",
+      "version": "v2",
+      "slug": "seated-leg-curl",
+      "sha256": "5a05552f08521d7a378328d5a563c0f0247c1fbdb2c8d871937eb414d01c3f9b",
+      "bytes": 4012565
+    },
+    {
+      "catalogId": "TK-000471",
+      "version": "v2",
+      "slug": "seated-pelvic-tilt-anterior-posterior",
+      "sha256": "63742271cca9a7af0f11d6795b689818114b8cccdce8a40f8df5c5f0a37667ec",
+      "bytes": 2663702
+    },
+    {
+      "catalogId": "TK-000472",
+      "version": "v2",
+      "slug": "seated-shoulder-rolls-scapular-retraction",
+      "sha256": "a6485aa87bd80505b02207d0f170ddbd3a307f3e342a22760a30a52fca1a4a1f",
+      "bytes": 1784834
+    },
+    {
+      "catalogId": "TK-000473",
+      "version": "v2",
+      "slug": "seated-thoracic-extension-chest-opener",
+      "sha256": "bb3c100e060a926d4485aee617694bf36a43ee955c0d6d5527b68bce5fb5c379",
+      "bytes": 2166159
+    },
+    {
+      "catalogId": "TK-000474",
+      "version": "v2",
+      "slug": "seated-wrist-flexor-stretch",
+      "sha256": "674b762276a8022507f1d9116a9ab5ec9060a906577164f122d7fdf0bed74e36",
+      "bytes": 2554356
+    },
+    {
+      "catalogId": "TK-000475",
+      "version": "v2",
+      "slug": "selectorized-overhead-press-machine",
+      "sha256": "958d016ab618adf955ba206848a4befa6520f3c7ea7acf8010ff7449d12ad586",
+      "bytes": 2210732
+    },
+    {
+      "catalogId": "TK-000476",
+      "version": "v2",
+      "slug": "selectorized-torso-rotation-machine",
+      "sha256": "01917001f336ad55250d4e21de73164491f8f9085c0bde0bc6c900780e17251b",
+      "bytes": 3778189
+    },
+    {
+      "catalogId": "TK-000477",
+      "version": "v2",
+      "slug": "shadow-boxing",
+      "sha256": "aac687805ac77febee114fe640e1dc885452fdb12b63568213aff174fcdd8a33",
+      "bytes": 3087331
+    },
+    {
+      "catalogId": "TK-000478",
+      "version": "v2",
+      "slug": "side-plank-lateral-raise",
+      "sha256": "e37c6794a92f0be1d23f34c6c6e42ae613a55924f1c300e2c8bd0b654796edc2",
+      "bytes": 4411988
+    },
+    {
+      "catalogId": "TK-000479",
+      "version": "v2",
+      "slug": "single-arm-cable-fly",
+      "sha256": "f48dc06e12d5cb02887ddaa2db75ef7e766c47aa3541c4fc79374de1e752d361",
+      "bytes": 3530449
+    },
+    {
+      "catalogId": "TK-000480",
+      "version": "v2",
+      "slug": "single-arm-dumbbell-bench-press",
+      "sha256": "9da33810ac519eaf52b03acd7cc904e8b638df4ce084f0a50d7701027fdcb701",
+      "bytes": 2944999
+    },
+    {
+      "catalogId": "TK-000481",
+      "version": "v2",
+      "slug": "single-arm-dumbbell-overhead-press",
+      "sha256": "ae2bfce65b69713c0a2d614364d7ab056666d05d3ff5f2fa504ebeae28167c41",
+      "bytes": 2081350
+    },
+    {
+      "catalogId": "TK-000482",
+      "version": "v2",
+      "slug": "single-arm-incline-lateral-raise",
+      "sha256": "a867800cbc7704f659ad30f2086eed0c6d747650b9a9a04292bb46a3975c732d",
+      "bytes": 1221581
+    },
+    {
+      "catalogId": "TK-000483",
+      "version": "v2",
+      "slug": "single-arm-kettlebell-military-press-to-side",
+      "sha256": "37543cad9ffc6c55a332907d6764adc34ed036dac957bb2b5d1b5b852e37a9df",
+      "bytes": 3482419
+    },
+    {
+      "catalogId": "TK-000484",
+      "version": "v2",
+      "slug": "single-arm-landmine-press",
+      "sha256": "0e48cb9015e3843ba1c9ea598183e23c820fd58d18d3c04b9c82f1643803a9ab",
+      "bytes": 2524174
+    },
+    {
+      "catalogId": "TK-000485",
+      "version": "v2",
+      "slug": "single-arm-landmine-row",
+      "sha256": "cb79e4cee92be90fe8bc44effbf7019fc1a4f15069cffec4d8c34c54b828ace0",
+      "bytes": 2710073
+    },
+    {
+      "catalogId": "TK-000486",
+      "version": "v2",
+      "slug": "single-arm-lat-pulldown",
+      "sha256": "a24f228b03fa8781239c16b8f39cf30fd29e3c9c861bacbacc0f91f10d7119d8",
+      "bytes": 3008976
+    },
+    {
+      "catalogId": "TK-000487",
+      "version": "v2",
+      "slug": "single-arm-overhead-cable-extension",
+      "sha256": "fcad5749d60e8b9231de22651a809f60c8180c49b99e77ffcba30c8bc5c65d68",
+      "bytes": 2793162
+    },
+    {
+      "catalogId": "TK-000488",
+      "version": "v2",
+      "slug": "single-arm-tricep-extension",
+      "sha256": "01262bbba3581e70ab753c64f848cc8c36a6f56abc0f22146166ddec939ce349",
+      "bytes": 3213427
+    },
+    {
+      "catalogId": "TK-000489",
+      "version": "v2",
+      "slug": "single-leg-back-extension",
+      "sha256": "fbe4ebfca89c14105185d02fa0944be3d2e4d9c530dea13754ddac5148c4c3d9",
+      "bytes": 2350766
+    },
+    {
+      "catalogId": "TK-000490",
+      "version": "v2",
+      "slug": "single-leg-balance",
+      "sha256": "d5e422cc873c0bf93bfaad927440a8ef9e065e18918aeb96107b00fcacdcde01",
+      "bytes": 3439997
+    },
+    {
+      "catalogId": "TK-000491",
+      "version": "v2",
+      "slug": "single-leg-balance-reach",
+      "sha256": "547fd95751250301abff8124be36cf5cb16f2032c21cf3af9c6fb5a37306d6b0",
+      "bytes": 4212038
+    },
+    {
+      "catalogId": "TK-000492",
+      "version": "v2",
+      "slug": "single-leg-barbell-squat",
+      "sha256": "cdf592ee8b19de6e8735078ff63f7ca1dc61c9bb54752e47cabbbd3dbeb775c3",
+      "bytes": 2201785
+    },
+    {
+      "catalogId": "TK-000493",
+      "version": "v2",
+      "slug": "single-leg-bound",
+      "sha256": "28cd0bd98b2419e7f03eb9fa7823fab6f1c923b05f0596aa5f56e5a074e6ed41",
+      "bytes": 2139873
+    },
+    {
+      "catalogId": "TK-000494",
+      "version": "v2",
+      "slug": "single-leg-dumbbell-romanian-deadlift",
+      "sha256": "1ec2c8d47244e53705c959d2249d058e34e49a1ab878daedd3cf887bedbf68e1",
+      "bytes": 5068842
+    },
+    {
+      "catalogId": "TK-000495",
+      "version": "v2",
+      "slug": "single-leg-glute-bridge",
+      "sha256": "308a93180bcfbdc6e3780a85db0c824f04dd28e69c8165158e2ce01185ef5c8d",
+      "bytes": 1687774
+    },
+    {
+      "catalogId": "TK-000496",
+      "version": "v2",
+      "slug": "single-leg-hip-thrust",
+      "sha256": "4d7be42b516f46804ffa5daace2a63eba91dac96fd0638e4412e16e883afdb41",
+      "bytes": 2985324
+    },
+    {
+      "catalogId": "TK-000497",
+      "version": "v2",
+      "slug": "single-leg-hop",
+      "sha256": "f71536a03840d846ed1774aa883fade5f475acac3da20380a2598eeee1277f09",
+      "bytes": 3861619
+    },
+    {
+      "catalogId": "TK-000498",
+      "version": "v2",
+      "slug": "single-leg-kettlebell-romanian-deadlift-deficit",
+      "sha256": "7e117b0f233027f08e7c00a24dc2d09ac0b0dd5f010527329636d6ffed15afb8",
+      "bytes": 3891120
+    },
+    {
+      "catalogId": "TK-000499",
+      "version": "v2",
+      "slug": "single-leg-press",
+      "sha256": "45c105b462c467e8c2989b543857b01510688047220e209ac766b7da52ecca90",
+      "bytes": 4926548
+    },
+    {
+      "catalogId": "TK-000500",
+      "version": "v2",
+      "slug": "single-leg-standing-calf-raise",
+      "sha256": "7fcad837bb788d439640fd2c7d1a626072a8a69c0f79880e52aab134fab0b0a0",
+      "bytes": 5213784
+    },
+    {
+      "catalogId": "TK-000501",
+      "version": "v2",
+      "slug": "single-leg-step-down",
+      "sha256": "6fd39158b83f117245b5c23e6c91bb5fdb2736dbbdd473d238fe233aa9420252",
+      "bytes": 3877979
+    },
+    {
+      "catalogId": "TK-000502",
+      "version": "v2",
+      "slug": "sissy-squat",
+      "sha256": "f13f64218d487017806ed47cdbcea619eedad96f4b2781529f5e2fc4c553e8d2",
+      "bytes": 3293086
+    },
+    {
+      "catalogId": "TK-000503",
+      "version": "v2",
+      "slug": "sit-up",
+      "sha256": "4b1641d691d4625d819d43bea6208a40486803890d5a68b365194085345e3856",
+      "bytes": 5772994
+    },
+    {
+      "catalogId": "TK-000504",
+      "version": "v2",
+      "slug": "skater-bound",
+      "sha256": "0066643603068f14bbcd8472e2307c48c1119bdb5da74fab72413cd064ae40e0",
+      "bytes": 5172200
+    },
+    {
+      "catalogId": "TK-000505",
+      "version": "v2",
+      "slug": "ski-erg",
+      "sha256": "2f5b20c38cf93ee65a875e79955487909b78122d1d23ab6b7b8ce866a3ec8356",
+      "bytes": 4877206
+    },
+    {
+      "catalogId": "TK-000506",
+      "version": "v2",
+      "slug": "sled-pull",
+      "sha256": "3fae9e1ac5d35d4f78d91e61056af8ed52e5cff2a19f49c9ac23e6142cae59d9",
+      "bytes": 3761290
+    },
+    {
+      "catalogId": "TK-000507",
+      "version": "v2",
+      "slug": "sled-push",
+      "sha256": "b67d29d434f96b00c12aa61f9f1f33253fec012d1e06c0911d57274529072c7c",
+      "bytes": 1348534
+    },
+    {
+      "catalogId": "TK-000508",
+      "version": "v2",
+      "slug": "slider-leg-curl",
+      "sha256": "705719349aae8edf1062396cae8a2a3c4be5e7c48c83bf35968e3a97536576e6",
+      "bytes": 1893428
+    },
+    {
+      "catalogId": "TK-000509",
+      "version": "v2",
+      "slug": "smith-machine-bench-press",
+      "sha256": "ed6c51c25983647b2714a7412999664c3551a97547cabb9258668c74eb8ab925",
+      "bytes": 3879724
+    },
+    {
+      "catalogId": "TK-000510",
+      "version": "v2",
+      "slug": "smith-machine-bent-over-row",
+      "sha256": "8c136dfa1bd543dd46ceec027b9eaa33e05ea01a4f7fdce08cf8dd31f1f2804a",
+      "bytes": 2908959
+    },
+    {
+      "catalogId": "TK-000511",
+      "version": "v2",
+      "slug": "smith-machine-calf-raise",
+      "sha256": "78450324835636d4606301d3980232011fd6413b85aa846762181b00efbb2f0d",
+      "bytes": 3030788
+    },
+    {
+      "catalogId": "TK-000512",
+      "version": "v2",
+      "slug": "smith-machine-decline-bench-press",
+      "sha256": "731d1d030fd69dbc3587a91ff444a6df5045783713d86c23b016296948e6fc82",
+      "bytes": 2004381
+    },
+    {
+      "catalogId": "TK-000513",
+      "version": "v2",
+      "slug": "smith-machine-front-squat",
+      "sha256": "b8cb46fb5c4d2c262f6cd7f6c38fe15d7c90a465dff6a2b6864b2752c47d47a2",
+      "bytes": 4039437
+    },
+    {
+      "catalogId": "TK-000514",
+      "version": "v2",
+      "slug": "smith-machine-overhead-press",
+      "sha256": "9d3d76b67079523f32291caf27b339773d8ae942dde65331a748cbf4aed57ff9",
+      "bytes": 3245457
+    },
+    {
+      "catalogId": "TK-000515",
+      "version": "v2",
+      "slug": "smith-machine-seated-overhead-press",
+      "sha256": "a47c81c17e1f10269216ef05c46172a955d0409f4d75664b9814cba61d9162f4",
+      "bytes": 4014351
+    },
+    {
+      "catalogId": "TK-000516",
+      "version": "v2",
+      "slug": "smith-machine-squat",
+      "sha256": "9de143efb92cceace3fbd1ad345532c04911a9a1c8ae14f01177c9fc8f4804d7",
+      "bytes": 4040599
+    },
+    {
+      "catalogId": "TK-000517",
+      "version": "v2",
+      "slug": "snap-down-landing",
+      "sha256": "ca18e2b293a2e1a47dc0b0ef8f7f2dd3820b863345959ef4d764564c6a6f3759",
+      "bytes": 3070214
+    },
+    {
+      "catalogId": "TK-000518",
+      "version": "v2",
+      "slug": "snatch-grip-deadlift",
+      "sha256": "7754c050d21b2dfb1f0687e18d25964ee0effb68b1416bc75e51ef5e4f614375",
+      "bytes": 3687561
+    },
+    {
+      "catalogId": "TK-000519",
+      "version": "v2",
+      "slug": "snatch-grip-high-pull",
+      "sha256": "6286d47d6db094707d9f66a64310bda75099f6c869d191504b4718bb7104dd1c",
+      "bytes": 5023448
+    },
+    {
+      "catalogId": "TK-000520",
+      "version": "v2",
+      "slug": "snatch-pull",
+      "sha256": "af0c58ff577ee877277c59bb7cfd45ec7647631e2854fab545c7c1e4fa934faf",
+      "bytes": 3112307
+    },
+    {
+      "catalogId": "TK-000521",
+      "version": "v2",
+      "slug": "spider-curl",
+      "sha256": "1b73f9ffc3a31dc192a2b7af5aa6d3f97f2bf33bf59b9ecfaf3b59dd2efa368d",
+      "bytes": 2234726
+    },
+    {
+      "catalogId": "TK-000522",
+      "version": "v2",
+      "slug": "spiderman-stretch",
+      "sha256": "51166e08e903f6c387d2d332f64ab2269fff8c78e067558dd5aeee902220a451",
+      "bytes": 4100860
+    },
+    {
+      "catalogId": "TK-000523",
+      "version": "v2",
+      "slug": "split-jerk",
+      "sha256": "322a98314b1e4298fc739405df24fb8c3439e4702297c7b45e070dc044828bc0",
+      "bytes": 2678307
+    },
+    {
+      "catalogId": "TK-000524",
+      "version": "v2",
+      "slug": "split-squat-isometric-hold",
+      "sha256": "c454fa54ab7bcca870c509e23ea5291a3d5938368a6a0ea465e1e6a040658512",
+      "bytes": 2222091
+    },
+    {
+      "catalogId": "TK-000525",
+      "version": "v2",
+      "slug": "squat-thrusts",
+      "sha256": "4fecee487d0203647185270e0f9ce73f053df2222b43bc558f51b83ad89c93a6",
+      "bytes": 3948833
+    },
+    {
+      "catalogId": "TK-000526",
+      "version": "v2",
+      "slug": "stability-ball-leg-curl",
+      "sha256": "e8f70bf7ee5e6cb6ce9789df41f8663212355222d9c67e062f9cf96e771ced52",
+      "bytes": 4431131
+    },
+    {
+      "catalogId": "TK-000527",
+      "version": "v2",
+      "slug": "stair-climber",
+      "sha256": "f50da011d77ed66634e93995cfff6e5b81b8b4bdacd6b5f38faeba5324cd0ab8",
+      "bytes": 2320916
+    },
+    {
+      "catalogId": "TK-000528",
+      "version": "v2",
+      "slug": "standing-alternating-dumbbell-overhead-press",
+      "sha256": "c90f2e52114c03ad75e2509073b2f06f59e875a28f86d9e9981bea9d824beb25",
+      "bytes": 3748889
+    },
+    {
+      "catalogId": "TK-000529",
+      "version": "v2",
+      "slug": "standing-cable-hip-abduction",
+      "sha256": "5e03553e5995b38f0fe6ffad46c6670aef341b5aa9a85d2f4cb7d5d7a0e9cb40",
+      "bytes": 2577453
+    },
+    {
+      "catalogId": "TK-000530",
+      "version": "v2",
+      "slug": "standing-calf-raise-machine",
+      "sha256": "48c20cc68060f75b092de735cd8505a667bf943130cda5753fcb438646ee7917",
+      "bytes": 1921458
+    },
+    {
+      "catalogId": "TK-000531",
+      "version": "v2",
+      "slug": "standing-dumbbell-overhead-press",
+      "sha256": "840982ca69354bbc4630b9145fa2f6f31350cdd0fc2895e6786e0855cb6658d7",
+      "bytes": 3119693
+    },
+    {
+      "catalogId": "TK-000532",
+      "version": "v2",
+      "slug": "standing-neutral-grip-dumbbell-overhead-press",
+      "sha256": "f15b7956f4695a645b8121e8fffcd50388c6705c9540d58c18466506ce852ffb",
+      "bytes": 3838268
+    },
+    {
+      "catalogId": "TK-000533",
+      "version": "v2",
+      "slug": "standing-wall-shoulder-opening-stretch",
+      "sha256": "c2bcc6014de52fdf8d261c0bc4690abdd91fb88fe0179b096a4395f342c86578",
+      "bytes": 2774887
+    },
+    {
+      "catalogId": "TK-000534",
+      "version": "v2",
+      "slug": "steady-state-ride",
+      "sha256": "1cd3146403daa267a568a6b7766bd5ddaefe36736cc373fc421c6dbca8a1b21a",
+      "bytes": 9862985
+    },
+    {
+      "catalogId": "TK-000535",
+      "version": "v2",
+      "slug": "step-down-to-balance",
+      "sha256": "f0d4379c535d7862c65238388a048976c9419394b11e4e77ed555db82c67c1cc",
+      "bytes": 1902875
+    },
+    {
+      "catalogId": "TK-000536",
+      "version": "v2",
+      "slug": "straight-arm-lat-pulldown",
+      "sha256": "b57cd56f0cd2937444c66dd5b21831b2e4911c6812777817a1724425f7cba34e",
+      "bytes": 4038962
+    },
+    {
+      "catalogId": "TK-000537",
+      "version": "v2",
+      "slug": "straight-arm-rope-pulldown-light",
+      "sha256": "5e0698fe182e87b5ccf125efe5deffea009c77c6024aeadcfa201af648cc9549",
+      "bytes": 3778406
+    },
+    {
+      "catalogId": "TK-000538",
+      "version": "v2",
+      "slug": "straight-bar-bench-mid-row",
+      "sha256": "9901f4ecb1a0e898827d9ae34c48a9eb3fecd18027342ff14a15a0e8da40ffaf",
+      "bytes": 5273821
+    },
+    {
+      "catalogId": "TK-000539",
+      "version": "v2",
+      "slug": "sumo-deadlift",
+      "sha256": "e323a1aab1db3fe9b5de4bdc2e49d7bb4a91adf4c027f9c41ddb2aa16c12e9d5",
+      "bytes": 4339284
+    },
+    {
+      "catalogId": "TK-000540",
+      "version": "v2",
+      "slug": "swim-kick-drill",
+      "sha256": "7270225c5d9ad0ce64b909144c51ff4f28da27b862b2194921ff05825256b60f",
+      "bytes": 2955571
+    },
+    {
+      "catalogId": "TK-000541",
+      "version": "v2",
+      "slug": "swim-pull-drill",
+      "sha256": "5447fd98ce2ecbe8c172e570ebc63c17cbb0a152690588f35f387c5b13d2c01e",
+      "bytes": 4453562
+    },
+    {
+      "catalogId": "TK-000542",
+      "version": "v2",
+      "slug": "swim-sprint-intervals",
+      "sha256": "e29f146e327d7afd098aea86947ccc0e57ce8f86b3ebfdd5d4bd3307d8d7916f",
+      "bytes": 8674539
+    },
+    {
+      "catalogId": "TK-000543",
+      "version": "v2",
+      "slug": "tate-press",
+      "sha256": "56702210eaabdd1942489010d95cd6da210332571e1de98e6dbbb8c8ecb34ad0",
+      "bytes": 2677332
+    },
+    {
+      "catalogId": "TK-000544",
+      "version": "v2",
+      "slug": "tempo-run",
+      "sha256": "10c7024f9a576b855f3c50a30fa6f35356bd725301d5189625a60166de1ec070",
+      "bytes": 5783369
+    },
+    {
+      "catalogId": "TK-000545",
+      "version": "v2",
+      "slug": "thoracic-extension-over-foam-roller",
+      "sha256": "6183fee0957643d4ae0e117af78f8c02fe30430dcccd2b0789da1b7cd0d729a2",
+      "bytes": 4141172
+    },
+    {
+      "catalogId": "TK-000546",
+      "version": "v2",
+      "slug": "tibialis-raise",
+      "sha256": "d30864ba06abc46bfcf0c3722a4d7ae36634786d03a5538bd25fb04926dce580",
+      "bytes": 2897286
+    },
+    {
+      "catalogId": "TK-000547",
+      "version": "v2",
+      "slug": "toes-to-bar",
+      "sha256": "72fcb7a4bf6bf109e868dae603846375844719abfef5b2c058e5041b17c72efa",
+      "bytes": 3172217
+    },
+    {
+      "catalogId": "TK-000548",
+      "version": "v2",
+      "slug": "towel-doorframe-row",
+      "sha256": "b438f6950a4757387a883101feb4745ff407720538c7e095e061d128e96e0307",
+      "bytes": 5902387
+    },
+    {
+      "catalogId": "TK-000549",
+      "version": "v2",
+      "slug": "towel-isometric-curls",
+      "sha256": "2a5b221bea25d885cbffacc8c985ecb9051da0d572317b870f8a6494871931cd",
+      "bytes": 4241394
+    },
+    {
+      "catalogId": "TK-000550",
+      "version": "v2",
+      "slug": "towel-slide-leg-curl",
+      "sha256": "88ffbad5f439a640485aed9bff124bd1739fa87d6e73d8d433f98c2b4141d4f7",
+      "bytes": 2746341
+    },
+    {
+      "catalogId": "TK-000551",
+      "version": "v2",
+      "slug": "trail-run",
+      "sha256": "65420e6a0e37e7a028417dacc8337ffc948399d001ea762c44c1af41f6317930",
+      "bytes": 5737491
+    },
+    {
+      "catalogId": "TK-000552",
+      "version": "v2",
+      "slug": "trap-bar-carry",
+      "sha256": "1ffa2d1abb7183292fea2eef3fc8f88ddc0e852bfbd10d69e224ca5aa8def413",
+      "bytes": 2333225
+    },
+    {
+      "catalogId": "TK-000553",
+      "version": "v2",
+      "slug": "trap-bar-deadlift",
+      "sha256": "e5613da5240f1f1fbae258718ec18e9186a4c8ae4bd6b4b1b5652022871dbb51",
+      "bytes": 2575626
+    },
+    {
+      "catalogId": "TK-000554",
+      "version": "v2",
+      "slug": "trap-bar-shrug",
+      "sha256": "1ebe06d3659e4a0b74b40191ad84c2ced4ff02e48a3849c2c8e0baa27505feca",
+      "bytes": 4111669
+    },
+    {
+      "catalogId": "TK-000555",
+      "version": "v2",
+      "slug": "treadmill-run",
+      "sha256": "f3b74927ce6ff728ef394938b83047c663e457445360b60209fafe8fd754988d",
+      "bytes": 1682910
+    },
+    {
+      "catalogId": "TK-000556",
+      "version": "v2",
+      "slug": "trx-row",
+      "sha256": "4ce49ef4984b28fb02f62bdbdb26e6c26935ff9d7222d9477c2cf04c28702a24",
+      "bytes": 3812568
+    },
+    {
+      "catalogId": "TK-000557",
+      "version": "v2",
+      "slug": "trx-squat",
+      "sha256": "551999523719e58ae221507daefde8fecf04d83e2d769fe00735abee7e610878",
+      "bytes": 2178469
+    },
+    {
+      "catalogId": "TK-000558",
+      "version": "v2",
+      "slug": "tuck-jump",
+      "sha256": "a11129acb3aba1507bf0ee171ced3ff2893c25911cf495fdfe05ce432bd5838c",
+      "bytes": 3948153
+    },
+    {
+      "catalogId": "TK-000559",
+      "version": "v2",
+      "slug": "turkish-get-up",
+      "sha256": "73ed2b446dc4c13ed5eed2d43e219861c8f07067039348f227bf7a10fe471549",
+      "bytes": 5382639
+    },
+    {
+      "catalogId": "TK-000560",
+      "version": "v2",
+      "slug": "two-arm-kettlebell-military-press",
+      "sha256": "97da75e983cd7cd9910414897b0606741efa212aec6c91f4ea908500f1db56d8",
+      "bytes": 3842242
+    },
+    {
+      "catalogId": "TK-000561",
+      "version": "v2",
+      "slug": "underhand-barbell-row",
+      "sha256": "b6f663eb19b00e9f4d36c4c29f2697899ca93cb2b2cfccff8feb91ae89b63387",
+      "bytes": 4057812
+    },
+    {
+      "catalogId": "TK-000562",
+      "version": "v2",
+      "slug": "v-up",
+      "sha256": "8bab53d62d966f82e429b7366a392b05a15ebf3655976601d1472f6f319ad2c3",
+      "bytes": 7251133
+    },
+    {
+      "catalogId": "TK-000563",
+      "version": "v2",
+      "slug": "versaclimber",
+      "sha256": "f3656845084571a1ed48e553d26dd62a634e63033f14fce66635f6be99f71235",
+      "bytes": 2427242
+    },
+    {
+      "catalogId": "TK-000564",
+      "version": "v2",
+      "slug": "walking-knee-hugs",
+      "sha256": "1d4f7cd21515dddca1965a794e94d38c1cbb93ddb9b6fc7fe25c8d5f49ac8b7c",
+      "bytes": 3412206
+    },
+    {
+      "catalogId": "TK-000565",
+      "version": "v2",
+      "slug": "walking-lunge-with-twist",
+      "sha256": "fe89374a534595534304cbaa363d660825c7e593dde8bb1b951ffc6556f514c8",
+      "bytes": 1817097
+    },
+    {
+      "catalogId": "TK-000566",
+      "version": "v2",
+      "slug": "wall-ball",
+      "sha256": "81cfcec22d93be504999783930d027d370f249991b6ce2f34c71c0cc56ecc572",
+      "bytes": 3113892
+    },
+    {
+      "catalogId": "TK-000567",
+      "version": "v2",
+      "slug": "weighted-parallel-bar-straight-leg-raise",
+      "sha256": "d55eae9db179745313ed35f31c37655fabb0a6d29aeb52a92f9cbf98ec019884",
+      "bytes": 2672938
+    },
+    {
+      "catalogId": "TK-000568",
+      "version": "v2",
+      "slug": "weighted-pull-ups",
+      "sha256": "1e5e2886b8a53d3d065a94ba0c18ff5afd0750be28a070acbc8eaac1660620ba",
+      "bytes": 2613718
+    },
+    {
+      "catalogId": "TK-000569",
+      "version": "v2",
+      "slug": "wide-grip-barbell-bench-press",
+      "sha256": "e7f74d03c28ad42dd212d8efd8022977d7055111773b1727d727b02e6a722d83",
+      "bytes": 2513513
+    },
+    {
+      "catalogId": "TK-000570",
+      "version": "v2",
+      "slug": "wide-grip-barbell-curl",
+      "sha256": "421d9bc602427500aacbb38464a6dce8fe15b2a96295a4723a97601bdcdf03d2",
+      "bytes": 3301253
+    },
+    {
+      "catalogId": "TK-000571",
+      "version": "v2",
+      "slug": "wide-grip-lat-pulldown",
+      "sha256": "18a83f4867525414e9272629efb23708cc5578c67da8932a7478a32beed6ed42",
+      "bytes": 4101656
+    },
+    {
+      "catalogId": "TK-000572",
+      "version": "v2",
+      "slug": "wide-grip-pull-up",
+      "sha256": "1b24e493120906c051ff52a93b31be027e09a6402198b8f02e441cbe76632490",
+      "bytes": 3600529
+    },
+    {
+      "catalogId": "TK-000573",
+      "version": "v2",
+      "slug": "wide-grip-seated-cable-row",
+      "sha256": "8d0e60b5fd2d958d0b2905ffb5ea17cb990550ffbc916cecb3e78f9339652b3b",
+      "bytes": 3234148
+    },
+    {
+      "catalogId": "TK-000574",
+      "version": "v2",
+      "slug": "wide-incline-push-up",
+      "sha256": "533ce1eb87f40386f0419e29f478cd028a447e39a1f42a34906ef1f27befefae",
+      "bytes": 3197089
+    },
+    {
+      "catalogId": "TK-000575",
+      "version": "v2",
+      "slug": "wide-push-up",
+      "sha256": "f6d560efdb13e227b90814608dff1d2c2c813c0c223c31aace672ece942b4963",
+      "bytes": 3196778
+    },
+    {
+      "catalogId": "TK-000576",
+      "version": "v2",
+      "slug": "wide-push-ups",
+      "sha256": "21b0a146627b68e5ef4f40edb7b6876eea03056f77a324cc02183f09253f6655",
+      "bytes": 4933769
+    },
+    {
+      "catalogId": "TK-000577",
+      "version": "v2",
+      "slug": "worlds-greatest-stretch",
+      "sha256": "4a06844d5cab0cdf7cc56e3c521aa2bc388ed6f497fbf9e5ea59ad71f036bf59",
+      "bytes": 5143113
+    },
+    {
+      "catalogId": "TK-000578",
+      "version": "v2",
+      "slug": "wrist-roller",
+      "sha256": "423256e51e71a1f144fec841b1d1d784e3be84567fa8cb915e4ed8e5b5d36cb4",
+      "bytes": 1536207
+    },
+    {
+      "catalogId": "TK-000579",
+      "version": "v2",
+      "slug": "yates-row",
+      "sha256": "6127fd7aa53bb6feff9e76daec772a485e81052233649d027280251a2cd5abe8",
+      "bytes": 5046224
+    },
+    {
+      "catalogId": "TK-000580",
+      "version": "v2",
+      "slug": "z-press",
+      "sha256": "d473c5b7830d3344c6124ff16ffb47b1542a5d70d4993369c28a3980ae47c9ca",
+      "bytes": 3309434
+    },
+    {
+      "catalogId": "TK-000581",
+      "version": "v2",
+      "slug": "zercher-squat",
+      "sha256": "b9babc8b55c7957df891994c6fa8089b49a54009adb6ad2ab35c14be31d48e03",
+      "bytes": 4859090
+    },
+    {
+      "catalogId": "TK-000582",
+      "version": "v2",
+      "slug": "zottman-curl",
+      "sha256": "1c9e8d0fe8426eab2685a2c0dc9474d30716dfd55eae11e3aa73b3ee3c95e424",
+      "bytes": 1743442
+    }
+  ]
+}

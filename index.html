@@ -4544,9 +4544,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-relations"></div>
     <button class="lich-goto" onclick="go('s-lich-verbanden')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="7" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="17" r="2"/><path d="M7.8 8.2L11 15.3M16.4 7.3L13 15.3"/></svg></span><span class="b"><b>Alle verbanden</b><s>Wat lijkt bij jou samen te hangen?</s></span><span class="chev">›</span></button>
 
-    <div class="v43-lbl" style="margin:16px 0 10px">Wat betekent dit?</div>
-    <button class="lich-goto" onclick="go('s-coach')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.2 3.2L16.4 7.6 13.2 8.8 12 12l-1.2-3.2L7.6 7.6l3.2-1.2z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/></svg></span><span class="b"><b>Wat betekent dit voor vandaag?</b><s>De coach legt uit en adviseert</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11M4 4l3 3M20 20l-3-3M2 8l4-4M22 16l-4 4M14 4l3 3-8 8-3-3z"/></svg></span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
     </div>
 
     <div class="v43-lbl" style="margin:18px 0 10px">Domeinen</div>
@@ -34812,7 +34809,7 @@ function tkRelPeriodeZet(d){ tkRelPeriode=Number(d)||90; renderLichaamVerbandDet
    staan alleen de sterkste bevindingen, de volledige lijst zit achter "Alle verbanden".
    Is er niets gevonden, dan blijft de bestaande veilige lege toestand staan — die
    wordt hier niet vervangen maar overgeslagen. */
-const TK_REL_HOME_MAX = 3;
+const TK_REL_HOME_MAX = 2;
 async function renderLichaamVerbanden(){
   const el=document.getElementById('lich-relations'); if(!el) return;
   let uit=null;

@@ -306,6 +306,137 @@ class FailClosedTests(Base):
         self.assertEqual(rc, 1)
 
 
+class ReviewRelationTests(Base):
+    """8 kept apart / 12 metadata-correction / 6 variant members; paired identity links, no dedup."""
+
+    def build(self):
+        st = self.stage
+        owner_ids = [x['catalog_id'] for x in st['catalog'] if
+                     x.get('_review', {}).get('review_route') == 'OWNER_FEEDBACK_PENDING_CONTENT_REVIEW']
+        self.assertEqual(len(owner_ids), 26)
+        plan = ['apart'] * 8 + ['meta'] * 12 + ['variant'] * 6
+        by = {x['catalog_id']: x for x in st['catalog']}
+        for cid, choice in zip(owner_ids, plan):
+            fb = by[cid]['_review']['feedback']
+            fb['owner_choice'] = choice
+            if choice == 'meta':
+                fb['source_metadata_proposal'] = {'approved': False, 'fields': {'equipment': ['Synth Term']}}
+        variants = owner_ids[20:]
+        # 3 pairs, each pair points at the other (and one points at an existing published id)
+        pairs = [(variants[0], variants[1]), (variants[2], variants[3]), (variants[4], 'TK-000010')]
+        for a, b in pairs:
+            by[a]['_review']['feedback']['variant_pair'] = {
+                'peer_catalog_id': b, 'video_bytes_identical': False,
+                'automated_deduplication_permitted': False, 'formal_variant_relation_approved': False}
+        by[variants[1]]['_review']['feedback']['variant_pair'] = {
+            'peer_catalog_id': variants[0], 'video_bytes_identical': False,
+            'automated_deduplication_permitted': False, 'formal_variant_relation_approved': False}
+        by[variants[3]]['_review']['feedback']['variant_pair'] = {
+            'peer_catalog_id': variants[2], 'video_bytes_identical': False,
+            'automated_deduplication_permitted': False, 'formal_variant_relation_approved': False}
+        by[variants[5]]['_review']['feedback']['variant_pair'] = {
+            'peer_catalog_id': variants[4], 'video_bytes_identical': False,
+            'automated_deduplication_permitted': False, 'formal_variant_relation_approved': False}
+        return owner_ids, variants
+
+    def test_owner_split_and_unapproved_flags_survive(self):
+        owner_ids, variants = self.build()
+        self.run_gen()
+        data = self.embedded((self.private / 'preview.html').read_text(encoding='utf8'))
+        owner = [x for x in data['items'] if x['owner']]
+        self.assertEqual([x['owner']['choice'] for x in owner].count('apart'), 8)
+        self.assertEqual([x['owner']['choice'] for x in owner].count('meta'), 12)
+        self.assertEqual([x['owner']['choice'] for x in owner].count('variant'), 6)
+        meta = [x for x in data['items'] if x['metadata']]
+        self.assertEqual(len(meta), 12)
+        self.assertTrue(all(x['metadata']['approved'] is False for x in meta))
+        paired = [x for x in data['items'] if x['variant']]
+        self.assertEqual(len(paired), 6)
+        self.assertTrue(all(x['variant']['automated_deduplication_permitted'] is False and
+                            x['variant']['formal_variant_relation_approved'] is False for x in paired))
+        # no auto-dedup: all 582 ids and slugs remain
+        self.assertEqual(len({x['id'] for x in data['items']}), 582)
+        self.assertEqual(len({x['slug'] for x in data['items']}), 582)
+
+    def test_pair_links_resolve_in_both_directions(self):
+        owner_ids, variants = self.build()
+        self.run_gen()
+        data = self.embedded((self.private / 'preview.html').read_text(encoding='utf8'))
+        ids = {x['id'] for x in data['items']}
+        for x in data['items']:
+            if x['variant']:
+                self.assertIn(x['variant']['peer_catalog_id'], ids)
+        by = {x['id']: x for x in data['items']}
+        self.assertEqual(by[variants[0]]['variant']['peer_catalog_id'], variants[1])
+        self.assertEqual(by[variants[1]]['variant']['peer_catalog_id'], variants[0])
+        # a pending item referencing a published one does not change the published item
+        self.assertIsNone(by['TK-000010']['variant'])
+        self.assertEqual(by['TK-000010']['group'], 'published')
+
+    def test_source_terms_are_embedded_verbatim_without_synonyms(self):
+        self.build()
+        for x in self.stage['catalog']:
+            r = x.get('_review')
+            if r and r['review_route'] == 'SOURCE_TERM_PROPOSAL_PENDING_HUMAN_REVIEW':
+                r['feedback']['proposed_exact_vocabulary'] = [{'term': 'Wrist  Roller', 'source_sha256': 'a' * 64}]
+        self.run_gen()
+        data = self.embedded((self.private / 'preview.html').read_text(encoding='utf8'))
+        terms = [x for x in data['items'] if x['group'] == 'term']
+        self.assertEqual(len(terms), 85)
+        for t in terms:
+            self.assertEqual(t['proposal'], [{'term': 'Wrist  Roller', 'source_sha256': 'a' * 64}])
+        html = (self.private / 'preview.html').read_text(encoding='utf8')
+        self.assertIn('Voorstel bronterm (niet bevestigd)', html)
+
+
+class UxContractTests(Base):
+    """Static contract checks for the navigation / accessibility / performance upgrade."""
+
+    def page(self):
+        self.run_gen()
+        return (self.private / 'preview.html').read_text(encoding='utf8')
+
+    def test_detail_is_a_modal_dialog_with_focus_management(self):
+        html = self.page()
+        self.assertRegex(html, r'<aside id="detail" hidden role="dialog" aria-modal="true" aria-labelledby="detail-title">')
+        for needle in ("e.key==='Escape'", 'function trap(e)', 'lastFocus', "$('page').inert=true",
+                       "$('page').inert=false", "h.id='detail-title'", 'id="scrim"'):
+            self.assertIn(needle, html)
+
+    def test_large_catalog_is_rendered_in_chunks(self):
+        html = self.page()
+        self.assertIn('var PAGE=96;', html)
+        self.assertIn('current.slice(0,S.limit)', html)
+        self.assertIn('id="more"', html)
+        self.assertIn('setTimeout(function(){S.q=v;render();},120)', html)
+
+    def test_owner_filter_and_relationship_chips_exist(self):
+        html = self.page()
+        self.assertIn('id="owner"', html)
+        self.assertIn('Gekoppeld paar', html)
+        self.assertIn('Gekoppeld vanuit (niet automatisch ontdubbeld)', html)
+        self.assertIn('Metadata-voorstel (niet goedgekeurd)', html)
+
+    def test_no_text_suggests_approval(self):
+        html = self.page()
+        ui = html.split('<script type="application/json"')[0] + html.split('</script>', 1)[1]
+        for m in re.finditer(r'(?i)goedgekeurd|vrijgegeven|approved|gepubliceerd', ui):
+            ctx = ui[max(0, m.start() - 24):m.end()].lower()
+            self.assertTrue(any(k in ctx for k in ('niet ', 'bestaand', 'geen ', 'niets', 'alleen'))
+                            or 'garandeert' in ctx, ctx)
+
+    def test_csp_still_strict_and_no_network(self):
+        html = self.page()
+        self.assertIn("default-src 'none'", html)
+        self.assertNotRegex(html, r'(?i)\b(fetch|XMLHttpRequest|WebSocket|sendBeacon|serviceWorker|importScripts)\b')
+        self.assertNotRegex(html, r'(?i)(src|href)="https?:')
+
+    def test_deep_link_hash_is_validated(self):
+        html = self.page()
+        self.assertIn(r"/^#(TK-\d{6})$/", html)
+        self.assertIn('byId[m[1]]', html)
+
+
 @unittest.skipUnless(shutil.which('node'), 'node not available')
 class JavaScriptSyntaxTests(Base):
     def test_embedded_script_parses(self):

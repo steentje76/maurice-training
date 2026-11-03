@@ -270,6 +270,13 @@ header.top p{margin:4px 0 0;color:#b9c9da;font-size:13px}
 .b-published{background:#e1f2e8;color:var(--ok)}
 .b-ai,.b-term,.b-owner{background:#fdeccd;color:var(--warn)}
 .b-vid{background:#e3edf8;color:#27517f}
+.b-rel{background:#ece8f8;color:#4a3a86}
+.more{display:block;margin:16px auto 0}
+.more[hidden],#scrim[hidden]{display:none}
+#scrim{position:fixed;inset:0;background:rgba(16,37,63,.45);z-index:15}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.card{content-visibility:auto;contain-intrinsic-size:260px 300px}
+.link{min-height:32px}
 .chips{margin-top:6px;color:var(--mut);font-size:12px}
 .empty{padding:40px;text-align:center;color:var(--mut)}
 aside#detail{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:#fff;border-left:1px solid var(--line);box-shadow:-6px 0 24px rgba(16,37,63,.18);overflow:auto;z-index:20;padding:16px 18px 40px}
@@ -287,7 +294,8 @@ ul.plain{margin:0;padding-left:18px}
 .muted{color:var(--mut)}
 .tag{display:inline-block;background:#eef3f7;border-radius:6px;padding:1px 7px;margin:2px 4px 2px 0;font-size:13px}
 .link{background:none;border:0;color:var(--teal-d);text-decoration:underline;cursor:pointer;font:inherit;padding:0}
-@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}.wrap{padding:12px}}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr);gap:8px}.wrap{padding:10px}.tiles{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.tile{min-width:128px;flex:0 0 auto}.tools{position:static}.tools select{flex:1 1 140px}.btn,.tile,.tools input,.tools select{min-height:44px}aside#detail{width:100%;border-left:0;padding:12px 14px 40px}header.top h1{font-size:17px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 '''
 
 SCRIPT = r'''
@@ -301,7 +309,9 @@ var REASON={
  term:'Alleen een voorstel op basis van exacte brontermen; menselijke beoordeling is nog nodig.',
  owner:'Eigenaar-feedback is verwerkt; een inhoudelijke beoordeling en vrijgave volgen nog.'};
 var ORDER={published:0,ai:1,term:2,owner:3};
-var S={q:'',exact:false,group:'all',equipment:'',muscle:'',video:false,sort:'name'};
+var PAGE=96;
+var S={q:'',exact:false,group:'all',owner:'',equipment:'',muscle:'',video:false,sort:'name',limit:PAGE};
+var incoming={},lastFocus=null,qTimer=null;
 function $(id){return document.getElementById(id);}
 function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=String(txt);return e;}
 function norm(s){return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
@@ -310,6 +320,7 @@ function isPending(it){return it.group!=='published';}
 
 items.forEach(function(it){
  byId[it.id]=it;
+ if(it.variant&&it.variant.peer_catalog_id){var pe=it.variant.peer_catalog_id;(incoming[pe]=incoming[pe]||[]).push(it.id);}
  var tg=it.primary.concat(it.secondary,it.equipment);
  it._h=norm([it.name,it.nl,it.id,it.slug].concat(tg).join(' | '));
  it._x=[it.name,it.nl,it.id,it.slug].concat(tg).filter(Boolean).map(norm);
@@ -318,6 +329,7 @@ items.forEach(function(it){
 function matches(it){
  if(S.group==='pending'){if(!isPending(it))return false;}
  else if(S.group!=='all'&&it.group!==S.group)return false;
+ if(S.owner&&(!it.owner||it.owner.choice!==S.owner))return false;
  if(S.equipment&&it.equipment.indexOf(S.equipment)<0)return false;
  if(S.muscle&&it.primary.indexOf(S.muscle)<0&&it.secondary.indexOf(S.muscle)<0)return false;
  if(S.video&&!it.video)return false;
@@ -342,13 +354,17 @@ function thumb(it,big){
 }
 function badge(it){return el('span','badge b-'+it.group,isPending(it)?PENDING:GROUP_LABEL.published);}
 function card(it){
- var b=el('button','card');b.type='button';
+ var b=el('button','card');b.type='button';b.setAttribute('data-id',it.id);
+ b.setAttribute('aria-label',it.name+', '+it.id+', '+(isPending(it)?PENDING:GROUP_LABEL.published));
  b.appendChild(thumb(it,false));
  var body=el('div','cbody');
  body.appendChild(el('h3',null,it.name));
  body.appendChild(el('div','cid',it.id+(it.nl&&it.nl!==it.name?' \u00b7 '+it.nl:'')));
  body.appendChild(badge(it));
  if(isPending(it))body.appendChild(el('span','badge b-'+it.group,GROUP_LABEL[it.group]));
+ if(it.owner)body.appendChild(el('span','badge b-rel',it.owner.label));
+ if(it.metadata)body.appendChild(el('span','badge b-rel','Metadata-voorstel (niet goedgekeurd)'));
+ if(it.variant||incoming[it.id])body.appendChild(el('span','badge b-rel','Gekoppeld paar'));
  if(it.video)body.appendChild(el('span','badge b-vid','Video lokaal'));
  var t=it.primary.concat(it.equipment).slice(0,4).join(' \u00b7 ');
  if(t)body.appendChild(el('div','chips',t));
@@ -356,14 +372,19 @@ function card(it){
  b.addEventListener('click',function(){openDetail(it);});
  return b;
 }
-function render(){
- var list=items.filter(matches).sort(sorter());
+var current=[];
+function render(keepLimit){
+ if(!keepLimit)S.limit=PAGE;
+ current=items.filter(matches).sort(sorter());
  var grid=$('grid');while(grid.firstChild)grid.removeChild(grid.firstChild);
+ var shown=current.slice(0,S.limit);
  var frag=document.createDocumentFragment();
- list.forEach(function(it){frag.appendChild(card(it));});
+ shown.forEach(function(it){frag.appendChild(card(it));});
  grid.appendChild(frag);
- $('count').textContent=list.length+' van '+items.length+' oefeningen';
- $('empty').hidden=list.length>0;
+ $('count').textContent=current.length+' van '+items.length+' oefeningen · '+shown.length+' getoond';
+ $('more').hidden=shown.length>=current.length;
+ $('more').textContent='Toon meer ('+(current.length-shown.length)+' resterend)';
+ $('empty').hidden=current.length>0;
  Array.prototype.forEach.call(document.querySelectorAll('[data-group]'),function(t){
   t.classList.toggle('on',t.getAttribute('data-group')===S.group);});
  $('group').value=S.group;
@@ -392,10 +413,11 @@ function tagRow(parent,label,arr){
 function section(root,title){root.appendChild(el('h4',null,title));var d=el('div');root.appendChild(d);return d;}
 function openDetail(it){
  var root=$('detail');
+ if(root.hidden)lastFocus=document.activeElement;
  while(root.firstChild)root.removeChild(root.firstChild);
- var close=el('button','btn ghost','Sluiten');close.type='button';close.addEventListener('click',closeDetail);
+ var close=el('button','btn ghost','Sluiten');close.type='button';close.id='detail-close';close.addEventListener('click',closeDetail);
  root.appendChild(close);
- root.appendChild(el('h2',null,it.name));
+ var h=el('h2',null,it.name);h.id='detail-title';h.tabIndex=-1;root.appendChild(h);
  root.appendChild(el('div','cid',it.id+' \u00b7 '+it.slug));
  root.appendChild(badge(it));
  if(isPending(it))root.appendChild(el('span','badge b-'+it.group,GROUP_LABEL[it.group]));
@@ -444,17 +466,45 @@ function openDetail(it){
  }
  if(it.variant){
   var vs=section(root,'Variant-koppeling (niet automatisch ontdubbeld)');
-  var peer=it.variant.peer_catalog_id;
-  if(peer&&byId[peer]){
-   var lk=el('button','link',byId[peer].name+' ('+peer+')');lk.type='button';
-   lk.addEventListener('click',function(){openDetail(byId[peer]);});
-   vs.appendChild(lk);
-  }
+  peerLink(vs,'Gekoppeld aan',it.variant.peer_catalog_id);
   renderValue({'video_bytes_identical':it.variant.video_bytes_identical},vs);
  }
+ if(incoming[it.id]&&!(it.variant&&incoming[it.id].length===1&&incoming[it.id][0]===it.variant.peer_catalog_id)){
+  var is=section(root,'Gekoppeld vanuit (niet automatisch ontdubbeld)');
+  incoming[it.id].forEach(function(id){peerLink(is,'Verwijst naar deze oefening',id);});
+ }
  root.hidden=false;root.scrollTop=0;
+ $('scrim').hidden=false;$('page').inert=true;$('page').setAttribute('aria-hidden','true');
+ try{history.replaceState(null,'','#'+it.id);}catch(e){}
+ h.focus();
 }
-function closeDetail(){var r=$('detail');while(r.firstChild)r.removeChild(r.firstChild);r.hidden=true;}
+function peerLink(parent,label,id){
+ var row=el('div');row.appendChild(el('span','muted',label+': '));
+ var t=byId[id];
+ if(t){
+  var lk=el('button','link',t.name+' ('+id+')');lk.type='button';
+  lk.addEventListener('click',function(){openDetail(t);});
+  row.appendChild(lk);
+  row.appendChild(el('span','badge '+(isPending(t)?'b-'+t.group:'b-published'),isPending(t)?PENDING:'Bestaand · ongewijzigd'));
+ }else row.appendChild(el('span','muted',id+' (niet in deze bibliotheek)'));
+ parent.appendChild(row);
+}
+function closeDetail(){
+ var r=$('detail');if(r.hidden)return;
+ while(r.firstChild)r.removeChild(r.firstChild);
+ r.hidden=true;$('scrim').hidden=true;$('page').inert=false;$('page').removeAttribute('aria-hidden');
+ try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+ var f=lastFocus;lastFocus=null;
+ if(f&&f.isConnected&&f.focus)f.focus();else $('q').focus();
+}
+function trap(e){
+ var r=$('detail');if(r.hidden||e.key!=='Tab')return;
+ var f=Array.prototype.filter.call(r.querySelectorAll('button,[href],input,select,video[controls],[tabindex]:not([tabindex="-1"])'),function(x){return !x.disabled;});
+ if(!f.length){e.preventDefault();return;}
+ var first=f[0],last=f[f.length-1],a=document.activeElement;
+ if(e.shiftKey&&(a===first||!r.contains(a))){e.preventDefault();last.focus();}
+ else if(!e.shiftKey&&(a===last||!r.contains(a))){e.preventDefault();first.focus();}
+}
 
 function uniq(get){
  var s={};items.forEach(function(it){get(it).forEach(function(t){s[t]=1;});});
@@ -471,18 +521,32 @@ function init(){
  Array.prototype.forEach.call(document.querySelectorAll('[data-group]'),function(t){
   t.addEventListener('click',function(){S.group=t.getAttribute('data-group');render();});});
  $('group').addEventListener('change',function(e){S.group=e.target.value;render();});
- $('q').addEventListener('input',function(e){S.q=e.target.value;render();});
+ $('q').addEventListener('input',function(e){var v=e.target.value;clearTimeout(qTimer);qTimer=setTimeout(function(){S.q=v;render();},120);});
+ $('owner').addEventListener('change',function(e){S.owner=e.target.value;render();});
+ $('more').addEventListener('click',function(){S.limit+=PAGE*2;render(true);});
+ $('scrim').addEventListener('click',closeDetail);
  $('exact').addEventListener('change',function(e){S.exact=e.target.checked;render();});
  $('equipment').addEventListener('change',function(e){S.equipment=e.target.value;render();});
  $('muscle').addEventListener('change',function(e){S.muscle=e.target.value;render();});
  $('video').addEventListener('change',function(e){S.video=e.target.checked;render();});
  $('sort').addEventListener('change',function(e){S.sort=e.target.value;render();});
  $('reset').addEventListener('click',function(){
-  S={q:'',exact:false,group:'all',equipment:'',muscle:'',video:false,sort:'name'};
-  $('q').value='';$('exact').checked=false;$('equipment').value='';$('muscle').value='';
+  clearTimeout(qTimer);
+  S={q:'',exact:false,group:'all',owner:'',equipment:'',muscle:'',video:false,sort:'name',limit:PAGE};
+  $('q').value='';$('owner').value='';$('exact').checked=false;$('equipment').value='';$('muscle').value='';
   $('video').checked=false;$('sort').value='name';render();});
- document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDetail();});
+ document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){closeDetail();return;}
+  trap(e);
+  var t=e.target&&e.target.tagName;
+  if(e.key==='/'&&t!=='INPUT'&&t!=='SELECT'&&$('detail').hidden){e.preventDefault();$('q').focus();}
+ });
+ var oc={},on={};
+ items.forEach(function(it){if(it.owner){oc[it.owner.choice]=it.owner.label;on[it.owner.choice]=(on[it.owner.choice]||0)+1;}});
+ Object.keys(oc).sort().forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=oc[k]+' ('+on[k]+')';$('owner').appendChild(o);});
  render();
+ var m=/^#(TK-\d{6})$/.exec(location.hash||'');
+ if(m&&byId[m[1]]){openDetail(byId[m[1]]);}
 }
 init();
 })();
@@ -492,7 +556,7 @@ BODY = '''<header class="top"><h1>Trainingskompas \u00b7 Oefeningenbibliotheek \
 <p>Lokale voorbeeldweergave van alle MoveKit-oefeningen. Alleen voor de eigenaar.</p></header>
 <div class="banner">Priv\u00e9 en niet vrijgegeven: niets is gepubliceerd, er is geen koppeling met de app en er zijn geen mediarechten toegekend. Video's en posters worden alleen lokaal geopend.</div>
 <noscript><div class="banner">Voor deze pagina is JavaScript nodig.</div></noscript>
-<div class="wrap">
+<div class="wrap" id="page">
 <div class="tiles">
 <button type="button" class="tile" data-group="all"><b id="n-all">0</b><span>Alle oefeningen</span></button>
 <button type="button" class="tile" data-group="published"><b id="n-pub">0</b><span>Bestaand (ongewijzigd)</span></button>
@@ -505,6 +569,7 @@ BODY = '''<header class="top"><h1>Trainingskompas \u00b7 Oefeningenbibliotheek \
 <input type="search" id="q" placeholder="Zoek op naam, ID, spier of materiaal" aria-label="Zoeken" autocomplete="off">
 <label><input type="checkbox" id="exact"> Exacte term</label>
 <select id="group" aria-label="Status"><option value="all">Alle statussen</option><option value="published">Bestaand</option><option value="pending">Nieuw (alle)</option><option value="ai">AI-voorstel</option><option value="term">Alleen bronterm</option><option value="owner">Eigenaar-feedback</option></select>
+<select id="owner" aria-label="Eigenaar-keuze"><option value="">Alle eigenaar-keuzes</option></select>
 <select id="equipment" aria-label="Materiaal"><option value="">Alle materiaal</option></select>
 <select id="muscle" aria-label="Spiergroep"><option value="">Alle spieren</option></select>
 <label><input type="checkbox" id="video"> Met lokale video</label>
@@ -513,9 +578,11 @@ BODY = '''<header class="top"><h1>Trainingskompas \u00b7 Oefeningenbibliotheek \
 </div>
 <div class="count" id="count"></div>
 <div class="grid" id="grid"></div>
+<button type="button" class="btn ghost more" id="more" hidden>Toon meer</button>
 <div class="empty" id="empty" hidden>Geen oefeningen gevonden voor deze selectie.</div>
 </div>
-<aside id="detail" hidden aria-label="Details"></aside>'''
+<div id="scrim" hidden></div>
+<aside id="detail" hidden role="dialog" aria-modal="true" aria-labelledby="detail-title"></aside>'''
 
 
 def render_html(items):

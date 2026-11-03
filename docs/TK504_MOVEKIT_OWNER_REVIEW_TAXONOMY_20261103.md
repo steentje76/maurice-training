@@ -31,6 +31,16 @@ python -m unittest discover -s tools -p "test_movekit_v2_taxonomy_preflight.py" 
 - Gecontroleerde privéprojectie: `C:\Movikit\.tk-private-review\TK504-V2-PRIVATE-REVIEWED-STAGE-582-FINAL-20261103.json`. Deze privéprojectie (met leverancierbeschrijvingen) **nooit** aan Git toevoegen.
 - De vervolgintegratie van JS-bronfacetten gebeurt als een afzonderlijk synthetisch getest contract; er is nog geen ingeschakelde UI/zoekfilter of wetenschappelijke spierbelastingafleiding.
 
+## Private 582 preview en bestaande ExerciseCatalogService — 3 november 2026
+
+- `core/movekitV2EcsReviewAdapter.js` is een pure **review-only** adapter die de bestaande `ExerciseCatalogService.search()` aanroept en optionele exacte bronfilters toevoegt (`movekitSourceMuscle`, `movekitSourceEquipment`). Het is uitdrukkelijk géén tweede zoekmachine, geen wijziging aan `index.html`, en geen productieroute. De app blijft ongewijzigd.
+- Synthetische test met werkelijke uit `index.html` geëxtraheerde `ExerciseCatalogService`: **14/14 PASS**; 582 records, 226 bestaande, 356 review. Het review-only contract faalt bij ongeldige stage, verkeerde bronprovider, foutieve registry of premature activatie.
+- De echte private 582-stage is met de onveranderde `ExerciseCatalogService` getest via `tools/movekit-v2-private-ecs-smoke.js`: **PASS**, zoekindex intact, 35 bronrecord-matches voor `Forearms`, 21 voor `Lower Back`, 7 voor `Bench`. Deze aantallen zijn exacte bronterm-matches in de stage, **geen wetenschappelijke spierbelastinguitkomsten**.
+- Claude Code bouwde `tools/movekit-v2-private-library-preview.py` plus synthetische regressietests. **20/20 PASS**. De generator leest alleen de privé 582-stage, slaat de HTML uitsluitend op in `C:\Movikit\.tk-private-review` op en verwijst naar lokale media; ze worden niet gekopieerd of gepubliceerd. 582/582 posterbestanden en 582/582 videobestanden lokaal aangetroffen.
+- De door Claude gegenereerde lokale private HTML is in Chrome gerenderd met 582 daadwerkelijke kaarten en op 16 browserinteracties gecontroleerd: **16/16 PASS**. De browserinteracties testen o.a. 226/245/85/26 filters, Forearms/Lower Back/Bench, zoeken op TK-ID, eigenaar-opmerking, detail, op aanvraag videospeler, geen matches en reset. Geen claims over echte MP4-decodering, Android-UI of online rechten.
+- Persoonlijke eigenaarfeedback en volledige leverancierbeschrijvingen staan **uitsluitend lokaal**; er worden geen privé-outputbestanden, MP4 of WebP in Git opgenomen.
+- De privépreview is een testomgeving voor inhoud en UX, niet hetzelfde als een geïntegreerde gebruikersapplicatie.
+
 ## Releasegates blijven open
 
 - De nieuwe 18 termen moeten nog versioneerbaar worden opgenomen in de uiteindelijke catalogus-/UI-/filter- en spierbelastingcontracten, zonder te vervallen in onnauwkeurige synoniemen.

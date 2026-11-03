@@ -25009,8 +25009,12 @@ async function refreshHome(){
   const lh=hd[0];
   // Sprint 2 — Home-personalisatie: 'Jouw ritme' uit training_context (onboarding).
   // Alleen tonen wanneer de data echt bestaat; geen fake planning.
-  // Trainingsritme wordt nu op Trainen getoond; cache wordt bij openen opnieuw geladen
-  // en tegen accountwissel beschermd door refreshTrainContext().
+  // Behoud de Home-contextcache voor bestaande plannings- en coachfuncties.
+  // De zichtbare kaart staat nu onder Trainen en wordt daar ook zelfstandig geladen.
+  const ctxOwner=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const ctxCurrent=()=>ctxOwner===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
+  try{const tcRows=await v43SafeGet('training_context','&limit=1');if(ctxCurrent())renderHomeContextCard(tcRows&&tcRows[0]);}
+  catch(_){if(ctxCurrent())renderHomeContextCard(null);}
   let dfInfo=null,nextT=null;
   if(lh){
     const hrvComponent=hrvDagFactorPersonal(hd);

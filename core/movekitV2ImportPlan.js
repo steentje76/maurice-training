@@ -11,7 +11,7 @@ function plan(published,rows,bindings=[],staged=null){
   for(const b of bindings){
     const entry=b&&canon.get(b.catalog_id),row=b&&byId.get(b.exercise_id);
     if(!entry||!row||row.scope!=='global'||row.user_id!=null||row.owner_id!=null||
-      row.created_by!=null||b.provider_id!==entry.source.provider_id||
+      row.created_by!=null||row.has_owner===true||b.provider_id!==entry.source.provider_id||
       b.status!=='approved'||typeof b.review_ref!=='string'||!b.review_ref.trim()||
       bound.has(b.catalog_id)||used.has(b.exercise_id))throw new Error('UNSAFE_APPROVED_BINDING');
     bound.set(b.catalog_id,b);used.add(b.exercise_id);
@@ -34,7 +34,8 @@ function plan(published,rows,bindings=[],staged=null){
   }
   const operations=entries.map(entry=>{
     if(!canon.has(entry.catalog_id))return {catalog_id:entry.catalog_id,
-      exercise_id:'movekit-v2-'+entry.catalog_id,action:'HOLD_CLASSIFICATION_REVIEW',
+      exercise_id:'movekit-v2-'+entry.catalog_id,action:byId.has('movekit-v2-'+entry.catalog_id)?'HOLD_DATABASE_ID_COLLISION':'HOLD_CLASSIFICATION_REVIEW',
+      hold_reasons:byId.has('movekit-v2-'+entry.catalog_id)?['CLASSIFICATION_REVIEW','DATABASE_ID_COLLISION']:['CLASSIFICATION_REVIEW'],
       requires_review:true};
     const cid=entry.catalog_id,b=bound.get(cid);
     if(b)return {catalog_id:cid,exercise_id:b.exercise_id,action:'KEEP_REVIEWED_BINDING'};

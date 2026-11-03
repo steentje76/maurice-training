@@ -39,3 +39,8 @@ assert.throws(()=>plan(catalog,rows,[],{catalog:staged.catalog.slice(1)}),/INVAL
 const changed=JSON.parse(JSON.stringify(staged));changed.catalog[0].identity.name='changed';
 assert.throws(()=>plan(catalog,rows,[],changed),/PUBLISHED_CATALOG_CHANGED/);
 console.log('582-identity plan: 226 preserved, 356 review holds PASS');
+
+const newCollision=plan(catalog,[...rows,{id:'movekit-v2-TK-000227',name:'Unrelated',scope:'personal'}],[],staged);
+assert.deepEqual(newCollision.operations[226].hold_reasons,['CLASSIFICATION_REVIEW','DATABASE_ID_COLLISION']);
+assert.throws(()=>plan(catalog,[personal,{...rows[1],has_owner:true}],[binding]),/UNSAFE_APPROVED_BINDING/);
+console.log('Review fixes: new-candidate collisions and ownership flags PASS');

@@ -17,6 +17,8 @@ assert(insight.includes('<b>Lichaamssamenstelling</b>'), 'body context label');
 const context=section('<div class="inzicht-context-list" role="group" aria-label="Gegevens en context">','</div>');
 assert.equal((context.match(/class="lich-goto"/g)||[]).length,4,'four context actions grouped into one card');
 for(const route of ['s-lich-metingen','s-lich-gegevens','s-lich-cyclus','s-nutrition']) assert(context.includes("go('"+route+"')"),'context preserves route '+route);
+const contextOrder=['s-lich-metingen','s-lich-gegevens','s-lich-cyclus','s-nutrition'].map(route=>context.indexOf("go('"+route+"')"));
+assert(contextOrder.every((pos,i)=>pos>=0&&(i===0||pos>contextOrder[i-1])),'approved context grouping order preserved');
 const domains=section('var domains=[','el.innerHTML=domains.map');
 assert(!domains.includes("title:'Lichaam'"), 'body not top-level domain');
 assert(domains.includes("title:'Herstel'"), 'recovery retained');

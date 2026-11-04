@@ -1,0 +1,19 @@
+{
+  "schema": "tk504-owner-facet-proposals/1.0",
+  "version": 1,
+  "source": "OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE",
+  "status": "PROPOSED_NOT_APPROVED",
+  "approval": false,
+  "runtime_activation": false,
+  "note": "Equipment facets suggested in owner feedback. They are NOT supplier attributes, NOT approved, and are deliberately kept apart from tools/movekit-v2-taxonomy-map.json (supplier-exact terms). No canonical filter mapping exists.",
+  "facets": {
+    "bench": {"source": "OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE", "approval": false, "canonical_filter_mapping": null},
+    "cambered_bar": {"source": "OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE", "approval": false, "canonical_filter_mapping": null},
+    "dip_belt": {"source": "OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE", "approval": false, "canonical_filter_mapping": null},
+    "jump_rope": {"source": "OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE", "approval": false, "canonical_filter_mapping": null},
+    "medicine_ball": {"source": "OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE", "approval": false, "canonical_filter_mapping": null},
+    "pull_up_bar": {"source": "OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE", "approval": false, "canonical_filter_mapping": null},
+    "trap_bar": {"source": "OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE", "approval": false, "canonical_filter_mapping": null},
+    "wall_target": {"source": "OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE", "approval": false, "canonical_filter_mapping": null}
+  }
+}

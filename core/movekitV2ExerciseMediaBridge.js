@@ -20,22 +20,35 @@
   function create(opts){
     opts=opts||{};
     const data=opts.catalog&&opts.catalog.catalog;
+    const catalogStatus=opts.catalog&&opts.catalog._status;
+    if(catalogStatus!==undefined && catalogStatus!=='PRIVATE_REVIEW_NOT_RELEASED')
+      throw error('UNTRUSTED_CATALOG_RELEASE_STATUS');
+    const privateReviewStage=catalogStatus==='PRIVATE_REVIEW_NOT_RELEASED';
     const client=opts.mediaClient;
     if(!Array.isArray(data)||!client||typeof client.get!=='function'
        ||typeof client.invalidate!=='function'){
       throw error('BRIDGE_NOT_CONFIGURED');
     }
     const byCatalogId=new Map();
+    const seenCatalogIds=new Set();
     const seenSlugs=new Set();
     for(const row of data){
       if(!row||typeof row.catalog_id!=='string'||!ID.test(row.catalog_id))
         throw error('INVALID_EXERCISE_CATALOG');
-      if(byCatalogId.has(row.catalog_id))throw error('DUPLICATE_EXERCISE_CATALOG_ID');
+      if(seenCatalogIds.has(row.catalog_id))throw error('DUPLICATE_EXERCISE_CATALOG_ID');
+      seenCatalogIds.add(row.catalog_id);
       if(!row.source||row.source.provider!=='movekit')continue;
       const slug=row.source.provider_id;
       if(typeof slug!=='string'||!SLUG.test(slug)||seenSlugs.has(slug))
         throw error('INVALID_MOVEKIT_SOURCE_IDENTITY');
       seenSlugs.add(slug);
+      // A private V2 review stage is NOT publication authority. The new
+      // candidates include owner/AI source metadata but no verified release.
+      // Skip all pending review identities before they reach the signing client.
+      // A future released canonical catalog must come from a separately
+      // authenticated publication process, not from this private stage.
+      if(privateReviewStage || row._review ||
+         (row.identity && row.identity.category==='pending_review'))continue;
       byCatalogId.set(row.catalog_id,Object.freeze({
         catalogId:row.catalog_id,provider:'movekit',providerId:slug,
         version:'v2'

@@ -33,7 +33,7 @@ let _opts = [];
 async function sbPostQ(t, row, opts){ _posted.push({ t, row }); _opts.push(opts); return { ok: _postResult, status: _postResult ? 'confirmed' : 'rejected' }; }
 function invalidateExPickerPool(){ _invalidated++; }
 const CAT = {
-  'TK-000105': { catalog_id:'TK-000105', identity:{ name:'Dumbbell Goblet Squat', primary:['Quadriceps'], secondary:['Billen'], equipment:['dumbbell'] } }
+  'TK-000105': { catalog_id:'TK-000105', source:{ provider:'movekit', provider_id:'dumbbell-goblet-squat' }, identity:{ name:'Dumbbell Goblet Squat', primary:['Quadriceps'], secondary:['Billen'], equipment:['dumbbell'] } }
 };
 let ExerciseCatalogService = { byId:(id)=>CAT[id]||null };
 

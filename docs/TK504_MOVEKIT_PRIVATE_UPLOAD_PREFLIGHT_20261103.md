@@ -5,6 +5,11 @@ Branch: feat/tk504-media-upload-preflight-20261103
 Base SHA: cbac55c569595ffc86a5ef35f452e8fbade01fa0
 Governance: MoveKit #504 / Draft PR #595 and preceding repair PR #587.
 
+> Historical pre-upload baseline only (3 November 2026). This document
+> describes what this isolated tool verified **before** the later private
+> transfer. The integration into the newer stacked #598 review branch does
+> not re-run a remote inventory, authorize uploads, or change production.
+
 ## Scope
 Prepare secure, idempotent migration of 582 vendor MP4s and the corresponding
 582 optimized WebP posters from authorized local media into private Supabase
@@ -29,16 +34,18 @@ current Draft PR #595 and the private optimized-poster registry.
 - Immutable V1 and V2 paths never overwritten.
 - Local private plan: C:\Movikit\.tk-private-review\
   TK504-PRIVATE-MEDIA-UPLOAD-PLAN-20261103.json
-- Upload status: **NOT EXECUTED**; remote object count currently known as zero
-  for exercise-media. No billing-relevant 2GB media transfer was initiated.
+- At the time of this preflight: **NOT EXECUTED**; exercise-media contained
+  zero objects. No transfer was initiated by this workstream. This is not a
+  claim about the subsequent state of Supabase Storage.
 
 ## Remote prerequisites
 Supabase project: Maurice training (mhfxhzkdmgkaplicdszg).
-Read-only preflight on 3 November 2026: private exercise-media bucket exists
-with MIME video/mp4 and a 32MiB per-object limit, 0 objects.
-The separate private exercise-posters bucket does NOT exist. It is specified
-as the target for optimized image/webp media but must be provisioned,
-independently reviewed, and confirmed private before its first upload.
+Read-only snapshot from the **initial preflight** on 3 November 2026:
+private exercise-media had MIME video/mp4 and a 32MiB per-object limit, with
+0 objects; the private exercise-posters bucket did not yet exist.
+These figures are historical and must not be used as a current state check.
+At that earlier point the poster bucket was a planned target; its later
+creation and the reported transfer are documented below.
 No bucket, RLS, grants, table or other production resource was changed here.
 
 ## Non-destructive transfer gates
@@ -75,6 +82,18 @@ SHA/size corruption, canonical binding, private-only plan path, no overwrite,
 remote verification, transfer budgets, strict bucket MIME/private checks,
 no redirect and malformed/traversal object paths. No vendor media or test
 credentials leave the authorized PC.
+
+## Later staged-storage reconciliation (recorded in Draft PR #595)
+
+After this initial preflight, the separate MoveKit staging workstream reported
+1,164 of 1,164 private uploads in `exercise-media` and `exercise-posters`:
+582 MP4 videos and 582 WebP posters. It reported complete key/MIME/byte-total
+reconciliation, with SHA-256 re-download verification on a **sample** of remote
+objects rather than every remote object. This historical PR record is not a
+fresh independent live Storage audit and provides **no** approval to publish
+those objects, issue grants, activate V2, merge to main, or build an APK.
+The upload tool in this PR remains an isolated, manual, bounded safeguard,
+not a server-side exercise entitlement or release authority.
 
 ## Unresolved integration gates
 1. Server-side user entitlement and per-object approved catalog permissions.

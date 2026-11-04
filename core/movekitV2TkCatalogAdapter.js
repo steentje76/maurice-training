@@ -1,3 +1,8 @@
+(function(root,factory){
+  if(typeof module!=='undefined'&&module.exports){
+    module.exports=factory(require('./movekitV2ReviewEligibility.js'),require('./movekitV2SourceFacets.js'));
+  }else if(root){root.MoveKitV2TkCatalogAdapter=factory(root.MoveKitV2ReviewEligibility,root.MoveKitV2SourceFacets);}
+})(typeof globalThis!=='undefined'?globalThis:null,function(Eligibility,Facets){
 'use strict';
 /*
  * TK504 MoveKit V2 - V2-READY TK catalog adapter for a FUTURE normal training picker.
@@ -16,8 +21,6 @@
  * Names are returned as plain text (control chars stripped, length capped); the future
  * renderer must set them via textContent / escape, never innerHTML.
  */
-const Eligibility = require('./movekitV2ReviewEligibility.js');
-const Facets = require('./movekitV2SourceFacets.js');
 
 const FILTER_KEYS = Object.freeze({ muscle: 'movekitSourceMuscle', equipment: 'movekitSourceEquipment' });
 const LEGACY_FILTERS = Object.freeze(['category', 'equipment', 'family', 'difficulty', 'type', 'fatigue',
@@ -59,6 +62,8 @@ function strList(v) {
 }
 
 function create(opts) {
+  if(!Eligibility || !Facets || typeof Eligibility.create!=='function' ||
+     typeof Facets.validateTermRegistry!=='function') throw fail('MOVEKIT_V2_DEPENDENCIES_NOT_READY');
   if (!plain(opts)) throw fail('ADAPTER_NOT_CONFIGURED');
   const svc = opts.catalogService, launch = opts.launchGate, registry = opts.registry;
   const grantProvider = opts.grantProvider;
@@ -305,4 +310,5 @@ function create(opts) {
   });
 }
 
-module.exports = Object.freeze({ create, FILTER_KEYS, STATUS, PENDING_REASON });
+return Object.freeze({ create, FILTER_KEYS, STATUS, PENDING_REASON });
+});

@@ -1,3 +1,8 @@
+(function(root,factory){
+  const api=factory();
+  if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  else if(root)root.MoveKitV2SourceFacets=api;
+})(typeof globalThis!=='undefined'?globalThis:null,function(){
 'use strict';
 /* TK-504 MoveKit V2 — SOURCE-FIRST muscle/equipment facets (pure, display-only).
  *
@@ -209,7 +214,7 @@ function projectSourceFacets(input, registry) {
   return deepFreeze(JSON.parse(JSON.stringify(out)));
 }
 
-module.exports = Object.freeze({
+return Object.freeze({
   SCHEMA, REGISTRY_SCHEMA, REGISTRY_STATUS, NAMESPACE, STATUS,
   RUNTIME_ACTIVATION: false,
   APPROVED: false,
@@ -217,4 +222,5 @@ module.exports = Object.freeze({
   validateTermRegistry,
   listTermIdentifiers,
   projectSourceFacets
+});
 });

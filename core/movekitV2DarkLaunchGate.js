@@ -1,3 +1,8 @@
+(function(root,factory){
+  const api=factory();
+  if(typeof module!=='undefined'&&module.exports)module.exports=api;
+  else if(root)root.MoveKitV2DarkLaunchGate=api;
+})(typeof globalThis!=='undefined'?globalThis:null,function(){
 'use strict';
 /*
  * TK504 MoveKit V2 - dark-launch SERVER-AUTHORIZATION gate (pure, DISABLED BY DEFAULT).
@@ -79,9 +84,10 @@ function create(opts) {
   return Object.freeze({ check, configured });
 }
 
-module.exports = Object.freeze({
+return Object.freeze({
   create, REASON, SCOPE, ISSUER, MAX_TTL_MS,
   // Compile-time facts, not toggles.
   DEFAULT_ENABLED: false,
   PENDING_EXECUTION_PERMITTED: false
+});
 });

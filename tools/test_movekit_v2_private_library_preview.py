@@ -156,9 +156,15 @@ class SecurityTests(Base):
         html = self.html()
         for bad in ('http://', 'https://', 'fetch(', 'XMLHttpRequest', 'serviceWorker', 'WebSocket',
                     'sendBeacon', 'innerHTML', 'outerHTML', 'insertAdjacentHTML', 'document.write',
-                    'eval(', 'new Function', 'autoplay', 'localStorage', 'indexedDB', '<link',
-                    '<iframe', '<form', 'download='):
+                    'eval(', 'new Function', 'autoplay', 'localStorage', 'sessionStorage',
+                    'indexedDB', 'document.cookie', 'window.open', 'location.href', '<link',
+                    '<iframe', '<form', 'importScripts', 'postMessage', 'EventSource'):
             self.assertNotIn(bad, html, bad)
+        # The ONLY authorised exception: one user-click Blob download of the local draft.
+        self.assertEqual(html.count('download='), 1)
+        self.assertIn("a.download='tk504-review-concept-'", html)
+        self.assertEqual(html.count('createObjectURL'), 1)
+        self.assertEqual(html.count('new Blob('), 1)
         self.assertIn('noindex', html)
 
     def test_injection_is_neutralised(self):
@@ -447,6 +453,489 @@ class JavaScriptSyntaxTests(Base):
         p.write_text(js, encoding='utf8')
         r = subprocess.run(['node', '--check', str(p)], capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
+
+
+PENDING_ROUTES = ('AI_PROPOSAL_PENDING_HUMAN_REVIEW', 'SOURCE_TERM_PROPOSAL_PENDING_HUMAN_REVIEW',
+                  'OWNER_FEEDBACK_PENDING_CONTENT_REVIEW')
+
+
+class DraftBindingTests(Base):
+    """Python side of the draft collector: digests, embedded config, static UI contract."""
+
+    def page(self, **kw):
+        res = self.run_gen(**kw)
+        return res, (self.private / 'preview.html').read_text(encoding='utf8')
+
+    def test_stage_digest_and_manifest_digest_are_independently_reproducible(self):
+        res, html = self.page()
+        draft = self.embedded(html)['draft']
+        stage_bytes = (self.private / 'stage.json').read_bytes()
+        self.assertEqual(draft['stage_sha256'], hashlib.sha256(stage_bytes).hexdigest())
+        rows = sorted((x['catalog_id'], x['source']['provider_id'], x['_review']['review_route'])
+                      for x in self.stage['catalog'][226:])
+        self.assertEqual(len(rows), 356)
+        manifest = ''.join('%s\t%s\t%s\n' % r for r in rows)
+        self.assertEqual(draft['manifest_sha256'], hashlib.sha256(manifest.encode()).hexdigest())
+        self.assertEqual(res['draft_stage_sha256'], draft['stage_sha256'])
+        self.assertEqual(res['draft_manifest_sha256'], draft['manifest_sha256'])
+
+    def test_embedded_draft_config_is_fixed_and_carries_no_licensed_content(self):
+        _res, html = self.page()
+        draft = self.embedded(html)['draft']
+        self.assertEqual(draft['schema'], 'tk504-owner-review-draft')
+        self.assertEqual(draft['version'], 1)
+        self.assertEqual(draft['statuses'], ['unreviewed', 'review-agree-provisionally',
+                                             'needs-correction', 'exclude-provisionally'])
+        self.assertEqual((draft['max_bytes'], draft['max_note'], draft['expected']), (524288, 500, 356))
+        self.assertEqual(sorted(draft['routes'].values()), sorted(PENDING_ROUTES))
+        self.assertEqual(sorted(draft), ['expected', 'manifest_sha256', 'max_bytes', 'max_note',
+                                         'routes', 'schema', 'stage_sha256', 'statuses', 'version'])
+        blob = json.dumps(draft)
+        self.assertNotIn('note 3', blob)
+        self.assertNotIn('Synthetic Move', blob)
+
+    def test_digests_change_when_stage_or_pending_manifest_changes(self):
+        _r, html_a = self.page()
+        a = self.embedded(html_a)['draft']
+        # owner note edit: stage digest changes, manifest (ids/slugs/routes) does not
+        s2 = make_stage()
+        s2['catalog'][-1]['_review']['feedback']['owner_note'] = 'different'
+        self.write_stage(s2, name='stage2.json')
+        M.generate(self.source, self.private / 'stage2.json', self.private / 'p2.html')
+        b = self.embedded((self.private / 'p2.html').read_text(encoding='utf8'))['draft']
+        self.assertNotEqual(a['stage_sha256'], b['stage_sha256'])
+        self.assertEqual(a['manifest_sha256'], b['manifest_sha256'])
+        # slug edit of a pending item changes both
+        s3 = make_stage()
+        s3['catalog'][300]['source']['provider_id'] = 'renamed-slug'
+        self.write_stage(s3, name='stage3.json')
+        M.generate(self.source, self.private / 'stage3.json', self.private / 'p3.html')
+        c = self.embedded((self.private / 'p3.html').read_text(encoding='utf8'))['draft']
+        self.assertNotEqual(a['manifest_sha256'], c['manifest_sha256'])
+        self.assertNotEqual(a['stage_sha256'], c['stage_sha256'])
+
+    def test_csp_hash_covers_final_script_including_draft_code(self):
+        _r, html = self.page()
+        csp = re.search(r'Content-Security-Policy" content="([^"]+)"', html).group(1)
+        script = re.findall(r'<script>(.*?)</script>', html, re.S)
+        self.assertEqual(len(script), 1)
+        self.assertIn('function makeDraft(', script[0])
+        self.assertIn('/*DRAFT_LIB*/', M.SCRIPT_TEMPLATE)
+        self.assertNotIn('/*DRAFT_LIB*/', script[0])
+        digest = base64.b64encode(hashlib.sha256(script[0].encode('utf8')).digest()).decode()
+        self.assertIn("'sha256-%s'" % digest, csp)
+        self.assertEqual(csp.count('sha256-'), 2)  # exactly script + style
+        for forbidden in ('connect-src', 'blob:', 'unsafe-', 'http', "form-action *"):
+            self.assertNotIn(forbidden, csp)
+        self.assertIn("default-src 'none'", csp)
+
+    def test_ui_contract_for_draft_controls(self):
+        _r, html = self.page()
+        for needle in ('id="dexport"', 'id="dimport"', 'accept=".json,application/json"',
+                       'id="dstatus"', 'id="dsum"', 'id="dmsg"', "GEEN geauthenticeerde goedkeuring",
+                       "ta.maxLength=DATA.draft.max_note", "function draftControls(root,it)",
+                       "if(isPending(it))draftControls(root,it);",
+                       "if(!it||!isPending(it)||!cur)return;",   # published can never get a decision
+                       "'review-agree-provisionally'", "'needs-correction'", "'exclude-provisionally'",
+                       # fail-closed import: state is replaced only AFTER a successful parse
+                       "try{m=DR.parse(t);}catch(err){bad(", "D=m;dirty=false;",
+                       "f.size>DATA.draft.max_bytes", "if(blob.size>DATA.draft.max_bytes)",
+                       "e.preventDefault();e.returnValue=''"):
+            self.assertIn(needle, html, needle)
+        # the published 226 are not given a control: draftControls is only reached for pending
+        self.assertEqual(html.count('draftControls(root,it)'), 1 + 1)  # call + definition
+
+    def test_export_builder_reads_only_ids_slugs_routes_and_draft_state(self):
+        lib = M.DRAFT_LIB
+        build = lib[lib.index('function build('):lib.index('function parse(')]
+        for forbidden in ('.name', '.nl', '.poster', '.video', '.owner', '.proposal', '.metadata',
+                          '.variant', '.equipment', '.primary', 'http'):
+            self.assertNotIn(forbidden, build, forbidden)
+        for needed in ('p.id', 'p.slug', 'cfg.routes[p.group]', 'v.status', 'v.note'):
+            self.assertIn(needed, build)
+        for bad in ('fetch', 'XMLHttp', 'localStorage', 'sessionStorage', 'indexedDB', 'document.', 'innerHTML'):
+            self.assertNotIn(bad, lib, bad)  # library is pure: no DOM, network or storage
+
+    def test_generator_source_has_no_network_modules(self):
+        src = (ROOT / 'movekit-v2-private-library-preview.py').read_text(encoding='utf8')
+        for bad in ('urlopen', 'import socket', 'import requests', 'http.client', 'supabase', 'netlify'):
+            self.assertNotIn(bad, src.lower(), bad)
+
+
+DRIVER = r"""
+'use strict';
+const fs = require('fs'), vm = require('vm');
+const [htmlPath, libPath] = process.argv.slice(2);
+const html = fs.readFileSync(htmlPath, 'utf8');
+const libText = fs.readFileSync(libPath, 'utf8');
+const dataText = /<script type="application\/json" id="tk-data">(.*?)<\/script>/s.exec(html)[1];
+const appJs = /<script>(.*?)<\/script>/s.exec(html)[1];
+const DATA = JSON.parse(dataText);
+const out = {};
+const tick = () => new Promise(r => setImmediate(r));
+const clone = o => JSON.parse(JSON.stringify(o));
+
+// ------------------------------------------------ part 1: DOM-free draft library
+const makeDraft = new Function(libText + '\nreturn makeDraft;')();
+const cfg = DATA.draft;
+const pending = DATA.items.filter(i => i.group !== 'published').sort((a, b) => a.id < b.id ? -1 : 1);
+const DR = makeDraft(cfg, pending);
+out.pending = pending.length;
+const state = DR.blank();
+state.get(pending[0].id).status = 'review-agree-provisionally';
+state.get(pending[1].id).status = 'needs-correction';
+state.get(pending[1].id).note = 'Let op\nregel\t2 \u00e9 <b>x</b> ' + 'a'.repeat(400);
+state.get(pending[2].id).status = 'exclude-provisionally';
+state.get(pending[3].id).note = 'n'.repeat(500);
+const exp = DR.build(state, '2026-11-04T10:00:00.000Z');
+const text = JSON.stringify(exp);
+out.export_keys = Object.keys(exp);
+out.entry_keys = Object.keys(exp.decisions[0]);
+out.n_decisions = exp.decisions.length;
+out.unique_ids = new Set(exp.decisions.map(d => d.id)).size;
+out.flags = [exp.draft_only, exp.authenticated, exp.formal_approval, exp.ready_for_import];
+out.counts = exp.counts;
+out.export_has_licensed = ['Synthetic Move', 'note 3', 'posters-webp', 'file:', 'http', '../', 'Synth Chest', 'compound', 'KEEP_DISTINCT']
+  .filter(w => text.indexOf(w) >= 0);
+out.routes_ok = exp.decisions.every(d => d.review_route === cfg.routes[pending.find(p => p.id === d.id).group]);
+out.slugs_ok = exp.decisions.every(d => d.slug === pending.find(p => p.id === d.id).slug);
+const back = DR.parse(text);
+out.roundtrip = JSON.stringify([...back]) === JSON.stringify([...state]);
+out.roundtrip_pretty = JSON.stringify([...DR.parse(JSON.stringify(exp, null, 1) + '\n')]) === JSON.stringify([...state]);
+out.blank_roundtrip = DR.parse(JSON.stringify(DR.build(DR.blank(), '2026-11-04T10:00:00Z'))).size;
+
+const rejects = {};
+function expectReject(name, fn, code) {
+  let got = 'ACCEPTED';
+  try { const r = fn(); if (typeof r !== 'undefined') DR.parse(r); } catch (e) { got = e.message; }
+  rejects[name] = got === code ? 'ok' : name + ': expected ' + code + ' got ' + got;
+}
+const mut = f => () => { const o = clone(exp); const r = f(o); return JSON.stringify(typeof r === 'undefined' ? o : r); };
+const D0 = o => o.decisions[0];
+expectReject('not_json', () => '{nope', 'DRAFT_NOT_JSON');
+expectReject('empty', () => '', 'DRAFT_NOT_JSON');
+expectReject('non_string', () => 123, 'DRAFT_TOO_LARGE');
+expectReject('oversize', () => 'x'.repeat(cfg.max_bytes + 1), 'DRAFT_TOO_LARGE');
+expectReject('array_top', () => '[]', 'DRAFT_SHAPE');
+expectReject('null_top', () => 'null', 'DRAFT_SHAPE');
+expectReject('proto_key', () => text.replace('{"schema"', '{"__proto__":{"polluted":1},"schema"'), 'DRAFT_SHAPE');
+expectReject('extra_top', mut(o => { o.entitlement = true; }), 'DRAFT_SHAPE');
+expectReject('entitlement_granted', mut(o => { o.entitlement_granted = false; }), 'DRAFT_SHAPE');
+expectReject('missing_counts', mut(o => { delete o.counts; }), 'DRAFT_SHAPE');
+expectReject('schema', mut(o => { o.schema = 'other'; }), 'DRAFT_SCHEMA');
+expectReject('version2', mut(o => { o.version = 2; }), 'DRAFT_SCHEMA');
+expectReject('version_str', mut(o => { o.version = '1'; }), 'DRAFT_SCHEMA');
+expectReject('formal_approval', mut(o => { o.formal_approval = true; }), 'DRAFT_FLAGS');
+expectReject('ready_for_import', mut(o => { o.ready_for_import = true; }), 'DRAFT_FLAGS');
+expectReject('draft_only_false', mut(o => { o.draft_only = false; }), 'DRAFT_FLAGS');
+expectReject('authenticated', mut(o => { o.authenticated = true; }), 'DRAFT_FLAGS');
+expectReject('flag_string', mut(o => { o.formal_approval = 'false'; }), 'DRAFT_FLAGS');
+expectReject('stage_digest', mut(o => { o.stage_sha256 = '0'.repeat(64); }), 'DRAFT_STAGE_MISMATCH');
+expectReject('stage_digest_upper', mut(o => { o.stage_sha256 = o.stage_sha256.toUpperCase(); }), 'DRAFT_STAGE_MISMATCH');
+expectReject('manifest_digest', mut(o => { o.manifest_sha256 = '1'.repeat(64); }), 'DRAFT_MANIFEST_MISMATCH');
+expectReject('ts_text', mut(o => { o.exported_at = 'yesterday'; }), 'DRAFT_TIMESTAMP');
+expectReject('ts_number', mut(o => { o.exported_at = 5; }), 'DRAFT_TIMESTAMP');
+expectReject('ts_impossible', mut(o => { o.exported_at = '2026-13-45T99:99:99Z'; }), 'DRAFT_TIMESTAMP');
+expectReject('355', mut(o => { o.decisions.pop(); }), 'DRAFT_COUNT');
+expectReject('357', mut(o => { o.decisions.push(clone(D0(o))); }), 'DRAFT_COUNT');
+expectReject('decisions_object', mut(o => { o.decisions = {}; }), 'DRAFT_COUNT');
+expectReject('duplicate_id', mut(o => { o.decisions[1] = clone(D0(o)); }), 'DRAFT_ID');
+expectReject('unknown_id', mut(o => { D0(o).id = 'TK-999999'; }), 'DRAFT_ID');
+expectReject('published_id', mut(o => { D0(o).id = 'TK-000001'; }), 'DRAFT_ID');
+expectReject('id_number', mut(o => { D0(o).id = 7; }), 'DRAFT_ID');
+expectReject('id_proto', mut(o => { D0(o).id = '__proto__'; }), 'DRAFT_ID');
+expectReject('slug', mut(o => { D0(o).slug = 'other-slug'; }), 'DRAFT_SLUG');
+expectReject('slug_swapped', mut(o => { const t = o.decisions[0].slug; o.decisions[0].slug = o.decisions[1].slug; o.decisions[1].slug = t; }), 'DRAFT_SLUG');
+expectReject('route', mut(o => { D0(o).review_route = 'OWNER_FEEDBACK_PENDING_CONTENT_REVIEW'; }), 'DRAFT_ROUTE');
+expectReject('route_published', mut(o => { D0(o).review_route = 'PUBLISHED'; }), 'DRAFT_ROUTE');
+expectReject('entry_missing_key', mut(o => { delete D0(o).review_route; }), 'DRAFT_ENTRY_SHAPE');
+expectReject('entry_extra_key', mut(o => { D0(o).entitled = true; }), 'DRAFT_ENTRY_SHAPE');
+expectReject('entry_media_url', mut(o => { D0(o).poster = 'file:///x.webp'; }), 'DRAFT_ENTRY_SHAPE');
+expectReject('entry_string', mut(o => { o.decisions[0] = 'x'; }), 'DRAFT_ENTRY_SHAPE');
+expectReject('entry_array', mut(o => { o.decisions[0] = []; }), 'DRAFT_ENTRY_SHAPE');
+for (const [n, v] of [['approved', 'approved'], ['number', 1], ['empty', ''], ['array', ['unreviewed']], ['null', null],
+                      ['case', 'Needs-Correction'], ['space', 'needs-correction '], ['release', 'release']])
+  expectReject('status_' + n, mut(o => { D0(o).status = v; }), 'DRAFT_STATUS');
+for (const [n, v] of [['501', 'x'.repeat(501)], ['number', 5], ['null', null], ['nul', 'a\u0000b'], ['esc', 'a\u001bb'], ['del', 'a\u007fb'], ['array', ['x']]])
+  expectReject('note_' + n, mut(o => { D0(o).note = v; }), 'DRAFT_NOTE');
+expectReject('counts_wrong', mut(o => { o.counts['needs-correction'] += 1; }), 'DRAFT_COUNTS');
+expectReject('counts_extra', mut(o => { o.counts.approved = 1; }), 'DRAFT_COUNTS');
+expectReject('counts_missing', mut(o => { delete o.counts.unreviewed; }), 'DRAFT_COUNTS');
+expectReject('counts_string', mut(o => { o.counts = 'x'; }), 'DRAFT_COUNTS');
+out.rejects = rejects;
+out.reject_failures = Object.values(rejects).filter(v => v !== 'ok');
+out.reject_count = Object.keys(rejects).length;
+out.pollution = ({}).polluted === undefined;
+const frozen = JSON.stringify([...state]);
+try { DR.parse('{bad'); } catch (e) { /* expected */ }
+out.parse_pure = JSON.stringify([...state]) === frozen;
+out.accepts_500 = DR.parse(text).get(pending[3].id).note.length === 500;
+// export-size guard: worst-case notes exceed the import limit in BYTES
+const big = DR.blank(); big.forEach(v => { v.note = '\u5b57'.repeat(500); });
+out.worst_case_bytes_over_limit = Buffer.byteLength(JSON.stringify(DR.build(big, '2026-11-04T10:00:00Z'), null, 1)) > cfg.max_bytes;
+
+// ------------------------------------------------ part 2: whole page in a DOM stub
+function loadPage() {
+  const reg = {}, clicks = [], blobs = [], timers = [];
+  class El {
+    constructor(tag) { this.tag = tag; this.children = []; this.handlers = {}; this.attrs = {}; this._id = '';
+      this.classList = { toggle() {}, add() {}, remove() {} }; this.textContent = ''; this.value = ''; }
+    set id(v) { this._id = v; reg[v] = this; } get id() { return this._id; }
+    get firstChild() { return this.children[0] || null; }
+    get isConnected() { return true; }
+    appendChild(c) { if (c.isFrag) { c.children.forEach(x => { x.parent = this; this.children.push(x); }); c.children = []; }
+      else { c.parent = this; this.children.push(c); } return c; }
+    removeChild(c) { const i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); return c; }
+    remove() { if (this.parent) this.parent.removeChild(this); }
+    setAttribute(k, v) { this.attrs[k] = String(v); } getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
+    removeAttribute(k) { delete this.attrs[k]; }
+    addEventListener(t, f) { (this.handlers[t] = this.handlers[t] || []).push(f); }
+    fire(t, ev) { (this.handlers[t] || []).forEach(f => f(ev || { target: this, key: '' })); }
+    click() { if (this.tag === 'a') clicks.push({ href: this.href, download: this.download, rel: this.rel }); this.fire('click'); }
+    focus() {} querySelector() { return null; } querySelectorAll() { return []; }
+  }
+  const doc = {
+    body: new El('body'), activeElement: null,
+    getElementById(id) { return reg[id] || (() => { const e = new El('div'); e.id = id; return e; })(); },
+    createElement(t) { return new El(t); },
+    createDocumentFragment() { const e = new El('#frag'); e.isFrag = true; return e; },
+    querySelectorAll() { return []; }, addEventListener() {},
+  };
+  doc.getElementById('tk-data').textContent = dataText;
+  const win = { handlers: {}, addEventListener(t, f) { this.handlers[t] = f; } };
+  const sandbox = { document: doc, window: win, history: { replaceState() {} }, location: { hash: '', pathname: '/', search: '' },
+    Blob, URL: { createObjectURL(b) { blobs.push(b); return 'blob:test'; }, revokeObjectURL() {} },
+    setTimeout(f, ms) { timers.push([f, ms]); return timers.length; }, clearTimeout() {}, console };
+  vm.runInNewContext(appJs, sandbox, { timeout: 20000 });
+  return { doc, reg, clicks, blobs, timers, win, $: id => doc.getElementById(id), sandbox };
+}
+const gridCards = P => P.$('grid').children;
+const cardId = c => c.getAttribute('data-id');
+const isPend = id => id > 'TK-000226';
+async function readFile(text, sizeOverride) {
+  let read = false;
+  return { size: sizeOverride != null ? sizeOverride : Buffer.byteLength(text), text() { read = true; return Promise.resolve(text); }, get wasRead() { return read; } };
+}
+async function importText(P, text, size) {
+  const f = await readFile(text, size);
+  const input = P.$('dimport');
+  const ev = { target: { files: [f], value: 'C:\\fake\\draft.json' } };
+  input.fire('change', ev);
+  await tick(); await tick();
+  return { fileRead: f.wasRead, inputReset: ev.target.value === '' };
+}
+
+const P = loadPage();
+out.count_text = P.$('count').textContent;
+out.rendered_cards = gridCards(P).length;
+out.sum_initial = P.$('dsum').textContent;
+out.dstatus_options = P.$('dstatus').children.map(o => o.value);
+out.warning_in_page = html.indexOf('GEEN geauthenticeerde goedkeuring') > 0;
+const firstPub = gridCards(P).find(c => !isPend(cardId(c)));
+P.$('sort').value = 'name-desc'; P.$('sort').fire('change');
+const firstPend = gridCards(P).find(c => isPend(cardId(c)));
+const pendId = cardId(firstPend);
+// published: no decision controls
+delete P.reg['dec-status']; delete P.reg['dec-note'];
+firstPub.fire('click');
+out.published_has_controls = !!P.reg['dec-status'] || !!P.reg['dec-note'];
+// pending: controls exist and work
+firstPend.fire('click');
+const sel = P.reg['dec-status'], ta = P.reg['dec-note'];
+out.pending_has_controls = !!sel && !!ta;
+out.select_options = sel.children.map(o => o.value);
+out.note_maxlength = ta.maxLength;
+out.select_initial = sel.value;
+sel.value = 'needs-correction'; sel.fire('change');
+ta.value = 'Zie <img src=x onerror=alert(1)> en </script>'; ta.fire('input');
+out.sum_after = P.$('dsum').textContent;
+out.cards_after_change = gridCards(P).length;
+P.$('dstatus').value = 'needs-correction'; P.$('dstatus').fire('change');
+out.filter_count_text = P.$('count').textContent;
+out.filter_ids = gridCards(P).map(cardId);
+P.$('dstatus').value = 'exclude-provisionally'; P.$('dstatus').fire('change');
+out.filter_empty_text = P.$('count').textContent;
+P.$('dstatus').value = ''; P.$('dstatus').fire('change');
+out.count_after_clear = P.$('count').textContent;
+out.pending_id = pendId;
+// export on click only
+out.clicks_before_export = P.clicks.length;
+P.$('dexport').fire('click');
+out.clicks_after_export = P.clicks.length;
+out.download_name = P.clicks[0] && P.clicks[0].download;
+out.download_href = P.clicks[0] && P.clicks[0].href;
+out.blob_type = P.blobs[0] && P.blobs[0].type;
+const exported = await P.blobs[0].text();
+const eo = JSON.parse(exported);
+out.exp_n = eo.decisions.length;
+out.exp_flags = [eo.draft_only, eo.authenticated, eo.formal_approval, eo.ready_for_import];
+out.exp_entry = eo.decisions.find(d => d.id === pendId);
+out.exp_counts = eo.counts;
+out.exp_stage_ok = eo.stage_sha256 === DATA.draft.stage_sha256 && eo.manifest_sha256 === DATA.draft.manifest_sha256;
+out.exp_has_licensed = ['Synthetic Move', 'note 3', 'posters-webp', 'Synth Chest'].filter(w => exported.indexOf(w) >= 0);
+out.exp_published_ids = eo.decisions.filter(d => !isPend(d.id)).length;
+out.msg_after_export = P.$('dmsg').textContent;
+out.beforeunload_after_export = (() => { let prevented = false; P.win.handlers.beforeunload({ preventDefault() { prevented = true; } }); return prevented; })();
+// restore in a FRESH page from the exported file
+const Q = loadPage();
+const r1 = await importText(Q, exported);
+out.import_ok_summary = Q.$('dsum').textContent;
+out.import_ok_msg = Q.$('dmsg').textContent;
+out.import_ok_class = Q.$('dmsg').className;
+out.import_reset_input = r1.inputReset;
+Q.$('dstatus').value = 'needs-correction'; Q.$('dstatus').fire('change');
+out.import_filter_ids = gridCards(Q).map(cardId);
+Q.$('dstatus').value = ''; Q.$('dstatus').fire('change');
+Q.$('dstatus').value = 'needs-correction'; Q.$('dstatus').fire('change');
+gridCards(Q)[0].fire('click');
+out.import_restored_note = Q.reg['dec-note'].value;
+out.import_restored_status = Q.reg['dec-status'].value;
+out.beforeunload_after_import = (() => { let prevented = false; Q.win.handlers.beforeunload({ preventDefault() { prevented = true; } }); return prevented; })();
+// failed imports leave the existing draft untouched and show an error
+const before = Q.$('dsum').textContent;
+const failures = {};
+async function badImport(name, text, size, code) {
+  const r = await importText(Q, text, size);
+  failures[name] = {
+    err: Q.$('dmsg').className === 'err' && Q.$('dmsg').attrs.role === 'alert' && Q.$('dmsg').textContent.indexOf(code) >= 0,
+    unchanged: Q.$('dsum').textContent === before,
+    read: r.fileRead, reset: r.inputReset, shown: Q.$('dmsg').textContent };
+}
+await badImport('oversize_not_read', 'x', cfg.max_bytes + 1, 'DRAFT_TOO_LARGE');
+await badImport('not_json', '{nope', null, 'DRAFT_NOT_JSON');
+const forged = clone(eo); forged.stage_sha256 = 'f'.repeat(64);
+await badImport('foreign_stage', JSON.stringify(forged), null, 'DRAFT_STAGE_MISMATCH');
+const hacked = clone(eo); hacked.formal_approval = true;
+await badImport('formal_approval', JSON.stringify(hacked), null, 'DRAFT_FLAGS');
+const short = clone(eo); short.decisions.pop();
+await badImport('355', JSON.stringify(short), null, 'DRAFT_COUNT');
+const inj = clone(eo); inj.decisions[0].note = '<img src=x onerror=alert(1)>'.repeat(30);
+await badImport('note_too_long', JSON.stringify(inj), null, 'DRAFT_NOTE');
+const echo = clone(eo); echo.schema = '<script>alert(9)</script>';
+await badImport('error_never_echoes_input', JSON.stringify(echo), null, 'DRAFT_SCHEMA');
+out.error_text_has_input = Q.$('dmsg').textContent.indexOf('<script>') >= 0;
+out.failures = failures;
+// valid import still works after failures; then an unreviewed draft resets everything
+const cleared = clone(eo); cleared.decisions.forEach(d => { d.status = 'unreviewed'; d.note = ''; });
+cleared.counts = { 'unreviewed': 356, 'review-agree-provisionally': 0, 'needs-correction': 0, 'exclude-provisionally': 0 };
+await importText(Q, JSON.stringify(cleared));
+out.after_clear_summary = Q.$('dsum').textContent;
+
+// export guard: worst-case notes cannot be exported (would exceed what import accepts)
+const G = loadPage();
+G.$('group').value = 'pending'; G.$('group').fire('change');
+let more = 0; while (!G.$('more').hidden && more++ < 20) G.$('more').fire('click');
+const allCards = gridCards(G).filter(c => isPend(cardId(c)));
+out.guard_cards = allCards.length;
+for (const c of allCards) { c.fire('click'); G.reg['dec-note'].value = '\u5b57'.repeat(500); G.reg['dec-note'].fire('input'); }
+G.$('dexport').fire('click');
+out.guard_msg = G.$('dmsg').textContent;
+out.guard_err = G.$('dmsg').className;
+out.guard_downloads = G.clicks.length;
+console.log(JSON.stringify(out));
+"""
+
+
+@unittest.skipUnless(shutil.which('node'), 'node not available')
+class DraftWorkflowNodeTests(Base):
+    """Runs the REAL embedded script (DOM stub) and the DOM-free draft library in node."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.result = None
+
+    def run_driver(self):
+        self.run_gen()
+        (self.tmp / 'driver.js').write_text(
+            '(async () => {' + DRIVER + '})().catch(e => { console.error(e && e.stack || e); process.exit(1); });',
+            encoding='utf8')
+        (self.tmp / 'lib.js').write_text(M.DRAFT_LIB, encoding='utf8')
+        r = subprocess.run(['node', str(self.tmp / 'driver.js'), str(self.private / 'preview.html'),
+                            str(self.tmp / 'lib.js')], capture_output=True, text=True, timeout=180)
+        self.assertEqual(r.returncode, 0, r.stderr[-3000:])
+        return json.loads(r.stdout.strip().splitlines()[-1])
+
+    def test_library_and_page_behaviour(self):
+        o = self.run_driver()
+        # ---- export document
+        self.assertEqual(o['pending'], 356)
+        self.assertEqual(o['export_keys'], ['schema', 'version', 'draft_only', 'authenticated',
+                         'formal_approval', 'ready_for_import', 'stage_sha256', 'manifest_sha256',
+                         'exported_at', 'counts', 'decisions'])
+        self.assertEqual(o['entry_keys'], ['id', 'slug', 'review_route', 'status', 'note'])
+        self.assertEqual((o['n_decisions'], o['unique_ids']), (356, 356))
+        self.assertEqual(o['flags'], [True, False, False, False])
+        self.assertEqual(o['counts'], {'unreviewed': 353, 'review-agree-provisionally': 1,
+                                       'needs-correction': 1, 'exclude-provisionally': 1})
+        self.assertEqual(o['export_has_licensed'], [])
+        self.assertTrue(o['routes_ok'] and o['slugs_ok'])
+        self.assertTrue(o['roundtrip'] and o['roundtrip_pretty'])
+        self.assertEqual(o['blank_roundtrip'], 356)
+        self.assertTrue(o['accepts_500'])
+        # ---- strict import validation (every negative case must fail with its exact code)
+        self.assertEqual(o['reject_failures'], [])
+        self.assertEqual(o['reject_count'], 60)
+        self.assertTrue(o['pollution'] and o['parse_pure'])
+        self.assertTrue(o['worst_case_bytes_over_limit'])
+        # ---- page: browsing intact, 96 cards, counts unchanged
+        self.assertTrue(o['count_text'].startswith('582 van 582 oefeningen'), o['count_text'])
+        self.assertEqual(o['rendered_cards'], 96)
+        self.assertIn('Niet beoordeeld 356', o['sum_initial'])
+        self.assertEqual(o['dstatus_options'], ['unreviewed', 'review-agree-provisionally',
+                                                'needs-correction', 'exclude-provisionally'])
+        # ---- published cannot get a decision; pending can
+        self.assertFalse(o['published_has_controls'])
+        self.assertTrue(o['pending_has_controls'])
+        self.assertEqual(o['select_options'], ['unreviewed', 'review-agree-provisionally',
+                                               'needs-correction', 'exclude-provisionally'])
+        self.assertEqual((o['note_maxlength'], o['select_initial']), (500, 'unreviewed'))
+        self.assertIn('Correctie nodig (concept) 1', o['sum_after'])
+        self.assertIn('Niet beoordeeld 355', o['sum_after'])
+        self.assertEqual(o['cards_after_change'], 96)
+        self.assertTrue(o['filter_count_text'].startswith('1 van 582'), o['filter_count_text'])
+        self.assertEqual(o['filter_ids'], [o['pending_id']])
+        self.assertTrue(o['filter_empty_text'].startswith('0 van 582'), o['filter_empty_text'])
+        self.assertTrue(o['count_after_clear'].startswith('582 van 582'))
+        # ---- export only on explicit click, as a local Blob download
+        self.assertEqual((o['clicks_before_export'], o['clicks_after_export']), (0, 1))
+        self.assertRegex(o['download_name'], r'^tk504-review-concept-[0-9TZ-]+\.json$')
+        self.assertEqual(o['download_href'], 'blob:test')
+        self.assertEqual(o['blob_type'], 'application/json')
+        self.assertEqual(o['exp_n'], 356)
+        self.assertEqual(o['exp_flags'], [True, False, False, False])
+        self.assertEqual(o['exp_entry']['status'], 'needs-correction')
+        self.assertIn('<img', o['exp_entry']['note'])      # kept as inert data, never rendered
+        self.assertEqual(o['exp_entry']['id'], o['pending_id'])
+        self.assertTrue(o['exp_stage_ok'])
+        self.assertEqual(o['exp_has_licensed'], [])
+        self.assertEqual(o['exp_published_ids'], 0)
+        self.assertFalse(o['beforeunload_after_export'])
+        # ---- valid import restores choices in a fresh page, marks nothing approved
+        self.assertIn('Correctie nodig (concept) 1', o['import_ok_summary'])
+        self.assertNotIn('nog niet', o['import_ok_summary'])
+        self.assertIn('geen goedkeuring', o['import_ok_msg'])
+        self.assertNotEqual(o['import_ok_class'], 'err')
+        self.assertTrue(o['import_reset_input'])
+        self.assertEqual(o['import_filter_ids'], [o['pending_id']])
+        self.assertEqual(o['import_restored_status'], 'needs-correction')
+        self.assertIn('<img src=x', o['import_restored_note'])
+        self.assertFalse(o['beforeunload_after_import'])
+        # ---- failed imports: error shown, draft untouched, input reset, oversize never read
+        self.assertEqual(set(o['failures']), {'oversize_not_read', 'not_json', 'foreign_stage',
+                         'formal_approval', '355', 'note_too_long', 'error_never_echoes_input'})
+        for name, f in o['failures'].items():
+            self.assertTrue(f['err'], (name, f))
+            self.assertTrue(f['unchanged'], (name, f))
+            self.assertTrue(f['reset'], (name, f))
+            self.assertIn('ongewijzigd', f['shown'], (name, f))
+        self.assertFalse(o['failures']['oversize_not_read']['read'])
+        self.assertFalse(o['error_text_has_input'])
+        self.assertIn('Niet beoordeeld 356', o['after_clear_summary'])
+        # ---- export size guard
+        self.assertEqual(o['guard_cards'], 356)
+        self.assertIn('DRAFT_TOO_LARGE', o['guard_msg'])
+        self.assertEqual(o['guard_err'], 'err')
+        self.assertEqual(o['guard_downloads'], 0)
 
 
 if __name__ == '__main__':

@@ -35,6 +35,12 @@ ROUTES = {
     'OWNER_FEEDBACK_PENDING_CONTENT_REVIEW': ('owner', 'owner_choice'),
 }
 EXPECTED = {'published': 226, 'ai': 245, 'term': 85, 'owner': 26}
+DRAFT_SCHEMA = 'tk504-owner-review-draft'
+DRAFT_VERSION = 1
+DRAFT_STATUSES = ['unreviewed', 'review-agree-provisionally', 'needs-correction',
+                  'exclude-provisionally']
+DRAFT_MAX_BYTES = 512 * 1024
+DRAFT_MAX_NOTE = 500
 OWNER_LABELS = {
     'apart': 'Apart houden', 'meta': 'Metadata-correctie voorgesteld',
     'variant': 'Variant (niet automatisch ontdubbeld)',
@@ -223,6 +229,21 @@ def build_items(stage, poster_dir, video_dir, output_dir):
     return items
 
 
+def draft_binding(stage, stage_bytes):
+    """Digests binding a draft file to THIS stage; carries ids/slugs/routes only."""
+    rows = sorted((raw['catalog_id'], raw['source']['provider_id'], raw['_review']['review_route'])
+                  for raw in stage['catalog'][226:])
+    need(len(rows) == sum(EXPECTED[k] for k in ('ai', 'term', 'owner')), 'PENDING_COUNT_CHANGED')
+    manifest = ''.join('%s\t%s\t%s\n' % row for row in rows)
+    return {
+        'schema': DRAFT_SCHEMA, 'version': DRAFT_VERSION, 'statuses': DRAFT_STATUSES,
+        'max_bytes': DRAFT_MAX_BYTES, 'max_note': DRAFT_MAX_NOTE, 'expected': len(rows),
+        'routes': {g: r for r, (g, _k) in ROUTES.items()},
+        'stage_sha256': hashlib.sha256(stage_bytes).hexdigest(),
+        'manifest_sha256': hashlib.sha256(manifest.encode('utf8')).hexdigest(),
+    }
+
+
 def safe_json(obj):
     """JSON safe inside <script>: no raw <, >, & or line separators."""
     s = json.dumps(obj, ensure_ascii=False, separators=(',', ':'))
@@ -292,14 +313,67 @@ dl.kv dt{color:var(--mut)}
 dl.kv dd{margin:0;overflow-wrap:anywhere}
 ul.plain{margin:0;padding-left:18px}
 .muted{color:var(--mut)}
+.draft{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+.draft h2{margin:0 0 6px;font-size:16px}
+.draft .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
+#dmsg{margin:8px 0 0;font-size:13px;min-height:1.2em}
+#dmsg.err{color:#a11d1d;font-weight:600}
+.b-dec{background:#e6e0f5;color:#40307a}
+.dlab{display:block;margin:10px 0 4px;color:var(--mut);font-size:13px}
+.dsel,textarea.dnote{width:100%;font:inherit;color:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff}
 .tag{display:inline-block;background:#eef3f7;border-radius:6px;padding:1px 7px;margin:2px 4px 2px 0;font-size:13px}
 .link{background:none;border:0;color:var(--teal-d);text-decoration:underline;cursor:pointer;font:inherit;padding:0}
 @media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr);gap:8px}.wrap{padding:10px}.tiles{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.tile{min-width:128px;flex:0 0 auto}.tools{position:static}.tools select{flex:1 1 140px}.btn,.tile,.tools input,.tools select{min-height:44px}aside#detail{width:100%;border-left:0;padding:12px 14px 40px}header.top h1{font-size:17px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 '''
 
-SCRIPT = r'''
+DRAFT_LIB = r'''
+function makeDraft(cfg,pending){
+ var STAT=cfg.statuses.slice(),exp=new Map();
+ pending.forEach(function(p){exp.set(p.id,p);});
+ function fail(c){throw new Error('DRAFT_'+c);}
+ function plain(o){return o!==null&&typeof o==='object'&&!Array.isArray(o)&&(Object.getPrototypeOf(o)===Object.prototype||Object.getPrototypeOf(o)===null);}
+ function keysAre(o,list){return plain(o)&&Object.keys(o).sort().join('|')===list.slice().sort().join('|');}
+ function blank(){var m=new Map();pending.forEach(function(p){m.set(p.id,{status:STAT[0],note:''});});return m;}
+ function counts(m){var c={};STAT.forEach(function(s){c[s]=0;});m.forEach(function(v){c[v.status]++;});return c;}
+ function build(m,iso){
+  var d=pending.map(function(p){var v=m.get(p.id);return {id:p.id,slug:p.slug,review_route:cfg.routes[p.group],status:v.status,note:v.note};});
+  return {schema:cfg.schema,version:cfg.version,draft_only:true,authenticated:false,formal_approval:false,ready_for_import:false,
+   stage_sha256:cfg.stage_sha256,manifest_sha256:cfg.manifest_sha256,exported_at:iso,counts:counts(m),decisions:d};
+ }
+ function parse(text){
+  if(typeof text!=='string'||text.length>cfg.max_bytes)fail('TOO_LARGE');
+  var o;try{o=JSON.parse(text);}catch(e){fail('NOT_JSON');}
+  if(!keysAre(o,['schema','version','draft_only','authenticated','formal_approval','ready_for_import','stage_sha256','manifest_sha256','exported_at','counts','decisions']))fail('SHAPE');
+  if(o.schema!==cfg.schema||o.version!==cfg.version)fail('SCHEMA');
+  if(o.draft_only!==true||o.authenticated!==false||o.formal_approval!==false||o.ready_for_import!==false)fail('FLAGS');
+  if(o.stage_sha256!==cfg.stage_sha256)fail('STAGE_MISMATCH');
+  if(o.manifest_sha256!==cfg.manifest_sha256)fail('MANIFEST_MISMATCH');
+  if(typeof o.exported_at!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/.test(o.exported_at)||isNaN(Date.parse(o.exported_at)))fail('TIMESTAMP');
+  if(!Array.isArray(o.decisions)||o.decisions.length!==exp.size)fail('COUNT');
+  var m=new Map();
+  for(var i=0;i<o.decisions.length;i++){
+   var d=o.decisions[i];
+   if(!keysAre(d,['id','slug','review_route','status','note']))fail('ENTRY_SHAPE');
+   if(typeof d.id!=='string'||!exp.has(d.id)||m.has(d.id))fail('ID');
+   var p=exp.get(d.id);
+   if(d.slug!==p.slug)fail('SLUG');
+   if(d.review_route!==cfg.routes[p.group])fail('ROUTE');
+   if(typeof d.status!=='string'||STAT.indexOf(d.status)<0)fail('STATUS');
+   if(typeof d.note!=='string'||d.note.length>cfg.max_note||/[\u0000-\u0008\u000b-\u001f\u007f]/.test(d.note))fail('NOTE');
+   m.set(d.id,{status:d.status,note:d.note});
+  }
+  var c=counts(m);
+  if(!keysAre(o.counts,STAT)||STAT.some(function(s){return o.counts[s]!==c[s];}))fail('COUNTS');
+  return m;
+ }
+ return {statuses:STAT,blank:blank,counts:counts,build:build,parse:parse};
+}
+'''
+
+SCRIPT_TEMPLATE = r'''
 (function(){'use strict';
+/*DRAFT_LIB*/
 var DATA=JSON.parse(document.getElementById('tk-data').textContent);
 var items=DATA.items,byId={};
 var GROUP_LABEL={published:'Bestaand \u00b7 gepubliceerd',ai:'AI-voorstel',term:'Alleen bronterm',owner:'Eigenaar-feedback'};
@@ -310,13 +384,17 @@ var REASON={
  owner:'Eigenaar-feedback is verwerkt; een inhoudelijke beoordeling en vrijgave volgen nog.'};
 var ORDER={published:0,ai:1,term:2,owner:3};
 var PAGE=96;
-var S={q:'',exact:false,group:'all',owner:'',equipment:'',muscle:'',video:false,sort:'name',limit:PAGE};
+var S={q:'',exact:false,group:'all',owner:'',equipment:'',muscle:'',video:false,sort:'name',dec:'',limit:PAGE};
 var incoming={},lastFocus=null,qTimer=null;
 function $(id){return document.getElementById(id);}
 function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=String(txt);return e;}
 function norm(s){return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
 function cmp(a,b){return String(a).localeCompare(String(b),'nl',{sensitivity:'base',numeric:true});}
 function isPending(it){return it.group!=='published';}
+var DLABEL={'unreviewed':'Niet beoordeeld','review-agree-provisionally':'Voorlopig akkoord (concept)','needs-correction':'Correctie nodig (concept)','exclude-provisionally':'Voorlopig uitsluiten (concept)'};
+var DWARN='Alleen een lokaal concept: dit is GEEN geauthenticeerde goedkeuring, geen vrijgave en geen rechtenverlening. De keuze blijft alleen in het geheugen van dit tabblad tot je zelf exporteert. Schrijf geen bronteksten of eigenaar-notities over in de notitie.';
+var pendingList=items.filter(isPending).sort(function(a,b){return a.id<b.id?-1:a.id>b.id?1:0;});
+var DR=makeDraft(DATA.draft,pendingList),D=DR.blank(),dirty=false,STAT=DR.statuses;
 
 items.forEach(function(it){
  byId[it.id]=it;
@@ -333,6 +411,7 @@ function matches(it){
  if(S.equipment&&it.equipment.indexOf(S.equipment)<0)return false;
  if(S.muscle&&it.primary.indexOf(S.muscle)<0&&it.secondary.indexOf(S.muscle)<0)return false;
  if(S.video&&!it.video)return false;
+ if(S.dec&&(!isPending(it)||D.get(it.id).status!==S.dec))return false;
  var q=norm(S.q);
  if(!q)return true;
  if(S.exact)return it._x.indexOf(q)>=0;
@@ -365,6 +444,7 @@ function card(it){
  if(it.owner)body.appendChild(el('span','badge b-rel',it.owner.label));
  if(it.metadata)body.appendChild(el('span','badge b-rel','Metadata-voorstel (niet goedgekeurd)'));
  if(it.variant||incoming[it.id])body.appendChild(el('span','badge b-rel','Gekoppeld paar'));
+ if(isPending(it)&&D.get(it.id).status!==STAT[0])body.appendChild(el('span','badge b-dec',DLABEL[D.get(it.id).status]));
  if(it.video)body.appendChild(el('span','badge b-vid','Video lokaal'));
  var t=it.primary.concat(it.equipment).slice(0,4).join(' \u00b7 ');
  if(t)body.appendChild(el('div','chips',t));
@@ -439,6 +519,7 @@ function openDetail(it){
  }else{
   section(root,'Status').appendChild(el('div',null,'Bestaand in de bibliotheek (ongewijzigd).'));
  }
+ if(isPending(it))draftControls(root,it);
  var src=section(root,'Brontermen (origineel)');
  var dl=el('dl','kv');
  if(it.nl)tagRow(dl,'Nederlands',[it.nl]);
@@ -478,6 +559,61 @@ function openDetail(it){
  try{history.replaceState(null,'','#'+it.id);}catch(e){}
  h.focus();
 }
+function msg(text,isErr){
+ var m=$('dmsg');m.textContent=text;m.className=isErr?'err':'';m.setAttribute('role',isErr?'alert':'status');
+}
+function updateSummary(){
+ var c=DR.counts(D);
+ $('dsum').textContent='Concept-beoordeling van '+D.size+' nieuwe oefeningen (lokaal, niet bevestigd): '+
+  STAT.map(function(s){return DLABEL[s]+' '+c[s];}).join(' \u00b7 ')+(dirty?' \u00b7 nog niet ge\u00ebxporteerd':'');
+}
+function setDec(id,status,note){
+ var it=byId[id],cur=D.get(id);
+ if(!it||!isPending(it)||!cur)return;
+ if(status!==null){if(STAT.indexOf(status)<0)return;cur.status=status;}
+ if(note!==null)cur.note=String(note).slice(0,DATA.draft.max_note);
+ dirty=true;updateSummary();msg('',false);
+ if(status!==null)render(true);
+}
+function draftControls(root,it){
+ var cur=D.get(it.id),box=section(root,'Concept-beoordeling (alleen lokaal, voorlopig)');
+ box.appendChild(el('div','pend',DWARN));
+ var l1=el('label','dlab','Conceptstatus');l1.setAttribute('for','dec-status');box.appendChild(l1);
+ var sel=el('select','dsel');sel.id='dec-status';
+ STAT.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=DLABEL[s];sel.appendChild(o);});
+ sel.value=cur.status;
+ sel.addEventListener('change',function(){setDec(it.id,sel.value,null);});
+ box.appendChild(sel);
+ var l2=el('label','dlab','Notitie (optioneel, max. '+DATA.draft.max_note+' tekens)');l2.setAttribute('for','dec-note');box.appendChild(l2);
+ var ta=document.createElement('textarea');ta.id='dec-note';ta.className='dnote';ta.rows=3;ta.maxLength=DATA.draft.max_note;ta.value=cur.note;
+ var cnt=el('div','muted',cur.note.length+'/'+DATA.draft.max_note);
+ ta.addEventListener('input',function(){setDec(it.id,null,ta.value);cnt.textContent=ta.value.length+'/'+DATA.draft.max_note;});
+ box.appendChild(ta);box.appendChild(cnt);
+}
+function doExport(){
+ var iso=new Date().toISOString();
+ var json=JSON.stringify(DR.build(D,iso),null,1)+'\n';
+ var blob=new Blob([json],{type:'application/json'});
+ if(blob.size>DATA.draft.max_bytes){msg('Export geweigerd (DRAFT_TOO_LARGE): verkort de notities.',true);return;}
+ var url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='tk504-review-concept-'+iso.replace(/[:.]/g,'-')+'.json';a.rel='noopener';a.hidden=true;
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(function(){URL.revokeObjectURL(url);},4000);
+ dirty=false;updateSummary();
+ msg('Concept lokaal aangeboden als download. Dit bestand is geen goedkeuring of vrijgave; bewaar het zelf.',false);
+}
+function doImport(e){
+ var f=e.target.files&&e.target.files[0];e.target.value='';
+ if(!f)return;
+ function bad(code){msg('Import geweigerd ('+code+'). Het bestaande concept is ongewijzigd.',true);}
+ if(f.size>DATA.draft.max_bytes){bad('DRAFT_TOO_LARGE');return;}
+ f.text().then(function(t){
+  var m;
+  try{m=DR.parse(t);}catch(err){bad(/^DRAFT_[A-Z_]+$/.test(err&&err.message)?err.message:'DRAFT_INVALID');return;}
+  D=m;dirty=false;updateSummary();render(true);
+  msg('Concept hersteld uit bestand. Dit is een lokaal concept, geen goedkeuring of vrijgave.',false);
+ },function(){bad('DRAFT_READ_FAILED');});
+}
 function peerLink(parent,label,id){
  var row=el('div');row.appendChild(el('span','muted',label+': '));
  var t=byId[id];
@@ -499,7 +635,7 @@ function closeDetail(){
 }
 function trap(e){
  var r=$('detail');if(r.hidden||e.key!=='Tab')return;
- var f=Array.prototype.filter.call(r.querySelectorAll('button,[href],input,select,video[controls],[tabindex]:not([tabindex="-1"])'),function(x){return !x.disabled;});
+ var f=Array.prototype.filter.call(r.querySelectorAll('button,[href],input,select,textarea,video[controls],[tabindex]:not([tabindex="-1"])'),function(x){return !x.disabled;});
  if(!f.length){e.preventDefault();return;}
  var first=f[0],last=f[f.length-1],a=document.activeElement;
  if(e.shiftKey&&(a===first||!r.contains(a))){e.preventDefault();last.focus();}
@@ -530,10 +666,16 @@ function init(){
  $('muscle').addEventListener('change',function(e){S.muscle=e.target.value;render();});
  $('video').addEventListener('change',function(e){S.video=e.target.checked;render();});
  $('sort').addEventListener('change',function(e){S.sort=e.target.value;render();});
+ STAT.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=DLABEL[s];$('dstatus').appendChild(o);});
+ $('dstatus').addEventListener('change',function(e){S.dec=e.target.value;render();});
+ $('dexport').addEventListener('click',doExport);
+ $('dimport').addEventListener('change',doImport);
+ window.addEventListener('beforeunload',function(e){if(dirty){e.preventDefault();e.returnValue='';}});
+ updateSummary();
  $('reset').addEventListener('click',function(){
   clearTimeout(qTimer);
-  S={q:'',exact:false,group:'all',owner:'',equipment:'',muscle:'',video:false,sort:'name',limit:PAGE};
-  $('q').value='';$('owner').value='';$('exact').checked=false;$('equipment').value='';$('muscle').value='';
+  S={q:'',exact:false,group:'all',owner:'',equipment:'',muscle:'',video:false,sort:'name',dec:'',limit:PAGE};
+  $('dstatus').value='';$('q').value='';$('owner').value='';$('exact').checked=false;$('equipment').value='';$('muscle').value='';
   $('video').checked=false;$('sort').value='name';render();});
  document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){closeDetail();return;}
@@ -551,6 +693,7 @@ function init(){
 init();
 })();
 '''
+SCRIPT = SCRIPT_TEMPLATE.replace('/*DRAFT_LIB*/', DRAFT_LIB)
 
 BODY = '''<header class="top"><h1>Trainingskompas \u00b7 Oefeningenbibliotheek \u2014 priv\u00e9 beoordeling</h1>
 <p>Lokale voorbeeldweergave van alle MoveKit-oefeningen. Alleen voor de eigenaar.</p></header>
@@ -565,6 +708,12 @@ BODY = '''<header class="top"><h1>Trainingskompas \u00b7 Oefeningenbibliotheek \
 <button type="button" class="tile sub" data-group="term"><b id="n-term">0</b><span>Alleen bronterm</span></button>
 <button type="button" class="tile sub" data-group="owner"><b id="n-owner">0</b><span>Eigenaar-feedback</span></button>
 </div>
+<section class="draft" aria-labelledby="draft-h"><h2 id="draft-h">Concept-beoordeling (alleen lokaal)</h2>
+<div class="pend">Dit is GEEN geauthenticeerde goedkeuring, geen vrijgave en geen rechtenverlening. Keuzes blijven alleen in het geheugen van dit tabblad tot je zelf op exporteren klikt; sluit je de pagina eerst, dan zijn ze weg. De 226 bestaande oefeningen hebben geen concept-keuze.</div>
+<div class="count" id="dsum"></div>
+<div class="row"><button type="button" class="btn" id="dexport">Concept exporteren (JSON)</button>
+<label for="dimport">Concept importeren (JSON, max. 512 KiB):</label><input type="file" id="dimport" accept=".json,application/json"></div>
+<p id="dmsg" role="status" aria-live="polite"></p></section>
 <div class="tools">
 <input type="search" id="q" placeholder="Zoek op naam, ID, spier of materiaal" aria-label="Zoeken" autocomplete="off">
 <label><input type="checkbox" id="exact"> Exacte term</label>
@@ -572,6 +721,7 @@ BODY = '''<header class="top"><h1>Trainingskompas \u00b7 Oefeningenbibliotheek \
 <select id="owner" aria-label="Eigenaar-keuze"><option value="">Alle eigenaar-keuzes</option></select>
 <select id="equipment" aria-label="Materiaal"><option value="">Alle materiaal</option></select>
 <select id="muscle" aria-label="Spiergroep"><option value="">Alle spieren</option></select>
+<select id="dstatus" aria-label="Conceptstatus"><option value="">Alle conceptstatussen</option></select>
 <label><input type="checkbox" id="video"> Met lokale video</label>
 <select id="sort" aria-label="Sorteren"><option value="name">Naam A\u2013Z</option><option value="name-desc">Naam Z\u2013A</option><option value="id">ID</option><option value="status">Status</option></select>
 <button type="button" class="btn ghost" id="reset">Herstel</button>
@@ -585,8 +735,8 @@ BODY = '''<header class="top"><h1>Trainingskompas \u00b7 Oefeningenbibliotheek \
 <aside id="detail" hidden role="dialog" aria-modal="true" aria-labelledby="detail-title"></aside>'''
 
 
-def render_html(items):
-    data = safe_json({'items': items})
+def render_html(items, draft):
+    data = safe_json({'items': items, 'draft': draft})
     csp = ("default-src 'none'; script-src %s; style-src %s; img-src file: data:; "
            "media-src file:; base-uri 'none'; form-action 'none'; frame-src 'none'; "
            "object-src 'none'" % (sri(SCRIPT), sri(STYLE)))
@@ -606,7 +756,8 @@ def generate(source_directory, staged_catalog, output, baseline_catalog=None, vi
     source, private = resolve_private(source_directory)
     staged = resolve_staged(staged_catalog, private)
     target = resolve_output(output, private, staged)
-    stage = json.loads(staged.read_text(encoding='utf8'))
+    stage_bytes = staged.read_bytes()
+    stage = json.loads(stage_bytes.decode('utf8'))
     baseline = None
     if baseline_catalog is not None:
         raw = json.loads(Path(baseline_catalog).read_text(encoding='utf8'))
@@ -616,7 +767,8 @@ def generate(source_directory, staged_catalog, output, baseline_catalog=None, vi
     poster_dir = poster_dir.resolve() if poster_dir.is_dir() and not poster_dir.is_symlink() else None
     video_dir = find_video_dir(source, video_directory)
     items = build_items(stage, poster_dir, video_dir, private)
-    page = render_html(items)
+    draft = draft_binding(stage, stage_bytes)
+    page = render_html(items, draft)
     with open(target, 'x', encoding='utf8', newline='\n') as handle:  # never overwrites
         handle.write(page)
     return {'status': 'PRIVATE_LOCAL_REVIEW_PAGE_NOT_PUBLISHED', 'total': len(items),
@@ -624,6 +776,8 @@ def generate(source_directory, staged_catalog, output, baseline_catalog=None, vi
             'posters_found': sum(1 for x in items if x['poster']),
             'videos_found': sum(1 for x in items if x['video']),
             'baseline_compared': baseline is not None,
+            'draft_stage_sha256': draft['stage_sha256'],
+            'draft_manifest_sha256': draft['manifest_sha256'],
             'output': str(target)}
 
 

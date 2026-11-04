@@ -177,6 +177,68 @@ async function verifyEntitlement(uid, serviceKey, fetchFn, now) {
     return { ok: true };
   } catch (_) { return { ok: false, error: 'GRANT_BACKEND_UNAVAILABLE' }; }
 }
+/**
+ * Server-side canonical identity guard. A media manifest and a general user
+ * grant do NOT prove that an exercise was actually reviewed and published.
+ * Require a current, ownerless, active global exercise plus its explicit
+ * approved crosswalk before requesting a signed Storage URL.
+ *
+ * This is an additional, read-only, fail-closed gate. The staged DB migrations
+ * must be independently approved and applied before it can ever succeed.
+ */
+async function verifyCanonicalBinding(desc, serviceKey, fetchFn, now) {
+  const deny = { ok: false, error: 'CONTENT_BINDING_NOT_APPROVED' };
+  const unavailable = { ok: false, error: 'BINDING_BACKEND_UNAVAILABLE' };
+  const canonical = desc && byId.get(desc.catalog_id);
+  if (!canonical || typeof serviceKey !== 'string' || !serviceKey ||
+      typeof fetchFn !== 'function' || typeof now !== 'function') return deny;
+  const id = 'movekit-v2-' + canonical.catalog_id;
+  const baseHeaders = {
+    Authorization: 'Bearer ' + serviceKey,
+    apikey: serviceKey,
+    Accept: 'application/json'
+  };
+  async function readRows(table, params) {
+    const result = await fetchFn(BASE + '/rest/v1/' + table + '?' + params.toString(), {
+      method: 'GET', cache: 'no-store', redirect: 'error', headers: baseHeaders
+    });
+    if (!result || !result.ok) throw new Error('BINDING_BACKEND_UNAVAILABLE');
+    const rows = await result.json();
+    if (!Array.isArray(rows) || rows.length > 2) throw new Error('BINDING_BAD_RESPONSE');
+    return rows;
+  }
+  try {
+    const bindings = await readRows('movekit_exercise_bindings', new URLSearchParams({
+      select: 'catalog_id,exercise_id,provider_id,inventory_sha256,approved,review_ref,reviewer_kind,reviewed_at,reviewed_taxonomy_sha256',
+      catalog_id: 'eq.' + canonical.catalog_id, limit: '2'
+    }));
+    if (bindings.length !== 1) return deny;
+    const b = bindings[0];
+    if (!b || b.catalog_id !== canonical.catalog_id || b.exercise_id !== id ||
+        b.provider_id !== canonical.provider_id ||
+        b.inventory_sha256 !== inventorySha || b.approved !== true ||
+        b.reviewer_kind !== 'human' ||
+        typeof b.review_ref !== 'string' || !REVIEW.test(b.review_ref) ||
+        typeof b.reviewed_taxonomy_sha256 !== 'string' ||
+        !SHA.test(b.reviewed_taxonomy_sha256) ||
+        typeof b.reviewed_at !== 'string' ||
+        !Number.isFinite(Date.parse(b.reviewed_at)) ||
+        Date.parse(b.reviewed_at) > now()) return deny;
+    // Never infer the global row from a TEXT id or similar exercise name.
+    // Re-read the exact reserved exercise record; user-owned or inactive rows
+    // are ineligible even if a stale crosswalk claims approval.
+    const rows = await readRows('exercises', new URLSearchParams({
+      select: 'id,scope,user_id,created_by,active',
+      id: 'eq.' + id, limit: '2'
+    }));
+    if (rows.length !== 1) return deny;
+    const e = rows[0];
+    if (!e || e.id !== id || e.scope !== 'global' ||
+        e.user_id !== null || e.created_by !== null || e.active !== true) return deny;
+    return { ok: true };
+  } catch (_) { return unavailable; }
+}
+
 function signedUrl(raw, desc) {
   if (typeof raw !== 'string' || !raw || raw.length > 8192) return null;
   let u;
@@ -252,6 +314,11 @@ async function handle(event, deps = {}) {
     return failure(event, entitlement.error === 'GRANT_BACKEND_UNAVAILABLE' ? 503 : 403,
       entitlement.error);
   }
+  const binding = await verifyCanonicalBinding(desc, env.SUPABASE_SERVICE_ROLE_KEY, fetchFn, now);
+  if (!binding.ok) {
+    return failure(event, binding.error === 'BINDING_BACKEND_UNAVAILABLE' ? 503 : 403,
+      binding.error);
+  }
   const url = await sign(desc, env.SUPABASE_SERVICE_ROLE_KEY, fetchFn);
   if (!url) return failure(event, 502, 'SIGNED_MEDIA_UNAVAILABLE');
   return respond(event, 200, {
@@ -261,5 +328,5 @@ async function handle(event, deps = {}) {
 }
 exports.handler = event => handle(event, { env: process.env, fetch: globalThis.fetch, now: Date.now });
 exports._internal = { handle, releaseConfigured, descriptor, identifyUser, verifyEntitlement,
-  signedUrl, sign, inventorySha, posterSha, byId, postersById,
+  verifyCanonicalBinding, signedUrl, sign, inventorySha, posterSha, byId, postersById,
   BUCKET, POSTER_BUCKET, SCOPE, BASE, TTL_SECONDS, SCHEMA };

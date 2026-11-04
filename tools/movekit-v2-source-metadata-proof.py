@@ -3,6 +3,8 @@
 import argparse
 import hashlib
 import json
+import re
+import unicodedata
 from pathlib import Path
 
 # Minimal generic evidence tokens; licensed source text is read only from private files.
@@ -21,6 +23,24 @@ RULES={
  'TK-000566':('wall-ball',['wall target','ball'],['medicine_ball','wall_target'],'EQUIPMENT'),
  'TK-000568':('weighted-pull-ups',['dip belt','extra weight'],['dip_belt'],'EQUIPMENT'),
 }
+_TOKEN=re.compile(r'[^\W_]+',re.UNICODE)
+def tokens(text):
+    """Unicode word tokens: NFKC + casefold; every non-alphanumeric code point
+    (any hyphen/dash, space, punctuation, underscore) is a separator. Input is never altered."""
+    return _TOKEN.findall(unicodedata.normalize('NFKC',str(text)).casefold())
+def mentions(evidence_tokens,phrase):
+    """True if the phrase occurs as whole consecutive words. Only the LAST word may carry a
+    plain plural ('s'/'es'), so 'row' matches 'rows' but never 'Throw'; 'dip' never 'dipped'.
+    This proves the supplier text MENTIONS the term, nothing more."""
+    want=tokens(phrase)
+    if not want: return False
+    n=len(want)
+    for i in range(len(evidence_tokens)-n+1):
+        window=evidence_tokens[i:i+n]
+        if window[:-1]!=want[:-1]: continue
+        last,got=want[-1],window[-1]
+        if got==last or got in (last+'s',last+'es'): return True
+    return False
 def need(ok,code):
     if not ok: raise ValueError(code)
 def sha_file(p):
@@ -47,9 +67,9 @@ def reconcile(owner,ledger,supplier):
         row=source[slug]
         need(src_sha(row)==entry['supplier_record_sha256'],
              'SUPPLIER_RECORD_CHANGED:'+cid)
-        evidence=' '.join([row.get('name',''),row.get('shortDescription','')]
-                          +row.get('instructions',[])).casefold()
-        missing=[word for word in words if word not in evidence]
+        fields=[tokens(t) for t in [row.get('name',''),row.get('shortDescription','')]
+                +list(row.get('instructions',[]))]
+        missing=[word for word in words if not any(mentions(f,word) for f in fields)]
         need(not missing,'SUPPLIER_EVIDENCE_MISSING:'+cid+':'+','.join(missing))
         corrections.append({
           'catalog_id':cid, 'provider_id':slug,
@@ -58,6 +78,8 @@ def reconcile(owner,ledger,supplier):
           'owner_note':o['owner_note'],
           'issue':kind,
           'supporting_supplier_terms':words,
+          'evidence_kind':'SUPPLIER_TEXT_TERM_MENTION_ONLY',
+          'evidence_note':'Whole-word mention in supplier text; does NOT prove the equipment or movement is required.',
           'suggested_additional_equipment_facets':additions,
           'supplier_equipment_unchanged':row.get('equipment',[]),
           'supplier_primary_muscles_unchanged':row.get('primaryMuscles',[]),
@@ -66,6 +88,7 @@ def reconcile(owner,ledger,supplier):
           'safe_for_automatic_import':False,
         })
     return {'schema':'tk504-v2-source-metadata-exceptions/1.0',
+            'evidence_matching':'unicode_whole_word_mention_only',
             'status':'PRIVATE_CORRECTIONS_NOT_RELEASED',
             'owner_metadata_cases':len(corrections),
             'original_supplier_rows_modified':False,

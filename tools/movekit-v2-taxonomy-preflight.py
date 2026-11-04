@@ -17,13 +17,62 @@ def record_hash(record):
     raw = json.dumps(record,sort_keys=True,ensure_ascii=False,separators=(',',':'))
     return hashlib.sha256(raw.encode('utf8')).hexdigest()
 
+FIELDS=(('primaryMuscles','muscles'),('secondaryMuscles','muscles'),('equipment','equipment'))
+REASON_KEY={'primary':'primaryMuscles','secondary':'secondaryMuscles'}
+PREFLIGHT_SCHEMA='tk504-v2-taxonomy-preflight/1.1'
+AUTO_MARK='auto_completed_from_source_not_approved'
+
+def canonical_sha(value):
+    raw=json.dumps(value,sort_keys=True,ensure_ascii=False,separators=(',',':'))
+    return hashlib.sha256(raw.encode('utf8')).hexdigest()
+
+def registry_sha256(taxonomy):
+    """Canonical digest of the whole PROPOSED registry (key order independent)."""
+    return canonical_sha(taxonomy)
+
+def source_term_set(source, taxonomy):
+    """Exact (field,term) pairs of the 3 supplier fields that belong to the registry.
+    Derived ONLY from supplier record + registry, never from AI rationale. Each pair once."""
+    pairs=[]
+    for key,table in FIELDS:
+        values=source.get(key,[])
+        require(isinstance(values,list) and all(isinstance(v,str) for v in values),
+                'SOURCE_FIELD_INVALID: '+key)
+        for term in values:
+            if term in taxonomy[table] and (key,term) not in pairs:
+                pairs.append((key,term))
+    return pairs
+
+def parse_reason(reason, source, taxonomy):
+    listed=[]
+    for segment in reason.split('; '):
+        found=re.fullmatch(r'(primary|secondary):(.+?) ontbreekt exacte goedgekeurde mapping',segment)
+        if found:
+            field,term=found.groups()
+            key=REASON_KEY[field]
+            table=taxonomy['muscles']
+        else:
+            found=re.fullmatch(r'equipment:(.+?) ontbreekt canonieke code',segment)
+            require(bool(found), 'UNSUPPORTED_REASON: '+segment)
+            term=found.group(1)
+            key='equipment'
+            table=taxonomy['equipment']
+        require(term in source.get(key,[]), 'SOURCE_TERM_NOT_FOUND')
+        require(term in table, 'TERM_NOT_REVIEWED: '+term)
+        require((key,term) not in listed, 'DUPLICATE_REASON_TERM: '+key+':'+term)
+        listed.append((key,term))
+    return listed
+
 def annotate(deferred, ledger, suppliers, taxonomy):
+    require(taxonomy.get('status')=='PROPOSED_NOT_APPROVED', 'MAP_STATUS_INVALID')
     by_id = {r['catalog_id']:r for r in ledger}
     by_slug = {r['slug']:r for r in suppliers}
     require(len(by_id)==len(ledger) and len(by_slug)==len(suppliers), 'DUPLICATE_SOURCE_ID')
     seen=set()
     cases=[]
     others=[]
+    digest_rows=[]
+    auto_total=0
     for r in deferred:
         cid=r['catalog_id']
         require(cid not in seen, 'DUPLICATE_ID')
@@ -32,27 +81,25 @@ def annotate(deferred, ledger, suppliers, taxonomy):
         if not reason.startswith(('primary:','secondary:','equipment:')):
             others.append(cid)
             continue
+        require(cid in by_id, 'LEDGER_ID_MISSING')
         entry=by_id[cid]
         require(entry['decision']=='DEFER', 'UNEXPECTED_LEDGER_STATUS')
+        require(entry['provider_id'] in by_slug, 'SUPPLIER_ROW_MISSING')
         source=by_slug[entry['provider_id']]
         require(record_hash(source)==entry['supplier_record_sha256'], 'SUPPLIER_RECORD_CHANGED')
+        listed=parse_reason(reason,source,taxonomy)
+        expected=source_term_set(source,taxonomy)
+        require(set(listed)<=set(expected), 'REASON_TERM_OUTSIDE_SOURCE_SET')
         annotations=[]
-        for segment in reason.split('; '):
-            found=re.fullmatch(r'(primary|secondary):(.+?) ontbreekt exacte goedgekeurde mapping',segment)
-            if found:
-                field,term=found.groups()
-                key={'primary':'primaryMuscles','secondary':'secondaryMuscles'}[field]
-                table=taxonomy['muscles']
-            else:
-                found=re.fullmatch(r'equipment:(.+?) ontbreekt canonieke code',segment)
-                require(bool(found), 'UNSUPPORTED_REASON: '+segment)
-                term=found.group(1)
-                key='equipment'
-                table=taxonomy['equipment']
-            require(term in source[key], 'SOURCE_TERM_NOT_FOUND')
-            require(term in table, 'TERM_NOT_REVIEWED: '+term)
-            annotations.append({'source_field':key,'source_term':term,
-                                'proposed':table[term], 'approved':False})
+        for key,term in expected:
+            table=taxonomy[dict(FIELDS)[key]]
+            auto=(key,term) not in listed
+            auto_total+=auto
+            digest_rows.append([cid,key,term])
+            note={'source_field':key,'source_term':term,
+                  'proposed':table[term], 'approved':False,
+                  'provenance':AUTO_MARK if auto else 'ai_reason_confirmed_against_source'}
+            annotations.append(note)
         cases.append({'catalog_id':cid,'provider_id':entry['provider_id'],
                       'supplier_record_sha256':entry['supplier_record_sha256'],
                       'original_primary':source['primaryMuscles'],
@@ -60,8 +107,12 @@ def annotate(deferred, ledger, suppliers, taxonomy):
                       'original_equipment':source['equipment'],
                       'proposed_annotations':annotations,
                       'status':'TERMS_COVERED_HUMAN_REVIEW_REQUIRED'})
-    return {'schema':'tk504-v2-taxonomy-preflight/1.0',
+    return {'schema':PREFLIGHT_SCHEMA,
             'status':'PRIVATE_PROPOSALS_NO_PRODUCTION_RELEASE',
+            'registry_sha256':registry_sha256(taxonomy),
+            'expected_source_term_count':len(digest_rows),
+            'expected_source_term_set_sha256':canonical_sha(digest_rows),
+            'auto_completed_annotation_count':auto_total,
             'covered_count':len(cases),'special_count':len(others),
             'cases':cases,'special_ids':others,
             'raw_supplier_records_mutated':False,'db_writes':False,
@@ -69,7 +120,7 @@ def annotate(deferred, ledger, suppliers, taxonomy):
 
 def main(repo,private,output):
     repo,private,output=map(lambda x:Path(x).resolve(),(repo,private,output))
-    require(output.parent==private, 'OUTPUT_MUST_STAY_PRIVATE')
+    require(output.parent==private and not output.exists(), 'OUTPUT_MUST_BE_NEW_PRIVATE_FILE')
     supplier=private.parent/'complete-exercise-library-metadata'/'metadata.json'
     catalog=repo/'exercise-catalog.json'
     inventory=repo/'docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json'
@@ -94,6 +145,8 @@ def main(repo,private,output):
     output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
     print(json.dumps({'status':'PASS_STAGING_ONLY','term_cases':85,'content_cases':26,
                       'term_definitions':len(mapping['muscles'])+len(mapping['equipment']),
+                      'auto_completed_annotations':result['auto_completed_annotation_count'],
+                      'registry_sha256':result['registry_sha256'],
                       'output':str(output)},ensure_ascii=False))
 
 if __name__=='__main__':

@@ -23,6 +23,10 @@ def fixture():
     ledger=[]
     terms=[]
     owner=[]
+    deferred=[]
+    registry={'schema':'tk504-movekit-v2-terminology/1.0','status':'PROPOSED_NOT_APPROVED',
+              'muscles':{'Legs':{'code':'movekit:muscle:legs','label_nl':'Benen'}},'equipment':{}}
+    choices=['apart']*8+['meta']*12+['variant']*6
     for i,cid in enumerate(new_ids):
         slug=new_by_id[cid]['provider_id']
         source=source_by_slug[slug]
@@ -33,25 +37,49 @@ def fixture():
            'decision':'ACCEPT' if accepted else 'DEFER',
            'classification':{'category':'strength','type':'strength'} if accepted else None,
            'review':{'kind':'AI'} if accepted else None})
-        if 245<=i<330:
-            terms.append({'catalog_id':cid,'provider_id':slug,
-                          'supplier_record_sha256':rec_sha,
-                          'proposed_annotations':[],
-                          'status':'TERMS_COVERED_HUMAN_REVIEW_REQUIRED'})
-        elif i>=330:
+        if accepted: continue
+        if i<330:
+            deferred.append({'catalog_id':cid,
+                             'reason':'primary:Legs ontbreekt exacte goedgekeurde mapping'})
+        else:
+            deferred.append({'catalog_id':cid,'reason':'variants need content review'})
             owner.append({'catalog_id':cid,'provider_id':slug,
                           'supplier_record_sha256':rec_sha,
-                          'owner_choice':'apart',
+                          'owner_choice':choices[i-330],
                           'owner_note':'',
                           'suggested_route':'KEEP_DISTINCT_PROVISIONAL'})
-    assert len(terms)==85 and len(owner)==26
+    ai={'summary':{'counts':{'accept_ai':245,'defer_ai':111}},'deferred':deferred}
+    report=M.TAX.annotate(deferred,ledger,suppliers,registry)
+    terms=report
+    assert len(terms['cases'])==85 and len(owner)==26
+    metas=[]
+    for r in owner:
+        if r['owner_choice']!='meta': continue
+        src=source_by_slug[r['provider_id']]
+        metas.append({'catalog_id':r['catalog_id'],'provider_id':r['provider_id'],
+                      'supplier_record_sha256':r['supplier_record_sha256'],
+                      'owner_choice':'meta','issue':'EQUIPMENT',
+                      'supporting_supplier_terms':['supplier'],
+                      'evidence_kind':'SUPPLIER_TEXT_TERM_MENTION_ONLY',
+                      'suggested_additional_equipment_facets':[],
+                      'supplier_equipment_unchanged':src['equipment'],
+                      'supplier_primary_muscles_unchanged':src['primaryMuscles'],
+                      'supplier_movement_patterns_unchanged':src['movementPattern'],
+                      'review_status':'EVIDENCED_CORRECTION_PROPOSAL_NOT_APPROVED',
+                      'safe_for_automatic_import':False})
+    proof={'status':'PRIVATE_CORRECTIONS_NOT_RELEASED','owner_metadata_cases':12,
+           'evidence_matching':'unicode_whole_word_mention_only',
+           'corrections':metas}
+    variants=[r['catalog_id'] for r in owner if r['owner_choice']=='variant']
+    inv_by_id={x['catalog_id']:x for x in inventory['items']}
+    for cid in variants: inv_by_id[cid]['video']={'sha256':'v'+cid}
+    pairs=[{'catalog_ids':variants[k:k+2],'same_video_sha256':False,
+            'status':'OWNER_MARKED_VARIANT_NOT_AUTODEDUPED'} for k in (0,2,4)]
     return (catalog,inventory,suppliers,
-            {'entries':ledger},
-            {'summary':{'counts':{'accept_ai':245,'defer_ai':111}}},
-            {'status':'PRIVATE_PROPOSALS_NO_PRODUCTION_RELEASE',
-             'covered_count':85,'special_count':26,'cases':terms},
+            {'entries':ledger},ai,terms,
             {'status':'PRIVATE_VERIFIED_OWNER_FEEDBACK_NOT_AUTHENTICATED_APPROVAL',
-             'total':26,'routes':owner})
+             'total':26,'routes':owner,'possible_duplicate_groups':pairs},
+            proof,registry)
 
 class PrivateReviewedStageTests(unittest.TestCase):
     @classmethod
@@ -92,11 +120,13 @@ class PrivateReviewedStageTests(unittest.TestCase):
         self.assertEqual(x['_review']['review_route'],'SOURCE_TERM_PROPOSAL_PENDING_HUMAN_REVIEW')
         self.assertFalse(x['_review']['supplier_metadata_modified'])
         self.assertEqual(x['identity']['primary'],['Legs'])
-        self.assertEqual(x['_review']['feedback']['proposed_exact_vocabulary'],[])
+        notes=x['_review']['feedback']['proposed_exact_vocabulary']
+        self.assertEqual([n['source_term'] for n in notes],['Legs'])
+        self.assertFalse(notes[0]['approved'])
     def test_owner_feedback_does_not_authorize_import(self):
         x=self.build()['catalog'][-1]
         self.assertEqual(x['_review']['review_route'],'OWNER_FEEDBACK_PENDING_CONTENT_REVIEW')
-        self.assertEqual(x['_review']['feedback']['owner_choice'],'apart')
+        self.assertEqual(x['_review']['feedback']['owner_choice'],'variant')
         self.assertEqual(x['identity']['category'],'pending_review')
     def test_stale_supplier_record_rejected(self):
         self.data[2][-1]['name']='Changed without review'
@@ -117,6 +147,14 @@ class PrivateReviewedStageTests(unittest.TestCase):
     def test_duplicate_or_conflicting_term_ids_rejected(self):
         self.data[5]['cases'][0]['catalog_id']=self.data[6]['routes'][0]['catalog_id']
         with self.assertRaisesRegex(ValueError,'CONFLICTING_REVIEW_GROUPS'):
+            self.build()
+    def test_legacy_substring_metadata_proof_rejected(self):
+        self.data[7].pop('evidence_matching')
+        with self.assertRaisesRegex(ValueError,'UNVERIFIED_METADATA_EVIDENCE_MATCHING'):
+            self.build()
+    def test_metadata_annotation_without_whole_term_evidence_rejected(self):
+        self.data[7]['corrections'][0]['evidence_kind']='UNVERIFIED'
+        with self.assertRaisesRegex(ValueError,'SOURCE_METADATA_PROOF_CHANGED'):
             self.build()
     def test_old_catalog_change_breaks_golden_inventory(self):
         self.data[0]['catalog'].pop()

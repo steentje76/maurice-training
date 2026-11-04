@@ -82,5 +82,49 @@ class SourceFirstTests(unittest.TestCase):
         result=self.run_preview()
         self.assertEqual(result['status'],'PRIVATE_PROPOSALS_NO_PRODUCTION_RELEASE')
 
+class CompletenessTests(unittest.TestCase):
+    setUp=SourceFirstTests.setUp
+    run_preview=SourceFirstTests.run_preview
+    def test_omitted_source_term_is_auto_completed_and_marked_unapproved(self):
+        self.deferred['reason']='primary:Lower Back ontbreekt exacte goedgekeurde mapping'
+        result=self.run_preview()
+        notes={a['source_term']:a for a in result['cases'][0]['proposed_annotations']}
+        self.assertEqual(set(notes),{'Lower Back','Forearms','Bench'})
+        self.assertEqual(notes['Forearms']['provenance'],'auto_completed_from_source_not_approved')
+        self.assertEqual(notes['Lower Back']['provenance'],'ai_reason_confirmed_against_source')
+        self.assertTrue(all(a['approved'] is False for a in notes.values()))
+        self.assertEqual(result['auto_completed_annotation_count'],2)
+        self.assertEqual(result['expected_source_term_count'],3)
+        self.assertFalse(result['human_approved'])
+    def test_duplicate_reason_term_rejected(self):
+        self.deferred['reason']=('primary:Lower Back ontbreekt exacte goedgekeurde mapping; '
+                                 'primary:Lower Back ontbreekt exacte goedgekeurde mapping')
+        with self.assertRaisesRegex(ValueError,'DUPLICATE_REASON_TERM'):
+            self.run_preview()
+    def test_reason_term_from_wrong_field_rejected(self):
+        self.deferred['reason']='secondary:Lower Back ontbreekt exacte goedgekeurde mapping'
+        with self.assertRaisesRegex(ValueError,'SOURCE_TERM_NOT_FOUND'):
+            self.run_preview()
+    def test_source_duplicate_term_annotated_once(self):
+        self.supplier['primaryMuscles']=['Lower Back','Lower Back']
+        self.ledger['supplier_record_sha256']=M.record_hash(self.supplier)
+        n=[a for a in self.run_preview()['cases'][0]['proposed_annotations']
+           if a['source_term']=='Lower Back']
+        self.assertEqual(len(n),1)
+    def test_digest_and_registry_hash_deterministic_and_order_independent(self):
+        a=self.run_preview()
+        reordered=dict(reversed(list(TAXONOMY.items())))
+        b=M.annotate([self.deferred],[self.ledger],[self.supplier],reordered)
+        self.assertEqual(a['registry_sha256'],b['registry_sha256'])
+        self.assertEqual(a['expected_source_term_set_sha256'],b['expected_source_term_set_sha256'])
+        changed=copy.deepcopy(TAXONOMY)
+        changed['muscles']['Neck']['label_nl']='x'
+        self.assertNotEqual(M.registry_sha256(changed),a['registry_sha256'])
+    def test_unapproved_registry_status_required(self):
+        changed=copy.deepcopy(TAXONOMY)
+        changed['status']='APPROVED'
+        with self.assertRaisesRegex(ValueError,'MAP_STATUS_INVALID'):
+            M.annotate([self.deferred],[self.ledger],[self.supplier],changed)
+
 if __name__=='__main__':
     unittest.main()

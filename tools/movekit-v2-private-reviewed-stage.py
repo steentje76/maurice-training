@@ -52,7 +52,11 @@ def verify_owner_feedback(feedback,reconciled,ai_sha,supplier_sha):
             need(row[a]==match[b],'OWNER_REPORT_CHANGED:'+cid+':'+a)
     return True
 
-def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_proof=None):
+OWNER_SPLIT={'apart':8,'meta':12,'variant':6}
+TERM_REPORT_FILE='TK504-V2-TAXONOMY-PREFLIGHT-85-20261104-V2.json'
+TERM_REPORT_EXTRA_KEYS={'supplier_sha256','ai_result_sha256'}
+
+def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_proof,registry):
     """Pure projection; all source records and existing 226 entries remain untouched."""
     need(len(catalog['catalog'])==226,'BASELINE_COUNT')
     need(len(suppliers)==582 and len(inventory['items'])==582,'SUPPLIER_COUNT')
@@ -61,6 +65,11 @@ def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_p
     need(stage['_status']=='PRIVATE_LOCAL_REVIEW_ONLY_NOT_ACTIVE','STAGE_RELEASE_BOUNDARY')
     need(len(ledger['entries'])==356,'INVALID_REVIEW_LEDGER')
     need(ai['summary']['counts']=={'accept_ai':245,'defer_ai':111},'AI_COUNTS_CHANGED')
+    need(isinstance(registry,dict) and registry.get('status')=='PROPOSED_NOT_APPROVED',
+         'REGISTRY_NOT_VALID')
+    need(terms.get('schema')==TAX.PREFLIGHT_SCHEMA and
+         terms.get('registry_sha256')==TAX.registry_sha256(registry),
+         'TERM_REPORT_STALE_OR_REGISTRY_CHANGED')
     need(terms['status']=='PRIVATE_PROPOSALS_NO_PRODUCTION_RELEASE' and
          terms['covered_count']==85 and terms['special_count']==26,'TERM_REVIEW_NOT_VALID')
     need(owner['status']=='PRIVATE_VERIFIED_OWNER_FEEDBACK_NOT_AUTHENTICATED_APPROVAL'
@@ -72,38 +81,55 @@ def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_p
     by_owner={r['catalog_id']:r for r in owner['routes']}
     need(len(by_ledger)==356 and len(by_terms)==85 and len(by_owner)==26,'DUPLICATE_REVIEW_ID')
     need(set(by_terms).isdisjoint(by_owner),'CONFLICTING_REVIEW_GROUPS')
+    # G5: exact owner split; every 'meta' needs evidence and every 'variant' a pair.
+    need(isinstance(metadata_proof,dict),'METADATA_PROOF_REQUIRED')
+    need(Counter(x['owner_choice'] for x in by_owner.values())==Counter(OWNER_SPLIT),
+         'OWNER_CHOICE_SPLIT_UNEXPECTED')
+    # G4: the term report is never trusted: recompute from suppliers + deferred reasons + registry.
+    deferred=ai.get('deferred')
+    need(isinstance(deferred,list) and len(deferred)==111 and
+         {x['catalog_id'] for x in deferred}=={cid for cid,x in by_ledger.items()
+                                               if x['decision']=='DEFER'},
+         'AI_LEDGER_DEFERRED_MISMATCH')
+    recomputed=TAX.annotate(deferred,ledger['entries'],suppliers,registry)
+    need(set(terms)-TERM_REPORT_EXTRA_KEYS==set(recomputed),'TERM_REPORT_KEYS_CHANGED')
+    need(all(terms[k]==v for k,v in recomputed.items()),'TERM_REPORT_NOT_REPRODUCIBLE')
+    need(set(by_terms)=={c['catalog_id'] for c in recomputed['cases']},
+         'TERM_REPORT_NOT_REPRODUCIBLE')
     by_metadata={}
-    if metadata_proof is not None:
-        need(metadata_proof.get('status')=='PRIVATE_CORRECTIONS_NOT_RELEASED' and
-             metadata_proof.get('owner_metadata_cases')==12,
-             'INVALID_METADATA_PROOF')
-        by_metadata={x['catalog_id']:x for x in metadata_proof['corrections']}
-        need(len(by_metadata)==12,'DUPLICATE_METADATA_CASE')
-        need(set(by_metadata)=={cid for cid,x in by_owner.items()
-              if x['owner_choice']=='meta'},'METADATA_OWNER_ROUTE_MISMATCH')
+    need(metadata_proof.get('status')=='PRIVATE_CORRECTIONS_NOT_RELEASED' and
+         metadata_proof.get('owner_metadata_cases')==12,
+         'INVALID_METADATA_PROOF')
+    need(metadata_proof.get('evidence_matching')=='unicode_whole_word_mention_only',
+         'UNVERIFIED_METADATA_EVIDENCE_MATCHING')
+    by_metadata={x['catalog_id']:x for x in metadata_proof['corrections']}
+    need(len(by_metadata)==12,'DUPLICATE_METADATA_CASE')
+    need(set(by_metadata)=={cid for cid,x in by_owner.items()
+          if x['owner_choice']=='meta'},'METADATA_OWNER_ROUTE_MISMATCH')
     need(set(by_ledger)==set(r['catalog_id'] for r in stage['catalog'][226:]),'REVIEW_ID_SET_CHANGED')
     variant_links={}
-    if 'possible_duplicate_groups' in owner:
-        comparisons=owner['possible_duplicate_groups']
-        need(len(comparisons)==3,'VARIANT_PAIR_COUNT')
-        by_inventory={x['catalog_id']:x for x in inventory['items']}
-        for pair in comparisons:
-            ids=pair.get('catalog_ids')
-            need(isinstance(ids,list) and len(ids)==2 and ids[0]!=ids[1],
-                 'INVALID_VARIANT_PAIR')
-            a,b=ids
-            need(a in by_owner and b in by_owner and
-                 by_owner[a]['owner_choice']==by_owner[b]['owner_choice']=='variant'
-                 and a not in variant_links and b not in variant_links,
-                 'INVALID_OWNER_VARIANT_PAIR')
-            same=by_inventory[a]['video']['sha256']==by_inventory[b]['video']['sha256']
-            need(same==pair['same_video_sha256'] and
-                 pair['status']=='OWNER_MARKED_VARIANT_NOT_AUTODEDUPED',
-                 'VARIANT_VIDEO_INTEGRITY_CHANGED')
-            variant_links[a]={'peer_catalog_id':b,'video_bytes_identical':same}
-            variant_links[b]={'peer_catalog_id':a,'video_bytes_identical':same}
-        need(set(variant_links)=={cid for cid,x in by_owner.items()
-             if x['owner_choice']=='variant'},'UNPAIRED_OWNER_VARIANT')
+    need('possible_duplicate_groups' in owner,'VARIANT_PAIR_EVIDENCE_REQUIRED')
+    comparisons=owner['possible_duplicate_groups']
+    need(len(comparisons)==3,'VARIANT_PAIR_COUNT')
+    by_inventory={x['catalog_id']:x for x in inventory['items']}
+    for pair in comparisons:
+        ids=pair.get('catalog_ids')
+        need(isinstance(ids,list) and len(ids)==2 and ids[0]!=ids[1],
+             'INVALID_VARIANT_PAIR')
+        a,b=ids
+        need(a in by_owner and b in by_owner and
+             by_owner[a]['owner_choice']==by_owner[b]['owner_choice']=='variant'
+             and a not in variant_links and b not in variant_links,
+             'INVALID_OWNER_VARIANT_PAIR')
+        need(a in by_inventory and b in by_inventory,'VARIANT_INVENTORY_MISSING')
+        same=by_inventory[a]['video']['sha256']==by_inventory[b]['video']['sha256']
+        need(same==pair['same_video_sha256'] and
+             pair['status']=='OWNER_MARKED_VARIANT_NOT_AUTODEDUPED',
+             'VARIANT_VIDEO_INTEGRITY_CHANGED')
+        variant_links[a]={'peer_catalog_id':b,'video_bytes_identical':same}
+        variant_links[b]={'peer_catalog_id':a,'video_bytes_identical':same}
+    need(set(variant_links)=={cid for cid,x in by_owner.items()
+         if x['owner_choice']=='variant'},'UNPAIRED_OWNER_VARIANT')
     counts=Counter()
     for item in stage['catalog'][226:]:
         cid=item['catalog_id']
@@ -134,8 +160,7 @@ def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_p
             need(feedback['provider_id']==slug and
                  feedback['supplier_record_sha256']==review['supplier_record_sha256'],
                  'OWNER_SOURCE_CHANGED')
-            need(feedback['owner_choice'] in ('apart','meta','variant','hold','exclude'),
-                 'INVALID_OWNER_CHOICE')
+            need(feedback['owner_choice'] in OWNER_SPLIT,'INVALID_OWNER_CHOICE')
             route='OWNER_FEEDBACK_PENDING_CONTENT_REVIEW'
             evidence={'owner_choice':feedback['owner_choice'],
                       'owner_note':feedback['owner_note'],
@@ -145,11 +170,17 @@ def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_p
                     'identity_retained':True,
                     'automated_deduplication_permitted':False,
                     'formal_variant_relation_approved':False}
+            need((feedback['owner_choice']=='meta')==(cid in by_metadata) and
+                 (feedback['owner_choice']=='variant')==(cid in variant_links),
+                 'OWNER_EVIDENCE_ROUTE_MISMATCH')
             if cid in by_metadata:
                 meta=by_metadata[cid]
                 need(meta['provider_id']==slug and
                      meta['supplier_record_sha256']==review['supplier_record_sha256'] and
                      meta['review_status']=='EVIDENCED_CORRECTION_PROPOSAL_NOT_APPROVED' and
+                     meta['owner_choice']=='meta' and
+                     meta.get('evidence_kind')=='SUPPLIER_TEXT_TERM_MENTION_ONLY' and
+                     meta.get('safe_for_automatic_import') is False and
                      meta['supplier_equipment_unchanged']==source_by_slug[slug]['equipment'] and
                      meta['supplier_primary_muscles_unchanged']==source_by_slug[slug]['primaryMuscles'] and
                      meta['supplier_movement_patterns_unchanged']==source_by_slug[slug]['movementPattern'],
@@ -199,10 +230,10 @@ def run(source,output):
       'inventory':ROOT/'docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json'}
     ledger=read(private/'TK504-CLASSIFICATION-REVIEW-LEDGER-AI-20261103.json')
     ai_path=private/'TK504-CLASSIFICATION-AI-REVIEW-RESULT-20261103.json'
-    terms=read(private/'TK504-V2-TAXONOMY-PREFLIGHT-85-20261103.json')
+    terms=read(private/TERM_REPORT_FILE)  # old 20261103 report is deliberately NOT accepted
     owner_path=private/'TK504-EIGENAAR-REVIEW-GECONTROLEERD-20261103.json'
     owner=read(owner_path)
-    metadata_proof_path=private/'TK504-V2-OWNER-METADATA-EVIDENCE-12-20261103.json'
+    metadata_proof_path=private/'TK504-V2-OWNER-METADATA-EVIDENCE-12-20261104-V2.json'
     metadata_proof=read(metadata_proof_path)
     for k,p in sources.items():
         need(sha(p)==ledger['source_hashes'][k],'STALE_PINNED_SOURCE:'+k)
@@ -225,7 +256,9 @@ def run(source,output):
     ledger_validation=LEDGER.validate(ledger,template,base)
     need(ledger_validation['counts']=={'accept_ai':245,'defer_ai':111},
          'INVALID_AI_LEDGER')
-    stage=compile_private(base,inventory,supplier_records,ledger,read(ai_path),terms,owner,metadata_proof)
+    registry=read(ROOT/'tools/movekit-v2-taxonomy-map.json')
+    stage=compile_private(base,inventory,supplier_records,ledger,read(ai_path),terms,owner,
+                          metadata_proof,registry)
     output.write_text(json.dumps(stage,ensure_ascii=False,indent=2)+'\n',
                       encoding='utf8')
     return {'status':stage['_status'],

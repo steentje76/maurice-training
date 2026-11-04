@@ -17870,8 +17870,15 @@ let _ensureRowInflight={};
 async function ensureExerciseRowStatus(exId){
   try{
     if(!exId) return 'exists';
-    if(typeof exercises!=='undefined' && Array.isArray(exercises) && exercises.some(e=>e.id===exId)) return 'exists';
+    // TK504 guard: validate TK catalog identities BEFORE any existing-row shortcut.
+    // Unknown and not-yet-published MoveKit identities must not create shadow rows.
+    const isTK=typeof exId==='string'&&exId.indexOf('TK-')===0;
+    const alreadyExists=typeof exercises!=='undefined'&&Array.isArray(exercises)&&exercises.some(e=>e.id===exId);
+    if(!isTK&&alreadyExists) return 'exists'; // preserve existing legacy/owned exercise behavior
     const c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(exId):null;
+    if(c&&(c._review||(c.identity&&c.identity.category==='pending_review'))) return 'rejected';
+    if(isTK&&!(c&&c.catalog_id===exId&&c.identity&&c.source&&c.source.provider==='movekit'&&c.source.provider_id)) return 'rejected';
+    if(alreadyExists) return 'exists';
     if(!c||!c.identity) return 'exists'; // geen catalogus-id → legacy/custom hoort al te bestaan
     if(_ensureRowInflight[exId]) return _ensureRowInflight[exId];
     const Id=c.identity;

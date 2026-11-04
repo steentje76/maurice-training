@@ -147,6 +147,16 @@ function build(opts = {}) {
     await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/ENTITLEMENT_REQUIRED/);
     assert.equal(v.mock.calls.filter(c=>c.url.includes('/object/sign/')).length,0);
   });
+  await check('content not approved maps to unreleased, not a subscription/paywall error', async()=>{
+    const v=build({bindings:[]});
+    await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/MEDIA_NOT_RELEASED/);
+    assert.equal(v.mock.calls.filter(c=>c.url.includes('/object/sign/')).length,0);
+  });
+  await check('AI-only canonical binding also maps to unreleased', async()=>{
+    const v=build({bindings:[{...binding,reviewer_kind:'ai'}]});
+    await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/MEDIA_NOT_RELEASED/);
+    assert.equal(v.mock.calls.filter(c=>c.url.includes('/object/sign/')).length,0);
+  });
   await check('valid JWT for other account cannot get current user grant', async()=>{
     const v=build({identity:other});
     await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/ENTITLEMENT_REQUIRED/);

@@ -22,6 +22,11 @@ request**, in this order:
    `scope=global`, null owner/user fields and `active=true`.
 5. Only then may the server request the existing 60-second private signed URL.
 
+The staged client now presents an explicit content-binding denial as
+`MEDIA_NOT_RELEASED` rather than misleadingly reporting a subscription/
+entitlement problem. Unknown 403 failures remain `ENTITLEMENT_REQUIRED`, and
+account switching during the denial response invalidates that request.
+
 All backend requests are exact-ID, GET-only, `no-store`, redirect-rejecting and
 use only the server-side credential. Missing, duplicate, malformed, stale,
 personal, inactive or AI-only approvals are denied; backend failures return
@@ -32,7 +37,7 @@ exercise ID, bucket, storage path or raw media URL.
 
 - Synthetic broker security scenarios: **32 PASS**, including malicious and
   stale binding responses, owner-scope collisions and backend failures.
-- Synthetic client ↔ broker ↔ grant ↔ binding ↔ exercise ↔ signer: **14 PASS**.
+- Synthetic client ↔ broker ↔ grant ↔ binding ↔ exercise ↔ signer: **16 PASS**.
 - Previously published 226 continue using their existing V1 path; no V2
   activation or fallback changes.
 - CI Quality Gate to be recorded only after exact commit checks complete.

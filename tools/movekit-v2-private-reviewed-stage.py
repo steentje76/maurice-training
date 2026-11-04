@@ -25,6 +25,7 @@ def load_module(name,path):
 CAT=load_module('mk_stage',ROOT/'tools/movekit-catalog-stage.py')
 TAX=load_module('mk_taxonomy',ROOT/'tools/movekit-v2-taxonomy-preflight.py')
 LEDGER=load_module('mk_review_ledger',ROOT/'tools/movekit-review-ledger.py')
+PROOF=load_module('mk_metadata_proof',ROOT/'tools/movekit-v2-source-metadata-proof.py')
 
 def verify_owner_feedback(feedback,reconciled,ai_sha,supplier_sha):
     need(feedback.get('schema')=='tk504-owner-feedback/1.0' and
@@ -56,7 +57,37 @@ OWNER_SPLIT={'apart':8,'meta':12,'variant':6}
 TERM_REPORT_FILE='TK504-V2-TAXONOMY-PREFLIGHT-85-20261104-V2.json'
 TERM_REPORT_EXTRA_KEYS={'supplier_sha256','ai_result_sha256'}
 
-def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_proof,registry):
+GENERIC_META_STATUS='EVIDENCED_CORRECTION_PROPOSAL_NOT_APPROVED'
+GENERIC_META_EVIDENCE='SUPPLIER_TEXT_TERM_MENTION_ONLY'
+
+def verify_metadata_facets_and_anatomy(metadata_proof,by_metadata,facet_registry):
+    """G2/G2b: owner facets must come from the independent owner-proposal registry
+    (hash-pinned in the proof); the single lower-back exception is strictly bound to TK-000539."""
+    PROOF.validate_facet_registry(facet_registry)
+    need(metadata_proof.get('owner_facet_registry')==PROOF.facet_registry_record(facet_registry),
+         'OWNER_FACET_REGISTRY_PROOF_MISMATCH')
+    for cid,meta in by_metadata.items():
+        facets=meta.get('suggested_additional_equipment_facets')
+        need(isinstance(facets,list) and all(isinstance(f,str) and f in facet_registry['facets']
+                                             for f in facets),'FACET_NOT_IN_OWNER_REGISTRY:'+cid)
+        need(meta.get('owner_facet_source')==PROOF.FACET_SOURCE,'FACET_SOURCE_NOT_OWNER:'+cid)
+        special=(meta.get('review_status')==PROOF.ANATOMY_STATUS or
+                 meta.get('evidence_kind')==PROOF.ANATOMY_EVIDENCE or
+                 meta.get('issue')==PROOF.ANATOMY_ISSUE or
+                 'anatomical_tag_claim_valid' in meta)
+        if cid!=PROOF.ANATOMY_CASE:
+            need(not special,'ANATOMICAL_STATUS_NOT_PERMITTED:'+cid)
+            continue
+        need(meta.get('issue')==PROOF.ANATOMY_ISSUE and
+             meta.get('review_status')==PROOF.ANATOMY_STATUS and
+             meta.get('evidence_kind')==PROOF.ANATOMY_EVIDENCE and
+             meta.get('anatomical_tag_claim_valid') is False and
+             meta.get('safe_for_automatic_import') is False and
+             meta.get('supporting_supplier_terms')==['wide-stance'] and
+             facets==[],'ANATOMICAL_EXCEPTION_INVALID:'+cid)
+
+def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_proof,registry,
+                    facet_registry=None):
     """Pure projection; all source records and existing 226 entries remain untouched."""
     need(len(catalog['catalog'])==226,'BASELINE_COUNT')
     need(len(suppliers)==582 and len(inventory['items'])==582,'SUPPLIER_COUNT')
@@ -104,6 +135,9 @@ def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_p
          'UNVERIFIED_METADATA_EVIDENCE_MATCHING')
     by_metadata={x['catalog_id']:x for x in metadata_proof['corrections']}
     need(len(by_metadata)==12,'DUPLICATE_METADATA_CASE')
+    verify_metadata_facets_and_anatomy(
+        metadata_proof,by_metadata,
+        PROOF.load_facet_registry() if facet_registry is None else facet_registry)
     need(set(by_metadata)=={cid for cid,x in by_owner.items()
           if x['owner_choice']=='meta'},'METADATA_OWNER_ROUTE_MISMATCH')
     need(set(by_ledger)==set(r['catalog_id'] for r in stage['catalog'][226:]),'REVIEW_ID_SET_CHANGED')
@@ -177,9 +211,11 @@ def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_p
                 meta=by_metadata[cid]
                 need(meta['provider_id']==slug and
                      meta['supplier_record_sha256']==review['supplier_record_sha256'] and
-                     meta['review_status']=='EVIDENCED_CORRECTION_PROPOSAL_NOT_APPROVED' and
+                     meta['review_status'] in (GENERIC_META_STATUS,PROOF.ANATOMY_STATUS) and
+                     (meta['review_status']==GENERIC_META_STATUS)==(cid!=PROOF.ANATOMY_CASE) and
                      meta['owner_choice']=='meta' and
-                     meta.get('evidence_kind')=='SUPPLIER_TEXT_TERM_MENTION_ONLY' and
+                     meta.get('evidence_kind')==(PROOF.ANATOMY_EVIDENCE if cid==PROOF.ANATOMY_CASE
+                                                 else GENERIC_META_EVIDENCE) and
                      meta.get('safe_for_automatic_import') is False and
                      meta['supplier_equipment_unchanged']==source_by_slug[slug]['equipment'] and
                      meta['supplier_primary_muscles_unchanged']==source_by_slug[slug]['primaryMuscles'] and
@@ -189,6 +225,10 @@ def compile_private(catalog,inventory,suppliers,ledger,ai,terms,owner,metadata_p
                     'issue':meta['issue'],
                     'supporting_supplier_terms':copy.deepcopy(meta['supporting_supplier_terms']),
                     'suggested_additional_equipment_facets':copy.deepcopy(meta['suggested_additional_equipment_facets']),
+                    'review_status':meta['review_status'],
+                    'evidence_kind':meta['evidence_kind'],
+                    'suggested_facets_source':PROOF.FACET_SOURCE,
+                    'anatomical_tag_claim_valid':meta.get('anatomical_tag_claim_valid'),
                     'approved':False}
         review_block=item['_review']
         need(review_block['status']=='NOT_PUBLISHED','PREVIOUS_RELEASE_DETECTED')
@@ -233,7 +273,7 @@ def run(source,output):
     terms=read(private/TERM_REPORT_FILE)  # old 20261103 report is deliberately NOT accepted
     owner_path=private/'TK504-EIGENAAR-REVIEW-GECONTROLEERD-20261103.json'
     owner=read(owner_path)
-    metadata_proof_path=private/'TK504-V2-OWNER-METADATA-EVIDENCE-12-20261104-V2.json'
+    metadata_proof_path=private/'TK504-V2-OWNER-METADATA-EVIDENCE-12-20261104-V3.json'
     metadata_proof=read(metadata_proof_path)
     for k,p in sources.items():
         need(sha(p)==ledger['source_hashes'][k],'STALE_PINNED_SOURCE:'+k)
@@ -258,7 +298,7 @@ def run(source,output):
          'INVALID_AI_LEDGER')
     registry=read(ROOT/'tools/movekit-v2-taxonomy-map.json')
     stage=compile_private(base,inventory,supplier_records,ledger,read(ai_path),terms,owner,
-                          metadata_proof,registry)
+                          metadata_proof,registry,read(PROOF.FACET_REGISTRY_PATH))
     output.write_text(json.dumps(stage,ensure_ascii=False,indent=2)+'\n',
                       encoding='utf8')
     return {'status':stage['_status'],

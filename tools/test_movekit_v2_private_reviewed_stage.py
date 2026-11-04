@@ -66,9 +66,11 @@ def fixture():
                       'supplier_primary_muscles_unchanged':src['primaryMuscles'],
                       'supplier_movement_patterns_unchanged':src['movementPattern'],
                       'review_status':'EVIDENCED_CORRECTION_PROPOSAL_NOT_APPROVED',
+                      'owner_facet_source':'OWNER_FEEDBACK_NOT_SUPPLIER_ATTRIBUTE',
                       'safe_for_automatic_import':False})
     proof={'status':'PRIVATE_CORRECTIONS_NOT_RELEASED','owner_metadata_cases':12,
            'evidence_matching':'unicode_whole_word_mention_only',
+           'owner_facet_registry':M.PROOF.facet_registry_record(M.PROOF.load_facet_registry()),
            'corrections':metas}
     variants=[r['catalog_id'] for r in owner if r['owner_choice']=='variant']
     inv_by_id={x['catalog_id']:x for x in inventory['items']}

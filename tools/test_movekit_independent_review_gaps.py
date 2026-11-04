@@ -97,12 +97,19 @@ class SourceMetadataProofGaps(unittest.TestCase):
                                  "MOVEMENT_EXECUTION": 1, "SOURCE_MUSCLE_CONFLICT": 1,
                                  "SOURCE_NAME_VARIANT": 1, "EXACT_LOWER_BACK_TAG": 1})
 
-    @unittest.expectedFailure
-    def test_gap_suggested_equipment_facets_need_reviewed_vocabulary(self):
-        """Every suggested facet must resolve to an entry of the reviewed taxonomy map."""
+    def test_fixed_g2_owner_facets_are_versioned_proposals_not_supplier_terms(self):
+        """Owner-proposed equipment remains separate from the exact supplier term map."""
         known = {v["code"].rsplit(":", 1)[1] for v in MAP["equipment"].values()}
         facets = {f for (_, _, adds, _) in self._orig.values() for f in adds}
-        self.assertTrue(facets <= known, sorted(facets - known))
+        owner_registry = PROOF.load_facet_registry()
+        PROOF.validate_facet_registry(owner_registry)
+        self.assertEqual(set(owner_registry["facets"]), facets)
+        self.assertEqual(sorted(facets & known), ["bench", "medicine_ball"])
+        self.assertEqual(owner_registry["status"], "PROPOSED_NOT_APPROVED")
+        self.assertFalse(owner_registry["approval"])
+        self.assertFalse(owner_registry["runtime_activation"])
+        self.assertTrue(all(v["canonical_filter_mapping"] is None
+                            for v in owner_registry["facets"].values()))
 
     def test_pin_facet_vocabulary_overlap_is_partial(self):
         known = {v["code"].rsplit(":", 1)[1] for v in MAP["equipment"].values()}
@@ -110,12 +117,16 @@ class SourceMetadataProofGaps(unittest.TestCase):
         self.assertEqual(len(facets), 8)
         self.assertEqual(sorted(facets & known), ["bench", "medicine_ball"])
 
-    @unittest.expectedFailure
-    def test_gap_evidence_word_for_lower_back_case_must_name_the_muscle(self):
-        """The only evidence terms for the lower-back-tag case describe a stance."""
+    def test_fixed_g2b_lower_back_stance_not_claimed_as_anatomical_evidence(self):
+        """The reviewed stance-only case has an explicit unproven-anatomy status."""
         _, words, _, kind = self._orig["TK-000539"]
-        self.assertEqual(kind, "EXACT_LOWER_BACK_TAG")
-        self.assertTrue(any("back" in w for w in words), words)
+        self.assertEqual(kind, PROOF.ANATOMY_ISSUE)
+        self.assertEqual(words, ["wide-stance"])
+        self.assertTrue(all("back" not in w for w in words))
+        self.assertEqual(PROOF.ANATOMY_EVIDENCE,
+                         "MOVEMENT_STANCE_NOT_ANATOMICAL_EVIDENCE")
+        self.assertEqual(PROOF.ANATOMY_STATUS,
+                         "ANATOMICAL_TAG_NOT_EVIDENCED_REQUIRES_REVIEW")
 
 
 class TaxonomyPreflightGaps(unittest.TestCase):

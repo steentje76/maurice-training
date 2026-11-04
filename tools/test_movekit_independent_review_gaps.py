@@ -33,6 +33,7 @@ TAX = load("ir_taxonomy", "movekit-v2-taxonomy-preflight.py")
 LEDGER = load("ir_ledger", "movekit-review-ledger.py")
 PROOF = load("ir_proof", "movekit-v2-source-metadata-proof.py")
 STAGE = load("ir_stage", "movekit-v2-private-reviewed-stage.py")
+RELEASE = load("ir_release", "movekit-release-authority-gate.py")
 import test_movekit_v2_private_reviewed_stage as STAGE_FIXTURE  # noqa: E402
 from test_movekit_classification_review import sample  # noqa: E402
 
@@ -228,22 +229,39 @@ class LedgerSourceTraceGaps(unittest.TestCase):
         out = LEDGER.validate(self.ledger, self.template, self.catalog)
         self.assertFalse(out["release_approved"])
 
-    @unittest.expectedFailure
-    def test_gap_accept_must_not_contradict_supplier_equipment(self):
-        """Supplier row says Bodyweight; ACCEPT claims barbell. Vocabulary membership is the only check."""
+    def _release_flags(self):
+        pins = dict(self.ledger["source_hashes"], glossary="d" * 64)
+        report = RELEASE.prepare_report(self.ledger, self.rows, self.catalog,
+                                        self.inventory, MAP, pins)
+        self.assertFalse(report["release_authorized"])
+        cid = self.ledger["entries"][0]["catalog_id"]
+        return next(r["blocking_flags"] for r in report["candidates"]
+                    if r["catalog_id"] == cid)
+
+    def test_fixed_g6_draft_accept_can_be_stored_but_release_rejects_source_equipment(self):
+        """A review proposal may exist; the separate release gate blocks Barbell vs Bodyweight."""
         self.assertEqual(self.rows[226]["equipment"], ["Bodyweight"])
         self.accept(equipment=["barbell"])
-        with self.assertRaises(ValueError):
-            LEDGER.validate(self.ledger, self.template, self.catalog)
+        self.assertFalse(LEDGER.validate(self.ledger, self.template,
+                                         self.catalog)["release_approved"])
+        self.assertIn("EQUIPMENT_NOT_SOURCE_BACKED_VOCAB_ONLY",
+                      self._release_flags())
 
-    @unittest.expectedFailure
-    def test_gap_accept_must_state_relation_to_baseline_suggestion(self):
-        """ACCEPT with a category different from the unanimous baseline suggestion is not flagged."""
-        suggested = self.ledger["entries"][0]["suggestion"]["proposed_category"]
-        self.assertEqual(suggested, "mobility")
+    def test_fixed_g7_draft_accept_can_be_stored_but_release_requires_baseline_authority(self):
+        """Ensure a truly unanimous baseline before testing a category/type override."""
+        self.rows[1]["primaryMuscles"] = ["DifferentSourceMuscle"]
+        self.template = LEDGER.make_template(self.catalog, self.inventory,
+                                             self.rows, self.ledger["source_hashes"])
+        self.ledger = copy.deepcopy(self.template)
+        first = self.ledger["entries"][0]["suggestion"]
+        self.assertEqual(first["proposed_category"], "mobility")
+        self.assertEqual(first["proposed_type"], "mobility")
         self.accept(category="upper_body_pull", type="compound")
-        with self.assertRaises(ValueError):
-            LEDGER.validate(self.ledger, self.template, self.catalog)
+        self.assertFalse(LEDGER.validate(self.ledger, self.template,
+                                         self.catalog)["release_approved"])
+        flags = self._release_flags()
+        self.assertIn("CATEGORY_DIVERGES_FROM_UNANIMOUS_BASELINE", flags)
+        self.assertIn("TYPE_DIVERGES_FROM_UNANIMOUS_BASELINE", flags)
 
     def test_pin_goals_are_not_source_derived(self):
         """Supplier fixture rows carry no goals field; any accepted goals are AI-introduced."""

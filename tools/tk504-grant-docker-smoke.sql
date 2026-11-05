@@ -6,6 +6,8 @@ CREATE TABLE auth.users (id uuid PRIMARY KEY);
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
 CREATE ROLE service_role NOLOGIN BYPASSRLS;
+-- Simulate Supabase's broad default grants; migration MUST strip writes.
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 INSERT INTO auth.users(id) VALUES ('11111111-1111-4111-8111-111111111111');
 \i /tmp/tk504-grants.sql
 INSERT INTO public.movekit_media_grants(user_id, grant_reference)
@@ -30,7 +32,11 @@ BEGIN
     RAISE EXCEPTION 'PUBLIC_OR_USER_GRANT_LEAK'; END IF;
   IF NOT has_table_privilege('service_role', 'public.movekit_media_grants','SELECT') OR
      has_table_privilege('service_role', 'public.movekit_media_grants','INSERT') OR
-     has_table_privilege('service_role', 'public.movekit_media_grants','UPDATE') THEN
+     has_table_privilege('service_role', 'public.movekit_media_grants','UPDATE') OR
+     has_table_privilege('service_role', 'public.movekit_media_grants','DELETE') OR
+     has_table_privilege('service_role', 'public.movekit_media_grants','TRUNCATE') OR
+     has_table_privilege('service_role', 'public.movekit_media_grants','REFERENCES') OR
+     has_table_privilege('service_role', 'public.movekit_media_grants','TRIGGER') THEN
      RAISE EXCEPTION 'SERVER_GRANT_PERMISSION_ERROR'; END IF;
   BEGIN
     INSERT INTO public.movekit_media_grants(user_id,grant_reference)

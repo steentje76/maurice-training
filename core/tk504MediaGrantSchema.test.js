@@ -13,9 +13,10 @@ const checks=[
  ['review evidence format',/tk504-\[0-9\]/],
  ['row security enabled',/alter table public\.movekit_media_grants enable row level security/],
  ['user rights revoked',/revoke all on table public\.movekit_media_grants from public, anon, authenticated/],
- ['server read only',/grant select on table public\.movekit_media_grants to service_role/]
+ ['server read only',/grant select on table public\.movekit_media_grants to service_role/],
+ ['service role write explicitly revoked',/revoke insert, update, delete, truncate, references, trigger\s+on table public\.movekit_media_grants from service_role/]
 ];
 for(const [name,re] of checks)assert.match(sql,re,name);
 assert.doesNotMatch(sql,/grant\s+(?:all|insert|update|delete)\s+on\s+table\s+public\.movekit_media_grants\s+to\s+(?:authenticated|anon)/,'No browser writes');
 assert.doesNotMatch(sql,/create policy\s+/,'No public grant read policy');
-console.log('TK504 media grant migration: 11 fail-closed/static schema checks PASS; migration NOT applied');
+console.log('TK504 media grant migration: 12 fail-closed/static schema checks PASS; migration NOT applied');

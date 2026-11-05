@@ -19982,7 +19982,11 @@ function getExerciseAsset(ex){
     }catch(e){}
   }
   if(_intelById===null)_intelBuildIndex();
-  return _intelById[ex.id]||_intelByName[_intelNorm(ex.naam||ex.name)]||null;
+  var asset=_intelById[ex.id]||_intelByName[_intelNorm(ex.naam||ex.name)]||null;
+  // The legacy intelligence path still carries embedded MoveKit poster bytes.
+  // Strip only that public poster in private media mode; keep technique cues.
+  if(asset&&asset.movekit_slug&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return Object.assign({},asset,{poster:null});
+  return asset;
 }
 function _intelInjectPoster(exId){
   const el=document.getElementById('intel-poster-'+exId);
@@ -20260,10 +20264,10 @@ var ExerciseAssetProvider=(function(){
   };
   return {
     /* Publiek: media ophalen via catalog_id. */
-    poster:function(id){var k='poster|'+id;if(k in _cache)return _cache[k];var v=_providers.poster.resolve(_slug(id));_cache[k]=v;return v;},
+    poster:function(id){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()&&_providers.poster.id==='movekit-posters')return null;var k='poster|'+id;if(k in _cache)return _cache[k];var v=_providers.poster.resolve(_slug(id));_cache[k]=v;return v;},
     thumb:function(id){return this.poster(id);},   // posters zijn al klein (~9KB); CSS+lazy verzorgen de thumbnail
-    resolve:function(id,type){type=type||'poster';var p=_providers[type];return p?p.resolve(_slug(id)):null;},
-    has:function(id,type){type=type||'poster';var p=_providers[type];return p?p.has(_slug(id)):false;},
+    resolve:function(id,type){type=type||'poster';var p=_providers[type];if(type==='poster'&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()&&p&&p.id==='movekit-posters')return null;return p?p.resolve(_slug(id)):null;},
+    has:function(id,type){type=type||'poster';var p=_providers[type];if(type==='poster'&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()&&p&&p.id==='movekit-posters')return false;return p?p.has(_slug(id)):false;},
     /* Uitbreidbaar (Sprint 10: MoveKit-video's als tweede media-type in deze zelfde provider). */
     register:function(type,provider){_providers[type]=provider;_cache={};return true;},
     types:function(){return Object.keys(_providers);},
@@ -20394,14 +20398,14 @@ function tk504GetMediaRuntime(){
 function tk504InvalidateProtectedMedia(){
   if(tk504MediaRuntime)tk504MediaRuntime.invalidate();
   try{document.querySelectorAll('video[data-tk504-protected]').forEach(v=>{
-    v.pause();v.removeAttribute('src');v.load();
+    v.pause();v.removeAttribute('src');v.removeAttribute('poster');v.load();
   });}catch(_){}
 }
 function tk504PrivateVideoMarkup(catalogId,poster,label){
   if(!/^TK-\d{6}$/.test(catalogId))return '';
   const title=escHtml(label||'Oefening');
   return '<div class="vid-wrap tk504-private-video">'+
-    (poster?'<img src="'+escHtml(poster)+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain">':'')+
+    /* Never expose a legacy public/embedded MoveKit poster in secured markup. */
     '<button type="button" class="vid-play" style="position:absolute;left:40%;top:40%;z-index:1" onclick="tk504PlayPrivateVideo(this.parentElement,\''+catalogId+'\')">▶ Video afspelen</button>'+
     '<div class="vid-label">'+title+' — techniek video</div></div>';
 }
@@ -20424,7 +20428,7 @@ async function tk504PlayPrivateVideo(container,catalogId){
     v.setAttribute('controlsList','nodownload');
     v.setAttribute('data-tk504-protected','true');
     v.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000';
-    const poster=ExerciseAssetProvider.poster(catalogId);if(poster)v.poster=poster;
+    // Server signing authorizes the poster separately; no static raw fallback.
     let retried=false;
     v.addEventListener('error',async ()=>{
       if(retried||!container.isConnected){denied();return;}
@@ -20445,6 +20449,13 @@ async function tk504PlayPrivateVideo(container,catalogId){
     });
     v.src=ticket.url;
     container.replaceChildren(v);
+    // Only the server may sign the private optimized poster for this account.
+    // A poster failure never blocks an otherwise authorized video.
+    runtime.signed(catalogId,'poster').then(posterTicket=>{
+      if(container.isConnected&&v.parentNode===container&&authSession&&
+         authSession.user&&authSession.user.id===owner&&
+         posterTicket.type==='poster')v.poster=posterTicket.url;
+    }).catch(()=>{});
     const play=v.play();if(play&&play.catch)play.catch(()=>{});
     return true;
   }catch(_){denied();return false;}
@@ -20725,8 +20736,14 @@ var ExerciseCatalogService=(function(){
     types:function(){return uniq(function(c){return c.identity.type;});},
     difficulties:function(){return ['beginner','intermediate','advanced','expert'];},
     fatigues:function(){return ['very_low','low','moderate','high','very_high'];},
-    resolveAsset:function(item,type){type=type||'poster';var as=(item.assets||[]).filter(function(a){return a.type===type;});
+    resolveAsset:function(item,type){type=type||'poster';
+      // Canonical ECS must not bypass the authenticated media provider.
+      if(type==='poster'&&item&&item.source&&item.source.provider==='movekit'&&
+         typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return null;
+      var as=(item.assets||[]).filter(function(a){return a.type===type;});
       for(var i=0;i<as.length;i++){var a=as[i];
+        // Legacy embedded posters are never a valid private media fallback.
+        if(type==='poster'&&a.embedded&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return null;
         if(type==='poster'&&a.embedded&&typeof EXERCISE_ASSETS!=='undefined'){for(var j=0;j<EXERCISE_ASSETS.length;j++){if(EXERCISE_ASSETS[j].movekit_slug===a.ref&&EXERCISE_ASSETS[j].poster)return {type:type,src:EXERCISE_ASSETS[j].poster,embedded:true};}}}
       return null;},
     hasAsset:function(item,type){return !!(item.assets||[]).filter(function(a){return a.type===(type||'poster');}).length;},
@@ -21206,7 +21223,7 @@ function _videoBlock(id){
   if(ExerciseAssetProvider.has(id,'video')){
     var src=tk504PrivateEnabled()?'':ExerciseAssetProvider.resolve(id,'video');
     var meta=(ExerciseAssetProvider.video&&ExerciseAssetProvider.video(id))||{};
-    var poster=ExerciseAssetProvider.poster(id);
+    var poster=tk504PrivateEnabled()?null:ExerciseAssetProvider.poster(id);
     var dur=meta.duration?_fmtDur(meta.duration):'';var res=meta.resolution_label||'1080p';
     return '<div class="lib-video-ready" '+(tk504PrivateEnabled()?'':'data-vsrc="'+escHtml(src)+'" ')+'data-vid="'+id+'">'+
       (poster?'<img class="lib-video-bg" src="'+poster+'" alt="" aria-hidden="true">':'')+
@@ -25712,7 +25729,7 @@ function resolveExerciseMedia(ex){
        &&(!ex.source||(ex.source.provider==='movekit'&&ex.source.provider_id===row.source.provider_id))
        &&ExerciseAssetProvider.hasVideo(cid)){
       return {type:'movekit',kind:'private-mp4',catalogId:cid,source:'movekit',
-        available:true,poster:poster,provenance:{provider:'movekit',method:'private'}};
+        available:true,poster:null,provenance:{provider:'movekit',method:'private'}};
     }
     // Never leak an old public MoveKit asset as the private route's fallback.
     if(typeof mp4==='string'&&/(?:^|\/)videos\/[a-z0-9_.-]+\.mp4(?:$|\?)/i.test(mp4))mp4=null;

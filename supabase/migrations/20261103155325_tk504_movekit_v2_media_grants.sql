@@ -26,6 +26,9 @@ comment on table public.movekit_media_grants is
   'Movekit V2 signing entitlement, admin-only provenance. No user-editable claims. Enforced by server broker; license and object release are separately gated.';
 alter table public.movekit_media_grants enable row level security;
 revoke all on table public.movekit_media_grants from public, anon, authenticated;
--- Server-only role is allowed to CHECK grants; it does not receive write access.
+-- Server-only role may CHECK grants, but may not write them.
+-- Supabase service_role can inherit broad default table grants; revoke them explicitly.
+revoke insert, update, delete, truncate, references, trigger
+  on table public.movekit_media_grants from service_role;
 grant select on table public.movekit_media_grants to service_role;
 -- Intentionally NO policies for anon or authenticated, NO auto-grants.

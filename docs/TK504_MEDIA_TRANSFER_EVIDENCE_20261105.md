@@ -46,3 +46,10 @@ group by bucket_id order by bucket_id;
 ## Resultaat
 
 Integriteitsoordeel: **PASS voor alle 1.164 lokale SHA-256-bewijzen en corresponderende Storage ETag-registers**. Productie-release: **BLOCKED** tot beoordeelde grants/uitrol, echte user en Android/Range/caching-tests en aparte 356-review.
+
+## Lokale browsermedia-smoke
+
+- Vier gekozen lokale MP4-videobestanden uit de licentiebron zijn via een geïsoleerde Microsoft Edge (Chromium) headless-browser geladen en afgespeeld. Het ging om zowel een kandidaat uit de 356 als reeds gepubliceerde oefeningen; geen bestand of direct pad is publiek gemaakt.
+- **4/4** retourneerden `loadedmetadata`, `readyState=4` en succesvolle `video.play()`-promises. Alle vier tonen 1936×1072 videopixels, met looptijden tussen circa 5,3 en 9,6 seconden.
+- Het virtuele headless testklokje registreerde nog `currentTime=0`; daarom is realtime framesnelheid, doorspoelen en volledig afspelen van de clip **niet** aangetoond. Voor Android/WebView is nog geen fysieke afspeeltest uitgevoerd.
+- Test lokaal met een tijdelijke privé HTML-pagina die nooit naar Git of Netlify is gekopieerd. Dit bewijst lokale decodeerbaarheid van vier voorbeelden, niet de server-signed streaming-implementatie.

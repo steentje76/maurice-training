@@ -53,3 +53,12 @@ Integriteitsoordeel: **PASS voor alle 1.164 lokale SHA-256-bewijzen en correspon
 - **4/4** retourneerden `loadedmetadata`, `readyState=4` en succesvolle `video.play()`-promises. Alle vier tonen 1936×1072 videopixels, met looptijden tussen circa 5,3 en 9,6 seconden.
 - Het virtuele headless testklokje registreerde nog `currentTime=0`; daarom is realtime framesnelheid, doorspoelen en volledig afspelen van de clip **niet** aangetoond. Voor Android/WebView is nog geen fysieke afspeeltest uitgevoerd.
 - Test lokaal met een tijdelijke privé HTML-pagina die nooit naar Git of Netlify is gekopieerd. Dit bewijst lokale decodeerbaarheid van vier voorbeelden, niet de server-signed streaming-implementatie.
+
+## Beveiligde cache-cutover (code voorbereid, release UIT)
+
+- De bestaande service worker bewaart bewust de offline cache `tk-videos-v1`. Bij latere beveiligde media-activering zou dit ongeautoriseerd blijvende kopieën van de oude openbare MP4-bestanden kunnen opleveren.
+- Daarom heeft `sw.js` de compile-time codegate `TK504_PRIVATE_MEDIA_CUTOVER = false`, die exact synchroon moet blijven met `TK504_PRIVATE_MEDIA_RELEASE = false` in `index.html`. `core/tk504PrivateCutoverCache.test.js` is een release-guard die een mismatch blokkeert.
+- In de gesimuleerde private-modus verwijdert de activate-handler de oude ongecodeerde videobestanden uit Cache Storage; verzoeken naar de oude openbare `/videos/*.mp4` route worden met 403 afgebroken in de service worker. De beveiligde Supabase signed-URL's worden nooit aan de cache onderschept.
+- De daadwerkelijke openbare Netlify-bestanden moeten **apart** verdwijnen nadat beveiligde streaming en Android-acceptatie bewezen zijn; de service worker alleen beschermt niet tegen directe CDN-links.
+- De oude offline videofunctie is na beveiligde cutover bewust niet beschikbaar totdat het versleutelde native offline-vault-spoor afzonderlijk veilig is afgerond. Nooit stiekem een onversleutelde cache behouden.
+- Met beide vlaggen op `false` blijft het huidige V1-afspeel- en offlinegedrag ongewijzigd.

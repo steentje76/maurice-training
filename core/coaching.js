@@ -556,7 +556,7 @@
    * READINESS VAN DE DAG — VERWOORDING (readinesscoach.v1) — Sprint 14
    *
    * Zelfde rolverdeling als de live coach uit Sprint 13: de Decision Engine heeft al
-   * besloten (readiness_day.v1), deze laag zegt het in gewone taal en bewaakt wat er
+   * besloten (readiness_day.v1.1), deze laag zegt het in gewone taal en bewaakt wat er
    * gezegd mag worden. Er wordt hier niets berekend, niets herzien en niets aangevuld.
    *
    * Wat hier NOOIT mag: een medische uitspraak, een oorzaak-gevolgclaim, of de suggestie

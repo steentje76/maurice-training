@@ -231,6 +231,9 @@ ok(html.indexOf("if(draft){clearTrainingDraft()}") === -1, 'sanity: clearTrainin
     const volgordeVanAankomst = [];
     const sandbox = {
       indexedDB: undefined, navigator: { onLine: true }, authSession: { user: { id: 'user-A' }, refresh_token: null },
+      // TK-REL-SEC-05: de productie-PATCH weigert terecht een write zonder aantoonbare eigenaar.
+      // Deze ordering-fixture heeft een expliciete, ingelogde testgebruiker nodig.
+      tkEigenaarUid: () => 'user-A',
       SB_H: {}, SB_URL: 'https://mock.supabase.co', document: { getElementById: () => null }, toast: () => {},
       updateOfflineBadge: () => {}, renderOfflineQueueModal: () => {}, console, setTimeout,
       crypto: require('crypto').webcrypto || { randomUUID: () => require('crypto').randomUUID() }, Object, Promise,

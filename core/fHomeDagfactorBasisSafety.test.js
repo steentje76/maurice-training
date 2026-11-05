@@ -41,10 +41,19 @@ function tussen(src, van, tot) { const i = src.indexOf(van); if (i < 0) throw ne
 const GEEN_TXT = 'Nog te weinig gegevens voor advies';
 const GEEN_SUB = 'Je check-in van vandaag is er, maar slaap of een HRV-oordeel ontbreekt nog.';
 const GEEN_CHECKIN = 'Nog geen check-in vandaag — vul je HRV in en ik vertel je precies wat vandaag slim is.';
+/* UX-REC-02 (v4.70.25+): de coachzin schrijft het oordeel toe aan de dagfactor en claimt geen
+ * herstel meer. Zone en filters zijn ongewijzigd; alleen de verwoording veranderde. */
 const COACH = {
-  g: 'Je herstel is sterk. Vandaag heb je de grootste kans op progressie.',
-  y: 'Je herstel is oké. Train je training vandaag op gevoel en houd je RPE in de gaten.',
-  r: 'Je lichaam vraagt vandaag om rust. Houd je training licht of kies voor actief herstel.'
+  g: 'Je dagfactor is gunstig. Spierherstel is een aparte schatting.',
+  y: 'Je dagfactor is gemiddeld. Train je training vandaag op gevoel en houd je RPE in de gaten.',
+  r: 'Je dagfactor is laag. Houd je training vandaag licht of kies voor actief herstel.'
+};
+// DEC-REC-001-B: een Home zonder expliciete planning mag geen trainingsadvies tonen.
+// De legacy COACH-map hierboven blijft voor oudere rechtstreekse aanroepers staan.
+const COACH_ZONDER_PLAN = {
+  g: 'Je dagfactor is gunstig. Er is geen training gepland; spierherstel wordt apart beoordeeld.',
+  y: 'Je dagfactor vraagt om aandacht. Er is geen training gepland.',
+  r: 'Je dagfactor is lager. Er is geen training gepland.'
 };
 const SUB = {
   g: 'Je lichaam is goed hersteld en klaar voor optimale prestaties.',
@@ -141,7 +150,7 @@ async function deel1() {
     eq([df(sb, kloon(SCEN.S6)).factor, df(sb, kloon(SCEN.S7)).factor, df(sb, kloon(SCEN.S8)).factor, df(sb, kloon(SCEN.S5)).factor], [1.05, 0.85, 0.93, 1], 'B10 de vaste invoer dekt positief (1.05), negatief (0.85), neutraal/voorzichtig (0.93) en alleen-slaap (1 met basis)');
     /* bronbinding: alle afnemers krijgen de gekeurde dagfactor */
     ok(/const dfAdvies=tkDagfactorVoorAdvies\(dfInfo\), checkinVandaag=tkCheckinVandaag\(lh\);/.test(REFRESH), 'B11 refreshHome() bepaalt één keer of de dagfactor bruikbaar is');
-    ['buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag)', 'renderMorning(dfAdvies,nextT,checkinVandaag)', 'renderTodayCta(nextT,dfAdvies)', 'renderCoachAdvies(dfAdvies,recRows)', 'renderV43Home(dfAdvies,lh,nextT,recRows)', "dfAdvies?dayState(dfAdvies.factor).key:'goed'"].forEach(function (a) {
+    ['buildCoachAdvice(dfAdvies,nextT,recRows,checkinVandaag,heeftExplicietPlan,readinessCtx)', 'renderMorning(dfAdvies,nextT,checkinVandaag)', 'renderTodayCta(nextT,dfAdvies)', 'renderCoachAdvies(dfAdvies,recRows,readinessCtx)', 'renderV43Home(dfAdvies,lh,nextT,recRows)', "dfAdvies?dayState(dfAdvies.factor).key:'goed'"].forEach(function (a) {
       ok(REFRESH.indexOf(a) >= 0, 'B12 refreshHome() geeft de gekeurde dagfactor door: ' + a);
     });
     const naDef = REFRESH.slice(REFRESH.indexOf('const dfAdvies=') + 'const dfAdvies=tkDagfactorVoorAdvies(dfInfo)'.length);
@@ -166,7 +175,7 @@ async function deel1() {
     ok(/if\(adj&&hb&&hb\.bruikbaar&&hb\.zone==='ready'\)/.test(HTML), 'C7 de consistentiebrug vóór een training vereist ook een bruikbaar besluit');
     const echt = await besluit(SCEN.S6, function (x, d) { return x.__homeDfInfo(d); });
     const aiEcht = CoachingCore.readinessAiPayload(CoachingCore.buildReadinessContext({ besluit: echt.b }));
-    eq([aiEcht.zone, aiEcht.zoneLabel, aiEcht.trainingsadvies.soort], ['ready', 'Goed hersteld', 'ongewijzigd'], 'C8 met echte data krijgt de AI het besluit zoals voorheen');
+    eq([aiEcht.zone, aiEcht.zoneLabel, aiEcht.trainingsadvies.soort], ['ready', 'Gunstige dag', 'geen_advies'], 'C8 met echte data krijgt de AI het besluit zoals voorheen');
   }
   /* D. De melding na een check-in. */
   {
@@ -211,7 +220,7 @@ async function deel2() {
   const open = async function (w, rows, sessies) {
     const page = await browser.newPage({ viewport: { width: w, height: 1400 } });
     const errs = []; page.on('pageerror', function (e) { errs.push(e.message); });
-    await page.goto(url); await page.waitForTimeout(500);
+    await page.goto(url,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(500);
     await page.evaluate(function (a) {
       exercises = [{ id: 'sq', naam: 'Squat', muscle_primary: ['Quadriceps'], muscle_secondary: [] }];
       window.sbGet = async function (t) { return t === 'hrv_log' ? a[0] : (t === 'sessions' ? a[1] : []); };
@@ -273,14 +282,32 @@ async function deel2() {
     const f = u.calc.factor, z = DecisionCore.trainReadiness({ factor: f });
     eq(f, { S5: 1, S6: 1.05, S7: 0.85, S8: 0.93 }[s], s + '.0 dagfactor uit de berekening');
     ok(u.calc.basis.hrv || u.calc.basis.slaap || u.calc.basis.cyclus, s + '.0b er is een basis');
-    eq([u.titel, u.sub], [z.txt, SUB[z.cls]], s + '.1 hoofdstatus woordelijk zoals voorheen (' + z.txt + ')');
+    const subNu = z.cls === 'g'
+      ? (u.waarom.includes('Nog herstellend')
+        ? 'Je dagfactor is gunstig, maar sommige spiergroepen herstellen volgens de inschatting nog. Bekijk Waarom vandaag?'
+        : 'Je dagfactor is gunstig; spierherstel is een afzonderlijke schatting.')
+      : SUB[z.cls];
+    eq([u.titel, u.sub], [z.txt, subNu], s + '.1 hoofdstatus volgt Decision-zone, met eerlijke bronuitleg');
+    ok(u.waarom.includes('Afgeleid van je dagfactor; spierherstel is een aparte schatting.'), s + '.1b gereedheid los van spierherstel verklaard');
     eq([u.stats.Dagfactor, u.stats.Gereedheid], [String(f), String(CalcCore.readinessPercent(f))], s + '.2 Dagfactor en Gereedheid zijn de berekende waarden');
-    eq(u.coach, COACH[z.cls], s + '.3 coachzin woordelijk zoals voorheen');
+    eq(u.coach, COACH_ZONDER_PLAN[z.cls], s + '.3 coach noemt de dagstatus maar geeft geen trainingsadvies zonder expliciet plan');
     const zone = z.cls === 'g' ? 'ready' : (z.cls === 'y' ? 'caution' : 'reduce');
     eq([u.besluit.bruikbaar, u.besluit.zone, u.besluit.dagfactor, u.besluit.gereedheid, u.besluit.dagthema], [true, zone, f, CalcCore.readinessPercent(f), DecisionCore.dayZone(f).key], s + '.4 _tkReadiness: zone, dagfactor, gereedheid en dagthema ongewijzigd');
-    eq(u.readinessKop, { ready: 'Goed hersteld', caution: 'Voorzichtig vandaag', reduce: 'Belasting aanpassen' }[zone], s + '.5 readinesskaart toont het bestaande zonelabel');
+    eq(u.readinessKop, { ready: 'Gunstige dag', caution: 'Voorzichtig vandaag', reduce: 'Belasting aanpassen' }[zone], s + '.5 readinesskaart toont het bestaande zonelabel');
     eq([u.thema, u.ring, u.bel], [DecisionCore.dayZone(f).key, String(f), false], s + '.6 dagthema, dagfactorkaart en check-in-herinnering ongewijzigd');
     ok(new RegExp('Dagfactor' + String(f).replace('.', '\\.')).test(u.waarom.replace(/\s/g, '')), s + '.7 "Waarom vandaag?" toont de berekende dagfactor');
+    await page.close();
+  }
+  /* UX-REC-01: hoge dagfactor en laag geschat spierherstel mogen geen volledige-herstelclaim worden. */
+  {
+    const recenteSessies = [{ exercise_id: 'sq', date: dag(0), rpe: 10, sets: 5, reps: 5, weight: 100 }];
+    const page = await open(390, SCEN.S6, recenteSessies);
+    const u = await lees(page);
+    ok(Number.parseInt(u.stats.Spierherstel, 10) < 70, 'UX-REC-01: test gebruikt daadwerkelijk laag geschat spierherstel');
+    eq(u.titel, DecisionCore.trainReadiness({ factor: u.calc.factor }).txt, 'UX-REC-01: canonieke Decision-zonetitel onveranderd');
+    ok(u.sub.startsWith('Je dagfactor is gunstig, maar sommige spiergroepen herstellen'), 'UX-REC-01: voorzichtigheid zichtbaar in de hero, zonder onjuiste volledige-herstelclaim');
+    ok(u.waarom.includes('Nog herstellend') && u.waarom.includes('Afgeleid van je dagfactor; spierherstel is een aparte schatting.'), 'UX-REC-01: beide signalen en hun bronverschil uitgelegd');
+    eq(u.stats.Gereedheid, String(CalcCore.readinessPercent(u.calc.factor)), 'UX-REC-01: score niet door presentatielaag herberekend');
     await page.close();
   }
   /* Responsive: Home-kengetallen en de dagsamenvatting op Inzicht */
@@ -295,7 +322,7 @@ async function deel2() {
       return { namen: b.map(function (x) { return x.naam; }), overlap: overlap, hoogtes: b.map(function (x) { return x.h; }), regels: b.map(function (x) { return x.regels; }), binnen: b.every(function (x) { return x.r <= kaart.right + 0.5 && x.l >= kaart.left - 0.5; }), pagina: document.getElementById('s-home').scrollWidth > document.getElementById('s-home').clientWidth + 1 };
     });
     eq(h.namen, ['Dagfactor', 'Spierherstel', 'Gereedheid', 'Slaap'], w + 'px R1 het Home-kengetal heet Spierherstel');
-    ok(!h.overlap && h.binnen && !h.pagina, w + 'px R2 geen overlap tussen de labels, alles binnen de kaart, geen horizontaal scrollen');
+    ok(!h.overlap && h.binnen && !h.pagina, w + 'px R2 geen overlap tussen de labels, alles binnen de kaart, geen horizontaal scrollen: ' + JSON.stringify(h));
     ok(new Set(h.hoogtes).size === 1, w + 'px R3 de vier labels zijn even hoog, de rij blijft uitgelijnd: ' + JSON.stringify(h.hoogtes));
     eq(h.regels[1], w <= 360 ? 2 : 1, w + 'px R4 Spierherstel staat op ' + (w <= 360 ? 'twee regels (afgebroken op het streepje)' : 'één regel'));
     await page.evaluate(function () { window.__inz = false; go('s-inzicht'); });

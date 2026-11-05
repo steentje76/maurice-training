@@ -102,7 +102,7 @@ function makeWorld(html, over) {
     const pg = over.pgrst;
     Object.assign(env, { writeSessionRow: UNDEF, sbPostQ: UNDEF, SB_URL: 'https://x.supabase.co', navigator: { onLine: true },
       SB_RETRY_STATUS: JSON.parse((html.match(/SB_RETRY_STATUS\s*=\s*(\[[^\]]*\])/) || [0, '[]'])[1]), sbFetch: (u, i) => pg.fetch(u, i), offlineQueueAdd: async (it) => { pg.queued.push(it); }, updateOfflineBadge: () => {},
-      authSession: { user: { id: 'u-test' } }, offlineQueueAll: async () => [], TK_IDEMPOTENT_ZONDER_UPDATE: null, TK_WACHTRIJ_OUDERS: null, TK_SCHRIJF_TIMEOUT_MS: null });
+      authSession: { user: { id: 'u-test' } }, offlineQueueAll: async () => [], tkLeesWachtrijStrikt: async () => [], TK_IDEMPOTENT_ZONDER_UPDATE: null, TK_WACHTRIJ_OUDERS: null, TK_SCHRIJF_TIMEOUT_MS: null });
   }
   Object.assign(env, over.env || {});
   const proxy = new Proxy(env, {
@@ -478,7 +478,7 @@ process.on('exit', function (code) { if (!finished && code === 0) { console.log(
     ['losse completion weg (H5 2A.1)', h => h.replace("    try{ await completeTrainingInstance(row.training_instance_id); }\r\n    catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)'", "    try{ void 0; }\r\n    catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)'"), R2 => R2.c1.completes.length === 0],
     ['losse completion vóór de write (H5 2A.1)', h => h.replace("  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)", "  if(row.training_instance_id){ try{ await completeTrainingInstance(row.training_instance_id); }catch(_s){} }\r\n  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)"), R2 => R2.c2a.completes.length > 0],
     ['false telt weer als opgeslagen (training)', h => h.replace(" if(_wOk!==true) throw new Error('session_write_rejected');", ""), R2 => R2.p2a.completes > 0 || R2.p2a.okToast],
-    ['retry-marker weg (kracht)', h => h.replace("if(!l._sessionRowPersistedAt){ const _wOkS=", "if(true){ const _wOkS="), R2 => R2.p3b.rows.filter(x => x === 'squat').length > 1],
+    ['retry-marker weg (kracht)', h => h.replace("if(!l._sessionRowPersistedAt){ row.id=tkSessieRijId(l); const _wOkS=", "if(true){ row.id=tkSessieRijId(l); const _wOkS=") /* UX-EXEC-01: vaste rij-id vóór de write */, R2 => R2.p3b.rows.filter(x => x === 'squat').length > 1],
     ['watt-normalisatie weg', h => h.replace("async function sbPostQ(t,d,opts){\r\n  const detail=!!(opts&&opts.detail);\r\n  if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);", "async function sbPostQ(t,d,opts){\r\n  const detail=!!(opts&&opts.detail);\r\n"), R2 => R2.p1.rows !== 1 || R2.p1.watt !== 167],
     ['eligibility te ruim (0 m / 0 s)', h => h.replace("return (isFinite(dn)&&dn>0)||(isFinite(en)&&en>0);", "return true;"), R2 => R2.t4zero > 0]
   ];

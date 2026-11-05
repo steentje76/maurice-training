@@ -8,6 +8,97 @@ Trainingskompas — definitief (was Maurice Training Coach; appnaam vastgesteld 
 ## Huidige versie
 v4.70.25
 
+## SEC-570 herstel (21 oktober 2026 — Draft-PR bovenop integratie-PR #570)
+
+- Serververificatie: een tegenstrijdige lokale eigenaar of niet-primitieve identiteit is nooit SERVER_VERIFIED; de poort telt alleen intern consistent bewijs (DEC-SEC-007).
+- Reddingskopie: wachtrijpayloads (ook JSON-tekst) met een andere of niet te controleren eigenaar worden herkenbaar overgeslagen; de wachtrij blijft ongewijzigd.
+- Reddingskopie (SEC-570-03): items en bronnen met credentialmateriaal in tekst- of JSON-tekstvelden worden herkenbaar overgeslagen; bestaande kopieën niet gemigreerd (DEC-SEC-008).
+- Read-only herstelpreview van bestaande bestanden ongewijzigd. SEC-570-01/02 geaccepteerd voor de integratiebranch; heracceptatie SEC-570-03 open. De-installatie blijft NO-GO.
+
+## Reddingskopie en herstelpreview (19 oktober 2026 — TK-REL-SEC-29..31, Draft-PR's #566, #567 en fase 4B)
+
+- Versleutelde lokale reddingskopie (#566) na review gecorrigeerd (#567): echte wachtrij, geen schijnsucces in de Android-app, sterkere sleutelafleiding, strikte validatie.
+- Herstelpreview (alleen controleren) met concept-herstelplan; herstellen is niet gebouwd en uitgeschakeld (DEC-SEC-006).
+- Android: kopie maken in de app nog niet mogelijk (native opslagroute nodig). De-installatie blijft NO-GO.
+
+## Historische inventaris fase 3 (19 oktober 2026 — TK-REL-SEC-25..28, Draft-PR bovenop #564)
+
+- Verwijdering alleen bewezen via het DELETE-antwoord (DEC-SYNC-005).
+- Bronmanifest (57 bronnen) en een alleen-lezen, hervatbare inventaris met basismeting voor eigen trainingen.
+- Poort blijft dicht: concepten, voorkeuren, serverkopieën en de wachtrij blokkeren. De-installatie blijft NO-GO.
+
+## Read-after-write fase 2 (19 oktober 2026 — TK-REL-SEC-21..24, Draft-PR bovenop #563)
+
+- Verificatieregister in een aparte IndexedDB-database; teruglezen met het token van de eigenaar; ouder-kindcontrole voor vier relaties (DEC-SYNC-004).
+- "Controleren met de server" in de updategereedheid; "Veilig om te verwijderen" uitgeschakeld.
+- Poort blijft dicht: lokale historie van vóór het register is niet geïnventariseerd. De-installatie blijft NO-GO.
+
+## Resterende P1's schrijfketen (19 oktober 2026 — TK-REL-SEC-15..20, Draft-PR's #562 en P1-rest)
+
+- Directe REST-writes en flows met meerdere awaits zijn gebonden aan de startende gebruiker (DEC-SEC-005).
+- Replays zijn idempotent of worden vastgehouden.
+- Een latere write haalt een wachtende write op dezelfde rij niet in (DEC-SYNC-003).
+- Matrix: P0 8/8 en P1 20/20 opgelost.
+- P2: 13 opgelost, 11 deels, 25 open.
+- P3: 13 opgelost, 2 open.
+- Read-after-write fase 2: plan gereed (`docs/TK_SERVER_READ_AFTER_WRITE_FASE2_PLAN_20261019.md`), nog niet gebouwd.
+- De-installatie blijft NO-GO.
+
+## P0-heracceptatie #557/#558 (19 oktober 2026 — TK-REL-SEC-07..14, Draft-PR #560)
+
+- Imports, eerste trainingsupload en het opnieuw genereren van weken zijn gebonden aan de startende gebruiker; een
+  lopende uitvoering gaat nooit naar een ander account (DEC-SEC-003). Activity-laps-replay idempotent; tab-lock op flush.
+- Matrix: 247 schrijfaanroepen, 8 P0 hersteld (stand van #560; actuele stand hierboven).
+- Read-after-write: contract + kern (`core/serverVerification.js`), nog niet geladen; de-installatie blijft NO-GO.
+
+## Accountisolatie offline-wachtrij (19 oktober 2026 — TK-REL-SEC-02..04, draft bovenop PR #555)
+
+- Een write wordt nooit opnieuw verstuurd onder een andere identiteit (DEC-SEC-002); verlate refresh overschrijft geen
+  nieuwere sessie; wachtrij-UI toont/verwijdert alleen eigen items; IDB-abort eindigt fail-closed.
+- Open: reconciliatie eigenaarloze items, read-after-write-contract, client-id voor `activities`/`activity_laps`,
+  tab-overstijgende flush-lock, browsersuites die in CI niet in Chromium draaien. Geen toestelbewijs.
+
+## Updategereedheid en Android-test (18 oktober 2026 — DEV-UPDATE-01)
+
+- Help toont of het veilig is de app te verwijderen/opnieuw te installeren (wachtrij, concept, lopende/begeleide
+  training, onbevestigde eigen trainingen; fail-closed).
+- Laatste testbuild-release: v4.70.23 (`apk-debug-v4.70.23-7c33f7797-run48`); v4.70.25 en de kandidaat-PR's hebben nog
+  geen APK. Debug-signing wisselt per build (PR #532 open). Checklist: `docs/ANDROID_PRAKTIJKTEST_V1_BETA.md`.
+
+## Bibliotheken (18 oktober 2026 — LIB-VALIDATE-01)
+
+- Oefeningen: 226 MoveKit-oefeningen, 0 fouten; 0/226 met Nederlandse naam; Batch 002 (186) BLOCKED en bronbestanden
+  niet in de repository. Supplementen: 73 items, 128 claims, 0 fouten. Voeding: geen centrale bibliotheek.
+- Validatie: `node tools/library-validate.js --markdown --sha` (rapport `docs/LIBRARY_VALIDATION_REPORT.md`).
+
+## Uitvoeringsketen (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — UX-EXEC-01)
+
+- Invariant (DEC-EXEC-001): het trainingsscherm volgt uit `tkTrainScreenIdVoor(curT)`; het concept bewaart de
+  Preview-oefeningenlijst en per oefening een vaste sessierij-id; handmatige trainingen en verwijderen lopen via de
+  wachtrij; Preview of opnieuw openen van een lopende training maakt geen nieuwe uitvoering.
+- Open: B5/B6 (instance vóór hervat/annuleer), B8 (duur-instances), B11 (herhalen), `sbPatchQ`/`sbDelQ` zonder detail,
+  offline programma-start; geen toestelbewijs.
+- Status: pas waar op main na merge.
+
+## Setregistratie (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — UX-LOG-01)
+
+- Invariant (DEC-LOG-001): een setbewerking vervangt alleen kg/reps/RPE/effKg; opnieuw opbouwen tijdens een training
+  herstelt de ingevulde sets; Guided bewaart het gewicht per set; de Logboek-editor bewaart de RPE per set.
+- Een lopende training verlaat je via tabbalk of terugveeg pas na "Training verlaten?"; terug op de training loopt
+  de klok door. De 1RM-schatting staat onder de invoer.
+- Open: gewichtsmodus niet hersteld bij hervatten; set-id na verwijderen; geen toestelbewijs.
+- Status: pas waar op main na merge.
+
+## Herstelcommunicatie Vandaag/Inzicht (featurekandidaat bovenop v4.70.25, 18 oktober 2026 — PR #540 + vervolg-PR)
+
+- Invariant (DEC-REC-001): een dagoordeel noemt de dagfactor als bron; spierherstel heet een schatting. "Waarom
+  vandaag?" in de hero toont wat de dagfactor voedde (met meetmoment), wat niet meetelde, de berekening en de
+  betrouwbaarheid, via `tkDagfactorHerkomst()`. Inzicht vermeldt de herkomst van "Klaar om te trainen".
+- Berekeningen, drempels, Decision- en Coaching-core ongewijzigd.
+- Open (PO-besluit): kop "Goed hersteld" op de readinesskaart (DEC-REC-001-A); herstelscore en readiness wegen alleen
+  de spiergroepen van de geplande training (DEC-REC-001-B). Geen toestelbewijs.
+- Status: pas waar op main na merge van PR #540 en de vervolg-PR.
+
 ## Wearable-koppeling: tokenopslag, Android-bereikbaarheid, koppelstatus (v4.70.25, 11 oktober 2026)
 
 - Invariant (DEC-VAULT-001): elke autorisatie krijgt een unieke Vault-secretnaam. Bij (her)koppelen worden eerst de
@@ -653,3 +744,5 @@ Gecontroleerde, technische uitfasering van het legacy Gym-model, uitgevoerd na e
 **Live, zelf uitgevoerde technische risicoreparatie:** een voorgenomen `on_conflict`-upsert op `memberships` bleek onbetrouwbaar (unique constraint bevat een nullable `team_id`, NULL-waarden zijn nooit gelijk aan elkaar) — vervangen door een expliciete select-dan-patch/post, live transactioneel getest.
 
 **Tests:** `core/fCanonicalGymTrackB.test.js` (nieuw, 9/9), `core/fGymTeamSecurity.test.js` bijgewerkt (17/17), `core/fAdminAuthGymRlsHardening.test.js` 1 assertie bijgewerkt (8/8). Release gate: 230/230. Cross-domain regressie (Organization/Team/Entitlements) 0 problemen. **ACTIVE LEGACY WRITE:** alleen het bewuste, gedocumenteerde dual-write op `users.gym_role`. **STATUS: TECHNICAL FOUNDATION CLOSED — READY FOR FUTURE GYM UX.** Volledig rapport: `docs/TRACK_B_CANONICAL_GYM_MIGRATION_REPORT.md`.
+
+- SEC-570-03A (22 oktober 2026): meervoudige URL-decodering kandidaat-herstel in Draft-PR #573; heracceptatie open, geen productie/Android.

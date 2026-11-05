@@ -77,10 +77,11 @@ ok(html.indexOf("if(id==='s-hist'){histOff=0;renderHistFilterTabs();loadHistory(
   const fn = slice('async function sbPatchQ(t,f,d,opts){', '// sbDelQ:');
   ok(fn.indexOf('!navigator.onLine') > 0 && fn.indexOf('offlineQueueAdd(') > 0, '18. sbPatchQ (gebruikt door availConflictSkip/Reschedule) queuet automatisch bij offline-status -- Calendar-reschedule/skip erven dit zonder extra code');
   ok(fn.indexOf('sbRetryable(r.status)') > 0, '19. Retryable serverfouten worden ook gequeued (niet uitsluitend een harde offline-detectie) -- retry-scenario gedekt');
-  ok(/catch\(e\)\{[\s\S]{0,80}offlineQueueAdd/.test(fn), '20. Een netwerk-exception tijdens de fetch zelf wordt eveneens gequeued (drievoudige dekking: offline/retryable-status/exception)');
+  // TK-REL-SEC-05: de catch delegeert aan queue(); queue() bewaart alleen als IndexedDB commit slaagt.
+  ok(/const queue=async\(\)=>\{[\s\S]{0,250}offlineQueueAdd/.test(fn) && /catch\(e\)\{[\s\S]{0,140}return queue\(\)/.test(fn), '20. Een netwerk-exception delegeert aan de duurzame wachtrij, zonder vals succes bij commit-fout');
 }
 {
-  const fn = slice('if(_flushBezig)return;', 'if(syncedAny&&!(await offlineQueueAll())');
+  const fn = slice('if(_flushBezig)return;', 'if(syncedAny&&!(await tkLeesWachtrijStrikt())');
   ok(fn.indexOf('items.sort((a,b)=>a.id-b.id)') > 0, '21. Wachtrij-items worden gesorteerd op id (FIFO) vóór verwerking -- een reschedule A->B vóór B->C wordt in de juiste volgorde gerepliceerd, geen stale-overwrite-risico');
   ok(fn.indexOf('_flushBezig=true') > 0, '22. Een mutex (_flushBezig) voorkomt dat twee gelijktijdige flush-aanroepen (bv. dubbele tap of meerdere reconnect-triggers) hetzelfde item dubbel versturen');
   ok(fn.indexOf('await offlineQueueRemove(item.id)') > 0 && fn.indexOf('continue') > 0, '23. Per-item foutafhandeling: één mislukt item blokkeert de rest niet en blijft zichtbaar in de wachtrij (geen permanente, onzichtbare data-inconsistentie)');

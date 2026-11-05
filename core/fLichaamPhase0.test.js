@@ -85,12 +85,14 @@ eq((html.match(/sets>=12 \? 'var\(--load-3\)' : sets>=6 \? 'var\(--load-2\)' : '
 eq((html.match(/sets>=12\?'var\(--load-3\)':sets>=6\?'var\(--load-2\)':'var\(--load-1\)'/g) || []).length, 1,
   'volumelijst per spiergroep gebruikt dezelfde intensiteitsramp');
 ok(html.indexOf("path.style.fill = 'var(--load-0)'") >= 0, 'spier zonder belasting krijgt de neutrale basiskleur');
-ok(html.indexOf('path.style.fill = heeftModel ? colorFn(100) : \'var(--load-0)\';') >= 0,
-  'spier zonder herstelbelasting blijft "volledig hersteld"; gebied zonder herstelmodel wordt neutraal');
+ok(html.indexOf("if(!hit){pctBySvgId[id]=null;return;}") >= 0 &&
+   html.indexOf("path.style.fill = 'var(--load-0)';") >= 0,
+  'DEC-REC-001: spier zonder herstelhistorie is onbekend en wordt neutraal, nooit 100% groen');
 
 // De twee figuren mogen nooit dezelfde kleurbetekenis krijgen.
-ok(html.indexOf('const color = colorFn(pct);') >= 0 && html.indexOf("sets>=12 ? 'var(--load-3)'") >= 0,
-  'herstelfiguur en belastingsfiguur gebruiken aantoonbaar verschillende schalen');
+ok(html.indexOf("(typeof pct==='number'&&isFinite(pct)) ? colorFn(pct) : 'var(--load-0)'") >= 0 &&
+   html.indexOf("sets>=12 ? 'var(--load-3)'") >= 0,
+  'herstelfiguur gebruikt stoplicht voor geldige percentages; belastingsfiguur de eigen intensiteitsramp');
 
 // De belastingskaarten op Lichaam gebruiken de ramp, niet het stoplicht.
 ok(/\.lich-loadcard \.k\.hi\{color:var\(--load-3\)\}/.test(html), 'kaart "zwaar belast" is niet langer rood');

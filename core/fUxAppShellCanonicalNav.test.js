@@ -23,7 +23,7 @@ function slice(startMarker, endMarker) {
   return HTML.slice(s, e);
 }
 
-var VOLLEDIGE_NAV_BRON = slice('const TK_PRIMARY_NAV=[', 'function tkPaintBnav(')
+var VOLLEDIGE_NAV_BRON = (HTML.indexOf('function tkTrainScreenIdVoor(') > -1 ? slice('function tkTrainScreenIdVoor(', 'function newClientRowId(') : '') /* UX-EXEC-01: canonieke schermnaam */ + slice('const TK_PRIMARY_NAV=[', 'function tkPaintBnav(')
   .replace(/^let /gm, 'var ').replace(/^const /gm, 'var ');
 
 function zandbak(curTWaarde) {

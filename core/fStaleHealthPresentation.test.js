@@ -51,7 +51,7 @@ const NAMEN = ['td', 'tkSleepHours', 'tkFmtSleepHours', 'fmtSleep', 'v43SlaapTxt
   'tkHealthVandaag', 'tkNietMeegeteldTxt', 'tkMetingNa', 'tkNietMeeHtml', 'tkStatusLabel', 'tkSignaalOnbetrouwbaar', 'tkRhrDeltaHerstel', 'dagfactor', 'tkDagfactorHeeftBasis', 'tkDagfactorVoorAdvies', 'tkCheckinVandaag', 'trainReadiness', 'tkSpierherstelEvidence',
   'recoveryScoreFrom', 'rhrBaselineDelta', 'todayPainMuscle', 'recoveryAdjustmentForToday', 'computeProgAdjustment', 'v43GereedheidScore',
   'tkReadinessVandaag', 'fmtDate', 'capitalize', 'tkMetingHerkomst', 'tkMetingWanneer', 'tkMetingLabel', 'openRecoveryDetail',
-  'dagfactorStatus', 'dayState', 'dagfactorCoach', 'dagfactorUitleg', 'renderDagfactorDetail'];
+  'dagfactorStatus', 'dayState', 'dagfactorCoach', 'dagfactorUitleg', 'tkDagfactorHerkomst', 'renderDagfactorDetail'];
 const REFRESH = extractFn(HTML, 'refreshHome');
 const LICH = extractFn(HTML, 'renderLichaamPremium');
 // De echte Home-kaart: het blok van refreshHome dat de dagfactorkaart opbouwt.
@@ -87,11 +87,11 @@ function home(hd) {
   const tech = (r.kaart.match(/<div class="df-tech">([^<]*)<\/div>/) || [null, null])[1];
   return { sb: sb, dfInfo: r.dfInfo, detail: r.detail, kaart: r.kaart, tech: tech, waarom: sb.__els['dagfactor-detail'].innerHTML, ring: (r.kaart.match(/<div class="df-ring-val">([^<]*)<\/div>/) || [])[1] };
 }
-async function keten(hd, recRows) {
+async function keten(hd, recRows, gepland) {
   const sb = runtime({ hd: hd, recRows: recRows });
   const hq = sb.tkHealthQualified(hd); const lh = hq.rows[0];
   const df = lh ? sb.dagfactor(sb.hrvDagFactorPersonal(hq.rows), lh.sleep, sb.tkCyclusFaseVandaag(lh), hq.signalen) : null;
-  await sb.tkReadinessVandaag(df, recRows || [], null);
+  await sb.tkReadinessVandaag(df, recRows || [], gepland?{naam:'Borst- en schoudertraining',_muscles:['borst','schouders']}:null, !!gepland);
   const b = sb.window._tkReadiness; const adj = await sb.recoveryAdjustmentForToday(['borst'], {});
   return [df && df.factor, df && df.hrvFactor, df && df.slaapFactor, df && df.cyclusFactor, df && df.basis, b.herstel && [b.herstel.score, b.herstel.band, b.herstel.betrouwbaarheid],
     b.zone, b.datakwaliteit, b.beschikbaar, b.trainingsadvies, [adj.score, adj.band, adj.confidence, adj.factor, adj.setsDelta, adj.rpeDelta]];
@@ -119,7 +119,7 @@ function reeks(n, start) {
   return uit;
 }
 const kloon = function (x) { return JSON.parse(JSON.stringify(x)); };
-const REC = [{ pct: 80 }, { pct: 70 }];
+const REC = [{ muscle:'borst', pct: 80, hours: 24 }, { muscle:'schouders', pct: 70, hours: 30 }];
 const VANDAAG = dag(0);
 // scenario's
 const ACTUEEL = reeks(30);
@@ -210,7 +210,7 @@ async function main() {
     ok(/HRV-beoordeling t\.o\.v\. je volledige eigen baseline/.test(h.waarom) && /Vergeleken met je gemiddelde van 5 metingen in de laatste 7 dagen \(\d+ ms\)\./.test(h.waarom), 'F6 de HRV-basis van de berekening (7-daags gemiddelde) staat apart van de laatste meting');
     eq(Math.round(g.hv.hrv.basis.waarde), Number((h.waarom.match(/laatste 7 dagen \((\d+) ms\)/) || [])[1]), 'F7 het getoonde gemiddelde is hrvComponent.recent.meanRaw, alleen afgerond');
     eq([g.hv.hrv.basis.n, g.hv.hrv.basis.bron, g.hv.hrv.basis.waarde], [g.hc.recent.n, g.hc.recent.bron, g.hc.recent.meanRaw], 'F8 de context geeft hrvComponent.recent ongewijzigd door');
-    const uiCode = extractFn(HTML, 'tkHealthVandaag') + extractFn(HTML, 'renderDagfactorDetail') + extractFn(HTML, 'dagfactorUitleg');
+    const uiCode = extractFn(HTML, 'tkHealthVandaag') + extractFn(HTML, 'renderDagfactorDetail') + extractFn(HTML, 'dagfactorUitleg') + extractFn(HTML, 'tkDagfactorHerkomst'); // UX-REC-02: gedeelde herkomsthelper hoort bij dezelfde UI-grens
     ok(!/reduce\(|lnRmssd|hrvRollingRecent|hrvBaseline\(|meanLn/.test(uiCode), 'F9 de UI-code berekent zelf geen HRV-gemiddelde of baseline');
   }
   {
@@ -322,9 +322,14 @@ async function main() {
 
   /* ══ E. Berekening en beslissing ongewijzigd ═════════════════════════════ */
   {
-    eq(await keten(kloon(ACTUEEL), REC), [1.05, 1.05, 1, 1, { hrv: true, slaap: true, cyclus: false }, [92, 'hoog', 'hoog'], 'ready', 'volledig', ['hrv', 'rhr', 'slaap', 'spierherstel', 'trainingsbelasting'], { soort: 'ongewijzigd', setsDelta: 0, rpeDelta: 0 }, [92, 'hoog', 'hoog', 1.05, 0, 0]], 'E1 volledig actuele invoer: dagfactor, herstelscore, readiness en trainingsaanpassing exact als in #515/#516');
-    eq((await keten(kloon(ALLES_OUD), REC)).slice(0, 6), [1, 1, 1, 1, { hrv: false, slaap: false, cyclus: false }, [75, 'gemiddeld', 'laag']], 'E2 verouderde invoer: zelfde uitkomst als in #515 (neutraal, alleen spierherstel)');
+    eq(await keten(kloon(ACTUEEL), REC, true), [1.05, 1.05, 1, 1, { hrv: true, slaap: true, cyclus: false }, [92, 'hoog', 'hoog'], 'ready', 'volledig', ['hrv', 'rhr', 'slaap', 'spierherstel', 'trainingsbelasting'], { soort: 'ongewijzigd', setsDelta: 0, rpeDelta: 0 }, [92, 'hoog', 'hoog', 1.05, 0, 0]], 'E1 volledig actuele invoer: dagfactor, herstelscore, readiness en trainingsaanpassing exact als in #515/#516');
+    eq((await keten(kloon(ALLES_OUD), REC, true)).slice(0, 6), [1, 1, 1, 1, { hrv: false, slaap: false, cyclus: false }, [75, 'gemiddeld', 'laag']], 'E2 verouderde invoer: zelfde uitkomst als in #515 (neutraal, alleen spierherstel)');
     const h = home(kloon(ACTUEEL)); const k = await keten(kloon(ACTUEEL), REC);
+    ok(k[5]===null && k[9].soort==='geen_advies', 'DEC-REC-001-B: zonder expliciete planning geen trainingsherstelscore of trainingadvies');
+    const onvolledig = await keten(kloon(ACTUEEL), [{ muscle:'borst', pct:100, hours:null }], true);
+    ok(onvolledig[5]===null && !onvolledig[8].includes('spierherstel'), 'DEC-REC-001-B: expliciet gepland maar zonder aantoonbare spierhistorie geen herstelgetal');
+    const gemengd = await keten(kloon(ACTUEEL), [REC[0], { muscle:'schouders', pct:100, hours:null }], true);
+    ok(gemengd[5]===null, 'DEC-REC-001-B: gemengd bekende/onbekende spiergroepen leidt niet tot partiële score');
     eq([h.dfInfo.factor, h.detail.hrvF, h.detail.slaapF], [k[0], k[1], k[2]], 'E3 de kaart toont dezelfde dagfactor en onderdelen als de keten berekent');
     const src = ['core/calculation.js', 'core/decision.js', 'core/deviceIntegration.js'].map(function (f) { return fs.readFileSync(path.join(ROOT, f), 'utf8'); }).join('\n');
     ok(!/tkHealthVandaag|tkNietMeegeteldTxt/.test(src), 'E4 de cores kennen de presentatiecontext niet (alleen index.html)');

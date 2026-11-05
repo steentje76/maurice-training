@@ -43,7 +43,7 @@ KLASSE_B.forEach(function (f) {
 });
 ok(/if\(!\(await withdrawResearchConsent\(\)\)\)/.test(extractFn(HTML, 'toggleResearchConsent')) && /if\(!\(await grantResearchConsent\(\)\)\)/.test(extractFn(HTML, 'toggleResearchConsent')), 'bron: onderzoeksdeelname controleert de uitkomst');
 ok(/_alleenGeheugen:!_okW/.test(extractFn(HTML, 'upsertExerciseGoalField')), 'bron: exercise_goals blijft alleen-geheugen als de INSERT niet lukte');
-ok(!/sbPostQ\('custom_trainings',\{/.test(HTML) && (HTML.match(/tkCustomTrainingPost\(\{id:/g) || []).length === 5, 'bron: alle custom_trainings-INSERTs (4 aanroepers + herstel, Sprint 7) lopen via tkCustomTrainingPost');
+ok(!/sbPostQ\('custom_trainings',\{/.test(HTML) && (HTML.match(/tkCustomTrainingPost\(\{id[:,]/g) || []).length === 7, 'bron: alle custom_trainings-INSERTs (4 aanroepers + herstel, Sprint 7; + saveNewTraining en saveAsTrainingAndFinish, UX-EXEC-01) lopen via tkCustomTrainingPost');
 ok(/_behouden=customTrainings\.filter/.test(extractFn(HTML, 'syncCustomTrainingsFromSupabase')), 'bron: de sync behoudt nog niet bevestigde trainingen');
 ok(/'tk_trainings_onbevestigd'/.test(HTML.slice(HTML.indexOf('const PERSONAL_CACHE_KEYS'), HTML.indexOf('const PERSONAL_CACHE_KEYS') + 600)), 'bron: tk_trainings_onbevestigd is persoonsgebonden (gewist bij eigenaarwissel)');
 

@@ -44,3 +44,12 @@ De database mist public.movekit_media_grants. De server-broker is nog niet uitge
 ## Extra gecontroleerde serverentitlement-migratie
 
 De bestaande migratie `supabase/migrations/20261103155325_tk504_movekit_v2_media_grants.sql` uit de Draft #595 is geïsoleerd hergebruikt. De tabel is standaard inactief (`active=false`), beschermt grants met RLS, trekt rechten van anonieme en ingelogde browserrollen in, en verleent alleen SELECT aan de service_role voor server-side toetsing. De unieke (user_id,scope)-sleutel en gecontroleerde referentie verhinderen stilzwijgende user-grants. De migratie is **niet** in productie of op een testdatabase uitgevoerd. Zonder aparte goedgekeurde grant-activatie is afspelen onmogelijk. `core/tk504MediaGrantSchema.test.js`: 11/11 statische controles groen; echte migratietest/rollback op geïsoleerde database blijft open.
+
+## Aanvullende verificatie — 5 november 2026
+
+- Read-only Supabase Storage join: 582 unieke videoslugs én 582 unieke poster-slugs, 0 missende paren, 0 ongeldige lege bestanden. Objectmetadata is niet hetzelfde als cryptografische byte-verificatie.
+- GoldenCrosswalk test: 226 bestaande catalog-id en leverancier-id koppelingen exact behouden, 356 nieuwe kandidaten niet gepubliceerd; bij 210/226 verschilt de videobestandsgrootte tussen V2 en de V1 bron. Verifieer de V2 SHA256 tegen echte Storage-bytes vóór vrijgave.
+- Guided Workout (GWUI.media) was een vierde speler die de oude openbare videolink direct gebruikte. De private route is nu toegevoegd aan dezelfde bestaande spelerketen. V1 blijft ongewijzigd zolang de codegate uit is. Extra gerichte UI tests testen beide modes.
+- De migratie is uitgevoerd in een tijdelijke lokale Docker PostgreSQL 16 met synthetische gebruiker en rollen: default inactive, RLS, geen clienttoegang, service-only SELECT, unieke grants, revocation check. GEEN wijziging aan productie.
+- Netlify PR #602 deploy-preview: HTTP 503 V2_NOT_RELEASED voor signing request, zoals bedoeld. Bestaande openbare MP4 Range smoke: HTTP 206, bytes 0–1023, length 1024.
+- Vrijgave blijft uit. Op de geïsoleerde main baseline waren met dezelfde lokaal geïnstalleerde dependencies 16 gates rood; de nieuwe branch mag ze niet kwijtschelden.

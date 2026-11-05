@@ -38323,6 +38323,12 @@ var GWUI=(function(){
     var id=it.id,has=false,poster='';
     try{has=A().hasVideo(id);}catch(_){}
     try{poster=A().poster(id)||'';}catch(_){}
+    // TK504: Guided training must use the SAME protected provider route as the
+    // exercise library and normal execution. Never embed a legacy public MP4
+    // when the private-release gate is active.
+    if(has && typeof tk504PrivateEnabled==='function' && tk504PrivateEnabled()){
+      return '<div class="gw-media">'+tk504PrivateVideoMarkup(id,poster,'Techniekvideo')+'</div>';
+    }
     if(has){var src='';try{src=A().resolve(id,'video');}catch(_){}
       return '<div class="gw-media"><video class="gw-video" controls playsinline preload="none" poster="'+poster+'"><source src="'+src+'" type="video/mp4"></video></div>';}
     return '<div class="gw-media gw-media-ph" style="background-image:url(\''+poster+'\')"><span class="gw-media-tag">Techniekbeeld</span></div>';

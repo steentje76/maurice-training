@@ -77,7 +77,20 @@
       if(!res||!res.ok){
         const status=res&&res.status;
         if(status===401)throw fail('AUTH_REQUIRED');
-        if(status===403)throw fail('ENTITLEMENT_REQUIRED');
+        if(status===403){
+          // An unpublished canonical exercise is not a payment/entitlement
+          // failure. Preserve the distinction for the future UI while never
+          // trusting arbitrary response text or exposing backend details.
+          let reason=null;
+          try{
+            const denial=await res.json();
+            if(denial && typeof denial==='object' && !Array.isArray(denial))
+              reason=denial.error;
+          }catch(_){}
+          if(!current(ownerId,g))throw fail('STALE_ACCOUNT');
+          if(reason==='CONTENT_BINDING_NOT_APPROVED')throw fail('MEDIA_NOT_RELEASED');
+          throw fail('ENTITLEMENT_REQUIRED');
+        }
         if(status===404)throw fail('MEDIA_NOT_FOUND');
         if(status===429)throw fail('RATE_LIMITED');
         if(status===503)throw fail('MEDIA_NOT_RELEASED');

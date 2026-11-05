@@ -47,6 +47,18 @@ const validGrant = Object.freeze({
   user_id: ownerA, scope: broker.SCOPE, active: true,
   expires_at: '2027-01-01T00:00:00.000Z', revoked_at: null
 });
+const reviewedBinding = Object.freeze({
+  catalog_id: video.catalog_id, exercise_id: 'movekit-v2-' + video.catalog_id,
+  provider_id: video.provider_id, inventory_sha256: broker.inventorySha,
+  approved: true, reviewer_kind: 'human',
+  review_ref: 'TK504-20261103-005',
+  reviewed_at: '2026-11-03T15:00:00Z',
+  reviewed_taxonomy_sha256: 'a'.repeat(64)
+});
+const reviewedExercise = Object.freeze({
+  id: reviewedBinding.exercise_id, scope: 'global',
+  user_id: null, created_by: null, active: true
+});
 const body = JSON.stringify({ catalog_id: video.catalog_id, type: 'video', version: 'v2' });
 function event(auth = 'Bearer fake.jwt.token') {
   return { httpMethod: 'POST', headers: { origin, authorization: auth }, body };
@@ -67,6 +79,16 @@ function backend(options = {}) {
       if (options.grantDown) return { ok: false, status: 404 };
       return { ok: true, json: async () => options.grants === undefined
         ? [validGrant] : options.grants };
+    }
+    if (url.startsWith(broker.BASE + '/rest/v1/movekit_exercise_bindings?')) {
+      if (options.bindingDown) return { ok: false, status: 503 };
+      return { ok: true, json: async () => options.bindings === undefined
+        ? [reviewedBinding] : options.bindings };
+    }
+    if (url.startsWith(broker.BASE + '/rest/v1/exercises?')) {
+      if (options.exerciseDown) return { ok: false, status: 503 };
+      return { ok: true, json: async () => options.exercises === undefined
+        ? [reviewedExercise] : options.exercises };
     }
     if (url === broker.BASE + '/storage/v1/object/sign/' + broker.BUCKET + '/' + video.video.path ||
         url === broker.BASE + '/storage/v1/object/sign/' + broker.POSTER_BUCKET + '/' + approvedPoster.storage_path) {
@@ -130,7 +152,7 @@ function check(label, func) {
     assert.equal(r.resp.statusCode,200);
     assert.equal(r.data.type,'poster');
     assert.equal(r.data.url,broker.BASE+'/storage/v1/object/sign/'+broker.POSTER_BUCKET+'/'+approvedPoster.storage_path+'?token=fake-signed-token');
-    assert.equal(r.calls.length,3);
+    assert.equal(r.calls.length,5);
   });
   await check('optimized poster hash mismatch blocks signing', async () => {
     const e = event(); e.body = JSON.stringify({catalog_id:video.catalog_id,type:'poster',version:'v2'});
@@ -228,15 +250,71 @@ function check(label, func) {
     assert.equal(r.data.url, signed);
     assert.equal(r.data.expires_in, 60);
     assert.equal(r.data.version, 'v2');
-    assert.equal(r.calls.length, 3);
+    assert.equal(r.calls.length, 5);
     assert.match(r.resp.headers['Cache-Control'], /no-store/);
     const grantCall = r.calls[1];
     const parsed = new URL(grantCall.url);
     assert.equal(parsed.searchParams.get('user_id'), 'eq.' + ownerA);
     assert.equal(parsed.searchParams.get('scope'), 'eq.movekit_v2');
-    assert.equal(r.calls[2].opts.method, 'POST');
-    assert.equal(JSON.parse(r.calls[2].opts.body).expiresIn, 60);
+    assert.equal(r.calls[2].opts.method, 'GET');
+    assert.match(r.calls[2].url, /movekit_exercise_bindings/);
+    assert.equal(r.calls[3].opts.method, 'GET');
+    assert.match(r.calls[3].url, /rest\/v1\/exercises/);
+    assert.equal(r.calls[4].opts.method, 'POST');
+    assert.equal(JSON.parse(r.calls[4].opts.body).expiresIn, 60);
     assert.equal(r.data.url.includes('fake-service-only'), false);
+  });
+  await check('canonical binding absent, duplicated or fabricated never signs media', async () => {
+    for (const bindings of [[], [reviewedBinding, reviewedBinding],
+      [{ ...reviewedBinding, approved: false }],
+      [{ ...reviewedBinding, reviewer_kind: 'ai' }],
+      [{ ...reviewedBinding, provider_id: 'foreign-provider' }],
+      [{ ...reviewedBinding, inventory_sha256: '0'.repeat(64) }],
+      [{ ...reviewedBinding, exercise_id: 'TK-000001' }],
+      [{ ...reviewedBinding, review_ref: '' }],
+      [{ ...reviewedBinding, reviewed_taxonomy_sha256: null }],
+      [{ ...reviewedBinding, reviewed_at: '2026-11-04T00:00:00Z' }]]) {
+      const r = await invoke(event(), { bindings });
+      assert.equal(r.resp.statusCode, 403, JSON.stringify(bindings));
+      assert.equal(r.data.error, 'CONTENT_BINDING_NOT_APPROVED');
+      assert.equal(r.calls.filter(c => c.url.includes('/object/sign/')).length, 0);
+    }
+  });
+  await check('canonical DB exercise must remain ownerless global and active', async () => {
+    for (const exercises of [[], [reviewedExercise, reviewedExercise],
+      [{ ...reviewedExercise, scope: 'personal' }],
+      [{ ...reviewedExercise, user_id: ownerA }],
+      [{ ...reviewedExercise, created_by: ownerA }],
+      [{ ...reviewedExercise, active: false }],
+      [{ ...reviewedExercise, id: 'TK-000001' }]]) {
+      const r = await invoke(event(), { exercises });
+      assert.equal(r.resp.statusCode, 403, JSON.stringify(exercises));
+      assert.equal(r.calls.filter(c => c.url.includes('/object/sign/')).length, 0);
+    }
+  });
+  await check('failed binding/identity data API refuses signing without leaking credentials', async () => {
+    for (const opts of [{ bindingDown: true }, { exerciseDown: true }]) {
+      const r = await invoke(event(), opts);
+      assert.equal(r.resp.statusCode, 503);
+      assert.equal(r.data.error, 'BINDING_BACKEND_UNAVAILABLE');
+      assert.equal(r.calls.filter(c => c.url.includes('/object/sign/')).length, 0);
+      assert.equal(JSON.stringify(r.data).includes('fake-service-only'), false);
+    }
+  });
+  await check('binding queries are exact and server-side with no data mutation', async () => {
+    const r = await invoke(event());
+    const bindingReq = r.calls[2], exerciseReq = r.calls[3];
+    const bq = new URL(bindingReq.url).searchParams;
+    const eq = new URL(exerciseReq.url).searchParams;
+    assert.equal(bq.get('catalog_id'), 'eq.' + video.catalog_id);
+    assert.equal(bq.get('limit'), '2');
+    assert.equal(eq.get('id'), 'eq.movekit-v2-' + video.catalog_id);
+    assert.equal(eq.get('limit'), '2');
+    for (const call of [bindingReq, exerciseReq]) {
+      assert.equal(call.opts.method, 'GET');
+      assert.equal(call.opts.cache, 'no-store');
+      assert.equal(call.opts.redirect, 'error');
+    }
   });
   await check('sign backend failure does not expose details', async () => {
     const r = await invoke(event(), { signDown: true });

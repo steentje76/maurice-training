@@ -39,6 +39,18 @@ const grant = Object.freeze({
   user_id: owner, scope: service.SCOPE, active: true,
   expires_at: '2027-01-01T00:00:00.000Z', revoked_at: null
 });
+const binding = Object.freeze({
+  catalog_id: source.catalog_id, exercise_id: 'movekit-v2-' + source.catalog_id,
+  provider_id: source.provider_id, inventory_sha256: service.inventorySha,
+  approved: true, reviewer_kind: 'human',
+  review_ref: 'TK504-20261103-101',
+  reviewed_at: '2026-11-03T15:00:00Z',
+  reviewed_taxonomy_sha256: 'b'.repeat(64)
+});
+const globalExercise = Object.freeze({
+  id: binding.exercise_id, scope: 'global',
+  user_id: null, created_by: null, active: true
+});
 const validToken = 'synthetic.valid.token.1234';
 const now = () => Date.parse('2026-11-03T16:00:00.000Z');
 let tests = 0;
@@ -60,6 +72,14 @@ function mockServer(opts = {}) {
     if (url.startsWith(service.BASE+'/rest/v1/movekit_media_grants?')) {
       if (opts.dbFail) return {ok:false};
       return {ok:true,json:async()=> opts.grants===undefined?[grant]:opts.grants};
+    }
+    if (url.startsWith(service.BASE+'/rest/v1/movekit_exercise_bindings?')) {
+      if (opts.bindingFail) return {ok:false};
+      return {ok:true,json:async()=>opts.bindings===undefined?[binding]:opts.bindings};
+    }
+    if (url.startsWith(service.BASE+'/rest/v1/exercises?')) {
+      if (opts.exerciseFail) return {ok:false};
+      return {ok:true,json:async()=>opts.exercises===undefined?[globalExercise]:opts.exercises};
     }
     if (url.startsWith(service.BASE+'/storage/v1/object/sign/')) {
       return {ok:true,json:async()=>({signedURL:url.slice(service.BASE.length)+'?token=mock-signed-token-12345'})};
@@ -92,13 +112,13 @@ function build(opts = {}) {
   return {client,mock,identity};
 }
 (async()=>{
-  await check('video success via 3 server-side authorization calls', async()=>{
+  await check('video success via verified 5-step server authorization chain', async()=>{
     const v=build();
     const result=await v.client.get(source.catalog_id,'video',owner);
     assert.equal(result.type,'video');
     assert.equal(result.expiresAt,now()+30000);
     assert.equal(result.version,'v2');
-    assert.equal(v.mock.calls.length,3);
+    assert.equal(v.mock.calls.length,5);
     assert.match(result.url,/\/exercise-media\/movekit\/v2\/video\//);
     assert.equal(v.client.activeUi,false);
     assert.equal(v.client.offlineDownloadReleased,false);
@@ -108,7 +128,7 @@ function build(opts = {}) {
     const result=await v.client.get(source.catalog_id,'poster',owner);
     assert.equal(result.type,'poster');
     assert.equal(result.expiresAt,now()+30000);
-    assert.equal(v.mock.calls.length,3);
+    assert.equal(v.mock.calls.length,5);
     assert.match(result.url,/\/exercise-posters\/movekit\/v2\/poster-optimized\//);
   });
   await check('default checked-in release registry blocks without network', async()=>{
@@ -125,6 +145,16 @@ function build(opts = {}) {
   await check('client never treats editable user_metadata as entitlement', async()=>{
     const v=build({grants:[]});
     await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/ENTITLEMENT_REQUIRED/);
+    assert.equal(v.mock.calls.filter(c=>c.url.includes('/object/sign/')).length,0);
+  });
+  await check('content not approved maps to unreleased, not a subscription/paywall error', async()=>{
+    const v=build({bindings:[]});
+    await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/MEDIA_NOT_RELEASED/);
+    assert.equal(v.mock.calls.filter(c=>c.url.includes('/object/sign/')).length,0);
+  });
+  await check('AI-only canonical binding also maps to unreleased', async()=>{
+    const v=build({bindings:[{...binding,reviewer_kind:'ai'}]});
+    await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/MEDIA_NOT_RELEASED/);
     assert.equal(v.mock.calls.filter(c=>c.url.includes('/object/sign/')).length,0);
   });
   await check('valid JWT for other account cannot get current user grant', async()=>{

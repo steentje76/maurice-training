@@ -40,3 +40,7 @@ Existing baseline: `node core/fMediaUrlResolver.test.js`: 29 PASS, 0 FAIL.
 ## Voor productie absoluut noodzakelijk
 
 De database mist public.movekit_media_grants. De server-broker is nog niet uitgerold; release- en licentiegoedkeuring ontbreken. Een gecontroleerde table-migratie, gecontroleerde gebruikersrechten, echte SHA-/Range-tests, schriftelijke licentietoets, Android/WebView-apparaatproeven, service-worker-cachecutover en verwijderen van openbare Netlify MP4s zijn nog nodig. De 356 nieuwe oefeningen zijn niet gepubliceerd en vereisen menselijke review. De problemen #577/#579/#582/#584/#586 en gezamenlijke UX-beoordeling komen vóór nieuwe APK. Geen van deze gating-acties is in deze branch geactiveerd.
+
+## Extra gecontroleerde serverentitlement-migratie
+
+De bestaande migratie `supabase/migrations/20261103155325_tk504_movekit_v2_media_grants.sql` uit de Draft #595 is geïsoleerd hergebruikt. De tabel is standaard inactief (`active=false`), beschermt grants met RLS, trekt rechten van anonieme en ingelogde browserrollen in, en verleent alleen SELECT aan de service_role voor server-side toetsing. De unieke (user_id,scope)-sleutel en gecontroleerde referentie verhinderen stilzwijgende user-grants. De migratie is **niet** in productie of op een testdatabase uitgevoerd. Zonder aparte goedgekeurde grant-activatie is afspelen onmogelijk. `core/tk504MediaGrantSchema.test.js`: 11/11 statische controles groen; echte migratietest/rollback op geïsoleerde database blijft open.

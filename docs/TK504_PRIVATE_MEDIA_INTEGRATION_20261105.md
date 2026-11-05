@@ -53,3 +53,5 @@ De bestaande migratie `supabase/migrations/20261103155325_tk504_movekit_v2_media
 - De migratie is uitgevoerd in een tijdelijke lokale Docker PostgreSQL 16 met synthetische gebruiker en rollen: default inactive, RLS, geen clienttoegang, service-only SELECT, unieke grants, revocation check. GEEN wijziging aan productie.
 - Netlify PR #602 deploy-preview: HTTP 503 V2_NOT_RELEASED voor signing request, zoals bedoeld. Bestaande openbare MP4 Range smoke: HTTP 206, bytes 0–1023, length 1024.
 - Vrijgave blijft uit. Op de geïsoleerde main baseline waren met dezelfde lokaal geïnstalleerde dependencies 16 gates rood; de nieuwe branch mag ze niet kwijtschelden.
+
+- Aanvullende geïsoleerde PostgreSQL-test: service_role met BYPASSRLS kon de synthetische grant daadwerkelijk lezen terwijl gewone gebruikers geen toegangsrechten kregen. Smoke-test opnieuw groen; testcontainer onmiddellijk opgeruimd.

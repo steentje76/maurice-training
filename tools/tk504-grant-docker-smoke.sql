@@ -5,7 +5,7 @@ CREATE SCHEMA auth;
 CREATE TABLE auth.users (id uuid PRIMARY KEY);
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
-CREATE ROLE service_role NOLOGIN;
+CREATE ROLE service_role NOLOGIN BYPASSRLS;
 INSERT INTO auth.users(id) VALUES ('11111111-1111-4111-8111-111111111111');
 \i /tmp/tk504-grants.sql
 INSERT INTO public.movekit_media_grants(user_id, grant_reference)
@@ -50,3 +50,14 @@ BEGIN
   RAISE NOTICE 'TK504_DOCKER_GRANTS_PASS: inactive default, RLS, no browser access, server read-only, uniqueness, revocation consistency';
 END
 $$;
+-- Simulate Supabase service_role's BYPASSRLS semantics, not just SQL GRANTs.
+SET ROLE service_role;
+DO $$
+BEGIN
+  IF (SELECT count(*) FROM public.movekit_media_grants) <> 1 THEN
+    RAISE EXCEPTION 'SERVER_ROLE_CANNOT_READ_APPROVED_GRANT';
+  END IF;
+  RAISE NOTICE 'TK504_SERVICE_ROLE_BYPASSRLS_READ_PASS';
+END
+$$;
+RESET ROLE;

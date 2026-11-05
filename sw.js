@@ -5,8 +5,8 @@
 // Reden: de static-fetch is cache-first over ALLE caches; een oude core-entry in de niet-gebumpte
 // dynamische cache kon de nieuwe precache overschaduwen (stale serve na deploy). Door CACHE_NAME mee te
 // bumpen ruimt de activate-handler de oude dynamische cache op. REGEL: core wijzigt -> bump CACHE_NAME + CACHE_STATIC.
-const CACHE_NAME = 'trainingskompas-v470250';
-const CACHE_STATIC = 'trainingskompas-static-v470250';
+const CACHE_NAME = 'trainingskompas-v470251';
+const CACHE_STATIC = 'trainingskompas-static-v470251';
 // F1.9 SW-GUARD: CRLF-agnostische hash van de kritieke canonical core-set,
 // inclusief ContextEngineCore nu deze door buildCtx() in productie wordt gebruikt.
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
@@ -88,6 +88,9 @@ const STATIC_ASSETS = [
   '/core/relationship.js',
   '/core/athlete.js',
   '/core/movement.js',
+  '/core/privateMoveKitV2MediaClient.js',
+  '/core/movekitV2ExerciseMediaBridge.js',
+  '/core/tk504ProtectedPlayback.js',
   '/core/organizationCore.js',
   '/core/brandingCore.js',
   '/core/organizationContextRuntime.js',

@@ -61,6 +61,25 @@ projectie naar precies 14 UI-velden staat onder
 registreert expliciet de twee uitgesloten extra velden. De originele
 vertalingen en bronrecords zijn behouden.
 
+## Lokale Chrome-weergave gecontroleerd
+
+Uit de bestaande `EX_CATALOG` en dezelfde ECS-module is bovendien een
+**volledig offline app-achtige privépreview** gemaakt. Deze bevat de
+Nederlandse draft-overlay uitsluitend lokaal, zonder netwerkverzoeken of
+training/loggingfunctionaliteit:
+`C:\Movikit\.tk-private-review\TK504-NL-EXERCISE-CATALOG-ECS-APP-PREVIEW-20261105.html`.
+
+Headless Chrome (privé) heeft deze daadwerkelijk uitgevoerd:
+
+- **226/226 Nederlandse oefeningkaarten** gerenderd vanuit de bestaande ECS.
+- De eerste Nederlandstalige detailweergave geladen.
+- **356/356 nieuwe kandidaten niet getoond**.
+- Resultaat `PRIVATE_REAL_CHROME_ECS_PREVIEW_PASS`, rapport:
+  `TK504-CHROME-ECS-NL-PICKER-QA-20261105.json` (privé).
+
+Deze HTML is bewust geen releasebuild van Trainingskompas. In productie is nog
+geen script of vertaaldata aangesloten.
+
 ## Nog nodig voordat dit in de app komt
 
 - Menselijke Nederlandse redactie en techniekcontrole van de 582 records.

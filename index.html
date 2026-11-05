@@ -20414,7 +20414,10 @@ async function tk504PlayPrivateVideo(container,catalogId){
   try{
     const runtime=tk504GetMediaRuntime();
     const ticket=await runtime.signed(catalogId,'video');
-    if(!container.isConnected||!authSession||authSession.user.id!==owner)return false;
+    if(!container.isConnected||!authSession||authSession.user.id!==owner){
+      if(container.isConnected)container.textContent='Video onderbroken na wijzigen van account.';
+      return false;
+    }
     const v=document.createElement('video');
     v.controls=true;v.preload='none';v.playsInline=true;
     v.setAttribute('playsinline','');
@@ -20430,12 +20433,14 @@ async function tk504PlayPrivateVideo(container,catalogId){
       try{
         const fresh=await runtime.signed(catalogId,'video');
         if(!container.isConnected||!authSession||authSession.user.id!==owner)return;
-        v.src=fresh.url;
-        v.load();
+        // Attach first: a WebView can dispatch loadedmetadata immediately.
         v.addEventListener('loadedmetadata',()=>{
+          if(!container.isConnected||!authSession||authSession.user.id!==owner)return;
           if(position>0&&Number.isFinite(v.duration))v.currentTime=Math.min(position,Math.max(0,v.duration-0.1));
           const play=v.play();if(play&&play.catch)play.catch(()=>{});
         },{once:true});
+        v.src=fresh.url;
+        v.load();
       }catch(_){denied();}
     });
     v.src=ticket.url;

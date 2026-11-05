@@ -5336,7 +5336,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
   <div class="scroll" style="padding-top:8px">
     <div id="pbd-ex-list"></div>
-    <button class="btn btn-o" onclick="addBlockExercise()" style="margin-top:4px">+ Oefening toevoegen</button>
+    <button id="pbd-add-btn" class="btn btn-o" onclick="addBlockExercise()" style="margin-top:4px">+ Oefening toevoegen</button>
     <button id="pbd-start-btn" class="btn btn-r" style="margin-top:10px;width:100%" onclick="startProgramBlockTraining(curProgramBlockId)">▶ Start deze training</button>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
@@ -7671,7 +7671,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.25';
+const APP_VER = 'v4.70.27';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9561,9 +9561,9 @@ async function createTrainingInstance({vasteTrainingId=null,customTrainingId=nul
 }
 
 // completeTrainingInstance(instanceId) → true/false (queuet offline zoals alle sb*Q-writes)
-async function completeTrainingInstance(instanceId){
+async function completeTrainingInstance(instanceId,executionSnapshot=null){
   if(!instanceId)return false;
-  return await sbPatchQ('training_instances','id=eq.'+encodeURIComponent(instanceId),{status:'completed',completed_at:new Date().toISOString()});
+  return await sbPatchQ('training_instances','id=eq.'+encodeURIComponent(instanceId),{status:'completed',completed_at:new Date().toISOString(),...(executionSnapshot?{snapshot:executionSnapshot}:{})});
 }
 
 // getTrainingInstance(instanceId) → rij of null. Let op: dit is een directe sbGet
@@ -19077,12 +19077,15 @@ async function openProgramBlockDetail(blockId){
   document.getElementById('pbd-title').textContent=block.fase_naam||'Training';
   document.getElementById('pbd-sub').textContent=`Wk ${block.week_nr}`+(block.planned_date?' · '+block.planned_date:'')+(block.completed_at?' · afgerond':'');
   document.getElementById('pbd-start-btn').style.display=block.completed_at?'none':'block';
+  document.getElementById('pbd-add-btn').style.display=block.completed_at?'none':'';
+  window._tkProgramDetailCompleted=!!block.completed_at;
   await renderProgramBlockDetail();
   go('s-programma-detail');
 }
 async function renderProgramBlockDetail(){
   const el=document.getElementById('pbd-ex-list');
   if(!el||!curProgramBlockId)return;
+  if(window._tkProgramDetailCompleted){await renderCompletedProgramBlock(curProgramBlockId,el);return;}
   const rows=await v43SafeGet('program_block_exercises','&program_block_id=eq.'+curProgramBlockId+'&order=sort_order.asc');
   programBlockExCache[curProgramBlockId]=rows;
   if(!rows.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:20px 0">Nog geen oefeningen in deze training.</div>';return;}
@@ -19091,13 +19094,59 @@ async function renderProgramBlockDetail(){
     return `<div onclick='openEditBlockExercise(${JSON.stringify(r)})' style="cursor:pointer">${renderExerciseRow(ex,r)}</div>`;
   }).join('');
 }
+// TK584: historical plan and actuals have separate sources. Legacy gaps stay explicit.
+function programHistoryHtml(instance,records){
+  const snapshot=instance?.snapshot, execution=snapshot?.execution;
+  const name=id=>{const e=typeof resolvePickerEx==='function'?resolvePickerEx(id):null;return escHtml(e?.name||e?.naam||id||'Onbekend');};
+  const itemsHtml=items=>items.map(x=>'<li>'+name(x.exercise_id||x.id)+' · '+escHtml(x.sets??'—')+' × '+escHtml(x.reps??'—')+(x.rpe_target||x.rpe?' · RPE '+escHtml(x.rpe_target||x.rpe):'')+(x.suggestedWeight!=null?' · '+escHtml(x.suggestedWeight)+' kg':'')+'</li>').join('');
+  let h='<h3>Oorspronkelijk gepland</h3>';
+  h+=snapshot?.items?'<ol>'+itemsHtml(snapshot.items)+'</ol>':'<p>Historische programmasnapshot niet vastgelegd. De huidige planning is geen historisch bewijs.</p>';
+  h+='<h3>Tijdens training aangepast</h3>';
+  if(execution){
+    h+='<ol>'+itemsHtml(execution.items||[])+'</ol>';
+    const original=new Set((snapshot.items||[]).map(x=>x.exercise_id||x.id));
+    (execution.items||[]).forEach(x=>{
+      if(x._replaces)h+='<p>Vervangen: '+name(x._replaces)+' → '+name(x.id)+'</p>';
+      else if(!original.has(x.id))h+='<p>Toegevoegd: '+name(x.id)+'</p>';
+      const planned=(snapshot.items||[]).find(p=>(p.exercise_id||p.id)===x.id);
+      if(planned&&planned.sets!==x.sets)h+='<p>Sets gewijzigd: '+name(x.id)+' · '+escHtml(planned.sets)+' → '+escHtml(x.sets)+'</p>';
+    });
+    (execution.skipped||[]).forEach(id=>{h+='<p>Overgeslagen: '+name(id)+'</p>';});
+  }else h+='<p>Aanpassingen tijdens deze oudere uitvoering zijn niet vastgelegd.</p>';
+  h+='<h3>Werkelijk uitgevoerd</h3>';
+  if(!records.length)return h+'<p>Geen gekoppelde uitvoeringsrecords gevonden. Geplande sets tellen niet als uitgevoerd.</p>';
+  records.forEach(r=>{
+    h+='<article class="card" style="padding:12px;margin:8px 0"><b>'+name(r.exercise_id)+'</b><p>'+escHtml(r.date||'')+' · '+escHtml(instance?.status||'registratie')+'</p>';
+    if(Array.isArray(r.sets_detail)&&r.sets_detail.length){
+      let volume=0;
+      h+='<ol>'+r.sets_detail.map(d=>{const kg=d.effKg??d.kg;volume+=(Number(kg)||0)*(Number(d.reps)||0);return '<li>'+escHtml(kg??'—')+' kg × '+escHtml(d.reps??'—')+(d.rpe?' · RPE '+escHtml(d.rpe):'')+'</li>';}).join('')+'</ol><p>Extern volume: '+escHtml(volume)+' kg</p>';
+    }else h+='<p>'+escHtml(r.sets??'—')+' sets · '+escHtml(r.weight??'—')+' kg × '+escHtml(r.reps??'—')+' reps; afzonderlijke sets niet vastgelegd.</p>';
+    if(r.time_str||r.distance!=null||r.watt!=null)h+='<p>Cardio: '+escHtml(r.time_str||'')+' · '+escHtml(r.distance??'—')+' m · '+escHtml(r.watt??'—')+' W</p>';
+    h+='</article>';
+  });
+  return h;
+}
+async function renderCompletedProgramBlock(blockId,el){
+  // Server RLS remains authoritative; no owner or session inferred from exercise/date matches.
+  const records=await sbGetOrFail('sessions','&training_type=eq.'+encodeURIComponent('prog_'+blockId)+'&order=created_at.asc');
+  if(records.failed){el.textContent='Historie kon niet worden geladen. Probeer opnieuw.';return;}
+  const groups=new Map();
+  (records.rows||[]).forEach(r=>{const k=r.training_instance_id||'legacy';if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r);});
+  if(!groups.size){el.innerHTML=programHistoryHtml(null,[]);return;}
+  let h='';
+  for(const [id,rows] of groups){
+    const instance=id==='legacy'?null:await getTrainingInstance(id);
+    h+=programHistoryHtml(instance,rows);
+  }
+  if(String(curProgramBlockId)===String(blockId))el.innerHTML=h;
+}
 function pctOptionsHtml(selected){
   let h='<option value="">Geen</option>';
   PCT_1RM_OPTIONS.forEach(p=>{h+=`<option value="${p}"${String(selected)===String(p)?' selected':''}>${p}%</option>`;});
   return h;
 }
 function addBlockExercise(){
-  if(!curProgramBlockId)return;
+  if(!curProgramBlockId||window._tkProgramDetailCompleted)return;
   openExPicker(async(ex)=>{
     const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+curProgramBlockId);
     const inserted=await sbPostReturning('program_block_exercises',{program_block_id:curProgramBlockId,exercise_id:ex.id,sort_order:rows.length});
@@ -19200,7 +19249,7 @@ async function startT(t){
   }catch(_){ sessionRxAdj[t]={rpeDelta:0,setsDelta:0}; }
   let _resumeElapsedMs=0; // P0: verstreken tijd bij hervatten (0 = verse start)
   if(resumeDraft){
-    curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
+    curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];restoreExecutionDraft(draft);trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
     // RC0: de koppeling met training_instances terug uit de draft, zodat het afronden na
     // een herstart de instance alsnog op 'completed' zet i.p.v. hem als wees achter te laten.
     activeInstanceId=draft.instanceId||null;
@@ -19518,7 +19567,7 @@ async function renderTrainScreen(t){
     const div=document.createElement('div');
     div.className='ex-card';
 
-    let bodyHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:ex.sets,prefill:prefillData});
+    let bodyHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:Math.max(ex.sets||0,sessionLog[ex.id]?._workSetCount||0,sessionLog[ex.id]?.sets?.length||0)||ex.sets,prefill:prefillData});
 
     div.innerHTML=`
       <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
@@ -19570,6 +19619,7 @@ async function renderTrainScreen(t){
     </div>
     <div style="height:16px"></div>`;
   container.appendChild(addDiv);
+  restoreSessionLogToDom(t);
   updateProgress(t);
   // F0.7P — single-exercise focus-view over de bestaande kaarten. Alle kaarten blijven in de
   // DOM (zelfde set-inputs/ids → logSet/finishSession ongewijzigd en bewezen), maar er wordt
@@ -19694,13 +19744,44 @@ function applyExecutionFocus(t){
   if(nextNm){ np=document.createElement('div'); np.className='exfocus-next'; np.setAttribute('onclick','openExecNext(\''+t+'\')'); np.style.cursor='pointer'; np.innerHTML='<div class="k">Volgende oefening ›</div><div class="nm">'+escHtml(nextNm)+'</div>'; container.insertBefore(np,nav); }
   // F0.8G — duidelijke actiehiërarchie: primaire actie dominant (volle breedte), secundaire
   // acties (Vorige/Overslaan/Pauze) visueel ondergeschikt. Zelfde handlers/functionaliteit.
-  nav.innerHTML=(isLast?'<button class="primary" onclick="showSessionSummary(\''+t+'\')">Training afronden ✓</button>'
-           :'<button class="primary" onclick="execFocusGo(\''+t+'\',1)">Oefening afronden →</button>');
+  nav.innerHTML=(isLast?'<button class="primary" onclick="execCompleteExercise(\''+t+'\')">Training afronden ✓</button>'
+           :'<button class="primary" onclick="execCompleteExercise(\''+t+'\')">Oefening afronden →</button>');
   nav2.innerHTML='<button class="ghost" onclick="execFocusGo(\''+t+'\',-1)"'+(idx===0?' disabled':'')+'>← Vorige</button>'+
     '<button class="ghost" onclick="execFocusSkip(\''+t+'\')">Overslaan</button>'+
     '<button class="ghost" onclick="openExecPause(\''+t+'\')">⏸ Pauze</button>';
   // Nieuwe oefening opent logisch bovenaan (F0.7J scroll-reset-patroon).
   container.scrollTop=0; try{const scr=container.closest('.scr'); if(scr)scr.scrollTop=0;}catch(e){}
+}
+// TK584: explicit confirmation, never treat an untouched prescription as performed.
+let execCompleteBusy=false;
+async function execCompleteExercise(t){
+  if(execCompleteBusy||t!==curT)return;
+  execCompleteBusy=true;
+  try{
+    const owner=typeof tkEigenaarUid==='function'?tkEigenaarUid():null;
+    const list=getSessionExs(t), idx=execFocus[t]||0, ex=list[idx];
+    if(!ex)return;
+    if(!resolveCardioType(ex)){
+      const pending=[];
+      const setLimit=Math.max(Number(ex.sets)||0,sessionLog[ex.id]?._workSetCount||0,sessionLog[ex.id]?.sets?.length||0);
+      for(let i=1;i<=setLimit;i++){
+        const reps=document.getElementById('s-'+ex.id+'-'+i+'-reps');
+        if(!reps)continue;
+        if(Number(normNumStr(reps.value))>0 && !sessionLog[ex.id]?.sets?.[i-1]?.done)pending.push(i);
+      }
+      if(pending.length){
+        const accepted=await confirmModal(pending.length+' ingevulde werksets van '+(ex.naam||ex.id)+' als uitgevoerd registreren? Pas aantallen aan of verwijder niet-uitgevoerde sets voordat je bevestigt.',{title:'Uitgevoerde sets bevestigen',okLabel:'Sets registreren',cancelLabel:'Terug naar sets'});
+        if(!accepted||t!==curT||(typeof tkEigenaarUid==='function'&&owner!==tkEigenaarUid()))return;
+        pending.forEach(i=>{
+          logSet(ex.id,'work',i,true);
+          sessionLog[ex.id].sets[i-1].done=true;
+        });
+      }
+    }
+    persistTrainingDraft(true);
+    if(idx>=list.length-1)showSessionSummary(t);
+    else execFocusGo(t,1);
+  }finally{execCompleteBusy=false;}
 }
 function execFocusGo(t,dir){
   const cards=document.querySelectorAll('#train-'+t.toLowerCase()+'-list .ex-card');
@@ -19715,6 +19796,7 @@ function execFocusSkip(t){
   const list=(typeof getSessionExs==='function')?getSessionExs(t):[];
   const n=list.length; const idx=execFocus[t]||0;
   const id=list[idx]&&list[idx].id; if(id)execSkipSet(t).add(id);
+  persistTrainingDraft(true);
   // ga naar de volgende nog niet-overgeslagen oefening; is die er niet → overzicht.
   let ni=-1; for(let i=idx+1;i<n;i++){ if(!execSkipSet(t).has(list[i].id)){ ni=i; break; } }
   if(ni<0){ applyExecutionFocus(t); openExecOverview(t); return; }
@@ -23079,6 +23161,17 @@ function currentWorkoutElapsedMs(){
   if(trainPaused&&pausedAt)e-=(Date.now()-pausedAt);
   return Math.max(0,e);
 }
+// Session-only evidence; never reconstruct user history from current program definitions.
+let sessionProgramSnapshot=null;
+function restoreExecutionDraft(draft){
+  if(!draft||draft.t!==curT)return;
+  if(draft.resolvedWorkout&&draft.resolvedWorkout.t===curT)resolvedWorkout=draft.resolvedWorkout;
+  else if(curT.startsWith('prog_'))resolvedWorkout=null;
+  execFocus[curT]=Number(draft.execFocus)||0;
+  execSkipped[curT]=new Set(draft.skipped||[]);
+  sessionProgramSnapshot=draft.programSnapshot||null;
+}
+
 function persistTrainingDraft(silent){
   if(!curT)return;
   saveState='saving';updateSaveIndicator();
@@ -23088,7 +23181,7 @@ function persistTrainingDraft(silent){
     // verloren zodra Android de app afsloot: bij hervatten was activeInstanceId weer null,
     // completeTrainingInstance() werd nooit aangeroepen en de instance bleef eeuwig
     // 'active'. Precies de weesrijen die migratie v446 achteraf moest opruimen.
-    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0,instanceId:(typeof activeInstanceId!=='undefined'?activeInstanceId:null)||null}));
+    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,resolvedWorkout:(resolvedWorkout&&resolvedWorkout.t===curT?resolvedWorkout:null),skipped:[...execSkipSet(curT)],programSnapshot:(String(curT).startsWith('prog_')?sessionProgramSnapshot:null),ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0,instanceId:(typeof activeInstanceId!=='undefined'?activeInstanceId:null)||null}));
     lastSaveTs=Date.now();saveState='saved';
   }catch(e){saveState='dirty';}
   updateSaveIndicator();
@@ -23351,6 +23444,8 @@ function copyToSets(exId, fromSet, field, val){
 
 function logSet(exId,type,setNum,isWork){
   if(!sessionLog[exId])sessionLog[exId]={wu:[],sets:[]};
+  // A retry must upsert edited actuals using the same row ID, never skip them as already saved.
+  delete sessionLog[exId]._sessionRowPersistedAt;
   const pfx=type==='wu'?'w':'s';
   // P0 (14-08): sla NL-komma genormaliseerd op ("73,5"→"73.5") zodat elke downstream-parse klopt.
   const kg=normNumStr(document.getElementById(pfx+'-'+exId+'-'+setNum+'-kg')?.value);
@@ -23359,7 +23454,7 @@ function logSet(exId,type,setNum,isWork){
   // Effectief gewicht: houdt rekening met de gewicht-modus (vast/+kg/% vorige set).
   const effKg=isWork?getEffectiveKg(exId,setNum):(numNL(kg)||null);
   if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]={kg,reps};}
-  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe,effKg};}
+  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={...sessionLog[exId].sets[setNum-1],kg,reps,rpe,effKg};}
   // Check PR (per rep-bucket 1/3/5/10, plus absolute-PR fallback voor niet-rep oefeningen)
   if(isWork&&effKg){
     const exObj=exercises.find(e=>e.id===exId);
@@ -23403,6 +23498,9 @@ function toggleSetDone(exId,setNum){
   const c=document.getElementById('sc-'+exId+'-'+setNum);
   if(!c)return;
   const nowDone=!c.classList.contains('done');
+  // TK584: confirming a prefilled set must capture the visible actuals too.
+  // Merely rendering a prescription still records nothing.
+  if(nowDone)logSet(exId,'work',setNum,true);
   c.classList.toggle('done');
   // v3.3.53 — kaart weerspiegelt de done-status (presentatie; circle blijft de bron).
   document.getElementById('sr-'+exId+'-'+setNum)?.classList.toggle('done',nowDone);
@@ -23422,6 +23520,7 @@ function toggleSetDone(exId,setNum){
       lastSetDoneAt[exId]=Date.now();
     }
   }catch(_){}
+  persistTrainingDraft(true); // explicit confirmation survives an immediate app close
   if(nowDone){c.classList.add('just-done');setTimeout(()=>c.classList.remove('just-done'),220);}
   updateProgress(curT);
   updateSummary(curT);
@@ -23616,13 +23715,17 @@ function addWorkSet(exId,type){
   const body=document.getElementById('body-'+exId);
   if(!body)return;
   const existing=body.querySelectorAll('.set-row[id^="sr-'+exId+'"]').length;
-  const i=existing+1;
+  const highest=[...body.querySelectorAll('.set-row[id^="sr-'+exId+'-"]')].reduce((n,row)=>Math.max(n,parseInt(row.id.slice(('sr-'+exId+'-').length))||0),0);
+  const i=Math.max(existing,highest,sessionLog[exId]?._workSetCount||0)+1;
   if(type==='strength'||type==='carry'||type==='bodyweight'){
     const tmp=document.createElement('div');
     tmp.innerHTML=buildWorkSetRow(exId,i);
     const addBtn=body.querySelector('.add-row:last-of-type');
     if(addBtn)body.insertBefore(tmp.firstElementChild,addBtn);
     else body.appendChild(tmp.firstElementChild);
+    if(!sessionLog[exId])sessionLog[exId]={};
+    sessionLog[exId]._workSetCount=i;
+    persistTrainingDraft(true);
   }
 }
 
@@ -23646,6 +23749,7 @@ function toggleExCard(id){
 }
 
 function removeExSession(id){
+  if(execExerciseHasData(id)){toast('Uitgevoerde sets blijven bewaard; gebruik Overslaan voor het vervolg');return;}
   sessionExtra=sessionExtra.filter(e=>e.id!==id);
   delete sessionLog[id];
   delete pctSelection[id];delete rpeManual[id];delete warmupState[id];delete cardioSplitMode[id];delete cardioSplits[id];delete manualKgSets[id];
@@ -23725,11 +23829,12 @@ function execExerciseHasData(exId){
   const l=sessionLog[exId]; if(!l)return false;
   const setsData=(l.sets||[]).some(s=>s&&(s.kg||s.reps));
   const wuData=(l.wu||[]).some(s=>s&&(s.kg||s.reps));
-  return setsData||wuData;
+  return setsData||wuData||!!(l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals))||!!(typeof tkC2IsLoggableSummary==='function'&&tkC2IsLoggableSummary(l.c2));
 }
 async function execRemoveExercise(t,exId){
   const nm=(exercises.find(e=>e.id===exId)||{}).naam||'deze oefening';
   const heeftData=execExerciseHasData(exId);
+  if(heeftData){toast('Uitgevoerde sets blijven bewaard; gebruik Overslaan voor het vervolg');return;}
   const ok=await confirmModal(
     heeftData?('Voor '+nm+' zijn al sets geregistreerd in deze sessie. Verwijderen verwijdert ook die gegevens.'):('"'+nm+'" verwijderen uit deze training?'),
     {title:'Oefening verwijderen',okLabel:'Verwijderen',cancelLabel:'Annuleren',danger:heeftData}
@@ -23750,9 +23855,11 @@ function execReplaceExercise(t,exId){
   openExPicker(async function(newEx){
     if(!newEx||!newEx.id||newEx.id===exId)return;
     const replaced=resolvePickerEx(newEx.id); if(!replaced)return; // F41: canoniek catalog_id behouden
+    if(getSessionExs(t).some(e=>e.id===newEx.id)){toast('Deze oefening staat al in deze training');return;}
+    const _original=getSessionExs(t).find(e=>e.id===exId);
     const heeftData=execExerciseHasData(exId);
     if(heeftData){
-      const ok=await confirmModal('Voor '+nm+' zijn al sets geregistreerd in deze sessie. Bij vervangen gaan die gegevens verloren -- ze worden NIET automatisch overgezet naar de nieuwe oefening.',{title:'Oefening vervangen',okLabel:'Toch vervangen',cancelLabel:'Annuleren',danger:true});
+      const ok=await confirmModal('Voor '+nm+' zijn al sets geregistreerd in deze sessie. De uitgevoerde sets blijven onder deze oefening bewaard. De vervangende oefening begint zonder uitgevoerde sets.',{title:'Oefening vervangen',okLabel:'Toch vervangen',cancelLabel:'Annuleren',danger:true});
       if(!ok)return;
     }
     // GAP-P3-033: intent behouden, load/provenance canonical opnieuw voor de NIEUWE oefening (geen prevS-fallback van A).
@@ -23762,11 +23869,13 @@ function execReplaceExercise(t,exId){
         const old=resolvedWorkout.items[idx];
         const _rx=await canonicalNewExerciseItem(replaced.id, old);
         resolvedWorkout.items[idx]=Object.assign({},old,{id:replaced.id,naam:replaced.name},_rx);
+        resolvedWorkout.items[idx]._replaces=exId;
       }
     }
     const sxIdx=sessionExtra.findIndex(e=>e.id===exId&&e._t===t);
-    if(sxIdx>=0){ const _rx2=await canonicalNewExerciseItem(replaced.id, sessionExtra[sxIdx]); sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name},_rx2); } // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
-    delete sessionLog[exId]; // oude, reeds gelogde data hoort NIET automatisch bij de nieuwe oefening (expliciete productregel)
+    if(sxIdx>=0){ const _rx2=await canonicalNewExerciseItem(replaced.id, sessionExtra[sxIdx]); sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name},_rx2); sessionExtra[sxIdx]._replaces=exId; } // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
+    // TK584: keep original actuals under their original exercise ID.
+    if(heeftData&&_original)sessionExtra.push({..._original,_t:t,_retainedPerformed:true});
     renderTrainScreen(t);
     scheduleAutosave();
     toast('Vervangen door '+replaced.name);
@@ -24261,6 +24370,13 @@ async function finishSession(){
   if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
   try{
   const t=curT,list=getSessionExs(t),today=td();let saved=0,failed=0;
+  // A program finish must not discard its only plan snapshot when instance creation failed.
+  if(t.startsWith('prog_')&&!activeInstanceId){
+    if(!sessionProgramSnapshot){toast('Programmasnapshot ontbreekt; concept blijft bewaard.');return;}
+    activeInstanceId=await createTrainingInstance({snapshot:sessionProgramSnapshot});
+    if(!activeInstanceId){toast('Programma-instantie kon niet worden opgeslagen; concept blijft bewaard.');return;}
+    persistTrainingDraft(true);
+  }
   // ROADMAP POST-V1 #1 — duration_s per sessie vastleggen (RAW DATA). Hergebruikt
   // exact dezelfde formule als de al bestaande live-klok (startTrainTimer()): wall-
   // clock verstreken tijd minus geaccumuleerde pauzetijd. trainStart/pausedAccumMs
@@ -24334,8 +24450,10 @@ async function finishSession(){
       const _protoCols=_ergProj?{protocol_type:_ergProj.protocol_type,protocol_value:_ergProj.protocol_value}:{};
       // v4.70.4: alleen een AANTOONBAAR geslaagde write telt (sbPostQ geeft bij een PostgREST-400 false).
       // Retry schrijft een al gepersisteerde oefening niet opnieuw (geen dubbele rij).
+      if(!l._sessionRowId)l._sessionRowId=newClientRowId();
+      persistTrainingDraft(true);
       const _so=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,id:l._sessionRowId},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); persistTrainingDraft(true); }
       saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -24352,8 +24470,11 @@ async function finishSession(){
       row.weather=_weerData; // ROADMAP POST-V1 #3 — zie de berekening bovenaan finishSession()
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
+      if(!l._sessionRowId)l._sessionRowId=newClientRowId();
+      row.id=l._sessionRowId;
+      persistTrainingDraft(true);
       const _soS=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
+      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); persistTrainingDraft(true); } // v4.70.4
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
@@ -24382,6 +24503,12 @@ async function finishSession(){
     if(window.toast)toast(saved>0?(saved+' opgeslagen, '+failed+' mislukt — controleer je verbinding en probeer opnieuw'):('Opslaan mislukt ('+failed+') — probeer opnieuw'));
     return;
   }
+  if(saved===0){toast('Geen uitgevoerde sets om op te slaan');return;}
+  // Persist separate immutable plan and session-only modifications before clearing the draft.
+  if(activeInstanceId){
+    const snapshot=t.startsWith('prog_')&&sessionProgramSnapshot?{...sessionProgramSnapshot,execution:{version:'program_execution.v1',captured_at:new Date().toISOString(),items:JSON.parse(JSON.stringify(list)),skipped:[...execSkipSet(t)]}}:null;
+    if(await completeTrainingInstance(activeInstanceId,snapshot)!==true){toast('Sets bewaard; afronden nog niet bevestigd. Probeer opnieuw.');return;}
+  }
   closeModal('m-session-end');stopTrainTimer();
   tkErgDisconnectAll('session_finish'); // A5-hardening (v4.67.0) -- voorkomt een BLE-verbinding/subscriptie die op de achtergrond actief blijft ná het afronden van de training
   try{ if(typeof tkC2ExecutionCleanup==='function') tkC2ExecutionCleanup(list.map(function(e){ return e.id; }),'session_finish'); }catch(_cl){} // FASE 2A (H4): pas NA volledig geslaagde opslag (failed>0 is hierboven al teruggekeerd)
@@ -24396,10 +24523,7 @@ async function finishSession(){
      bestaande offline-veilige sbPatchQ: bij een verbroken verbinding wordt hij
      gequeued in plaats van verloren. Een mislukte afronding mag de sessie nooit
      ongedaan maken — de trainingen zijn op dit punt al weggeschreven. */
-  if(activeInstanceId){
-    try{ await completeTrainingInstance(activeInstanceId); }
-    catch(e){ try{ console.warn('completeTrainingInstance mislukt (sessie is wel opgeslagen)',e&&e.message); }catch(_){ } }
-  }
+  // Instance completion was confirmed above; a failed finish keeps the draft for retry.
   // SPRINT C2-C — execution linkage: het echte training_instance-ID vóór het
   // wissen vasthouden, zodat de canonical assignment-completion hieronder
   // (uitsluitend bij een ECHTE finish, na saved===0-guard) de juiste FK kan
@@ -31188,6 +31312,7 @@ async function startCustomTraining(id,resolvedItems){
     // Herstel de volledige sessie uit de draft (zoals startT): logboek + voorgeschreven oefeningen + tijd.
     sessionLog=_draft.sessionLog||{};
     sessionExtra=_draft.sessionExtra||[];
+    restoreExecutionDraft(_draft);
     activeInstanceId=_draft.instanceId||null; // RC0: zie startT — anders blijft de instance 'active'
     _resumeElapsedMs=Number(_draft.elapsedMs)||0;
     if(typeof execFocus!=='undefined')execFocus[curT]=Number(_draft.execFocus)||0;
@@ -31322,6 +31447,8 @@ async function confirmSwapExercise(newId){
   if(idx===-1){closeModal('m-swap-exercise');return;}
   const newEx=resolvePickerEx(newId); // F44/Phase2C: legacy of catalogus
   if(!newEx)return;
+  if(getSessionExs(t).some(e=>e.id===newId)){toast('Deze oefening staat al in deze training');return;}
+  const _original=sessionExtra[idx];
   // Exercise Swap Prescription Carry-Over Fix: suggestedWeight van A hoort niet mee te gaan naar
   // B (een biomechanisch andere oefening) -- expliciet invalideren (null), zodat de bestaande
   // canonical prefill-keten (prevS/computeProgPrefill, hierboven in renderTrainScreen, al keyed
@@ -31330,9 +31457,12 @@ async function confirmSwapExercise(newId){
   // GAP-P3-033: intent (sets/reps/RPE) blijft; load + provenance canonical opnieuw voor de NIEUWE oefening.
   const _rx=await canonicalNewExerciseItem(newId, sessionExtra[idx]);
   sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type,..._rx};
-  delete sessionLog[fromId];delete pctSelection[fromId];delete rpeManual[fromId];delete warmupState[fromId];
+  sessionExtra[idx]._replaces=fromId;
+  if(execExerciseHasData(fromId))sessionExtra.push({..._original,_t:t,_retainedPerformed:true});
+  delete pctSelection[fromId];delete rpeManual[fromId];delete warmupState[fromId];
   closeModal('m-swap-exercise');
   await renderTrainScreen(t);
+  persistTrainingDraft(true);
   toast('Oefening gewisseld voor deze training');
 }
 let progCheckinCtx=null;
@@ -31591,8 +31721,7 @@ async function launchProgramTrainScreen(adjustment){
     activeInstanceId=_draft.instanceId||null;
   }else{
     try{
-      activeInstanceId=await createTrainingInstance({
-        snapshot:{
+      sessionProgramSnapshot={
           source:'program_block',
           definition_id:blockId,
           program_id:prog?.id||null,
@@ -31601,14 +31730,15 @@ async function launchProgramTrainScreen(adjustment){
           items:(rows||[]).map(r=>({exercise_id:r.exercise_id,sets:r.sets,reps:r.reps,rpe_target:r.rpe_target,sort_order:r.sort_order})),
           decision_rules:(typeof DecisionCore!=='undefined'&&DecisionCore.Evidence)?DecisionCore.Evidence.decisionRulesSnapshot((typeof DETRAINING_RULES!=='undefined')?DETRAINING_RULES:null):null,
           modifications:adjustment?[{type:'recovery_adjustment',setsDelta:adjustment.setsDelta||0,rpeDelta:adjustment.rpeDelta||0}]:[]
-        }
-      });
+      };
+      activeInstanceId=await createTrainingInstance({snapshot:sessionProgramSnapshot});
     }catch(e){ activeInstanceId=null; /* instance-tracking mag nooit de trainingstart zelf blokkeren */ }
   }
+  if(_resume)sessionProgramSnapshot=_draft.programSnapshot||null;
   curT=ctxT;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   if(_resume){
-    sessionLog=_draft.sessionLog||{};sessionExtra=_draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
+    sessionLog=_draft.sessionLog||{};sessionExtra=_draft.sessionExtra||[];restoreExecutionDraft(_draft);trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
   }else{
     sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
     for(const r of rows){
@@ -32240,6 +32370,19 @@ function updateViewToggleLabel(btnId, view){
 }
 // Sets per spier over de laatste 7 dagen — één bron voor het figuur, de lijst en het
 // overzicht. Leest uitsluitend bestaande sessies; geen nieuwe berekening.
+// Input provenance only. Existing calculation and decision formulae are unchanged.
+function tkRememberMuscleInputs(calculationId,records,windowDays){
+  const evidence={calculationId,calculatedAt:new Date().toISOString(),windowDays,
+    rules:calculationId==='muscle_load'?'existing sets per mapped muscle':'recovery.v1; existing time-since-last-session + RPE',
+    sourceRecords:(records||[]).map(r=>({sessionId:r.id||null,exerciseId:r.exercise_id,date:r.date,sets:r.sets??null,rpe:r.rpe??null,muscles:getExerciseMuscles(r.exercise_id)}))};
+  const owner=typeof tkEigenaarUid==='function'?tkEigenaarUid():null;
+  if(owner){window._tkMuscleInputs=window._tkMuscleInputs||{};window._tkMuscleInputs[calculationId]={owner,evidence};}
+  return evidence;
+}
+function tkMuscleInputEvidence(calculationId){
+  const item=window._tkMuscleInputs?.[calculationId];
+  return item&&typeof tkEigenaarUid==='function'&&item.owner===tkEigenaarUid()?item.evidence:null;
+}
 async function muscleLoadBySvgId(){
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate()-7);
@@ -32252,7 +32395,7 @@ async function muscleLoadBySvgId(){
     names.forEach(m=>{ setsByMuscle[m] = (setsByMuscle[m]||0) + setCount; });
     muscleNamesToSvgIds(names).forEach(id=>{ setsBySvgId[id] = (setsBySvgId[id]||0) + setCount; });
   });
-  return { setsBySvgId, setsByMuscle };
+  return { setsBySvgId, setsByMuscle,provenance:tkRememberMuscleInputs('muscle_load',ss,7) };
 }
 async function refreshMuscleHeatmap(){
   const { setsBySvgId } = await muscleLoadBySvgId();
@@ -32285,6 +32428,7 @@ async function getRelevantMuscleRecovery(muscleNames){
   const twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr=twoWeeksAgo.toISOString().split('T')[0];
   const ss=await sbGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  tkRememberMuscleInputs('program_recovery',ss,14);
   const lastHit={};
   ss.forEach(s=>{
     getExerciseMuscles(s.exercise_id).forEach(m=>{if(!lastHit[m])lastHit[m]={date:s.date,rpe:s.rpe};});
@@ -32311,6 +32455,7 @@ async function refreshMuscleRecovery(){
   // structureel uit van spierherstel, ook als ze getagd zijn. Herstel kijkt naar tijd
   // sinds laatste sessie + RPE, niet naar setvolume — dus alle sessietypen tellen mee.
   const ss = await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  tkRememberMuscleInputs('recovery_list',ss,14);
   const lastHit = {};
   ss.forEach(s=>{
     const muscles = getExerciseMuscles(s.exercise_id);
@@ -32423,6 +32568,7 @@ async function refreshMuscleRecoveryHeatmap(){
   twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr = twoWeeksAgo.toISOString().split('T')[0];
   const ss = await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  tkRememberMuscleInputs('recovery_heatmap',ss,14);
   const lastHitBySvgId = {};
   ss.forEach(s=>{
     const names = getExerciseMuscles(s.exercise_id);

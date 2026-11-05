@@ -17638,12 +17638,38 @@ let exPickerRecentIds=[];
 // een catalogus-entry ('TK-000019 Barbell Bench Press') hebben verschillende id's → beide
 // blijven staan (F41-regel: bij twijfel beide behouden, nooit gokken). Dat beschermt ook de
 // historie: bestaande sessies staan onder hun eigen id en blijven herkenbaar.
+/* TK504: only localized PRESENTATION of the existing catalog; original
+   English source, TK identity, historic workout ID and media stay untouched. */
+function tkCatalogDisplayName(c){
+  if(!c||!c.identity)return '';
+  const nl=c.identity.nl;
+  return (typeof nl==='string'&&nl.trim())?nl.trim():(c.identity.name||c.catalog_id||'');
+}
+function tkPickerDisplayName(e){
+  if(!e)return '';
+  // Personal/legacy scope wins, even when an ID resembles a catalog ID.
+  if(e._catalog===true&&e.catalog_id===e.id&&typeof ExerciseCatalogService!=='undefined'){
+    const c=ExerciseCatalogService.byId(e.catalog_id);
+    if(c&&c.source&&c.source.provider==='movekit'&&c.catalog_id===e.id)
+      return tkCatalogDisplayName(c);
+  }
+  return e.name||'';
+}
+function tkPickerSearchText(e){
+  let result=tkPickerDisplayName(e)+' '+(e.name||'');
+  if(e&&e._catalog===true&&e.catalog_id===e.id&&typeof ExerciseCatalogService!=='undefined'){
+    const c=ExerciseCatalogService.byId(e.catalog_id);
+    if(c&&c.source&&c.source.provider==='movekit')
+      result+=' '+(c.identity.name||'')+' '+(c.source.provider_id||'');
+  }
+  return result.toLocaleLowerCase('nl');
+}
 function catalogToPickerEx(c){
   if(!c||!c.identity)return null;
   const Id=c.identity;
   return {
     id:c.catalog_id,
-    name:Id.name||c.catalog_id,
+    name:(typeof Id.nl==='string'&&Id.nl.trim())?Id.nl.trim():(Id.name||c.catalog_id),
     type:'strength',                 // canonical-conventie (zie buildResolvedExecutionItems)
     category:Id.category||'Overig',
     muscle_primary:Array.isArray(Id.primary)?Id.primary.slice():[],
@@ -17838,11 +17864,11 @@ function renderExPickerList(){
   }
   if(exPickerQuickFilter==='favoriet')list=list.filter(e=>isExerciseFavorite(e.id));
   if(exPickerQuickFilter==='recent')list=list.filter(e=>exPickerRecentIds.includes(e.id));
-  if(q)list=list.filter(e=>(e.name||'').toLowerCase().includes(q));
+  if(q)list=list.filter(e=>tkPickerSearchText(e).includes(q));
   if(exPickerQuickFilter==='recent'){
     list.sort((a,b)=>exPickerRecentIds.indexOf(a.id)-exPickerRecentIds.indexOf(b.id));
   }else{
-    list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    list.sort((a,b)=>tkPickerDisplayName(a).localeCompare(tkPickerDisplayName(b),'nl'));
   }
   const el=document.getElementById('ex-pick-list');
   const cnt=document.getElementById('ex-pick-count'); // F42: live teller (bv. "206 oefeningen")
@@ -17871,7 +17897,7 @@ function renderExPickerList(){
       ${gym}
       <span class="pk-fav${fav?' on':''}" onclick="event.stopPropagation();toggleFavorite('${e.id}').then(renderExPickerList)" role="button" aria-label="Favoriet">${fav?'★':'☆'}</span>
       ${box}
-      <div class="pk-nm">${escHtml(e.name)}</div>
+      <div class="pk-nm">${escHtml(tkPickerDisplayName(e))}</div>
       <div class="pk-mu">${escHtml(mu)}</div>
     </button>`;
   }).join('')+'</div>';
@@ -17916,7 +17942,7 @@ function selectExPickerItem(id){
   }
   clearLosSessionState(); // v306.2 #12: nieuwe oefening start altijd volledig leeg
   losSelectedExId=id;
-  document.getElementById('los-ex-trigger-lbl').textContent=ex.name;
+  document.getElementById('los-ex-trigger-lbl').textContent=tkPickerDisplayName(ex);
   document.getElementById('los-ex-trigger-lbl').className='';
   document.getElementById('los-new-fields').style.display='none';
   closeModal('m-ex-picker');
@@ -20333,6 +20359,13 @@ const EX_CATALOG = {"_schema":"trainingskompas-exercise-catalog v1","_architectu
    met één centrale alias-index in de ECS (NL↔EN, synoniemen, spiergroepen, equipment, doelen, typfouten,
    cross-field, ranking). Geen tweede zoeklaag, geen dubbele index. */
 var ExerciseCatalogService=(function(){
+  // Internal copy of the established display rule: the ECS must also run
+  // standalone in Android/Node contract tests without other app globals.
+  function _displayName(c){
+    var id=c&&c.identity;if(!id)return '';
+    var nl=id.nl;
+    return (typeof nl==='string'&&nl.trim())?nl.trim():(id.name||c.catalog_id||'');
+  }
   var C=(typeof EX_CATALOG!=='undefined'&&EX_CATALOG.catalog)?EX_CATALOG.catalog:[];
   var byIdIx={};C.forEach(function(c){byIdIx[c.catalog_id]=c;});
   var _recent=[];
@@ -20425,7 +20458,7 @@ var ExerciseCatalogService=(function(){
       var I=c.intelligence||{}; _ix(id,I.fatigue,FW.intel); _ix(id,I.recovery,FW.intel); _ix(id,I.fatigue_cost,FW.intel);
       if(c.source&&c.source.provider_id)_ix(id,c.source.provider_id,FW.source);
       _ix(id,Id.type,FW.meta); _ix(id,Id.category,FW.meta); _ix(id,Id.difficulty,FW.meta);
-      c._nm=_norm(Id.name);
+      c._nm=_norm(_displayName(c));c._nmEn=_norm(Id.name);
     });
     _tlist=Object.keys(_post);_vlist=Object.keys(_vocab);_buildMs=_now()-t0;_cacheClear();
     return _buildMs;
@@ -20480,7 +20513,7 @@ var ExerciseCatalogService=(function(){
     for(var id in base){var ok=true,sc=0,rs=[];
       for(var t=0;t<perTok.length;t++){var hit=perTok[t][id];if(!hit){ok=false;break;}sc+=hit.w;rs.push({field:_lbl(hit.w),term:hit.term,w:hit.w});}
       if(!ok)continue;
-      var c=byIdIx[id];if(c){if(c._nm===qn)sc+=200;else if(c._nm.indexOf(qn)===0)sc+=80;else if(qn&&c._nm.indexOf(qn)>=0)sc+=30;}
+      var c=byIdIx[id];if(c){if(c._nm===qn||c._nmEn===qn)sc+=200;else if(c._nm.indexOf(qn)===0||c._nmEn.indexOf(qn)===0)sc+=80;else if(qn&&(c._nm.indexOf(qn)>=0||c._nmEn.indexOf(qn)>=0))sc+=30;}
       ids[id]=sc;reasons[id]=rs;}
     return {ids:ids,reasons:reasons};}
 
@@ -20505,16 +20538,16 @@ var ExerciseCatalogService=(function(){
     if(q){var mm=_match(q).ids;r=[];for(var id in mm){var c=byIdIx[id];if(!c||!_pass(c,f))continue;c._score=mm[id];r.push(c);}}
     else{r=[];for(var i=0;i<C.length;i++){if(_pass(C[i],f)){C[i]._score=0;r.push(C[i]);}}}
     sort=sort||(q?'relevance':'name');
-    if(sort==='relevance'&&q)r.sort(function(a,b){return (b._score-a._score)||(a.identity.name<b.identity.name?-1:1);});
+    if(sort==='relevance'&&q)r.sort(function(a,b){return (b._score-a._score)||_displayName(a).localeCompare(_displayName(b),'nl');});
     else if(sort==='difficulty'){var o={beginner:0,intermediate:1,advanced:2,expert:3};r.sort(function(a,b){return o[a.identity.difficulty]-o[b.identity.difficulty];});}
     else if(sort==='confidence')r.sort(function(a,b){
       /* KNOWN aflopend; UNKNOWN altijd na KNOWN; stabiele secundaire ordening op naam. Nooit NaN. */
       var av=ExerciseIntelligence.confidenceOf(a),bv=ExerciseIntelligence.confidenceOf(b);
-      if(av===null&&bv===null)return a.identity.name<b.identity.name?-1:(a.identity.name>b.identity.name?1:0);
+      if(av===null&&bv===null)return (a.identity.nl||a.identity.name).localeCompare(b.identity.nl||b.identity.name,'nl');
       if(av===null)return 1; if(bv===null)return -1;
       if(bv!==av)return bv-av;
-      return a.identity.name<b.identity.name?-1:(a.identity.name>b.identity.name?1:0);});
-    else r.sort(function(a,b){return a.identity.name<b.identity.name?-1:1;});
+      return (a.identity.nl||a.identity.name).localeCompare(b.identity.nl||b.identity.name,'nl');});
+    else r.sort(function(a,b){return (a.identity.nl||a.identity.name).localeCompare(b.identity.nl||b.identity.name,'nl');});
     return r;}
   function _trackAlias(q){var ts=_tok(q);for(var i=0;i<ts.length;i++){var t=ts[i],cid=_alias[t]||(_post[t]?null:_alias[_correct(t)]);if(cid)_stats.aliasUse[cid]=(_stats.aliasUse[cid]||0)+1;}}
 
@@ -20813,14 +20846,14 @@ function _card(c,ix){var Id=c.identity,rib=_ribbon(c),m=ExerciseIntelligence.met
   // v4.11.0 — premium kaart: poster + tag (type · spier) + compacte meta (rating · herstel).
   // Score-balken vervallen op de kaart (leven op de detailpagina) — rustiger, scanbaarder.
   var tag=_libCap(Id.type)+((Id.primary&&Id.primary[0])?' · '+Id.primary[0]:'');
-  return '<button class="lib-card lib5-card" data-id="'+c.catalog_id+'" aria-label="'+escHtml(Id.name)+'" style="animation-delay:'+Math.min((ix||0)*40,240)+'ms">'+
+  return '<button class="lib-card lib5-card" data-id="'+c.catalog_id+'" aria-label="'+escHtml(tkCatalogDisplayName(c))+'" style="animation-delay:'+Math.min((ix||0)*40,240)+'ms">'+
     (rib?'<span class="lib-rib '+rib.cls+'">'+rib.l+'</span>':'')+
-    _imgBox(c.catalog_id,Id.name,'')+
-    '<span class="lib-card-b"><span class="lib-card-name">'+escHtml(Id.name)+'</span>'+
+    _imgBox(c.catalog_id,tkCatalogDisplayName(c),'')+
+    '<span class="lib-card-b"><span class="lib-card-name">'+escHtml(tkCatalogDisplayName(c))+'</span>'+
     '<span class="lib5-tag">'+escHtml(tag)+'</span>'+
     '<span class="lib-card-meta"><span class="lib5-rt">★ '+m.rating.toFixed(1)+'</span> · '+escHtml(m.recovery)+'</span>'+
     '</span></button>';}
-function _item(c){var Id=c.identity,r=ExerciseIntelligence.rating(c);return '<button class="lib-item" data-id="'+c.catalog_id+'" aria-label="'+escHtml(Id.name)+'">'+_imgBox(c.catalog_id,Id.name,'sm')+'<span class="lib-it-main"><span class="lib-it-name">'+escHtml(Id.name)+'</span><span class="lib-it-sub">'+escHtml(Id.primary.join(', ')||_libCap(Id.family))+' · '+escHtml(_diffNL(Id.difficulty))+'</span></span><span class="lib-it-r">★ '+r.toFixed(1)+'</span>'+(ExerciseCatalogService.isFavorite(c.catalog_id)?'<span class="lib-it-fav" aria-label="Favoriet">★</span>':'')+'</button>';}
+function _item(c){var Id=c.identity,r=ExerciseIntelligence.rating(c);return '<button class="lib-item" data-id="'+c.catalog_id+'" aria-label="'+escHtml(tkCatalogDisplayName(c))+'">'+_imgBox(c.catalog_id,tkCatalogDisplayName(c),'sm')+'<span class="lib-it-main"><span class="lib-it-name">'+escHtml(tkCatalogDisplayName(c))+'</span><span class="lib-it-sub">'+escHtml(Id.primary.join(', ')||_libCap(Id.family))+' · '+escHtml(_diffNL(Id.difficulty))+'</span></span><span class="lib-it-r">★ '+r.toFixed(1)+'</span>'+(ExerciseCatalogService.isFavorite(c.catalog_id)?'<span class="lib-it-fav" aria-label="Favoriet">★</span>':'')+'</button>';}
 function _row(list){return '<div class="lib-row" role="list">'+list.map(function(c,ix){return '<div role="listitem">'+_card(c,ix)+'</div>';}).join('')+'</div>';}
 
 /* ── Recommendation engine (Sprint 9, behouden) ── */
@@ -21108,7 +21141,7 @@ function _libPlayVideo(el){var src=el.getAttribute('data-vsrc'),id=el.getAttribu
 function _libDisposeVideo(){try{var vs=document.querySelectorAll('#s-library video');for(var i=0;i<vs.length;i++){try{vs[i].pause();vs[i].removeAttribute('src');vs[i].load();}catch(e){}}}catch(e){}}
 
 function _statList(c){var m=ExerciseIntelligence.meta(c),Id=c.identity;
-  var rows=[['Populariteit','★ '+m.rating.toFixed(1)],['Moeilijkheid',_diffNL(Id.difficulty)],['Type',_libCap(Id.type)],['Trainingsdoel',(Id.goals||[]).map(_goalNL).join(', ')||'—'],['Primair',Id.primary.join(', ')||'—'],['Secundair',Id.secondary.join(', ')||'—'],['Equipment',Id.equipment.map(_libCap).join(', ')||'—'],['Gem. sets',m.sets],['Gem. reps',m.reps],['Tempo',m.tempo],['Sets/week',m.setsWeek],['Hersteltijd',m.recovery],['Gem. duur',m.duration]];
+  var rows=[['Populariteit','★ '+m.rating.toFixed(1)],['Moeilijkheid',_diffNL(Id.difficulty)],['Type',_libCap(Id.type)],['Trainingsdoel',(Id.goals||[]).map(_goalNL).join(', ')||'—'],['Primair',Id.primary.join(', ')||'—'],['Secundair',Id.secondary.join(', ')||'—'],['Materiaal',Id.equipment.map(_libCap).join(', ')||'—'],['Gem. sets',m.sets],['Gem. reps',m.reps],['Tempo',m.tempo],['Sets/week',m.setsWeek],['Hersteltijd',m.recovery],['Gem. duur',m.duration]];
   return '<div class="lib-kv-grid">'+rows.map(function(r){return '<div class="lib-kv"><span>'+escHtml(r[0])+'</span><b>'+escHtml(r[1])+'</b></div>';}).join('')+'</div><div class="lib-musc-note">Richtlijnen zijn indicatief, afgeleid uit doel/type/herstel.</div>';}
 
 /* ── Detailpagina v3.5 (AI Summary onder hero + accordions voor overzicht) ── */
@@ -21117,8 +21150,8 @@ function _libDetailHtml(id){var E=ExerciseCatalogService;var c=E.byId(id);if(!c)
   var out='<div class="scroll" id="lib-scroll">';
   // Hero (parallax, gradient, glass badges, fade-in)
   out+='<div class="lib-detail-top"><button class="lib-back" id="lib-back" aria-label="Terug">←</button><button class="lib-favbtn'+(fav?' on':'')+'" id="lib-fav" aria-pressed="'+(fav?'true':'false')+'" aria-label="Favoriet toevoegen">'+(fav?'★':'☆')+'</button></div>';
-  out+='<div class="lib-hero" data-muscle-visual="reserved">'+_imgBox(id,Id.name,'hero','<span class="lib-hero-grad"></span>')+'</div>';
-  out+='<h2 class="lib-d-name">'+escHtml(Id.name)+'</h2>';
+  out+='<div class="lib-hero" data-muscle-visual="reserved">'+_imgBox(id,tkCatalogDisplayName(c),'hero','<span class="lib-hero-grad"></span>')+'</div>';
+  out+='<h2 class="lib-d-name">'+escHtml(tkCatalogDisplayName(c))+'</h2>';
   out+='<p class="lib-motiv">“'+escHtml(_motivation(c))+'”</p>';
   out+=_badgeRow(_heroBadges(c),'detailbadges');
   // AI Samenvatting (de enige samenvattingskaart — voorkomt dubbele info)
@@ -21133,7 +21166,7 @@ function _libDetailHtml(id){var E=ExerciseCatalogService;var c=E.byId(id);if(!c)
   // 2 Coach
   out+=_acc('coach','Coach','<div class="lib-coach">'+coach.map(function(a){return '<div class="lib-cc lib-cc--'+a.k+'"><div class="lib-cc-h"><span class="lib-cc-i">'+a.i+'</span><b>'+escHtml(a.t)+'</b></div><p>'+escHtml(a.x)+'</p></div>';}).join('')+'</div>',false,'<span class="lib-acc-chips">'+[_goalNL(mm.primaryGoal),'RPE '+rpe,mm.recovery].map(function(x){return '<span class="lib-cs-chip">'+escHtml(x)+'</span>';}).join('')+'</span>');
   // 3 Exercise Intelligence Dashboard (+ spieren & equipment + statistieken)
-  var muscHtml='<div class="lib-sub-h">Spieren &amp; equipment</div><div class="lib-musc"><div><span class="lib-musc-lbl">Primair</span>'+(Id.primary.map(function(x){return '<span class="lib-mchip on">'+escHtml(x)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Secundair</span>'+(Id.secondary.map(function(x){return '<span class="lib-mchip">'+escHtml(x)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Equipment</span>'+(Id.equipment.map(function(e){return '<span class="lib-mchip">'+escHtml(_libCap(e))+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div></div>';
+  var muscHtml='<div class="lib-sub-h">Spieren &amp; equipment</div><div class="lib-musc"><div><span class="lib-musc-lbl">Primair</span>'+(Id.primary.map(function(x){return '<span class="lib-mchip on">'+escHtml(x)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Secundair</span>'+(Id.secondary.map(function(x){return '<span class="lib-mchip">'+escHtml(x)+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div><div><span class="lib-musc-lbl">Materiaal</span>'+(Id.equipment.map(function(e){return '<span class="lib-mchip">'+escHtml(_libCap(e))+'</span>';}).join('')||'<span class="lib-muted">—</span>')+'</div></div>';
   out+=_acc('intel','Exercise Intelligence',_intelDashboard(c)+muscHtml+'<div class="lib-sub-h">Statistieken &amp; richtlijnen</div>'+_statList(c),false);
   // F0.7C follow-up — Library → Training: geeft toegang tot de bestaande Builder/composition-
   // keten (zie libOpenAddToTraining). Zelfde visuele taal als de bestaande vergelijk-knop.
@@ -21142,7 +21175,7 @@ function _libDetailHtml(id){var E=ExerciseCatalogService;var c=E.byId(id);if(!c)
   out+='<button class="lib-cmp-btn lib5d-cmp" id="lib-cmp" aria-label="Vergelijk met andere oefening"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v18M5 7h14M7 7l-3 6a3 3 0 006 0zM17 7l-3 6a3 3 0 006 0z"/></svg> Vergelijk met andere oefening</button>';
   // 5 Gerelateerde oefeningen (contextueel)
   var inter=_interessant(c);
-  if(inter.length)out+=_acc('reco','Gerelateerde oefeningen','<p class="lib-reco-lead">Omdat je “'+escHtml(Id.name)+'” bekijkt:</p>'+inter.map(function(g){return '<div class="lib-altg"><div class="lib-altg-h">'+escHtml(g.t)+'</div>'+_row(g.g)+'</div>';}).join(''),false);
+  if(inter.length)out+=_acc('reco','Gerelateerde oefeningen','<p class="lib-reco-lead">Omdat je “'+escHtml(tkCatalogDisplayName(c))+'” bekijkt:</p>'+inter.map(function(g){return '<div class="lib-altg"><div class="lib-altg-h">'+escHtml(g.t)+'</div>'+_row(g.g)+'</div>';}).join(''),false);
   // 6 Video
   out+=_acc('video','Video',_videoBlock(id),false);
   // 7 Bronnen
@@ -21156,7 +21189,7 @@ function _cmpMetricRow(la,a,lb,b,label){var hi=a===b?'':(a>b?'a':'b');
 function _cmpHtml(aId,bId){var E=ExerciseCatalogService,X=ExerciseIntelligence;var A=E.byId(aId),B=E.byId(bId);
   if(!A||!B)return '<div class="scroll">Selecteer twee oefeningen.</div>';
   var sa=X.scores(A),sb=X.scores(B),ma=X.meta(A),mb=X.meta(B);
-  function head(c,m){return '<div class="lib-cmp-hd">'+_imgBox(c.catalog_id,c.identity.name,'sm')+'<div class="lib-cmp-nm">'+escHtml(c.identity.name)+'</div><div class="lib-cmp-r">★ '+m.rating.toFixed(1)+'</div><div class="lib-cmp-sub">'+escHtml(_diffNL(c.identity.difficulty))+' · '+escHtml(c.identity.equipment.map(_libCap).join('/'))+'</div></div>';}
+  function head(c,m){return '<div class="lib-cmp-hd">'+_imgBox(c.catalog_id,tkCatalogDisplayName(c),'sm')+'<div class="lib-cmp-nm">'+escHtml(tkCatalogDisplayName(c))+'</div><div class="lib-cmp-r">★ '+m.rating.toFixed(1)+'</div><div class="lib-cmp-sub">'+escHtml(_diffNL(c.identity.difficulty))+' · '+escHtml(c.identity.equipment.map(_libCap).join('/'))+'</div></div>';}
   var rows=[['kracht','Kracht'],['hypertrofie','Hypertrofie'],['techniek','Techniek'],['explosiviteit','Explosiviteit'],['mobiliteit','Mobiliteit'],['stabiliteit','Stabiliteit'],['cns','CNS'],['herstelduur','Herstel'],['complexiteit','Complexiteit']];
   var diffMap={beginner:25,intermediate:55,advanced:80,expert:100};
   var out='<div class="scroll" id="lib-scroll"><div class="lib-detail-top"><button class="lib-back" id="lib-cmp-back" aria-label="Terug">←</button><span class="lib-cmp-title">Vergelijken</span><span style="width:44px"></span></div>';

@@ -62,7 +62,7 @@ class BatchTests(unittest.TestCase):
                   "shortDescription_nl":"Synthetische omschrijving",
                   "instructions_nl":"1. Teststap; 2. Tweede teststap",
                   "commonMistakes_nl":"Niet uitvoeren zonder test"}})
-            if 227<=n<=276:
+            if 227<=n<=276 or 577<=n<=582:
                 (video_dir/(slug+".mp4")).write_bytes(vb)
                 (poster_dir/(slug+".webp")).write_bytes(pb)
         catalog.write_text(json.dumps({"count":226,"catalog":old}))
@@ -104,6 +104,18 @@ class BatchTests(unittest.TestCase):
         rows=batch.batch_records(self.args)
         self.assertEqual(len(rows),25)
         self.assertEqual(sum(r["approved"] for r in rows),0)
+
+    def test_final_six_are_supported_only_at_end(self):
+        self.args.start=577
+        self.args.count=6
+        rows=batch.batch_records(self.args)
+        self.assertEqual(len(rows),6)
+        self.assertEqual(rows[-1]['catalog_id'],'TK-000582')
+        self.assertEqual(sum(x['approved'] for x in rows),0)
+
+    def test_reject_unaligned_batch_start(self):
+        self.args.start=228
+        with self.assertRaises(RuntimeError):batch.batch_records(self.args)
 
     def test_reject_batch_larger_than_25(self):
         self.args.count=26

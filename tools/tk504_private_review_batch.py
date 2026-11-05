@@ -35,9 +35,9 @@ def js(value):
 
 
 def batch_records(args):
-    require(227 <= args.start <= 582 and args.count == LIMIT
-            and args.start + args.count - 1 <= 582,
-            "Batch must be exactly 25 unpublished V2 candidates")
+    require(args.start in range(227,583,LIMIT) and
+            args.count == min(LIMIT,583-args.start),
+            "Only deterministic 25-item V2 review batches (last six allowed)")
     require(args.videos_dir.is_dir() and args.posters_dir.is_dir(),
             "Private media source folders missing")
     stage = json.loads(args.stage.read_text(encoding="utf-8-sig"))
@@ -136,7 +136,7 @@ def batch_records(args):
             "video_bytes":v["video"]["bytes"],"poster_bytes":p["bytes"],
             "approved":catalog_id==REVIEWED
         })
-    require(len(output) == LIMIT, "Unexpected batch size")
+    require(len(output) == args.count, "Unexpected batch size")
     return output
 
 
@@ -170,6 +170,9 @@ CSS = r"""
 #tk504-batch-review .card h3{margin:0 0 9px;font-size:16px}
 #tk504-batch-review .card ol,#tk504-batch-review .card ul{padding-left:21px;margin:6px 0}
 #tk504-batch-review .card li{margin:6px 0}#tk504-batch-review p{margin:8px 0;color:#d4e0ef}
+#tk504-batch-review .batchnav{display:flex;gap:6px;overflow-x:auto;padding:0 0 15px;scrollbar-width:thin}
+#tk504-batch-review .batchlink{display:inline-block;flex:none;border-radius:8px;padding:6px 10px;border:1px solid #3c5875;background:#182a41;color:#d5e6fa;text-decoration:none;font-size:12px}
+#tk504-batch-review .batchlink.active{background:#3a6293;border-color:#9ec5f5;color:#fff;font-weight:bold}
 #tk504-batch-review .note{border-left:3px solid #efbd69;background:#2c2b2a;padding:10px 12px;border-radius:7px;margin-top:16px}
 #tk504-batch-review .verify{display:block;font:11px/1.4 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;color:#a0c4e0;margin-top:14px}
 @media(max-width:850px){#tk504-batch-review .layout{grid-template-columns:1fr}#tk504-batch-review .items{max-height:300px}#tk504-batch-review .detail .two{grid-template-columns:1fr}#tk504-batch-review .shell{padding:12px}#tk504-batch-review .detail{padding:14px}}
@@ -197,22 +200,31 @@ const verified=DATA.every(x=>{
    Array.isArray(search)&&search.some(y=>y.catalog_id===x.id);
 });
 let selected=DATA[0];
-const state={verified,selected:selected.id,filtered:25};
+const state={verified,selected:selected.id,filtered:DATA.length};
 const panel=el("section");panel.id="tk504-batch-review";
 const shell=el("div",null,"shell");panel.appendChild(shell);
 const header=el("div",null,"header");shell.appendChild(header);
 const heading=el("div");header.appendChild(heading);
 heading.appendChild(el("div","TRAININGSKOMPAS · MOVEKIT IMPORTEVALUATIE","brand"));
-heading.appendChild(el("h1","Batch 01 — 25 nieuwe oefeningen"));
+const batchNumber=Math.floor((Number(DATA[0].id.slice(3))-227)/25)+1;
+heading.appendChild(el("h1","Batch "+String(batchNumber).padStart(2,"0")+" — "+DATA.length+" nieuwe oefeningen"));
 heading.appendChild(el("p","De bestaande oefencatalogus met echte video's en posters · uitsluitend lokale review","sub"));
 const kpis=el("div",null,"kpis");header.appendChild(kpis);
 function kpi(number,text){const n=el("div",null,"kpi");n.appendChild(el("strong",number));n.appendChild(el("div",text));kpis.appendChild(n);}
-kpi("25/25","Bronnen gecontroleerd");kpi("1","Inhoud goedgekeurd");kpi("24","Ter beoordeling");
+const nav=el("nav",null,"batchnav");shell.appendChild(nav);
+for(let batch=1;batch<=15;batch++){
+ const link=el("a","Batch "+String(batch).padStart(2,"0"),
+     "batchlink"+(batch===batchNumber?" active":""));
+ link.href="/?batch="+batch;
+ if(batch===batchNumber)link.setAttribute("aria-current","page");
+ nav.appendChild(link);
+}
+kpi(DATA.length+"/"+DATA.length,"Bronnen gecontroleerd");kpi(DATA.filter(x=>x.approved).length,"Inhoud goedgekeurd");kpi(DATA.filter(x=>!x.approved).length,"Ter beoordeling");
 const layout=el("div",null,"layout");shell.appendChild(layout);
 const listPanel=el("div",null,"panel");layout.appendChild(listPanel);
 const toolbar=el("div",null,"toolbar");listPanel.appendChild(toolbar);
-const search=el("input");search.id="tk504-batch-search";search.placeholder="Zoek in 25 oefeningen…";search.setAttribute("aria-label","Zoek oefeningen");toolbar.appendChild(search);
-const result=el("div","25 oefeningen","sub");toolbar.appendChild(result);
+const search=el("input");search.id="tk504-batch-search";search.placeholder="Zoek in "+DATA.length+" oefeningen…";search.setAttribute("aria-label","Zoek oefeningen");toolbar.appendChild(search);
+const result=el("div",DATA.length+" oefeningen","sub");toolbar.appendChild(result);
 const items=el("div",null,"items");items.id="tk504-batch-items";listPanel.appendChild(items);
 const detailPanel=el("div",null,"panel");layout.appendChild(detailPanel);
 const detail=el("div",null,"detail");detailPanel.appendChild(detail);
@@ -229,7 +241,7 @@ function renderItems(){
   x.en.toLocaleLowerCase("en").includes(term)||
   x.id.toLocaleLowerCase("en").includes(term)
  );
- state.filtered=filtered.length;result.textContent=filtered.length+" van 25 oefeningen";
+ state.filtered=filtered.length;result.textContent=filtered.length+" van "+DATA.length+" oefeningen";
  for(const x of filtered){
    const button=el("button",null,"item"+(x.id===selected.id?" active":""));
    button.type="button";button.dataset.catalogId=x.id;
@@ -279,7 +291,7 @@ function renderDetail(){
   "Dit is een concept ter inhoudelijke beoordeling. Nog niet gepubliceerd, niet trainbaar en niet beschikbaar in productie.";
  detail.appendChild(note);
  const proof={ok:verified&&!!item&&!!videoSrc&&!!posterSrc,id:selected.id,
-  count:ecs.count(),batch:25,approved:selected.approved,unpublished:item?item._review.status==="NOT_PUBLISHED":false,
+  count:ecs.count(),batch:DATA.length,approved:selected.approved,unpublished:item?item._review.status==="NOT_PUBLISHED":false,
   videoProvider:"ExerciseAssetProvider",catalogProvider:"ExerciseCatalogService",
   trainingLogging:"disabled"};
  const code=el("code","BATCH25_RESULT="+JSON.stringify(proof),"verify");detail.appendChild(code);
@@ -287,7 +299,7 @@ function renderDetail(){
 search.addEventListener("input",renderItems);
 renderItems();renderDetail();
 document.body.appendChild(panel);
-const audit={ok:verified,count:ecs?ecs.count():0,added:25,existing:226,
+const audit={ok:verified,count:ecs?ecs.count():0,added:DATA.length,existing:226,
  approved:DATA.filter(x=>x.approved).length,unapproved:DATA.filter(x=>!x.approved).length,
  ids:IDs,private_local:true,live_write:false};
 panel.appendChild(el("code","BATCH25_AUDIT="+JSON.stringify(audit),"verify"));

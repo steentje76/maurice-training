@@ -23,14 +23,17 @@ function mockContainer(){
    set(v){this._text=String(v);this.children=[];}
  });
  e.replaceChildren=function(...v){this.children=v;this._text='';for(const c of v)c.parentNode=this;};
+ e.querySelector=function(sel){return sel==='video[data-tk504-protected]'?(this.children[0]||null):null;};
  return e;
 }
 function fakeVideo(){
  const handlers={};
  return {
   handlers,controls:false,preload:'',playsInline:false,style:{},poster:null,parentNode:null,
-  duration:70,currentTime:0,playCount:0,loadCount:0,
+  duration:70,currentTime:0,playCount:0,loadCount:0,paused:false,
   setAttribute(k,v){this[k]=v;},
+  removeAttribute(k){this[k]=null;},
+  pause(){this.paused=true;},
   addEventListener(event,callback,opts){(handlers[event]??=[]).push({callback,once:!!opts?.once});},
   dispatch(event){
    const current=[...(handlers[event]||[])];
@@ -43,12 +46,14 @@ function fakeVideo(){
 }
 function harness({signed,enabled=true,session=true}={}){
  let signedCount=0;
+ let currentClock=100000;
  const videos=[];
  const env={
    tk504PrivateEnabled:()=>enabled,
+   Date:{now:()=>currentClock},
    authSession:session?{user:{id:USER_A}}:null,
    tk504GetMediaRuntime:()=>({
-     signed:async(id,type)=>{signedCount++;return signed?signed(id,type,signedCount):{url:type==='poster'?POSTER:URL1,type};}
+     signed:async(id,type)=>{signedCount++;return signed?signed(id,type,signedCount,currentClock):{url:type==='poster'?POSTER:URL1,type};}
    }),
    document:{createElement(type){
      assert.equal(type,'video');
@@ -59,6 +64,7 @@ function harness({signed,enabled=true,session=true}={}){
  const context=vm.createContext(env);
  vm.runInContext(fn,context);
  return {context,env,videos,get signedCount(){return signedCount;},
+   advance:(ms)=>{currentClock+=ms;},
    play:(container,id='TK-000001')=>context.tk504PlayPrivateVideo(container,id)};
 }
 async function run(){
@@ -80,9 +86,50 @@ async function run(){
  okay(v.currentTime===36,'seek position restored on immediate loadedmetadata');
  okay(v.playCount===2,'playback resumes after renewal');
  await v.dispatch('error');
- okay(h.signedCount===3,'second error is terminal');
+ okay(h.signedCount===4,'second immediate error is eligible for one more controlled renewal');
+ await v.dispatch('error');
+ okay(h.signedCount===4,'third rapid failure is terminal and never signs again');
  okay(c.textContent.includes('niet beschikbaar'),'terminal error shows fail-closed notice');
  okay(c.children.length===0,'terminal error removes tokenized video node');
+ okay(v.src===null&&v.poster===null,'terminal denial clears both signed player URLs');
+ okay(v.paused===true,'terminal denial stops playback');
+ // Verify repeated pauses separated by full token expiry: no global one-retry limit.
+ h=harness({signed:(id,type,i,time)=>({
+   url:type==='poster'?POSTER:(i===1?URL1:URL2),
+   type,expiresAt:time+30000
+ })});
+ const paused=mockContainer();
+ okay(await h.play(paused)===true,'fresh session starts');
+ const pv=h.videos[0];
+ pv.currentTime=12;pv.paused=true;
+ h.advance(31000);
+ await pv.dispatch('seeking');
+ okay(h.signedCount===3,'seek after expiry renews independently of media error');
+ okay(pv.currentTime===12,'expired seek retains position');
+ okay(pv.playCount===1,'seeking while paused does not autoplay');
+ h.advance(65000);
+ pv.paused=false;
+ await pv.dispatch('play');
+ okay(h.signedCount===4,'second expiry after a long pause renews again');
+ okay(pv.currentTime===12,'second renewal preserves position');
+ okay(pv.playCount===2,'resuming after new token plays again');
+ okay(paused.children.length===1,'multiple natural renewals do not close player');
+ // Concurrent seek and play events after expiry must share one signing call.
+ let finishRenewal;
+ const pendingRenewal=new Promise(resolve=>{finishRenewal=resolve;});
+ h=harness({signed:(id,type,i)=>type==='poster'?{url:POSTER,type}:
+   i===1?{url:URL1,type,expiresAt:110000}:pendingRenewal});
+ const combined=mockContainer();
+ okay(await h.play(combined)===true,'concurrent test opens authorized video');
+ const combinedVideo=h.videos[0];
+ h.advance(15000);
+ const seeking=combinedVideo.dispatch('seeking');
+ const playback=combinedVideo.dispatch('play');
+ okay(h.signedCount===3,'simultaneous expiry events share exactly one server-sign request');
+ finishRenewal({url:URL2,type:'video',expiresAt:200000});
+ await Promise.all([seeking,playback]);
+ okay(combinedVideo.src===URL2,'concurrent renewal applies one fresh ticket');
+ okay(h.signedCount===3,'no duplicate signing after renewal resolves');
  h=harness({signed:(id,type)=>{if(type==='poster')throw Error('POSTER_DENIED');return {url:URL1,type};}});
  const withoutPoster=mockContainer();
  okay(await h.play(withoutPoster)===true,'poster refusal does not block authorized video');

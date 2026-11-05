@@ -20414,7 +20414,13 @@ async function tk504PlayPrivateVideo(container,catalogId){
   const owner=authSession&&authSession.user&&authSession.user.id;
   if(!owner){container.textContent='Log in om de video af te spelen.';return false;}
   container.textContent='Video laden…';
-  const denied=()=>{if(container.isConnected)container.textContent='Video is momenteel niet beschikbaar. De training kan doorgaan.';};
+  const denied=()=>{
+    // Revoked/denied playback must not leave a signed media source in memory.
+    try{const video=container.querySelector&&container.querySelector('video[data-tk504-protected]');
+      if(video){video.pause();video.removeAttribute('src');video.removeAttribute('poster');video.load();}
+    }catch(_){}
+    if(container.isConnected)container.textContent='Video is momenteel niet beschikbaar. De training kan doorgaan.';
+  };
   try{
     const runtime=tk504GetMediaRuntime();
     const ticket=await runtime.signed(catalogId,'video');
@@ -20429,24 +20435,48 @@ async function tk504PlayPrivateVideo(container,catalogId){
     v.setAttribute('data-tk504-protected','true');
     v.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000';
     // Server signing authorizes the poster separately; no static raw fallback.
-    let retried=false;
-    v.addEventListener('error',async ()=>{
-      if(retried||!container.isConnected){denied();return;}
-      retried=true;
+    // Short-lived URLs are renewed after pauses/seeks and on genuine media
+    // errors. Two renewals per 12s prevent a broken asset from looping;
+    // repeated pauses separated in time remain supported.
+    let activeTicket=ticket;
+    let inFlight=null;
+    let recentRenewals=[];
+    let terminal=false;
+    const stillCurrent=()=>container.isConnected&&v.parentNode===container&&
+      authSession&&authSession.user&&authSession.user.id===owner;
+    const expired=()=>Number.isFinite(activeTicket.expiresAt)&&
+      Date.now()>=activeTicket.expiresAt;
+    async function renewVideo(reason){
+      if(terminal||!stillCurrent())return false;
+      if(inFlight)return inFlight;
+      const now=Date.now();
+      recentRenewals=recentRenewals.filter(t=>now-t<12000);
+      if(recentRenewals.length>=2){terminal=true;denied();return false;}
+      recentRenewals.push(now);
       const position=Number.isFinite(v.currentTime)?v.currentTime:0;
-      try{
-        const fresh=await runtime.signed(catalogId,'video');
-        if(!container.isConnected||!authSession||authSession.user.id!==owner)return;
-        // Attach first: a WebView can dispatch loadedmetadata immediately.
-        v.addEventListener('loadedmetadata',()=>{
-          if(!container.isConnected||!authSession||authSession.user.id!==owner)return;
-          if(position>0&&Number.isFinite(v.duration))v.currentTime=Math.min(position,Math.max(0,v.duration-0.1));
-          const play=v.play();if(play&&play.catch)play.catch(()=>{});
-        },{once:true});
-        v.src=fresh.url;
-        v.load();
-      }catch(_){denied();}
-    });
+      const resume=reason==='error'||v.paused===false;
+      inFlight=(async()=>{
+        try{
+          const fresh=await runtime.signed(catalogId,'video');
+          if(!stillCurrent()||terminal)return false;
+          activeTicket=fresh;
+          // Attach before load(): a fast WebView may emit synchronously.
+          v.addEventListener('loadedmetadata',()=>{
+            if(!stillCurrent()||terminal)return;
+            if(position>0&&Number.isFinite(v.duration))
+              v.currentTime=Math.min(position,Math.max(0,v.duration-0.1));
+            if(resume){const play=v.play();if(play&&play.catch)play.catch(()=>{});}
+          },{once:true});
+          v.src=fresh.url;
+          v.load();
+          return true;
+        }catch(_){terminal=true;denied();return false;}
+      })();
+      try{return await inFlight;}finally{inFlight=null;}
+    }
+    v.addEventListener('error',()=>{if(!terminal)return renewVideo('error');});
+    v.addEventListener('play',()=>{if(expired())return renewVideo('play');});
+    v.addEventListener('seeking',()=>{if(expired())return renewVideo('seeking');});
     v.src=ticket.url;
     container.replaceChildren(v);
     // Only the server may sign the private optimized poster for this account.

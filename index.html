@@ -17669,7 +17669,7 @@ function catalogToPickerEx(c){
   const Id=c.identity;
   return {
     id:c.catalog_id,
-    name:tkCatalogDisplayName(c),
+    name:(typeof Id.nl==='string'&&Id.nl.trim())?Id.nl.trim():(Id.name||c.catalog_id),
     type:'strength',                 // canonical-conventie (zie buildResolvedExecutionItems)
     category:Id.category||'Overig',
     muscle_primary:Array.isArray(Id.primary)?Id.primary.slice():[],

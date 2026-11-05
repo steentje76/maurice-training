@@ -51,3 +51,9 @@ De eerste 25-proef is doorontwikkeld naar één lokale appinterface met batchnav
 - Het werk kan pas als **productie end-to-end** worden gemarkeerd na afzonderlijke grants, licentierechten, media-release, echte gebruikers-/Android-acceptatie en veilig verwijderen van historische openbare assets. De huidige 356 reviewpreviews zijn daarom niet vrijgegeven aan normale sporters of trainingen.
 
 **Te gebruiken demo op de geautoriseerde ontwikkel-pc:** `http://127.0.0.1:18777/` (zo nodig herladen). Klik op een batchknop bovenaan en kies links een oefening. Niet op de telefoon bereikbaar via dit loopback-adres.
+
+## Wijziging na expliciete eigenaar-goedkeuring — 5 november 2026
+
+De eigenaar heeft na de reviewweergave verklaard: **"ik keur batch 1 tm 15 goed"**. Dit is als **gezamenlijke inhoudelijke goedkeuring van alle 356** geregistreerd in `docs/generated/MOVEKIT_V2_OWNER_BATCH_CONTENT_APPROVAL_20261105.json`; de hierboven genoemde stand van 1 goedgekeurd / 355 concepten is daarmee **historisch** en niet langer de actuele **inhoudsstatus**. De beslissing is afgebakend tot de getoonde inhoud; het is geen individuele reviewverklaring voor alle 356 afzonderlijk.
+
+De lokale appreview op `http://127.0.0.1:18777/` toont nu per batch **25/25 goedgekeurd** (laatste batch 6/6). Alle 15 pagina's en alle 356 statussen zijn uit de gegenereerde app en via HTTP gecontroleerd. De oefeningen blijven ongewijzigd `NOT_PUBLISHED`, `selectable=false`, `trainable=false`; de ontbrekende productie- en mediarights-gates blijven expliciet rood. Zie `docs/TK504_OWNER_APPROVAL_BATCHES_01_15_20261105.md`.

@@ -63,6 +63,16 @@ def batch_records(args):
     translations = {row["catalog_id"]: row for row in names["items"]}
     require(len(translations) == 582 and len(names["items"]) == 582,
             "Translation identity registry incomplete")
+    # The owner's blanket approval is a separate, fingerprint-pinned CONTENT
+    # decision. It never modifies the private source draft or release gates.
+    bulk_approval = getattr(args, "bulk_approval", None)
+    if bulk_approval:
+        from tk504_bulk_owner_review import verify
+        manifest = json.loads(bulk_approval.read_text(encoding="utf-8"))
+        verify(manifest, stage["catalog"], names["items"])
+        approved_ids = {f"TK-{n:06d}" for n in range(227,583)}
+    else:
+        approved_ids = {REVIEWED}
     approved = json.loads(args.approval.read_text(encoding="utf-8"))
     require(approved["exercise"]["catalog_id"] == REVIEWED
             and approved["decision_status"] == "OWNER_CONTENT_APPROVED_FOR_SINGLE_ITEM_PILOT"
@@ -118,9 +128,15 @@ def batch_records(args):
         identity["_review"]["integration_status"] = "LOCAL_REVIEW_BATCH_ONLY"
         identity["_review"]["selectable"] = False
         identity["_review"]["trainable"] = False
-        identity["_review"]["owner_visible_content_approved"] = catalog_id == REVIEWED
+        owner_approved = catalog_id in approved_ids
+        identity["_review"]["owner_visible_content_approved"] = owner_approved
+        identity["_review"]["owner_approval_scope"] = (
+            "BULK_VISIBLE_CONTENT_ONLY" if bulk_approval else
+            ("SINGLE_PILOT_VISIBLE_CONTENT_ONLY" if owner_approved else "NONE")
+        )
         identity["_review"]["classification_authority"] = (
-            "OWNER_CONTENT_APPROVED" if catalog_id == REVIEWED else "AI_PROPOSAL_PENDING_REVIEW"
+            "OWNER_BULK_VISIBLE_CONTENT_APPROVED" if bulk_approval else
+            ("OWNER_CONTENT_APPROVED" if owner_approved else "AI_PROPOSAL_PENDING_REVIEW")
         )
         output.append({
             "catalog_id":catalog_id, "slug":slug, "name":dutch["name_nl"],
@@ -134,7 +150,11 @@ def batch_records(args):
             "row":identity,
             "video_file":video_file,"poster_file":poster_file,
             "video_bytes":v["video"]["bytes"],"poster_bytes":p["bytes"],
-            "approved":catalog_id==REVIEWED
+            "approved":owner_approved,
+            "approval_kind":(
+                "OWNER_BULK_CONTENT_APPROVED" if bulk_approval else
+                ("OWNER_SINGLE_PILOT_APPROVED" if owner_approved else "NOT_APPROVED")
+            )
         })
     require(len(output) == args.count, "Unexpected batch size")
     return output
@@ -286,9 +306,11 @@ function renderDetail(){
  list(textCol,"Uitvoering — Nederlandse tekst",selected.instructions,true);
  list(textCol,"Veelgemaakte fouten",selected.mistakes,false);
  const note=el("div",null,"note");
- note.textContent=selected.approved?
+ note.textContent=selected.approvalKind==="OWNER_BULK_CONTENT_APPROVED"?
+  "De eigenaar heeft batch 01 t/m 15 in één keer inhoudelijk goedgekeurd. Dit is geen bewijs dat alle 356 oefeningen afzonderlijk zijn beoordeeld. De oefeningen zijn niet gepubliceerd of trainbaar; licentie-, beveiligings- en mediavrijgave blijven apart nodig.":
+  (selected.approved?
   "De eigenaar heeft de getoonde inhoud van deze oefening goedgekeurd. Technische productie- en mediavrijgave zijn nog niet afgerond.":
-  "Dit is een concept ter inhoudelijke beoordeling. Nog niet gepubliceerd, niet trainbaar en niet beschikbaar in productie.";
+  "Dit is een concept ter inhoudelijke beoordeling. Nog niet gepubliceerd, niet trainbaar en niet beschikbaar in productie.");
  detail.appendChild(note);
  const proof={ok:verified&&!!item&&!!videoSrc&&!!posterSrc,id:selected.id,
   count:ecs.count(),batch:DATA.length,approved:selected.approved,unpublished:item?item._review.status==="NOT_PUBLISHED":false,
@@ -333,7 +355,8 @@ def preview_html(args, rows):
         ui.append({"id":cid,"slug":slug,"name":r["name"],"en":r["english"],
                    "category":r["category"],"level":r["level"],
                    "description":r["description"],"instructions":r["instructions"],
-                   "mistakes":r["mistakes"],"approved":r["approved"]})
+                   "mistakes":r["mistakes"],"approved":r["approved"],
+                   "approvalKind":r["approval_kind"]})
     js_manifest="Object.assign(VIDEO_MANIFEST,"+js(videos)+");\n" + \
       "if(typeof EXERCISE_POSTERS!=='undefined')Object.assign(EXERCISE_POSTERS,"+js(posters)+");"
     html=after_json(html,"var VIDEO_MANIFEST=",js_manifest)
@@ -426,6 +449,8 @@ def parse(argv=None):
     a.add_argument("--start",type=int,default=227)
     a.add_argument("--count",type=int,default=25)
     a.add_argument("--port",type=int,default=18777)
+    a.add_argument("--bulk-approval",type=Path,default=None,
+                   help="Optional exact 356-item owner CONTENT decision (never a release grant)")
     modes=a.add_mutually_exclusive_group(required=True)
     modes.add_argument("--check-only",action="store_true")
     modes.add_argument("--serve",action="store_true")

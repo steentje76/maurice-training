@@ -62,16 +62,17 @@ def construct(args):
             "sha256_checks":2*count,"owner_approved":sum(x["approved"] for x in rows),
             "private_only":True
         }),flush=True)
+    expected_approved = 356 if getattr(args,"bulk_approval",None) else 1
     batch.require(len(html_by_batch)==15 and len(ids)==356
-                  and len(assets)==712 and approved==1,
-                  "All 356 candidates must be represented in 15 batch review pages")
+                  and len(assets)==712 and approved==expected_approved,
+                  "All 356 candidates must be represented with the exact owner decision")
     batch.require(ids=={f"TK-{i:06d}" for i in range(227,583)},
                   "Exact complete 356 canonical IDs required")
     print("TK504_ALL_BATCHES="+json.dumps({
        "batches":15,"full_batches_25":14,"final_batch_6":1,"local_review_items":356,
        "existing_prod_catalog_unchanged":226,"media_sha256_checks":712,
        "local_asset_bytes":total_bytes,"approved_content":approved,
-       "pending_content":355,"production_writes":0,
+       "pending_content":356-approved,"production_writes":0,
        "origin":f"http://127.0.0.1:{args.port}/"
     }),flush=True)
     return html_by_batch,assets
@@ -160,6 +161,8 @@ def cli(argv=None):
                 "translations","videos_dir","posters_dir","approval","private_out"):
         parser.add_argument("--"+key.replace("_","-"),type=Path,required=True)
     parser.add_argument("--port",type=int,default=18777)
+    parser.add_argument("--bulk-approval",type=Path,default=None,
+                        help="Owner batch-content record, not a live media grant")
     mode=parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check-only",action="store_true")
     mode.add_argument("--serve",action="store_true")

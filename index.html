@@ -20543,11 +20543,11 @@ var ExerciseCatalogService=(function(){
     else if(sort==='confidence')r.sort(function(a,b){
       /* KNOWN aflopend; UNKNOWN altijd na KNOWN; stabiele secundaire ordening op naam. Nooit NaN. */
       var av=ExerciseIntelligence.confidenceOf(a),bv=ExerciseIntelligence.confidenceOf(b);
-      if(av===null&&bv===null)return _displayName(a).localeCompare(_displayName(b),'nl');
+      if(av===null&&bv===null)return (a.identity.nl||a.identity.name).localeCompare(b.identity.nl||b.identity.name,'nl');
       if(av===null)return 1; if(bv===null)return -1;
       if(bv!==av)return bv-av;
-      return _displayName(a).localeCompare(_displayName(b),'nl');});
-    else r.sort(function(a,b){return _displayName(a).localeCompare(_displayName(b),'nl');});
+      return (a.identity.nl||a.identity.name).localeCompare(b.identity.nl||b.identity.name,'nl');});
+    else r.sort(function(a,b){return (a.identity.nl||a.identity.name).localeCompare(b.identity.nl||b.identity.name,'nl');});
     return r;}
   function _trackAlias(q){var ts=_tok(q);for(var i=0;i<ts.length;i++){var t=ts[i],cid=_alias[t]||(_post[t]?null:_alias[_correct(t)]);if(cid)_stats.aliasUse[cid]=(_stats.aliasUse[cid]||0)+1;}}
 

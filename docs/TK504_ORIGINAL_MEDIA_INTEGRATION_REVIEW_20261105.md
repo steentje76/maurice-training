@@ -58,3 +58,36 @@ De oorspronkelijke bronstroom is **technisch compatibel**, maar betekent nog nie
 - Een `inFlight`-slot dedupliceert gelijktijdige `play`/`seeking`-vernieuwingen; een rolling limit van **maximaal twee vernieuwingen in twaalf seconden** verhindert een oneindige retryloop op corrupte content, terwijl latere pauzes wel een nieuwe poging mogen doen. Bij auth- of mediaweigering wordt de speler beëindigd, gepauzeerd en worden signed `src` en `poster` uit het video-element verwijderd.
 - `core/tk504ProtectedPlayerFlow.test.js`: **46** synthetische DOM-tests, inclusief twee afzonderlijke linkverlopen met lange pauzes, paused seek zonder autoplay, parallelle events met één signed request, fout-herstel, fail-closed gedrag en accountwissel.
 - **Grenzen:** Dit is nog geen test met echte Supabase-signed links of op fysieke Android-WebView. Het verversen van elke kaartposter voor een grote bibliotheek is nog niet gebatcht. Server-side rate limiting en tokenuitgifte-audit ontbreken nog en moeten vóór activatie worden gebouwd. Laat de 226 openbare MP4's en embedded data alleen verdwijnen via een gecontroleerde, veilige cutover; geen voortijdige breuk voor bestaande gebruikers.
+
+## Aanvullende tweede onafhankelijke Claude Code-review — 5 november 2026, 21:09 CET
+
+De gebruiker vroeg expliciet om Claude te betrekken en te onderzoeken of de oorspronkelijke importopzet uitvoerbaar is met het geleverde bronpakket. Claude Code 2.1.317 (Sonnet) is werkelijk gestart in read-only modus (`Read`, `Glob`, `Grep`, geen schrijf-, shell- of edit-tools). Uitvoercode 0. De volledige, ongefilterde review bleef in de private ontwikkelmap; geen gelicentieerde mediabestanden werden geopend of naar Git gekopieerd. De conclusies zijn vervolgens onafhankelijk getoetst met een lokale read-only bronmetadata-audit.
+
+### Direct geverifieerd tegen het originele 582-rijige bronmetadata-schema
+
+- Metadata JSON: **582 records / 582 unieke `slug`-waarden** met 18 bronvelden. De bijbehorende CSV heeft dezelfde 18 kolomnamen.
+- Voor **582/582** is `videoFile` exact `<slug>.mp4` en staat het originele MP4-bestand daadwerkelijk in het bronpakket.
+- Voor **582/582** is `posterFile` exact `posters/<slug>.png`; de voorbereide geoptimaliseerde WebP (`<slug>.webp`) is voor **582/582** aanwezig.
+- **582/582** bron-slugs matchen één-op-één met de Golden V2-inventaris. Alle **226** bestaande `exercise-catalog.json`-ID's matchen de Golden V2-catalogus-ID en exacte provider-slug; de overige **356** catalogus-ID's zijn ongepubliceerd.
+- Geen lege verplichte bronvelden gevonden voor `slug`, `name`, `primaryMuscles`, `equipment`, `movementPattern`, `difficulty`, `durationSeconds`, `instructions`, `commonMistakes`, `shortDescription`, `longDescription`, `posterFile`, `videoFile`. `movementPattern` is een lijst in **582/582** rijen; dus NIET zomaar als enkelvoudige categorietekst importeren.
+
+### Canonieke veldmapping — noodzakelijke conversies expliciet
+
+| MoveKit bronvelden | Reeds bestaande TK-bestemming / behandeling | Gate |
+|---|---|---|
+| `slug` | `source.provider_id`, vaste `catalog_id` uit Golden V2 | Exacte identiteit en unieke bron-slug |
+| `name`, `aliases` | `identity.name`, optionele extra zoekalias via bestaande ECS-index | Geen naam als primaire sleutel |
+| `primaryMuscles`, `secondaryMuscles` | `identity.primary`, `identity.secondary` na gecontroleerde vertaling naar TK spier-taxonomie | Geen nieuwe spiernamen zonder mapping |
+| `equipment`, `difficulty` | `identity.equipment`, `identity.difficulty` via TK woordenlijst | Verifieer toegestane enums |
+| `movementPattern` (lijst) | Voorgestelde `identity.pattern`, `family`, `type`, `category`, `goals` | **Niet 1-op-1**; per-item review. Geen impliciete kracht-/herstelregels |
+| `durationSeconds` | Video-asset / manifest duur als beschrijvende mediadata | Niet als trainingsduur of voorschrift interpreteren |
+| `instructions`, `commonMistakes` | `intelligence.cues`, `intelligence.mistakes` of gecontroleerde bestaande UI-detailtekst | Taal-/veiligheidsreview voor publicatie |
+| `shortDescription`, `longDescription` | Bestaande detail-UI of aparte presentatie-overlay, niet blind in ECS plaatsen zonder contract | Omzetting/toetsing van UI-contract |
+| `tags`, `benefits`, `useCases` | Alleen getoetste tags/tekstcontext; géén automatisch sportdoel of trainingsregel | Redactionele en evidence-check |
+| `videoFile`, `posterFile` | Private storage-objectpad + geoptimaliseerde WebP, `VIDEO_MANIFEST` en `ExerciseAssetProvider` | Golden SHA-256, bytes, MIME, gebruikersgrant en private media broker |
+
+### Eindoordeel en oorspronkelijke volgorde
+
+**Bronpakket geschikt**, oorspronkelijke provider-onafhankelijke architectuur geschikt. De bestaande 226-record ECS, picker, Builder, Execution/Logging mogen niet gedupliceerd of opnieuw geïmplementeerd worden. Een algemene GUI om globale oefeningen met media te reviewen/publiceren bestond nog niet. Het ontbrekende stuk is een herhaalbare **offline generator per expliciet goedgekeurde catalogus-ID**, plus afgescheiden autorisatie-/release-pipeline. De oorspronkelijke `MOVEKIT_MEDIA_SCALE_GATE_2026-10-01.md` schrijft de veilige cutover van de bestaande 226 openbare media voor **vóór** Batch 002. Het inmiddels grotere pakket (historisch 412, nieuw 582) vraagt aparte controle van licentiescope en overdracht, ondanks dat alle 582 metadata- en bestandspaden technisch overeenkomen.
+
+**TK-000227:** alleen de voor de eigenaar zichtbare NL-tekst, taxonomie en pilot-UX zijn op 5 november goedgekeurd; geen grants of productieactivering. De overige **355** moeten ongepubliceerd blijven. Advies: in de komende bouwfase één generieke versieerbare import/preview-generator maken (geen nieuwe catalogus), metadata-validation/regressies herhaalbaar maken, parallel reeds bestaande 226-public-media-cutover voorbereiden en pas na beveiligings- en Android-acceptatie itemgewijs vrijgeven.

@@ -38,7 +38,9 @@ const FINISH = (function () { const i = HTML.indexOf('  function finish(){\n    
 const WRITER=extractFn(HTML,'writeSessionRow');
 ok(/return await sbPostQ\('sessions', prepared, opts\);/.test(WRITER)&&/opts&&opts\.tk504_binding/.test(WRITER), 'bron: 1 centrale writeSessionRow geeft opts door en mapt uitsluitend geverifieerde optionele FK');
 ok(/const detail=!!\(opts&&opts\.detail\);/.test(POSTQ), 'bron: sbPostQ kent een optionele detail-uitkomst');
-eq((POSTQ.match(/return (?:uit|queue)\(/g) || []).length, 6, 'bron: elke uitgang van sbPostQ loopt via één uitkomst (uit(), sinds v4.70.24 ook via queue() die zelf uit() gebruikt)');
+eq((POSTQ.match(/return (?:uit|queue)\(/g) || []).length, 10, 'bron: alle sbPostQ-uitgangen gebruiken uit()/queue(), inclusief de nieuwe fail-closed TKC-paden');
+ok(/if\(confirmedOnly\)return uit\('failed',http,reden\|\|'offline'\)/.test(POSTQ) && /const confirmedOnly=t==='sessions'&&!!\(opts&&opts\.tk504_binding\)/.test(POSTQ),
+  'bron: getypeerde catalogus-FK mag bij netwerkfout nooit in de offline-wachtrij');
 ok(/return detail\?tkSchrijfUitkomst\(status,http(?:,reden)?\)/.test(POSTQ), 'bron: detail geeft tkSchrijfUitkomst');
 ok(/q===true\?uit\('queued',http,reden\):uit\('failed',http,'opslag'\)/.test(POSTQ), 'bron: queued alleen als queuen zelf lukte');
 ok(/:\(status==='confirmed'\|\|status==='queued'\)/.test(POSTQ), 'bron: zonder detail true alleen bij confirmed of queued (Sprint 6, DEC-QUEUE-001)');

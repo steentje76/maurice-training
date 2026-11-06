@@ -165,7 +165,15 @@ function sandbox() {
   ok(/intervals_detail:\(l\.intervalsDetail\|\|null\)/.test(FINISH_SESSION_WRITE) && /exercise_id:ex\.id/.test(FINISH_SESSION_WRITE) && /training_instance_id:activeInstanceId\|\|_ergInst\|\|null/.test(FINISH_SESSION_WRITE), 'persistence: intervals_detail gaat mee in DEZELFDE, enige sessierij (Erg Continuous Protocol Identity: activeInstanceId houdt voorrang; _ergInst is uitsluitend de ad-hoc losse-Erg-instance als er geen programma-instance is -- nog steeds EEN sessierij, geen dual-write)');
   eq((code.match(/intervals_detail:/g) || []).length, 1, 'persistence: exact één schrijfplek voor intervals_detail (geen tweede write)');
   eq((code.match(/await writeSessionRow\((?:tk504RewriteVerifiedSessionRow\()?\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
-  eq((code.match(/writeSessionRow\(/g) || []).length, 5, 'persistence: totaal aantal writeSessionRow-aanroepen ongewijzigd (definitie + 4 bestaande schrijfpaden; geen extra schrijfweg)');
+  const looseWriter=extractFn('saveLosOefening');
+  const looseWriterCalls=(looseWriter.match(/writeSessionRow\(/g)||[]).length;
+  eq(looseWriterCalls,2,'persistence: losse oefening heeft 2 schrijfvarianten, alleen in exclusieve branches');
+  ok(/if\(TK504_TYPED_FK_SESSION_RELEASE===true&&ex\._catalog===true\)/.test(looseWriter) &&
+     /ok=await writeSessionRow\(row,\{tk504_binding:binding\}\)/.test(looseWriter) &&
+     /\}else\{[\s\S]*ok=await writeSessionRow\(row\)/.test(looseWriter),
+     'persistence: catalogus-getypeerde en legacy losse schrijftakken zijn strikt exclusief');
+  eq((code.match(/writeSessionRow\(/g)||[]).length-looseWriterCalls,5,
+     'persistence: overige writer-bronnen blijven exact gelijk (1 definitie + 4 bestaande paden)');
   ok(!/sbPostQ\('activities'/.test(SRC.finishIntervalExecution) && !/activity_laps/.test(SRC.finishIntervalExecution), 'persistence: erg schrijft niet naar activities/activity_laps');
   ok(/_tkErgPending&&_tkErgPending\.exId===exId/.test(SRC.startIntervalExecution) && /buildIntervalPrescriptionFromForm/.test(SRC.startIntervalExecution), 'executie: snapshot-prescriptie heeft voorrang, formulier blijft fallback voor ad-hoc');
   ok(/IntervalEngineCore\.stateAt/.test(SRC.tkErgCloseBlockActual) && /IntervalEngineCore\.nextBlockIndex/.test(SRC.advanceIntervalBlock), 'engine: bloksemantiek uit IntervalEngineCore');

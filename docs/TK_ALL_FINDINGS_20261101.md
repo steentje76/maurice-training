@@ -61,3 +61,14 @@ De zeven domeinlinks en vijf overzichtscellen konden geheel ontbreken tijdens ee
 Herstel: de bestaande secties starten onafhankelijk; domeinlinks zijn direct beschikbaar en worden niet opnieuw vervangen voor grafiekjes. Vijf echte onbekend-placeholders verschijnen vóór netwerkresultaten, HRV/slaap kunnen apart verschijnen terwijl de overige berekeningen nog laden. De bestaande Calculation/Context/Decision-uitkomsten blijven de enige bron. Owner- en rendergenerationcontrole voorkomt dat een oud antwoord een nieuwe gebruiker/schermverversing overschrijft. Gerichte deferred-promise-regressie toont het defect vóór herstel en slaagt na herstel. Browserherhaling en volledige releasecontrole blijven vereist.
 
 PCC-route opnieuw gecontroleerd: huidige cloudsessie toont Inloggen, dus geen PCC-write uitgevoerd. API/securitypoorten niet omzeild. Nieuwe broncommits veranderen geen historische gebruikersgegevens en bouwen geen APK.
+
+
+## 6 november 2026 — TK579 gedeelde canonieke intervalbron (code/test, geen PM5-vrijgave)
+
+Voorheen gebruikte de gewone `startIntervalExecution` een geldige `_tkErgPending.prescription` bij uitvoering van een opgeslagen programma, terwijl de experimentele `tkErgSendFiniteTest` altijd opnieuw las uit het ad-hoc formulier. Daardoor konden app-uitvoering en PM5-programmering verschillende intervallen gebruiken.
+
+Beide routes gebruiken nu `tkErgResolveIntervalPrescription(exId,cardioType)`: een geldige, bij dezelfde oefening behorende programmasnapshot wint; een andere of ongeldige snapshot valt terug op de bestaande formuliernormalisatie. Instantie-identiteit en sportcontext van de bestaande uitvoering blijven intact. De PM5-controller ontvangt exact hetzelfde genormaliseerde object als de app-route; geen tweede berekening of workout-writer.
+
+Regressie: `node core/fTk579CanonicalPrescription.test.js` en `node core/fConcept2FiniteTransferWiring.test.js`; de laatste voert ook de echte PM5-UI-handler met een canoniek programma uit en verifieert dat het formulier niet wordt gelezen. Bestaande `fConcept2FiniteTransfer` en `fTk584ProgramLogging` blijven groen.
+
+**Restgates blijven ongewijzigd:** volledige apparaat-readback van werk/rust/herhalingsstructuur is niet aangetoond; fysieke PM5-/Samsung-acceptatie ontbreekt. `TRANSFERRED_UNVERIFIED` blijft uitdrukkelijk geen `PROGRAMMED`. Geen APK, productie- of persoonlijke-datawijziging.

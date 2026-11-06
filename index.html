@@ -22705,9 +22705,17 @@ function buildIntervalPrescriptionFromForm(exId,cardioType){
   if(cooldown>0)blocks.push({type:'cooldown',termination:{type:'time',seconds:cooldown}});
   return IntervalEngineCore.normalizePrescription({sport:cardioType,blocks});
 }
-// #579 physical-test entry point. Never called by ordinary app-side interval start.
-// Requires real 0x31 wait-to-begin telemetry, the current BLE lease, and a user
-// confirmation before ANY write. Transfer completion is not PM5 readback.
+// #579: one canonical prescription source for both app execution and PM5 staging.
+// Saved program snapshots remain authoritative; form values are ad-hoc fallback.
+// The same normalized object reaches both controllers without recomputation.
+function tkErgResolveIntervalPrescription(exId,cardioType){
+  const canon=(_tkErgPending&&_tkErgPending.exId===exId&&
+    _tkErgPending.prescription&&_tkErgPending.prescription.geldig)?_tkErgPending:null;
+  return {canon,prescription:canon?canon.prescription:buildIntervalPrescriptionFromForm(exId,cardioType)};
+}
+// Experimental PM5 test is separate from ordinary interval start.
+// It requires live idle telemetry, a BLE lease and explicit confirmation;
+// transfer success cannot prove the monitor's full programmed structure.
 async function tkErgSendFiniteTest(exId,cardioType){
   const st=_c2pair[exId],t=tkDeviceTransport();
   if(!st||!st.connected||!t||typeof t.getControlContext!=='function'){
@@ -22724,8 +22732,8 @@ async function tkErgSendFiniteTest(exId,cardioType){
       Date.now()-rt.finitePreflight.observedAt>15000){
     toast('Wacht op een recente PM5-status in rust; er is niets verstuurd.');return;
   }
-  const normalized=buildIntervalPrescriptionFromForm(exId,cardioType);
-  if(!normalized.geldig){toast('Ongeldige intervaltraining; niets verstuurd.');return;}
+  const normalized=tkErgResolveIntervalPrescription(exId,cardioType).prescription;
+  if(!normalized||!normalized.geldig){toast('Ongeldige intervaltraining; niets verstuurd.');return;}
   if(typeof window.confirm!=='function'||!window.confirm(
     'EXPERIMENTELE PM5-TEST. Dit kan een bestaande ingestelde training op de PM5 vervangen. '+
     'Controleer dat je niet traint. Er is nog geen volledige readback van de intervalstructuur. '+
@@ -22742,8 +22750,8 @@ async function tkErgSendFiniteTest(exId,cardioType){
 function startIntervalExecution(exId,cardioType){
   // B3: canonieke structured Erg-start leest de prescriptie UITSLUITEND uit het gepersisteerde
   // instance-snapshot (_tkErgPending); zonder Definition blijft het bestaande ad-hoc formulier gelden.
-  const canon=(_tkErgPending&&_tkErgPending.exId===exId&&_tkErgPending.prescription&&_tkErgPending.prescription.geldig)?_tkErgPending:null;
-  const prescription=canon?canon.prescription:buildIntervalPrescriptionFromForm(exId,cardioType);
+  const source=tkErgResolveIntervalPrescription(exId,cardioType);
+  const canon=source.canon,prescription=source.prescription;
   if(!prescription.geldig){ toast('Ongeldige intervalinstelling: '+(prescription.reden||'onbekende fout')); return; }
   _ivExec={exId,cardioType,prescription,blockIndex:0,workSecondsTotaal:0,completedWorkBlocks:0,
     canonical:!!canon,instanceId:canon?canon.instanceId:null,sport:canon?canon.sport:cardioType,

@@ -14,19 +14,19 @@ function takeFunction(name){
 }
 const fn=takeFunction('tkErgSendFiniteTest');
 const make=extra=>{
- let called=0,consent=0,normalized=0,msg=[];
+ let called=0,consent=0,normalized=0,sent=null,msg=[];
  const rt={ownerUid:'owner-A',finiteTx:{isPending:()=>false,
-   start:async()=>{called++;return {transferred:true,state:'TRANSFERRED_UNVERIFIED'};}},
+   start:async value=>{called++;sent=value;return {transferred:true,state:'TRANSFERRED_UNVERIFIED'};}},
    prog:{isPending:()=>false},finitePreflight:{source:'pm5_0x31',workoutState:0,
      observedAt:Date.now(),deviceId:'pm5-A',generation:4}};
  const env={
   _c2pair:{EX:{connected:true}},tkDeviceTransport:()=>({getControlContext:()=>({connected:true,deviceId:'pm5-A',generation:4})}),
-  _c2rtGet:()=>rt,tkEigenaarUid:()=> 'owner-A',_ivExec:null,
+  _c2rtGet:()=>rt,tkEigenaarUid:()=> 'owner-A',_ivExec:null,_tkErgPending:null,
   buildIntervalPrescriptionFromForm:()=>{normalized++;return {geldig:true,blocks:[]};},
   window:{confirm:()=>{consent++;return true;}},toast:x=>msg.push(x),Date,...extra
  };
- const exec=new Function(...Object.keys(env),fn+'\nreturn tkErgSendFiniteTest;')(...Object.values(env));
- return {exec,rt,msg,get called(){return called;},get consent(){return consent;},get normalized(){return normalized;}};
+ const exec=new Function(...Object.keys(env),takeFunction('tkErgResolveIntervalPrescription')+'\n'+fn+'\nreturn tkErgSendFiniteTest;')(...Object.values(env));
+ return {exec,rt,msg,get called(){return called;},get consent(){return consent;},get normalized(){return normalized;},get sent(){return sent;}};
 };
 (async()=>{
  assert(html.includes('core/concept2FiniteTransfer.js'),'browser loads core');
@@ -40,6 +40,11 @@ const make=extra=>{
  assert(!/tkErgSendFiniteTest\(/.test(takeFunction('startIntervalExecution')),'normal start remains app-only');
  const okay=make();await okay.exec('EX','rowing');
  assert.equal(okay.called,1);assert.equal(okay.consent,1);assert(okay.msg.at(-1).includes('nog niet bevestigd'));
+ const frozen={geldig:true,sport:'rowerg',blocks:[{type:'work',termination:{type:'time',seconds:90}}]};
+ const fromProgram=make({_tkErgPending:{exId:'EX',instanceId:'program-instance',sport:'rowerg',prescription:frozen}});
+ await fromProgram.exec('EX','rowing');
+ assert.strictEqual(fromProgram.sent,frozen,'PM5 must send the actual canonical program prescription');
+ assert.equal(fromProgram.normalized,0,'canonical program must not read mutable form defaults');
  const noOwner=make({tkEigenaarUid:()=> 'owner-B'});await noOwner.exec('EX','rowing');
  assert.equal(noOwner.called,0);assert.equal(noOwner.consent,0);
  const noHardware=make({tkDeviceTransport:()=>null});await noHardware.exec('EX','rowing');

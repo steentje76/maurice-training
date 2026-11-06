@@ -70,7 +70,7 @@ async function fetchStub(url,opts){
  if(url.includes('/movekit_catalog_fk_bindings?'))return response(auth.bindings);
  throw Error('Unexpected URL in test');
 }
-function event({method='GET',token=true,origin='https://trainingskompas.com'}={}){
+function event({method='POST',token=true,origin='https://trainingskompas.com'}={}){
  return {httpMethod:method,headers:{origin,
   ...(token?{authorization:'Bearer synthetic.valid.jwt'}:{})}};
 }
@@ -83,6 +83,12 @@ async function status(res,wanted,code){
  checks++;
 }
 (async()=>{
+ const installed=require('../netlify/functions/exercise-catalog-v2.js').handler;
+ const preflight=await installed({httpMethod:'OPTIONS',headers:{
+  origin:'https://localhost','access-control-request-headers':'authorization'}});
+ assert.equal(preflight.statusCode,204);checks++;
+ assert.equal(preflight.headers['Access-Control-Allow-Origin'],'https://localhost');checks++;
+ assert.match(preflight.headers['Access-Control-Allow-Methods'],/POST/);checks++;
  const blocked=await broker.handle(event(),{env:{},fetch:fetchStub,release:cfg});
  await status(blocked,503,'MOVEKIT_CATALOG_NOT_RELEASED');
  assert.equal(auth.calls.length,0);checks++;
@@ -94,7 +100,7 @@ async function status(res,wanted,code){
  }
  await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub}),
   503,'MOVEKIT_CATALOG_NOT_RELEASED'); // real central release doc remains blocked
- await status(await broker.handle(event({method:'POST'}),{env:goodEnv,
+ await status(await broker.handle(event({method:'GET'}),{env:goodEnv,
   fetch:fetchStub,release:cfg}),405,'METHOD_NOT_ALLOWED');
  await status(await broker.handle(event({origin:'https://attacker.example'}),{env:goodEnv,
   fetch:fetchStub,release:cfg}),403,'ORIGIN_REJECTED');

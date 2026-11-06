@@ -9621,7 +9621,7 @@ async function tk504RefreshPublishedCatalog(){
       });
     }
     const response=await fetch(tkApiUrl('/.netlify/functions/exercise-catalog-v2'),{
-      method:'GET',cache:'no-store',
+      method:'POST',cache:'no-store',
       headers:{Authorization:'Bearer '+token,Accept:'application/json'}
     });
     if(!response.ok)throw Error('TK504_CATALOG_NOT_RELEASED');

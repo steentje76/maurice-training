@@ -19,7 +19,7 @@ function headers(event){
    'Cache-Control':'private,no-store,max-age=0','Pragma':'no-cache',
    'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
    'Vary':'Origin','Access-Control-Allow-Headers':'Authorization, Content-Type',
-   'Access-Control-Allow-Methods':'GET, OPTIONS'};
+   'Access-Control-Allow-Methods':'POST, OPTIONS'};
  const origins=new Set(['https://maurice-art.netlify.app',
   'https://trainingskompas.com','https://www.trainingskompas.com',
   'https://localhost','capacitor://localhost']);
@@ -87,7 +87,7 @@ async function handle(event,deps={}){
   'https://www.trainingskompas.com','https://localhost','capacitor://localhost'].includes(origin))
   return deny(event,403,'ORIGIN_REJECTED');
  if(event?.httpMethod==='OPTIONS')return result(event,204,{});
- if(event?.httpMethod!=='GET')return deny(event,405,'METHOD_NOT_ALLOWED');
+ if(event?.httpMethod!=='POST')return deny(event,405,'METHOD_NOT_ALLOWED');
  if(!enabled(env,active))return deny(event,503,'MOVEKIT_CATALOG_NOT_RELEASED');
  if(env.SUPABASE_URL!==BASE||typeof env.SUPABASE_ANON_KEY!=='string'||
    !env.SUPABASE_ANON_KEY||!env.SUPABASE_SERVICE_ROLE_KEY||
@@ -121,3 +121,5 @@ async function handle(event,deps={}){
 }
 exports.handler=event=>handle(event,{env:process.env,fetch:globalThis.fetch,now:Date.now});
 exports._internal=Object.freeze({enabled,handle,validatePublished,headers,SCHEMA});
+// Match the canonical Android API preflight contract (I22), not a parallel CORS stack.
+exports.handler = require('./_cors.js').withCors(exports.handler);

@@ -9255,7 +9255,7 @@ async function sbPostQ(t,d,opts){
     if(confirmedOnly&&tkEigenaarUid()!==expectedOwner)return uit('failed',r.status,'account');
     return uit('confirmed',r.status);
   }catch(e){
-    console.warn('sbPostQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
+    console.warn(confirmedOnly?'sbPostQ typed session not queued':'sbPostQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
     return queue(null,(e&&e.tkTimeout)?'timeout':'netwerk');
   }
 }

@@ -17,6 +17,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\tk603-local-two-acco
 
 Observed: **PASS** — 582 reserved aliases/bindings, default inactive, RLS permission denial for anon/authenticated, service role SELECT-only, exact provider ID validation, deliberately permissive legacy exercises INSERT policies defeated by reserved-alias guard, privileged definer bypass attempts refused, A and B owning separate sessions, cross-user session write denied, historical catalog IDs preserved after revoke, unreviewed/revoked catalog writes rejected, complete `ROLLBACK` followed by zero remaining `auth` tables.
 
+A separate rollback-only replay assertion uses the SAME session UUID for a second PostgreSQL `INSERT ... ON CONFLICT DO UPDATE` under owner A: one row remains. A replay using that UUID under owner B is denied by session RLS, despite both owners sharing the same canonical TKC exercise FK.
+
 **Evidence limitations:** The two users are synthetic simulated JWT claim contexts using PostgreSQL role switching and `auth.uid()` in a temporary database; this is a real PostgreSQL/RLS test, **not** a test with two independently signed Supabase Auth JWTs against the actual deployed PostgREST/session schema. This cannot substitute for the latter.
 
 ## Client real-code failure + repair

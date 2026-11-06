@@ -22721,7 +22721,12 @@ async function tkErgSendFiniteTest(exId,cardioType){
   if(!st||!st.connected||!t||typeof t.getControlContext!=='function'){
     toast('Verbind eerst met je PM5.');return;
   }
-  const ctx=t.getControlContext(),rt=_c2rtGet(exId,ctx.generation,ctx.deviceId);
+  let ctx;
+  try{ctx=t.getControlContext();}catch(_){ctx=null;}
+  if(!ctx||ctx.connected!==true||!ctx.deviceId||ctx.generation==null){
+    toast('De PM5-verbinding is niet meer actief; er is niets verstuurd.');return;
+  }
+  const rt=_c2rtGet(exId,ctx.generation,ctx.deviceId);
   if(!rt||!rt.finiteTx||rt.ownerUid!==(typeof tkEigenaarUid==='function'?tkEigenaarUid():null)){
     toast('Geen geldige PM5-programmeerverbinding.');return;
   }

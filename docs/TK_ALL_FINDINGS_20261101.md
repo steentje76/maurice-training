@@ -72,3 +72,9 @@ Beide routes gebruiken nu `tkErgResolveIntervalPrescription(exId,cardioType)`: e
 Regressie: `node core/fTk579CanonicalPrescription.test.js` en `node core/fConcept2FiniteTransferWiring.test.js`; de laatste voert ook de echte PM5-UI-handler met een canoniek programma uit en verifieert dat het formulier niet wordt gelezen. Bestaande `fConcept2FiniteTransfer` en `fTk584ProgramLogging` blijven groen.
 
 **Restgates blijven ongewijzigd:** volledige apparaat-readback van werk/rust/herhalingsstructuur is niet aangetoond; fysieke PM5-/Samsung-acceptatie ontbreekt. `TRANSFERRED_UNVERIFIED` blijft uitdrukkelijk geen `PROGRAMMED`. Geen APK, productie- of persoonlijke-datawijziging.
+
+## 6 november 2026 — PM5-verbinding fail-closed bij start van experimentele overdracht
+
+De knop `tkErgSendFiniteTest` nam vóór de patch aan dat `getControlContext()` altijd een niet-null object retourneert. Bij wegvallende BLE-verbinding tussen UI-render en klik kon dit een runtimefout veroorzaken of de gebruiker een overbodige bevestiging tonen. Nu wordt vóór snapshotnormalisatie of gebruikersbevestiging getoetst op daadwerkelijk actieve connection-context, een deviceId en een generation; null/throw/disconnect geeft alleen een melding en **geen write**.
+
+De regressie `fConcept2FiniteTransferWiring.test.js` dekt null, disconnected, ontbrekende deviceId/generation en een exception in getControlContext. Native transport en de normale app-only route zijn niet gewijzigd. De update is uitsluitend code/hardening: geen echte PM5-acceptatie, geen reconstructie van training, geen nieuwe APK.

@@ -49,6 +49,18 @@ const make=extra=>{
  assert.equal(noOwner.called,0);assert.equal(noOwner.consent,0);
  const noHardware=make({tkDeviceTransport:()=>null});await noHardware.exec('EX','rowing');
  assert.equal(noHardware.called,0);
+ for(const context of [null,{connected:false,deviceId:'pm5-A',generation:4},
+   {connected:true,deviceId:null,generation:4},{connected:true,deviceId:'pm5-A',generation:null}]){
+   const unavailable=make({tkDeviceTransport:()=>({getControlContext:()=>context})});
+   await unavailable.exec('EX','rowing');
+   assert.equal(unavailable.called,0,'missing or disconnected BLE lease must not write');
+   assert.equal(unavailable.consent,0,'missing or disconnected BLE lease must not ask for a write');
+   assert(unavailable.msg.at(-1).includes('niet meer actief'));
+ }
+ const thrown=make({tkDeviceTransport:()=>({getControlContext:()=>{throw new Error('BLE disconnected');}})});
+ await thrown.exec('EX','rowing');
+ assert.equal(thrown.called,0,'BLE context exceptions must fail closed');
+ assert.equal(thrown.consent,0);
  const refuse=make({window:{confirm:()=>false}});await refuse.exec('EX','rowing');
  assert.equal(refuse.called,0);
  const busy=make();busy.rt.finiteTx.isPending=()=>true;await busy.exec('EX','rowing');

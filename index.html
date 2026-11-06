@@ -20368,6 +20368,8 @@ var VIDEO_MANIFEST={"TK-000206":{"catalog_id":"TK-000206","slug":"wall-sit","pos
    and real-device cut-over gates pass. No user-configurable/localStorage switch. */
 const TK504_PRIVATE_MEDIA_RELEASE = false;
 let tk504MediaRuntime = null;
+// Invalidates outstanding signed poster requests and DOM sources on account changes.
+let tk504PosterEpoch = 0;
 function tk504PrivateEnabled(){ return TK504_PRIVATE_MEDIA_RELEASE === true; }
 function tk504GetMediaRuntime(){
   if(!tk504PrivateEnabled()) return null;
@@ -20396,6 +20398,12 @@ function tk504GetMediaRuntime(){
   return tk504MediaRuntime;
 }
 function tk504InvalidateProtectedMedia(){
+  tk504PosterEpoch++;
+  // Remove account-scoped thumbnails even if the library cards remain mounted.
+  try{document.querySelectorAll('img[data-tk504-protected]').forEach(img=>{
+    img.removeAttribute('src');img.classList.remove('is-loaded');
+    img.removeAttribute('data-tk504-protected');img._done=0;
+  });}catch(_){}
   if(tk504MediaRuntime)tk504MediaRuntime.invalidate();
   try{document.querySelectorAll('video[data-tk504-protected]').forEach(v=>{
     v.pause();v.removeAttribute('src');v.removeAttribute('poster');v.load();
@@ -20981,7 +20989,45 @@ var LIB_SUGGEST=[{i:'💪',l:'Borst',q:'borst'},{i:'🔙',l:'Rug',q:'rug'},{i:'�
 
 /* ── Lazy images + scroll-reveal ── */
 var _libIO=(typeof IntersectionObserver!=='undefined')?new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){_libLoad(en.target);_libIO.unobserve(en.target);}});},{rootMargin:'250px 0px'}):null;
-function _libLoad(img){if(img._done)return;img._done=1;var id=img.getAttribute('data-aid');var src=ExerciseAssetProvider.poster(id);if(src){img.onload=function(){img.classList.add('is-loaded');};img.src=src;}else{var box=img.parentNode;if(box)box.classList.add('no-img');}}
+// Same original library card and lazy observer; only the image URL source changes
+// after the separately gated private-media cutover. The broker owns entitlement.
+function tk504LoadPrivateLibraryPoster(img,catalogId){
+  img.setAttribute('data-tk504-protected','true');
+  const owner=authSession&&authSession.user&&authSession.user.id;
+  const epoch=tk504PosterEpoch;
+  const denied=()=>{if(img.isConnected&&img.parentNode)img.parentNode.classList.add('no-img');};
+  if(!owner){denied();return;}
+  let runtime;
+  try{runtime=tk504GetMediaRuntime();}catch(_){denied();return;}
+  Promise.resolve().then(()=>runtime.signed(catalogId,'poster')).then(ticket=>{
+    if(!img.isConnected||img.getAttribute('data-aid')!==catalogId||
+       tk504PosterEpoch!==epoch||!authSession||!authSession.user||
+       authSession.user.id!==owner)return;
+    if(!ticket||ticket.type!=='poster'||ticket.catalogId!==catalogId||
+       typeof ticket.url!=='string'){denied();return;}
+    img.referrerPolicy='no-referrer';
+    img.onload=()=>{if(tk504PosterEpoch===epoch)img.classList.add('is-loaded');};
+    img.onerror=()=>{img.removeAttribute('src');img.classList.remove('is-loaded');denied();};
+    img.src=ticket.url;
+  }).catch(denied);
+}
+function _libLoad(img){
+  if(img._done)return;
+  img._done=1;
+  var id=img.getAttribute('data-aid');
+  // A private MoveKit poster MUST never fall back to the original public
+  // ExerciseAssetProvider URL (not even in this existing lazy library path).
+  if(tk504PrivateEnabled()){
+    var canonical=(typeof ExerciseCatalogService!=='undefined'&&ExerciseCatalogService.byId)
+      ?ExerciseCatalogService.byId(id):null;
+    if(canonical&&canonical.source&&canonical.source.provider==='movekit'){
+      tk504LoadPrivateLibraryPoster(img,id);return;
+    }
+  }
+  var src=ExerciseAssetProvider.poster(id);
+  if(src){img.onload=function(){img.classList.add('is-loaded');};img.src=src;}
+  else{var box=img.parentNode;if(box)box.classList.add('no-img');}
+}
 function _libObserve(root){if(!root)return;var imgs=root.querySelectorAll('.lib-img[data-aid]');for(var i=0;i<imgs.length;i++){if(_libIO)_libIO.observe(imgs[i]);else _libLoad(imgs[i]);}}
 function _imgBox(id,name,extra,overlay){return '<span class="lib-imgbox'+(extra?' '+extra:'')+'"><span class="lib-skel"></span><img class="lib-img" alt="'+escHtml(name||'')+'" data-aid="'+id+'">'+(overlay||'')+'</span>';}
 function _libRipple(e){var b=e.currentTarget;if(!b)return;var r=b.getBoundingClientRect();var s=document.createElement('span');s.className='lib-ripple';var d=Math.max(r.width,r.height);s.style.width=s.style.height=d+'px';s.style.left=((e.clientX||r.left+r.width/2)-r.left-d/2)+'px';s.style.top=((e.clientY||r.top+r.height/2)-r.top-d/2)+'px';b.appendChild(s);setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},520);}

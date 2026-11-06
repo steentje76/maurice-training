@@ -33,6 +33,7 @@ const env = {
   MOVEKIT_V2_SIGNING_ENABLED: 'true',
   MOVEKIT_V2_PERMISSION_REVIEWED: 'true',
   MOVEKIT_V2_PRIVATE_UPLOAD_VERIFIED: 'true',
+  MOVEKIT_V2_NEW_CATALOG_EXECUTION_VERIFIED: 'true',
   MOVEKIT_V2_POSTER_UPLOAD_VERIFIED: 'true'
 };
 const grant = Object.freeze({
@@ -102,6 +103,11 @@ function build(opts = {}) {
     assert.match(result.url,/\/exercise-media\/movekit\/v2\/video\//);
     assert.equal(v.client.activeUi,false);
     assert.equal(v.client.offlineDownloadReleased,false);
+  });
+  await check('new 356 canonical rows require independently verified logging and FK mapping', async()=>{
+    const v=build({env:{...env,MOVEKIT_V2_NEW_CATALOG_EXECUTION_VERIFIED:'false'}});
+    await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/MEDIA_NOT_RELEASED/);
+    assert.equal(v.mock.calls.length,0,'no auth, entitlement or signing calls for unverified catalog execution');
   });
   await check('optimized poster success requires same database grant and own bucket', async()=>{
     const v=build();

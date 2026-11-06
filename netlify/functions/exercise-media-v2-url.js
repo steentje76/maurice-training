@@ -238,6 +238,14 @@ async function handle(event, deps = {}) {
       (body.type !== 'video' && body.type !== 'poster') || body.version !== 'v2') {
     return failure(event, 400, 'INVALID_REQUEST');
   }
+  // #603: media signing must not silently make the 356 new catalog items
+  // usable before a durable, collision-safe catalog->FK logging contract has
+  // been validated. The existing 226 may still undergo a safe private cutover.
+  const catalogNumber = Number(body.catalog_id.slice(3));
+  if (catalogNumber >= 227 && catalogNumber <= 582 &&
+      env.MOVEKIT_V2_NEW_CATALOG_EXECUTION_VERIFIED !== 'true') {
+    return failure(event, 503, 'NEW_CATALOG_EXECUTION_UNVERIFIED');
+  }
   if (body.type === 'poster' && env.MOVEKIT_V2_POSTER_UPLOAD_VERIFIED !== 'true') {
     return failure(event, 503, 'POSTERS_NOT_RELEASED');
   }

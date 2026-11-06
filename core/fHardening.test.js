@@ -514,7 +514,8 @@ ok(!/deloadSignaalTekst/.test(decisionSrc) && !/corroboratedLoadSignal/.test(dec
 console.log('\nT. Execution: vervangen/verwijderen/verwerpen tijdens actieve sessie — geen tweede execution path');
 const execReplaceSrc = html.slice(html.indexOf('function execReplaceExercise('), html.indexOf('function execReplaceExercise(') + 2600); // venster verbreed (GAP-P3-033: canonical re-resolve in dezelfde functie)
 ok(/openExPicker\(async function\(newEx\)/.test(execReplaceSrc), 'T1 (EX-REPLACE-1): hergebruikt de bestaande, unified openExPicker() -- geen tweede picker');
-ok(/resolvePickerEx\(newEx\.id\)/.test(execReplaceSrc), 'T2 (EX-REPLACE-3): gebruikt resolvePickerEx() voor het canonieke catalog_id, exact hetzelfde pad als addExConfirm()');
+ok(/const replaced=newEx;/.test(execReplaceSrc) && /tk603CatalogRefFromPickerSelection\(replaced\)/.test(execReplaceSrc) && !/resolvePickerEx\(newEx\.id\)/.test(execReplaceSrc),
+  'T2 (EX-REPLACE-3 / #603): gebruikt de expliciete geselecteerde bron uit de bestaande unified picker; geen ongetypeerde ID-herresolutie');
 ok(/heeftData=execExerciseHasData\(exId\)/.test(execReplaceSrc), 'T3 (EX-REPLACE-2): controleert expliciet op reeds geregistreerde data vóór vervangen');
 ok(/gaan die gegevens verloren -- ze worden NIET automatisch overgezet/.test(execReplaceSrc), 'T3b: waarschuwt expliciet dat data NIET automatisch wordt omgezet -- exacte, veilige productregel uit de opdracht');
 ok(/delete sessionLog\[exId\]/.test(execReplaceSrc), 'T4: oude sessionLog-data voor de vervangen oefening wordt opgeruimd -- geen orphan/ghost-koppeling aan de nieuwe oefening');

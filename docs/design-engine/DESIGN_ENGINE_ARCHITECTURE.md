@@ -80,3 +80,13 @@ V2.1 Scenario Lab: interactive flows, A/B/C variants, phone preview, compare mod
 V2.2 Validation: capability/state/a11y/evidence guards and source-change invalidation.
 V2.3 Contract: design freeze + Claude implementation contract + regression/visual acceptance export.
 V2.4 Continuous sync: GitHub main changes invalidate only affected rules/scenarios and queue them for re-review.
+
+## Changelog
+v2.38 — Mega Sprint A: Visual Design Workspace V2 (branch `feature/design-engine-visual-workspace-v2`).
+- P0: Direct pointer/touch reorder of tiles inside the interactive phone preview itself (Pointer Events, no external dependency), additive to the existing Eerder/Later and sidebar HTML5-drag fallbacks. Reuses the existing `visualStudio.move()` API; no second order/state model introduced.
+- P0: Confirmed the mobile-first workspace requirement was already substantially met (off-canvas Lab/Governance drawers, `#visualStudio` prioritized on mobile, Audit & bewijs behind an explicit toggle); added Playwright regression coverage for it.
+- P0: Style Studio — added global color tokens (background/text/accent) alongside the existing global radius/spacing tokens, reusing the existing generic `patchStyle('global', …)` inheritance model; added an explicit inheritance explanation and a reset-to-global-token action.
+- P0: Re-verified `activeVariant` vs `selectedVariant` isolation and A/B/C state isolation against the new reorder path; added regression coverage.
+- P1: Added compact toolbar context chips (active/selected variant, current selection) to the existing device-width/compare toolbar.
+- P1 (capability preservation warning UX): deferred. No remove/hide/replace action exists yet in the Visual Studio proposal flow to attach a meaningful warning to — the UI already states explicitly that "Route/capability verwijderen is niet toegestaan." Introducing a warning without a real triggering action would be speculative UX. Recommended for a future sprint once a genuine removal/replacement action is scoped.
+- P2: `productIdentity` on the proposal pipeline is no longer hardcoded to the `'trainingskompas'` literal; it now binds to the active Design Pack's `product_identity` (exposed as `window.designActivePack`), falling back to the project picker value and then the literal. No architecture rewrite; single project remains active today.

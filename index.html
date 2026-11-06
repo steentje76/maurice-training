@@ -10009,7 +10009,13 @@ function buildResolvedExecutionItems(list){
   //   2) anders/niet gevonden → ongewijzigd legacy-pad (exercises-array)
   return (list||[]).map(it=>{
     const exId=it.exercise_id;
-    const isCanonical=typeof exId==='string'&&exId.indexOf('TK-')===0;
+    // #603: in staged typed mode a TK-shaped personal ID cannot become
+    // a licensed catalog execution just because the canonical ID exists.
+    // Preserve V1's legacy fallback until the release gate is explicitly ON.
+    const typedMode=typeof TK504_TYPED_FK_SESSION_RELEASE!=='undefined'&&
+      TK504_TYPED_FK_SESSION_RELEASE===true;
+    const isCanonical=typeof exId==='string'&&exId.indexOf('TK-')===0&&
+      (!typedMode||!!tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref));
     let canon=null;
     if(isCanonical&&typeof ExerciseCatalogService!=='undefined'){
       try{canon=ExerciseCatalogService.byId(exId);}catch(e){canon=null;}

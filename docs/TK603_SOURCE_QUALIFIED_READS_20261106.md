@@ -12,6 +12,7 @@ Een door de toekomstige getypeerde FK-keten vastgelegde Movekit-sessie krijgt in
 - Oefeningkiezers 'Recent gebruikt' tonen bij ingeschakelde typed mode afzonderlijke `catalog:TK-...` en `legacy:TK-...` keuzes. Het cataloguslabel volgt alleen uit de reeds aanwezige `tk504_historical_catalog_id` server-RPC die vaststelt dat deze sporter een eigen getypeerde sessie bezit. Inactieve of niet-bestaande cataloguspublicaties worden niet geraden. Andere aanroepers van `getRecentExerciseIds()` houden hun bestaande gedrag; geen verborgen generatieve trainingswijziging.
 - `loadStrengthBasis(eid,sourceRef)` blijft exact de bestaande `CalcCore.selectStrengthBasis` (CALC-STR-006) gebruiken. Bij geldig catalogusverband komt de dataset uitsluitend uit de getypeerde bron en wordt deze in de eigenaar- en brongebonden sleutel `strengthBasisCache['catalog:'+owner+':'+id]` bewaard. De eerdere persoonlijke `strengthBasisCache[id]` en `estOneRMCache[id]` blijven onaangeroerd.
 - `canonicalNewExerciseItem` krijgt bij **aanmaken/toevoegen, vervangen en eenmalig omwisselen** de werkelijk gekozen `tk504_catalog_ref` door. Het bestaande `resolveWorkingWeight` gebruikt in brongetypeerde modus uitsluitend de door CALC-STR-006 bevestigde basis, nooit een ongerelateerde handmatige personal-1RM of rep-PR. Ontbrekende basis levert `null`/no-base, niet een gegokt gewicht. Het deterministische Calculation/Decision-model en de wetenschappelijke status worden niet gewijzigd.
+- De bestaande `buildResolvedExecutionItems()` toont bij toekomstige getypeerde vrijgave alleen canonieke Movekit-metadata en video/poster als het specifieke Preview-item een geverifieerde `tk504_catalog_ref` bezit. Eenzelfde `TK-` ID zonder bronbewijs behoudt zijn persoonlijke/ruwe uitvoering zonder beschermde leveranciersmedia. De oude catalog-first werking blijft intact zolang de vlag UIT staat.
 - Alle paden achter `TK504_TYPED_FK_SESSION_RELEASE=false` behouden hun huidige legacy-gedrag. Geen gewijzigde productie-RLS, migraties, mediarechten of logging-writer.
 
 ## Reproduceerbare tests
@@ -19,6 +20,7 @@ Een door de toekomstige getypeerde FK-keten vastgelegde Movekit-sessie krijgt in
 ```sh
 node core/tk603TypedReadProjection.test.js
 node core/tk603RecentPickerCollisionUi.test.js
+node core/tk603ExecutionMediaProvenance.test.js
 node core/fStrengthBasisSelection.test.js
 node core/fExerciseSwapPrescriptionWeight.test.js
 node core/tk504TypedFkSessionWriteGate.test.js

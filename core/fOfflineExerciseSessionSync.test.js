@@ -62,7 +62,7 @@ function installeer(cfg) {
   window.refreshStats = function () {}; window.stopTrainTimer = function () {};
   window.clearTrainingDraft = function () { window.__draftWeg++; };
   window.generateSessionSummaryAI = async function () { return ''; };
-  window.completeTrainingInstance = async function () { schrijf('__inst', lees('__inst', 0) + 1); };
+  window.completeTrainingInstance = async function () { schrijf('__inst', lees('__inst', 0) + 1); return true; }; // #587: completion contract must explicitly confirm success
   window.upsertExerciseGoalField = async function () { window.__pr++; schrijf('__prtel', lees('__prtel', 0) + 1); };
   window.ensureVasteTrainingenLoaded = async function () {};
   authSession = { user: { id: 'u-test' }, access_token: 'x', refresh_token: null };

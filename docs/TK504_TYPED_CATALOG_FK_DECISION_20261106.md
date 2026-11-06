@@ -1,0 +1,44 @@
+# TK504 / #603 — getypeerde catalogusidentiteit en veilige sessie-FK (ontwikkelcontract)
+
+**Status:** DRAFT / VOLLEDIGE RELEASE GEBLOKKEERD. 6 november 2026. Geen productionele database, APK, media-grants, persoonsgegevens of historische sessies gewijzigd.
+
+## 1. Oorzaak en geverifieerde uitgangspunten
+
+De enige bron voor oefenidentiteit is de bestaande `ExerciseCatalogService`. Bestaande MoveKit-items `TK-000001..226` en de 356 goedgekeurde maar ongepubliceerde kandidaten `TK-000227..582` moeten in dezelfde bestaande Picker → Preview → Execution → Logging → History-keten passen, zonder nieuwe UX, tweede catalogus of tweede writer.
+
+Read-only schemaonderzoek op het actieve Trainingskompas-project (6 november 2026):
+- `public.exercises.id` = **TEXT PRIMARY KEY**, `sessions.exercise_id` verwijst daar via een **FOREIGN KEY** naar.
+- `exercises`: 7 globale en 16 persoonlijke `TK-######`-IDs in de bestaande 226; **geen** in de nieuwe 356. Dit zijn *vormovereenkomsten*, geen gecertificeerde MoveKit-identiteiten.
+- Er bestaan 103 sessierijen waarvan `exercise_id` op `TK-######` lijkt; hun ware historische provenance is niet vast te stellen uit het ID alleen. **Niet migreren, verwijderen, hernoemen of automatisch herclassificeren**.
+- Gereserveerde toekomstige `TKC-######`-IDs: **0** in `public.exercises` bij de read-only preflight.
+- De 582 video's en 582 posters zijn in private Supabase-buckets aanwezig; `public.movekit_media_grants` is niet ingericht. Deze feiten autoriseren niets automatisch.
+
+## 2. Beslissing: gescheiden catalogus- en FK-identiteit
+
+De gebruiker selecteert een *expliciet getypeerde canonieke oefening*:
+`{_catalog:true, id:'TK-000038', catalog_id:'TK-000038'}` uit de bestaande ECS, met gecontroleerde MoveKit `source.provider/provider_id`.
+
+De domeinidentiteit blijft `TK-000038`; een vooruitgerichte **globaal gereserveerde** FK-placeholder voor nieuwe logs is `TKC-000038`. `TKC` betekent uitsluitend een technische catalogus-FK, **geen** nieuwe oefening, oefeningsnaam, gebruikersrecht of licentie. De deterministische transformatie gebeurt alleen na een onafhankelijk geverifieerd en gepubliceerd FK-bindingcontract. De databank moet de mapping duurzaam vastleggen en valideren; de clientmodule is géén authenticatie- of autorisatiebron.
+
+De databankbeheerder provisiont die `TKC`-placeholderrijen **eenmalig global** met `created_by = null`, een gescheiden mapping op `catalog_id`, FK constraints en RLS. Normale gebruikers mogen de aliasruimte niet aanmaken, aanpassen of verwijderen. Voor eigen oefeningen, oude `TK`-historie en legacy IDs blijft de bestaande weg behouden. Geen acceptatie op basis van naam, slug, tekstvorm, gelijkende spiergroep of vrije `exercises.id`.
+
+De bestaande app negeert zulke toekomstige *globale* FK-placeholders bij `ensureExercisesLoaded`, zodat ze **geen extra oefeningen in de huidige UX** worden. Persoonlijke rows — ook met gelijkende IDs — blijven behouden.
+
+## 3. Huidige code (staging)
+
+- `core/tk504TypedCatalogFk.js`: pure versioneerbare typed mapping met deny-by-default wanneer een item niet gepubliceerd is, de selectie geen expliciete catalogusprovenance heeft of een echte binding niet als geverifieerd beschikbaar is. Returnt een nieuw sessieobject; muteert bestaande `sessionLog`, `sets_detail`, account of instantie-ID niet.
+- `index.html`: filtert **uitsluitend** `scope='global'` met gereserveerd `TKC-[0-9]{6}` in de gedefinieerde reeks 1..582 uit de normale `exercises`-collectie. De bestaande bibliotheek/picker/layout blijft ongewijzigd; lege technische placeholders veroorzaken geen onbedoelde standaarddata-seed.
+- `core/tk504TypedCatalogFk.test.js`: 52 asserts, 582 unieke aliases, persoonlijke ID-botsingen, multi-user, oude en nieuwe sessies, ontbrekende authority en ongewijzigde idempotente rijvelden.
+- `core/tk504TypedCatalogFkOriginalPicker.test.js`: echte huidige ECS en daadwerkelijke `catalogToPickerEx`; 226/226 expliciete catalogusselecties/logreferenties/historie blijven consistent, persoonlijke `TK`-rows worden niet ongemerkt Movekit.
+- `core/tk504GlobalFkVisibility.test.js`: 582 technische globale placeholders onzichtbaar, 16 synthetische persoonlijke `TK`-IDs blijven zichtbaar; geen automatische seed op uitsluitend placeholders.
+- `tools/tk504-typed-fk-isolated-smoke.sql`: volledige synthetische PostgreSQL 17-transactie met 582 aliases, globale FK, twee rollen met RLS, gedeelde catalogusverwijzing voor A/B, afgeschermde persoonlijke oefeningen, ongewijzigde legacyhistorie en deny-by-default release. Eindigt in **ROLLBACK**. Op 6 november 2026 uitgevoerd op tijdelijke `--network none` Docker PostgreSQL-container, PASS; container daarna verwijderd. **NIET uitvoeren op live Supabase.**
+
+## 4. Nog expliciet open — essentieel voor daadwerkelijke 582-vrijgave
+
+1. Ontwerp, security-audit en autoriseer een **echte**, getypte database-bindingtabel en alleen-servermatige globale aliasprovisioning met RLS, uniekheid, migratie, audit en herstelplan. De SQL-smoke is bewust géén productiemigratie.
+2. Sluit de app-output aan **op de ene bestaande `writeSessionRow`** op basis van een **expliciet brongetypeerde selectie** uit programmavoorbeeld of vrije oefening. Controleer dat training-instance snapshots, crash/herstart, offline FIFO en retries die selectie onveranderd behouden. Nooit zomaar `TK`-achtige legacy IDs als catalogus behandelen. Totdat dit kan is de module **niet runtime actief**.
+3. Historische weergave van nieuwe `TKC`-sessies moet de serververifieerde binding gebruiken om de oorspronkelijke `TK`-catalogusinhoud te tonen. **Bestaande 103 `TK`-vormige sessies blijven ongewijzigd**.
+4. Volledige live-geïsoleerde acceptatie met twee accounts, 16 reeds aanwezige persoonlijk-scoped vormbotsingen, meerdere offline writes, accountwisseling, idempotente retry, nieuwe sessies, trainingsoverzicht en rollback; nooit proefmatig schrijven in de productieaccounts.
+5. Media server: `MOVEKIT_V2_NEW_CATALOG_EXECUTION_VERIFIED` moet uit blijven totdat 1–4 echt geslaagd zijn. 226 bestaande private-media-cutover kan apart. Alle overige licentie-/entitlement-/poster-/video-/Range-/Androidgates blijven gelden.
+
+**Geen vrijgavebesluit.** Deze code mag pas actief aan de Execution/Logging-keten worden verbonden wanneer de onderliggende database en releasevoorwaarden onafhankelijk zijn bewezen. Het gebruik van een client-side `verifiedBinding` callback is uitsluitend een aanvullende readiness-check, **geen servermatige machtiging**. De code is voorbereid om later veilig aangesloten te worden, maar lost #603 nog niet volledig op.

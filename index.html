@@ -35484,13 +35484,23 @@ async function deleteEquipmentCatalogItem(id){
   await ensureEquipmentCatalogLoaded();
   renderAdminEqCat();
 }
+// #603: Reserved globally provisioned catalog FK placeholders are persistence
+// references, NOT independently selectable exercises. Hide only global typed
+// aliases; never suppress user-created personal TK-looking legacy exercises.
+function tk504IsReservedGlobalFkStub(ex){
+  if(!ex||ex.scope!=='global'||typeof ex.id!=='string')return false;
+  const m=/^TKC-([0-9]{6})$/.exec(ex.id);
+  return !!(m&&Number(m[1])>=1&&Number(m[1])<=582);
+}
 async function ensureExercisesLoaded(){
   if(exercises.length)return exercises;
   if(_exercisesLoading)return _exercisesLoading;
   _exercisesLoading=(async()=>{
     const data=await sbGet('exercises','&order=sort_order.asc&active=eq.true');
-    exercises=data.length?data:[];
-    if(!exercises.length){
+    exercises=data.length?data.filter(ex=>!tk504IsReservedGlobalFkStub(ex)):[];
+    // A database containing only reserved FK references is not an empty
+    // exercise database: never auto-seed legacy defaults because they are hidden.
+    if(!exercises.length&&!data.length){
       const defs=[
         {id:'backsquat',name:'Backsquat',category:'A',type:'strength',pr:95,sort_order:1,active:true},
         {id:'bench',name:'Benchpress',category:'A',type:'strength',pr:80,sort_order:2,active:true},

@@ -9766,7 +9766,7 @@ async function openTrainingPreview(source,id){
   previewCtx={
     def, source, id,
     removedIds:new Set(),
-    swaps:{}, swapRefs:{},           // origineel exercise_id → vervangend exercise_id
+    swaps:{}, swapRefs:{}, swapCandidateFor:null, swapCandidateRefs:{}, // origineel exercise_id → vervangend exercise_id
     order:def.exercises.map(e=>e.exercise_id),
     swapPickerFor:null,
     adjustOpen:false,
@@ -10422,6 +10422,11 @@ function previewRenderSwapPicker(){
   // F23: bied alleen alternatieven aan die passen bij het beschikbare materiaal en niet vermeden zijn.
   // Veilige laag (AthleteConstraints): onbekende equipment blijft beschikbaar, valt nooit terug op leeg.
   alts=applyAthleteConstraintsCatalog(alts); // catalogusentries: naam uit identity.name (avoid-term)
+  // Trust only the actual catalog objects offered for THIS original exercise;
+  // never upgrade a personal TK-looking ID through an ID-only callback.
+  previewCtx.swapCandidateFor=exId;
+  previewCtx.swapCandidateRefs=Object.create(null);
+  alts.forEach(a=>{const ref=tk504CatalogSourceRefFromCatalog(a);if(ref)previewCtx.swapCandidateRefs[a.catalog_id]=ref;});
   const opts=alts.length?alts.map(a=>`<div class="lrow" style="align-items:center"><div style="flex:1;font-size:13px">${escHtml(previewExerciseName(a.catalog_id))}</div><button class="btn btn-o btn-sm" onclick="previewApplySwap('${escHtml(exId)}','${escHtml(a.catalog_id)}')">Kies</button></div>`).join('')
     :'<div style="font-size:12px;color:var(--g4)">Geen alternatieven gevonden</div>';
   return `<div style="margin-top:10px;border-top:1px solid var(--g1);padding-top:10px">
@@ -10434,7 +10439,10 @@ function previewApplySwap(origExId,newExId){
   if(!previewCtx)return;
   previewCtx.swaps[origExId]=newExId;
   // The preview swap UI selects only real catalog alternatives, not bare IDs.
-  previewCtx.swapRefs[origExId]=tk504CatalogSourceRefFromSelection(newExId);
+  const proposed=previewCtx.swapCandidateFor===origExId&&previewCtx.swapCandidateRefs&&previewCtx.swapCandidateRefs[newExId];
+  previewCtx.swapRefs[origExId]=tk504ValidateCatalogSourceRef(newExId,proposed);
+  previewCtx.swapCandidateFor=null;
+  previewCtx.swapCandidateRefs={};
   previewCtx.swapPickerFor=null;
   renderTrainingPreview();
 }

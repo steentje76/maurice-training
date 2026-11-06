@@ -55,3 +55,11 @@ De oorspronkelijke Builder was een informatieverliespunt: `custom_training_exerc
 - Nieuwe gerichte regressie `core/tk504CatalogProvenanceFlow.test.js`: oorspronkelijke 226 ECS-items, fraude/spoof/ontbrekende bron, ongepubliceerde 356, grenzen 1..582, Builder-sidecar, lokale én server-definities, snapshots, Preview-swap, normale en Guided-items.
 
 **Volgende harde release-gate:** de getypeerde bron moet na (her)start en offline FIFO met servermatig geverifieerde `TKC`-binding bij de **enige bestaande `writeSessionRow`** aankomen. Dat mag pas na geautoriseerde echte binding- en RLS-migratie. Oudere `TK`-vormige sessies krijgen geen retroactieve MoveKit-identiteit; historie vereist expliciete resolutie van `TKC` naar canonieke bron.
+
+## 6 november — previewkeuze uitsluitend brongetypeerd na daadwerkelijk aanbieden
+
+Bij samenvoegen met herstel-PR #587 is een belangrijk onderscheid aangetroffen: de alternatieven-UI gebruikt `WB.altList` (canonieke catalogus), maar de herstel-PR voegt ook een **handmatige keuze uit de oorspronkelijke centrale picker** toe. Daardoor zou een extra `previewApplySwap(id)`-callback bij een persoonlijke `TK-`-vormige oefening ten onrechte een MoveKit-claim kunnen afleiden uit alleen het ID.
+
+De bronclaim wordt daarom **niet meer uit de replacement-ID afgeleid**: `previewRenderSwapPicker` registreert alleen de daadwerkelijk voor die originele oefening aangeboden ECS-alternatieven en hun gecontroleerde bron, `previewApplySwap` consumeert die tijdelijke context één keer en wist die daarna. Bij een directe ID-call zonder aangeboden catalogusobject blijft de bron **onbekend**. De regressie verifieert zowel de negatieve ID-only-case als de juiste echte alternatiefkeuze.
+
+De afzonderlijke lokale integratie met PR #587 moet expliciet de nieuwe handmatige picker-callback op het **geselecteerde oefeningobject** laten controleren (niet op het ID). Dit blijft een integratievoorwaarde voor de gezamenlijke release; géén nieuwe UX of extra catalogus.

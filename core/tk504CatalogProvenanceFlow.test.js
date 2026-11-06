@@ -11,8 +11,8 @@ const catalog=JSON.parse(m[1]);
 assert.equal(catalog.catalog.length,226);
 const byId=new Map(catalog.catalog.map(c=>[c.catalog_id,c]));
 const cid='TK-000038',other='TK-000019';
-const uid=byId.get(cid),otherRec=byId.get(other);
-assert(uid&&otherRec);
+const uid=byId.get(cid),otherRec=byId.get(other),candidateRec=byId.get('TK-000001');
+assert(uid&&otherRec&&candidateRec);
 function take(name){
  const match=new RegExp('(?:async\\s+)?function\\s+'+name+'\\s*\\(').exec(html);
  assert(match,'Missing original function '+name);
@@ -26,7 +26,7 @@ function take(name){
 const names=['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection',
  'tk504ValidateCatalogSourceRef','tk504BuilderRefsFromPlan','tk504AttachSavedCatalogRefs',
  'snapshotFromVasteTraining','snapshotFromCustomTraining','getTrainingDefinition',
- 'previewWorkingList','previewApplySwap','previewBuildModifications',
+ 'previewWorkingList','previewRenderSwapPicker','previewApplySwap','previewBuildModifications',
  'buildResolvedExecutionItems','buildGuidedWorkoutPlan'];
 const script=names.map(take).join('\n');
 let renders=0;
@@ -41,7 +41,9 @@ const ctx=vm.createContext({
     if(table==='custom_training_exercises')return ctx.remoteTargets;
     return [];
   },remoteRows:[],remoteTargets:[],
-  previewCtx:null,previewRoleLabel:()=>'',previewResolveItemWeight:()=>42,
+  previewCtx:null,WB:{altList:()=>[candidateRec]},applyAthleteConstraintsCatalog:items=>items,
+  escHtml:x=>String(x),previewExerciseName:id=>id,
+  previewRoleLabel:()=>'',previewResolveItemWeight:()=>42,
   previewResolveItemDetrain:()=>null,renderTrainingPreview:()=>{renders++;},
   ExerciseAssetProvider:{poster:()=>null,hasVideo:()=>false},
   exercises:[],resolveCardioType:()=>null,Set,console
@@ -111,14 +113,24 @@ assert(!Object.hasOwn(normal[1],'tk504_catalog_ref'),
 const guided=ctx.buildGuidedWorkoutPlan(current);
 assert.equal(guided.items[0].tk504_catalog_ref.catalog_id,cid);
 assert(!Object.hasOwn(guided.items[1],'tk504_catalog_ref'));
-ctx.previewApplySwap(cid,other);
+const candidateId=candidateRec.catalog_id;
+ctx.previewApplySwap(cid,candidateId);
 assert.equal(renders,1);
+assert(!Object.hasOwn(ctx.previewWorkingList()[0],'tk504_catalog_ref'),
+ 'bare replacement ID without an offered catalog source is never promoted');
+ctx.previewCtx.swaps={};ctx.previewCtx.swapRefs={};
+ctx.previewCtx.swapPickerFor=cid;
+const offered=ctx.previewRenderSwapPicker();
+assert(offered.includes(candidateId));
+assert.equal(ctx.previewCtx.swapCandidateRefs[candidateId].provider_id,candidateRec.source.provider_id);
+ctx.previewApplySwap(cid,candidateId);
+assert.equal(renders,2);
 const swapped=ctx.previewWorkingList()[0];
-assert.equal(swapped.exercise_id,other);
-assert.equal(swapped.tk504_catalog_ref.catalog_id,other);
+assert.equal(swapped.exercise_id,candidateId);
+assert.equal(swapped.tk504_catalog_ref.catalog_id,candidateId);
 const mods=ctx.previewBuildModifications();
 assert.equal(mods[0].type,'swap');
-assert.equal(mods[0].tk504_catalog_ref.catalog_id,other);
+assert.equal(mods[0].tk504_catalog_ref.catalog_id,candidateId);
 const damaged={...ctx.previewCtx.swapRefs[cid],provider_id:'not-original'};
 ctx.previewCtx.swapRefs[cid]=damaged;
 assert(!Object.hasOwn(ctx.previewWorkingList()[0],'tk504_catalog_ref'),

@@ -9216,17 +9216,31 @@ async function sbPostQ(t,d,opts){
   // queue ('failed', IndexedDB niet beschikbaar) gaf hier tot v4.70.22 true — een valse succesmelding
   // terwijl de data nergens stond. Impactanalyse van alle aanroepers: DECISION_LOG DEC-QUEUE-001.
   let queueOnly=!!(opts&&opts.queueOnly); const ignoreDup=!!(opts&&opts.ignoreDuplicates)||!!TK_IDEMPOTENT_ZONDER_UPDATE[t];
+  // #603: server-verified TKC bindings are momentary authority, never durable
+  // offline grants. A lost connection must not persist a stale typed FK for replay.
+  const confirmedOnly=t==='sessions'&&!!(opts&&opts.tk504_binding);
+  const expectedOwner=confirmedOnly?opts.tk504_binding.owner_uid:null;
   const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation');
   const item=ignoreDup?{table:t,method:'POST',body:d,resolution:'ignore-duplicates'}:{table:t,method:'POST',body:d};
   const uit=function(status,http,reden){ if(opts&&typeof opts==='object'){opts.status=status;opts.reden=reden||null;} tkLogSchrijf(status,t,reden,http); return detail?tkSchrijfUitkomst(status,http,reden):(status==='confirmed'||status==='queued'); };
-  const queue=async function(http,reden){ const q=await offlineQueueAdd(item); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
+  const queue=async function(http,reden){
+    // #603: typed binding is valid for this authenticated ONLINE write only.
+    // A retry must re-verify authority; never save it for offline replay.
+    if(confirmedOnly)return uit('failed',http,reden||'offline');
+    const q=await offlineQueueAdd(item); updateOfflineBadge();
+    return q===true?uit('queued',http,reden):uit('failed',http,'opslag');
+  };
   // Sprint 7 (Track D, ACCOUNT_MISMATCH): zonder bekende eigenaar geen write en geen wachtrij-item —
   // zo'n item zou later onder de VOLGENDE gebruiker kunnen worden verstuurd.
   if(!tkEigenaarUid()) return uit('failed',null,'account');
+  if(confirmedOnly&&(!expectedOwner||tkEigenaarUid()!==expectedOwner))
+    return uit('failed',null,'account');
   let reden=queueOnly?'afhankelijk':null;
   // Sprint 7 (DEC-SYNC-002): staat de ouder van deze rij nog in de wachtrij, dan gaat deze rij er ook in.
   if(!queueOnly&&TK_WACHTRIJ_OUDERS[t]&&await tkWachtrijHeeftOuder(t,d)){ queueOnly=true; reden='afhankelijk'; }
   if(!navigator.onLine||queueOnly) return queue(null,navigator.onLine?reden:'offline');
+  // Awaiting FIFO dependency checks can itself span an account switch.
+  if(confirmedOnly&&tkEigenaarUid()!==expectedOwner)return uit('failed',null,'account');
   const magTimeout=!!(d&&d.id!=null&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||ignoreDup));
   try{
     const verzoek=sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:prefer,body:d});
@@ -9238,6 +9252,7 @@ async function sbPostQ(t,d,opts){
       if(sbRetryable(r.status)) return queue(r.status,r.status===401?'auth':'server');
       return uit('rejected',r.status,r.status===401||r.status===403?'toegang':'validatie');
     }
+    if(confirmedOnly&&tkEigenaarUid()!==expectedOwner)return uit('failed',r.status,'account');
     return uit('confirmed',r.status);
   }catch(e){
     console.warn('sbPostQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
@@ -18331,6 +18346,8 @@ async function saveLosOefening(btnEl){
       if(!ref)throw new Error('tk504_catalog_provenance_invalid');
       const binding=await tk504VerifySessionBinding({id:exId,tk504_catalog_ref:ref});
       if(!binding)throw new Error('tk504_catalog_fk_unverified');
+      // Stable original UUID across retry/timeout; new authority is rechecked.
+      row.id=tk504StableSessionId(sessionLog[LOS_DOMID]||(sessionLog[LOS_DOMID]={}));
       ok=await writeSessionRow(row,{tk504_binding:binding});
     }catch(_){toast('Beveiligde oefening niet opgeslagen: controleer verbinding en toegang');return;}
   }else{
@@ -24536,6 +24553,18 @@ function renderSessionSummaryContent(t){
 // Training (H2) te gebruiken zodat er één centrale trainingshistorie is. Geen
 // gedragswijziging voor de normale Execution: finishSession() bouwt/schrijft via deze
 // helpers en levert byte-equivalente rijen.
+function tk504StableSessionId(log){
+  // #603: a lost HTTP acknowledgement must replay the SAME UUID, not create a
+  // second workout row. Kept on the existing sessionLog entry until completion.
+  if(!log||typeof log!=='object')throw new Error('tk504_missing_session_log');
+  const old=log._tk504StableSessionId;
+  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if(old!=null){if(!uuid.test(old))throw new Error('tk504_invalid_session_uuid');return old;}
+  const next=newClientRowId();
+  if(!uuid.test(next))throw new Error('tk504_uuid_unavailable');
+  log._tk504StableSessionId=next;
+  return next;
+}
 async function writeSessionRow(row, opts){
   // #603: one canonical sessions writer. A reviewed, owner-bound FK mapping
   // is applied here, not duplicated in cardio/strength/Guided persistence.
@@ -24775,7 +24804,7 @@ async function finishSession(){
       // v4.70.4: alleen een AANTOONBAAR geslaagde write telt (sbPostQ geeft bij een PostgREST-400 false).
       // Retry schrijft een al gepersisteerde oefening niet opnieuw (geen dubbele rij).
       const _so=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,...(_so.tk504_binding?{id:tk504StableSessionId(l)}:{})},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
       saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -24793,7 +24822,7 @@ async function finishSession(){
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       const _soS=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
+      if(!l._sessionRowPersistedAt){ if(_soS.tk504_binding)row.id=tk504StableSessionId(l); const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.

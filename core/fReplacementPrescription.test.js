@@ -93,8 +93,8 @@ const intentA = { id: 'A', naam: 'A', type: 'strength', sets: 4, reps: '5', rpe:
   ok(b2.recent.weight === 58.5 && b2.recent.date === TODAY, '10: na loggen onder de nieuwe identity is die sessie de nieuwe recente basis');
 
   // ── Statisch: swap/replace/add via helper; geen prevS-fallback van A; geen dubbele readiness ──
-  ok(/const _rx=await canonicalNewExerciseItem\(newId, sessionExtra\[idx\]\)/.test(CONFIRM) && !/suggestedWeight:null/.test(CONFIRM), 'confirmSwapExercise via canonicalNewExerciseItem (geen suggestedWeight:null)');
-  ok(/canonicalNewExerciseItem\(replaced\.id, old\)/.test(REPLACE) && /canonicalNewExerciseItem\(replaced\.id, sessionExtra\[sxIdx\]\)/.test(REPLACE), 'execReplaceExercise: beide spiegels canonical');
+  ok(/const _rx=await canonicalNewExerciseItem\(newId,\{\.\.\.sessionExtra\[idx\],tk504_catalog_ref:sourceRef\}\)/.test(CONFIRM) && !/suggestedWeight:null/.test(CONFIRM), 'confirmSwapExercise via canonicalNewExerciseItem (geen suggestedWeight:null)');
+  ok(/canonicalNewExerciseItem\(replaced\.id,\{\.\.\.old,tk504_catalog_ref:sourceRef\}\)/.test(REPLACE) && /canonicalNewExerciseItem\(replaced\.id,\{\.\.\.sessionExtra\[sxIdx\],tk504_catalog_ref:sourceRef\}\)/.test(REPLACE), 'execReplaceExercise: beide spiegels canonical');
   ok(/async function addExConfirm/.test(ADD) && /await canonicalNewExerciseItem\(ex\.id, extra\)/.test(ADD), 'addExConfirm: toegevoegde oefening canonical');
   ok(!/recoveryWeightFactor|applySessionRecovery|computeProgAdjustment/.test(SRC.canonicalNewExerciseItem), 'helper past zelf geen readiness toe (dat doet de bestaande route één keer)');
   ok(!/suggestedWeight:\s*(intent|old|sessionExtra)/.test(SRC.canonicalNewExerciseItem), 'helper kopieert nooit een gewicht van de oude oefening');

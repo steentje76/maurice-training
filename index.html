@@ -6550,6 +6550,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/privateMoveKitV2MediaClient.js"></script>
 <script src="core/movekitV2ExerciseMediaBridge.js"></script>
 <script src="core/tk504ProtectedPlayback.js"></script>
+<script src="core/tk504PublishedCatalogRuntime.js"></script>
 <script src="core/organizationCore.js"></script>
 <script src="core/brandingCore.js"></script>
 <script src="core/organizationContextRuntime.js"></script>
@@ -7702,7 +7703,7 @@ function loadAuthSession(){
   }catch(e){return null;}
 }
 function saveAuthSession(s){
-  if(authSession&&authSession.user&&s&&s.user&&authSession.user.id!==s.user.id)tk504InvalidateProtectedMedia();
+  if(authSession&&authSession.user&&s&&s.user&&authSession.user.id!==s.user.id){tk504InvalidateProtectedMedia();tk504ClearPublishedCatalog();}
   authSession=s;
   localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s));
   SB_H.Authorization='Bearer '+s.access_token;
@@ -7710,6 +7711,7 @@ function saveAuthSession(s){
 }
 function clearAuthSession(){
   tk504InvalidateProtectedMedia();
+  tk504ClearPublishedCatalog();
   authSession=null;
   localStorage.removeItem(AUTH_SESSION_KEY);
   SB_H.Authorization='Bearer '+SB_KEY;
@@ -9591,8 +9593,55 @@ async function getTrainingInstance(instanceId){
 // #603: hard release hold. Do NOT enable until verified 582 manifest,
 // real server migration/RLS, two-account online+offline acceptance and owner gate.
 const TK504_TYPED_FK_SESSION_RELEASE = false;
+// #504/#603: authenticated 356-item extension of the EXISTING ECS. Never
+// enable without independently reviewed publishing, provenance and media gates.
+const TK504_PUBLISHED_CATALOG_RELEASE = false;
 // #603 — provenance is attached only by an explicit existing-catalog selection.
 // A bare TK-shaped ID, personal FK shadow, or editable exercise name is NOT proof.
+// The bridge is deliberately part of the real ExerciseCatalogService, not a
+// demo catalog. No network access or UI differences while the flag is OFF.
+let tk504PublishedCatalogRuntime=null;
+function tk504ClearPublishedCatalog(){
+  if(tk504PublishedCatalogRuntime){
+    try{if(tk504PublishedCatalogRuntime.clear())tk504InvalidateProtectedMedia();}catch(_){}
+  }
+}
+async function tk504RefreshPublishedCatalog(){
+  if(TK504_PUBLISHED_CATALOG_RELEASE!==true ||
+     TK504_TYPED_FK_SESSION_RELEASE!==true ||
+     typeof tk504PrivateEnabled!=='function'||!tk504PrivateEnabled())return false;
+  const current=authSession&&authSession.user&&authSession.user.id;
+  const token=authSession&&authSession.access_token;
+  if(!current||!token||typeof TK504PublishedCatalogRuntime==='undefined')return false;
+  try{
+    if(!tk504PublishedCatalogRuntime){
+      tk504PublishedCatalogRuntime=TK504PublishedCatalogRuntime.create({
+        catalog:EX_CATALOG,service:ExerciseCatalogService,
+        invalidatePicker:invalidateExPickerPool
+      });
+    }
+    const response=await fetch(tkApiUrl('/.netlify/functions/exercise-catalog-v2'),{
+      method:'GET',cache:'no-store',
+      headers:{Authorization:'Bearer '+token,Accept:'application/json'}
+    });
+    if(!response.ok)throw Error('TK504_CATALOG_NOT_RELEASED');
+    const answer=await response.json();
+    if(TK504_PUBLISHED_CATALOG_RELEASE!==true ||tkEigenaarUid()!==current)
+      throw Error('TK504_CATALOG_ACCOUNT_CHANGED');
+    tk504PublishedCatalogRuntime.mount(answer,current,tkEigenaarUid);
+    // The private V2 broker snapshots catalog identities at construction.
+    // Rebuild it after the new 356 entries become part of the SAME ECS.
+    tk504InvalidateProtectedMedia();
+    const countLabel=document.getElementById('lib-total');
+    if(countLabel)countLabel.textContent=ExerciseCatalogService.count();
+    const libPage=document.getElementById('s-library');
+    if(libPage&&libPage.classList.contains('active')&&typeof renderLibBody==='function')
+      renderLibBody();
+    return true;
+  }catch(_){
+    tk504ClearPublishedCatalog();return false;
+  }
+}
 function tk504CatalogSourceRefFromCatalog(c){
   if(!c||typeof c.catalog_id!=='string'||!/^TK-[0-9]{6}$/.test(c.catalog_id)||
       Number(c.catalog_id.slice(3))<1||Number(c.catalog_id.slice(3))>582||!c.source||
@@ -20540,6 +20589,7 @@ function tk504InvalidateProtectedMedia(){
     img.removeAttribute('data-tk504-protected');img._done=0;
   });}catch(_){}
   if(tk504MediaRuntime)tk504MediaRuntime.invalidate();
+  tk504MediaRuntime=null; // rebind current ECS after catalog mount/unmount
   try{document.querySelectorAll('video[data-tk504-protected]').forEach(v=>{
     v.pause();v.removeAttribute('src');v.removeAttribute('poster');v.load();
   });}catch(_){}
@@ -21431,7 +21481,13 @@ function _vslug(id){var c=ExerciseCatalogService.byId(id);return (c&&c.source)?c
 function _fmtDur(sec){sec=Math.round(sec||0);return Math.floor(sec/60)+':'+('0'+(sec%60)).slice(-2);}
 function _videoBlock(id){
   // Echte video beschikbaar → premium thumbnail-kaart die pas op klik de video laadt (nooit preload)
-  if(ExerciseAssetProvider.has(id,'video')){
+  // #504: newly authorized catalog entries use the same protected video UI,
+  // even though they deliberately have NO public ExerciseAssetProvider asset.
+  var protectedCatalog=typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()&&
+    typeof ExerciseCatalogService!=='undefined'&&
+    !!(ExerciseCatalogService.byId(id)&&ExerciseCatalogService.byId(id).source&&
+       ExerciseCatalogService.byId(id).source.provider==='movekit');
+  if(protectedCatalog||ExerciseAssetProvider.has(id,'video')){
     var src=tk504PrivateEnabled()?'':ExerciseAssetProvider.resolve(id,'video');
     var meta=(ExerciseAssetProvider.video&&ExerciseAssetProvider.video(id))||{};
     var poster=tk504PrivateEnabled()?null:ExerciseAssetProvider.poster(id);
@@ -35851,6 +35907,7 @@ async function startAppAfterAuth(){
   refreshHome();
   tkPaintBnav('s-home'); // App Shell: s-home is statisch al .active bij boot, go()-wrapper vuurt pas bij een echte wissel
   ensureExercisesLoaded().then(()=>loadTrainCfg());
+  tk504RefreshPublishedCatalog(); // only when independently released; no second ECS
   ensureEquipmentTypesLoaded();
   migrateLibraryFavoritesToSupabase(); // Sprint 6.0.1 — eenmalig, laadt ook favoriteExIds vroeg
   ensureExerciseGoalsLoaded(); // peakdoelen vroeg laden — voorkomt lege 'jouw doel'-weergave bij eerste render

@@ -64,10 +64,14 @@ function homeDf(sb, hdRuw) {            // de orkestratie van refreshHome (bronb
   const hq = sb.tkHealthQualified(hdRuw); const hd = hq.rows; const lh = hd[0];
   return lh ? sb.dagfactor(sb.hrvDagFactorPersonal(hd), lh.sleep, sb.tkCyclusFaseVandaag(lh), hq.signalen) : null;
 }
-async function draai(state) {
+async function draai(state, heeftPlan) {
   const sb = runtime(state);
   const df = homeDf(sb, state.hd);
-  await sb.tkReadinessVandaag(df, state.recRows || [], null);
+  // DEC-REC-001-B: dit historische rekenscenario heeft een expliciet plan.
+  // Test het ontbreken van een plan apart, zodat de nieuwe fail-closed regel niet wordt omzeild.
+  const explicietPlan = heeftPlan !== false;
+  const plan = explicietPlan ? { naam: 'Testtraining', _muscles: ['borst', 'rug'] } : null;
+  await sb.tkReadinessVandaag(df, state.recRows || [], plan, explicietPlan);
   const b = sb.window._tkReadiness;
   const adj = await sb.recoveryAdjustmentForToday(['borst'], {});
   return { sb: sb, df: df, besluit: b, herstel: b.herstel, start: adj };
@@ -90,7 +94,7 @@ function reeks(n, bron, start, fase) {
   return uit;
 }
 const kloon = function (x) { return JSON.parse(JSON.stringify(x)); };
-const REC = [{ pct: 80 }, { pct: 70 }];
+const REC = [{ muscle: 'borst', pct: 80, hours: 24 }, { muscle: 'rug', pct: 70, hours: 36 }];
 const VANDAAG = dag(0);
 const kern = function (r) { return [r.df.factor, r.df.cyclusFactor, r.df.basis, r.herstel ? [r.herstel.score, r.herstel.band, r.herstel.betrouwbaarheid] : null,
   [r.start.factor, r.start.score, r.start.band, r.start.confidence, r.start.setsDelta, r.start.rpeDelta], r.besluit.zone, r.besluit.trainingsadvies]; };
@@ -152,6 +156,23 @@ async function main() {
       eq([r.df.factor, r.df.hrvFactor, r.df.slaapFactor, r.df.cyclusFactor, r.df.basis], [oud.factor, oud.hrvFactor, oud.slaapFactor, oud.cyclusFactor, oud.basis], 'B10 volledig actuele invoer (fase ' + fase + '): dagfactor en onderdelen numeriek ongewijzigd');
     }
     eq([ref.df.factor, ref.herstel.score, ref.herstel.band, ref.herstel.betrouwbaarheid, ref.start.setsDelta, ref.start.rpeDelta], [1.05, 92, 'hoog', 'hoog', 0, 0], 'B11 referentiescenario uit #515 geeft dezelfde getallen (dagfactor 1.05, herstel 92 hoog)');
+    // DEC-REC-001-B: dezelfde gezonde brondata zonder expliciet trainingsplan heeft GEEN trainingsherstelscore.
+    const zonderPlan = await draai({ hd: reeks(30, 'wearable'), recRows: REC }, false);
+    eq([zonderPlan.herstel, zonderPlan.besluit.herstel, zonderPlan.besluit.trainingsadvies.soort], [null, null, 'geen_advies'], 'B11a geen expliciet plan -> geen trainingsherstelscore of trainingsadvies');
+    const zonderSpierbasis = await draai({ hd: reeks(30, 'wearable'), recRows: [{ muscle: 'borst', pct: 80, hours: null }] });
+    eq([zonderSpierbasis.herstel, zonderSpierbasis.besluit.herstel], [null, null], 'B11b plan zonder geldige spierherstelhistorie -> geen schijnscore');
+    const ontbrekendeGroep = await draai({ hd: reeks(30, 'wearable'), recRows: [REC[0]] });
+    eq([ontbrekendeGroep.herstel, ontbrekendeGroep.besluit.herstel], [null, null], 'B11c een geldige subset is geen complete dekking van alle geplande spieren');
+    const dubbeleGroep = await draai({ hd: reeks(30, 'wearable'), recRows: [REC[0], REC[0]] });
+    eq([dubbeleGroep.herstel, dubbeleGroep.besluit.herstel], [null, null], 'B11d dubbel getelde spier vervangt ontbrekende geplande spier niet');
+    const verkeerdeGroep = await draai({ hd: reeks(30, 'wearable'), recRows: [REC[0], { muscle: 'kuiten', pct: 90, hours: 10 }] });
+    eq([verkeerdeGroep.herstel, verkeerdeGroep.besluit.herstel], [null, null], 'B11e geldige maar niet-geplande spier vervangt ontbrekende spier niet');
+    for (const pct of [-0.5, 100.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const ongeldigePct = await draai({ hd: reeks(30, 'wearable'), recRows: [{ muscle: 'borst', pct: pct, hours: 24 }, REC[1]] });
+      eq([ongeldigePct.herstel, ongeldigePct.besluit.herstel], [null, null], 'B11f ongeldige spierherstelwaarde ' + String(pct) + ' maakt trainingsscore onbeschikbaar');
+    }
+    const ongeldigeUren = await draai({ hd: reeks(30, 'wearable'), recRows: [{ muscle: 'borst', pct: 80, hours: -1 }, REC[1]] });
+    eq([ongeldigeUren.herstel, ongeldigeUren.besluit.herstel], [null, null], 'B11g negatieve herstelduur maakt trainingsscore onbeschikbaar');
     // fail-closed blijft: zonder keuringslaag telt de fase van vandaag nog wel, een oude niet
     const fc = runtime({ hd: [] }, { zonderDeviceCore: true });
     eq([homeDf(fc, [{ date: VANDAAG, hrv: 450, sleep: 4, cyclus_fase: 'luteaal' }]).cyclusFactor, homeDf(fc, [{ date: dag(4), hrv: 450, sleep: 4, cyclus_fase: 'luteaal' }]).cyclusFactor], [0.97, 1], 'B12 fail-closed: fase van vandaag blijft werken, een oude fase niet');

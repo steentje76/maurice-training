@@ -19,6 +19,9 @@ async function run(testName,localChanges,serverChanges,shouldMatch){
     tkTrainingenOnbevestigd:()=>['tr-1'],
     tkMarkeerTrainingOnbevestigd:(id,on)=>marks.push({id,on}),
     sbGet:async table=>table==='custom_trainings'?[remote]:[{custom_training_id:'tr-1',...target}],
+    // TK-INT-01: deze test bewijst inhoudsbevestiging, met een betrouwbaar lege queue.
+    // De aparte fOfflineDeleteFailClosed-test bewijst juist de negatieve queue-scenario's.
+    offlineQueueAll:async()=>[],tkHuidigeUid:()=> 'athlete-1',
     localStorage:{setItem:()=>{}},
     renderCustomTrainBtns:()=>{rendered++;},renderCustomTrainList:()=>{},
     migrateLegacyWbSaved:async()=>{migrated++;},navigator:{onLine:false}

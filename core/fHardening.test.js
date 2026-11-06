@@ -518,7 +518,7 @@ ok(/resolvePickerEx\(newEx\.id\)/.test(execReplaceSrc), 'T2 (EX-REPLACE-3): gebr
 ok(/heeftData=execExerciseHasData\(exId\)/.test(execReplaceSrc), 'T3 (EX-REPLACE-2): controleert expliciet op reeds geregistreerde data vóór vervangen');
 ok(/gaan die gegevens verloren -- ze worden NIET automatisch overgezet/.test(execReplaceSrc), 'T3b: waarschuwt expliciet dat data NIET automatisch wordt omgezet -- exacte, veilige productregel uit de opdracht');
 ok(/delete sessionLog\[exId\]/.test(execReplaceSrc), 'T4: oude sessionLog-data voor de vervangen oefening wordt opgeruimd -- geen orphan/ghost-koppeling aan de nieuwe oefening');
-ok(/renderTrainScreen\(t\)/.test(execReplaceSrc), 'T5: hergebruikt de bestaande renderTrainScreen() -- geen tweede render-/execution-pad');
+ok(/rerenderTrainScreenKeepLog\(t\)/.test(execReplaceSrc) && /async function rerenderTrainScreenKeepLog\(t\)\{\s*await renderTrainScreen\(t\);/.test(html), 'T5: hergebruikt de bestaande renderTrainScreen() (via rerenderTrainScreenKeepLog, UX-LOG-01: + restoreSessionLogToDom) -- geen tweede render-/execution-pad');
 
 const execRemoveSrc = html.slice(html.indexOf('async function execRemoveExercise('), html.indexOf('async function execRemoveExercise(') + 1300);
 ok(/heeftData=execExerciseHasData\(exId\)/.test(execRemoveSrc), 'T6 (EX-REMOVE-eis): onderscheidt expliciet lege vs. reeds-gelogde oefening met verschillende bevestigingstaal');

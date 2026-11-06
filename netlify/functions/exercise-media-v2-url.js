@@ -174,7 +174,7 @@ async function verifyEntitlement(uid, serviceKey, fetchFn, now) {
           !Number.isFinite(Date.parse(item.expires_at)) ||
           Date.parse(item.expires_at) <= now()) return { ok: false, error: 'NO_ENTITLEMENT' };
     }
-    return { ok: true };
+    return { ok: true, expiresAt: item.expires_at === null ? null : Date.parse(item.expires_at) };
   } catch (_) { return { ok: false, error: 'GRANT_BACKEND_UNAVAILABLE' }; }
 }
 function signedUrl(raw, desc) {
@@ -195,13 +195,13 @@ function signedUrl(raw, desc) {
     return parsed.href;
   } catch (_) { return null; }
 }
-async function sign(desc, key, fetchFn) {
+async function sign(desc, key, fetchFn, ttlSeconds = TTL_SECONDS) {
   const url = BASE + '/storage/v1/object/sign/' + desc.bucket + '/' + desc.path;
   try {
     const result = await fetchFn(url, {
       method: 'POST', redirect: 'error', cache: 'no-store',
       headers: { Authorization: 'Bearer ' + key, apikey: key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ expiresIn: TTL_SECONDS })
+      body: JSON.stringify({ expiresIn: ttlSeconds })
     });
     if (!result || !result.ok) return null;
     const body = await result.json();
@@ -260,11 +260,28 @@ async function handle(event, deps = {}) {
     return failure(event, entitlement.error === 'GRANT_BACKEND_UNAVAILABLE' ? 503 : 403,
       entitlement.error);
   }
-  const url = await sign(desc, env.SUPABASE_SERVICE_ROLE_KEY, fetchFn);
+  // Cap requested TTL by the grant's remaining validity. The browser uses a
+  // conservative 30-second margin; direct Storage bearer replay remains a
+  // separately documented release boundary, not an instant-revocation claim.
+  const issuedAt = now();
+  const ttlSeconds = entitlement.expiresAt === null ? TTL_SECONDS :
+    Math.min(TTL_SECONDS, Math.floor((entitlement.expiresAt - issuedAt) / 1000));
+  if (ttlSeconds < 31) return failure(event, 403, 'ENTITLEMENT_EXPIRING');
+  const url = await sign(desc, env.SUPABASE_SERVICE_ROLE_KEY, fetchFn, ttlSeconds);
   if (!url) return failure(event, 502, 'SIGNED_MEDIA_UNAVAILABLE');
+  // Signing is asynchronous. A grant can expire or be revoked while Storage
+  // answers; do not release a newly signed bearer URL after that boundary.
+  const confirmed = await verifyEntitlement(uid, env.SUPABASE_SERVICE_ROLE_KEY, fetchFn, now);
+  if (!confirmed.ok) return failure(event,
+    confirmed.error === 'GRANT_BACKEND_UNAVAILABLE' ? 503 : 403, confirmed.error);
+  const expiresAt = issuedAt + ttlSeconds * 1000;
+  if (confirmed.expiresAt !== null && confirmed.expiresAt < expiresAt)
+    return failure(event, 403, 'ENTITLEMENT_CHANGED');
+  const remainingSeconds = Math.floor((expiresAt - now()) / 1000);
+  if (remainingSeconds < 31) return failure(event, 403, 'SIGNED_MEDIA_EXPIRED');
   return respond(event, 200, {
     ok: true, catalog_id: desc.catalog_id, type: desc.type, version: desc.version,
-    expires_in: TTL_SECONDS, url
+    expires_in: remainingSeconds, url
   });
 }
 exports.handler = event => handle(event, { env: process.env, fetch: globalThis.fetch, now: Date.now });

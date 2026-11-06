@@ -130,7 +130,7 @@ function check(label, func) {
     assert.equal(r.resp.statusCode,200);
     assert.equal(r.data.type,'poster');
     assert.equal(r.data.url,broker.BASE+'/storage/v1/object/sign/'+broker.POSTER_BUCKET+'/'+approvedPoster.storage_path+'?token=fake-signed-token');
-    assert.equal(r.calls.length,3);
+    assert.equal(r.calls.length,4);
   });
   await check('optimized poster hash mismatch blocks signing', async () => {
     const e = event(); e.body = JSON.stringify({catalog_id:video.catalog_id,type:'poster',version:'v2'});
@@ -228,7 +228,7 @@ function check(label, func) {
     assert.equal(r.data.url, signed);
     assert.equal(r.data.expires_in, 60);
     assert.equal(r.data.version, 'v2');
-    assert.equal(r.calls.length, 3);
+    assert.equal(r.calls.length, 4);
     assert.match(r.resp.headers['Cache-Control'], /no-store/);
     const grantCall = r.calls[1];
     const parsed = new URL(grantCall.url);

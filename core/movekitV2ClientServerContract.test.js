@@ -93,13 +93,13 @@ function build(opts = {}) {
   return {client,mock,identity};
 }
 (async()=>{
-  await check('video success via 3 server-side authorization calls', async()=>{
+  await check('video success via authorization, signing and post-sign grant confirmation', async()=>{
     const v=build();
     const result=await v.client.get(source.catalog_id,'video',owner);
     assert.equal(result.type,'video');
     assert.equal(result.expiresAt,now()+30000);
     assert.equal(result.version,'v2');
-    assert.equal(v.mock.calls.length,3);
+    assert.equal(v.mock.calls.length,4);
     assert.match(result.url,/\/exercise-media\/movekit\/v2\/video\//);
     assert.equal(v.client.activeUi,false);
     assert.equal(v.client.offlineDownloadReleased,false);
@@ -114,7 +114,7 @@ function build(opts = {}) {
     const result=await v.client.get(source.catalog_id,'poster',owner);
     assert.equal(result.type,'poster');
     assert.equal(result.expiresAt,now()+30000);
-    assert.equal(v.mock.calls.length,3);
+    assert.equal(v.mock.calls.length,4);
     assert.match(result.url,/\/exercise-posters\/movekit\/v2\/poster-optimized\//);
   });
   await check('default checked-in release registry blocks without network', async()=>{

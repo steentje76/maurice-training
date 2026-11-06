@@ -98,7 +98,7 @@ const intentA = { id: 'A', naam: 'A', type: 'strength', sets: 4, reps: '5', rpe:
   ok(/async function addExConfirm/.test(ADD) && /await canonicalNewExerciseItem\(ex\.id, extra\)/.test(ADD), 'addExConfirm: toegevoegde oefening canonical');
   ok(!/recoveryWeightFactor|applySessionRecovery|computeProgAdjustment/.test(SRC.canonicalNewExerciseItem), 'helper past zelf geen readiness toe (dat doet de bestaande route één keer)');
   ok(!/suggestedWeight:\s*(intent|old|sessionExtra)/.test(SRC.canonicalNewExerciseItem), 'helper kopieert nooit een gewicht van de oude oefening');
-  ok(/\{kg:prevS\.weight/.test(RENDER), 'bestaande no-basis-fallback in renderTrainScreen ongewijzigd (prevS is altijd keyed op het NIEUWE id)');
+  ok(RENDER.includes('strengthExecutionPrefill(ex,prevS)'), 'renderTrainScreen delegates target-aware fallback; no raw previous one-rep weight reused for a higher target');
   ok(/\{maxDays:7,\s*factor:1\.00\}[\s\S]*\{maxDays:Infinity,\s*factor:0\.80\}/.test(RULES_SRC), 'DEC-DETRAIN-001 ongewijzigd');
 
   if (msgs.length) console.log(msgs.join('\n'));

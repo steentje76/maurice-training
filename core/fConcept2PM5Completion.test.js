@@ -212,7 +212,7 @@ async function suite(C2L, html) {
     ['acceptedMuxSeq-guard weg', { live: s => s.replace("return res(false, 'before_acceptance');", "void 0;") }, R2 => R2.beforeAccept === true],
     ['11 als normale completion', { live: s => s.replace("n === 11 ? 'terminated'", "n === 11 ? 'logged'") }, R2 => R2.term11 !== 'terminated'],
     ['0x31-eis weg', { live: s => s.replace("if (meta.packetId != null && meta.packetId !== '0x31') return res(false, 'not_0x31');", '') }, R2 => R2.via32 === true],
-    ['automatische finishSession bij freeze', { html: h => h.replace("if(_fz) sessionLog[exId].c2Completed=_fz;", "if(_fz){ sessionLog[exId].c2Completed=_fz; if(typeof finishSession==='function') finishSession(); }") }, R2 => R2.training.spies.finishSession > 0],
+    ['automatische finishSession bij freeze', { html: h => h.replace("sessionLog[exId].c2Completed=_fz;", "sessionLog[exId].c2Completed=_fz; if(typeof finishSession==='function') finishSession();") }, R2 => R2.training.spies.finishSession > 0],
     ['loggability-eis weg', { html: h => h.replace("{ tr.note('terminal_not_loggable'); return null; }", "{ tr.note('terminal_not_loggable'); }") }, R2 => R2.zero === true]
   ];
   for (const [name, mut, detects] of sab) {

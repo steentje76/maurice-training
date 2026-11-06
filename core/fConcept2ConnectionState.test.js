@@ -132,7 +132,7 @@ const tick = () => new Promise((r) => setTimeout(r, 5));
     c.mount('exB', 'bikeerg');
     c._c2pair.exB.devices = [{ id: 'dev-1', name: 'PM5 430716776 Row', machineType: 'unknown', rssi: -40 }];
     c.tkErgSelect('exB', 0); await tick();
-    ok(c._dom['c2body-exB'].includes('Dit apparaat meldt zich als RowErg, maar je hebt BikeErg geselecteerd.'), 'M: naam-hint mismatch-melding');
+    ok(c._dom['c2body-exB'].includes('De Bluetooth-naam suggereert RowErg; het apparaattype is niet bevestigd. Je hebt BikeErg geselecteerd. Controleer je PM5.'), 'M: naam-hint mismatch-melding');
     ok(c._dom['c2body-exB'].includes('Ander apparaat kiezen') && c._dom['c2body-exB'].includes('Toch verbinden'), 'M: acties Ander apparaat kiezen / Toch verbinden');
     eq(t._st.calls.connect, 0, 'M: geen automatische connect bij hint-mismatch (maar ook geen hard block)');
     c.tkErgConnectDevice('exB', 0); await tick(); await tick();

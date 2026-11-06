@@ -156,8 +156,11 @@ ok(html.indexOf('id="lich-fig-front"') >= 0 && html.indexOf('id="lich-fig-back"'
    'F2: voor- en achterzijde zijn direct zichtbaar op het overzicht, niet achter een route');
 ok(html.indexOf('Nog geen verbanden vrijgegeven') >= 0, 'F3: de veilige verbandentoestand is intact');
 ok(!/minimaal \d+ (vergelijkbare )?waarnemingen/.test(html), 'F4: nog steeds geen verzonnen drempel voor verbanden');
-ok(html.indexOf('id="lich-hero"') >= 0 && html.indexOf('id="lich-checkin"') >= 0 && html.indexOf('id="lich-datastatus"') >= 0,
-   'F5: de goedgekeurde overzichtsblokken staan er ongewijzigd');
+const inzichtHtml = html.slice(html.indexOf('<div class="scr" id="s-inzicht">'), html.indexOf('<div class="scr" id="s-library">'));
+ok(!inzichtHtml.includes('id="lich-hero"') && !inzichtHtml.includes('id="lich-checkin"') &&
+   inzichtHtml.includes('id="lich-datastatus"') && inzichtHtml.includes('id="lich-metrics"') &&
+   inzichtHtml.includes('id="lich-fig-front"') && inzichtHtml.includes('id="lich-fig-back"'),
+   'F5: dubbele Home-dagkaart is verwijderd, hersteldetail/metingstrends en beide anatomiefiguren blijven intact');
 ok(html.indexOf("go('s-lich-spier')") >= 0 && html.indexOf('function renderLichaamSpierDetail') >= 0,
    'F6: het spiergroep-detail uit v4.28 is ongemoeid');
 ok(html.indexOf('calculateMuscleRecoveryPct') >= 0, 'F7: de bestaande herstelberekening is niet vervangen');

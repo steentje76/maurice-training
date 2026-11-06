@@ -75,8 +75,8 @@ console.log('D. confirmSwapExercise() ongewijzigd (identity/history-veiligheid)'
 var CONFIRM_FN = extractFn('confirmSwapExercise');
 ok(CONFIRM_FN.indexOf("sessionExtra[idx]={...sessionExtra[idx],id:newId") > -1,
   'D1: gekozen B wordt als B in sessionExtra gezet (toekomstige logging gebruikt B-ID)');
-ok(/delete sessionLog\[fromId\];delete pctSelection\[fromId\];delete rpeManual\[fromId\];delete warmupState\[fromId\];/.test(CONFIRM_FN),
-  'D2: lokale werksessie-staat van A wordt opgeruimd, niet naar B gemigreerd (geen A-B-vermenging)');
+ok(!/delete sessionLog\[fromId\]/.test(CONFIRM_FN) && /_retainedPerformed:true/.test(CONFIRM_FN) && !/sessionLog\[newId\]\s*=\s*sessionLog\[fromId\]/.test(CONFIRM_FN),
+  'D2 TK584: uitgevoerde A-sets blijven onder A behouden en worden niet naar B gekopieerd');
 ok(/const _rx=await canonicalNewExerciseItem\(newId, sessionExtra\[idx\]\)/.test(CONFIRM_FN) && CONFIRM_FN.indexOf('suggestedWeight:null') === -1,
   'D3 (GAP-P3-033): confirmSwapExercise() bepaalt het gewicht van B canonical opnieuw (loadStrengthBasis→resolveWorkingWeight) i.p.v. blind te wissen -- geen A-gewicht, geen conversie');
 ok(!/suggestedWeight\s*[:=]\s*(?!null)[^,}]+/.test(CONFIRM_FN.replace(/id:newId,naam:newEx\.name,type:newEx\.type\|\|sessionExtra\[idx\]\.type,suggestedWeight:null/, '')),

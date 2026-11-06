@@ -296,7 +296,7 @@ ok(D.VERBAND_DEFINITIES.every(x => x.methode === 'spearman'), 'methode blijft Sp
 ok(/s-lich-gegevens/.test(html), 'Sprint 9 — scherm Gezondheidsgegevens & koppelingen staat er nog');
 ok(/s-lich-verband/.test(html) && /s-lich-metric/.test(html), 'verband- en metricdetail staan er nog');
 ok(/Wat betekent dit voor vandaag\?/.test(html), 'bestaande coach-knop is niet vervangen');
-ok(/Welke training past hierbij\?/.test(html), 'bestaande trainingsknop is niet vervangen');
+ok(/\{id:'trainen',label:'Trainen',[\s\S]*?target:function\(\)\{[\s\S]*?'s-train-mgr'/.test(html) && /<div class="scr" id="s-train-mgr">/.test(html), 'training blijft bereikbaar via de primaire Trainen-tab en de bestaande traininghub');
 /* Deze twee controles toetsen een INVARIANT, geen momentopname. Ze stonden hier eerst als
  * letterlijke versiestrings ('v4.34.0' en 'v43400'). Dat had twee nadelen: elke volgende
  * versiebump liet ze onterecht falen, en toen bij een upload sw.js ontbrak, meldde de gate

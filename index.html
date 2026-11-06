@@ -914,7 +914,7 @@ body{display:flex;justify-content:center}
    Alleen presentatie; geen handlers, ID's, routing of businesslogica. */
 
 /* Compacte canonical header. */
-#s-profiel .hdr,#s-settings .hdr{padding-top:14px;padding-bottom:6px}
+#s-profiel .hdr,#s-settings .hdr{padding-top:max(52px,calc(14px + env(safe-area-inset-top,0px)));padding-bottom:6px}
 #s-profiel .hdr-title,#s-settings .hdr-title{font-size:23px;line-height:1.15}
 #s-profiel .hdr-sub,#s-settings .hdr-sub{font-size:12.5px;margin-top:2px}
 /* Canonical terugnavigatie "‹ Profiel" i.p.v. een grote X. */
@@ -1126,8 +1126,16 @@ canvas{width:100%;height:100%}
 /* Fullscreen bottomsheet: modal vult het scherm, alleen de lijst scrollt.
    Zoekbalk/filters (sticky top) en actieknoppen (sticky bottom) blijven altijd zichtbaar,
    ook wanneer het toetsenbord open staat — zie ook initExPickerKeyboardFix() in JS. */
+#m-ex-picker{z-index:1300}
+.ex-pick-filter-details{margin:0 0 8px;font-size:12px}
+.ex-pick-filter-details summary{cursor:pointer;padding:6px 0;font-weight:700}
+#m-ex-picker.ex-pick-compact .pk-pt{display:none}
+#m-ex-picker.ex-pick-compact .pk-grid{grid-template-columns:1fr;gap:6px}
+#m-ex-picker.ex-pick-compact .pk-gcard{min-height:52px;padding-right:44px}
+#m-ex-picker.ex-pick-compact .pk-nm{margin-top:4px}
+#m-ex-picker.ex-pick-compact .ex-pick-sticky-bottom{padding-top:6px;padding-bottom:6px}
 .ex-pick-modal .modal{height:100dvh;max-height:100dvh;border-radius:0;padding:0;overflow:hidden;display:flex;flex-direction:column}
-.ex-pick-sticky-top{flex-shrink:0;padding:16px 18px 0;background:var(--card)}
+.ex-pick-sticky-top{flex-shrink:0;padding:calc(12px + env(safe-area-inset-top,0px)) 18px 0;background:var(--card)}
 .ex-pick-sticky-bottom{flex-shrink:0;padding:12px 18px calc(14px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--g2)}
 .ex-pick-search{width:100%;border:1px solid var(--g2);border-radius:10px;padding:10px 12px;font-family:var(--f);font-size:15px;background:var(--g1);margin-bottom:8px}
 .ex-pick-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;max-height:98px;overflow-y:auto}
@@ -3046,6 +3054,21 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-goto b{display:block;font-size:13.5px;font-weight:800;color:var(--dark);line-height:1.3}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-goto s{display:block;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--g4);margin-top:2px;line-height:1.35}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-goto .chev{font-size:19px;font-weight:700;color:var(--g3);flex:0 0 auto}
+/* Compacte contextlijst op Inzicht: een kaart met vier bestaande detailroutes. */
+#s-inzicht .inzicht-context-list{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:2px 12px;overflow:hidden}
+#s-inzicht .inzicht-context-list .lich-goto{min-height:54px;margin:0;border-radius:0;box-shadow:none;padding:11px 4px;background:transparent}
+#s-inzicht .inzicht-context-list .lich-goto+.lich-goto{border-top:1px solid var(--color-border)}
+#s-inzicht .inzicht-context-list .lich-goto:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
+#s-inzicht .inzicht-context-list .lich-goto .ic{background:var(--color-primary-soft);color:var(--color-primary)}
+#s-inzicht .inzicht-context-list .lich-goto .ic svg{width:20px;height:20px;stroke:currentColor}
+/* Inzicht V2 — Verbanden: afzonderlijke kaarten met vaste ruimte en de primaire mintkleur.
+   Alleen presentatie: geen aanpassing aan evidence/selectie of berekening. */
+#s-inzicht #lich-relations{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+#s-inzicht #lich-relations>.lich-vrow{margin-bottom:0}
+#s-inzicht #lich-relations .lich-vrow .cls.s3,
+#s-inzicht #lich-relations .lich-vrow .cls.s2{background:var(--color-primary-soft);color:var(--color-primary)}
+#s-inzicht #lich-relations+.lich-goto .ic{background:var(--color-primary-soft);color:var(--color-primary)}
+#s-inzicht #lich-relations+.lich-goto .ic svg{width:20px;height:20px;stroke:currentColor}
 /* Anatomiekaart op het overzicht — beide zijden tegelijk, direct zichtbaar. */
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-anatcard{padding:12px 12px 10px}
 :is(#s-inzicht,#s-lich-spieren,#s-lich-spier,#s-lich-health,#s-lich-metingen,#s-lich-metric,#s-lich-oefeningen,#s-lich-verband,#s-lich-gegevens) .lich-seg{display:flex;background:var(--g1);border-radius:999px;padding:3px;gap:2px;margin-bottom:10px}
@@ -3183,7 +3206,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tpv2-ovc{flex:1;background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;padding:12px;text-align:center}
 .tpv2-ovc .v{font-size:20px;font-weight:800;color:var(--dark)}
 .tpv2-ovc .k{font-size:11px;color:var(--g4);font-weight:600;margin-top:2px}
-.tpv2-excard{display:flex;gap:11px;align-items:flex-start;background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;padding:11px;margin-bottom:9px;cursor:pointer;text-align:left;width:100%;font-family:var(--f)}
+.tpv2-excard{display:grid;grid-template-columns:52px minmax(0,1fr);gap:11px;align-items:flex-start;background:var(--card,#fff);border:1px solid var(--g1);border-radius:14px;padding:11px;margin-bottom:9px;cursor:pointer;text-align:left;width:100%;font-family:var(--f)}
 .tpv2-excard.cur{border-color:var(--teal,var(--accent));box-shadow:0 0 0 1px var(--teal,var(--accent)) inset}
 .tpv2-exthumb{width:52px;height:52px;flex-shrink:0;border-radius:11px;background:var(--g1);object-fit:cover;display:flex;align-items:center;justify-content:center;color:var(--g3);font-size:20px}
 .tpv2-exb{flex:1;min-width:0}
@@ -3191,7 +3214,11 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .tpv2-exnm{font-size:14px;font-weight:800;color:var(--dark);margin:1px 0 4px}
 .tpv2-extags{display:flex;gap:5px;flex-wrap:wrap}
 .tpv2-tag{font-size:10px;font-weight:700;color:var(--g4);background:var(--g1);padding:2px 7px;border-radius:999px}
-.tpv2-exmeta{font-size:12px;font-weight:800;color:var(--dark);flex-shrink:0;text-align:right}
+.tpv2-exmeta{grid-column:2;font-size:12px;font-weight:800;color:var(--dark);text-align:left;overflow-wrap:anywhere}
+.tpv2-exactions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.tpv2-exactions button{min-width:44px;min-height:44px}
+.tpv2-exb{overflow-wrap:anywhere}
+.set-field[aria-invalid="true"]{outline:2px solid var(--red,#c0392b)}
 .tpv2-exwhy{font-size:11.5px;color:var(--g4);margin-top:6px;line-height:1.4}
 .tpv2-exwu{font-size:11px;font-weight:700;color:var(--teal,var(--accent));margin-top:5px}
 .tpv2-excard--prep{border-color:var(--teal,var(--accent));box-shadow:0 0 0 1px var(--teal,var(--accent)) inset;background:linear-gradient(0deg,var(--card,#fff),var(--card,#fff)) padding-box}
@@ -3498,6 +3525,17 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .nk-ai-typing span:nth-child(2){animation-delay:.15s}
 .nk-ai-typing span:nth-child(3){animation-delay:.3s}
 @keyframes nkTypingBlink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* TK582-010: input space stays stable when e1RM/AMRAP/active-set content appears. */
+.tks-setcard .set-row.setr{display:grid;grid-template-columns:26px minmax(0,1fr) 52px;align-items:start}
+.setr-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}
+.setr-cell-rpe{min-width:0}
+.setr-e1rm{grid-column:1/-1;min-width:0;overflow-wrap:anywhere}
+@media(max-width:430px){
+  .setr-cells{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .setr-cell-rpe{grid-column:1/-1;align-items:stretch;justify-self:stretch}
+  .setr-cell-rpe .rpe-stepper-v{width:100%;box-sizing:border-box}
+}
 </style>
 </head>
 <body>
@@ -3749,7 +3787,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   <div class="hdr">
     <div id="v43-home-head"></div>
     <div id="offline-badge" style="display:none;margin-top:8px;font-size:11px;font-weight:700;color:var(--y,#b8860b);background:rgba(184,134,11,.12);border-radius:8px;padding:2px 8px;width:fit-content;cursor:pointer" onclick="openOfflineQueueModal()"></div>
-    <button class="ibtn" onclick="go('s-social')" aria-label="Naar Sociaal" style="position:absolute;top:12px;right:12px">👥</button>
   </div>
   <div class="scroll" id="home-theme" data-day="goed" style="padding-top:10px">
     <div id="home-dash" style="display:none"></div>
@@ -3760,7 +3797,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <!-- Sprint 14 — readiness van de dag: tussen het coachbericht en het trainingsplan, zodat de
          sporter eerst leest wat vandaag betekent en dan direct doorkan naar de training. -->
     <div id="home-readiness"></div>
-    <div id="home-context" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <!-- GAP-P2-008 — hervatbare training: staat bewust VOOR "Vandaag gepland". Een lopende
          sessie afmaken gaat voor een nieuwe starten. Geen kaart wanneer niets hervatbaar is. -->
     <div id="home-resume"></div>
@@ -3775,7 +3811,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="home-f7-attention" class="hcoach-item" style="margin-bottom:14px"></div>
     <!-- S1 — "Recente vooruitgang": bestaande improvementsDigest (tot nu alleen op Stats) nu ook op Home. Presentatie-only, verschijnt alleen bij echte vooruitgang. -->
     <div id="home-improve" class="hcoach-item" style="margin-bottom:14px"></div>
-    <div id="home-motivatie" class="hcoach-item" style="margin-bottom:4px"></div>
     <div class="v43-lbl" style="margin:20px 2px 10px">Snelacties</div>
     <div id="home-quick" style="margin-bottom:8px"></div>
     <!-- Verborgen, behouden voor render/tests — wonen op Home v2 niet meer (bereikbaar via Training/Logboek/Lichaam) -->
@@ -4497,8 +4532,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
          rechtstreeks onder Inzicht. Zelfde element-id's en dezelfde renderer (renderLichaam), dus
          geen tweede dataketen. -->
     <div id="inzicht-herstel" style="margin-top:18px">
-    <div id="lich-hero"></div>
-    <div id="lich-checkin"></div>
+    <!-- Dagadvies en dagelijkse check-in zijn exclusief op Vandaag/Home. -->
     <div id="lich-datastatus"></div>
 
     <div class="v43-lbl" style="margin:12px 0 8px">Herstel &amp; belasting</div>
@@ -4524,9 +4558,6 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div id="lich-relations"></div>
     <button class="lich-goto" onclick="go('s-lich-verbanden')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="7" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="17" r="2"/><path d="M7.8 8.2L11 15.3M16.4 7.3L13 15.3"/></svg></span><span class="b"><b>Alle verbanden</b><s>Wat lijkt bij jou samen te hangen?</s></span><span class="chev">›</span></button>
 
-    <div class="v43-lbl" style="margin:16px 0 10px">Wat betekent dit?</div>
-    <button class="lich-goto" onclick="go('s-coach')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.2 3.2L16.4 7.6 13.2 8.8 12 12l-1.2-3.2L7.6 7.6l3.2-1.2z"/><path d="M5 16l.7 1.8L7.5 18.5l-1.8.7L5 21l-.7-1.8L2.5 18.5l1.8-.7z"/></svg></span><span class="b"><b>Wat betekent dit voor vandaag?</b><s>De coach legt uit en adviseert</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="curT?go('s-train-'+curT.toLowerCase()):go('s-train-mgr')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5l11 11M4 4l3 3M20 20l-3-3M2 8l4-4M22 16l-4 4M14 4l3 3-8 8-3-3z"/></svg></span><span class="b"><b>Welke training past hierbij?</b><s>Je trainingen en de planning van vandaag</s></span><span class="chev">›</span></button>
     </div>
 
     <div class="v43-lbl" style="margin:18px 0 10px">Domeinen</div>
@@ -4534,10 +4565,13 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 
     <!-- Routes die geen eigen domein hebben. Stonden op het vroegere Lichaam-scherm. -->
     <div class="v43-lbl" style="margin:18px 0 10px">Gegevens &amp; context</div>
-    <button class="lich-goto" onclick="go('s-lich-cyclus')"><span class="ic">🌙</span><span class="b"><b>Cyclus</b><s>Optioneel: menstruatie registreren als trainingscontext</s></span><span class="chev">›</span></button>
+    <div class="inzicht-context-list" role="group" aria-label="Gegevens en context">
+    <button class="lich-goto" onclick="go('s-lich-metingen')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="3"/><path d="M8 21l1-8-3-3 2-2m8 13-1-8 3-3-2-2M9 12h6"/></svg></span><span class="b"><b>Lichaamssamenstelling</b><s>Metingen, samenstelling, historie</s></span><span class="chev">›</span></button>
     <button class="lich-goto" onclick="go('s-lich-gegevens')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="8" width="6" height="10" rx="1"/><rect x="14" y="5" width="6" height="13" rx="1"/><path d="M7 18v2M17 18v2"/></svg></span><span class="b"><b>Gezondheidsgegevens &amp; koppelingen</b><s>Waar je gegevens vandaan komen en wat er gekoppeld is</s></span><span class="chev">›</span></button>
-    <button class="lich-goto" onclick="go('s-nutrition')"><span class="ic">🍽️</span><span class="b"><b>Voeding rond je training</b><s>Vrije invoer van kcal en macro's, zonder product</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-lich-cyclus')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5 8.5 8.5 0 1 0 20.5 14.6Z"/></svg></span><span class="b"><b>Cyclus</b><s>Optioneel: menstruatie registreren als trainingscontext</s></span><span class="chev">›</span></button>
+    <button class="lich-goto" onclick="go('s-nutrition')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M16 3c3 2 4 5 4 8v2h-5V8c0-2 .4-4 1-5ZM20 13v8"/></svg></span><span class="b"><b>Voeding rond je training</b><s>Vrije invoer van kcal en macro's, zonder product</s></span><span class="chev">›</span></button>
 
+    </div>
     <div class="v43-lbl" style="margin:18px 0 10px">Recente inzichten</div>
     <div id="inzicht-recent-list"></div>
 
@@ -4595,7 +4629,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <button class="vd-chip" aria-pressed="false" onclick="voedingOpenPhotoUnavailable()">Foto</button>
       <button class="vd-chip" aria-pressed="false" onclick="voedingOpenCustomProductForm()">Eigen</button>
     </div>
-    
+
     <div id="voeding-search-results" aria-live="polite"></div>
     <button style="width:100%;background:var(--card);border-radius:12px;margin:4px 0 12px;padding:12px;text-align:left;border:none;font-size:14px;color:var(--color-primary);font-weight:600;cursor:pointer" onclick="voedingOpenCustomProductForm()">+ Zelf product toevoegen</button>
   </div>
@@ -4929,6 +4963,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
 
     <!-- SECTION 2 — Jouw training: Mijn trainingen / Programma's / Planning (Level 3). -->
+    <div class="v43-lbl" id="trainen-ritme-heading" style="display:none;margin:20px 0 8px">Trainingsritme</div>
+    <div id="home-context" class="hcoach-item" style="display:none;margin-bottom:14px"></div>
     <div class="v43-lbl" style="margin:20px 0 8px">Jouw training</div>
     <div class="tk-card tk-card-l3" style="display:flex;padding:0">
       <button onclick="go('s-train-mine')" style="flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 10px;border:none;background:none;cursor:pointer;font-family:var(--f);text-align:left"><span class="tk-icon-box tk-icon-box-sm"><svg class="tk-icon" data-icon="programma" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><span style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:var(--color-text-primary)">Mijn trainingen<svg class="tk-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--color-text-muted)"><path d="M9 5l7 7-7 7"/></svg></span><span style="font-size:11px;color:var(--color-text-secondary);display:block">Schema's &amp; eigen workouts</span></button>
@@ -5336,7 +5372,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
   </div>
   <div class="scroll" style="padding-top:8px">
     <div id="pbd-ex-list"></div>
-    <button class="btn btn-o" onclick="addBlockExercise()" style="margin-top:4px">+ Oefening toevoegen</button>
+    <button id="pbd-add-btn" class="btn btn-o" onclick="addBlockExercise()" style="margin-top:4px">+ Oefening toevoegen</button>
     <button id="pbd-start-btn" class="btn btn-r" style="margin-top:10px;width:100%" onclick="startProgramBlockTraining(curProgramBlockId)">▶ Start deze training</button>
   </div>
   <nav class="bnav" role="navigation" aria-label="Hoofdnavigatie"></nav>
@@ -5738,8 +5774,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
       <div class="modal-title">📚 Kies een oefening<span id="ex-pick-count" style="font-weight:600;font-size:12.5px;color:var(--g4);margin-left:7px"></span></div>
       <input type="text" class="ex-pick-search" id="ex-pick-search" placeholder="Zoek op naam…" oninput="renderExPickerList()">
       <div class="ex-pick-quickfilters" id="ex-pick-quickfilters"></div>
-      <div class="pk-catlbl">Categorieën</div>
-      <div class="ex-pick-filters" id="ex-pick-filters"></div>
+      <details class="ex-pick-filter-details"><summary>Filters</summary>
+      <div class="ex-pick-filters" id="ex-pick-filters"></div></details>
     </div>
     <div class="ex-pick-list" id="ex-pick-list"></div>
     <div class="ex-pick-sticky-bottom" style="display:flex;gap:8px">
@@ -6558,6 +6594,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/concept2Live.js"></script>
 <script src="core/concept2Csafe.js"></script>
 <script src="core/concept2Programming.js"></script>
+<script src="core/concept2FiniteTransfer.js"></script>
 <script src="core/weather.js"></script>
 <script src="core/cycle.js"></script>
 <script src="core/cycleTraining.js"></script>
@@ -7059,7 +7096,7 @@ var _c2pair={}, _c2liveLast={};
    de fysieke verbinding (generation + deviceId), niet die van de UI. Geen tweede source of
    truth: _c2pair blijft eigenaar van de presentatie, _c2rt uitsluitend van de runtime. */
 var _c2rt={};
-function _c2rtSet(exId, generation, deviceId, prog, agg){ _c2rt[exId]={ generation:generation, deviceId:deviceId, prog:prog, agg:agg }; }
+function _c2rtSet(exId, generation, deviceId, prog, agg){ _c2rt[exId]={ generation:generation, deviceId:deviceId, prog:prog, agg:agg, ownerUid:(typeof tkEigenaarUid==='function'?tkEigenaarUid():null) }; }
 /* Levert de runtime alleen wanneer generation EN device overeenkomen; anders is het een
    andere verbinding of een ander PM5 en mag de oude runtime nooit hergebruikt worden. */
 function _c2rtGet(exId, generation, deviceId){
@@ -7071,6 +7108,7 @@ function _c2rtGet(exId, generation, deviceId){
 function _c2rtTeardown(exId, reason){
   var r=_c2rt[exId]; if(!r) return;
   try{ if(r.prog) r.prog.cancel(reason||'teardown'); }catch(_e){}
+  try{ if(r.finiteTx) r.finiteTx.cancel(reason||'teardown'); }catch(_e){}
   try{ if(r.agg) r.agg.reset(); }catch(_e){}
   delete _c2rt[exId];
 }
@@ -7159,9 +7197,10 @@ function _c2deviceList(exId, devs){
   var rows=devs.map(function(d,i){
     var mt=d.machineType&&d.machineType!=='unknown'? (({rowerg:'RowErg',skierg:'SkiErg',bikeerg:'BikeErg'}[d.machineType])||'Concept2 PM5') : null;
     var sig=CL?CL.signalLabel(d.rssi):''; var last4=d.id?('#'+String(d.id).slice(-4)):'';
-    var meta=[mt, sig, last4].filter(Boolean).join(' · ');
+    var serial=CL&&CL.pm5SerialFromName?CL.pm5SerialFromName(d.name):null;
+    var meta=[mt, sig, serial?'PM5 ID '+serial+' (Bluetooth-naam)':('ID nog onbekend · BLE '+last4)].filter(Boolean).join(' · ');
     return '<button onclick="tkErgSelect(\''+exId+'\','+i+')" style="display:flex;align-items:center;width:100%;text-align:left;border:1px solid var(--g2,#e3e7e9);background:#fff;border-radius:12px;padding:10px 12px;margin-top:8px;cursor:pointer">'+
-      '<div style="flex:1"><div style="font-weight:700;color:var(--g5,#1a2b33);font-size:13px">Concept2 PM5</div><div style="font-size:11px;color:var(--g4)">'+(meta||'')+'</div></div>'+
+      '<div style="flex:1"><div style="font-weight:700;color:var(--g5,#1a2b33);font-size:13px">Concept2 PM5</div><div style="font-size:11px;color:var(--g4)">'+escHtml(meta||'')+'</div></div>'+
       '<span style="color:var(--g3);font-size:18px">›</span></button>';
   }).join('');
   return '<div style="font-size:11.5px;color:var(--g4);margin-bottom:2px">Tik op je apparaat om te verbinden</div>'+rows;
@@ -7211,7 +7250,27 @@ function _c2connectedInner(exId, cm){
   if(_fz){ var _los=(typeof LOS_DOMID!=='undefined'&&exId===LOS_DOMID);
     line='<div style="font-size:12px;font-weight:700;margin-bottom:4px;color:'+(_fz.reason==='terminated'?'var(--orange,#b45309)':'var(--green)')+'">'+(_fz.reason==='terminated'?'Workout afgebroken op de PM5 — resultaat vastgelegd':'✓ Workout voltooid op de PM5')+(_los?' · tik Opslaan':' · wordt opgeslagen bij Training afronden')+'</div>'+line; }
   return '<div style="font-weight:800;color:var(--g5,#1a2b33);font-size:13px;margin-bottom:6px"><span style="color:var(--green)">🟢</span> '+(_C2ERGLBL[st.cardioType]||'Concept2')+' verbonden · <span style="font-weight:600;color:var(--g4);font-size:11px">Concept2 PM5</span></div>'+
+    (st.identityInfo?'<div style="font-size:12px;margin:6px 0">'+escHtml(st.identityInfo)+'</div>':'<div style="font-size:12px;margin:6px 0">PM5 ID niet uitgelezen</div>')+
     line+'<button class="btn btn-o btn-sm" style="font-size:12px;margin-top:8px" onclick="tkErgDisconnect(\''+exId+'\')">Verbinding verbreken</button>';
+}
+function tkReadPm5Identity(exId,st,t,targetId){
+      st.identityInfo=null;
+      // Optional read after real connect; a late result from another connection is discarded.
+      if(typeof t.getDeviceInfo==='function'){
+        const lease=typeof t.getControlContext==='function'?t.getControlContext():null;
+        Promise.resolve(t.getDeviceInfo()).then(function(info){
+          if(_c2pair[exId]!==st||!st.connected||st.deviceId!==targetId||!info||info.deviceId!==targetId)return;
+          const current=typeof t.getControlContext==='function'?t.getControlContext():null;
+          if(lease&&current&&lease.generation!==current.generation)return;
+          const parts=[info.serialNumber?'PM5 ID '+info.serialNumber+' (uitgelezen)':'PM5 ID niet beschikbaar'];
+          if(info.reportedMachineType){
+            parts.push('Apparaat: '+_c2mLabel(info.reportedMachineType));
+            if(info.reportedMachineType!==st.mt)parts.push('Ander apparaattype dan deze oefening; verbreek de verbinding en kies de juiste oefening.');
+          }else parts.push('Apparaattype niet bevestigd');
+          st.identityInfo=parts.join(' · ');
+          _c2repaint(exId,_c2connectedInner(exId,st.lastCm||null));
+        }).catch(function(){});
+      }
 }
 function tkErgConnectDevice(exId, idx){
   var st=_c2pair[exId]; var t=tkDeviceTransport(); if(!st||!t) return; var d=st.devices[idx]; if(!d) return;
@@ -7236,6 +7295,7 @@ function tkErgConnectDevice(exId, idx){
       st._connecting=false;
       if(!res||res.connected!==true){ _c2repaint(exId, _c2note('Verbinding mislukt. Probeer opnieuw.')+_c2btn(exId,'Opnieuw zoeken')); return; }
       st.connected=true; st.wasConnected=true; st.deviceId=d.id; st.lastDevice=d;
+      tkReadPm5Identity(exId,st,t,d.id);
       // Gate A.4: één canonieke PM5-aggregator per verbinding, op dezelfde st-scope.
       // De multiplexed 0x31/0x32-events zijn partial; Concept2Live voegt ze samen en
       // mapt RAW->canonical. Geen merge- of mappinglogica hier.
@@ -7250,12 +7310,33 @@ function tkErgConnectDevice(exId, idx){
       try{
         if(typeof Concept2Programming!=='undefined'&&Concept2Programming.createProgrammingController&&typeof t.writeControlFrame==='function'){
           st._prog=Concept2Programming.createProgrammingController({ write:function(b){ return t.writeControlFrame(b); } });
-          if(typeof t.setControlResponseHandler==='function') t.setControlResponseHandler(function(bytes,ctx){ if(st._prog) st._prog.handleControlResponse(bytes,ctx); });
+          if(typeof t.setControlResponseHandler==='function') t.setControlResponseHandler(function(bytes,ctx){
+            if(st._prog) st._prog.handleControlResponse(bytes,ctx);
+            var runtime=_c2rtGet(exId,_ctx0.generation,d.id);
+            if(runtime&&runtime.finiteTx){
+              if(runtime.ownerUid!==(typeof tkEigenaarUid==='function'?tkEigenaarUid():null))runtime.finiteTx.cancel('owner_changed');
+              else runtime.finiteTx.handleControlResponse(bytes,ctx);
+            }
+          });
         }
           // Developer Mode leest de diagnostiek uit DEZE controller (geen statisch object).
           try{ if(window.TKDeveloperMode&&window.TKDeveloperMode.setProgrammingSource) window.TKDeveloperMode.setProgrammingSource(function(){ return st._prog; }); }catch(_e2){}
       }catch(_e){ st._prog=null; }
       if(typeof _c2rtSet==='function') _c2rtSet(exId, _ctx0.generation, d.id, st._prog, st._agg);
+      // #579: a single finite-interval transfer on the SAME device/session owner.
+      // No workout-success claim: structure readback is not yet supported.
+      try{
+        if(typeof Concept2FiniteTransfer!=='undefined'&&typeof t.writeControlFrame==='function'){
+          var _finiteRt=_c2rtGet(exId,_ctx0.generation,d.id);
+          if(_finiteRt)_finiteRt.finiteTx=Concept2FiniteTransfer.createFiniteIntervalTransfer({write:function(b){
+            var live=(typeof t.getControlContext==='function')?t.getControlContext():null;
+            if(!live||!live.connected||live.deviceId!==d.id||live.generation!==_ctx0.generation||
+                _finiteRt.ownerUid!==(typeof tkEigenaarUid==='function'?tkEigenaarUid():null))
+              return Promise.reject(new Error('stale_device_lease'));
+            return t.writeControlFrame(b);
+          }});
+        }
+      }catch(_finiteErr){}
       _c2repaint(exId, _c2connectedInner(exId, null));
       // connectie-events uit het transport (geen fake). Fase B: het transport emit bij een echte
       // plugin-disconnect 'disconnected' (nooit meer 'reconnecting' zonder reconnect-mechanisme);
@@ -7266,6 +7347,7 @@ function tkErgConnectDevice(exId, idx){
         else if(e&&e.state==='connected') _c2repaint(exId, _c2connectedInner(exId, st.lastCm||null));
       });
       st._unsubMetrics=t.subscribeMetrics(function(evt){
+        if(evt&&evt.metrics&&evt.metrics.kind==='pm5_split'){try{if(typeof tkErgOnMeasuredSplit==='function')tkErgOnMeasuredSplit(exId,evt.metrics,t.getControlContext());}catch(_){}return;}
         var cm=(evt&&evt.metrics&&evt.metrics.schema)?evt.metrics
              : (st._agg?st._agg.push((evt&&evt.metrics)||evt||{}, st.mt, {}):null);
         if(!cm) return; st.lastCm=cm;
@@ -7281,7 +7363,16 @@ function tkErgConnectDevice(exId, idx){
           var _rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,null,null):null;
           if(_rt&&_rt.prog&&_rt.agg&&typeof _rt.prog.verifyFromTelemetry==='function'){
             var _vctx=(typeof t.getControlContext==='function')?t.getControlContext():{};
-            var _vres=_rt.prog.verifyFromTelemetry(tkC2ReadbackFromPacket(evt,_vctx), _vctx); // FIX 3: alleen DIT packet
+            var _rawPm5=tkC2ReadbackFromPacket(evt,_vctx); // actual packet, never merged state
+            // #579: recently received idle readback is the preflight for the explicit PM5 test.
+            if(_vctx.packetId==='0x31'){
+              _rt.finitePreflight=(_rawPm5.workoutState!=null&&Number(_rawPm5.workoutState)===0)?{
+                source:'pm5_0x31',workoutState:0,deviceId:_vctx.deviceId,
+                generation:_vctx.generation,observedAt:Date.now()}:null;
+              if(_rawPm5.workoutState!=null&&Number(_rawPm5.workoutState)!==0&&
+                  _rt.finiteTx&&_rt.finiteTx.isPending())_rt.finiteTx.cancel('pm5_no_longer_idle');
+            }
+            var _vres=_rt.prog.verifyFromTelemetry(_rawPm5, _vctx); // FIX 3: alleen DIT packet
             try{ if(typeof tkC2DiagVerifyCall==='function') tkC2DiagVerifyCall(exId,_vres,t); }catch(_dv){} // DIAG, fail-open
           }
         }catch(_ev){}
@@ -7671,7 +7762,7 @@ async function tkFitbitSync(){
 // ══════════════════════════════════════════════════════════
 // CONSTANTS & CONFIG
 // ══════════════════════════════════════════════════════════
-const APP_VER = 'v4.70.25';
+const APP_VER = 'v4.70.27';
 const PIN_HASH = '699415a6e63027a2c3cb8fcb891dab4c62a28b6a15dbe6ccf5dab0126c02505b';
 const SB_URL = 'https://mhfxhzkdmgkaplicdszg.supabase.co';
 const SB_KEY = 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';
@@ -9561,9 +9652,9 @@ async function createTrainingInstance({vasteTrainingId=null,customTrainingId=nul
 }
 
 // completeTrainingInstance(instanceId) → true/false (queuet offline zoals alle sb*Q-writes)
-async function completeTrainingInstance(instanceId){
+async function completeTrainingInstance(instanceId,executionSnapshot=null){
   if(!instanceId)return false;
-  return await sbPatchQ('training_instances','id=eq.'+encodeURIComponent(instanceId),{status:'completed',completed_at:new Date().toISOString()});
+  return await sbPatchQ('training_instances','id=eq.'+encodeURIComponent(instanceId),{status:'completed',completed_at:new Date().toISOString(),...(executionSnapshot?{snapshot:executionSnapshot}:{})});
 }
 
 // getTrainingInstance(instanceId) → rij of null. Let op: dit is een directe sbGet
@@ -9771,9 +9862,28 @@ function previewExerciseName(exId){
 // previewWorkingList() → huidige, ná lokale aanpassingen, geordende oefeningenlijst
 // (uitsluitend in-memory — raakt op geen enkel moment def/vaste_trainingen/
 // custom_trainings/Builder-data zelf aan).
+// TK582-004: session-only additions; the stored definition remains immutable.
+function previewDefinitionItems(){
+  return [...(previewCtx?.def?.exercises||[]),...(previewCtx?.added||[])];
+}
+async function previewAddExercise(){
+  const owner=previewCtx;
+  if(!owner||owner.def?.intervalPrescription)return;
+  await openExPicker(function(ex){
+    if(previewCtx!==owner||!ex?.id)return;
+    const used=new Set(previewWorkingList().map(x=>x.exercise_id));
+    if(used.has(ex.id)||owner.order.includes(ex.id)){toast('Deze oefening staat al in de training');return;}
+    // Same existing defaults as the execution add-exercise flow, no AI-generated prescription.
+    const cardio=resolveCardioType(ex);
+    const item={exercise_id:ex.id,sets:cardio?1:4,reps:cardio?null:'6-8',rpe:cardio?null:'8',wu:0,pick:'main'};
+    owner.added=owner.added||[];owner.added.push(item);owner.order.push(ex.id);
+    owner.prev=owner.prev||{};
+    renderTrainingPreview();
+  });
+}
 function previewWorkingList(){
   if(!previewCtx)return [];
-  const byId={};previewCtx.def.exercises.forEach(e=>byId[e.exercise_id]=e);
+  const byId={};previewDefinitionItems().forEach(e=>byId[e.exercise_id]=e);
   return previewCtx.order
     .filter(id=>!previewCtx.removedIds.has(id))
     .map(id=>{
@@ -10186,7 +10296,7 @@ function renderTPPlan(el){
       .map(t=>`<span class="tpv2-tag">${escHtml(t)}</span>`).join('');
     const swapped=previewCtx.swaps[it.original_exercise_id];
     const why=m.why?`<div class="tpv2-exwhy">${escHtml(m.why)}</div>`:'';
-    const adjHtml=adj?`<div style="display:flex;gap:4px;margin-left:auto" onclick="event.stopPropagation()">
+    const adjHtml=adj?`<div class="tpv2-exactions" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()">
         <button onclick="previewOpenSwapPicker('${escHtml(it.original_exercise_id)}')" title="Vervangen" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">⇄</button>
         <button onclick="previewRemoveExercise('${escHtml(it.original_exercise_id)}')" title="Overslaan" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px">✕</button>
         <button onclick="previewMoveExercise('${escHtml(it.original_exercise_id)}',-1)" ${i===0?'disabled':''} title="Omhoog" style="width:30px;height:30px;border-radius:9px;border:1px solid var(--g1);background:var(--g1);color:var(--teal);font-size:13px${i===0?';opacity:.35':''}">↑</button>
@@ -10215,6 +10325,7 @@ function renderTPPlan(el){
     ${removedRows?`<div class="tpv2-sec">Overgeslagen voor vandaag</div>${removedRows}`:''}
     ${swapPickerHtml}
     <div style="margin-top:16px">
+      ${adj?`<button type="button" class="btn btn-o" style="width:100%;margin-bottom:8px" onclick="previewAddExercise()">+ Oefening toevoegen</button>`:''}
       <button class="btn btn-o" style="width:100%" onclick="previewToggleAdjust()">${adj?'Klaar met aanpassen':'Training aanpassen'}</button>
       <button class="btn btn-r" style="width:100%;margin-top:8px;line-height:1.2" onclick="previewStartTraining('normal')">START TRAINING<span style="display:block;font-size:10.5px;font-weight:600;opacity:.85;margin-top:2px">Ik train zelf</span></button>
       <button class="btn btn-o" style="width:100%;margin-top:8px;line-height:1.2" onclick="previewStartTraining('guided')">BEGELEID TRAINEN<span style="display:block;font-size:10.5px;font-weight:600;opacity:.75;margin-top:2px">De app begeleidt mij tijdens de training</span></button>
@@ -10364,6 +10475,8 @@ function previewOpenSwapPicker(exId){
   if(!previewCtx)return;
   previewCtx.swapPickerFor=exId;
   renderTrainingPreview();
+  const picker=document.getElementById('tp-swap-picker');
+  if(picker)picker.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 function previewRenderSwapPicker(){
   const exId=previewCtx.swapPickerFor;
@@ -10376,17 +10489,48 @@ function previewRenderSwapPicker(){
   alts=applyAthleteConstraintsCatalog(alts); // catalogusentries: naam uit identity.name (avoid-term)
   const opts=alts.length?alts.map(a=>`<div class="lrow" style="align-items:center"><div style="flex:1;font-size:13px">${escHtml(previewExerciseName(a.catalog_id))}</div><button class="btn btn-o btn-sm" onclick="previewApplySwap('${escHtml(exId)}','${escHtml(a.catalog_id)}')">Kies</button></div>`).join('')
     :'<div style="font-size:12px;color:var(--g4)">Geen alternatieven gevonden</div>';
-  return `<div style="margin-top:10px;border-top:1px solid var(--g1);padding-top:10px">
+  return `<div id="tp-swap-picker" style="margin-top:10px;border-top:1px solid var(--g1);padding-top:10px">
     <div style="font-size:11px;font-weight:800;color:var(--g4);text-transform:uppercase;margin-bottom:6px">Vervangen: ${escHtml(previewExerciseName(exId))}</div>
     ${opts}
+    <button class="btn btn-o" style="width:100%;margin-top:10px" onclick="previewChooseReplacement()">Kies zelf uit de oefeningbibliotheek</button>
     <button class="btn btn-o btn-sm" style="margin-top:6px" onclick="previewCtx.swapPickerFor=null;renderTrainingPreview()">Annuleren</button>
   </div>`;
 }
-function previewApplySwap(origExId,newExId){
-  if(!previewCtx)return;
-  previewCtx.swaps[origExId]=newExId;
-  previewCtx.swapPickerFor=null;
+// TK-UT-002: reuse the central picker; manual selection is not a recommended substitute.
+async function previewChooseReplacement(){
+  const owner=previewCtx, origId=owner&&owner.swapPickerFor;
+  if(!owner||!origId)return;
+  await openExPicker(function(ex){
+    if(previewCtx!==owner||owner.swapPickerFor!==origId)return;
+    previewApplySwap(origId,ex.id);
+  });
+}
+async function previewApplySwap(origExId,newExId){
+  const owner=previewCtx;
+  if(!owner||!owner.order.includes(origExId))return;
+  if(previewWorkingList().some(it=>it.original_exercise_id!==origExId&&it.exercise_id===newExId)){
+    toast('Deze oefening staat al in je training');return;
+  }
+  const replacement=resolvePickerEx(newExId);
+  const original=resolvePickerEx(owner.swaps[origExId]||origExId);
+  if(!replacement||replacement.active===false)return;
+  // Cardio targets (distance/time) cannot silently become strength sets or vice versa.
+  // Cross-sport replacement needs a separate prescription editor, outside this repair.
+  if((resolveCardioType(original)||null)!==(resolveCardioType(replacement)||null)){
+    toast('Kies hetzelfde trainingstype; een ander type vraagt een nieuw trainingsdoel');return;
+  }
+  owner.swaps[origExId]=newExId;
+  owner.swapPickerFor=null;
+  if(owner.overrides){delete owner.overrides[origExId];delete owner.overrides[newExId];}
   renderTrainingPreview();
+  // Resolve the NEW identity's own history, never carry over the old exercise's weight.
+  try{
+    const prev=await loadPrevPerformance(newExId);
+    if(previewCtx!==owner||owner.swaps[origExId]!==newExId)return;
+    if(!owner.prevMap)owner.prevMap={};
+    if(prev)owner.prevMap[newExId]=prev;else delete owner.prevMap[newExId];
+    renderTrainingPreview();
+  }catch(_){} // Missing history stays explicitly unknown.
 }
 
 // previewBuildModifications() → het modifications[]-array in de vorm die
@@ -10394,6 +10538,7 @@ function previewApplySwap(origExId,newExId){
 // (Werkblok A/B) al verwachten als vrije-vorm JSON — geen nieuwe opslagvorm.
 function previewBuildModifications(){
   const mods=[];
+  (previewCtx.added||[]).filter(x=>!previewCtx.removedIds.has(x.exercise_id)).forEach(item=>mods.push({type:'add',exercise_id:item.exercise_id,item:{...item}}));
   previewCtx.removedIds.forEach(id=>mods.push({type:'remove',exercise_id:id}));
   Object.entries(previewCtx.swaps).forEach(([origId,newId])=>mods.push({type:'swap',exercise_id:origId,replacement_exercise_id:newId}));
   // F0.7M (M1): bewuste gewicht-override per oefening als expliciete instance-modificatie
@@ -13429,6 +13574,8 @@ function tkNavHuidig(){
   return el?el.id:null;
 }
 function tkNavModaalOpen(){
+  const picker=document.getElementById('m-ex-picker');
+  if(picker&&picker.classList&&picker.classList.contains('open'))return picker;
   return document.querySelector('.modal-bg.open');
 }
 // WAVE 1 (RC-OVL-01/RC-OVL-02, Route Map): tkNavModaalOpen() herkende alleen
@@ -13442,7 +13589,7 @@ function tkNavModaalOpen(){
 // sluit alleen de bovenste overlay, precies zoals de zichtbare X/Sluiten-knop
 // dat al deed.
 function tkNavTopmostOverlay(){
-  const modaal=document.querySelector('.modal-bg.open');
+  const modaal=tkNavModaalOpen();
   if(modaal)return {el:modaal,close:function(){closeModal(modaal.id);}};
   const confirmEl=document.querySelector('.tk-confirm-bg');
   if(confirmEl)return {el:confirmEl,close:function(){
@@ -13569,6 +13716,7 @@ function openModal(id){
   if(focusables.length)focusables[0].focus();
 }
 function closeModal(id){
+  if(id==='m-ex-picker'){exPickerCallback=null;cleanupExPickerKeyboard();}
   const m=document.getElementById(id);
   m.classList.remove('open');
   m.removeAttribute('aria-modal');
@@ -17915,29 +18063,35 @@ function _pkIcon(e){
 let _exPickerVVHandler=null;
 function initExPickerKeyboardFix(){
   if(!window.visualViewport)return;
+  const vv=window.visualViewport;
   const modalEl=document.querySelector('#m-ex-picker .modal');
   const modalBg=document.getElementById('m-ex-picker');
-  if(_exPickerVVHandler)window.visualViewport.removeEventListener('resize',_exPickerVVHandler);
+  if(_exPickerVVHandler){vv.removeEventListener('resize',_exPickerVVHandler);vv.removeEventListener('scroll',_exPickerVVHandler);}
   _exPickerVVHandler=()=>{
-    if(!modalBg.classList.contains('open')){
-      window.visualViewport.removeEventListener('resize',_exPickerVVHandler);
-      modalEl.style.height='';modalEl.style.maxHeight='';
-      return;
-    }
-    const vh=window.visualViewport.height;
-    modalEl.style.height=vh+'px';
-    modalEl.style.maxHeight=vh+'px';
+    if(!modalBg.classList.contains('open')){cleanupExPickerKeyboard();return;}
+    const vh=vv.height;
+    modalBg.style.top=vv.offsetTop+'px';modalBg.style.height=vh+'px';modalBg.style.bottom='auto';
+    modalEl.style.height=vh+'px';modalEl.style.maxHeight=vh+'px';
+    modalBg.classList.toggle('ex-pick-compact',vh<600);
   };
-  window.visualViewport.addEventListener('resize',_exPickerVVHandler);
+  vv.addEventListener('resize',_exPickerVVHandler);vv.addEventListener('scroll',_exPickerVVHandler);
   _exPickerVVHandler();
+}
+function cleanupExPickerKeyboard(){
+  const vv=window.visualViewport;
+  if(vv&&_exPickerVVHandler){vv.removeEventListener('resize',_exPickerVVHandler);vv.removeEventListener('scroll',_exPickerVVHandler);}
+  _exPickerVVHandler=null;
+  const bg=document.getElementById('m-ex-picker'),modal=bg&&bg.querySelector('.modal');
+  if(bg){bg.style.top='';bg.style.height='';bg.style.bottom='';bg.classList.remove('ex-pick-compact');}
+  if(modal){modal.style.height='';modal.style.maxHeight='';}
 }
 function selectExPickerItem(id){
   const ex=resolvePickerEx(id); // F41: legacy of catalogus-fallback (behoudt catalog_id)
   if(!ex)return;
   if(exPickerCallback){
+    const callback=exPickerCallback;
     closeModal('m-ex-picker');
-    exPickerCallback(ex);
-    exPickerCallback=null;
+    callback(ex);
     return;
   }
   clearLosSessionState(); // v306.2 #12: nieuwe oefening start altijd volledig leeg
@@ -18055,7 +18209,7 @@ async function saveLosOefening(btnEl){
     const _losConv=(typeof tkC2Converter==='function')?tkC2Converter():null;
     let cRow;
     if(_losConv&&typeof tkC2IsLoggableSummary==='function'&&tkC2IsLoggableSummary(_losC2)){
-      cRow=tkC2SessionRowFromLog(_losC2,{date:row.date,training_type:null,training_instance_id:null},_losConv);
+      cRow=tkC2SessionRowFromLog(_losC2,{date:row.date,training_type:null,training_instance_id:null,actualRpe:val('rpe')},_losConv);
     } else {
       const d={machine:localStorage.getItem('sel_'+cardioType)||''};
       CARDIO_TYPES[cardioType].fields.forEach(f=>{d[f]=val(f);});
@@ -18070,6 +18224,7 @@ async function saveLosOefening(btnEl){
     const _losInst=(typeof tkErgProtocolInstanceId==='function')?tkErgProtocolInstanceId(LOS_DOMID):null;
     if(_losProj){ row.protocol_type=_losProj.protocol_type; row.protocol_value=_losProj.protocol_value; }
     if(_losInst) row.training_instance_id=_losInst;
+    if(sessionLog[LOS_DOMID]?.intervalsDetail)row.intervals_detail=sessionLog[LOS_DOMID].intervalsDetail;
   } else if(ex.type==='wod'){
     const fmtEl=document.getElementById(domId+'-wodfmt');
     const fmt=fmtEl?fmtEl.value:(ex.wod_format||'for_time');
@@ -18437,10 +18592,10 @@ function computeProgPrefill(ex,prevS,oneRM){
   const repsPrefill=resolvePrescriptionRepTarget(ex.reps)||repsForWeight; // startset → MAXIMUM van de range
   // DETRAINING B1: geen eigen prescription meer — delegeren aan de canonical resolver
   // (base 1RM→Brzycki × detrainingFactor(days sinds prevS.date)). Zonder 1RM: suggested=null →
-  // vorige gewicht als ruwe referentie (ongewijzigd fallback-gedrag).
+  // geen gewicht in de invoer; de vorige prestatie blijft afzonderlijk zichtbaar als referentie.
   let suggested=null, detrain=null;
   try{ const r=resolveWorkingWeight(ex.id,{reps:parseFloat(repsForWeight),rpe:ex.rpe,prev:prevS||null,oneRM:(oneRM!=null?oneRM:null)}); suggested=r.suggested; detrain={days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion,basis:r.strengthBasis||null}; }catch(e){}
-  const kg=(suggested!=null)?suggested:((prevS&&prevS.weight)?prevS.weight:'');
+  const kg=(suggested!=null)?suggested:''; // history remains visible as reference; never a new prescription without a basis
   return {kg,reps:repsPrefill,rpe:ex.rpe||'',sets:ex.sets||4,detrain};
 }
 // Pure functie — bouwt de prompt voor één week, los testbaar
@@ -19077,12 +19232,15 @@ async function openProgramBlockDetail(blockId){
   document.getElementById('pbd-title').textContent=block.fase_naam||'Training';
   document.getElementById('pbd-sub').textContent=`Wk ${block.week_nr}`+(block.planned_date?' · '+block.planned_date:'')+(block.completed_at?' · afgerond':'');
   document.getElementById('pbd-start-btn').style.display=block.completed_at?'none':'block';
+  document.getElementById('pbd-add-btn').style.display=block.completed_at?'none':'';
+  window._tkProgramDetailCompleted=!!block.completed_at;
   await renderProgramBlockDetail();
   go('s-programma-detail');
 }
 async function renderProgramBlockDetail(){
   const el=document.getElementById('pbd-ex-list');
   if(!el||!curProgramBlockId)return;
+  if(window._tkProgramDetailCompleted){await renderCompletedProgramBlock(curProgramBlockId,el);return;}
   const rows=await v43SafeGet('program_block_exercises','&program_block_id=eq.'+curProgramBlockId+'&order=sort_order.asc');
   programBlockExCache[curProgramBlockId]=rows;
   if(!rows.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:20px 0">Nog geen oefeningen in deze training.</div>';return;}
@@ -19091,13 +19249,59 @@ async function renderProgramBlockDetail(){
     return `<div onclick='openEditBlockExercise(${JSON.stringify(r)})' style="cursor:pointer">${renderExerciseRow(ex,r)}</div>`;
   }).join('');
 }
+// TK584: historical plan and actuals have separate sources. Legacy gaps stay explicit.
+function programHistoryHtml(instance,records){
+  const snapshot=instance?.snapshot, execution=snapshot?.execution;
+  const name=id=>{const e=typeof resolvePickerEx==='function'?resolvePickerEx(id):null;return escHtml(e?.name||e?.naam||id||'Onbekend');};
+  const itemsHtml=items=>items.map(x=>'<li>'+name(x.exercise_id||x.id)+' · '+escHtml(x.sets??'—')+' × '+escHtml(x.reps??'—')+(x.rpe_target||x.rpe?' · RPE '+escHtml(x.rpe_target||x.rpe):'')+(x.suggestedWeight!=null?' · '+escHtml(x.suggestedWeight)+' kg':'')+'</li>').join('');
+  let h='<h3>Oorspronkelijk gepland</h3>';
+  h+=snapshot?.items?'<ol>'+itemsHtml(snapshot.items)+'</ol>':'<p>Historische programmasnapshot niet vastgelegd. De huidige planning is geen historisch bewijs.</p>';
+  h+='<h3>Tijdens training aangepast</h3>';
+  if(execution){
+    h+='<ol>'+itemsHtml(execution.items||[])+'</ol>';
+    const original=new Set((snapshot.items||[]).map(x=>x.exercise_id||x.id));
+    (execution.items||[]).forEach(x=>{
+      if(x._replaces)h+='<p>Vervangen: '+name(x._replaces)+' → '+name(x.id)+'</p>';
+      else if(!original.has(x.id))h+='<p>Toegevoegd: '+name(x.id)+'</p>';
+      const planned=(snapshot.items||[]).find(p=>(p.exercise_id||p.id)===x.id);
+      if(planned&&planned.sets!==x.sets)h+='<p>Sets gewijzigd: '+name(x.id)+' · '+escHtml(planned.sets)+' → '+escHtml(x.sets)+'</p>';
+    });
+    (execution.skipped||[]).forEach(id=>{h+='<p>Overgeslagen: '+name(id)+'</p>';});
+  }else h+='<p>Aanpassingen tijdens deze oudere uitvoering zijn niet vastgelegd.</p>';
+  h+='<h3>Werkelijk uitgevoerd</h3>';
+  if(!records.length)return h+'<p>Geen gekoppelde uitvoeringsrecords gevonden. Geplande sets tellen niet als uitgevoerd.</p>';
+  records.forEach(r=>{
+    h+='<article class="card" style="padding:12px;margin:8px 0"><b>'+name(r.exercise_id)+'</b><p>'+escHtml(r.date||'')+' · '+escHtml(instance?.status||'registratie')+'</p>';
+    if(Array.isArray(r.sets_detail)&&r.sets_detail.length){
+      let volume=0;
+      h+='<ol>'+r.sets_detail.map(d=>{const kg=d.effKg??d.kg;volume+=(Number(kg)||0)*(Number(d.reps)||0);return '<li>'+escHtml(kg??'—')+' kg × '+escHtml(d.reps??'—')+(d.rpe?' · RPE '+escHtml(d.rpe):'')+'</li>';}).join('')+'</ol><p>Extern volume: '+escHtml(volume)+' kg</p>';
+    }else h+='<p>'+escHtml(r.sets??'—')+' sets · '+escHtml(r.weight??'—')+' kg × '+escHtml(r.reps??'—')+' reps; afzonderlijke sets niet vastgelegd.</p>';
+    if(r.time_str||r.distance!=null||r.watt!=null)h+='<p>Cardio: '+escHtml(r.time_str||'')+' · '+escHtml(r.distance??'—')+' m · '+escHtml(r.watt??'—')+' W</p>';
+    h+='</article>';
+  });
+  return h;
+}
+async function renderCompletedProgramBlock(blockId,el){
+  // Server RLS remains authoritative; no owner or session inferred from exercise/date matches.
+  const records=await sbGetOrFail('sessions','&training_type=eq.'+encodeURIComponent('prog_'+blockId)+'&order=created_at.asc');
+  if(records.failed){el.textContent='Historie kon niet worden geladen. Probeer opnieuw.';return;}
+  const groups=new Map();
+  (records.rows||[]).forEach(r=>{const k=r.training_instance_id||'legacy';if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r);});
+  if(!groups.size){el.innerHTML=programHistoryHtml(null,[]);return;}
+  let h='';
+  for(const [id,rows] of groups){
+    const instance=id==='legacy'?null:await getTrainingInstance(id);
+    h+=programHistoryHtml(instance,rows);
+  }
+  if(String(curProgramBlockId)===String(blockId))el.innerHTML=h;
+}
 function pctOptionsHtml(selected){
   let h='<option value="">Geen</option>';
   PCT_1RM_OPTIONS.forEach(p=>{h+=`<option value="${p}"${String(selected)===String(p)?' selected':''}>${p}%</option>`;});
   return h;
 }
 function addBlockExercise(){
-  if(!curProgramBlockId)return;
+  if(!curProgramBlockId||window._tkProgramDetailCompleted)return;
   openExPicker(async(ex)=>{
     const rows=await sbGet('program_block_exercises','&program_block_id=eq.'+curProgramBlockId);
     const inserted=await sbPostReturning('program_block_exercises',{program_block_id:curProgramBlockId,exercise_id:ex.id,sort_order:rows.length});
@@ -19200,7 +19404,7 @@ async function startT(t){
   }catch(_){ sessionRxAdj[t]={rpeDelta:0,setsDelta:0}; }
   let _resumeElapsedMs=0; // P0: verstreken tijd bij hervatten (0 = verse start)
   if(resumeDraft){
-    curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
+    curT=t;sessionLog=draft.sessionLog||{};sessionExtra=draft.sessionExtra||[];restoreExecutionDraft(draft);trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
     // RC0: de koppeling met training_instances terug uit de draft, zodat het afronden na
     // een herstart de instance alsnog op 'completed' zet i.p.v. hem als wees achter te laten.
     activeInstanceId=draft.instanceId||null;
@@ -19428,6 +19632,15 @@ async function buildTrainIntro(t,list){
     ${meta?`<div class="train-intro-meta">${escHtml(meta)}</div>`:''}
   </div>`;
 }
+function strengthExecutionPrefill(ex,prevS){
+  const reps=resolvePrescriptionRepTarget(ex.reps)||repsPrefillFromRange(ex.reps)||null;
+  let kg=ex.suggestedWeight, resolved=null;
+  if(kg==null){
+    resolved=resolveWorkingWeight(ex.id,{reps:reps,rpe:ex.rpe,prev:prevS,oneRM:getOneRM(ex.id)||estimatedOneRM(ex.id)||null});
+    kg=resolved?.suggested??null;
+  }
+  return {kg:kg,reps:reps,rpe:ex.rpe??'',sets:ex.sets??4,detrain:resolved};
+}
 async function renderTrainScreen(t){
   await ensureEquipmentTypesLoaded();
   await loadTrainCfg();
@@ -19458,7 +19671,10 @@ async function renderTrainScreen(t){
     const prev=await v43SafeGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=1');
     if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
     const eqList=await loadEquipment(ex.id);
-    return {prevS:prev[0],eqList};
+    const latest=prev[0];
+    const strength=!resolveCardioType(ex)&&ex.type!=='wod'&&ex.type!=='carry';
+    const prevS=(strength&&(!latest||!latest.weight||!latest.reps))?((await loadPrevPerformance(ex.id))||latest):latest;
+    return {prevS,eqList};
   }));
   let _pi=0;
   for(const ex of list){
@@ -19488,13 +19704,9 @@ async function renderTrainScreen(t){
         prefillData=computeProgPrefill(ex,prevS,oneRM);
         if(prefillData&&prefillData.detrain&&!ex._detrain)ex._detrain=prefillData.detrain; // DETRAINING B1: reden voor de bestaande uitleg
       }
-    } else if(ex.suggestedWeight!=null){
-      // F0.7L: Normal Execution start op exact hetzelfde canonical resolver-gewicht als Preview.
-      // Reps-prefill = MAXIMUM van de voorgeschreven range (canonical), NIET de vorige-sessie-reps —
-      // valt alleen zonder rep-doel terug op de vorige sessie. RPE als hint uit vorige sessie.
-      prefillData={kg:ex.suggestedWeight, reps:resolvePrescriptionRepTarget(ex.reps)||((prevS&&prevS.reps)||null), rpe:(prevS&&prevS.rpe)||null, sets:(prevS&&prevS.sets)||ex.sets||4};
-    } else if(prevS&&prevS.weight&&prevS.reps){
-      prefillData={kg:prevS.weight, reps:resolvePrescriptionRepTarget(ex.reps)||prevS.reps, rpe:prevS.rpe, sets:prevS.sets||4};
+    } else if(!resolveCardioType(ex)&&ex.type!=='wod'&&ex.type!=='carry'){
+      prefillData=strengthExecutionPrefill(ex,prevS);
+      if(prefillData.detrain&&!ex._detrain)ex._detrain=prefillData.detrain;
     }
     // ÉÉN prescription-waarheid: exact het gewicht dat de gebruiker ook echt ziet (prefill.kg, anders
     // het canonical resolver-gewicht). Coaching/"Vorige keer" leiden hier ALLEEN van af (geen tweede getal).
@@ -19518,7 +19730,7 @@ async function renderTrainScreen(t){
     const div=document.createElement('div');
     div.className='ex-card';
 
-    let bodyHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:ex.sets,prefill:prefillData});
+    let bodyHTML=buildExerciseBody(ex,{wu:ex.wu||0,sets:Math.max(ex.sets||0,sessionLog[ex.id]?._workSetCount||0,sessionLog[ex.id]?.sets?.length||0)||ex.sets,prefill:prefillData});
 
     div.innerHTML=`
       <div class="ex-card-hd" onclick="toggleExCard('${ex.id}')">
@@ -19528,7 +19740,7 @@ async function renderTrainScreen(t){
         </div>
         <span style="color:var(--g3);font-size:20px" id="arr-${ex.id}">›</span>
       </div>
-      ${prevBlockHtml||(prevStr?`<div class="ex-prev"><strong>${prevStr}</strong></div>`:'')||(resolveCardioType(ex)?'':prevEmptyBlock())}
+      ${prevBlockHtml||(prevStr?`<div class="ex-prev"><strong>${escHtml(prevStr)}</strong></div>`:'')||(resolveCardioType(ex)?'':prevEmptyBlock())}
       <div class="ex-body" id="body-${ex.id}">
         ${ex.tip?`<div style="background:var(--g1);border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:var(--g4);margin:8px 14px;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
         ${buildVideoMuscle(ex)}
@@ -19570,6 +19782,7 @@ async function renderTrainScreen(t){
     </div>
     <div style="height:16px"></div>`;
   container.appendChild(addDiv);
+  restoreSessionLogToDom(t);
   updateProgress(t);
   // F0.7P — single-exercise focus-view over de bestaande kaarten. Alle kaarten blijven in de
   // DOM (zelfde set-inputs/ids → logSet/finishSession ongewijzigd en bewezen), maar er wordt
@@ -19694,13 +19907,44 @@ function applyExecutionFocus(t){
   if(nextNm){ np=document.createElement('div'); np.className='exfocus-next'; np.setAttribute('onclick','openExecNext(\''+t+'\')'); np.style.cursor='pointer'; np.innerHTML='<div class="k">Volgende oefening ›</div><div class="nm">'+escHtml(nextNm)+'</div>'; container.insertBefore(np,nav); }
   // F0.8G — duidelijke actiehiërarchie: primaire actie dominant (volle breedte), secundaire
   // acties (Vorige/Overslaan/Pauze) visueel ondergeschikt. Zelfde handlers/functionaliteit.
-  nav.innerHTML=(isLast?'<button class="primary" onclick="showSessionSummary(\''+t+'\')">Training afronden ✓</button>'
-           :'<button class="primary" onclick="execFocusGo(\''+t+'\',1)">Oefening afronden →</button>');
+  nav.innerHTML=(isLast?'<button class="primary" onclick="execCompleteExercise(\''+t+'\')">Training afronden ✓</button>'
+           :'<button class="primary" onclick="execCompleteExercise(\''+t+'\')">Oefening afronden →</button>');
   nav2.innerHTML='<button class="ghost" onclick="execFocusGo(\''+t+'\',-1)"'+(idx===0?' disabled':'')+'>← Vorige</button>'+
     '<button class="ghost" onclick="execFocusSkip(\''+t+'\')">Overslaan</button>'+
     '<button class="ghost" onclick="openExecPause(\''+t+'\')">⏸ Pauze</button>';
   // Nieuwe oefening opent logisch bovenaan (F0.7J scroll-reset-patroon).
   container.scrollTop=0; try{const scr=container.closest('.scr'); if(scr)scr.scrollTop=0;}catch(e){}
+}
+// TK584: explicit confirmation, never treat an untouched prescription as performed.
+let execCompleteBusy=false;
+async function execCompleteExercise(t){
+  if(execCompleteBusy||t!==curT)return;
+  execCompleteBusy=true;
+  try{
+    const owner=typeof tkEigenaarUid==='function'?tkEigenaarUid():null;
+    const list=getSessionExs(t), idx=execFocus[t]||0, ex=list[idx];
+    if(!ex)return;
+    if(!resolveCardioType(ex)){
+      const pending=[];
+      const setLimit=Math.max(Number(ex.sets)||0,sessionLog[ex.id]?._workSetCount||0,sessionLog[ex.id]?.sets?.length||0);
+      for(let i=1;i<=setLimit;i++){
+        const reps=document.getElementById('s-'+ex.id+'-'+i+'-reps');
+        if(!reps)continue;
+        if(Number(normNumStr(reps.value))>0 && !sessionLog[ex.id]?.sets?.[i-1]?.done)pending.push(i);
+      }
+      if(pending.length){
+        const accepted=await confirmModal(pending.length+' ingevulde werksets van '+(ex.naam||ex.id)+' als uitgevoerd registreren? Pas aantallen aan of verwijder niet-uitgevoerde sets voordat je bevestigt.',{title:'Uitgevoerde sets bevestigen',okLabel:'Sets registreren',cancelLabel:'Terug naar sets'});
+        if(!accepted||t!==curT||(typeof tkEigenaarUid==='function'&&owner!==tkEigenaarUid()))return;
+        pending.forEach(i=>{
+          logSet(ex.id,'work',i,true);
+          sessionLog[ex.id].sets[i-1].done=true;
+        });
+      }
+    }
+    persistTrainingDraft(true);
+    if(idx>=list.length-1)showSessionSummary(t);
+    else execFocusGo(t,1);
+  }finally{execCompleteBusy=false;}
 }
 function execFocusGo(t,dir){
   const cards=document.querySelectorAll('#train-'+t.toLowerCase()+'-list .ex-card');
@@ -19715,6 +19959,7 @@ function execFocusSkip(t){
   const list=(typeof getSessionExs==='function')?getSessionExs(t):[];
   const n=list.length; const idx=execFocus[t]||0;
   const id=list[idx]&&list[idx].id; if(id)execSkipSet(t).add(id);
+  persistTrainingDraft(true);
   // ga naar de volgende nog niet-overgeslagen oefening; is die er niet → overzicht.
   let ni=-1; for(let i=idx+1;i<n;i++){ if(!execSkipSet(t).has(list[i].id)){ ni=i; break; } }
   if(ni<0){ applyExecutionFocus(t); openExecOverview(t); return; }
@@ -21583,24 +21828,33 @@ async function loadEquipment(exId){
 // EQUIPMENT MEMORY (persoonlijk, device-niveau) — losstaand van de gym-gedeelde exercise_equipment
 // EN van session-history. Onthoudt JOUW laatste instelling per oefening in localStorage (geen schema).
 // Verdwijnt niet bij het afsluiten van een training. Wordt niet verzonnen: leeg = geen suggestie.
-function eqMemAll(){ try{ return JSON.parse(localStorage.getItem('tk_eqmem')||'{}')||{}; }catch(_){ return {}; } }
-function eqMemGet(exId){ const m=eqMemAll(); return (m[exId]&&m[exId].value)||''; }
+function eqMemStorageKey(){
+  const uid=typeof tkEigenaarUid==='function'?tkEigenaarUid():null;
+  return uid?'tk_eqmem_v2:'+uid:null;
+}
+function eqMemVariant(exId){
+  const all=eqMemAll();return all.__variants?.['e:'+exId]||'';
+}
+function eqMemVariantSet(exId,value){
+  const key=eqMemStorageKey();if(!key)return false;
+  const all=eqMemAll();all.__variants=all.__variants||{};all.__variants['e:'+exId]=String(value||'').trim();
+  try{localStorage.setItem(key,JSON.stringify(all));refreshEquipmentPanel(exId);return true;}catch(_){return false;}
+}
+function eqMemEntryKey(exId){return JSON.stringify([String(exId),eqMemVariant(exId)]);}
+function eqMemAll(){
+  const key=eqMemStorageKey();if(!key)return {};
+  try{const v=JSON.parse(localStorage.getItem(key)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(_){return {};}
+}
+function eqMemGet(exId){const m=eqMemAll();return m[eqMemEntryKey(exId)]?.value||'';}
 function eqMemSet(exId,val){
-  try{ const m=eqMemAll(); const v=String(val||'').trim(); const e=m[exId]||{};
-    if(v){ e.value=v; e.ts=Date.now(); m[exId]=e; }
-    else { delete e.value; if(e.fields && Object.keys(e.fields).length){ e.ts=Date.now(); m[exId]=e; } else delete m[exId]; }
-    localStorage.setItem('tk_eqmem',JSON.stringify(m));
-  }catch(_){}
+  const key=eqMemStorageKey();if(!key)return false;
+  try{const m=eqMemAll(),id=eqMemEntryKey(exId),e=m[id]||{};e.value=String(val||'').trim();e.ts=Date.now();if(e.value||Object.values(e.fields||{}).some(Boolean))m[id]=e;else delete m[id];localStorage.setItem(key,JSON.stringify(m));return true;}catch(_){return false;}
 }
 // GESTRUCTUREERDE per-label instelling (bv. Zitting=4, Pin=12) — los van de vrije tekst en van history.
-function eqMemFieldGet(exId,label){ const m=eqMemAll(); const e=m[exId]; return (e&&e.fields&&e.fields[label])||''; }
+function eqMemFieldGet(exId,label){return eqMemAll()[eqMemEntryKey(exId)]?.fields?.['f:'+label]||'';}
 function eqMemFieldSet(exId,label,val){
-  try{ const m=eqMemAll(); const e=m[exId]||{}; if(!e.fields)e.fields={}; const v=String(val||'').trim();
-    if(v)e.fields[label]=v; else delete e.fields[label];
-    if(!Object.keys(e.fields).length)delete e.fields;
-    if(e.value||e.fields){ e.ts=Date.now(); m[exId]=e; } else delete m[exId];
-    localStorage.setItem('tk_eqmem',JSON.stringify(m));
-  }catch(_){}
+  const key=eqMemStorageKey();if(!key)return false;
+  try{const m=eqMemAll(),id=eqMemEntryKey(exId),e=m[id]||{};e.fields=e.fields||{};const value=String(val||'').trim();if(value)e.fields['f:'+label]=value;else delete e.fields['f:'+label];e.ts=Date.now();if(e.value||Object.values(e.fields).some(Boolean))m[id]=e;else delete m[id];localStorage.setItem(key,JSON.stringify(m));return true;}catch(_){return false;}
 }
 function buildEquipmentPanel(exId,eqList){
   const typeOptions=equipmentTypes.map(t=>`<option value="${escHtml(t.label)}">${escHtml(t.label)}</option>`).join('');
@@ -21611,15 +21865,18 @@ function buildEquipmentPanel(exId,eqList){
     </div>
     <div class="eq-panel-body" id="eq-body-${exId}" style="display:none">
       <div class="eq-mem" style="margin-bottom:8px">
+        <label class="ilbl">Apparaat of variant (optioneel)</label>
+        <input class="inp" id="eq-variant-${exId}" value="${escHtml(eqMemVariant(exId))}" placeholder="bv. Machine 1" onchange="eqMemVariantSet('${exId}',this.value)">
+
         <label class="ilbl" style="font-size:11px;font-weight:700;color:var(--g4)">📌 Apparaatinstelling${eqMemGet(exId)?` · laatst gebruikt`:''}</label>
         <input class="inp" id="eq-mem-${exId}" placeholder="bv. Pin 29, Seat 4" value="${escHtml(eqMemGet(exId))}"
-          onchange="eqMemSet('${exId}',this.value)" style="margin-top:2px" aria-label="Apparaatinstelling ${escHtml(exId)}">
+          oninput="eqMemSet('${exId}',this.value)" style="margin-top:2px" aria-label="Apparaatinstelling ${escHtml(exId)}">
         ${eqList.length?`<div style="font-size:10px;color:var(--g4);margin-top:2px">Jouw laatst bekende instelling per veld — pas gerust aan vóór je traint.</div>`:''}
       </div>
       ${eqList.map(e=>{const _v=eqMemFieldGet(exId,e.label);return `<div class="eq-row">
         <span class="eq-label">${escHtml(e.label)}</span>
         <span class="eq-value">${escHtml(e.value)}</span>
-        <input class="inp" style="max-width:76px;padding:4px 6px" data-exid="${escHtml(exId)}" data-label="${escHtml(e.label)}" placeholder="jouw" value="${escHtml(_v)}" onchange="eqMemFieldSet(this.dataset.exid,this.dataset.label,this.value)" aria-label="Jouw ${escHtml(e.label)}"${_v?' title="Laatst gebruikt: '+escHtml(_v)+'"':''}>
+        <input class="inp" style="max-width:76px;padding:4px 6px" data-exid="${escHtml(exId)}" data-label="${escHtml(e.label)}" placeholder="jouw" value="${escHtml(_v)}" oninput="eqMemFieldSet(this.dataset.exid,this.dataset.label,this.value)" aria-label="Jouw ${escHtml(e.label)}"${_v?' title="Laatst gebruikt: '+escHtml(_v)+'"':''}>
         <button onclick="deleteEquipment('${e.id}','${exId}')">✕</button>
       </div>`}).join('')}
       <select class="inp" id="eq-new-label-${exId}" onchange="toggleEqCustomLabel('${exId}')" style="margin-top:8px">
@@ -21687,11 +21944,11 @@ function buildWarmupRow(exId,i){
     <div class="wur-no">W${i}</div>
     <div class="setr-cells">
       <div class="setr-cell">
-        <input class="set-field" type="text" inputmode="decimal" placeholder="–" id="w-${exId}-${i}-kg" value="${v.kg||''}" oninput="clampNumInput(this,0,500);onWarmupEdit('${exId}',${i})" onchange="logSet('${exId}','wu',${i},false)">
+        <input class="set-field" type="text" inputmode="decimal" placeholder="–" id="w-${exId}-${i}-kg" value="${escHtml(String(v.kg??''))}" oninput="onWarmupEdit('${exId}',${i});if(validateSetWeightInput(this))logSet('${exId}','wu',${i},false)" onchange="clampNumInput(this,0,500);onWarmupEdit('${exId}',${i});if(validateSetWeightInput(this))logSet('${exId}','wu',${i},false)">
         <div class="setr-u">kg</div>
       </div>
       <div class="setr-cell">
-        <input class="set-field" type="number" inputmode="numeric" placeholder="–" id="w-${exId}-${i}-reps" value="${v.reps||''}" oninput="onWarmupEdit('${exId}',${i})" onchange="logSet('${exId}','wu',${i},false)">
+        <input class="set-field" type="number" inputmode="numeric" placeholder="–" id="w-${exId}-${i}-reps" value="${escHtml(String(v.reps??''))}" oninput="onWarmupEdit('${exId}',${i})" onchange="logSet('${exId}','wu',${i},false)">
         <div class="setr-u">reps</div>
       </div>
     </div>
@@ -21711,6 +21968,8 @@ function buildWarmupSection(exId,count){
 function onWarmupEdit(exId,i){
   if(!warmupState[exId])warmupState[exId]={count:1,manual:{},values:{}};
   warmupState[exId].manual[i]=true;
+  // TK-UT-008: keep the editable draft, including a trailing comma, across warm-up rerenders.
+  warmupState[exId].values[i]={kg:document.getElementById('w-'+exId+'-'+i+'-kg')?.value||'',reps:document.getElementById('w-'+exId+'-'+i+'-reps')?.value||''};
 }
 function addWarmupSet(exId){
   if(!warmupState[exId])warmupState[exId]={count:0,manual:{},values:{}};
@@ -21798,7 +22057,12 @@ function regenerateWarmup(exId){autoGenerateWarmup(exId,true);toast('Opwarmsets 
 
 function buildStrengthBody(exId,wuCount,workCount,prefill=null){
   let h='';
-  if(!warmupState[exId])warmupState[exId]={count:wuCount||0,manual:{},values:{}};
+  if(!warmupState[exId]){
+    const saved=(sessionLog[exId]&&Array.isArray(sessionLog[exId].wu))?sessionLog[exId].wu:[];
+    const st=warmupState[exId]={count:Math.max(wuCount||0,saved.length),manual:{},values:{}};
+    // TK-UT-008: a resumed manual value must not be replaced by a newly generated ramp.
+    saved.forEach((set,idx)=>{if(set){st.manual[idx+1]=true;st.values[idx+1]={kg:set.kg??'',reps:set.reps??''};}});
+  }
   // F0.7S — warm-up in een eigen kaart (mock-up "WARM-UP SETS"); bestaande wu-rijen/ids intact.
   h+='<div class="tks-card tks-wu-card">'+buildWarmupSection(exId,warmupState[exId].count)+'</div>';
   if(prefill) h+=`<div style="background:#e8f5e9;border-left:3px solid var(--green);border-radius:0 8px 8px 0;padding:6px 12px;font-size:11px;color:#2e7d32;margin:4px 14px 8px">📋 Voorgevuld: ${prefill.kg} kg × ${prefill.reps} reps${prefill.rpe?' · RPE '+prefill.rpe:''} — pas per set aan indien nodig</div>`;
@@ -22121,15 +22385,27 @@ function stepField(id,delta){
 // werd die door de browser genegeerd, waardoor "57,5" als "575" gelezen werd en tegen de
 // max-clamp aanliep). Daarom hier eerst de comma in el.value zelf vervangen, zodat het
 // zichtbare veld meteen het correcte getal toont.
+function validateSetWeightInput(el){
+  const empty=el.value.trim()==='';
+  const n=numNL(el.value);
+  const invalid=!empty&&(!Number.isFinite(n)||n<0||n>500);
+  if(el.setAttribute)el.setAttribute('aria-invalid',invalid?'true':'false');
+  if(el.setCustomValidity)el.setCustomValidity(invalid?'Voer een geldig gewicht in (komma of punt voor decimalen).':'');
+  return !invalid;
+}
 function clampNumInput(el,min,max){
   if(el.value==='')return;
-  if(el.value.indexOf(',')!==-1) el.value = el.value.replace(',','.');
-  let v=parseFloat(el.value);
-  if(isNaN(v))return;
-  if(v<min)v=min;
-  if(v>max)v=max;
-  // Voorkom oneindig lange invoer (bv. 3555) door te knippen op max digits vóór de komma
-  el.value=v;
+  // Never parse a prefix (67x5 -> 67), or remove a decimal separator while typing.
+  // Warm-up fields call this on change, just like work sets, not on each keystroke.
+  const v=numNL(el.value);
+  if(!Number.isFinite(v)){
+    if(el.setAttribute)el.setAttribute('aria-invalid','true');
+    if(el.setCustomValidity)el.setCustomValidity('Voer een geldig getal in (komma of punt voor decimalen).');
+    return;
+  }
+  el.value=Math.max(min,Math.min(max,v));
+  if(el.setAttribute)el.setAttribute('aria-invalid','false');
+  if(el.setCustomValidity)el.setCustomValidity('');
 }
 
 function buildCarryBody(exId,sets){
@@ -22322,6 +22598,7 @@ async function tkErgProgramPm5IfNeeded(exId,protocolType,meters){
   const rt=(typeof _c2rtGet==='function')?_c2rtGet(exId,ctx0.generation,st.deviceId||ctx0.deviceId):null;
   // FAIL CLOSED: PM5 verbonden en een afstandsdoel gevraagd, maar geen programmeerruntime.
   // Nooit stilzwijgend doorvallen alsof de PM5 is ingesteld.
+  if(rt&&rt.finiteTx&&rt.finiteTx.isPending())return {attempted:true,confirmed:false,state:'UNAVAILABLE',message:'Een PM5-intervaltest is nog bezig.'};
   if(!rt||!rt.prog) return {attempted:true,unavailable:true,confirmed:false,state:'UNAVAILABLE',
                             message:'Training kon niet op de PM5 worden ingesteld (programmering niet beschikbaar).'};
   const t=(typeof tkDeviceTransport==='function')?tkDeviceTransport():null;
@@ -22400,7 +22677,8 @@ function buildIntervalSection(exId,cardioType){
         <div class="row-item"><input class="row-inp" type="number" min="0" max="1800" id="iv-cooldown-${exId}" value="${p.cooldown}"><div class="row-inp-lbl">Cooldown (sec)</div></div>
       </div>
       <button class="btn btn-r" style="width:100%;margin-top:10px" onclick="startIntervalExecution('${exId}','${cardioType}')">▶ Start intervaltraining</button>
-      <div style="font-size:11px;color:var(--g4);margin-top:6px">Werk en herstel worden automatisch afgeteld. Je kunt tijdens het werk-block desgewenst een apparaat koppelen hierboven.</div>
+      <button class="btn btn-o" style="width:100%;margin-top:8px" onclick="tkErgSendFiniteTest('${exId}','${cardioType}')">PM5-intervalprogrammering testen (experimenteel)</button>
+      <div style="font-size:11px;color:var(--g4);margin-top:6px">Normale start telt intervallen alleen in de app af. De aparte PM5-test verstuurt na jouw bevestiging commando's naar een verbonden PM5 die nog niet aan een training is begonnen. Verzending is geen bewijs dat alle intervallen op de monitor juist zijn ingesteld: controleer ze daar zelf. De PM5-test start geen training of logboekregistratie.</div>
     </div>
   </div>`;
 }
@@ -22426,6 +22704,40 @@ function buildIntervalPrescriptionFromForm(exId,cardioType){
   ]});
   if(cooldown>0)blocks.push({type:'cooldown',termination:{type:'time',seconds:cooldown}});
   return IntervalEngineCore.normalizePrescription({sport:cardioType,blocks});
+}
+// #579 physical-test entry point. Never called by ordinary app-side interval start.
+// Requires real 0x31 wait-to-begin telemetry, the current BLE lease, and a user
+// confirmation before ANY write. Transfer completion is not PM5 readback.
+async function tkErgSendFiniteTest(exId,cardioType){
+  const st=_c2pair[exId],t=tkDeviceTransport();
+  if(!st||!st.connected||!t||typeof t.getControlContext!=='function'){
+    toast('Verbind eerst met je PM5.');return;
+  }
+  const ctx=t.getControlContext(),rt=_c2rtGet(exId,ctx.generation,ctx.deviceId);
+  if(!rt||!rt.finiteTx||rt.ownerUid!==(typeof tkEigenaarUid==='function'?tkEigenaarUid():null)){
+    toast('Geen geldige PM5-programmeerverbinding.');return;
+  }
+  if(rt.finiteTx.isPending()||(rt.prog&&rt.prog.isPending())){
+    toast('Er loopt al een PM5-programmeeractie.');return;
+  }
+  if(!rt.finitePreflight||rt.finitePreflight.source!=='pm5_0x31'||
+      Date.now()-rt.finitePreflight.observedAt>15000){
+    toast('Wacht op een recente PM5-status in rust; er is niets verstuurd.');return;
+  }
+  const normalized=buildIntervalPrescriptionFromForm(exId,cardioType);
+  if(!normalized.geldig){toast('Ongeldige intervaltraining; niets verstuurd.');return;}
+  if(typeof window.confirm!=='function'||!window.confirm(
+    'EXPERIMENTELE PM5-TEST. Dit kan een bestaande ingestelde training op de PM5 vervangen. '+
+    'Controleer dat je niet traint. Er is nog geen volledige readback van de intervalstructuur. '+
+    'Wil je de geselecteerde intervallen naar deze PM5 versturen?'))return;
+  let r;
+  try{r=await rt.finiteTx.start(normalized,{...ctx,now:Date.now(),userConfirmed:true,preflight:rt.finitePreflight});}
+  catch(_){r={transferred:false,reason:'unexpected_transfer_error'};}
+  if(r&&r.transferred){
+    toast('Testcommando\'s verzonden. Controleer ALLE werk-, rust- en herhalingswaarden op de PM5; nog niet bevestigd.');
+  }else{
+    toast('PM5-test niet bevestigd ('+String(r&&r.reason||'onbekend')+'). Controleer je PM5, ook na een gedeeltelijke verzending.');
+  }
 }
 function startIntervalExecution(exId,cardioType){
   // B3: canonieke structured Erg-start leest de prescriptie UITSLUITEND uit het gepersisteerde
@@ -22519,7 +22831,7 @@ async function finishIntervalExecution(vroegtijdigGestopt){
   // canonieke meting is (geen prescribed->actual, geen verzonnen telemetrie, geen RPM-in-stroke_rate).
   if(_ivExec.canonical&&_ivExec.laps.length){
     if(!sessionLog[exId])sessionLog[exId]={};
-    sessionLog[exId].intervalsDetail={version:TK_ERG_INTERVALS_VERSION,sport:_ivExec.sport,blocks:_ivExec.laps.slice(),aborted:!!_ivExec.aborted};
+    sessionLog[exId].intervalsDetail={...(sessionLog[exId].intervalsDetail||{}),version:TK_ERG_INTERVALS_VERSION,sport:_ivExec.sport,blocks:_ivExec.laps.slice(),aborted:!!_ivExec.aborted};
   }
   closeModal('m-interval-exec');
   if(workSecondsTotaal>0){
@@ -22588,6 +22900,7 @@ function buildCardioBody(exId, cardioType){
   h+='</div>';
 
   h+=buildSplitsSection(exId,cardioType);
+  h+='<div id="pm5splits-'+exId+'">'+tkPm5MeasuredSplitsHtml(sessionLog[exId]?.intervalsDetail)+'</div>';
   if(typeof enhanceCardioPrev==='function'){ setTimeout(function(){ enhanceCardioPrev(exId,cardioType); },0); }
   return h;
 }
@@ -22708,6 +23021,7 @@ function numSplitsFor(exId,cfg){
 }
 function splitRowsHtml(exId,cardioType){
   const cfg=CARDIO_TYPES[cardioType];
+  if((cardioSplitMode[exId]||'auto')!=='handmatig'&&sessionLog[exId]?.cardio?.splitProvenance==='unavailable')return '<div style="grid-column:1/-1">Exacte splits niet beschikbaar.</div>';
   const mode=cardioSplitMode[exId]||'auto';
   const n=numSplitsFor(exId,cfg);
   const s=cardioSplits[exId]||{};
@@ -22726,9 +23040,10 @@ function buildSplitsSection(exId,cardioType){
   const mode=cardioSplitMode[exId]||'auto';
   return `<div style="padding:4px 14px 4px;font-size:11px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px">Splits per ${cfg.splitDist}${cfg.unit}</div>
   <div class="rower-scroll" id="splitmode-${exId}">
-    <button class="rower-chip${mode==='auto'?' sel':''}" onclick="setCardioSplitMode('${exId}','${cardioType}','auto')">Automatisch</button>
+    <button class="rower-chip${mode==='auto'?' sel':''}" onclick="setCardioSplitMode('${exId}','${cardioType}','auto')">Geschatte verdeling</button>
     <button class="rower-chip${mode==='handmatig'?' sel':''}" onclick="setCardioSplitMode('${exId}','${cardioType}','handmatig')">Handmatig</button>
   </div>
+  <div style="padding:4px 14px;font-size:11px;color:var(--g4)">Geschatte verdeling is berekend uit het totaal; dit zijn geen gemeten afzonderlijke splits.</div>
   <div class="splits-grid" id="splitsgrid-${exId}">${splitRowsHtml(exId,cardioType)}</div>
   <div id="splitsummary-${exId}" style="padding:4px 14px 8px;font-size:11px;color:var(--g4)"></div>`;
 }
@@ -22740,7 +23055,7 @@ function renderSplitRows(exId,cardioType){
 function setCardioSplitMode(exId,cardioType,mode){
   cardioSplitMode[exId]=mode;
   const wrap=document.getElementById('splitmode-'+exId);
-  if(wrap)wrap.querySelectorAll('.rower-chip').forEach(b=>b.classList.toggle('sel',(b.textContent==='Automatisch')===(mode==='auto')));
+  if(wrap)wrap.querySelectorAll('.rower-chip').forEach(b=>b.classList.toggle('sel',(b.textContent==='Geschatte verdeling')===(mode==='auto')));
   if(mode==='auto')computeAutoSplits(exId,cardioType);
   renderSplitRows(exId,cardioType);
   updateSplitSummary(exId,cardioType);
@@ -22749,6 +23064,7 @@ function setCardioSplitMode(exId,cardioType,mode){
 // Automatisch: verdeelt de totale tijd gelijkmatig over alle intervallen.
 function computeAutoSplits(exId,cardioType){
   const cfg=CARDIO_TYPES[cardioType];
+  if(sessionLog[exId]?.cardio?.splitProvenance==='unavailable'){cardioSplits[exId]={};return;}
   const distVal=numNL(getCardioVal(exId,cfg.calc?.distField))||cfg.splitTotal; // KOMMA-VEILIG
   const timeVal=CardioEngine.parseTime(getCardioVal(exId,'time'));
   cardioSplits[exId]=timeVal?CardioEngine.autoSplits(timeVal,distVal,cfg.splitDist):{};
@@ -22765,6 +23081,7 @@ function onManualSplitChange(exId,cardioType,q){
 function updateSplitSummary(exId,cardioType){
   const cfg=CARDIO_TYPES[cardioType];
   const mode=cardioSplitMode[exId]||'auto';
+  if(mode==='auto'&&sessionLog[exId]?.cardio?.splitProvenance==='unavailable'){const e=document.getElementById('splitsummary-'+exId);if(e)e.textContent='Geen gemeten afzonderlijke splits ontvangen van de PM5.';return;}
   const n=numSplitsFor(exId,cfg);
   const s=cardioSplits[exId]||{};
   const summaryEl=document.getElementById('splitsummary-'+exId);
@@ -22783,7 +23100,7 @@ function updateSplitSummary(exId,cardioType){
       ? 'Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total)
       : agg.count+'/'+n+' splits ingevuld';
   } else {
-    if(summaryEl)summaryEl.textContent='Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total);
+    if(summaryEl)summaryEl.textContent='Geschatte gelijke verdeling; geen gemeten splits. Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total);
   }
 }
 // v306.2: centrale input-handler voor alle top-level cardiovelden — vervangt calcCardioSplit()
@@ -22989,6 +23306,69 @@ function tkC2FrozenFor(exId){
   return (typeof sessionLog!=='undefined'&&sessionLog&&sessionLog[exId]&&sessionLog[exId].c2Completed)?sessionLog[exId].c2Completed:null;
 }
 
+// Received PM5 splits share the connection owner and the existing session writer.
+function tkErgOnMeasuredSplit(exId,raw,ctx){
+  const rt=_c2rtGet(exId,ctx?.generation,ctx?.deviceId),uid=tkEigenaarUid();
+  if(!uid||!rt||rt.ownerUid!==uid||!ctx?.connected||!sessionLog[exId]||(!curT&&(typeof LOS_DOMID==='undefined'||exId!==LOS_DOMID)))return false;
+  const l=sessionLog[exId],cm=l.c2Completed?.measurement||l.c2;
+  if(!cm||!tkC2IsLoggableSummary(cm)||raw?.kind!=='pm5_split'||raw.multiplexedId!=='0x37')return false;
+  if(![0,1,3,4,6,7,8,9,255].includes(raw.intervalType)||!Number.isInteger(raw.intervalNumber))return false;
+  if(![raw.splitTimeS,raw.splitDistanceM,raw.elapsedTimeS,raw.distanceM].every(v=>Number.isFinite(v)&&v>0))return false;
+  if(raw.splitTimeS>raw.elapsedTimeS||raw.splitDistanceM>raw.distanceM)return false;
+  if(l.c2Completed&&(raw.elapsedTimeS>cm.elapsedTimeS||raw.distanceM>cm.distanceM))return false;
+  const det=l.intervalsDetail||{version:'pm5_measured_splits.v1'},rows=det.pm5_splits||[];
+  const old=rows.find(r=>r.number===raw.intervalNumber);
+  if(old&&(old.elapsed_s!==raw.elapsedTimeS||old.distance_total_m!==raw.distanceM))return false;
+  if(old)return true;
+  const record={number:raw.intervalNumber,duration_s:raw.splitTimeS,distance_m:raw.splitDistanceM,
+    elapsed_s:raw.elapsedTimeS,distance_total_m:raw.distanceM,interval_type:raw.intervalType,
+    source:'concept2_pm5',packet_id:'0x37',packet_seq:raw.packetSeq,device_id:ctx.deviceId,generation:ctx.generation,received_at:Date.now()};
+  det.pm5_splits=rows.concat([record]).sort((a,b)=>a.number-b.number);l.intervalsDetail=det;
+  delete l._sessionRowPersistedAt;
+  persistTrainingDraft(true);
+  const slot=document.getElementById('pm5splits-'+exId);if(slot)slot.innerHTML=tkPm5MeasuredSplitsHtml(det);
+  return true;
+}
+function tkPm5MeasuredSplitsHtml(det){
+  const rows=(det?.pm5_splits||[]).filter(r=>r.source==='concept2_pm5'&&r.duration_s>0&&r.distance_m>0);if(!rows.length)return '';
+  return '<div style="font-size:12px;padding:8px 0"><b>Gemeten PM5-splits</b>'+rows.map((r,i)=>'<div>'+'PM5 #'+Number(r.number)+': '+Number(r.distance_m)+' m · '+CardioEngine.formatTime(r.duration_s)+'</div>').join('')+'<div>Alleen ontvangen apparaatmetingen; ontbrekende splits worden niet aangevuld.</div></div>';
+}
+// TK582-006: project frozen measured actuals into the existing result form, never a second writer.
+function tkC2ReflectCompletedActual(exId,frozen){
+  const cm=frozen?.measurement;
+  if(!cm||!tkC2IsLoggableSummary(cm))return false;
+  const conv=tkC2Converter();if(!conv)return false;
+  const row=tkC2SessionRowFromLog(cm,{},conv);
+  const selected=(typeof getSessionExs==='function'&&curT)?getSessionExs(curT).find(e=>e.id===exId):null;
+  const type=selected?resolveCardioType(selected):({rowerg:'rowing',skierg:'skierg',bikeerg:'bikeerg'}[cm.machineType]||null);
+  const cfg=CARDIO_TYPES[type];if(!cfg)return false;
+  const prior=sessionLog[exId]?.cardio||{};
+  const data={...prior,type:type,source:'concept2_measured',splitProvenance:'unavailable'};
+  (cfg.fields||[]).forEach(f=>{
+    if(f==='rpe')return; // user RPE is not a device measurement
+    const spec=cfg.rowMap?.[f];if(!spec)return;
+    let value=null;
+    if(spec.col!=='extraNote'){
+      value=row[spec.col];if(value!=null&&spec.col==='distance'&&/_km$/.test(f))value=Number(value)/1000;
+    }else if(typeof spec.template==='function'){
+      const parts=String(spec.template('\u0001',{machine:''})).split('\u0001');
+      if(parts.length===2){const note=row.extraNote||'';const at=note.indexOf(parts[0].trim());if(at>=0){const rest=note.slice(at+parts[0].trim().length);const end=parts[1].trim()?rest.indexOf(parts[1].trim()):-1;value=(end>=0?rest.slice(0,end):rest.split(/[·|]/)[0]).trim();}}
+    }
+    if(value==null||value==='')return;
+    if(f==='split'&&cfg.splitUnit&&String(value).endsWith(cfg.splitUnit))value=String(value).slice(0,-cfg.splitUnit.length).trim();
+    data[f]=String(value);setCardioVal(exId,f,value);
+  });
+  if(row.watt_source)data.wattSource=row.watt_source;
+  sessionLog[exId].cardio=data;
+  // A total time contains no individual 250m measurements. Do not manufacture them.
+  if(cfg.splits&&(cardioSplitMode[exId]||'auto')!=='handmatig'){
+    cardioSplits[exId]={};renderSplitRows(exId,type);
+    const el=document.getElementById('splitsummary-'+exId);if(el)el.textContent='Geen gemeten afzonderlijke splits ontvangen van de PM5.';
+  }
+  if(typeof persistTrainingDraft==='function'&&curT)persistTrainingDraft(true);
+  else if(typeof scheduleAutosave==='function')scheduleAutosave();
+  return true;
+}
 function tkErgOnCanonicalMeasurement(exId, cm){
   try{ if(typeof tkC2DiagOnCanonical==='function') tkC2DiagOnCanonical(exId, cm); }catch(_dg){} // DIAG, fail-open
   if(!exId || !cm || typeof cm!=='object') return;
@@ -22998,7 +23378,7 @@ function tkErgOnCanonicalMeasurement(exId, cm){
   // packets (13/0/nieuwe workout) overschrijven .c2 niet (de diagnostiek hierboven zag ze wel).
   if(sessionLog[exId].c2Completed){ try{ if(typeof tkC2CompletionIgnored==='function') tkC2CompletionIgnored(exId, cm); }catch(_ci){} return; }
   sessionLog[exId].c2=cm;
-  try{ var _fz=(typeof tkC2CompletionObserve==='function')?tkC2CompletionObserve(exId, cm):null; if(_fz) sessionLog[exId].c2Completed=_fz; }catch(_co){}
+  try{ var _fz=(typeof tkC2CompletionObserve==='function')?tkC2CompletionObserve(exId, cm):null; if(_fz){ sessionLog[exId].c2Completed=_fz; tkC2ReflectCompletedActual(exId,_fz); } }catch(_co){}
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -23036,6 +23416,11 @@ function tkC2SessionRowFromLog(c2s, ctx, convert){
     heart_rate_bpm:(c2s.heart_rate_bpm!=null?c2s.heart_rate_bpm:c2s.heartRateBPM),
     drag_factor:(c2s.drag_factor!=null?c2s.drag_factor:c2s.dragFactor) };
   var row=convert(sum, ctx||{}).row;
+  // PM5 cannot measure perceived effort. Only explicit user-entered actual RPE is merged here.
+  if(ctx?.actualRpe!=null&&String(ctx.actualRpe).trim()!==''){
+    var actualRpe=Number(String(ctx.actualRpe).replace(',','.'));
+    if(Number.isFinite(actualRpe)&&actualRpe>=0&&actualRpe<=10)row.rpe=actualRpe;
+  }
   delete row.date; delete row.exercise_id; delete row.training_type; delete row.training_instance_id;
   row.extraNote=row.note; delete row.note;
   return row;
@@ -23045,7 +23430,7 @@ function tkC2SessionRowFromLog(c2s, ctx, convert){
 function logCardio(exId, cardioType){
   const cfg=CARDIO_TYPES[cardioType]||CARDIO_TYPES.rowing;
   if(!sessionLog[exId]) sessionLog[exId]={};
-  const data={type:cardioType,machine:localStorage.getItem('sel_'+cardioType)||''};
+  const data={...(sessionLog[exId].cardio||{}),type:cardioType,machine:localStorage.getItem('sel_'+cardioType)||''};
   cfg.fields.forEach(f=>{data[f]=getCardioVal(exId,f);});
   // GAP-P2-013: watt-herkomst meenemen (geen zichtbaar veld -- alleen
   // relevant voor apparaten waar watt daadwerkelijk een veld is).
@@ -23079,6 +23464,17 @@ function currentWorkoutElapsedMs(){
   if(trainPaused&&pausedAt)e-=(Date.now()-pausedAt);
   return Math.max(0,e);
 }
+// Session-only evidence; never reconstruct user history from current program definitions.
+let sessionProgramSnapshot=null;
+function restoreExecutionDraft(draft){
+  if(!draft||draft.t!==curT)return;
+  if(draft.resolvedWorkout&&draft.resolvedWorkout.t===curT)resolvedWorkout=draft.resolvedWorkout;
+  else if(curT.startsWith('prog_'))resolvedWorkout=null;
+  execFocus[curT]=Number(draft.execFocus)||0;
+  execSkipped[curT]=new Set(draft.skipped||[]);
+  sessionProgramSnapshot=draft.programSnapshot||null;
+}
+
 function persistTrainingDraft(silent){
   if(!curT)return;
   saveState='saving';updateSaveIndicator();
@@ -23088,7 +23484,7 @@ function persistTrainingDraft(silent){
     // verloren zodra Android de app afsloot: bij hervatten was activeInstanceId weer null,
     // completeTrainingInstance() werd nooit aangeroepen en de instance bleef eeuwig
     // 'active'. Precies de weesrijen die migratie v446 achteraf moest opruimen.
-    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0,instanceId:(typeof activeInstanceId!=='undefined'?activeInstanceId:null)||null}));
+    localStorage.setItem('tk_draft_training',JSON.stringify({t:curT,sessionLog,sessionExtra,resolvedWorkout:(resolvedWorkout&&resolvedWorkout.t===curT?resolvedWorkout:null),skipped:[...execSkipSet(curT)],programSnapshot:(String(curT).startsWith('prog_')?sessionProgramSnapshot:null),ts:Date.now(),elapsedMs:currentWorkoutElapsedMs(),execFocus:(typeof execFocus!=='undefined'?execFocus[curT]:0)||0,instanceId:(typeof activeInstanceId!=='undefined'?activeInstanceId:null)||null}));
     lastSaveTs=Date.now();saveState='saved';
   }catch(e){saveState='dirty';}
   updateSaveIndicator();
@@ -23351,6 +23747,8 @@ function copyToSets(exId, fromSet, field, val){
 
 function logSet(exId,type,setNum,isWork){
   if(!sessionLog[exId])sessionLog[exId]={wu:[],sets:[]};
+  // A retry must upsert edited actuals using the same row ID, never skip them as already saved.
+  delete sessionLog[exId]._sessionRowPersistedAt;
   const pfx=type==='wu'?'w':'s';
   // P0 (14-08): sla NL-komma genormaliseerd op ("73,5"→"73.5") zodat elke downstream-parse klopt.
   const kg=normNumStr(document.getElementById(pfx+'-'+exId+'-'+setNum+'-kg')?.value);
@@ -23358,8 +23756,13 @@ function logSet(exId,type,setNum,isWork){
   const rpe=isWork?normNumStr(document.getElementById('s-'+exId+'-'+setNum+'-rpe')?.value):null;
   // Effectief gewicht: houdt rekening met de gewicht-modus (vast/+kg/% vorige set).
   const effKg=isWork?getEffectiveKg(exId,setNum):(numNL(kg)||null);
-  if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]={kg,reps};}
-  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]={kg,reps,rpe,effKg};}
+  // UX-LOG-01: een bewerking vervangt alleen de invoerwaarden. Vlaggen die elders op dezelfde set
+  // zijn gezet (done/rest_sec via toggleSetDone, isAmrap via toggleAmrapSet) blijven behouden; voorheen
+  // wist elke toetsaanslag ze, waardoor een afgevinkte AMRAP-set als gewone, niet-afgevinkte set
+  // werd opgeslagen.
+  const _oud=(arr)=>(arr&&arr[setNum-1]&&typeof arr[setNum-1]==='object')?arr[setNum-1]:{};
+  if(type==='wu'){if(!sessionLog[exId].wu)sessionLog[exId].wu=[];sessionLog[exId].wu[setNum-1]=Object.assign({},_oud(sessionLog[exId].wu),{kg,reps});}
+  else{if(!sessionLog[exId].sets)sessionLog[exId].sets=[];sessionLog[exId].sets[setNum-1]=Object.assign({},_oud(sessionLog[exId].sets),{kg,reps,rpe,effKg});}
   // Check PR (per rep-bucket 1/3/5/10, plus absolute-PR fallback voor niet-rep oefeningen)
   if(isWork&&effKg){
     const exObj=exercises.find(e=>e.id===exId);
@@ -23403,6 +23806,9 @@ function toggleSetDone(exId,setNum){
   const c=document.getElementById('sc-'+exId+'-'+setNum);
   if(!c)return;
   const nowDone=!c.classList.contains('done');
+  // TK584: confirming a prefilled set must capture the visible actuals too.
+  // Merely rendering a prescription still records nothing.
+  if(nowDone)logSet(exId,'work',setNum,true);
   c.classList.toggle('done');
   // v3.3.53 — kaart weerspiegelt de done-status (presentatie; circle blijft de bron).
   document.getElementById('sr-'+exId+'-'+setNum)?.classList.toggle('done',nowDone);
@@ -23422,6 +23828,7 @@ function toggleSetDone(exId,setNum){
       lastSetDoneAt[exId]=Date.now();
     }
   }catch(_){}
+  persistTrainingDraft(true); // explicit confirmation survives an immediate app close
   if(nowDone){c.classList.add('just-done');setTimeout(()=>c.classList.remove('just-done'),220);}
   updateProgress(curT);
   updateSummary(curT);
@@ -23616,13 +24023,17 @@ function addWorkSet(exId,type){
   const body=document.getElementById('body-'+exId);
   if(!body)return;
   const existing=body.querySelectorAll('.set-row[id^="sr-'+exId+'"]').length;
-  const i=existing+1;
+  const highest=[...body.querySelectorAll('.set-row[id^="sr-'+exId+'-"]')].reduce((n,row)=>Math.max(n,parseInt(row.id.slice(('sr-'+exId+'-').length))||0),0);
+  const i=Math.max(existing,highest,sessionLog[exId]?._workSetCount||0)+1;
   if(type==='strength'||type==='carry'||type==='bodyweight'){
     const tmp=document.createElement('div');
     tmp.innerHTML=buildWorkSetRow(exId,i);
     const addBtn=body.querySelector('.add-row:last-of-type');
     if(addBtn)body.insertBefore(tmp.firstElementChild,addBtn);
     else body.appendChild(tmp.firstElementChild);
+    if(!sessionLog[exId])sessionLog[exId]={};
+    sessionLog[exId]._workSetCount=i;
+    persistTrainingDraft(true);
   }
 }
 
@@ -23646,6 +24057,7 @@ function toggleExCard(id){
 }
 
 function removeExSession(id){
+  if(execExerciseHasData(id)){toast('Uitgevoerde sets blijven bewaard; gebruik Overslaan voor het vervolg');return;}
   sessionExtra=sessionExtra.filter(e=>e.id!==id);
   delete sessionLog[id];
   delete pctSelection[id];delete rpeManual[id];delete warmupState[id];delete cardioSplitMode[id];delete cardioSplits[id];delete manualKgSets[id];
@@ -23725,11 +24137,12 @@ function execExerciseHasData(exId){
   const l=sessionLog[exId]; if(!l)return false;
   const setsData=(l.sets||[]).some(s=>s&&(s.kg||s.reps));
   const wuData=(l.wu||[]).some(s=>s&&(s.kg||s.reps));
-  return setsData||wuData;
+  return setsData||wuData||!!(l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals))||!!(typeof tkC2IsLoggableSummary==='function'&&tkC2IsLoggableSummary(l.c2));
 }
 async function execRemoveExercise(t,exId){
   const nm=(exercises.find(e=>e.id===exId)||{}).naam||'deze oefening';
   const heeftData=execExerciseHasData(exId);
+  if(heeftData){toast('Uitgevoerde sets blijven bewaard; gebruik Overslaan voor het vervolg');return;}
   const ok=await confirmModal(
     heeftData?('Voor '+nm+' zijn al sets geregistreerd in deze sessie. Verwijderen verwijdert ook die gegevens.'):('"'+nm+'" verwijderen uit deze training?'),
     {title:'Oefening verwijderen',okLabel:'Verwijderen',cancelLabel:'Annuleren',danger:heeftData}
@@ -23750,9 +24163,11 @@ function execReplaceExercise(t,exId){
   openExPicker(async function(newEx){
     if(!newEx||!newEx.id||newEx.id===exId)return;
     const replaced=resolvePickerEx(newEx.id); if(!replaced)return; // F41: canoniek catalog_id behouden
+    if(getSessionExs(t).some(e=>e.id===newEx.id)){toast('Deze oefening staat al in deze training');return;}
+    const _original=getSessionExs(t).find(e=>e.id===exId);
     const heeftData=execExerciseHasData(exId);
     if(heeftData){
-      const ok=await confirmModal('Voor '+nm+' zijn al sets geregistreerd in deze sessie. Bij vervangen gaan die gegevens verloren -- ze worden NIET automatisch overgezet naar de nieuwe oefening.',{title:'Oefening vervangen',okLabel:'Toch vervangen',cancelLabel:'Annuleren',danger:true});
+      const ok=await confirmModal('Voor '+nm+' zijn al sets geregistreerd in deze sessie. De uitgevoerde sets blijven onder deze oefening bewaard. De vervangende oefening begint zonder uitgevoerde sets.',{title:'Oefening vervangen',okLabel:'Toch vervangen',cancelLabel:'Annuleren',danger:true});
       if(!ok)return;
     }
     // GAP-P3-033: intent behouden, load/provenance canonical opnieuw voor de NIEUWE oefening (geen prevS-fallback van A).
@@ -23762,11 +24177,13 @@ function execReplaceExercise(t,exId){
         const old=resolvedWorkout.items[idx];
         const _rx=await canonicalNewExerciseItem(replaced.id, old);
         resolvedWorkout.items[idx]=Object.assign({},old,{id:replaced.id,naam:replaced.name},_rx);
+        resolvedWorkout.items[idx]._replaces=exId;
       }
     }
     const sxIdx=sessionExtra.findIndex(e=>e.id===exId&&e._t===t);
-    if(sxIdx>=0){ const _rx2=await canonicalNewExerciseItem(replaced.id, sessionExtra[sxIdx]); sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name},_rx2); } // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
-    delete sessionLog[exId]; // oude, reeds gelogde data hoort NIET automatisch bij de nieuwe oefening (expliciete productregel)
+    if(sxIdx>=0){ const _rx2=await canonicalNewExerciseItem(replaced.id, sessionExtra[sxIdx]); sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name},_rx2); sessionExtra[sxIdx]._replaces=exId; } // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
+    // TK584: keep original actuals under their original exercise ID.
+    if(heeftData&&_original)sessionExtra.push({..._original,_t:t,_retainedPerformed:true});
     renderTrainScreen(t);
     scheduleAutosave();
     toast('Vervangen door '+replaced.name);
@@ -24261,6 +24678,13 @@ async function finishSession(){
   if(btn){btn.disabled=true;btn.textContent='Opslaan...';}
   try{
   const t=curT,list=getSessionExs(t),today=td();let saved=0,failed=0;
+  // A program finish must not discard its only plan snapshot when instance creation failed.
+  if(t.startsWith('prog_')&&!activeInstanceId){
+    if(!sessionProgramSnapshot){toast('Programmasnapshot ontbreekt; concept blijft bewaard.');return;}
+    activeInstanceId=await createTrainingInstance({snapshot:sessionProgramSnapshot});
+    if(!activeInstanceId){toast('Programma-instantie kon niet worden opgeslagen; concept blijft bewaard.');return;}
+    persistTrainingDraft(true);
+  }
   // ROADMAP POST-V1 #1 — duration_s per sessie vastleggen (RAW DATA). Hergebruikt
   // exact dezelfde formule als de al bestaande live-klok (startTrainTimer()): wall-
   // clock verstreken tijd minus geaccumuleerde pauzetijd. trainStart/pausedAccumMs
@@ -24314,7 +24738,7 @@ async function finishSession(){
       try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,_c2ok?'c2_eligible':'c2_not_eligible_manual_path'); }catch(_dfp){} // DIAG, fail-open
       var cRow;
       if(_c2ok){
-        cRow=tkC2SessionRowFromLog(_c2s,{date:today,training_type:t,training_instance_id:activeInstanceId||null},_c2conv); // = Concept2Live.liveWorkoutToActual
+        cRow=tkC2SessionRowFromLog(_c2s,{date:today,training_type:t,training_instance_id:activeInstanceId||null,actualRpe:l.cardio?.rpe},_c2conv); // = Concept2Live.liveWorkoutToActual
         try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'liveWorkoutToActual_reached'); }catch(_dfl){} // DIAG, fail-open
         // date/exercise_id/training_type/instance levert de omliggende write; note -> extraNote (zie tkC2SessionRowFromLog).
       } else {
@@ -24334,8 +24758,10 @@ async function finishSession(){
       const _protoCols=_ergProj?{protocol_type:_ergProj.protocol_type,protocol_value:_ergProj.protocol_value}:{};
       // v4.70.4: alleen een AANTOONBAAR geslaagde write telt (sbPostQ geeft bij een PostgREST-400 false).
       // Retry schrijft een al gepersisteerde oefening niet opnieuw (geen dubbele rij).
+      if(!l._sessionRowId)l._sessionRowId=newClientRowId();
+      persistTrainingDraft(true);
       const _so=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,id:l._sessionRowId},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); persistTrainingDraft(true); }
       saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -24352,8 +24778,11 @@ async function finishSession(){
       row.weather=_weerData; // ROADMAP POST-V1 #3 — zie de berekening bovenaan finishSession()
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
+      if(!l._sessionRowId)l._sessionRowId=newClientRowId();
+      row.id=l._sessionRowId;
+      persistTrainingDraft(true);
       const _soS=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
+      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); persistTrainingDraft(true); } // v4.70.4
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
@@ -24382,6 +24811,12 @@ async function finishSession(){
     if(window.toast)toast(saved>0?(saved+' opgeslagen, '+failed+' mislukt — controleer je verbinding en probeer opnieuw'):('Opslaan mislukt ('+failed+') — probeer opnieuw'));
     return;
   }
+  if(saved===0){toast('Geen uitgevoerde sets om op te slaan');return;}
+  // Persist separate immutable plan and session-only modifications before clearing the draft.
+  if(activeInstanceId){
+    const snapshot=t.startsWith('prog_')&&sessionProgramSnapshot?{...sessionProgramSnapshot,execution:{version:'program_execution.v1',captured_at:new Date().toISOString(),items:JSON.parse(JSON.stringify(list)),skipped:[...execSkipSet(t)]}}:null;
+    if(await completeTrainingInstance(activeInstanceId,snapshot)!==true){toast('Sets bewaard; afronden nog niet bevestigd. Probeer opnieuw.');return;}
+  }
   closeModal('m-session-end');stopTrainTimer();
   tkErgDisconnectAll('session_finish'); // A5-hardening (v4.67.0) -- voorkomt een BLE-verbinding/subscriptie die op de achtergrond actief blijft ná het afronden van de training
   try{ if(typeof tkC2ExecutionCleanup==='function') tkC2ExecutionCleanup(list.map(function(e){ return e.id; }),'session_finish'); }catch(_cl){} // FASE 2A (H4): pas NA volledig geslaagde opslag (failed>0 is hierboven al teruggekeerd)
@@ -24396,10 +24831,7 @@ async function finishSession(){
      bestaande offline-veilige sbPatchQ: bij een verbroken verbinding wordt hij
      gequeued in plaats van verloren. Een mislukte afronding mag de sessie nooit
      ongedaan maken — de trainingen zijn op dit punt al weggeschreven. */
-  if(activeInstanceId){
-    try{ await completeTrainingInstance(activeInstanceId); }
-    catch(e){ try{ console.warn('completeTrainingInstance mislukt (sessie is wel opgeslagen)',e&&e.message); }catch(_){ } }
-  }
+  // Instance completion was confirmed above; a failed finish keeps the draft for retry.
   // SPRINT C2-C — execution linkage: het echte training_instance-ID vóór het
   // wissen vasthouden, zodat de canonical assignment-completion hieronder
   // (uitsluitend bij een ECHTE finish, na saved===0-guard) de juiste FK kan
@@ -24586,16 +25018,17 @@ let tkTrainingCtx=null; // globale cache van training_context (row | false=geen 
 function renderHomeContextCard(tc){
   tkTrainingCtx = tc || false;
   const el=document.getElementById('home-context'); if(!el)return;
-  if(!tc){el.style.display='none'; el.innerHTML=''; return;}
+  const heading=document.getElementById('trainen-ritme-heading');
+  if(!tc){el.style.display='none'; el.innerHTML=''; if(heading)heading.style.display='none'; return;}
   const bits=[];
-  if(tc.frequency!=null) bits.push('Je traint meestal <b>'+tc.frequency+'× per week</b>');
-  if(tc.duration_min!=null) bits.push('sessies van <b>'+tc.duration_min+' min</b>');
+  if(tc.frequency!=null) bits.push('Je traint meestal <b>'+escHtml(String(tc.frequency))+'× per week</b>');
+  if(tc.duration_min!=null) bits.push('sessies van <b>'+escHtml(String(tc.duration_min))+' min</b>');
   if(tc.location) bits.push('locatie <b>'+escHtml(String(tc.location))+'</b>');
   const line1=bits.join(' · ');
   const daysTxt=(tc.days&&tc.days.length)?tc.days.join(' · '):'';
   const equip=(tc.equipment&&tc.equipment.length)?tc.equipment.join(', '):'';
   const avoid=(tc.avoid_exercises&&tc.avoid_exercises.length)?tc.avoid_exercises.join(', '):'';
-  if(!line1 && !daysTxt && !equip && !avoid){el.style.display='none'; el.innerHTML=''; return;}
+  if(!line1 && !daysTxt && !equip && !avoid){el.style.display='none'; el.innerHTML=''; if(heading)heading.style.display='none'; return;}
   let h='<div class="card"><div class="card-body" style="padding-top:14px">';
   h+='<div style="font-size:12px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Jouw ritme</div>';
   if(line1) h+='<div style="font-size:14px;color:var(--dark);line-height:1.5">'+line1+'.</div>';
@@ -24603,7 +25036,19 @@ function renderHomeContextCard(tc){
   if(equip) h+='<div style="font-size:13px;color:var(--g4);margin-top:2px">Materiaal: '+escHtml(equip)+'</div>';
   if(avoid) h+='<div style="font-size:13px;color:var(--g4);margin-top:2px">Vermijdt: '+escHtml(avoid)+'</div>';
   h+='</div></div>';
-  el.innerHTML=h; el.style.display='block';
+  el.innerHTML=h; el.style.display='block'; if(heading)heading.style.display='';
+}
+let tkContextRequestEpoch=0; // latest training-context request wins, even for same account
+let tkContextDisplayOwnerId=null; // clear stale rhythm immediately when user switches
+async function refreshTrainContext(){
+  const requestEpoch=++tkContextRequestEpoch;
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  if(tkContextDisplayOwnerId!==ownerId){tkContextDisplayOwnerId=ownerId;renderHomeContextCard(null);}
+  const stillCurrent=()=>requestEpoch===tkContextRequestEpoch&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
+  try{
+    const rows=await v43SafeGet('training_context','&limit=1');
+    if(stillCurrent())renderHomeContextCard(rows&&rows[0]);
+  }catch(_){if(stillCurrent())renderHomeContextCard(null);}
 }
 async function refreshHome(){
   const hq=tkHealthQualified(await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=35'));
@@ -24611,8 +25056,14 @@ async function refreshHome(){
   const lh=hd[0];
   // Sprint 2 — Home-personalisatie: 'Jouw ritme' uit training_context (onboarding).
   // Alleen tonen wanneer de data echt bestaat; geen fake planning.
-  try{ const tcRows=await v43SafeGet('training_context','&limit=1'); renderHomeContextCard(tcRows&&tcRows[0]); }
-  catch(e){ renderHomeContextCard(null); }
+  // Behoud de Home-contextcache voor bestaande plannings- en coachfuncties.
+  // De zichtbare kaart staat nu onder Trainen en wordt daar ook zelfstandig geladen.
+  const ctxRequestEpoch=++tkContextRequestEpoch;
+  const ctxOwner=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  if(tkContextDisplayOwnerId!==ctxOwner){tkContextDisplayOwnerId=ctxOwner;renderHomeContextCard(null);}
+  const ctxCurrent=()=>ctxRequestEpoch===tkContextRequestEpoch&&ctxOwner===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
+  try{const tcRows=await v43SafeGet('training_context','&limit=1');if(ctxCurrent())renderHomeContextCard(tcRows&&tcRows[0]);}
+  catch(_){if(ctxCurrent())renderHomeContextCard(null);}
   let dfInfo=null,nextT=null;
   if(lh){
     const hrvComponent=hrvDagFactorPersonal(hd);
@@ -25567,7 +26018,7 @@ function buildPrescriptionContract(ex, prevS, rxWeight){
       const todayTxt='Vandaag: '+_w+' kg'+((ex.sets!=null&&ex.reps!=null)?(' × '+ex.sets+' × '+ex.reps):'')+(rpeOut!=null?(' @RPE '+rpeOut):'')+'.';
       let why='';
       if(via.indexOf('rep-range')!==-1 && w<prev.weight) why=' Lichter omdat het doel meer herhalingen ('+ex.reps+') is dan vorige keer.';
-      else if(via.indexOf('recovery')!==-1 && (prescription.recoveryApplied.rpeDelta<0||prescription.recoveryApplied.weightAdjusted)) why=' Iets lichter, afgestemd op je herstel vandaag.';
+      else if(via.indexOf('recovery')!==-1 && (prescription.recoveryApplied.rpeDelta<0||prescription.recoveryApplied.weightAdjusted)) why=w<prev.weight?' Lichter gewicht, afgestemd op je herstel vandaag.':'Herstel verwerkt in het sets-/RPE-doel; het getoonde gewicht is niet lager dan vorige keer.';
       else if(via.indexOf('progressie')!==-1) why=' Zwaarder dan vorige keer volgens je opbouw.';
       else if(w===prev.weight) why=' Gelijk aan vorige keer volgens je schema.';
       coaching=prevTxt+' '+todayTxt+why;
@@ -25864,7 +26315,7 @@ async function loadHistory(append=false){
           const clickAttr=s._pending?`onclick='toast("Wachtend op sync — bewerken kan zodra online")'`:`onclick='openEditSess(${JSON.stringify(s.id)},${JSON.stringify(n)},${JSON.stringify(s)})'`;
           return `<div class="lg-ex" ${clickAttr}>
             <span class="lg-ex-th${poster?' has':''}">${thumb}</span>
-            <div class="lg-ex-b"><div class="lg-ex-nm">${pendingTag}${escHtml(n)}</div><div class="lg-ex-did">${v}</div>${prog}${evBtn}<div id="ergiv-${s.id}"></div></div>
+            <div class="lg-ex-b"><div class="lg-ex-nm">${pendingTag}${escHtml(n)}</div><div class="lg-ex-did">${v}</div>${prog}${evBtn}${tkPm5MeasuredSplitsHtml(s.intervals_detail)}<div id="ergiv-${s.id}"></div></div>
             <div class="lg-ex-a">${s._pending?'':`<span class="lg-ex-i">${LI.edit}</span>`}<button class="del" onclick="event.stopPropagation();deleteSessionDirect(${JSON.stringify(s.id)})" aria-label="Verwijderen">${LI.trash}</button></div>
           </div>`;
         }).join('')}
@@ -26366,22 +26817,37 @@ async function renderInzicht(){
   if(sportSel && sportSel.options.length<=1 && typeof SPORT_BLOCKS!=='undefined'){
     Object.keys(SPORT_BLOCKS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=SPORT_BLOCKS[k].naam||k;sportSel.appendChild(o);});
   }
-  await inzichtRenderDevelopment();
-  await inzichtRenderOverview();
-  await inzichtRenderDomains();
-  await inzichtRenderRecent();
+  const renderId=(window._inzichtRenderId||0)+1;window._inzichtRenderId=renderId;
+  // Independent sections: delayed queries must not withhold navigation or unrelated data.
+  await Promise.allSettled([inzichtRenderDevelopment(renderId),inzichtRenderOverview(renderId),inzichtRenderDomains(renderId),inzichtRenderRecent(renderId)]);
 }
 
-/* Jouw ontwikkeling -- 4 summary cells, uitsluitend canonical bronnen. */
-async function inzichtRenderDevelopment(){
+/* Jouw ontwikkeling -- originele 4 indicatoren, uitsluitend canonical bronnen. */
+async function inzichtRenderDevelopment(renderId){
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var grid=document.getElementById('inzicht-summary-grid'); if(!grid) return;
-  grid.innerHTML='<div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div><div class="tk-summary-cell">…</div>';
+  var ICTREND='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>';
+  var ICCAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>';
+  var ICGOAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
+
+  function paintDevelopment(improvedHtml,trendHtml,trainingHtml,adherenceHtml){
+    if(!stillCurrent())return;
+  grid.innerHTML=
+    '<div class="tk-summary-cell">'+ICTREND+improvedHtml+'<div class="lbl">Verbeterd</div></div>'+
+    '<div class="tk-summary-cell">'+ICTREND+trendHtml+'<div class="lbl">Stijgende trends</div></div>'+
+    '<div class="tk-summary-cell">'+ICCAL+trainingHtml+'<div class="lbl">Trainingen</div></div>'+
+    '<div class="tk-summary-cell">'+ICGOAL+adherenceHtml+'<div class="lbl">Adherence</div></div>';
+  }
+  var unknown='<div class="unavailable">—</div>';
+  paintDevelopment(unknown,unknown,unknown,unknown);
   var all=await inzichtGetOrNull('sessions','&order=date.desc,created_at.desc&limit=500');
   var activities=await inzichtGetOrNull('activities','&order=date.desc&limit=200');
   var blocks=await tkOwnedProgramBlocks(authSession?.user?.id||null,'&order=planned_date.desc&limit=200',{nullOnError:true}); // GAP-P4-004: owner-scoped; null = niet beschikbaar (bestaande semantiek)
 
   var improvedHtml='<div class="unavailable">—</div>', trendHtml='<div class="unavailable">—</div>', trainingHtml='<div class="unavailable">—</div>', adherenceHtml='<div class="unavailable">—</div>';
 
+  if(!stillCurrent())return;
   if(all!==null){
     try{
       var digest=(typeof CoachingCore!=='undefined')?CoachingCore.improvementsDigest(buildImprovementItems(all)):null;
@@ -26392,11 +26858,9 @@ async function inzichtRenderDevelopment(){
     }catch(_){}
   }
 
-  // Trainingen: canonical, gededupliceerd per bron -- sessions (kracht/WOD/ergometer)
-  // en activities (standalone endurance) zijn architecturaal gescheiden (B9-H6B),
-  // dus een simpele optelling van beide tellingen dubbelt niet. UNKNOWN != 0: als
-  // een van beide bronnen faalde (null), is de totale telling onbetrouwbaar --
-  // toon dan "--", nooit een gedeeltelijke, mogelijk te lage telling als feit.
+
+  // Originele trainingsindicator telt de gescheiden sessions- en activities-bronnen.
+  // B9-H6B: geen dubbeltelling; bij een ontbrekende bron blijft de waarde onbekend.
   if(all!==null && activities!==null){
     trainingHtml='<div class="num">'+(all.length+activities.length)+'</div>';
   }
@@ -26410,19 +26874,13 @@ async function inzichtRenderDevelopment(){
     }catch(_){}
   }
 
-  var ICTREND='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>';
-  var ICCAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>';
-  var ICGOAL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
-
-  grid.innerHTML=
-    '<div class="tk-summary-cell">'+ICTREND+improvedHtml+'<div class="lbl">Verbeterd</div></div>'+
-    '<div class="tk-summary-cell">'+ICTREND+trendHtml+'<div class="lbl">Stijgende trends</div></div>'+
-    '<div class="tk-summary-cell">'+ICCAL+trainingHtml+'<div class="lbl">Trainingen</div></div>'+
-    '<div class="tk-summary-cell">'+ICGOAL+adherenceHtml+'<div class="lbl">Adherence</div></div>';
+  paintDevelopment(improvedHtml,trendHtml,trainingHtml,adherenceHtml);
 }
 
 /* Snel overzicht -- 5 cells, canonical health/load-bronnen. UNKNOWN != 0. */
-async function inzichtRenderOverview(){
+async function inzichtRenderOverview(renderId){
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var grid=document.getElementById('inzicht-overview-grid'); if(!grid) return;
   // PRODUCTION DATA REGRESSION FIX: 'dc' is GEEN globale variabele -- het is
   // een lokale alias (var dc=DeviceCore) die alleen binnen andere, specifieke
@@ -26442,7 +26900,9 @@ async function inzichtRenderOverview(){
     return '<div class="tk-overview-cell'+(unavailable?' is-unavailable':'')+'"><span class="ic-wrap">'+tkIcon(icon,{size:'standard'})+'</span><div class="lbl">'+lbl+'</div>'+inner+'</div>';
   }
   var icons={HRV:'hartslag',Rusthartslag:'hartslag',Slaap:'slaap'};
+  grid.innerHTML=['HRV','Rusthartslag','Slaap'].map(lbl=>ovCell(icons[lbl],lbl,'<div class="unavailable">—</div>',true)).concat([ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true),ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true)]).join('');
   var rows=await inzichtGetOrNull('hrv_log','&order=date.desc,created_at.desc&limit=400');
+  if(!stillCurrent())return;
   if(rows===null){
     ['HRV','Rusthartslag','Slaap'].forEach(function(lbl){ cells.push(ovCell(icons[lbl],lbl,'<div class="unavailable">—</div>',true)); });
   } else {
@@ -26472,6 +26932,7 @@ async function inzichtRenderOverview(){
       }catch(_){ cells.push(ovCell(icons[v.lbl],v.lbl,'<div class="unavailable">—</div>',true)); }
     });
   }
+  grid.innerHTML=cells.concat([ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true),ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true)]).join('');
   // Spierherstel: bestaande, canonieke v43OverallRecovery() hergebruikt (dezelfde
   // functie als Home/Lichaam) -- bron: gemiddeld spierherstelpercentage over alle
   // spiergroepen (computeMuscleRecoveryPct), 0-100%, 100% = volledig hersteld.
@@ -26485,6 +26946,8 @@ async function inzichtRenderOverview(){
       cells.push(ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true));
     }
   }catch(_){ cells.push(ovCell('herstel','Spierherstel','<div class="unavailable">—</div>',true)); }
+  if(!stillCurrent())return;
+  grid.innerHTML=cells.concat([ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true)]).join('');
   // Belasting: bestaande, canonieke tkCoachBelasting() hergebruikt (zelfde functie
   // als Coach). Bron: rollend 7-daags krachtvolume (AC.rollingSum), eenheid 'kg'
   // (AC.MODALITEITEN.strength.eenheid) -- nu expliciet getoond, was eerder een
@@ -26504,7 +26967,7 @@ async function inzichtRenderOverview(){
       cells.push(ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true));
     }
   }catch(_){ cells.push(ovCell('belasting','Krachtvolume','<div class="unavailable">—</div>',true)); }
-  grid.innerHTML=cells.join('');
+  if(stillCurrent())grid.innerHTML=cells.join('');
 }
 
 /* Domeinen -- 6 rijen, elk een bewezen, bestaand entry-point (Functional
@@ -26529,17 +26992,24 @@ function inzichtMiniViz(values,color){
   }).join(' ');
   return '<svg class="miniviz" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
-async function inzichtRenderDomains(){
+async function inzichtRenderDomains(renderId){
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var el=document.getElementById('inzicht-domain-list'); if(!el) return;
   var domains=[
     {icon:'prestaties',title:'Prestaties',sub:"PR's, 1RM, krachtverhoudingen, cardio",go:'s-stats',fn:'goInzichtPrestaties',viz:''},
     {icon:'herstel',title:'Herstel',sub:'Anatomie, hersteltrends, HRV/slaap',go:'s-lich-health',viz:''},
     {icon:'belasting',title:'Trainingsbelasting',sub:'Historisch volume, frequentie en consistentie',go:'s-stats',fn:'goInzichtTrainingsbelasting',viz:''},
-    {icon:'lichaam',title:'Lichaam',sub:'Metingen, samenstelling, historie',go:'s-lich-metingen',viz:''},
     {icon:'voeding',title:'Voeding',sub:'Inname, energie, voedingsstoffen',go:'s-voeding',viz:''},
     {icon:'verbanden',title:'Verbanden',sub:'Wat lijkt bij jou samen te hangen?',go:'s-lich-verbanden',viz:''},
     {icon:'doel',title:'Doelen',sub:'Actieve doelen en challenges',go:'s-stats',fn:'goInzichtDoelen',viz:''}
   ];
+  el.innerHTML=domains.map(function(d,i){
+    var vizHtml=d.viz
+      ? '<span class="miniviz-wrap">'+d.viz+'</span>'
+      : '<span class="miniviz-wrap" style="width:44px" aria-hidden="true"></span>';
+    return '<button class="row tk-domain-row" onclick="'+(d.fn?d.fn+'()':"go('"+d.go+"')")+'" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span>'+vizHtml+'<span class="ar">›</span></button>';
+  }).join('');
   // Herstel: REAL DATA READY -- v43OverallRecovery().rows (per-spiergroep %),
   // bestaande, ongewijzigde functie (zelfde als Home/Lichaam).
   try{
@@ -26549,28 +27019,19 @@ async function inzichtRenderDomains(){
       domains[1].viz=inzichtMiniViz(pcts,'#00B894');
     }
   }catch(_){}
-  // Lichaam: REAL DATA READY -- recente gewichtsmetingen (weight_log), geen
-  // nieuwe calculation, puur de ruwe, chronologische reeks gevisualiseerd.
-  try{
-    var wl=await inzichtGetOrNull('weight_log','&order=date.asc&limit=8');
-    if(wl && wl.length>1){
-      var weights=wl.map(function(r){return Number(r.gewicht||r.weight||r.value);}).filter(function(v){return isFinite(v);});
-      if(weights.length>1) domains[3].viz=inzichtMiniViz(weights,'#00B894');
-    }
-  }catch(_){}
-  el.innerHTML=domains.map(function(d,i){
-    var vizHtml=d.viz
-      ? '<span class="miniviz-wrap">'+d.viz+'</span>'
-      : '<span class="miniviz-wrap" style="width:44px" aria-hidden="true"></span>';
-    return '<button class="row tk-domain-row" onclick="'+(d.fn?d.fn+'()':"go('"+d.go+"')")+'" '+(i>0?'style="border-top:1px solid var(--color-border)"':'')+'><span class="tk-icon-box">'+tkIcon(d.icon,{size:'standard'})+'</span><span class="b"><span class="t">'+escHtml(d.title)+'</span><span class="s">'+escHtml(d.sub)+'</span></span>'+vizHtml+'<span class="ar">›</span></button>';
-  }).join('');
+  if(!stillCurrent())return;
+  domains.forEach(function(d,i){if(!d.viz)return;var slot=el.children[i]?.querySelector('.miniviz-wrap');if(slot)slot.innerHTML=d.viz;});
 }
 
 /* Recente inzichten -- PO2: GEEN ranking, deterministische recentheid van
    bestaande, gevalideerde canonical signalen. GEEN AI-score. */
-async function inzichtRenderRecent(){
+async function inzichtRenderRecent(renderId){
+  const ownerId=(typeof authSession!=='undefined'&&authSession?.user?.id)||null;
+  const stillCurrent=()=> (renderId==null||window._inzichtRenderId===renderId)&&ownerId===((typeof authSession!=='undefined'&&authSession?.user?.id)||null);
   var el=document.getElementById('inzicht-recent-list'); if(!el) return;
+  el.innerHTML='<div style="color:var(--color-text-muted)">Recente inzichten laden…</div>';
   var all=await inzichtGetOrNull('sessions','&order=date.desc,created_at.desc&limit=500');
+  if(!stillCurrent())return;
   if(all===null){ el.innerHTML='<div class="tk-card tk-card-l3" style="text-align:center;padding:20px;color:var(--color-text-muted);font-size:13px">Kon recente inzichten niet ophalen.</div>'; return; }
   try{
     var digest=(typeof CoachingCore!=='undefined')?CoachingCore.improvementsDigest(buildImprovementItems(all)):null;
@@ -30928,7 +31389,7 @@ async function renderBodyMeasurements(){
       ${bcAanwezig.length?`<div class="bc-herkomst">${escHtml(tkMetingHerkomst(lat.date, lat.source, 'entered', null))}</div>`:''}
       ${bcOntbreekt.length?`<div style="font-size:11px;color:var(--g4);font-weight:600;margin-top:8px;line-height:1.45">Niet gemeten: ${bcOntbreekt.join(' · ')}</div>`:''}
       ${lat.edema?`<div style="background:#fff8e1;border-left:3px solid var(--y);border-radius:0 8px 8px 0;padding:8px 10px;font-size:11px;color:#666;margin-top:8px">⚠️ Oedeem: ${lat.edema} — Tanita waarden minder betrouwbaar</div>`:''}`;
-    
+
     // Afmetingen: eigen kolommen, met fallback op legacy note-veld voor oude records
     const afm = resolveAfmetingen(lat);
     const items = [
@@ -31188,6 +31649,7 @@ async function startCustomTraining(id,resolvedItems){
     // Herstel de volledige sessie uit de draft (zoals startT): logboek + voorgeschreven oefeningen + tijd.
     sessionLog=_draft.sessionLog||{};
     sessionExtra=_draft.sessionExtra||[];
+    restoreExecutionDraft(_draft);
     activeInstanceId=_draft.instanceId||null; // RC0: zie startT — anders blijft de instance 'active'
     _resumeElapsedMs=Number(_draft.elapsedMs)||0;
     if(typeof execFocus!=='undefined')execFocus[curT]=Number(_draft.execFocus)||0;
@@ -31322,6 +31784,8 @@ async function confirmSwapExercise(newId){
   if(idx===-1){closeModal('m-swap-exercise');return;}
   const newEx=resolvePickerEx(newId); // F44/Phase2C: legacy of catalogus
   if(!newEx)return;
+  if(getSessionExs(t).some(e=>e.id===newId)){toast('Deze oefening staat al in deze training');return;}
+  const _original=sessionExtra[idx];
   // Exercise Swap Prescription Carry-Over Fix: suggestedWeight van A hoort niet mee te gaan naar
   // B (een biomechanisch andere oefening) -- expliciet invalideren (null), zodat de bestaande
   // canonical prefill-keten (prevS/computeProgPrefill, hierboven in renderTrainScreen, al keyed
@@ -31330,9 +31794,12 @@ async function confirmSwapExercise(newId){
   // GAP-P3-033: intent (sets/reps/RPE) blijft; load + provenance canonical opnieuw voor de NIEUWE oefening.
   const _rx=await canonicalNewExerciseItem(newId, sessionExtra[idx]);
   sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type,..._rx};
-  delete sessionLog[fromId];delete pctSelection[fromId];delete rpeManual[fromId];delete warmupState[fromId];
+  sessionExtra[idx]._replaces=fromId;
+  if(execExerciseHasData(fromId))sessionExtra.push({..._original,_t:t,_retainedPerformed:true});
+  delete pctSelection[fromId];delete rpeManual[fromId];delete warmupState[fromId];
   closeModal('m-swap-exercise');
   await renderTrainScreen(t);
+  persistTrainingDraft(true);
   toast('Oefening gewisseld voor deze training');
 }
 let progCheckinCtx=null;
@@ -31591,8 +32058,7 @@ async function launchProgramTrainScreen(adjustment){
     activeInstanceId=_draft.instanceId||null;
   }else{
     try{
-      activeInstanceId=await createTrainingInstance({
-        snapshot:{
+      sessionProgramSnapshot={
           source:'program_block',
           definition_id:blockId,
           program_id:prog?.id||null,
@@ -31601,14 +32067,15 @@ async function launchProgramTrainScreen(adjustment){
           items:(rows||[]).map(r=>({exercise_id:r.exercise_id,sets:r.sets,reps:r.reps,rpe_target:r.rpe_target,sort_order:r.sort_order})),
           decision_rules:(typeof DecisionCore!=='undefined'&&DecisionCore.Evidence)?DecisionCore.Evidence.decisionRulesSnapshot((typeof DETRAINING_RULES!=='undefined')?DETRAINING_RULES:null):null,
           modifications:adjustment?[{type:'recovery_adjustment',setsDelta:adjustment.setsDelta||0,rpeDelta:adjustment.rpeDelta||0}]:[]
-        }
-      });
+      };
+      activeInstanceId=await createTrainingInstance({snapshot:sessionProgramSnapshot});
     }catch(e){ activeInstanceId=null; /* instance-tracking mag nooit de trainingstart zelf blokkeren */ }
   }
+  if(_resume)sessionProgramSnapshot=_draft.programSnapshot||null;
   curT=ctxT;
   pctSelection={};rpeManual={};warmupState={};cardioSplitMode={};cardioSplits={};manualKgSets={};
   if(_resume){
-    sessionLog=_draft.sessionLog||{};sessionExtra=_draft.sessionExtra||[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
+    sessionLog=_draft.sessionLog||{};sessionExtra=_draft.sessionExtra||[];restoreExecutionDraft(_draft);trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
   }else{
     sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
     for(const r of rows){
@@ -32240,19 +32707,38 @@ function updateViewToggleLabel(btnId, view){
 }
 // Sets per spier over de laatste 7 dagen — één bron voor het figuur, de lijst en het
 // overzicht. Leest uitsluitend bestaande sessies; geen nieuwe berekening.
+// Input provenance only. Existing calculation and decision formulae are unchanged.
+function tkRememberMuscleInputs(calculationId,records,windowDays){
+  const evidence={calculationId,calculatedAt:new Date().toISOString(),windowDays,
+    rules:calculationId==='muscle_load'?'existing sets per mapped muscle':'recovery.v1; existing time-since-last-session + RPE',
+    sourceRecords:(records||[]).map(r=>({sessionId:r.id||null,exerciseId:r.exercise_id,date:r.date,sets:r.sets??null,rpe:r.rpe??null,muscles:getExerciseMuscles(r.exercise_id)}))};
+  const owner=typeof tkEigenaarUid==='function'?tkEigenaarUid():null;
+  if(owner){window._tkMuscleInputs=window._tkMuscleInputs||{};window._tkMuscleInputs[calculationId]={owner,evidence};}
+  return evidence;
+}
+function tkMuscleInputEvidence(calculationId){
+  const item=window._tkMuscleInputs?.[calculationId];
+  return item&&typeof tkEigenaarUid==='function'&&item.owner===tkEigenaarUid()?item.evidence:null;
+}
 async function muscleLoadBySvgId(){
+  const readOwner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate()-7);
   const dateStr = weekAgo.toISOString().split('T')[0];
-  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
+  const ss = await sbGet('sessions','&date=gte.'+dateStr+'&sets=not.is.null&reps=not.is.null');
+  // Never interpret A's completed request after switching to B's account.
+  if(typeof tkEigenaarUid==='function'&&tkEigenaarUid()!==readOwner)
+    return {setsBySvgId:{},setsByMuscle:{},provenance:null};
   const setsBySvgId = {}, setsByMuscle = {};
   (ss||[]).forEach(s=>{
     const names = getExerciseMuscles(s.exercise_id);
-    const setCount = s.sets||1;
+    // Bodyweight sets count too; missing/zero/invalid set counts must not invent volume.
+    const setCount=Number(s.sets);
+    if(!Number.isInteger(setCount)||setCount<=0) return;
     names.forEach(m=>{ setsByMuscle[m] = (setsByMuscle[m]||0) + setCount; });
     muscleNamesToSvgIds(names).forEach(id=>{ setsBySvgId[id] = (setsBySvgId[id]||0) + setCount; });
   });
-  return { setsBySvgId, setsByMuscle };
+  return { setsBySvgId, setsByMuscle,provenance:tkRememberMuscleInputs('muscle_load',ss,7) };
 }
 async function refreshMuscleHeatmap(){
   const { setsBySvgId } = await muscleLoadBySvgId();
@@ -32261,8 +32747,14 @@ async function refreshMuscleHeatmap(){
 
 function getExerciseMuscles(exId){
   const ex=exercises.find(e=>e.id===exId);
-  if(!ex) return [];
-  return [...(ex.muscle_primary||[]),...(ex.muscle_secondary||[])];
+  const declared=ex?[...(ex.muscle_primary||[]),...(ex.muscle_secondary||[])]:[];
+  if(declared.length)return declared;
+  // TK-UT-007: exact canonical identity only. No name matching, invented mapping or formula.
+  try{
+    const c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(exId):null;
+    if(c&&c.identity)return [...(c.identity.primary||[]),...(c.identity.secondary||[])];
+  }catch(_){}
+  return [];
 }
 
 // ══════════════════════════════════════════════════════════
@@ -32282,9 +32774,12 @@ function computeMuscleRecoveryPct(hoursSince, baseHours, rpe){ return CalcCore.c
 // spieren die vandaag's programmatraining raakt — voor de coach-check-in (v311).
 async function getRelevantMuscleRecovery(muscleNames){
   if(!muscleNames||!muscleNames.length)return [];
+  const readOwner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
   const twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr=twoWeeksAgo.toISOString().split('T')[0];
   const ss=await sbGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  if(typeof tkEigenaarUid==='function'&&tkEigenaarUid()!==readOwner)return [];
+  tkRememberMuscleInputs('program_recovery',ss,14);
   const lastHit={};
   ss.forEach(s=>{
     getExerciseMuscles(s.exercise_id).forEach(m=>{if(!lastHit[m])lastHit[m]={date:s.date,rpe:s.rpe};});
@@ -32302,6 +32797,7 @@ async function getRelevantMuscleRecovery(muscleNames){
 function computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle){ return DecisionCore.computeProgAdjustment(factor,muscleRecoveryRows,voelt,painMuscle); } /* F1.7: canonical Decision Core (progression_adjust.v1) */
 
 async function refreshMuscleRecovery(){
+  const readOwner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
   const el = document.getElementById('stats-recovery-content');
   if(!el) return;
   const twoWeeksAgo = new Date();
@@ -32311,6 +32807,8 @@ async function refreshMuscleRecovery(){
   // structureel uit van spierherstel, ook als ze getagd zijn. Herstel kijkt naar tijd
   // sinds laatste sessie + RPE, niet naar setvolume — dus alle sessietypen tellen mee.
   const ss = await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  if(typeof tkEigenaarUid==='function'&&tkEigenaarUid()!==readOwner)return;
+  tkRememberMuscleInputs('recovery_list',ss,14);
   const lastHit = {};
   ss.forEach(s=>{
     const muscles = getExerciseMuscles(s.exercise_id);
@@ -32423,6 +32921,7 @@ async function refreshMuscleRecoveryHeatmap(){
   twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr = twoWeeksAgo.toISOString().split('T')[0];
   const ss = await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  tkRememberMuscleInputs('recovery_heatmap',ss,14);
   const lastHitBySvgId = {};
   ss.forEach(s=>{
     const names = getExerciseMuscles(s.exercise_id);
@@ -32489,9 +32988,12 @@ function v43SafeGet(table,q,ms){
   ]).catch(()=>[]);
 }
 async function v43OverallRecovery(){
+  const readOwner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
   const twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr=twoWeeksAgo.toISOString().split('T')[0];
   let ss=await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  if(typeof tkEigenaarUid==='function'&&tkEigenaarUid()!==readOwner)
+    return {overall:null,rows:[],pctBySvgId:{},hasData:false};
   if(!Array.isArray(ss))ss=[];
   const lastHit={},lastHitSvg={};
   ss.forEach(s=>{
@@ -32533,7 +33035,6 @@ function v43HomeHeader(dfInfo,checkinVandaag){
       ${dstr?`<div class="v43-hh-date">${V43I.cal} ${escHtml(dstr)}</div>`:''}
     </div>
     <div class="v43-hh-r">
-      <button class="v43-bell" onclick="openModal('m-hrv')" aria-label="Dagelijkse check-in">${V43I.pulse}${needCheckin?'<span class="bdot"></span>':''}</button>
       <button class="v43-avatar" onclick="go('s-profiel')" aria-label="Profiel">${avatarInner}</button>
     </div>
   </div>`;
@@ -32872,6 +33373,7 @@ function v43RenderPlan(elId,nextT,opts){
   </div>`;
 }
 function renderV43Train(){
+  refreshTrainContext();
   v43RenderPlan('v43-train-plan',window.homeNextT,{detailsButton:true,compact:true});
   // Trainen-specifieke empty state (additief, Trainen v0.2 runtime-fix). De
   // gedeelde v43RenderPlan()-functie zelf blijft ongewijzigd (ook door Home
@@ -34374,7 +34876,7 @@ function tkRelPeriodeZet(d){ tkRelPeriode=Number(d)||90; renderLichaamVerbandDet
    staan alleen de sterkste bevindingen, de volledige lijst zit achter "Alle verbanden".
    Is er niets gevonden, dan blijft de bestaande veilige lege toestand staan — die
    wordt hier niet vervangen maar overgeslagen. */
-const TK_REL_HOME_MAX = 3;
+const TK_REL_HOME_MAX = 2;
 async function renderLichaamVerbanden(){
   const el=document.getElementById('lich-relations'); if(!el) return;
   let uit=null;

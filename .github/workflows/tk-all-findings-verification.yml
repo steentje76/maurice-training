@@ -11,7 +11,7 @@ concurrency:
 jobs:
   browser:
     if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tk-all-findings-20261101'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
 
   full-browser-release:
     if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tk-all-findings-20261101'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4

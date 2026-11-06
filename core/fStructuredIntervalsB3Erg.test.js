@@ -23,7 +23,8 @@ function extractFn(name) {
   for (let j = i; j < html.length; j++) { if (html[j] === '{') d++; else if (html[j] === '}') { d--; if (d === 0) return html.slice(m.index, j + 1); } }
   return null;
 }
-const FNS = ['tkErgSportForExercise', 'tkErgDefinitionValid', 'saveIntervalWorkout', 'ivRaw', 'ivFromRaw', 'snapshotFromCustomTraining', 'startInstanceFromDefinition',
+const FNS = ['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection','tk504ValidateCatalogSourceRef','tk504BuilderRefsFromPlan','tk504AttachSavedCatalogRefs',
+  'tkErgSportForExercise', 'tkErgDefinitionValid', 'saveIntervalWorkout', 'ivRaw', 'ivFromRaw', 'snapshotFromCustomTraining', 'startInstanceFromDefinition',
   'startIntervalExecution', 'advanceIntervalBlock', 'tkErgCloseBlockActual', 'finishIntervalExecution', 'buildIntervalPrescriptionFromForm',
   'renderErgSessionStructuredHtml', 'tkErgActualText', 'structuredBlockLabel', 'tkIvTerminationText', 'tkIvTargetText'];
 const SRC = {}; FNS.forEach((n) => { SRC[n] = extractFn(n); ok(SRC[n], 'functie gevonden: ' + n); });
@@ -32,7 +33,7 @@ const CONST = (html.match(/const TK_IV_BLOCK_LABEL=\{[^\n]*\n/) || [''])[0] + (h
   + (html.match(/const TK_ERG_INTERVALS_VERSION='[^']*';\r?\n/) || [''])[0]
   + (html.match(/const CARDIO_TYPE_BY_ID = \{[^\n]*\n/) || [''])[0];
 ok(/TK_ERG_SPORTS/.test(CONST) && /TK_ERG_EXERCISE_ID/.test(CONST) && /CARDIO_TYPE_BY_ID/.test(CONST), 'B3-constanten gevonden');
-const PREVIEW_START = extractFn('previewStartTraining'), FINISH_SESSION_WRITE = (html.match(/await writeSessionRow\(\{date:today,exercise_id:ex\.id[^\n]*/) || [''])[0];
+const PREVIEW_START = extractFn('previewStartTraining'), FINISH_SESSION_WRITE = (html.match(/await writeSessionRow\((?:tk504RewriteVerifiedSessionRow\()?\{date:today,exercise_id:ex\.id[^\n]*/) || [''])[0];
 const ERGS = [['rowing', 'roeien', 'RowErg'], ['bikeerg', 'bikeerg', 'BikeErg'], ['skierg', 'skierg', 'SkiErg']];
 const T0 = 1_800_000_000_000;
 
@@ -163,7 +164,7 @@ function sandbox() {
   const code = html.replace(/\/\/[^\n]*/g, '');
   ok(/intervals_detail:\(l\.intervalsDetail\|\|null\)/.test(FINISH_SESSION_WRITE) && /exercise_id:ex\.id/.test(FINISH_SESSION_WRITE) && /training_instance_id:activeInstanceId\|\|_ergInst\|\|null/.test(FINISH_SESSION_WRITE), 'persistence: intervals_detail gaat mee in DEZELFDE, enige sessierij (Erg Continuous Protocol Identity: activeInstanceId houdt voorrang; _ergInst is uitsluitend de ad-hoc losse-Erg-instance als er geen programma-instance is -- nog steeds EEN sessierij, geen dual-write)');
   eq((code.match(/intervals_detail:/g) || []).length, 1, 'persistence: exact één schrijfplek voor intervals_detail (geen tweede write)');
-  eq((code.match(/await writeSessionRow\(\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
+  eq((code.match(/await writeSessionRow\((?:tk504RewriteVerifiedSessionRow\()?\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
   eq((code.match(/writeSessionRow\(/g) || []).length, 5, 'persistence: totaal aantal writeSessionRow-aanroepen ongewijzigd (definitie + 4 bestaande schrijfpaden; geen extra schrijfweg)');
   ok(!/sbPostQ\('activities'/.test(SRC.finishIntervalExecution) && !/activity_laps/.test(SRC.finishIntervalExecution), 'persistence: erg schrijft niet naar activities/activity_laps');
   ok(/_tkErgPending&&_tkErgPending\.exId===exId/.test(SRC.startIntervalExecution) && /buildIntervalPrescriptionFromForm/.test(SRC.startIntervalExecution), 'executie: snapshot-prescriptie heeft voorrang, formulier blijft fallback voor ad-hoc');

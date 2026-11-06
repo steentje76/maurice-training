@@ -97,10 +97,10 @@ ok(/if\(!alts\.length\)return null;/.test(SWAP_FN), 'F2: swapAlternative() retou
 
 /* ══ G. Persistence/identity ongewijzigd ══ */
 console.log('G. Persistence en identity');
-ok(/st\.plan\.items\[idx\]\.id=alts\[0\]\.catalog_id;saveDraft\(\);return alts\[0\]\.catalog_id;/.test(SWAP_FN),
-  'G1: opgeslagen identity blijft het canonical catalog_id (TK-ID), geen provider-slug -- ongewijzigd');
+ok(/st\.plan\.items\[idx\]\.id=alts\[0\]\.catalog_id;st\.plan\.items\[idx\]\.tk504_catalog_ref=tk504CatalogSourceRefFromCatalog\(alts\[0\]\);saveDraft\(\);return alts\[0\]\.catalog_id;/.test(SWAP_FN),
+  'G1: canoniek catalog_id blijft gelijk, de geselecteerde bronreferentie wordt afzonderlijk vastgelegd');
 var REPLACE_FN = extractFn('replaceItem');
-ok(/st\.plan\.items\[idx\]\.id=newId;saveDraft\(\);/.test(REPLACE_FN), 'G2: replaceItem() ongewijzigd');
+ok(/st\.plan\.items\[idx\]\.id=newId;st\.plan\.items\[idx\]\.tk504_catalog_ref=tk504CatalogSourceRefFromSelection\(newId\);saveDraft\(\);/.test(REPLACE_FN), 'G2: replaceItem behoudt het oefening-ID en registreert gecontroleerde bronreferentie');
 
 /* ══ H. AthleteConstraints-core zelf onaangeraakt (geen wijziging aan de pure filter) ══ */
 console.log('H. AthleteConstraints-core onaangeraakt');

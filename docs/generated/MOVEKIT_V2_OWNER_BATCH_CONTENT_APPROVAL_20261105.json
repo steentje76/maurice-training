@@ -1,0 +1,163 @@
+{
+  "schema": "trainingskompas-movekit-v2-batch-owner-content-review/1.0",
+  "decision_id": "TK504-20261105-OWNER-BATCHES-01-15",
+  "decision_date": "2026-11-05",
+  "status": "OWNER_EXPLICIT_BULK_CONTENT_APPROVAL",
+  "decision_utterance": "ik keur batch 1 tm 15 goed",
+  "decision_origin": "explicit product owner ChatGPT approval after accessible 15-batch local review",
+  "review_evidence_type": "owner_bulk_instruction_not_356_separate_per_item_signatures",
+  "scope": {
+    "first_catalog_id": "TK-000227",
+    "last_catalog_id": "TK-000582",
+    "content_approved_count": 356,
+    "batch_count": 15,
+    "batch_size": 25,
+    "last_batch_size": 6,
+    "approved_display_sections": [
+      "nl_display_name",
+      "nl_short_description",
+      "nl_execution_steps",
+      "nl_common_mistakes",
+      "displayed_ai_proposed_category",
+      "displayed_difficulty",
+      "local_review_ux"
+    ],
+    "excluded_sections": [
+      "unshown_long_descriptions",
+      "unshown_benefits",
+      "unshown_use_cases",
+      "scientific_inferences",
+      "trainability",
+      "training_prescriptions",
+      "calculation_engine_changes",
+      "supplier_media_license",
+      "live_account_entitlements",
+      "release_authorization"
+    ]
+  },
+  "content_fingerprint": {
+    "display_sha256": "320f7abfa9d0022f9fd6695087409cc930cc6b300ec91ade5aef3465728d3e8d",
+    "batches": [
+      {
+        "batch": 1,
+        "from": "TK-000227",
+        "through": "TK-000251",
+        "count": 25,
+        "display_sha256": "a4fde8696d721a1389ff2a41e41b08eb18f91b1f654a15bcee6b802aed2983d6"
+      },
+      {
+        "batch": 2,
+        "from": "TK-000252",
+        "through": "TK-000276",
+        "count": 25,
+        "display_sha256": "e2347cd087763733497f58440ab48c7593994d4b739efb2576c6e3fe12635297"
+      },
+      {
+        "batch": 3,
+        "from": "TK-000277",
+        "through": "TK-000301",
+        "count": 25,
+        "display_sha256": "27fba9d5ccfbb9a7ad448adcfd8de48d1966c2b0bd54c3706266d6111542f1bf"
+      },
+      {
+        "batch": 4,
+        "from": "TK-000302",
+        "through": "TK-000326",
+        "count": 25,
+        "display_sha256": "8afa1330aa0e3cda53b97a7f3626684fb36fd2301fb15d9a32692ea96da4a0e2"
+      },
+      {
+        "batch": 5,
+        "from": "TK-000327",
+        "through": "TK-000351",
+        "count": 25,
+        "display_sha256": "2b2a5eecfcf5ebea3ff0c67a907243dc8966e035ac0d9527b03e885fe1a76609"
+      },
+      {
+        "batch": 6,
+        "from": "TK-000352",
+        "through": "TK-000376",
+        "count": 25,
+        "display_sha256": "b9b1732840530128984d17f33059d622a8aa0861892f19d03e0c53c8357ea93e"
+      },
+      {
+        "batch": 7,
+        "from": "TK-000377",
+        "through": "TK-000401",
+        "count": 25,
+        "display_sha256": "ecc13bb075bff0da62ea8eb2e90f47cfbd4c3a36fac34becfd86ce2a10f734eb"
+      },
+      {
+        "batch": 8,
+        "from": "TK-000402",
+        "through": "TK-000426",
+        "count": 25,
+        "display_sha256": "487b3bb3989c72161cb9ada179525aae82e0410ed22f6658c25cb3a19c955865"
+      },
+      {
+        "batch": 9,
+        "from": "TK-000427",
+        "through": "TK-000451",
+        "count": 25,
+        "display_sha256": "951279967aa0d387590cf39024dcc0c8ed5db548656c660c25a4552c8f94f15c"
+      },
+      {
+        "batch": 10,
+        "from": "TK-000452",
+        "through": "TK-000476",
+        "count": 25,
+        "display_sha256": "e22082e8f268f82170cbc84f2e974de1dd1ce4d8d4910760b1804cae2dddce9d"
+      },
+      {
+        "batch": 11,
+        "from": "TK-000477",
+        "through": "TK-000501",
+        "count": 25,
+        "display_sha256": "0cbab2865701a409d1547e6f369e5bf297ddf254ca95ac63ead8cab8963e677a"
+      },
+      {
+        "batch": 12,
+        "from": "TK-000502",
+        "through": "TK-000526",
+        "count": 25,
+        "display_sha256": "3e9a66bf9b08b9ba1159115c2102b3d40945871abcaae10dea65cc7b3a09defc"
+      },
+      {
+        "batch": 13,
+        "from": "TK-000527",
+        "through": "TK-000551",
+        "count": 25,
+        "display_sha256": "aaf95141d3d33019f855bbbfef18f9c68e63b077c088350a61ecd91bd1c51b3a"
+      },
+      {
+        "batch": 14,
+        "from": "TK-000552",
+        "through": "TK-000576",
+        "count": 25,
+        "display_sha256": "e1864cdfeb163c4bac1abfcf3924e41a304895c0cf8500fe99e78b51585f7162"
+      },
+      {
+        "batch": 15,
+        "from": "TK-000577",
+        "through": "TK-000582",
+        "count": 6,
+        "display_sha256": "028418a69c9729f2583c26ebf951f9993d5dc597523c7c986a676f739eb2536d"
+      }
+    ]
+  },
+  "access_release": {
+    "production_release_authorized": false,
+    "server_entitlement_approved": false,
+    "grant_migration_authorized": false,
+    "signed_url_production_tested": false,
+    "android_physical_device_tested": false,
+    "public_media_cutover_authorized": false,
+    "batch_356_release_authorized": false
+  },
+  "warnings": [
+    "A single blanket content approval is not evidence that each of 356 exercises was individually inspected.",
+    "AI category proposals remain subject to correctness/validation tests beyond owner-visible content approval.",
+    "Status is for the local review and evidence record, not for live publishing.",
+    "Existing individual TK-000227 approval remains separately recorded."
+  ]
+}

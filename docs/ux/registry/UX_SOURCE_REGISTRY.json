@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0",
+  "classification": [
+    "CURRENT_RUNTIME",
+    "CURRENT_VERIFIED",
+    "TARGET_APPROVED",
+    "TARGET_SPEC",
+    "HISTORICAL_OR_STALE",
+    "AUDIT_EVIDENCE",
+    "BENCHMARK_INPUT",
+    "DECISION_SOURCE"
+  ],
+  "sources": [
+    {
+      "path": "index.html",
+      "role": "CURRENT_RUNTIME",
+      "authority": "actual current UI/handlers; not automatically good design"
+    },
+    {
+      "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_MAP.json",
+      "role": "CURRENT_VERIFIED",
+      "authority": "canonical action-level navigation map; point-in-time"
+    },
+    {
+      "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_MAP.md",
+      "role": "CURRENT_VERIFIED",
+      "authority": "canonical action-level navigation evidence; point-in-time"
+    },
+    {
+      "path": "docs/architecture/TRAININGSKOMPAS_ROUTE_RULES.md",
+      "role": "TARGET_SPEC",
+      "authority": "canonical navigation invariants"
+    },
+    {
+      "path": "docs/ux/baseline/v1/README.md",
+      "role": "TARGET_APPROVED",
+      "authority": "PO-approved primary screen visual baseline"
+    },
+    {
+      "path": "docs/TRAININGSKOMPAS_DESIGN_SYSTEM_V1.md",
+      "role": "TARGET_APPROVED",
+      "authority": "PO-approved design-system specification baseline"
+    },
+    {
+      "path": "docs/ux/SCREEN_IMPLEMENTATION_STANDARD_v1.md",
+      "role": "CURRENT_VERIFIED",
+      "authority": "runtime-measured proven implementation patterns"
+    },
+    {
+      "path": "docs/ux/SCREEN_MIGRATION_CHECKLIST_v1.md",
+      "role": "TARGET_SPEC",
+      "authority": "hard pre-code migration sequence"
+    },
+    {
+      "path": "docs/UX_CURRENT_TARGET_GAP_MATRIX.md",
+      "role": "AUDIT_EVIDENCE",
+      "authority": "explicit current-to-target migration gaps"
+    },
+    {
+      "path": "docs/DESIGN_SYSTEM_CURRENT_IMPLEMENTATION_AUDIT.md",
+      "role": "AUDIT_EVIDENCE",
+      "authority": "current component/token audit"
+    },
+    {
+      "path": "docs/DESIGN_SYSTEM_V1_IMPLEMENTATION_PLAN.md",
+      "role": "TARGET_SPEC",
+      "authority": "PO-approved implementation plan; not proof of implementation"
+    },
+    {
+      "path": "docs/Handbook/Trainingskompas_Development_Handbook_H4_UX_Interaction_Design.md",
+      "role": "HISTORICAL_OR_STALE",
+      "authority": "binding intent but based on older v3.3.25 structure"
+    },
+    {
+      "path": "docs/Handbook/Trainingskompas_Development_Handbook_H5_UI_Design_System.md",
+      "role": "TARGET_SPEC",
+      "authority": "handbook visual language; reconcile with newer Design System V1"
+    },
+    {
+      "path": "docs/Handbook/Trainingskompas_Development_Handbook_H6_Screen_Library.md",
+      "role": "HISTORICAL_OR_STALE",
+      "authority": "binding intent but explicitly incomplete for newer screens"
+    },
+    {
+      "path": "docs/Handbook/Trainingskompas_Development_Handbook_H7_Component_Library.md",
+      "role": "TARGET_SPEC",
+      "authority": "component behaviour library"
+    },
+    {
+      "path": "docs/Handbook/Trainingskompas_Development_Handbook_H8_AI_Behaviour_Library.md",
+      "role": "TARGET_SPEC",
+      "authority": "AI behaviour UX constraints; scientific claims separately gated"
+    },
+    {
+      "path": "docs/Handbook/Trainingskompas_Development_Handbook_H10_Navigation_Architecture.md",
+      "role": "HISTORICAL_OR_STALE",
+      "authority": "flow intent partly tied to older screen library"
+    },
+    {
+      "path": "docs/BENCHMARK_9_PLUS_SCREEN_SCORECARD.md",
+      "role": "BENCHMARK_INPUT",
+      "authority": "quality audit input, not design/scientific truth"
+    },
+    {
+      "path": "docs/ux/INZICHT_V01_PREIMPLEMENTATION_AUDIT.md",
+      "role": "AUDIT_EVIDENCE",
+      "authority": "screen-specific preimplementation evidence"
+    },
+    {
+      "path": "docs/TRAINEN_V02_SOURCE_REGISTER.md",
+      "role": "AUDIT_EVIDENCE",
+      "authority": "screen-specific source reconciliation"
+    },
+    {
+      "path": "docs/00_Project_Management/DECISION_LOG.md",
+      "role": "DECISION_SOURCE",
+      "authority": "PO/project decisions"
+    },
+    {
+      "path": "docs/GAP_ANALYSIS_V2.md",
+      "role": "AUDIT_EVIDENCE",
+      "authority": "known gaps and stale-doc warnings"
+    }
+  ],
+  "rule": "No source is silently merged. Runtime proves CURRENT behaviour, not TARGET quality. Benchmark suggests opportunities, never canon by itself."
+}

@@ -90,3 +90,15 @@ Een kleine read-only PostgREST-RPC `tk504_resolve_catalog_fk(catalog_id,provider
 - De proef eindigde met **ROLLBACK**; de complete container is verwijderd. `core/tk504TypedFkMigrationSecurity.test.js` bewaakt 38 statische contractsafety-controles.
 
 **Nog vereist:** onafhankelijke SQL/securitybeoordeling, formele toestemming voor toepassing van deze migratie, verifieerbaar backup/herstelpunt, uitsluitend-admin manifestseeding met de originele 582 bronidentiteiten (NIET uit codeprefixen genereren), echte Supabase-staging-RLS-test en integratie met de bestaande enige sessieschrijver en historie. Geen enkel actueel gebruikersaccount heeft via deze code toegang gekregen tot de 356 nieuwe video's.
+
+## 6 november — staged runtime-bridge naar de ENIGE bestaande sessieschrijver
+
+`index.html` bevat nu een **hard uitgeschakelde** `TK504_TYPED_FK_SESSION_RELEASE=false`. Er is geen ingeschakelde featureflag, externe schakelaar of productiedeployment.
+
+Na een latere formele vrijgave kan de bestaande `tk504_catalog_ref` op Preview/Execution/Guided via de bestaande geauthenticeerde `sbRpc` de gecontroleerde `tk504_resolve_catalog_fk` aanroepen. De client verlangt exact dezelfde provideridentiteit, exact `TKC-<zes cijfers>`, een onveranderde ingelogde accountidentiteit en een bestaande canonieke ECS-bron. Een ontbrekend, afgewezen of mismatched serverantwoord is **geen personal FK-shadow-fallback**. De definitieve database trigger weigert eveneens nieuwe `TKC`-sessies zonder geactiveerde en beoordeelde binding.
+
+**Eén schrijver blijft behouden:** `writeSessionRow(row,opts)` past alleen bij een geverifieerde `opts.tk504_binding` de FK naar een nieuwe session-row kopie aan, en roept daarna precies de al bestaande `sbPostQ('sessions',...)` aan. Gewone oefeningen/legacy en de huidige 226 gebruiken exact de bestaande rijen en wachtrij; een normale of begeleide training krijgt geen tweede writer, geen client-gespoofde `user_id`, geen vermenging van trainingswaarden en geen nieuwe UI. De bestaande begeleide retry-ID en de normale `_sessionRowPersistedAt` blijven intact.
+
+De uitvoering is voorlopig **alleen online** mogelijk met de stageflag aan: zonder verbindingsbevestiging weigert de nieuwe getypeerde route de FK-wijziging en houdt de bestaande recovery/draft-flow de niet-opgeslagen training vast. **Offline FIFO met getypeerde serverbindings blijft daarom expliciet een releaseblokkade**; niet als al opgelost rapporteren. Losse oefening, starten buiten Preview, hergebruik van oudere programmadefinities en nieuwe `TKC`-historieweergave vereisen nog end-to-end bewijs; ongetypeerde gelijkende `TK`-IDs zijn principieel geen MoveKit-bewijs.
+
+`core/tk504TypedFkSessionWriteGate.test.js` gebruikt de échte applicatiefuncties in geïsoleerde VM met gecontroleerde bron, geauthenticeerde RPC, onveranderde opslagvelden, echte centrale writer, online/accountwissel/foutpaden en de harde stageflag. 27 gerichte asserts geslaagd; daarnaast zijn de actuele sessie-FK- en ergometertests groen. Dit valideert **voorbereid gedrag**, niet de werkelijke Android- of Supabase-productieactivatie.

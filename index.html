@@ -9588,6 +9588,9 @@ async function getTrainingInstance(instanceId){
 // vorm van "vandaag aanpassen" wordt pas in Werkblok C ontworpen; dit werkblok
 // hoeft alleen te garanderen dát een snapshot het onderscheid plan/uitvoering kan
 // dragen (Definition of Done A3/A4), niet hoe de UI die vult.
+// #603: hard release hold. Do NOT enable until verified 582 manifest,
+// real server migration/RLS, two-account online+offline acceptance and owner gate.
+const TK504_TYPED_FK_SESSION_RELEASE = false;
 // #603 — provenance is attached only by an explicit existing-catalog selection.
 // A bare TK-shaped ID, personal FK shadow, or editable exercise name is NOT proof.
 function tk504CatalogSourceRefFromCatalog(c){
@@ -9627,6 +9630,40 @@ function tk504AttachSavedCatalogRefs(targets,metadata){
     const ref=it&&refs&&tk504ValidateCatalogSourceRef(it.exercise_id,refs[it.exercise_id]);
     return ref?{...it,tk504_catalog_ref:ref}:it;
   });
+}
+// #603 staged adapter: existing sbRpc uses the real athlete JWT. The DB RPC
+// returns a FK only for a reviewed, active, exactly matching provider binding.
+// No accountless/offline fallback, local grant, or personal FK-shadow shortcut.
+async function tk504VerifySessionBinding(ex){
+  if(TK504_TYPED_FK_SESSION_RELEASE!==true)return null;
+  if(!ex||!ex.tk504_catalog_ref)return null;
+  const ref=tk504ValidateCatalogSourceRef(ex.id,ex.tk504_catalog_ref);
+  if(!ref)throw new Error('tk504_catalog_provenance_invalid');
+  const owner=tkEigenaarUid();
+  if(!owner)throw new Error('tk504_account_missing');
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)
+    throw new Error('tk504_typed_fk_offline_unverified');
+  const raw=await sbRpc('tk504_resolve_catalog_fk',
+    {p_catalog_id:ref.catalog_id,p_provider_id:ref.provider_id});
+  const expected='TKC-'+ref.catalog_id.slice(3);
+  if(raw!==expected)throw new Error('tk504_catalog_fk_unverified');
+  if(tkEigenaarUid()!==owner)throw new Error('tk504_account_changed');
+  return Object.freeze({kind:'movekit-catalog-v1',catalog_id:ref.catalog_id,
+    provider_id:ref.provider_id,fk_id:expected,owner_uid:owner});
+}
+function tk504RewriteVerifiedSessionRow(row,binding){
+  if(!binding)return row; // legacy and disabled release remain byte-equivalent
+  if(TK504_TYPED_FK_SESSION_RELEASE!==true||
+     !row||typeof row!=='object'||!row.exercise_id||
+     binding.kind!=='movekit-catalog-v1'||
+     row.exercise_id!==binding.catalog_id||
+     binding.fk_id!=='TKC-'+binding.catalog_id.slice(3)||
+     binding.owner_uid!==tkEigenaarUid()||
+     !tk504ValidateCatalogSourceRef(binding.catalog_id,binding))
+    throw new Error('tk504_session_fk_mapping_denied');
+  // Existing writeSessionRow is the ONLY persistence writer; the translation
+  // returns a new row, preserving the original idempotency UUID, sets and notes.
+  return {...row,exercise_id:binding.fk_id};
 }
 function snapshotFromVasteTraining(def,texs,modifications=[]){
   return {
@@ -17846,7 +17883,13 @@ function tkSessieSchrijfOpts(exStatus){ return {queueOnly:exStatus==='queued'}; 
 function tkSessieOptsVoor(statussen, exId){
   const s=statussen?statussen[exId]:undefined;
   if(s==='rejected'||s==='failed') throw new Error('exercise_row_'+s);
-  return tkSessieSchrijfOpts(s);
+  const opts=tkSessieSchrijfOpts(s);
+  if(s==='typed-verified'){
+    const binding=statussen&&statussen._tk504Bindings&&statussen._tk504Bindings[exId];
+    if(!binding)throw new Error('tk504_session_binding_missing');
+    opts.tk504_binding=binding;
+  }
+  return opts;
 }
 // Een sessie die niet bevestigd én niet gequeued is (queuen zelf mislukte) is niet opgeslagen.
 function tkSessieUitkomst(opts){ if(opts&&opts.status==='failed') throw new Error('session_write_not_persisted'); }
@@ -17854,10 +17897,25 @@ function tkSessieUitkomst(opts){ if(opts&&opts.status==='failed') throw new Erro
 // de (frozen) sessions-writes. Alleen oefeningen met een sessionLog-entry (die geschreven worden).
 async function ensureSessionExerciseRows(list){
   const statussen={};
+  const verified=Object.create(null);
+  statussen._tk504Bindings=verified;
   try{
-    const ids=[...new Set((list||[]).filter(ex=>ex&&ex.id&&(typeof sessionLog!=='undefined')&&sessionLog[ex.id]).map(ex=>ex.id))];
-    // Na elkaar, niet parallel: de wachtrij-volgorde is dan deterministisch (oefeningen in lijstvolgorde).
-    for(const id of ids){ statussen[id]=await ensureExerciseRowStatus(id); }
+    const selected=(list||[]).filter(ex=>ex&&ex.id&&(typeof sessionLog!=='undefined')&&sessionLog[ex.id]);
+    const ids=[...new Set(selected.map(ex=>ex.id))];
+    // Na elkaar, niet parallel: de wachtrij-volgorde is deterministisch.
+    for(const id of ids){
+      const ex=selected.find(x=>x.id===id);
+      if(TK504_TYPED_FK_SESSION_RELEASE===true&&ex&&ex.tk504_catalog_ref){
+        try{
+          const binding=await tk504VerifySessionBinding(ex);
+          if(!binding)throw new Error('tk504_catalog_fk_not_verified');
+          verified[id]=binding;
+          statussen[id]='typed-verified'; // no personal FK shadow or new queue writer
+        }catch(_){statussen[id]='rejected';}
+      }else{
+        statussen[id]=await ensureExerciseRowStatus(id);
+      }
+    }
   }catch(_){}
   return statussen;
 }
@@ -24356,7 +24414,14 @@ function renderSessionSummaryContent(t){
 // Training (H2) te gebruiken zodat er één centrale trainingshistorie is. Geen
 // gedragswijziging voor de normale Execution: finishSession() bouwt/schrijft via deze
 // helpers en levert byte-equivalente rijen.
-async function writeSessionRow(row, opts){ return await sbPostQ('sessions', row, opts); }
+async function writeSessionRow(row, opts){
+  // #603: one canonical sessions writer. A reviewed, owner-bound FK mapping
+  // is applied here, not duplicated in cardio/strength/Guided persistence.
+  // No binding => the original row is sent byte-equivalently as before.
+  const prepared=(opts&&opts.tk504_binding)
+    ?tk504RewriteVerifiedSessionRow(row,opts.tk504_binding):row;
+  return await sbPostQ('sessions', prepared, opts);
+}
 // ARCHITECTUUR-HARDENING (v4.91.0) — dedicated schrijfpad voor race_segments
 // (HYROX/Triathlon-brick), i.p.v. de gedeelde sessions-tabel.
 async function writeRaceSegmentRow(row){ return await sbPostQ('race_segments', row); }
@@ -38390,7 +38455,16 @@ var GW=(function(){
       // oefening heeft daar nog geen rij; zonder die rij weigert de server de write (23503 → 409) en
       // dat is geen tijdelijke fout. finishSession doet dit via ensureSessionExerciseRows(); Guided
       // deed het niet. Zelfde idempotente helper, geen nieuwe schrijfweg (DEC-SAVE-001, Sprint 4).
-      var exStatus=(typeof ensureExerciseRowStatus==='function')?await ensureExerciseRowStatus(it.id):'exists';
+      // #603: explicit catalog selection uses the reviewed server binding,
+      // NEVER a personal FK-shadow. The typed path is disabled until owner gate.
+      var tk504Binding=null,exStatus='exists';
+      if(TK504_TYPED_FK_SESSION_RELEASE===true&&it.tk504_catalog_ref){
+        try{tk504Binding=await tk504VerifySessionBinding(it);
+          exStatus=tk504Binding?'typed-verified':'rejected';}
+        catch(_){exStatus='rejected';}
+      }else{
+        exStatus=(typeof ensureExerciseRowStatus==='function')?await ensureExerciseRowStatus(it.id):'exists';
+      }
       // Sprint 5 (DEC-SYNC-001): geen sessie-write zonder geldige oefeningreferentie.
       if(exStatus==='rejected'||exStatus==='failed'){ it._save='failed'; n.failed++; persist(); continue; }
       var ws=it.setsDone.map(function(sd){return {kg:(it.weight!=null?it.weight:null),reps:(sd.reps!=null?sd.reps:null),rpe:sd.rpe};});
@@ -38406,7 +38480,7 @@ var GW=(function(){
           at:it._rowAt,
           voorschrift:{kg:(it.weight!=null?it.weight:null), reps:(it.reps!=null?it.reps:null), rpe:(it.rpe!=null?it.rpe:null)}});
         built.row.id=it._rowId;
-        uitkomst=await writeSessionRow(built.row,{detail:true,queueOnly:exStatus==='queued'});
+        uitkomst=await writeSessionRow(built.row,{detail:true,queueOnly:exStatus==='queued',...(tk504Binding?{tk504_binding:tk504Binding}:{})});
         var st8=(uitkomst&&(uitkomst.status==='confirmed'||uitkomst.status==='queued'))?uitkomst.status:'failed';
         it._save=st8; n[st8]++;
         if(st8!=='failed'){

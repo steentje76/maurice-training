@@ -162,6 +162,10 @@ begin
    raise exception 'PROVIDER_SPOOFED_BINDING_RESOLVED'; end if;
  if public.tk504_resolve_catalog_fk('TK-000227','synthetic-vendor-000227') is not null then
    raise exception 'UNREVIEWED_BINDING_RESOLVED'; end if;
+ if public.tk504_historical_catalog_id('TKC-000038') is distinct from 'TK-000038'
+ then raise exception 'OWNER_A_HISTORICAL_CATALOG_ID_UNAVAILABLE'; end if;
+ if public.tk504_historical_catalog_id('TKC-000227') is not null
+ then raise exception 'UNKNOWN_HISTORY_CATALOG_LEAK'; end if;
  caught:=false;
  begin
    insert into public.exercises(id,name,category,type,scope,created_by)
@@ -203,6 +207,10 @@ BEGIN
    RAISE EXCEPTION 'USER_B_SESSIONS_RLS'; END IF;
  IF (SELECT count(*) FROM public.exercises WHERE id='TK-000038')<>0 THEN
    RAISE EXCEPTION 'PERSONAL_A_VISIBLE_TO_B'; END IF;
+ IF public.tk504_historical_catalog_id('TKC-000038') is distinct from 'TK-000038'
+ THEN RAISE EXCEPTION 'OWNER_B_HISTORICAL_CATALOG_ID_UNAVAILABLE'; END IF;
+ IF public.tk504_historical_catalog_id('TKC-000227') is not null
+ THEN RAISE EXCEPTION 'OWNER_B_OTHER_HISTORY_LEAK'; END IF;
 END $smoke$;
 reset role;
 
@@ -231,6 +239,11 @@ BEGIN
    perform public.tk504_resolve_catalog_fk('TK-000038','synthetic-vendor-000038');
  exception when insufficient_privilege then caught:=true; end;
  if not caught then raise exception 'SERVICE_ROLE_WAS_GRANTED_CLIENT_BINDING_RPC'; end if;
+ caught:=false;
+ begin
+   perform public.tk504_historical_catalog_id('TKC-000038');
+ exception when insufficient_privilege then caught:=true; end;
+ if not caught then raise exception 'SERVICE_ROLE_GRANTED_HISTORICAL_RPC'; end if;
 END $smoke$;
 reset role;
 select set_config('request.jwt.claim.role','',true);
@@ -255,6 +268,18 @@ begin
  if (select count(*) from public.sessions where exercise_id='TKC-000038')<>2
  then raise exception 'HISTORICAL_TYPED_SESSIONS_CHANGED'; end if;
 end $smoke$;
+-- History is independently accessible after revocation only to its owner.
+select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
+set role authenticated;
+DO $smoke$
+BEGIN
+ IF public.tk504_historical_catalog_id('TKC-000038') is distinct from 'TK-000038'
+ THEN RAISE EXCEPTION 'REVOKED_ALIAS_ERASED_OWNER_HISTORY'; END IF;
+ IF public.tk504_resolve_catalog_fk('TK-000038','synthetic-vendor-000038') is not null
+ THEN RAISE EXCEPTION 'REVOKED_ALIAS_ACTIVE_LOGGING_STILL_ALLOWED'; END IF;
+END $smoke$;
+reset role;
+select set_config('request.jwt.claim.sub','',true);
 
 -- Admin constraint checks: source mapping must exactly match the FK ID, and
 -- activation without review is forbidden.

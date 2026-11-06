@@ -186,3 +186,35 @@ grant execute on function public.tk504_resolve_catalog_fk(text,text)
   to authenticated;
 comment on function public.tk504_resolve_catalog_fk(text,text) is
   'Returns only an approved typed FK to a logged-in athlete; does not grant licensed media or create session rows.';
+
+-- Historical resolution is a SEPARATE, owner-scoped read only. Revoking a
+-- binding or video entitlement must never make the athlete's own completed
+-- session lose its canonical exercise identity. A caller must actually own
+-- at least one persisted session using the same typed FK.
+-- No vendor metadata or video URL is returned.
+create or replace function public.tk504_historical_catalog_id(
+  p_exercise_id text
+)
+returns text
+language sql
+stable
+security definer
+set search_path=pg_catalog
+as $tk504$
+  select b.catalog_id
+  from public.movekit_catalog_fk_bindings b
+  where auth.uid() is not null
+    and b.exercise_id=p_exercise_id
+    and exists (
+      select 1 from public.sessions s
+      where s.user_id=auth.uid()
+        and s.exercise_id=b.exercise_id
+    )
+  limit 1;
+$tk504$;
+revoke all on function public.tk504_historical_catalog_id(text)
+  from public, anon, authenticated, service_role;
+grant execute on function public.tk504_historical_catalog_id(text)
+  to authenticated;
+comment on function public.tk504_historical_catalog_id(text) is
+  'Read-only canonical catalog ID for an own historical TKC session, including after media/license revocation; never exposes a provider identifier or media.';

@@ -18,9 +18,11 @@ function extractFn(name){
 }
 // gestubde localStorage + vaste tijd (eqMemSet gebruikt Date.now voor ts; determinisme niet vereist voor value)
 let _store = {};
+let owner='synthetic-owner';
+function tkEigenaarUid(){return owner;}
 const localStorage = { getItem:k=>(k in _store?_store[k]:null), setItem:(k,v)=>{_store[k]=String(v);}, removeItem:k=>{delete _store[k];} };
 const _origNow = Date.now; Date.now = () => 1700000000000;
-eval(extractFn('eqMemAll') + '\n' + extractFn('eqMemGet') + '\n' + extractFn('eqMemSet') + '\n' + extractFn('eqMemFieldGet') + '\n' + extractFn('eqMemFieldSet'));
+eval(extractFn('eqMemStorageKey') + '\n' + extractFn('eqMemEntryKey') + '\n' + extractFn('eqMemVariant') + '\n' + extractFn('eqMemAll') + '\n' + extractFn('eqMemGet') + '\n' + extractFn('eqMemSet') + '\n' + extractFn('eqMemFieldGet') + '\n' + extractFn('eqMemFieldSet'));
 
 let pass = 0, fail = 0;
 function eq(a, b, m){ if (a === b) pass++; else { fail++; console.log('  ✗ ' + m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')'); } }
@@ -48,8 +50,8 @@ eq(eqMemGet('bench'), '', 'lege/whitespace waarde → entry verwijderd');
 
 // ── store bevat alleen echte entries ──
 eqMemSet('a','X'); eqMemSet('b','Y');
-const all = JSON.parse(_store['tk_eqmem']);
-eq(Object.keys(all).sort().join(','), 'a,b', 'store bevat exact de gezette oefeningen');
+const all = JSON.parse(_store[eqMemStorageKey()]);
+eq(Object.keys(all).map(k=>JSON.parse(k)[0]).sort().join(','), 'a,b', 'store bevat exact de gezette oefeningen');
 
 // ── GESTRUCTUREERD: per-label instelling, los van de vrije tekst ──
 _store = {};
@@ -69,7 +71,7 @@ eq(eqMemFieldGet('legpress','Zitting'), '4', 'ander veld blijft');
 // entry verdwijnt pas als vrije tekst én alle velden weg zijn
 eqMemSet('legpress','');
 eqMemFieldSet('legpress','Zitting','');
-eq(JSON.parse(_store['tk_eqmem']).legpress, undefined, 'entry weg als vrije tekst + alle velden leeg');
+eq(JSON.parse(_store[eqMemStorageKey()])[eqMemEntryKey('legpress')], undefined, 'entry weg als vrije tekst + alle velden leeg');
 
 // ── P1c-eisen: decimalen (vrije equipment-waarde, ongewijzigd bewaard) ──
 _store = {};
@@ -86,7 +88,7 @@ eq(eqMemGet('nooit'), '', 'onbekende oefening → geen vrije-tekst preset');
 _store = { 'sessions_cache':'HISTORISCHE_DATA' }; // simuleer bestaande (andere) opslag
 eqMemSet('bench','Pin 29'); eqMemFieldSet('bench','Seat','4');
 eq(_store['sessions_cache'], 'HISTORISCHE_DATA', 'preset raakt andere opslag (history/cache) NIET aan');
-eq(Object.keys(_store).filter(k=>k!=='sessions_cache').join(','), 'tk_eqmem', 'preset schrijft alleen naar tk_eqmem');
+eq(Object.keys(_store).filter(k=>k!=='sessions_cache').join(','), 'tk_eqmem_v2:synthetic-owner', 'preset schrijft alleen naar eigenaargebonden equipment-store');
 // een latere preset-wijziging verandert niets aan een eerder gemaakte "historische" waarde
 const snapshotBefore = _store['sessions_cache'];
 eqMemFieldSet('bench','Seat','6'); // preset aangepast

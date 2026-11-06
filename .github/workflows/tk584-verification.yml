@@ -1,0 +1,118 @@
+name: TK584 P1 verification and isolated APK
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tk584-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/tk584-program-execution'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run cap:copy
+      - run: npm test && npm run test:native && node coaching.test.js
+      - run: npm install --no-save --package-lock=false playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/tk584-browser-acceptance.cjs
+  apk:
+    # APK HOLD until joint UX approval.
+    if: ${{ false }}
+    needs: regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - run: npm ci && npm run cap:sync
+      - run: chmod +x android/gradlew && cd android && ./gradlew assembleTk584test --no-daemon
+      - name: Verify package, signing, embedded sources and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/tk584test/app-tk584test.apk
+          mkdir -p candidate
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > candidate/package.txt
+          grep -q "package: name='com.trainingskompas.app.tk584test20261101'" candidate/package.txt
+          grep -q "application-label:'TK P1 Test 1 november'" candidate/package.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml > candidate/manifest.txt
+          if grep -qE 'android:scheme.*"trainingskompas"' candidate/manifest.txt; then exit 1; fi
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > candidate/signature.txt
+          node tools/verify-ocr-packaging.js --apk "$APK"
+          unzip -p "$APK" assets/public/index.html > candidate/embedded-index.html
+          cmp www/index.html candidate/embedded-index.html
+          rm candidate/embedded-index.html
+          SOURCE_SHA=$(git rev-parse HEAD)
+          NAME="Trainingskompas-v4.70.27-${SOURCE_SHA:0:9}-P1-test1nov.apk"
+          cp "$APK" "candidate/$NAME"
+          echo "$SOURCE_SHA" > candidate/source-commit.txt
+          (cd candidate && sha256sum "$NAME" > "$NAME.sha256")
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tk584-apk
+          path: candidate/
+          if-no-files-found: error
+          retention-days: 14
+  android:
+    needs: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm install --no-save --package-lock=false playwright@1.58.2
+      - uses: actions/download-artifact@v4
+        with:
+          name: tk584-apk
+          path: candidate
+      - run: sudo chmod 666 /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        env:
+          TK_EMULATOR_ONLY: '1'
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: node scripts/tk584-android-acceptance.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tk584-android-evidence
+          path: android-test-evidence/
+          if-no-files-found: warn

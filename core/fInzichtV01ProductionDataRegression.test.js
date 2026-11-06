@@ -15,7 +15,7 @@ const msgs = [];
 function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: ' + label); } }
 
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-const fnStart = html.indexOf('async function inzichtRenderOverview()');
+const fnStart = html.search(/\basync\s+function\s+inzichtRenderOverview\s*\([^)]*\)\s*\{/); // accept renderId without weakening DeviceCore checks
 const fnEnd = html.indexOf('\nasync function ', fnStart + 10);
 const fnSrc = html.slice(fnStart, fnEnd > 0 ? fnEnd : fnStart + 4000);
 

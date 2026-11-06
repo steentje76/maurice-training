@@ -34,11 +34,11 @@
       pmData2:    { uuid: U('60'), role: 'pm_erg_data_service_ext',   confidence: 'APK_OBSERVED' }
     },
     characteristics: {
-      serialNumber:      { uuid: U('11'), service: 'deviceInfo', props: ['read'],          role: 'module_serial_number',         confidence: 'BOTH' },
-      firmwareRev:       { uuid: U('12'), service: 'deviceInfo', props: ['read'],          role: 'firmware_revision',            confidence: 'BOTH' },
+      serialNumber:      { uuid: U('12'), service: 'deviceInfo', props: ['read'],          role: 'module_serial_number',         confidence: 'BOTH' },
+      firmwareRev:       { uuid: U('14'), service: 'deviceInfo', props: ['read'],          role: 'firmware_revision',            confidence: 'BOTH' },
       hardwareRev:       { uuid: U('13'), service: 'deviceInfo', props: ['read'],          role: 'hardware_revision',            confidence: 'BOTH' },
-      manufacturer:      { uuid: U('14'), service: 'deviceInfo', props: ['read'],          role: 'manufacturer_name',            confidence: 'BOTH' },
-      machineType:       { uuid: U('15'), service: 'deviceInfo', props: ['read'],          role: 'erg_machine_type',             confidence: 'BOTH' },
+      manufacturer:      { uuid: U('15'), service: 'deviceInfo', props: ['read'],          role: 'manufacturer_name',            confidence: 'BOTH' },
+      machineType:       { uuid: U('16'), service: 'deviceInfo', props: ['read'],          role: 'erg_machine_type',             confidence: 'BOTH' },
       ctrlReceive:       { uuid: U('21'), service: 'control',    props: ['write'],         role: 'csafe_receive',                confidence: 'BOTH' },
       ctrlTransmit:      { uuid: U('22'), service: 'control',    props: ['notify'],        role: 'csafe_transmit',               confidence: 'BOTH' },
       sampleRate:        { uuid: U('34'), service: 'pmData',     props: ['read', 'write'], role: 'sample_rate',                  confidence: 'BOTH' },
@@ -237,11 +237,27 @@
     if (/\bSki\b/i.test(n)) return 'skierg';
     return null;
   }
+  // TK-UT-004/005: official PM CSAFE spec, device info table + Appendix A.
+  // Name identity is display-only (advertised), never used for authorization or classification.
+  function pm5SerialFromName(name) {
+    var m = /^PM5\s+(\d{9})(?:\s+(?:Row|Ski|Bike))?$/i.exec(String(name || '').trim());
+    return m ? m[1] : null;
+  }
+  function decodePm5Identity(raw) {
+    raw = raw || {};
+    var serial = Array.isArray(raw.serialNumber) && raw.serialNumber.length === 9
+      ? String.fromCharCode.apply(null, raw.serialNumber) : '';
+    var b = Array.isArray(raw.machineType) && raw.machineType.length === 1 ? raw.machineType[0] : null;
+    // Reserved values remain unknown; no broad range inference.
+    var known = [0,1,2,3,5,7,8,16,17,18,19,20,32,128,143,192,193,194,207,224,225,226];
+    return { serialNumber: /^\d{9}$/.test(serial) ? serial : null,
+      reportedMachineType: known.indexOf(b) !== -1 ? pm5MachineType(b) : null };
+  }
   function machineHintMismatchMessage(hint, cardioType) {
     var expected = CARDIO_TO_MACHINE[cardioType] || null;
     if (!hint || !expected || hint === expected) return null;
     var lbl = { rowerg: 'RowErg', skierg: 'SkiErg', bikeerg: 'BikeErg' };
-    return 'Dit apparaat meldt zich als ' + (lbl[hint] || hint) + ', maar je hebt ' + (lbl[expected] || expected) + ' geselecteerd.';
+    return 'De Bluetooth-naam suggereert ' + (lbl[hint] || hint) + '; het apparaattype is niet bevestigd. Je hebt ' + (lbl[expected] || expected) + ' geselecteerd. Controleer je PM5.';
   }
 
   function _num(v) { if (v == null) return null; var n = Number(v); return isFinite(n) ? n : null; }
@@ -456,6 +472,7 @@
 
   var Concept2Live = {
     VERSION: VERSION, CONCEPT2_BLE_UUIDS: CONCEPT2_BLE_UUIDS,
+    pm5SerialFromName: pm5SerialFromName, decodePm5Identity: decodePm5Identity,
     machineHintFromName: machineHintFromName, machineHintMismatchMessage: machineHintMismatchMessage,
     MACHINE_TYPES: MACHINE_TYPES, MACHINE_EXERCISE: MACHINE_EXERCISE, paceBasisFor: paceBasisFor, exerciseForMachine: exerciseForMachine,
     CONN_STATES: CONN_STATES, nextConnState: nextConnState,

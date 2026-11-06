@@ -17,8 +17,11 @@ ok(inzichtSrc.includes('AdherenceIntelligenceCore.aggregate'), '2: Adherence geb
 ok(!/inzichtSrc.*avgStep\s*=|percentage\s*=\s*Math\.round\(\(.*completed.*\/.*eligible/.test(inzichtSrc), '3: geen lokale herimplementatie van de adherence-percentageberekening in de Inzicht-code zelf');
 ok(inzichtSrc.includes('dc.healthSeries') && inzichtSrc.includes('dc.healthTrend') && inzichtSrc.includes('dc.qualifySeries'), '4: HRV/Rusthartslag/Slaap gebruiken uitsluitend de bestaande dc.health*-functies');
 ok(!/inzichtRender[A-Za-z]*\(\)[\s\S]{0,2000}?\bavgStep\s*=\s*\(/.test(inzichtSrc), '5: geen lokale trend-slope-berekening binnen de Inzicht-renderfuncties zelf');
-ok(inzichtSrc.includes('B9-H6B') || inzichtSrc.includes('architecturaal gescheiden'), '6: de Trainingen-telling documenteert expliciet waarom sessions+activities niet dubbeltellen (B9-H6B), geen ongedocumenteerde aanname');
-ok(!inzichtSrc.includes('AI') || !/AI[\s\S]{0,200}rank/i.test(inzichtSrc), '7: geen AI-ranking-taal in de Inzicht-code (PO2: deterministische recentheid, geen AI-score)');
+const developmentSrc=html.slice(html.indexOf('async function inzichtRenderDevelopment(renderId)'),html.indexOf('async function inzichtRenderOverview(renderId)'));
+ok(developmentSrc.includes('B9-H6B') && developmentSrc.includes("inzichtGetOrNull('activities'") && developmentSrc.includes("inzichtGetOrNull('sessions'") && /if\(all!==null && activities!==null\)/.test(developmentSrc), '6: originele Trainingen-tegel leest gescheiden sessions/activities, zonder verzonnen partiële telling bij ontbrekende data');
+const aiRankingLanguage = /\bAI\b[\s\S]{0,200}\brank/i; // whole word AI: never match the 'ai' inside 'domains'
+ok(!aiRankingLanguage.test(inzichtSrc), '7: geen AI-ranking-taal in de Inzicht-code (PO2: deterministische recentheid, geen AI-score)');
+ok(aiRankingLanguage.test('AI-ranking') && !aiRankingLanguage.test('domains.forEach(); /* GEEN ranking */'), '7a: testguard herkent echte AI-ranking maar niet de letters ai binnen domains');
 ok(inzichtSrc.includes("digest.highlights") && !/\.sort\(/.test(inzichtSrc.slice(inzichtSrc.indexOf('inzichtRenderRecent'))), '8: Recente inzichten hergebruikt de bestaande, canonieke digest.highlights-volgorde -- geen eigen sorteer-/rankingregel toegevoegd');
 ok(inzichtSrc.includes('inzichtGetOrNull'), '9: gebruikt een expliciete, veilige data-wrapper die fouten (null) onderscheidt van een echte, lege dataset ([]) -- UNKNOWN != 0');
 ok(!/inzicht[\s\S]{0,3000}v43SafeGet/.test(inzichtSrc.slice(0, inzichtSrc.indexOf('inzichtGetOrNull')+50)) || true, '10: (informatief) v43SafeGet zelf blijft ongewijzigd voor alle bestaande schermen -- Inzicht gebruikt een eigen, aparte wrapper');

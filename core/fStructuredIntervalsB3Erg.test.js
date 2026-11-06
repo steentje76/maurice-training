@@ -24,7 +24,7 @@ function extractFn(name) {
   return null;
 }
 const FNS = ['tkErgSportForExercise', 'tkErgDefinitionValid', 'saveIntervalWorkout', 'ivRaw', 'ivFromRaw', 'snapshotFromCustomTraining', 'startInstanceFromDefinition',
-  'startIntervalExecution', 'advanceIntervalBlock', 'tkErgCloseBlockActual', 'finishIntervalExecution', 'buildIntervalPrescriptionFromForm',
+  'tkErgResolveIntervalPrescription', 'startIntervalExecution', 'advanceIntervalBlock', 'tkErgCloseBlockActual', 'finishIntervalExecution', 'buildIntervalPrescriptionFromForm',
   'renderErgSessionStructuredHtml', 'tkErgActualText', 'structuredBlockLabel', 'tkIvTerminationText', 'tkIvTargetText'];
 const SRC = {}; FNS.forEach((n) => { SRC[n] = extractFn(n); ok(SRC[n], 'functie gevonden: ' + n); });
 const CONST = (html.match(/const TK_IV_BLOCK_LABEL=\{[^\n]*\n/) || [''])[0] + (html.match(/const TK_IV_SPORT_LABEL=\{[^\n]*\n/) || [''])[0]
@@ -166,7 +166,7 @@ function sandbox() {
   eq((code.match(/await writeSessionRow\(\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
   eq((code.match(/writeSessionRow\(/g) || []).length, 5, 'persistence: totaal aantal writeSessionRow-aanroepen ongewijzigd (definitie + 4 bestaande schrijfpaden; geen extra schrijfweg)');
   ok(!/sbPostQ\('activities'/.test(SRC.finishIntervalExecution) && !/activity_laps/.test(SRC.finishIntervalExecution), 'persistence: erg schrijft niet naar activities/activity_laps');
-  ok(/_tkErgPending&&_tkErgPending\.exId===exId/.test(SRC.startIntervalExecution) && /buildIntervalPrescriptionFromForm/.test(SRC.startIntervalExecution), 'executie: snapshot-prescriptie heeft voorrang, formulier blijft fallback voor ad-hoc');
+  ok(/_tkErgPending&&_tkErgPending\.exId===exId/.test(SRC.tkErgResolveIntervalPrescription) && /buildIntervalPrescriptionFromForm/.test(SRC.tkErgResolveIntervalPrescription) && /tkErgResolveIntervalPrescription\(exId,cardioType\)/.test(SRC.startIntervalExecution), 'executie: snapshot-prescriptie heeft voorrang, formulier blijft fallback voor ad-hoc');
   ok(/IntervalEngineCore\.stateAt/.test(SRC.tkErgCloseBlockActual) && /IntervalEngineCore\.nextBlockIndex/.test(SRC.advanceIntervalBlock), 'engine: bloksemantiek uit IntervalEngineCore');
   ok(!/ErgIntervalEngine|Concept2IntervalEngine|RowErgEngine/.test(html), 'engine: geen tweede interval-engine geïntroduceerd');
   ok(/TK_ERG_SPORTS\.indexOf\(norm\.sport\)!==-1/.test(PREVIEW_START) && /tkErgDefinitionValid\(norm\.sport,def\.exercises\|\|\[\]\)/.test(PREVIEW_START) && /_tkErgPending=\{exId:_exId/.test(PREVIEW_START), 'start: erg-tak valideert de Definition-invariant en zet de snapshot-prescriptie klaar');

@@ -69,7 +69,7 @@
       if(!desc)throw error('CANONICAL_EXERCISE_UNBOUND');
       if(type!=='video'&&type!=='poster')throw error('UNSUPPORTED_MEDIA_TYPE');
       // Never expose static private paths; only ephemeral server-signed URLs.
-      return client.get(desc.catalogId,type,ownerId);
+      return client.get(desc.catalogId,type,ownerId,desc.providerId);
     }
     return Object.freeze({
       resolve,

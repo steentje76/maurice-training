@@ -165,7 +165,15 @@ function sandbox() {
   ok(/intervals_detail:\(l\.intervalsDetail\|\|null\)/.test(FINISH_SESSION_WRITE) && /exercise_id:ex\.id/.test(FINISH_SESSION_WRITE) && /training_instance_id:activeInstanceId\|\|_ergInst\|\|null/.test(FINISH_SESSION_WRITE), 'persistence: intervals_detail gaat mee in DEZELFDE, enige sessierij (Erg Continuous Protocol Identity: activeInstanceId houdt voorrang; _ergInst is uitsluitend de ad-hoc losse-Erg-instance als er geen programma-instance is -- nog steeds EEN sessierij, geen dual-write)');
   eq((code.match(/intervals_detail:/g) || []).length, 1, 'persistence: exact één schrijfplek voor intervals_detail (geen tweede write)');
   eq((code.match(/await writeSessionRow\((?:tk504RewriteVerifiedSessionRow\()?\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
-  eq((code.match(/writeSessionRow\(/g) || []).length, 5, 'persistence: totaal aantal writeSessionRow-aanroepen ongewijzigd (definitie + 4 bestaande schrijfpaden; geen extra schrijfweg)');
+  const looseWriter=extractFn('saveLosOefening');
+  const looseWriterCalls=(looseWriter.match(/writeSessionRow\(/g)||[]).length;
+  eq(looseWriterCalls,2,'persistence: losse oefening heeft 2 schrijfvarianten, alleen in exclusieve branches');
+  ok(/if\(TK504_TYPED_FK_SESSION_RELEASE===true&&ex\._catalog===true\)/.test(looseWriter) &&
+     /ok=await writeSessionRow\(row,\{tk504_binding:binding\}\)/.test(looseWriter) &&
+     /\}else\{[\s\S]*ok=await writeSessionRow\(row\)/.test(looseWriter),
+     'persistence: catalogus-getypeerde en legacy losse schrijftakken zijn strikt exclusief');
+  eq((code.match(/writeSessionRow\(/g)||[]).length-looseWriterCalls,5,
+     'persistence: overige writer-bronnen blijven exact gelijk (1 definitie + 4 bestaande paden)');
   ok(!/sbPostQ\('activities'/.test(SRC.finishIntervalExecution) && !/activity_laps/.test(SRC.finishIntervalExecution), 'persistence: erg schrijft niet naar activities/activity_laps');
   ok(/_tkErgPending&&_tkErgPending\.exId===exId/.test(SRC.startIntervalExecution) && /buildIntervalPrescriptionFromForm/.test(SRC.startIntervalExecution), 'executie: snapshot-prescriptie heeft voorrang, formulier blijft fallback voor ad-hoc');
   ok(/IntervalEngineCore\.stateAt/.test(SRC.tkErgCloseBlockActual) && /IntervalEngineCore\.nextBlockIndex/.test(SRC.advanceIntervalBlock), 'engine: bloksemantiek uit IntervalEngineCore');
@@ -193,7 +201,7 @@ function sandbox() {
   ok(!/service_role|SUPABASE_SERVICE_ROLE_KEY|SB_KEY_ADMIN/i.test(ergCodeBlock), 'ownership C: geen enkel Erg/B3-codepad gebruikt een elevated/service-role-sleutel — uitsluitend de normale, auth-gebonden sbGet/sbPostQ-weg (RLS blijft de enige poortwachter)');
   ok(!/user_id\s*:/.test(FINISH_SESSION_WRITE), 'ownership D: de sessierij-insert (incl. intervals_detail) stuurt zelf GEEN user_id mee — het veld wordt structureel niet clientside gezet, dus een client kan niet eens proberen een andermans user_id te spoofen; toewijzing gebeurt uitsluitend serverside (kolom-default/RLS), ongewijzigd door B3');
   ok(!/sbGet\('sessions',[^)]*user_id=eq\.'\+(?!authSession|uid)/.test(SRC.renderErgSessionStructuredHtml || ''), 'ownership E: History-renderer bevat geen eigen, potentieel foutieve user_id-filterlogica — vertrouwt (zoals B1/B2) volledig op de database-RLS, geen tweede/eigen autorisatiemodel');
-  msgs.push('LIMITATIE (erkend, niet dit-PR-specifiek): een live, twee-gebruikers Postgres-RLS-proef (authSession A vs. authSession B tegen een echte sessions/training_instances-tabel) is met de huidige repository-testinfrastructuur niet uitvoerbaar — er bestaat nergens in deze codebase een lokale Postgres/pgTAP-testharness. Bovenstaande is het sterkste offline-bewijs dat deze architectuur toelaat: geen nieuwe/zwakkere toegangsweg, geen elevated sleutel, geen clientside user_id-spoofing mogelijk, RLS-policies ongewijzigd.');
+  msgs.push('LIMITATIE: de geisoleerde PostgreSQL 17 Docker/ROLLBACK-proef met twee synthetische eigenaren (tools/tk603-local-two-account-db-proof.ps1) controleert de staged TK504 RLS/FK-migratie. Dit bewijst GEEN echte Supabase Auth JWT/PostgREST-integratie, geen productie-sessions schema en geen live twee-accountacceptatie; deze gates blijven open.');
 
   if (msgs.length) console.log(msgs.join('\n'));
   console.log('fStructuredIntervalsB3Erg: ' + pass + ' geslaagd, ' + fail + ' mislukt');

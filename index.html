@@ -9216,17 +9216,31 @@ async function sbPostQ(t,d,opts){
   // queue ('failed', IndexedDB niet beschikbaar) gaf hier tot v4.70.22 true — een valse succesmelding
   // terwijl de data nergens stond. Impactanalyse van alle aanroepers: DECISION_LOG DEC-QUEUE-001.
   let queueOnly=!!(opts&&opts.queueOnly); const ignoreDup=!!(opts&&opts.ignoreDuplicates)||!!TK_IDEMPOTENT_ZONDER_UPDATE[t];
+  // #603: server-verified TKC bindings are momentary authority, never durable
+  // offline grants. A lost connection must not persist a stale typed FK for replay.
+  const confirmedOnly=t==='sessions'&&!!(opts&&opts.tk504_binding);
+  const expectedOwner=confirmedOnly?opts.tk504_binding.owner_uid:null;
   const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation');
   const item=ignoreDup?{table:t,method:'POST',body:d,resolution:'ignore-duplicates'}:{table:t,method:'POST',body:d};
   const uit=function(status,http,reden){ if(opts&&typeof opts==='object'){opts.status=status;opts.reden=reden||null;} tkLogSchrijf(status,t,reden,http); return detail?tkSchrijfUitkomst(status,http,reden):(status==='confirmed'||status==='queued'); };
-  const queue=async function(http,reden){ const q=await offlineQueueAdd(item); updateOfflineBadge(); return q===true?uit('queued',http,reden):uit('failed',http,'opslag'); };
+  const queue=async function(http,reden){
+    // #603: typed binding is valid for this authenticated ONLINE write only.
+    // A retry must re-verify authority; never save it for offline replay.
+    if(confirmedOnly)return uit('failed',http,reden||'offline');
+    const q=await offlineQueueAdd(item); updateOfflineBadge();
+    return q===true?uit('queued',http,reden):uit('failed',http,'opslag');
+  };
   // Sprint 7 (Track D, ACCOUNT_MISMATCH): zonder bekende eigenaar geen write en geen wachtrij-item —
   // zo'n item zou later onder de VOLGENDE gebruiker kunnen worden verstuurd.
   if(!tkEigenaarUid()) return uit('failed',null,'account');
+  if(confirmedOnly&&(!expectedOwner||tkEigenaarUid()!==expectedOwner))
+    return uit('failed',null,'account');
   let reden=queueOnly?'afhankelijk':null;
   // Sprint 7 (DEC-SYNC-002): staat de ouder van deze rij nog in de wachtrij, dan gaat deze rij er ook in.
   if(!queueOnly&&TK_WACHTRIJ_OUDERS[t]&&await tkWachtrijHeeftOuder(t,d)){ queueOnly=true; reden='afhankelijk'; }
   if(!navigator.onLine||queueOnly) return queue(null,navigator.onLine?reden:'offline');
+  // Awaiting FIFO dependency checks can itself span an account switch.
+  if(confirmedOnly&&tkEigenaarUid()!==expectedOwner)return uit('failed',null,'account');
   const magTimeout=!!(d&&d.id!=null&&(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]||ignoreDup));
   try{
     const verzoek=sbFetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',prefer:prefer,body:d});
@@ -9238,9 +9252,10 @@ async function sbPostQ(t,d,opts){
       if(sbRetryable(r.status)) return queue(r.status,r.status===401?'auth':'server');
       return uit('rejected',r.status,r.status===401||r.status===403?'toegang':'validatie');
     }
+    if(confirmedOnly&&tkEigenaarUid()!==expectedOwner)return uit('failed',r.status,'account');
     return uit('confirmed',r.status);
   }catch(e){
-    console.warn('sbPostQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
+    console.warn(confirmedOnly?'sbPostQ typed session not queued':'sbPostQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
     return queue(null,(e&&e.tkTimeout)?'timeout':'netwerk');
   }
 }
@@ -9658,6 +9673,17 @@ function tk504CatalogSourceRefFromSelection(id){
     return c&&c.catalog_id===id?tk504CatalogSourceRefFromCatalog(c):null;
   }catch(_){return null;}
 }
+// #603: only actual canonical picker objects may produce a source claim.
+// No personal exercise is upgraded by its ID, name, equipment or shadow shape.
+function tk603CatalogRefFromPickerSelection(ex){
+  // Database-shaped personal/global rows are NEVER source authority, even
+  // if they happen to contain _catalog and catalog_id.
+  if(!ex||ex._catalog!==true||ex.catalog_id!==ex.id||
+     Object.prototype.hasOwnProperty.call(ex,'scope')||
+     Object.prototype.hasOwnProperty.call(ex,'user_id')||
+     Object.prototype.hasOwnProperty.call(ex,'owner_id'))return null;
+  return tk504CatalogSourceRefFromSelection(ex.id);
+}
 function tk504ValidateCatalogSourceRef(exId,ref){
   if(!ref||typeof ref!=='object'||Array.isArray(ref)||
       ref.kind!=='movekit-catalog-v1'||ref.catalog_id!==exId||
@@ -9983,7 +10009,13 @@ function buildResolvedExecutionItems(list){
   //   2) anders/niet gevonden → ongewijzigd legacy-pad (exercises-array)
   return (list||[]).map(it=>{
     const exId=it.exercise_id;
-    const isCanonical=typeof exId==='string'&&exId.indexOf('TK-')===0;
+    // #603: in staged typed mode a TK-shaped personal ID cannot become
+    // a licensed catalog execution just because the canonical ID exists.
+    // Preserve V1's legacy fallback until the release gate is explicitly ON.
+    const typedMode=typeof TK504_TYPED_FK_SESSION_RELEASE!=='undefined'&&
+      TK504_TYPED_FK_SESSION_RELEASE===true;
+    const isCanonical=typeof exId==='string'&&exId.indexOf('TK-')===0&&
+      (!typedMode||!!tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref));
     let canon=null;
     if(isCanonical&&typeof ExerciseCatalogService!=='undefined'){
       try{canon=ExerciseCatalogService.byId(exId);}catch(e){canon=null;}
@@ -17789,6 +17821,7 @@ let exPickerCallback=null;
 let exPickerFilterState={sport:'all',type:'all',muscle:'all',equipment:'all'};
 let exPickerQuickFilter='all'; // 'all' | 'favoriet' | 'recent'
 let exPickerRecentIds=[];
+let exPickerRecentSourceKeys=[]; // #603: true source-qualified recent filter when typed FK enabled
 
 // ── F41 — UNIFIED EXERCISE POOL (legacy exercises-tabel + 206 MoveKit-catalogus) ──
 // De in-training picker toonde tot nu toe UITSLUITEND de legacy `exercises`-array (~80).
@@ -17856,8 +17889,8 @@ function pickerExEquipment(e){
   if(e&&Array.isArray(e.equipment)&&e.equipment.length)return e.equipment;
   try{ const r=(typeof resolveExerciseEquipment==='function')?resolveExerciseEquipment(e):null; return (r&&r.length)?r:null; }catch(_){ return null; }
 }
-// Samengevoegde, gededupliceerde pool voor de picker/filters. Legacy eerst (behoudt hun
-// eigen id en historie), daarna elke nog niet aanwezige catalogus-entry.
+// Unified picker/filters: retain legacy ownership and canonical catalog provenance.
+// Same-ID rows from different sources remain separately selectable, never merged by name.
 // F44/Phase10 — gecachet: renderExPickerList draait per toetsaanslag; zonder cache werd de
 // 206-catalogus elke render opnieuw doorlopen. Cache-sleutel = #legacy + #catalogus + laatste
 // legacy-id, zodat toevoegen/verwijderen van een custom oefening de cache vanzelf verse maakt.
@@ -17871,12 +17904,16 @@ function exPickerPool(){
   const key=exLen+':'+catLen+':'+(exLen?exercises[exLen-1].id:'');
   if(_exPickerPoolCache&&_exPickerPoolKey===key)return _exPickerPoolCache;
   const out=hasEx?exercises.slice():[];
-  const seen=new Set(out.map(e=>e.id));
+  // #603: IDs alone are not provenance. A personal FK-shadow and the canonical
+  // catalog entry may share one TEXT id. Preserve BOTH under distinct sources.
+  // 'exercises' holds database/legacy records, never authoritative catalog
+  // objects; a forged _catalog marker there must not hide the real ECS tile.
+  const seenCatalog=new Set();
   try{
     const C=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.all():[];
     C.forEach(c=>{
-      if(!c||!c.catalog_id||seen.has(c.catalog_id))return; // dedup op id — nooit naam-fuzzy
-      seen.add(c.catalog_id);
+      if(!c||!c.catalog_id||seenCatalog.has(c.catalog_id))return;
+      seenCatalog.add(c.catalog_id);
       const px=catalogToPickerEx(c);
       if(px)out.push(px);
     });
@@ -17884,11 +17921,15 @@ function exPickerPool(){
   _exPickerPoolCache=out; _exPickerPoolKey=key;
   return out;
 }
-// Resolve een gekozen picker-id naar het exercise-object: eerst legacy (met historie/velden),
-// anders de catalogus-fallback. Retourneert null als het id nergens bestaat.
-function resolvePickerEx(id){
-  let ex=(typeof exercises!=='undefined'&&Array.isArray(exercises))?exercises.find(e=>e.id===id):null;
-  if(ex)return ex;
+// Resolve a selected picker identity. 'catalog'/'legacy' are explicit UI-source tokens;
+// bare IDs keep legacy-first compatibility, never promote a personal row.
+function resolvePickerEx(id,source='auto'){
+  const ex=(typeof exercises!=='undefined'&&Array.isArray(exercises))?exercises.find(e=>e.id===id):null;
+  // Explicitly selected catalog tile is independent of a same-ID personal row.
+  // Unknown/direct ID calls retain the historical personal-first fallback;
+  // they never silently turn a personal exercise into a MoveKit selection.
+  if(source==='legacy')return ex||null;
+  if(source!=='catalog'&&ex)return ex;
   try{
     const c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(id):null;
     if(c)return catalogToPickerEx(c);
@@ -17904,7 +17945,7 @@ function resolvePickerEx(id){
 // voor poster/cues/equipment/intelligence; deze rij draagt enkel id + basisvelden voor de FK en
 // legacy-joins. Idempotent (doet niets als het id al bestaat of geen catalogus-id is) en
 // in-flight-gededupliceerd. scope:'personal' = de bewezen client-schrijfbare zichtbaarheid (zoals
-// saveLosOefening); 'global' is owner-only. exPickerPool dedupliceert op id → geen dubbele weergave.
+// saveLosOefening); 'global' is owner-only. #603: never infer MoveKit provenance from these rows.
 let _ensureRowInflight={};
 // Sprint 5 (DEC-SYNC-001) — de FK-compat-rij gaat via de BESTAANDE wachtrij. Voorheen een directe
 // sbPost: offline of bij een netwerkfout viel hij stil weg, terwijl de sessie wél werd gequeued; bij
@@ -17961,6 +18002,51 @@ function tkSessieOptsVoor(statussen, exId){
 }
 // Een sessie die niet bevestigd én niet gequeued is (queuen zelf mislukte) is niet opgeslagen.
 function tkSessieUitkomst(opts){ if(opts&&opts.status==='failed') throw new Error('session_write_not_persisted'); }
+
+// #603: read-side provenance must mirror the *verified* typed writer.
+// Never infer catalog ownership from a TK-shaped ID, a matching name, or a
+// historical personal FK-shadow. RLS still owns the returned sessions.
+async function tk603ReadExerciseSessions(exId,sourceRef=null,querySuffix='&order=date.desc,created_at.desc&limit=30'){
+  if(TK504_TYPED_FK_SESSION_RELEASE!==true||sourceRef==null)
+    return await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(exId)+querySuffix);
+  const ref=tk504ValidateCatalogSourceRef(exId,sourceRef);
+  if(!ref)return [];
+  const owner=tkEigenaarUid();
+  if(!owner||typeof navigator!=='undefined'&&navigator.onLine===false)return [];
+  try{
+    const binding=await tk504VerifySessionBinding({id:exId,tk504_catalog_ref:ref});
+    if(!binding||binding.owner_uid!==owner||tkEigenaarUid()!==owner)return [];
+    const rows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(binding.fk_id)+querySuffix);
+    if(tkEigenaarUid()!==owner)return [];
+    return Array.isArray(rows)?rows.filter(x=>x&&x.exercise_id===binding.fk_id):[];
+  }catch(_){return [];} // explicit catalog source must never fall back to personal sessions
+}
+
+// Picker-specific recent lookup: user-owned TKC rows can only identify the
+// catalog tile after the existing owner-scoped history RPC has verified them.
+// Existing program prompts still use getRecentExerciseIds() unchanged.
+function tk603PickerSourceKey(ex){
+  return (ex&&ex._catalog===true&&ex.catalog_id===ex.id&&
+    !Object.prototype.hasOwnProperty.call(ex,'scope')&&
+    !Object.prototype.hasOwnProperty.call(ex,'user_id')?'catalog:':'legacy:')+(ex&&ex.id||'');
+}
+async function tk603RecentPickerSourceKeys(){
+  const rows=await sbGet('sessions','&exercise_id=not.is.null&order=date.desc,created_at.desc&limit=60');
+  const owner=tkEigenaarUid();
+  if(!owner)return [];
+  const raw=[...new Set((rows||[]).map(x=>x&&x.exercise_id).filter(Boolean))].slice(0,15);
+  const keys=await Promise.all(raw.map(async id=>{
+    if(TK504_TYPED_FK_SESSION_RELEASE===true&&/^TKC-[0-9]{6}$/.test(id)){
+      try{
+        const projected=await tk504HistoricalSourceForSession(id);
+        return projected&&projected.exercise_id===id&&tkEigenaarUid()===owner
+          ?'catalog:'+projected.catalog_id:null;
+      }catch(_){return null;}
+    }
+    return 'legacy:'+id;
+  }));
+  return tkEigenaarUid()===owner?keys.filter(Boolean):[];
+}
 // Zorg dat alle daadwerkelijk gelogde catalogus-only oefeningen een FK-compat rij hebben, vóór
 // de (frozen) sessions-writes. Alleen oefeningen met een sessionLog-entry (die geschreven worden).
 async function ensureSessionExerciseRows(list){
@@ -18010,6 +18096,8 @@ async function openExPicker(onSelect=null){
   exPickerFilterState={sport:'all',type:'all',muscle:'all',equipment:'all'};
   exPickerQuickFilter='all';
   exPickerRecentIds=await getRecentExerciseIds();
+  exPickerRecentSourceKeys=(TK504_TYPED_FK_SESSION_RELEASE===true)
+    ?await tk603RecentPickerSourceKeys():[];
   document.getElementById('ex-pick-search').value='';
   // F44/Phase3 — filteropties uit de volledige pool (catalogus-aware). Spiergroep-taxonomie is
   // consistent (Dutch) tussen legacy en catalogus; equipment is de canonieke 7-term-set.
@@ -18052,10 +18140,13 @@ function renderExPickerList(){
     list=list.filter(e=>{ const eq=pickerExEquipment(e); return !eq || eq.includes(exPickerFilterState.equipment); });
   }
   if(exPickerQuickFilter==='favoriet')list=list.filter(e=>isExerciseFavorite(e.id));
-  if(exPickerQuickFilter==='recent')list=list.filter(e=>exPickerRecentIds.includes(e.id));
+  if(exPickerQuickFilter==='recent')list=list.filter(e=>TK504_TYPED_FK_SESSION_RELEASE===true
+    ?exPickerRecentSourceKeys.includes(tk603PickerSourceKey(e)):exPickerRecentIds.includes(e.id));
   if(q)list=list.filter(e=>tkPickerSearchText(e).includes(q));
   if(exPickerQuickFilter==='recent'){
-    list.sort((a,b)=>exPickerRecentIds.indexOf(a.id)-exPickerRecentIds.indexOf(b.id));
+    list.sort((a,b)=>TK504_TYPED_FK_SESSION_RELEASE===true
+      ?exPickerRecentSourceKeys.indexOf(tk603PickerSourceKey(a))-exPickerRecentSourceKeys.indexOf(tk603PickerSourceKey(b))
+      :exPickerRecentIds.indexOf(a.id)-exPickerRecentIds.indexOf(b.id));
   }else{
     list.sort((a,b)=>tkPickerDisplayName(a).localeCompare(tkPickerDisplayName(b),'nl'));
   }
@@ -18074,16 +18165,25 @@ function renderExPickerList(){
     return;
   }
   const A=window.ExerciseAssetProvider;
+  // #603: compute collision labels once, not by scanning all 582 cards repeatedly.
+  const pickerIdCounts=new Map();
+  list.forEach(e=>pickerIdCounts.set(e.id,(pickerIdCounts.get(e.id)||0)+1));
   el.innerHTML='<div class="pk-grid">'+list.map(e=>{
-    let poster=null;try{poster=(A&&A.poster)?(A.poster(e.id)||A.poster(e.catalog_id||'')):null;}catch(_){poster=null;}
+    // #603: a personal TK-shaped ID cannot borrow the catalog's licensed media.
+    const personalCatalogCollision=e._catalog!==true&&e.scope==='personal'&&/^TK-[0-9]{6}$/.test(e.id||'');
+    let poster=null;try{poster=(!personalCatalogCollision&&A&&A.poster)?(A.poster(e.id)||A.poster(e.catalog_id||'')):null;}catch(_){poster=null;}
     const mu=(e.muscle_primary&&e.muscle_primary[0])||TYPE_LABELS[e.type]||e.type||'Overig';
     const box=poster
       ?`<div class="pk-pt"><img src="${poster}" alt="" loading="lazy"></div>`
       :`<div class="pk-pt"><span class="mg">${escHtml(mu)}</span>${_pkIcon(e)}</div>`;
     const fav=isExerciseFavorite(e.id);
     const gym=e.gym_id?'<span class="pk-gym">GYM</span>':'';
-    return `<button class="pk-gcard" onclick="selectExPickerItem('${e.id}')">
-      ${gym}
+    // Show origin only for same-ID collisions, with an explicit selection token.
+    // No name/id heuristic may silently promote a personal row to MoveKit.
+    const collide=(pickerIdCounts.get(e.id)||0)>1;
+    const origin=collide?`<span class="pk-gym">${e._catalog===true?'Movekit':'Eigen oefening'}</span>`:'';
+    return `<button class="pk-gcard" onclick="selectExPickerItem('${e.id}', '${e._catalog===true?'catalog':'legacy'}')">
+      ${gym}${origin}
       <span class="pk-fav${fav?' on':''}" onclick="event.stopPropagation();toggleFavorite('${e.id}').then(renderExPickerList)" role="button" aria-label="Favoriet">${fav?'★':'☆'}</span>
       ${box}
       <div class="pk-nm">${escHtml(tkPickerDisplayName(e))}</div>
@@ -18120,8 +18220,8 @@ function initExPickerKeyboardFix(){
   window.visualViewport.addEventListener('resize',_exPickerVVHandler);
   _exPickerVVHandler();
 }
-function selectExPickerItem(id){
-  const ex=resolvePickerEx(id); // F41: legacy of catalogus-fallback (behoudt catalog_id)
+function selectExPickerItem(id,source='auto'){
+  const ex=resolvePickerEx(id,source); // #603: source comes from the actual tapped tile, never name or id
   if(!ex)return;
   if(exPickerCallback){
     closeModal('m-ex-picker');
@@ -18227,7 +18327,8 @@ async function saveLosOefening(btnEl){
       exId=id;
     }
   } else {
-    ex=resolvePickerEx(exId); // F41: legacy of catalogus-fallback (behoudt catalog_id)
+    // #603: retain the source of the actually selected tile across form rendering.
+    ex=(losCurEx&&losCurEx.id===exId)?losCurEx:resolvePickerEx(exId);
     if(!ex){toast('Kies een oefening');return;}
   }
 
@@ -18292,9 +18393,25 @@ async function saveLosOefening(btnEl){
     }
   }
 
-  await ensureExerciseRow(exId); // F91/Optie B — FK-compat vóór de losse-oefening-write
-  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row): dezelfde sessions-schrijflaag
-  if(!ok){toast('Fout bij opslaan');return;} // FASE 2A: retry -- state blijft staan, geen cleanup
+  // #603: the loose exercise uses the SAME canonical sessions writer. With
+  // typed FK release ON, an explicit catalog selection requires online server
+  // authority; it must NEVER produce the old personal FK-shadow first.
+  let ok=false;
+  if(TK504_TYPED_FK_SESSION_RELEASE===true&&ex._catalog===true){
+    try{
+      const ref=tk603CatalogRefFromPickerSelection(ex);
+      if(!ref)throw new Error('tk504_catalog_provenance_invalid');
+      const binding=await tk504VerifySessionBinding({id:exId,tk504_catalog_ref:ref});
+      if(!binding)throw new Error('tk504_catalog_fk_unverified');
+      // Stable original UUID across retry/timeout; new authority is rechecked.
+      row.id=tk504StableSessionId(sessionLog[LOS_DOMID]||(sessionLog[LOS_DOMID]={}));
+      ok=await writeSessionRow(row,{tk504_binding:binding});
+    }catch(_){toast('Beveiligde oefening niet opgeslagen: controleer verbinding en toegang');return;}
+  }else{
+    await ensureExerciseRow(exId); // unchanged V1/personal FK compatibility
+    ok=await writeSessionRow(row);
+  }
+  if(!ok){toast('Fout bij opslaan');return;} // retry -- state unchanged
   // FASE 2A.1 (H5): een losse Concept2-execution met ad-hoc instance wordt via de BESTAANDE canonieke
   // completion afgerond -- pas NA een geslaagde sessions-write (bij falen hierboven al teruggekeerd, dus
   // nooit 'completed' zonder row) en VOOR resetLosAllState(), dat de lokale protocolidentiteit wist.
@@ -18506,15 +18623,25 @@ function daysBetweenDates(fromYmd,toYmd){
 //   strengthBasisCache[eid] = {recent, peak, prev} (peak uitsluitend voor PR/trend/analytics/context)
 // Verzint niets: zonder representatieve historie blijft de basis null (no-base).
 const strengthBasisCache={};
-async function loadStrengthBasis(eid){
-  const rows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(eid)+'&order=date.desc,created_at.desc&limit=30');
-  const b=CalcCore.selectStrengthBasis(rows||[],{maxReps:10});
-  strengthBasisCache[eid]=b;
-  estOneRMCache[eid]=(b.recent&&b.recent.e1rm!=null)?b.recent.e1rm:null;
+async function loadStrengthBasis(eid,sourceRef=null){
+  const sourceBound=typeof TK504_TYPED_FK_SESSION_RELEASE!=='undefined'&&
+    TK504_TYPED_FK_SESSION_RELEASE===true&&sourceRef!=null;
+  const owner=sourceBound?tkEigenaarUid():null;
+  const rows=sourceBound?await tk603ReadExerciseSessions(eid,sourceRef):
+    await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(eid)+'&order=date.desc,created_at.desc&limit=30');
+  // A fresh login while the RLS read was in flight must discard stale
+  // rows BEFORE the Calculation Engine sees them. No duplicate calculation.
+  const validOwner=!sourceBound||(owner&&tkEigenaarUid()===owner);
+  const b=CalcCore.selectStrengthBasis(validOwner?(rows||[]):[],{maxReps:10});
+  if(!validOwner)return b;
+  const key=sourceBound?'catalog:'+owner+':'+eid:eid;
+  strengthBasisCache[key]=b;
+  // Legacy/personal 1RM and canonical catalog e1RM are never the same cache.
+  if(!sourceBound)estOneRMCache[eid]=(b.recent&&b.recent.e1rm!=null)?b.recent.e1rm:null;
   return b;
 }
-async function loadPrevPerformance(eid){
-  const b=await loadStrengthBasis(eid);
+async function loadPrevPerformance(eid,sourceRef=null){
+  const b=await loadStrengthBasis(eid,sourceRef);
   return b.prev||null;
 }
 // Provenance/data-quality van de gebruikte 1RM-basis (geen berekening, geen numerieke straf):
@@ -18530,10 +18657,14 @@ async function loadPrevPerformance(eid){
 async function canonicalNewExerciseItem(newId,intent){
   const out={suggestedWeight:null,_detrain:null,_weightOverride:false,_rxAdjusted:false,_rxWeightAdjusted:false,_rxOverrideBypass:false,_rxInputs:null,_rxSetsDelta:0,_rxRpeDelta:0};
   try{
-    const b=await loadStrengthBasis(newId);
+    const sourceRef=intent&&intent.tk504_catalog_ref||null;
+    const sourceBound=typeof TK504_TYPED_FK_SESSION_RELEASE!=='undefined'&&
+      TK504_TYPED_FK_SESSION_RELEASE===true&&sourceRef!=null;
+    const b=await loadStrengthBasis(newId,sourceRef);
     const repsRaw=(intent&&intent.reps!=null)?parseFloat(repsPrefillFromRange(String(intent.reps))):NaN;
     const rpeRaw=(intent&&intent.rpe!=null)?parseFloat(intent.rpe):NaN;
-    const r=resolveWorkingWeight(newId,{reps:(isFinite(repsRaw)&&repsRaw>0)?repsRaw:null,rpe:(isFinite(rpeRaw)?rpeRaw:8),prev:(b&&b.prev)||null});
+    const r=resolveWorkingWeight(newId,{reps:(isFinite(repsRaw)&&repsRaw>0)?repsRaw:null,rpe:(isFinite(rpeRaw)?rpeRaw:8),prev:(b&&b.prev)||null,
+      ...(sourceBound?{sourceBound:true,oneRM:(b&&b.recent&&b.recent.e1rm!=null)?b.recent.e1rm:null}:{})});
     out.suggestedWeight=(r&&r.suggested!=null)?r.suggested:null;
     out._detrain={days:r.days,factor:r.factor,reason:r.reason,ruleId:r.ruleId,ruleVersion:r.ruleVersion,basis:r.strengthBasis||null};
   }catch(e){}
@@ -18578,10 +18709,14 @@ function resolveWorkingWeight(exId,opts){
   if(opts.override!=null&&!isNaN(parseFloat(opts.override))){
     out.suggested=roundKg(parseFloat(opts.override));out.reason='override';return out;
   }
-  const oneRM=(opts.oneRM!=null)?opts.oneRM:(typeof previewOneRM==='function'?previewOneRM(exId):null);
+  // #603: an explicitly bound catalog workout may use only the verified
+  // catalog sessions, never a manual 1RM/PR belonging to a same-ID personal row.
+  const oneRM=opts.sourceBound===true?(opts.oneRM!=null?opts.oneRM:null):
+    ((opts.oneRM!=null)?opts.oneRM:(typeof previewOneRM==='function'?previewOneRM(exId):null));
   out.oneRM=(oneRM!=null)?oneRM:null;
   // Strength Basis Recency B1: provenance/data-quality van de basis (geen tweede recency-factor).
-  try{ out.strengthBasis=(typeof strengthBasisProvenance==='function')?strengthBasisProvenance(exId,out.oneRM):null; }catch(_){ out.strengthBasis=null; }
+  try{ out.strengthBasis=opts.sourceBound===true?null:
+    ((typeof strengthBasisProvenance==='function')?strengthBasisProvenance(exId,out.oneRM):null); }catch(_){ out.strengthBasis=null; }
   const reps=(opts.reps!=null)?opts.reps:null;
   const rpe=(opts.rpe!=null)?opts.rpe:8;
   let base=null;
@@ -24084,15 +24219,18 @@ function addExToSession(t){
     if(!ex||!ex.id)return;
     const cur=getSessionExs(t).map(e=>e.id);
     if(cur.includes(ex.id)){ toast((ex.name||'Deze oefening')+' zit al in deze training'); return; }
-    addExConfirm(ex.id, t);
+    addExConfirm(ex.id, t, ex);
   });
 }
 
-async function addExConfirm(exId,t){
-  const ex=resolvePickerEx(exId);if(!ex)return; // F41: legacy of catalogus-fallback (behoudt catalog_id)
+async function addExConfirm(exId,t,chosenEx=null){
+  const ex=(chosenEx&&chosenEx.id===exId)?chosenEx:resolvePickerEx(exId);
+  if(!ex)return; // #603: never discard the picker-selected source
   const cardioType=resolveCardioType(ex);
   const exType=cardioType||ex.type||'strength';
   const extra=cardioType?{id:ex.id,naam:ex.name,type:exType,_t:t}:{id:ex.id,naam:ex.name,type:exType,sets:4,reps:'6-8',rpe:'8',_t:t};
+  const sourceRef=tk603CatalogRefFromPickerSelection(ex);
+  if(sourceRef)extra.tk504_catalog_ref=sourceRef;
   if(!cardioType){ Object.assign(extra, await canonicalNewExerciseItem(ex.id, extra)); } // GAP-P3-033: canonical load voor toegevoegde oefening
   sessionExtra.push(extra);
   renderTrainScreen(t);
@@ -24135,23 +24273,24 @@ function execReplaceExercise(t,exId){
   const nm=(exercises.find(e=>e.id===exId)||{}).naam||'deze oefening';
   openExPicker(async function(newEx){
     if(!newEx||!newEx.id||newEx.id===exId)return;
-    const replaced=resolvePickerEx(newEx.id); if(!replaced)return; // F41: canoniek catalog_id behouden
+    const replaced=newEx; // #603: preserve actual selected catalog/personal object
     const heeftData=execExerciseHasData(exId);
     if(heeftData){
       const ok=await confirmModal('Voor '+nm+' zijn al sets geregistreerd in deze sessie. Bij vervangen gaan die gegevens verloren -- ze worden NIET automatisch overgezet naar de nieuwe oefening.',{title:'Oefening vervangen',okLabel:'Toch vervangen',cancelLabel:'Annuleren',danger:true});
       if(!ok)return;
     }
     // GAP-P3-033: intent behouden, load/provenance canonical opnieuw voor de NIEUWE oefening (geen prevS-fallback van A).
+    const sourceRef=tk603CatalogRefFromPickerSelection(replaced);
     if(resolvedWorkout&&resolvedWorkout.t===t){
       const idx=resolvedWorkout.items.findIndex(e=>e.id===exId);
       if(idx>=0){
         const old=resolvedWorkout.items[idx];
-        const _rx=await canonicalNewExerciseItem(replaced.id, old);
-        resolvedWorkout.items[idx]=Object.assign({},old,{id:replaced.id,naam:replaced.name},_rx);
+        const _rx=await canonicalNewExerciseItem(replaced.id,{...old,tk504_catalog_ref:sourceRef});
+        resolvedWorkout.items[idx]=Object.assign({},old,{id:replaced.id,naam:replaced.name},_rx,{tk504_catalog_ref:sourceRef});
       }
     }
     const sxIdx=sessionExtra.findIndex(e=>e.id===exId&&e._t===t);
-    if(sxIdx>=0){ const _rx2=await canonicalNewExerciseItem(replaced.id, sessionExtra[sxIdx]); sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name},_rx2); } // Exercise Swap Prescription Carry-Over Fix: gelijkgetrokken met de resolvedWorkout.items-spiegel hierboven
+    if(sxIdx>=0){ const _rx2=await canonicalNewExerciseItem(replaced.id,{...sessionExtra[sxIdx],tk504_catalog_ref:sourceRef}); sessionExtra[sxIdx]=Object.assign({},sessionExtra[sxIdx],{id:replaced.id,naam:replaced.name},_rx2,{tk504_catalog_ref:sourceRef}); } // #603: same-source replacement across both mirrors
     delete sessionLog[exId]; // oude, reeds gelogde data hoort NIET automatisch bij de nieuwe oefening (expliciete productregel)
     renderTrainScreen(t);
     scheduleAutosave();
@@ -24489,6 +24628,18 @@ function renderSessionSummaryContent(t){
 // Training (H2) te gebruiken zodat er één centrale trainingshistorie is. Geen
 // gedragswijziging voor de normale Execution: finishSession() bouwt/schrijft via deze
 // helpers en levert byte-equivalente rijen.
+function tk504StableSessionId(log){
+  // #603: a lost HTTP acknowledgement must replay the SAME UUID, not create a
+  // second workout row. Kept on the existing sessionLog entry until completion.
+  if(!log||typeof log!=='object')throw new Error('tk504_missing_session_log');
+  const old=log._tk504StableSessionId;
+  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if(old!=null){if(!uuid.test(old))throw new Error('tk504_invalid_session_uuid');return old;}
+  const next=newClientRowId();
+  if(!uuid.test(next))throw new Error('tk504_uuid_unavailable');
+  log._tk504StableSessionId=next;
+  return next;
+}
 async function writeSessionRow(row, opts){
   // #603: one canonical sessions writer. A reviewed, owner-bound FK mapping
   // is applied here, not duplicated in cardio/strength/Guided persistence.
@@ -24728,7 +24879,7 @@ async function finishSession(){
       // v4.70.4: alleen een AANTOONBAAR geslaagde write telt (sbPostQ geeft bij een PostgREST-400 false).
       // Retry schrijft een al gepersisteerde oefening niet opnieuw (geen dubbele rij).
       const _so=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:activeInstanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,...(_so.tk504_binding?{id:tk504StableSessionId(l)}:{})},_so); if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
       saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -24746,7 +24897,7 @@ async function finishSession(){
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       const _soS=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
+      if(!l._sessionRowPersistedAt){ if(_soS.tk504_binding)row.id=tk504StableSessionId(l); const _wOkS=await writeSessionRow(row,_soS); if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
@@ -31709,7 +31860,7 @@ function resolveCanonicalAlternatives(exId,excludeIds){
       const resolved=ExerciseCatalogService.byId(id); // uitsluitend geldige TK-IDs -- fail-safe genegeerd indien onbekend
       if(!resolved)return;
       seen.add(id);
-      const picker=resolvePickerEx(id);
+      const picker=resolvePickerEx(id,'catalog'); // #603: byId resolved from canonical ECS
       if(picker&&picker.active!==false)out.push(picker);
     });
     return out;
@@ -31738,14 +31889,14 @@ function openSwapExercise(exId,t){
     ? 'Andere suggesties op spiergroep, alleen voor deze training'
     : 'Aanbevolen alternatieven, alleen voor deze training';
   document.getElementById('swap-ex-list').innerHTML=candidates.slice(0,10).map(c=>
-    `<button type="button" class="rower-chip" onclick="confirmSwapExercise('${c.id}')">${escHtml(c.name)}</button>`).join('');
+    `<button type="button" class="rower-chip" onclick="confirmSwapExercise('${c.id}','${c._catalog===true?'catalog':'legacy'}')">${escHtml(c.name)}</button>`).join('');
   openModal('m-swap-exercise');
 }
-async function confirmSwapExercise(newId){
+async function confirmSwapExercise(newId,source='auto'){
   const {fromId,t}=swapCtx;
   const idx=sessionExtra.findIndex(e=>e.id===fromId);
   if(idx===-1){closeModal('m-swap-exercise');return;}
-  const newEx=resolvePickerEx(newId); // F44/Phase2C: legacy of catalogus
+  const newEx=resolvePickerEx(newId,source); // #603: retain selected source
   if(!newEx)return;
   // Exercise Swap Prescription Carry-Over Fix: suggestedWeight van A hoort niet mee te gaan naar
   // B (een biomechanisch andere oefening) -- expliciet invalideren (null), zodat de bestaande
@@ -31753,8 +31904,9 @@ async function confirmSwapExercise(newId){
   // op het NIEUWE id) B's eigen gewicht/"nog te bepalen" bepaalt. Geen nieuwe berekening, geen
   // conversie. sets/reps/RPE blijven bewust behouden (workoutblok-intentie, ongewijzigd).
   // GAP-P3-033: intent (sets/reps/RPE) blijft; load + provenance canonical opnieuw voor de NIEUWE oefening.
-  const _rx=await canonicalNewExerciseItem(newId, sessionExtra[idx]);
-  sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type,..._rx};
+  const sourceRef=tk603CatalogRefFromPickerSelection(newEx);
+  const _rx=await canonicalNewExerciseItem(newId,{...sessionExtra[idx],tk504_catalog_ref:sourceRef});
+  sessionExtra[idx]={...sessionExtra[idx],id:newId,naam:newEx.name,type:newEx.type||sessionExtra[idx].type,..._rx,tk504_catalog_ref:sourceRef};
   delete sessionLog[fromId];delete pctSelection[fromId];delete rpeManual[fromId];delete warmupState[fromId];
   closeModal('m-swap-exercise');
   await renderTrainScreen(t);
@@ -32461,10 +32613,12 @@ async function startRepeatWorkout(){
 // ══════════════════════════════════════════════════════════
 let supersetCurT = null;
 let supersetExIds = [];
+let supersetPickedById=Object.create(null); // #603 selected source, not id-only
 
 function openSupersetModal(t){
   supersetCurT = t;
   supersetExIds = [];
+  supersetPickedById=Object.create(null);
   renderSupersetList();
   openModal('m-superset');
 }
@@ -32477,7 +32631,7 @@ function renderSupersetList(){
     return;
   }
   el.innerHTML = supersetExIds.map((id,i)=>{
-    const ex = (typeof resolvePickerEx==='function')?resolvePickerEx(id):exercises.find(e=>e.id===id); // F62/Fase5: catalogus-aware naam
+    const ex = supersetPickedById[id]||((typeof resolvePickerEx==='function')?resolvePickerEx(id):exercises.find(e=>e.id===id)); // #603 original selected source
     return `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)">
       <div style="font-size:14px;font-weight:600;color:var(--dark);flex:1">${escHtml(ex?.name||id)}</div>
       <button onclick="supersetExIds.splice(${i},1);renderSupersetList()" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">✕</button>
@@ -32490,7 +32644,7 @@ function addSupersetEx(){
   // zoeken/filters/posters). Dedup op id via de callback; identity (catalog_id) behouden.
   openExPicker(function(ex){
     if(!ex||!ex.id)return;
-    if(supersetExIds.indexOf(ex.id)<0){ supersetExIds.push(ex.id); renderSupersetList(); }
+    if(supersetExIds.indexOf(ex.id)<0){ supersetPickedById[ex.id]=ex; supersetExIds.push(ex.id); renderSupersetList(); }
   });
 }
 
@@ -32501,8 +32655,9 @@ async function saveSupersetToSession(btnEl){
   const t = supersetCurT;
   const ssId = 'ss_'+Date.now();
   const supersetExs = supersetExIds.map(id=>{
-    const ex = (typeof resolvePickerEx==='function'?resolvePickerEx(id):null)||{id,name:id,type:'strength'}; // F62/Fase5: catalogus/legacy/custom
-    return {...ex,id:id,naam:ex.name||id,type:ex.type||'strength',sets:3,reps:'8-12',rpe:'8',_t:t,_superset:ssId};
+    const ex = supersetPickedById[id]||(typeof resolvePickerEx==='function'?resolvePickerEx(id):null)||{id,name:id,type:'strength'};
+    const ref=tk603CatalogRefFromPickerSelection(ex);
+    return {...ex,id:id,naam:ex.name||id,type:ex.type||'strength',sets:3,reps:'8-12',rpe:'8',_t:t,_superset:ssId,...(ref?{tk504_catalog_ref:ref}:{})};
   });
   sessionExtra.push(...supersetExs);
   closeModal('m-superset');
@@ -35845,6 +36000,7 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
   goalsCache=[];
   programBlockExCache={};
   exPickerRecentIds=[];
+  exPickerRecentSourceKeys=[];
   vasteTrainingen=[];
   vtMetaSel={};
   _vasteTrainingenLoaded=false;

@@ -214,6 +214,44 @@ BEGIN
 END $smoke$;
 reset role;
 
+-- #603: replay after a lost HTTP acknowledgement uses the SAME session UUID.
+-- RLS must accept own idempotent upsert but reject stealing another owner's
+-- already-persisted UUID (the underlying shared TKC FK is not authority).
+select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
+select set_config('request.jwt.claim.role','authenticated',true);
+set role authenticated;
+insert into public.sessions(id,user_id,exercise_id,note) values
+ ('aaaaaaaa-0000-4000-8000-000000000002',
+  'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  'TKC-000038','synthetic A retried same UUID')
+ on conflict (id) do update set note=excluded.note;
+DO $smoke$
+begin
+ if (select count(*) from public.sessions
+     where id='aaaaaaaa-0000-4000-8000-000000000002')<>1
+ then raise exception 'SAME_UUID_REPLAY_DUPLICATED_SESSION'; end if;
+ if (select note from public.sessions
+     where id='aaaaaaaa-0000-4000-8000-000000000002')
+    is distinct from 'synthetic A retried same UUID'
+ then raise exception 'SAME_UUID_REPLAY_NOT_IDEMPOTENT'; end if;
+end $smoke$;
+reset role;
+select set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',true);
+set role authenticated;
+DO $smoke$
+declare caught boolean:=false;
+begin
+ begin
+  insert into public.sessions(id,user_id,exercise_id,note) values
+   ('aaaaaaaa-0000-4000-8000-000000000002',
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    'TKC-000038','malicious B replay')
+   on conflict (id) do update set note=excluded.note;
+ exception when insufficient_privilege then caught:=true; end;
+ if not caught then raise exception 'OTHER_OWNER_UUID_REPLAY_ALLOWED'; end if;
+end $smoke$;
+reset role;
+
 -- Service role SELECT only: can check binding but can neither create nor
 -- activate a binding (even though BYPASSRLS).
 select set_config('request.jwt.claim.sub','',true);

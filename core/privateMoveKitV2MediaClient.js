@@ -30,7 +30,7 @@
     if(type==='poster')return new RegExp('^/storage/v1/object/sign/exercise-posters/movekit/v2/poster-optimized/'+SLUG+'\\.webp$');
     throw fail('INVALID_MEDIA_TYPE');
   }
-  function validUrl(raw,type){
+  function validUrl(raw,type,expectedProviderId=null){
     let url;
     try{url=new URL(raw);}catch(_){throw fail('INVALID_SIGNED_URL');}
     const params=Array.from(url.searchParams.entries());
@@ -39,6 +39,16 @@
        || params.length!==1 || params[0][0]!=='token'
        || !/^[A-Za-z0-9._~-]{8,4096}$/.test(params[0][1])){
       throw fail('INVALID_SIGNED_URL');
+    }
+    // The existing canonical bridge supplies its registered supplier identity.
+    // This is response-integrity checking, never a client authorization grant.
+    if(expectedProviderId!==null){
+      if(typeof expectedProviderId!=='string'||!new RegExp('^'+SLUG+'$').test(expectedProviderId))
+        throw fail('INVALID_PROVIDER_ID');
+      const expected=type==='video'
+        ?'/storage/v1/object/sign/exercise-media/movekit/v2/video/'+expectedProviderId+'.mp4'
+        :'/storage/v1/object/sign/exercise-posters/movekit/v2/poster-optimized/'+expectedProviderId+'.webp';
+      if(url.pathname!==expected)throw fail('SIGNED_ASSET_MISMATCH');
     }
     return url.href;
   }
@@ -54,7 +64,7 @@
       ||typeof getOwner!=='function')throw fail('CLIENT_NOT_CONFIGURED');
     let generation=0;
     const current=(uid,g)=>g===generation&&getOwner()===uid;
-    async function get(catalogId,type,ownerId){
+    async function get(catalogId,type,ownerId,expectedProviderId=null){
       if(typeof catalogId!=='string'||!ID.test(catalogId))throw fail('INVALID_CATALOG_ID');
       mediaPath(type);
       if(typeof ownerId!=='string'||!UID.test(ownerId)||getOwner()!==ownerId)
@@ -91,7 +101,7 @@
           || !Number.isInteger(payload.expires_in)
           || payload.expires_in<31 || payload.expires_in>60)
         throw fail('INVALID_BROKER_RESPONSE');
-      const signed=validUrl(payload.url,type);
+      const signed=validUrl(payload.url,type,expectedProviderId);
       return Object.freeze({
         url:signed, catalogId:catalogId,type:type,version:'v2',
         expiresAt:now()+(payload.expires_in-30)*1000

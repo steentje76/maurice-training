@@ -11,6 +11,13 @@ const code=[
  "sys.path.insert(0, 'tools')",
  'import test_tk504_owner_approval_reconcile as sample',
  'from tk504_prepare_private_catalog_content import stage_content',
+ // The synthetic hash fixture intentionally keeps only the approved display
+ // fields; add unapproved supplier structure solely for metadata-shape tests.
+ "for row in sample.stage:",
+ "    row['identity'].update({'name':'Synthetic supplier movement',",
+ "      'type':'compound','family':'press','pattern':'push',",
+ "      'primary':['Borst'],'secondary':[],'equipment':['barbell'],",
+ "      'goals':['strength']})",
  'plan=stage_content(sample.stage,sample.translations,sample.decision)',
  "assert plan['status']=='STAGED_ONLY_NO_PUBLICATION_AUTHORITY'",
  "assert plan['count']==356 and len(plan['records'])==356",

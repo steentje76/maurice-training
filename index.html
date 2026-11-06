@@ -9588,13 +9588,53 @@ async function getTrainingInstance(instanceId){
 // vorm van "vandaag aanpassen" wordt pas in Werkblok C ontworpen; dit werkblok
 // hoeft alleen te garanderen dát een snapshot het onderscheid plan/uitvoering kan
 // dragen (Definition of Done A3/A4), niet hoe de UI die vult.
+// #603 — provenance is attached only by an explicit existing-catalog selection.
+// A bare TK-shaped ID, personal FK shadow, or editable exercise name is NOT proof.
+function tk504CatalogSourceRefFromCatalog(c){
+  if(!c||typeof c.catalog_id!=='string'||!/^TK-[0-9]{6}$/.test(c.catalog_id)||
+      Number(c.catalog_id.slice(3))<1||Number(c.catalog_id.slice(3))>582||!c.source||
+      c.source.provider!=='movekit'||typeof c.source.provider_id!=='string'||
+      !c.source.provider_id.trim()||
+      (c._review&&(c._review.status==='NOT_PUBLISHED'||c._review.selectable===false)))return null;
+  return {kind:'movekit-catalog-v1',catalog_id:c.catalog_id,provider_id:c.source.provider_id};
+}
+// Only call this at an intentional, catalog-backed UI action (Builder generation,
+// choosing a catalog alternative, or adding from the existing exercise library).
+function tk504CatalogSourceRefFromSelection(id){
+  try{
+    const c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(id):null;
+    return c&&c.catalog_id===id?tk504CatalogSourceRefFromCatalog(c):null;
+  }catch(_){return null;}
+}
+function tk504ValidateCatalogSourceRef(exId,ref){
+  if(!ref||typeof ref!=='object'||Array.isArray(ref)||
+      ref.kind!=='movekit-catalog-v1'||ref.catalog_id!==exId||
+      typeof ref.provider_id!=='string')return null;
+  const canon=tk504CatalogSourceRefFromSelection(exId);
+  return canon&&canon.provider_id===ref.provider_id?canon:null;
+}
+function tk504BuilderRefsFromPlan(items){
+  const refs=Object.create(null);
+  (items||[]).forEach(it=>{
+    const valid=it&&tk504ValidateCatalogSourceRef(it.id,it.tk504_catalog_ref);
+    if(valid)refs[valid.catalog_id]=valid;
+  });
+  return refs;
+}
+function tk504AttachSavedCatalogRefs(targets,metadata){
+  const refs=metadata&&metadata.tk504_catalog_refs;
+  return (targets||[]).map(it=>{
+    const ref=it&&refs&&tk504ValidateCatalogSourceRef(it.exercise_id,refs[it.exercise_id]);
+    return ref?{...it,tk504_catalog_ref:ref}:it;
+  });
+}
 function snapshotFromVasteTraining(def,texs,modifications=[]){
   return {
     source:'vaste_training',
     definition_id:def?.id??null,
     // F0.7E: wu (warming-up) + tip meenemen zodat de Training Instance de oorspronkelijke
     // training volledig weerspiegelt (warm-up/activation gaat niet verloren bij definition->instance).
-    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sets:t.sets,reps:t.reps,rpe:t.rpe,sort_order:t.sort_order,wu:t.wu??null,tip:t.tip??null})),
+    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sets:t.sets,reps:t.reps,rpe:t.rpe,sort_order:t.sort_order,wu:t.wu??null,tip:t.tip??null,...(tk504ValidateCatalogSourceRef(t.exercise_id,t.tk504_catalog_ref)?{tk504_catalog_ref:tk504ValidateCatalogSourceRef(t.exercise_id,t.tk504_catalog_ref)}:{})})),
     // F0.7M (M1): welke Decision-Engine-regel gold bij het plannen — reconstrueerbaar
     // waarom een gewicht destijds zo werd voorgesteld. Additief JSON, geen migratie.
     decision_rules:DecisionCore.Evidence.decisionRulesSnapshot((typeof DETRAINING_RULES!=='undefined')?DETRAINING_RULES:null),
@@ -9608,7 +9648,7 @@ function snapshotFromCustomTraining(def,texs,modifications=[]){
     // Werkblok B: sets/reps/rpe/rest/pick zijn nieuwe, nullable kolommen — voor
     // handmatig aangemaakte custom trainingen (zonder Builder-oorsprong) zijn dit
     // gewoon null-waarden, functioneel identiek aan de oude, kalere snapshot-vorm.
-    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,pick:t.pick??null,wu:t.wu??null})),
+    items:(texs||[]).map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,pick:t.pick??null,wu:t.wu??null,...(tk504ValidateCatalogSourceRef(t.exercise_id,t.tk504_catalog_ref)?{tk504_catalog_ref:tk504ValidateCatalogSourceRef(t.exercise_id,t.tk504_catalog_ref)}:{})})),
     // F0.7M (M1): actieve Decision-Engine-regel bij plannen (traceability). Additief JSON.
     decision_rules:DecisionCore.Evidence.decisionRulesSnapshot((typeof DETRAINING_RULES!=='undefined')?DETRAINING_RULES:null),
     modifications,
@@ -9657,8 +9697,8 @@ async function getTrainingDefinition(source,id){
           goal:(local.metadata&&local.metadata.sel&&local.metadata.sel.goal)||null,
           // B1 Structured Intervals: canonical plan uit custom_trainings.metadata (raw prescriptie met repeat-groepen).
           intervalPrescription:(local.metadata&&local.metadata.intervalPrescription)||null,
-          exercises:(local.exercise_targets&&local.exercise_targets.length?local.exercise_targets:
-            (local.exercises||[]).map(exId=>({exercise_id:exId,sort_order:null,sets:null,reps:null,rpe:null,rest:null})))
+          exercises:tk504AttachSavedCatalogRefs((local.exercise_targets&&local.exercise_targets.length?local.exercise_targets:
+            (local.exercises||[]).map(exId=>({exercise_id:exId,sort_order:null,sets:null,reps:null,rpe:null,rest:null}))),local.metadata)
         };
       }
     }
@@ -9671,7 +9711,7 @@ async function getTrainingDefinition(source,id){
       sport:(def.metadata&&def.metadata.sel&&def.metadata.sel.sport)||null,
       goal:(def.metadata&&def.metadata.sel&&def.metadata.sel.goal)||null,
       intervalPrescription:(def.metadata&&def.metadata.intervalPrescription)||null,
-      exercises:texs.map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,wu:t.wu??null,pick:t.pick??null}))
+      exercises:tk504AttachSavedCatalogRefs(texs.map(t=>({exercise_id:t.exercise_id,sort_order:t.sort_order,sets:t.sets??null,reps:t.reps??null,rpe:t.rpe??null,rest:t.rest??null,wu:t.wu??null,pick:t.pick??null})),def.metadata)
     };
   }
   return null;
@@ -9726,7 +9766,7 @@ async function openTrainingPreview(source,id){
   previewCtx={
     def, source, id,
     removedIds:new Set(),
-    swaps:{},                       // origineel exercise_id → vervangend exercise_id
+    swaps:{}, swapRefs:{},           // origineel exercise_id → vervangend exercise_id
     order:def.exercises.map(e=>e.exercise_id),
     swapPickerFor:null,
     adjustOpen:false,
@@ -9784,8 +9824,10 @@ function previewWorkingList(){
     .map(id=>{
       const swapTo=previewCtx.swaps[id];
       const src=byId[id]; // targets (sets/reps/rpe/wu/tip) blijven van de oorspronkelijke slot komen — een vervangen oefening neemt het doel van de plek over, niet een verzonnen eigen doel
+      const ref=swapTo?tk504ValidateCatalogSourceRef(swapTo,previewCtx.swapRefs&&previewCtx.swapRefs[id]):tk504ValidateCatalogSourceRef(id,src&&src.tk504_catalog_ref);
       return {
         exercise_id:swapTo||id, original_exercise_id:id,
+        ...(ref?{tk504_catalog_ref:ref}:{}),
         sets:src?src.sets:null, reps:src?src.reps:null, rpe:src?src.rpe:null,
         wu:src?src.wu:null, tip:src?src.tip:null, pick:src?src.pick:null
       };
@@ -9857,6 +9899,7 @@ function buildResolvedExecutionItems(list){
         wu:it.wu||0, tip:it.tip??null, pick:it.pick??null,
         yt:null,                 // geen YouTube-ID voor canonical Gym; poster/video lopen apart
         poster:posterUrl, video:videoFile, canonicalId:exId,
+        ...(tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref)?{tk504_catalog_ref:tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref)}:{}),
         suggestedWeight:previewResolveItemWeight(it),   // F0.7L: canonical resolver-gewicht
         _detrain:previewResolveItemDetrain(it),          // DETRAINING B1: bestaande resolver-reden voor Normal execution
         _weightOverride:!!(previewCtx&&previewCtx.overrides&&previewCtx.overrides[it.exercise_id]!=null), // GAP-P3-032: override finaal
@@ -10390,6 +10433,8 @@ function previewRenderSwapPicker(){
 function previewApplySwap(origExId,newExId){
   if(!previewCtx)return;
   previewCtx.swaps[origExId]=newExId;
+  // The preview swap UI selects only real catalog alternatives, not bare IDs.
+  previewCtx.swapRefs[origExId]=tk504CatalogSourceRefFromSelection(newExId);
   previewCtx.swapPickerFor=null;
   renderTrainingPreview();
 }
@@ -10400,7 +10445,10 @@ function previewApplySwap(origExId,newExId){
 function previewBuildModifications(){
   const mods=[];
   previewCtx.removedIds.forEach(id=>mods.push({type:'remove',exercise_id:id}));
-  Object.entries(previewCtx.swaps).forEach(([origId,newId])=>mods.push({type:'swap',exercise_id:origId,replacement_exercise_id:newId}));
+  Object.entries(previewCtx.swaps).forEach(([origId,newId])=>{
+    const ref=tk504ValidateCatalogSourceRef(newId,previewCtx.swapRefs&&previewCtx.swapRefs[origId]);
+    mods.push({type:'swap',exercise_id:origId,replacement_exercise_id:newId,...(ref?{tk504_catalog_ref:ref}:{})});
+  });
   // F0.7M (M1): bewuste gewicht-override per oefening als expliciete instance-modificatie
   // vastleggen — traceability van de geplande load (planned ≠ actual). Muteert niets.
   if(previewCtx.overrides){
@@ -10428,6 +10476,7 @@ function buildGuidedWorkoutPlan(list){
     return {id:it.exercise_id, pick:it.pick||null, block:it.pick||null,
       label:(typeof previewRoleLabel==='function'?previewRoleLabel(it.pick):'')||'',
       sets:(it.sets!=null?it.sets:null), wu:it.wu??null,
+      ...(tk504ValidateCatalogSourceRef(it.exercise_id,it.tk504_catalog_ref)?{tk504_catalog_ref:tk504ValidateCatalogSourceRef(it.exercise_id,it.tk504_catalog_ref)}:{}),
       // F0.7L: canonical resolver-gewicht meegeven zodat Guided-baseline = Preview = Normal.
       weight:previewResolveItemWeight(it),
       _weightOverride:!!(previewCtx&&previewCtx.overrides&&previewCtx.overrides[it.exercise_id]!=null)}; // GAP-P3-032
@@ -10542,7 +10591,7 @@ function libStartNewTrainingWithExercise(catalogId){
   // nieuwe-training-pad van WB.saveWorkout().
   if(typeof WB!=='undefined'){
     WB.st.sel=WB.st.sel||WB.defaultSel();
-    WB.st.plan={items:[{id:catalogId,pick:'compound',sets:4,reps:'6-8',rest:90}]};
+    WB.st.plan={items:[{id:catalogId,pick:'compound',sets:4,reps:'6-8',rest:90,tk504_catalog_ref:tk504CatalogSourceRefFromSelection(catalogId)}]};
     WB.st.dirty=false;
     try{WB.saveDraft();}catch(e){}
   }
@@ -10570,7 +10619,7 @@ function libAddToExistingTraining(catalogId,trainingId){
     if(window.toast)toast('Kon deze training niet laden');
     return;
   }
-  WB.st.plan.items.push({id:catalogId,pick:'compound',sets:4,reps:'6-8',rest:90});
+  WB.st.plan.items.push({id:catalogId,pick:'compound',sets:4,reps:'6-8',rest:90,tk504_catalog_ref:tk504CatalogSourceRefFromSelection(catalogId)});
   WB.st.dirty=false;
   try{WB.saveDraft();}catch(e){}
   window.wbReturnCtx={source:'custom',id:trainingId};
@@ -37447,7 +37496,7 @@ var WB=(function(){
       if(isHeavy(ex))heavyStreak++; else heavyStreak=0;
       var dur=estDur(ex,pick);
       if(pick!=='warmup'&&pick!=='cooldown')mainSpent+=dur;
-      return {id:ex.catalog_id,block:slot.block,label:slot.label,pick:pick,sets:blockSets(pick,sel.goal),dur:dur};
+      return {id:ex.catalog_id,block:slot.block,label:slot.label,pick:pick,sets:blockSets(pick,sel.goal),dur:dur,tk504_catalog_ref:tk504CatalogSourceRefFromCatalog(ex)};
     }
     for(var i=0;i<slots.length;i++){
       var slot=slots[i];
@@ -37529,7 +37578,7 @@ var WB=(function(){
   /* ── Bewerken ── */
   function altList(id){var ex=E().byId(id);if(!ex)return [];var r=ex.relations||{};
     return (r.alternatives||[]).concat(r.regressions||[]).concat(r.progressions||[]).filter(function(x,i,a){return a.indexOf(x)===i;}).map(function(x){return E().byId(x);}).filter(Boolean);}
-  function replaceItem(idx,newId){if(!st.plan||!st.plan.items[idx])return;st.plan.items[idx].id=newId;saveDraft();}
+  function replaceItem(idx,newId){if(!st.plan||!st.plan.items[idx])return;st.plan.items[idx].id=newId;st.plan.items[idx].tk504_catalog_ref=tk504CatalogSourceRefFromSelection(newId);saveDraft();}
   function removeItem(idx){if(!st.plan)return;st.plan.items.splice(idx,1);saveDraft();}
   function moveItem(idx,dir){if(!st.plan)return;var j=idx+dir;if(j<0||j>=st.plan.items.length)return;var a=st.plan.items;var t=a[idx];a[idx]=a[j];a[j]=t;saveDraft();}
   function swapAlternative(idx){if(!st.plan)return;var cur=st.plan.items[idx];var alts=altList(cur.id).filter(function(ex){return !st.plan.items.some(function(it){return it.id===ex.catalog_id;});});
@@ -37553,7 +37602,7 @@ var WB=(function(){
     if(!alts.length)return null;
     // kies best passend alternatief voor het doel
     alts.sort(function(a,b){return goalScore(b,st.sel.goal)-goalScore(a,st.sel.goal);});
-    st.plan.items[idx].id=alts[0].catalog_id;saveDraft();return alts[0].catalog_id;}
+    st.plan.items[idx].id=alts[0].catalog_id;st.plan.items[idx].tk504_catalog_ref=tk504CatalogSourceRefFromCatalog(alts[0]);saveDraft();return alts[0].catalog_id;}
 
   /* ── Persistentie — Werkblok B: schrijft naar custom_trainings/custom_training_exercises
      i.p.v. tk_wb_saved (localStorage-only), zodat een Builder-training dezelfde
@@ -37571,8 +37620,12 @@ var WB=(function(){
   // wbFavs: favoriet-markering blijft bewust lokaal-only (geen kolom op custom_trainings) —
   // dit is een Builder-lijst-gemak, geen onderdeel van de Definition/Instance/Sessions-keten.
   var wbFavs=lsGet('tk_wb_favs',{});
-  function planItemsFromTargets(targets){
-    return (targets||[]).map(function(et){return {id:et.exercise_id,pick:et.pick||'compound',sets:et.sets,reps:et.reps,rest:et.rest};});
+  function planItemsFromTargets(targets,metadata){
+    const refs=metadata&&metadata.tk504_catalog_refs;
+    return (targets||[]).map(function(et){
+      const ref=refs&&tk504ValidateCatalogSourceRef(et.exercise_id,refs[et.exercise_id]);
+      return {id:et.exercise_id,pick:et.pick||'compound',sets:et.sets,reps:et.reps,rest:et.rest,...(ref?{tk504_catalog_ref:ref}:{})};
+    });
   }
   function targetsFromPlanItems(items){
     return (items||[]).map(function(it){return {exercise_id:it.id,sets:it.sets,reps:it.reps,rest:it.rest,rpe:it.rpe||null,pick:it.pick||null};});
@@ -37583,7 +37636,7 @@ var WB=(function(){
       return {
         id:t.id, name:t.name,
         sel:(t.metadata&&t.metadata.sel)?clone(t.metadata.sel):defaultSel(),
-        plan:{items:planItemsFromTargets(t.exercise_targets)},
+        plan:{items:planItemsFromTargets(t.exercise_targets,t.metadata)},
         fav:!!wbFavs[t.id],
         q:(t.metadata&&t.metadata.quality&&t.metadata.quality.score)||0,
         created:(t.metadata&&t.metadata.created)||0,
@@ -37637,7 +37690,7 @@ var WB=(function(){
       id:id, name:name||(existing?existing.name:autoName()), color:(existing?existing.color:'#0E3B4A'), note:(existing?existing.note:''),
       exercises:(st.plan.items||[]).map(function(it){return it.id;}), // platte lijst, zelfde vorm als bestaande custom trainingen
       source:(existing?existing.source:'builder'),
-      metadata:{sel:clone(st.sel),quality:q,created:(existing&&existing.metadata?existing.metadata.created:Date.now())},
+      metadata:{sel:clone(st.sel),quality:q,created:(existing&&existing.metadata?existing.metadata.created:Date.now()),...((()=>{const refs=tk504BuilderRefsFromPlan(st.plan.items);return Object.keys(refs).length?{tk504_catalog_refs:refs}:{};})())},
       exercise_targets:targetsFromPlanItems(st.plan.items)
     };
     if(typeof customTrainings!=='undefined'){
@@ -37688,7 +37741,7 @@ var WB=(function(){
     // exercise_targets wordt universeel geladen voor elke custom training (ensureCustomTrainingsLoaded),
     // dus elke custom training is hervatbaar, ook zonder metadata.sel.
     st.sel=(t.metadata&&t.metadata.sel)?clone(t.metadata.sel):defaultSel();
-    st.plan={items:planItemsFromTargets(t.exercise_targets)};
+    st.plan={items:planItemsFromTargets(t.exercise_targets,t.metadata)};
     st.dirty=false;
     saveDraft();
     return true;
@@ -38073,6 +38126,7 @@ var GW=(function(){
       // op het laatste guided-gewicht. Zo is Guided-start = Preview = Normal.
       var startW=(it.weight!=null)?it.weight:((p&&p.weight!=null)?p.weight:null);
       return {id:it.id,block:it.block,label:it.label,pick:it.pick,
+        ...(tk504ValidateCatalogSourceRef(it.id,it.tk504_catalog_ref)?{tk504_catalog_ref:tk504ValidateCatalogSourceRef(it.id,it.tk504_catalog_ref)}:{}),
         setsTarget:it.sets||3,reps:repsFor(it.pick,sel),rest:restFor(it.pick,sel),
         weight:startW,prev:p,setsDone:[]};
     });

@@ -10440,6 +10440,7 @@ function previewApplySwap(origExId,newExId){
   previewCtx.swaps[origExId]=newExId;
   // The preview swap UI selects only real catalog alternatives, not bare IDs.
   const proposed=previewCtx.swapCandidateFor===origExId&&previewCtx.swapCandidateRefs&&previewCtx.swapCandidateRefs[newExId];
+  previewCtx.swapRefs=previewCtx.swapRefs||{}; // tolerate older in-memory Preview contexts
   previewCtx.swapRefs[origExId]=tk504ValidateCatalogSourceRef(newExId,proposed);
   previewCtx.swapCandidateFor=null;
   previewCtx.swapCandidateRefs={};

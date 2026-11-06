@@ -137,6 +137,13 @@ assert(!Object.hasOwn(ctx.previewWorkingList()[0],'tk504_catalog_ref'),
  'forged swap reference does not inherit previous exercise identity');
 ctx.previewCtx.swapRefs[cid]=null;
 assert(!Object.hasOwn(ctx.previewWorkingList()[0],'tk504_catalog_ref'));
+// A Preview object restored from an older local draft may lack the new field.
+ctx.previewCtx.swapRefs=undefined;
+ctx.previewCtx.swapCandidateFor=null;
+ctx.previewCtx.swapCandidateRefs={};
+ctx.previewApplySwap(cid,candidateId);
+assert(ctx.previewCtx.swapRefs&&ctx.previewCtx.swapRefs[cid]===null,
+ 'older in-memory Preview contexts are upgraded without claiming identity');
 assert(html.includes('tk504_catalog_refs:refs')&&html.includes('tk504CatalogSourceRefFromCatalog(ex)'),
  'original Builder save and generator connect explicit provenance');
 assert(html.includes('tk504_catalog_ref:tk504ValidateCatalogSourceRef(it.id,it.tk504_catalog_ref)'),

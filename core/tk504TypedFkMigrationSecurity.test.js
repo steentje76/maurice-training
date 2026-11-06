@@ -1,0 +1,56 @@
+'use strict';
+// Static fail-closed contract for #603. SQL is executed separately in an
+// isolated Postgres 17 Docker container; never live Supabase.
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const root=path.join(__dirname,'..');
+const sql=fs.readFileSync(path.join(root,'supabase','migrations','20261106110000_tk504_typed_catalog_fk_stage.sql'),'utf8').toLowerCase();
+let checks=0;
+function has(name,re){assert.match(sql,re,name);checks++;}
+function not(name,re){assert.doesNotMatch(sql,re,name);checks++;}
+has('registry table',/create table if not exists public\.movekit_catalog_fk_bindings\s*\(/);
+has('canonical format 6 digits',/catalog_id\s*~\s*'\^tk-\[0-9\]\{6\}\$'/);
+has('range 1..582',/between 1 and 582/);
+has('fk must point to exercises',/references public\.exercises\(id\)/);
+has('no FK deletion cascade',/on update restrict on delete restrict/);
+has('mapping exactly TKC from TK',/exercise_id\s*=\s*'tkc-'\s*\|\|\s*substring\(catalog_id from 4\)/);
+has('unique provider id',/provider_id text not null unique/);
+has('inactive by default',/active boolean not null default false/);
+has('activation requires review',/not active or reviewed_at is not null/);
+has('RLS enabled',/alter table public\.movekit_catalog_fk_bindings enable row level security/);
+has('revoke all client grants',/revoke all on table public\.movekit_catalog_fk_bindings\s+from public, anon, authenticated, service_role/);
+has('server read only',/grant select on table public\.movekit_catalog_fk_bindings to service_role/);
+not('no browser read',/grant (?:select|all) on table public\.movekit_catalog_fk_bindings to (?:public|anon|authenticated)/);
+not('no user policy',/create policy /);
+has('protect future alias inserts and updates',/before insert or update or delete on public\.exercises/);
+has('protect registry changes',/before insert or update or delete on public\.movekit_catalog_fk_bindings/);
+has('guard only new session FK writes',/before insert or update of exercise_id on public\.sessions/);
+has('session guard can verify server-only bindings',/create or replace function public\.tk504_validate_typed_session_fk\(\)[\s\S]*?security definer/);
+has('deny unauthorized new session logging',/binding_active is distinct from true/);
+has('do not break existing unchanged historical session',/tg_op='update' and new\.exercise_id is not distinct from old\.exercise_id/);
+has('do not block legacy session with null FK',/new\.exercise_id is null or new\.exercise_id !~ /);
+has('verified authenticated-only lookup RPC',/create or replace function public\.tk504_resolve_catalog_fk\([\s\S]*?security definer/);
+has('lookup validates authentication',/where auth\.uid\(\) is not null/);
+has('lookup checks exact provider id',/b\.provider_id=p_provider_id/);
+has('lookup checks approved state',/b\.active=true/);
+has('lookup only grants execution to authenticated',/grant execute on function public\.tk504_resolve_catalog_fk\(text,text\)\s+to authenticated/);
+has('client RPC defaults revoked',/revoke all on function public\.tk504_resolve_catalog_fk\(text,text\)\s+from public, anon, authenticated, service_role/);
+has('protect JWT service-role from privileged definers',/request\.jwt\.claim\.role/);
+has('protect old alias on identity change',/tg_op='update' and old\.id/);
+has('require trusted postgres role',/current_user <> 'postgres'/);
+has('definer guard requires auth uid null',/auth\.uid\(\) is not null/);
+has('force unowned global',/new\.scope is distinct from 'global'/);
+has('ensure no created_by',/new\.created_by is not null/);
+has('ensure no user id',/new\.user_id is not null/);
+has('ensure no gym id',/new\.gym_id is not null/);
+not('no direct exercise writes in migration',/\binsert\s+into\s+public\.exercises\b/);
+not('no direct session writes',/\b(?:insert|update|delete)\s+(?:into\s+|from\s+)?public\.sessions\b/);
+not('no real grant writes',/\b(?:insert|update|delete)\s+(?:into\s+|from\s+)?public\.movekit_media_grants\b/);
+const smoke=fs.readFileSync(path.join(root,'tools','tk504-typed-fk-security-smoke.sql'),'utf8').toLowerCase();
+assert.match(smoke,/generate_series\(1,582\)/);
+assert.match(smoke,/set role authenticated/);
+assert.match(smoke,/set role service_role/);
+assert.match(smoke,/rollback;/);
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+assert.match(html,/function tk504IsReservedGlobalFkStub\(ex\)/);
+assert.match(html,/tk504IsReservedGlobalFkStub\(ex\)/);
+console.log('TK504 typed-FK migration security: '+checks+' static safety gates PASS; isolated Docker proof required; NOT applied to production');

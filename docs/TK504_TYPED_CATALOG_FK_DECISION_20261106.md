@@ -63,3 +63,30 @@ Bij samenvoegen met herstel-PR #587 is een belangrijk onderscheid aangetroffen: 
 De bronclaim wordt daarom **niet meer uit de replacement-ID afgeleid**: `previewRenderSwapPicker` registreert alleen de daadwerkelijk voor die originele oefening aangeboden ECS-alternatieven en hun gecontroleerde bron, `previewApplySwap` consumeert die tijdelijke context één keer en wist die daarna. Bij een directe ID-call zonder aangeboden catalogusobject blijft de bron **onbekend**. De regressie verifieert zowel de negatieve ID-only-case als de juiste echte alternatiefkeuze.
 
 De afzonderlijke lokale integratie met PR #587 moet expliciet de nieuwe handmatige picker-callback op het **geselecteerde oefeningobject** laten controleren (niet op het ID). Dit blijft een integratievoorwaarde voor de gezamenlijke release; géén nieuwe UX of extra catalogus.
+
+## 6 november — echte schema-voorbereiding en oorspronkelijke Supabase-RLS-vorm
+
+Een tweede controle op het **actuele schema via uitsluitend read-only queries** bevestigt:
+- `public.exercises(id TEXT PRIMARY KEY)` met vereiste `name`, `category`, `type`, bestaande `scope`-waarden `personal/gym/global`, `created_by` en `user_id`.
+- `public.sessions.exercise_id` verwijst via FK naar `public.exercises.id`, terwijl `sessions` bestaande owner-RLS via `auth.uid()` gebruikt.
+- Bestaande `exercises_insert_v333` laat persoonlijke inserts op `scope` toe en `exercises_update/delete_v333` kennen beheerdersruimte. Deze regels kunnen niet gebruikt worden als onafhankelijke bescherming van de **nieuwe gereserveerde aliasruimte**.
+- Geen app-permissies of bestaande policies zijn gewijzigd, noch is er een rij uit de echte productieaccount gewijzigd.
+
+**Nieuwe volledig UITGESCHAKELDE migratie:**
+`supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql`.
+
+Deze creëert een server-eigen typed bindingregistry, exacte `TK-######` → `TKC-######` FK-check, unieke provideridentiteit, standaard `active=false`, RLS en een uitsluitend servermatige SELECT-grant. Nauw begrensde triggers beschermen gereserveerde globale FK-rows tegen bestaande app-policy-inschrijvingen/wijzigingen, blokkeren via PostgreSQL zelf nieuwe `TKC`-sessies zonder een actief, onafhankelijk beoordeeld bindingrecord, en houden historische sessies met ongewijzigde FK bewerkbaar na eventuele deactivering. Het systeem moet niet alleen op `current_user` maar ook op `auth.uid()` en JWT-roleclaims vertrouwen, omdat ook een postgres-owned `SECURITY DEFINER` binnen een onbetrouwbare gebruikersrequest kan draaien.
+
+Een kleine read-only PostgREST-RPC `tk504_resolve_catalog_fk(catalog_id,provider_id)` levert alleen aan een ingelogde gebruiker een op server gecontroleerde, actieve en exact bij de leverancier passende alias. Dat is **geen** mediarecht, geen publicatiebesluit en geen tweede writer. De browser kan de bindingregistry zelf nooit lezen of bewerken.
+
+**Uitgevoerde beveiligingstest:**
+`tools/tk504-typed-fk-security-smoke.sql` in tijdelijke Docker PostgreSQL 17, `--network none` (alle rijen/rollen/providers synthetisch):
+- 582 unieke globale placeholders, 582 getypeerde providers en nul actieve rechten bij aanmaak.
+- Bestaande persoonlijke `TK-`-vormige oefening en historie ongewijzigd.
+- Onafhankelijke RLS-sessies voor twee gebruikers op één actieve, *synthetisch goedgekeurde* gedeelde FK; verkeerde provider of 581 ongepubliceerde bindings geven geen geldige RPC-uitkomst.
+- Persoonlijke rol kan geen gereserveerde alias toevoegen, aanpassen of wissen en geen sessie namens de andere gebruiker loggen; service role kan de registry alleen lezen.
+- Een opzettelijk onveilige `SECURITY DEFINER`-functie kan onder ingelogde gebruiker of service-role JWT-claim niet alsnog de alias wijzigen.
+- Na intrekken van de synthetische binding weigert de database nieuwe trainingssessies op die alias, zonder bestaande sessies te verwijderen; direct `TK-`-historie blijft onaangeroerd.
+- De proef eindigde met **ROLLBACK**; de complete container is verwijderd. `core/tk504TypedFkMigrationSecurity.test.js` bewaakt 38 statische contractsafety-controles.
+
+**Nog vereist:** onafhankelijke SQL/securitybeoordeling, formele toestemming voor toepassing van deze migratie, verifieerbaar backup/herstelpunt, uitsluitend-admin manifestseeding met de originele 582 bronidentiteiten (NIET uit codeprefixen genereren), echte Supabase-staging-RLS-test en integratie met de bestaande enige sessieschrijver en historie. Geen enkel actueel gebruikersaccount heeft via deze code toegang gekregen tot de 356 nieuwe video's.

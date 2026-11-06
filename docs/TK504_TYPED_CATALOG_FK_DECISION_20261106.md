@@ -110,3 +110,11 @@ Een tweede read-only RPC in dezelfde **niet-toegepaste** migratie is toegevoegd:
 Deze historische resolver blijft geldig na het intrekken van een mapping; een oud opgeslagen resultaat mag dus niet verdwijnen omdat nieuwe logging of mediatoegang is geblokkeerd. De database blijft nieuwe sessies op een ingetrokken typed FK weigeren. Het uiterlijk van bestaande historieschermen is niet gewijzigd: daadwerkelijke asynchrone data-aansluiting in History/Recent vereist nog een gecontroleerde implementatie en regressies.
 
 De PostgreSQL 17 Docker-test controleert naast de bestaande 582-opslag-, sessie- en RLS-poorten nu ook: historische lookup door user A en B naar hun eigen gedeelde FK, weigering van een oefening zonder eigen sessie, weigering van deze RPC voor service-role, en leesbaarheid van oude sessies na deactivering. **PASS; volledige transactie ROLLBACK; container verwijderd.** De statische migration-securitytest bewaakt inmiddels **43** contractsafety-punten.
+
+## 6 november — historieprojectie aangesloten, achter dezelfde uitgeschakelde release-gate
+
+`index.html` voegt `tk504HistoricalSourceForSession(exerciseId)` toe aan het bestaande `loadHistory`-pad. De functie retourneert uitsluitend een weergavenaam uit de bestaande canonieke catalogus nadat de nieuwe, uitsluitend voor de eigenaar beschikbare read-only RPC `tk504_historical_catalog_id` de oorspronkelijke `TK-`-identiteit bevestigt. De actuele account, het antwoord, de catalogusbron en de exacte `TKC-######`-vorm moeten kloppen.
+
+De geschiedenis blijft qua bediening en lay-out **ongewijzigd**: alleen de bestaande naamregel wordt verrijkt; sessie-ID/FK, editor, sets, berekeningen, datum, PB en de bestaande cardio-context blijven intact. Onbevestigde offline wachtrij-items, personal records met vergelijkbare ID's, onbevoegde gebruikers en ontbrekende providerresultaten krijgen **geen gefantaseerde catalogusnaam**. De weergave wordt via de bestaande `escHtml` ontsmet. De historische naam is geen toestemming voor videomedia.
+
+Het hele pad blijft uit zolang `TK504_TYPED_FK_SESSION_RELEASE=false` staat. De gerichte `core/tk504HistoryOwnerProjection.test.js` draait op de originele applicatiefuncties, valideert eigenaar/afwijzing/verlopen account/oude historie en controleert dat het scherm niet wordt herontworpen. De echte productiedatabase is niet veranderd.

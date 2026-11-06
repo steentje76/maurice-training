@@ -9665,6 +9665,25 @@ function tk504RewriteVerifiedSessionRow(row,binding){
   // returns a new row, preserving the original idempotency UUID, sets and notes.
   return {...row,exercise_id:binding.fk_id};
 }
+// #603 — Historical UI is a separate, own-session read-only projection.
+// Revoking future catalog logging/media must not erase a completed workout.
+// The server verifies the owner has this exact typed FK in their sessions.
+async function tk504HistoricalSourceForSession(exerciseId){
+  if(TK504_TYPED_FK_SESSION_RELEASE!==true)return null;
+  if(typeof exerciseId!=='string'||!/^TKC-[0-9]{6}$/.test(exerciseId)||
+     Number(exerciseId.slice(4))<1||Number(exerciseId.slice(4))>582)return null;
+  const owner=tkEigenaarUid();
+  if(!owner || (typeof navigator!=='undefined'&&navigator.onLine===false))return null;
+  const actual=await sbRpc('tk504_historical_catalog_id',{p_exercise_id:exerciseId});
+  if(tkEigenaarUid()!==owner)return null;
+  if(typeof actual!=='string'||actual!=='TK-'+exerciseId.slice(4))return null;
+  const c=typeof ExerciseCatalogService!=='undefined'
+    ?ExerciseCatalogService.byId(actual):null;
+  if(!c||c.catalog_id!==actual||!c.source||c.source.provider!=='movekit')
+    return null;
+  return Object.freeze({exercise_id:exerciseId,catalog_id:actual,
+    name:(c.identity&&((c.identity.nl&&c.identity.nl.trim())||c.identity.name))||actual});
+}
 function snapshotFromVasteTraining(def,texs,modifications=[]){
   return {
     source:'vaste_training',
@@ -26095,6 +26114,22 @@ async function loadHistory(append=false){
     if(histFilter!=='all')pending=pending.filter(s=>s.training_type===histFilter);
     ss.unshift(...pending);
   }
+  // #603: the existing history list and editor keep the real session FK.
+  // Only the display name is projected from independently owner-verified
+  // historical identity; no cached metadata across accounts or media access.
+  const tk504HistoryNames=Object.create(null);
+  if(TK504_TYPED_FK_SESSION_RELEASE===true){
+    const owner=tkEigenaarUid();
+    const typed=[...new Set(ss.filter(s=>s&&!s._pending&&
+      typeof s.exercise_id==='string'&&/^TKC-[0-9]{6}$/.test(s.exercise_id))
+      .map(s=>s.exercise_id))];
+    await Promise.all(typed.map(async id=>{
+      try{
+        const mapped=await tk504HistoricalSourceForSession(id);
+        if(owner&&tkEigenaarUid()===owner&&mapped)tk504HistoryNames[id]=mapped.name;
+      }catch(_){ /* unknown ownership remains raw FK, never guessed from prefix */ }
+    }));
+  }
   const byDate={};
   ss.forEach(s=>{if(!byDate[s.date])byDate[s.date]=[];byDate[s.date].push(s);});
   // v4.17.0 (Sprint 4.8 P10) — progressie per oefening: vorige keer (oudere sessie zelfde oefening).
@@ -26172,7 +26207,7 @@ async function loadHistory(append=false){
           }).join('');
         })()}
         ${sess.filter(s=>!hyroxRaceSessieIds.has(s.id)).map(s=>{
-          const n=exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
+          const n=tk504HistoryNames[s.exercise_id]||exercises.find(e=>e.id===s.exercise_id)?.name||s.exercise_id;
           let v='';
           // P1-fix: cardio-tak in het logboek. Voorheen toonden running/cycling/swimming/assaultbike een
           // LEGE regel (geen note-extra) en de rest alleen het note-fragment. Nu gestructureerde weergave

@@ -21,6 +21,9 @@ def heeftSleutel = ksStore != null && ksStorePass != null && ksAlias != null && 
 
 android {
     namespace "com.trainingskompas.app"
+    // Security release gate: TkOfflineMediaPlugin uses BuildConfig.DEBUG to
+    // keep encrypted offline media disabled in production until device acceptance.
+    buildFeatures { buildConfig true }
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "com.trainingskompas.app"
@@ -39,12 +42,9 @@ android {
         }
     }
     signingConfigs {
-        gebruikerstest {
-            initWith debug
-            applicationIdSuffix ".gebruikerstest20261025"
-            versionNameSuffix "-gebruikerstest20261025"
-            matchingFallbacks = ['debug']
-        }
+        // Signing config is ONLY key material. The old 'gebruikerstest' variant
+        // incorrectly configured applicationIdSuffix in signingConfigs,
+        // preventing ANY Gradle build (even debug) before Java compilation.
         release {
             if (heeftSleutel) {
                 storeFile file(ksStore)
@@ -55,6 +55,12 @@ android {
         }
     }
     buildTypes {
+        gebruikerstest {
+            initWith debug
+            applicationIdSuffix ".gebruikerstest20261025"
+            versionNameSuffix "-gebruikerstest20261025"
+            matchingFallbacks = ['debug']
+        }
         tk584test {
             initWith debug
             applicationIdSuffix ".tk584test20261101"

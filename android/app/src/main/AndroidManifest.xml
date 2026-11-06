@@ -51,6 +51,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- MoveKit offline #504: distinguish Wi-Fi from metered/mobile networks. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- ANDROID-BARCODE-SCANNER-opdracht: native CameraX+ML Kit barcode scanning. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />

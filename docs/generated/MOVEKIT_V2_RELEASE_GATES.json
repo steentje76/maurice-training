@@ -1,0 +1,8 @@
+{
+  "schema": "trainingskompas-movekit-v2-release/1.0",
+  "status": "BLOCKED_NOT_REVIEWED",
+  "inventory_sha256": null,
+  "poster_digest_sha256": null,
+  "entries": [],
+  "documentation": "All V2 media requires separately verified private upload, per-item catalog review and a server-side user grant. No V2 media is released."
+}

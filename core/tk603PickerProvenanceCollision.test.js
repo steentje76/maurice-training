@@ -64,4 +64,20 @@ assert.equal(all.filter(x=>x.scope==='personal').length,226,'all personal rows p
 assert.equal(new Set(all.filter(x=>x._catalog).map(x=>x.catalog_id)).size,226,'catalog ids distinct');
 assert.equal(context.resolvePickerEx('NOT-CATALOG','catalog'),null,'unknown catalog denied');
 assert.match(html,/selectExPickerItem\('\$\{e\.id\}',\s*'\$\{e\._catalog/,'rendered tile must carry explicit source');
-console.log('TK603 picker-source collision: 226 real catalog + 226 synthetic personal overlays, explicit selection, lossless legacy PASS');
+// The source helper also rejects a forged _catalog/catalog_id on a database-shaped row.
+vm.runInContext(['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection',
+  'tk603CatalogRefFromPickerSelection'].map(extract).join('\n'),context,{timeout:5000});
+const canonical=context.resolvePickerEx(id,'catalog');
+assert.equal(context.tk603CatalogRefFromPickerSelection(canonical).catalog_id,id,
+  'actual ECS picker object is accepted');
+assert.equal(context.tk603CatalogRefFromPickerSelection(personal),null,
+  'personal row cannot claim a canonical source');
+const spoof={...personal,_catalog:true,catalog_id:id};
+assert.equal(context.tk603CatalogRefFromPickerSelection(spoof),null,
+  'fake catalog metadata on a scope:personal row is never accepted');
+context.exercises=[spoof];context.invalidateExPickerPool();
+assert.equal(Array.from(context.exPickerPool()).filter(e=>e.id===id).length,2,
+  'spoofed legacy row does not suppress ECS catalog tile');
+assert.equal(context.resolvePickerEx(id,'catalog').catalog_id,id,
+  'canonical source survives legacy spoof');
+console.log('TK603 picker-source collision: 226 real catalog + 226 synthetic personal overlays, explicit selection, lossless legacy and spoof-deny PASS');

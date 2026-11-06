@@ -9661,8 +9661,13 @@ function tk504CatalogSourceRefFromSelection(id){
 // #603: only actual canonical picker objects may produce a source claim.
 // No personal exercise is upgraded by its ID, name, equipment or shadow shape.
 function tk603CatalogRefFromPickerSelection(ex){
-  return ex&&ex._catalog===true&&ex.catalog_id===ex.id
-    ?tk504CatalogSourceRefFromSelection(ex.id):null;
+  // Database-shaped personal/global rows are NEVER source authority, even
+  // if they happen to contain _catalog and catalog_id.
+  if(!ex||ex._catalog!==true||ex.catalog_id!==ex.id||
+     Object.prototype.hasOwnProperty.call(ex,'scope')||
+     Object.prototype.hasOwnProperty.call(ex,'user_id')||
+     Object.prototype.hasOwnProperty.call(ex,'owner_id'))return null;
+  return tk504CatalogSourceRefFromSelection(ex.id);
 }
 function tk504ValidateCatalogSourceRef(exId,ref){
   if(!ref||typeof ref!=='object'||Array.isArray(ref)||
@@ -17879,7 +17884,9 @@ function exPickerPool(){
   const out=hasEx?exercises.slice():[];
   // #603: IDs alone are not provenance. A personal FK-shadow and the canonical
   // catalog entry may share one TEXT id. Preserve BOTH under distinct sources.
-  const seenCatalog=new Set(out.filter(e=>e&&e._catalog===true&&e.catalog_id===e.id).map(e=>e.catalog_id));
+  // 'exercises' holds database/legacy records, never authoritative catalog
+  // objects; a forged _catalog marker there must not hide the real ECS tile.
+  const seenCatalog=new Set();
   try{
     const C=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.all():[];
     C.forEach(c=>{

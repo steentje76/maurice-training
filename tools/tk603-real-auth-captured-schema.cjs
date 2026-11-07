@@ -6,7 +6,9 @@
 const {execFileSync}=require('node:child_process');
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..');
-const batch25=process.argv.includes('--batch25');
+const packagesMode=process.argv.includes('--packages');
+const batch25=packagesMode||process.argv.includes('--batch25');
+const packageChecks=[];
 const stagedScope=process.argv.includes('--staged-scope');
 if(stagedScope&&!batch25)throw Error('--staged-scope requires --batch25');
 let finishStagedScope=null;
@@ -32,7 +34,7 @@ async function account(label){const email='tk603-'+label+'-'+Date.now()+'@exampl
   let readyDb=false;for(let n=0;n<100;n++){try{docker(['exec',id+'-db','pg_isready','-U','supabase_admin','-h','127.0.0.1','-d','postgres']);readyDb=true;break;}catch{}await delay(500);}if(!readyDb)throw Error('Database not ready');
   sql("alter role supabase_auth_admin password '"+password+"'; alter role authenticator password '"+password+"';",'supabase_admin');
   const an=run('auth','public.ecr.aws/supabase/gotrue:v2.197.0',{
-   GOTRUE_API_HOST:'0.0.0.0',GOTRUE_API_PORT:'9999',API_EXTERNAL_URL:'http://127.0.0.1',GOTRUE_DB_DRIVER:'postgres',GOTRUE_DB_DATABASE_URL:'postgres://supabase_auth_admin:'+password+'@db:5432/postgres',GOTRUE_SITE_URL:'http://127.0.0.1',GOTRUE_DISABLE_SIGNUP:'false',GOTRUE_JWT_ADMIN_ROLES:'service_role',GOTRUE_JWT_AUD:'authenticated',GOTRUE_JWT_DEFAULT_GROUP_NAME:'authenticated',GOTRUE_JWT_EXP:'3600',GOTRUE_JWT_SECRET:secret,GOTRUE_EXTERNAL_EMAIL_ENABLED:'true',GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED:'false',GOTRUE_MAILER_AUTOCONFIRM:'true',GOTRUE_EXTERNAL_PHONE_ENABLED:'false'},[9999]);
+   GOTRUE_API_HOST:'0.0.0.0',GOTRUE_API_PORT:'9999',API_EXTERNAL_URL:'http://127.0.0.1',GOTRUE_DB_DRIVER:'postgres',GOTRUE_DB_DATABASE_URL:'postgres://supabase_auth_admin:'+password+'@db:5432/postgres',GOTRUE_SITE_URL:'http://127.0.0.1',GOTRUE_DISABLE_SIGNUP:'false',GOTRUE_JWT_ADMIN_ROLES:'service_role',GOTRUE_JWT_AUD:'authenticated',GOTRUE_JWT_DEFAULT_GROUP_NAME:'authenticated',GOTRUE_JWT_EXP:packagesMode?'14400':'3600',GOTRUE_JWT_SECRET:secret,GOTRUE_EXTERNAL_EMAIL_ENABLED:'true',GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED:'false',GOTRUE_MAILER_AUTOCONFIRM:'true',GOTRUE_EXTERNAL_PHONE_ENABLED:'false'},[9999]);
   auth='http://127.0.0.1:'+port(an,9999);await ready(auth+'/health');
   A=await account('owner-a');B=await account('owner-b');assert(A.id!==B.id&&A.token!==B.token,'two real independently issued local Auth identities');
   const captured=capturedSchema.fixture(root,A,B);
@@ -117,12 +119,14 @@ update public.movekit_catalog_fk_bindings set active=true,reviewed_at=clock_time
    assert(r.status===403,'authenticated '+(who===A?'A':'B')+' cannot exploit global unowned scope proposal');
   }
   const encode=x=>Buffer.from(JSON.stringify(x)).toString('base64url');
-  const unsigned=encode({alg:'HS256',typ:'JWT'})+'.'+encode({role:'service_role',aud:'authenticated',exp:Math.floor(Date.now()/1000)+60});
+  const unsigned=encode({alg:'HS256',typ:'JWT'})+'.'+encode({role:'service_role',aud:'authenticated',exp:Math.floor(Date.now()/1000)+(packagesMode?14400:60)});
   const serviceJwt=unsigned+'.'+crypto.createHmac('sha256',secret).update(unsigned).digest('base64url');
   r=await query('/exercises',{token:serviceJwt},'POST',{id:'TKC-000001',name:'synthetic service spoof',category:'system',type:'strength',scope:'global',created_by:null,user_id:null,gym_id:null});
   assert(r.status===403,'locally signed service_role JWT cannot provision reserved global aliases');
 
-  if(batch25)await require('./tk504Batch25RealAuthProbe.cjs')({root,rest,auth,A,B,query,sql,assert,serviceJwt});
+  if(batch25){let mark=checks;await require('./tk504Batch25RealAuthProbe.cjs')({root,rest,auth,A,B,query,sql,assert,serviceJwt,
+   packages:packagesMode?Array.from({length:15},(_,i)=>i+1):[1],
+   onPackage:n=>{packageChecks.push({n,checks:checks-mark});mark=checks;}});}
   if(finishStagedScope)finishStagedScope();
 
   console.log('RESULT '+checks+' real local Auth/PostgREST/PostgreSQL assertions PASS');
@@ -137,6 +141,15 @@ update public.movekit_catalog_fk_bindings set active=true,reviewed_at=clock_time
    .replace('before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases.','before the actual staged scope migration enabled 582 synthetic aliases in temporary containers.')
    .replace('Scope proposal remains outside production migration.','The scope migration is staged in Git; it has not been applied to production. Its drift/guard checks, local privilege preservation and explicit rollback were exercised. Rollback compares complete row-content SHA256 digests for exercises, sessions, bindings and publications.')
    .replace('node tools/tk603-real-auth-captured-schema.cjs --batch25`','node tools/tk603-real-auth-captured-schema.cjs --batch25 --staged-scope`'):report;
-  fs.writeFileSync(path.join(root,stagedScope?'docs/TK603_STAGED_SCOPE_BATCH25_20261107.md':batch25?'docs/TK504_BATCH25_REAL_AUTH_20261107.md':'docs/TK603_REAL_AUTH_CAPTURED_SCHEMA_20261107.md'),finalReport+'\n');
+  const packageReport=packagesMode?[
+   '# TK504 15 MoveKit packages — real local Auth/PostgREST acceptance — 7 November 2026','',
+   'Status: '+(process.exitCode?'FAILED / incomplete':'PASS')+'. '+checks+' checks. Run completed '+new Date().toISOString(),'',
+   'Services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5 in dedicated internal Docker networks; two synthetic accounts with real independent JWTs. No cloud, production data, licensed metadata, media, Storage, Range or Android.','',
+   'Per package: release config generated by core/tk504BatchReleaseLedger.js from Git inventory digests (owner fingerprint per package), status promoted to RELEASE_APPROVED only inside this local harness. All 356 synthetic publication rows physically published; actual catalog function must return exactly the cumulative package range, which is mounted into the actual ECS from index.html; each new ID runs the actual extracted strength-writer probe (typed FK binding RPC, lost-ACK same-UUID retry, cross-owner B HTTP 403, no offline-queue pollution).','',
+   '| Package | Checks |','|---|---|',...packageChecks.map(p=>'| '+String(p.n).padStart(2,'0')+' | '+p.checks+' |'),'',
+   'Package 01 checks include the shared release/RLS preconditions. Final checks: owner reset, FK revoke, mid-read grant revocation, B denied, foreign package stamp blocks release.','',
+   'Reproduce: `node tools/tk603-real-auth-captured-schema.cjs --packages` with Docker and the cached images. Secrets are generated in memory and never printed.'].join('\n'):null;
+  if(packageReport)fs.writeFileSync(path.join(root,'docs/TK504_15_PACKAGES_REAL_AUTH_20261107.md'),packageReport+'\n');
+  else fs.writeFileSync(path.join(root,stagedScope?'docs/TK603_STAGED_SCOPE_BATCH25_20261107.md':batch25?'docs/TK504_BATCH25_REAL_AUTH_20261107.md':'docs/TK603_REAL_AUTH_CAPTURED_SCHEMA_20261107.md'),finalReport+'\n');
  }
 })();

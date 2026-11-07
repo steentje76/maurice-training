@@ -55,6 +55,7 @@ function harness({signed,enabled=true,session=true}={}){
    tk504GetMediaRuntime:()=>({
      signed:async(id,type)=>{signedCount++;return signed?signed(id,type,signedCount,currentClock):{url:type==='poster'?POSTER:URL1,type};}
    }),
+   tk504SignedMediaTicket:(runtime,id,type)=>runtime.signed(id,type),
    document:{createElement(type){
      assert.equal(type,'video');
      const video=fakeVideo();videos.push(video);return video;

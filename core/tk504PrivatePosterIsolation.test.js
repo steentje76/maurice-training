@@ -44,12 +44,13 @@ ok(secure.resolve(CAT,'poster')===ALTERNATIVE,'Other provider resolves normally'
 const start=html.indexOf('function tk504PrivateVideoMarkup(catalogId,poster,label){');
 const end=html.indexOf('async function tk504PlayPrivateVideo(',start);
 ok(start>=0&&end>start,'Private markup function present');
-const ctxt=vm.createContext({escHtml:v=>String(v)});
+const ctxt=vm.createContext({escHtml:v=>String(v),tk504QueuePrivateVideoPosters:()=>{}});
 vm.runInContext(html.slice(start,end),ctxt);
 const markup=ctxt.tk504PrivateVideoMarkup(CAT,PUBLIC,'Wall sit');
 ok(markup.includes('Video afspelen'),'Signed-video click target still present');
 ok(!markup.includes(PUBLIC),'Public raw poster never rendered in private markup');
-ok(!markup.includes('<img '),'Private preview has no unauthorized image element');
+ok(markup.includes('<img class="tk504-video-poster" data-aid="'+CAT+'"'),'Private preview uses canonical signed poster identity');
+ok(!/tk504-video-poster[^>]*\ssrc=/.test(markup),'Private preview never embeds an unsigned raw poster URL');
 ok(ctxt.tk504PrivateVideoMarkup('bad-id',PUBLIC,'x')==='','Invalid catalog ID rejected');
 const mediaStart=html.indexOf('function resolveExerciseMedia(ex){');
 const mediaEnd=html.indexOf('// UNIVERSELE RECOVERY',mediaStart);

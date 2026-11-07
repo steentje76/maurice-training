@@ -32,6 +32,7 @@ function image(id){
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 function harness(opts={}){
  let resolveTicket,signCalls=[],oldCalls=0,invalidated=0,owner='owner-A',release=opts.release!==false;
+ const timers=[];
  const images=[];
  const getOwner=()=>owner;
  const ctx=vm.createContext({
@@ -43,6 +44,10 @@ function harness(opts={}){
   ExerciseAssetProvider:{poster:()=>{oldCalls++;return PUBLIC;}},
   tk504GetMediaRuntime:()=>({signed:(id,type)=>{signCalls.push([id,type]);return new Promise(resolve=>{resolveTicket=resolve;});},
    invalidate:()=>{invalidated++;}}),
+  tk504PosterRequestQueue:()=>null,
+  tk504SignedMediaTicket:(runtime,id,type)=>runtime.signed(id,type),
+  tk504MediaTickets:null,
+  setTimeout:(fn)=>{timers.push(fn);},
   tk504MediaRuntime:{invalidate:()=>{invalidated++;}},
   document:{querySelectorAll:()=>images},
   self:{},console
@@ -50,7 +55,8 @@ function harness(opts={}){
  vm.runInContext(loader+'\n'+lib+'\n'+invalidate,ctx);
  return {ctx,images,make:(id=CID)=>{const i=image(id);images.push(i);return i;},
   setOwner:v=>{owner=v;ctx.authSession={user:{id:v}};},setRelease:v=>{release=v;},
-  complete:v=>resolveTicket(v),get calls(){return signCalls;},get legacy(){return oldCalls;}};
+  complete:v=>resolveTicket(v),runNextTimer:()=>{const fn=timers.shift();assert(fn,'expected bounded retry');fn();},
+  get calls(){return signCalls;},get legacy(){return oldCalls;}};
 }
 (async()=>{
  const a=harness(),img=a.make();
@@ -80,6 +86,10 @@ function harness(opts={}){
 
  const denied=harness(),deniedImg=denied.make();denied.ctx._libLoad(deniedImg);await tick();
  denied.complete(null);await tick();assert.equal(deniedImg.src,null);
+ denied.runNextTimer();await tick();denied.complete(null);await tick();
+ denied.runNextTimer();await tick();denied.complete(null);await tick();
+ assert.deepEqual(denied.calls,[[CID,'poster'],[CID,'poster'],[CID,'poster']],
+  'private poster retries exactly twice, never falls back to a public URL');
  assert(deniedImg.parentNode.classes.has('no-img'),'denied private poster shows existing placeholder');
 
  const other=harness(),legacyImg=other.make(OTHER);

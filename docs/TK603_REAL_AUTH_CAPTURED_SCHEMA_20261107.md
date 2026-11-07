@@ -1,10 +1,10 @@
 # TK603 real local Auth acceptance — 7 November 2026
 
-Status: PASS. 39 checks. Run completed 2026-11-07T04:06:14.422Z
+Status: PASS. 53 checks. Run completed 2026-11-07T04:09:25.809Z
 
 Actual services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5, dedicated internal backend plus dedicated frontend Docker network; only ephemeral loopback Auth/REST ports. Two synthetic email/password accounts received independent JWTs; tokens verified by GoTrue and PostgREST. No cloud project, production data, media or credentials used.
 
-Schema: captured 21 exercise and 39 session columns, constraints, table ACLs, RLS policies, three digest-verified functions and two noninternal triggers; synthetic dependency tables only. Unmodified captured scope trigger RED was required before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases. Original staged typed-FK migration executed unchanged. This is not a full database restore, cloud acceptance, actual UI writer payload, media or Android test. Scope proposal remains outside production migration.
+Schema: captured 21 exercise and 39 session columns, constraints, table ACLs, RLS policies, three functions and two noninternal triggers pinned through a normalized full-contract SHA256; synthetic dependency tables are locked with synthetic ACL/RLS, not production dependency-table parity. Unmodified captured scope trigger RED was required before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases. Original staged typed-FK migration executed unchanged. Function owners/EXECUTE ACLs, column grants, indexes and type modifiers are not replayed. Test requests explicitly add a synthetic date. This is not a full database restore, cloud acceptance, actual UI writer payload, media or Android test. Scope proposal remains outside production migration.
 
 Checks:
 - GoTrue independently verifies owner-a password-login JWT
@@ -30,6 +30,7 @@ Checks:
 - owner B SELECT hides A sessions
 - captured INSERT trigger rewrites forged owner to JWT identity
 - rewritten row never belongs to forged owner
+- synthetic forged-owner probe row deleted by actual owner
 - cross-owner UPDATE touches zero rows
 - cross-owner DELETE touches zero rows
 - same UUID own-session retry succeeds
@@ -46,6 +47,19 @@ Checks:
 - history identity RPC denies account without own saved session
 - existing history editable after revocation
 - personal TK collision session preserved separately
+- B cannot self-assign synthetic coach relationship through REST
+- B cannot elevate synthetic profile privileges
+- real B JWT cannot read athlete A with disabled coach scope
+- real B coach JWT reads A only after server-enabled scope
+- explicit own-user filter excludes authorized athlete rows
+- historical identity RPC remains own-only despite coach read scope
+- coach read permission never grants athlete UPDATE
+- coach scope revocation removes athlete visibility with same real JWT
+- anonymous PATCH cannot mutate populated session
+- anonymous DELETE cannot mutate populated session
+- authenticated A cannot exploit global unowned scope proposal
+- authenticated B cannot exploit global unowned scope proposal
+- locally signed service_role JWT cannot provision reserved global aliases
 
 Cleanup: dedicated containers, anonymous volumes and network removed
 

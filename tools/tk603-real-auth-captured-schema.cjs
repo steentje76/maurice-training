@@ -61,7 +61,7 @@ update public.movekit_catalog_fk_bindings set active=true,reviewed_at=clock_time
   r=await query('/sessions?select=id,user_id,exercise_id',A);assert(r.status===200&&r.data.length===2&&r.data.every(x=>x.user_id===A.id),'owner A SELECT isolates personal and typed sessions');
   r=await query('/sessions?id=eq.'+sa,A,'PATCH',{user_id:B.id},'return=representation');assert(r.status===403,'own row cannot be reassigned to another owner');
   r=await query('/sessions?select=id,user_id,exercise_id',B);assert(r.status===200&&r.data.length===1&&r.data[0].id===sb,'owner B SELECT hides A sessions');
-  r=await query('/sessions',B,'POST',{id:crypto.randomUUID(),user_id:A.id,exercise_id:'TKC-000038'},'return=representation');assert(r.status===201&&r.data[0].user_id===B.id,'captured INSERT trigger rewrites forged owner to JWT identity');const rewrittenId=r.data[0].id;r=await query('/sessions?id=eq.'+rewrittenId,A);assert(r.status===200&&r.data.length===0,'rewritten row never belongs to forged owner');await query('/sessions?id=eq.'+rewrittenId,B,'DELETE');
+  r=await query('/sessions',B,'POST',{id:crypto.randomUUID(),user_id:A.id,exercise_id:'TKC-000038'},'return=representation');assert(r.status===201&&r.data[0].user_id===B.id,'captured INSERT trigger rewrites forged owner to JWT identity');const rewrittenId=r.data[0].id;r=await query('/sessions?id=eq.'+rewrittenId,A);assert(r.status===200&&r.data.length===0,'rewritten row never belongs to forged owner');r=await query('/sessions?id=eq.'+rewrittenId,B,'DELETE',undefined,'return=representation');assert(r.status===200&&r.data.length===1,'synthetic forged-owner probe row deleted by actual owner');
   r=await query('/sessions?id=eq.'+sa,B,'PATCH',{note:'forged'},'return=representation');assert(r.status===200&&r.data.length===0,'cross-owner UPDATE touches zero rows');
   r=await query('/sessions?id=eq.'+sa,B,'DELETE',undefined,'return=representation');assert(r.status===200&&r.data.length===0,'cross-owner DELETE touches zero rows');
   r=await query('/sessions?on_conflict=id',A,'POST',{id:sa,user_id:A.id,exercise_id:'TKC-000038',note:'idempotent retry'},'resolution=merge-duplicates,return=representation');assert(r.status<300,'same UUID own-session retry succeeds');
@@ -79,13 +79,48 @@ update public.movekit_catalog_fk_bindings set active=true,reviewed_at=clock_time
   r=await query('/rpc/tk504_historical_catalog_id',B,'POST',{p_exercise_id:'TKC-000038'});assert(r.status===200&&r.data===null,'history identity RPC denies account without own saved session');
   r=await query('/sessions?id=eq.'+sa,A,'PATCH',{note:'history retained'},'return=representation');assert(r.status===200&&r.data[0].exercise_id==='TKC-000038','existing history editable after revocation');
   r=await query('/sessions?id=eq.'+sp,A);assert(r.status===200&&r.data.length===1&&r.data[0].exercise_id==='TK-000038','personal TK collision session preserved separately');
+
+  r=await query('/coach_athlete_relationships',B,'POST',{id:crypto.randomUUID(),coach_user_id:B.id,athlete_user_id:A.id,status:'active'});
+  assert([401,403].includes(r.status),'B cannot self-assign synthetic coach relationship through REST');
+  r=await query('/users?id=eq.'+B.id,B,'PATCH',{system_role:'developer',gym_role_level:3},'return=representation');
+  assert([401,403].includes(r.status),'B cannot elevate synthetic profile privileges');
+  const rel=crypto.randomUUID();
+  sql("insert into public.coach_athlete_relationships values('"+rel+"','"+B.id+"','"+A.id+"','active'); insert into public.coach_access_scopes values('"+rel+"','TRAINING_CORE',false);");
+  r=await query('/sessions?user_id=eq.'+A.id,B);
+  assert(r.status===200&&r.data.length===0,'real B JWT cannot read athlete A with disabled coach scope');
+  sql("update public.coach_access_scopes set enabled=true where relationship_id='"+rel+"';");
+  r=await query('/sessions?user_id=eq.'+A.id,B);
+  assert(r.status===200&&r.data.length===2&&r.data.every(x=>x.user_id===A.id),'real B coach JWT reads A only after server-enabled scope');
+  r=await query('/sessions?user_id=eq.'+B.id,B);
+  assert(r.status===200&&r.data.length===0,'explicit own-user filter excludes authorized athlete rows');
+  r=await query('/rpc/tk504_historical_catalog_id',B,'POST',{p_exercise_id:'TKC-000038'});
+  assert(r.status===200&&r.data===null,'historical identity RPC remains own-only despite coach read scope');
+  r=await query('/sessions?id=eq.'+sa,B,'PATCH',{note:'coach must not write'},'return=representation');
+  assert(r.status===200&&r.data.length===0,'coach read permission never grants athlete UPDATE');
+  sql("update public.coach_athlete_relationships set status='revoked' where id='"+rel+"';");
+  r=await query('/sessions?user_id=eq.'+A.id,B);
+  assert(r.status===200&&r.data.length===0,'coach scope revocation removes athlete visibility with same real JWT');
+  for(const method of ['PATCH','DELETE']){
+   r=await query('/sessions?id=eq.'+sa,null,method,method==='PATCH'?{note:'anonymous mutation'}:undefined,'return=representation');
+   assert([401,403].includes(r.status)||(r.status===200&&Array.isArray(r.data)&&r.data.length===0),'anonymous '+method+' cannot mutate populated session');
+  }
+  for(const who of [A,B]){
+   r=await query('/exercises',who,'POST',{id:'TKC-000001',name:'synthetic global spoof',category:'system',type:'strength',scope:'global',created_by:null,user_id:null,gym_id:null});
+   assert(r.status===403,'authenticated '+(who===A?'A':'B')+' cannot exploit global unowned scope proposal');
+  }
+  const encode=x=>Buffer.from(JSON.stringify(x)).toString('base64url');
+  const unsigned=encode({alg:'HS256',typ:'JWT'})+'.'+encode({role:'service_role',aud:'authenticated',exp:Math.floor(Date.now()/1000)+60});
+  const serviceJwt=unsigned+'.'+crypto.createHmac('sha256',secret).update(unsigned).digest('base64url');
+  r=await query('/exercises',{token:serviceJwt},'POST',{id:'TKC-000001',name:'synthetic service spoof',category:'system',type:'strength',scope:'global',created_by:null,user_id:null,gym_id:null});
+  assert(r.status===403,'locally signed service_role JWT cannot provision reserved global aliases');
+
   console.log('RESULT '+checks+' real local Auth/PostgREST/PostgreSQL assertions PASS');
  }catch(e){console.error('FAIL '+String(e.message).replaceAll(password,'[redacted]').replaceAll(secret,'[redacted]'));process.exitCode=1;}
  finally{
   let clean=true;for(const n of names.reverse()){try{docker(['rm','--force','--volumes',n]);}catch{clean=false;}}
   if(net)for(const n of [network,id+'-front'])try{docker(['network','rm',n]);}catch{clean=false;}
   if(!clean){console.error('FAIL temporary resource cleanup; inspect '+id);process.exitCode=1;}else console.log('CLEANUP PASS: all dedicated containers/anonymous volumes/network removed');
-  const report=['# TK603 real local Auth acceptance — 7 November 2026','','Status: '+(process.exitCode?'FAILED / incomplete':'PASS')+'. '+checks+' checks. Run completed '+new Date().toISOString(),'','Actual services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5, dedicated internal backend plus dedicated frontend Docker network; only ephemeral loopback Auth/REST ports. Two synthetic email/password accounts received independent JWTs; tokens verified by GoTrue and PostgREST. No cloud project, production data, media or credentials used.','','Schema: captured 21 exercise and 39 session columns, constraints, table ACLs, RLS policies, three digest-verified functions and two noninternal triggers; synthetic dependency tables only. Unmodified captured scope trigger RED was required before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases. Original staged typed-FK migration executed unchanged. This is not a full database restore, cloud acceptance, actual UI writer payload, media or Android test. Scope proposal remains outside production migration.','','Checks:',...events.map(x=>'- '+x),'','Cleanup: '+(clean?'dedicated containers, anonymous volumes and network removed':'FAILED; inspect temporary resources'),'','Reproduce: `node tools/tk603-real-auth-captured-schema.cjs` with Docker running and listed cached images. Generated local secrets remain in memory only and are never printed or committed.'].join('\n');
+  const report=['# TK603 real local Auth acceptance — 7 November 2026','','Status: '+(process.exitCode?'FAILED / incomplete':'PASS')+'. '+checks+' checks. Run completed '+new Date().toISOString(),'','Actual services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5, dedicated internal backend plus dedicated frontend Docker network; only ephemeral loopback Auth/REST ports. Two synthetic email/password accounts received independent JWTs; tokens verified by GoTrue and PostgREST. No cloud project, production data, media or credentials used.','','Schema: captured 21 exercise and 39 session columns, constraints, table ACLs, RLS policies, three functions and two noninternal triggers pinned through a normalized full-contract SHA256; synthetic dependency tables are locked with synthetic ACL/RLS, not production dependency-table parity. Unmodified captured scope trigger RED was required before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases. Original staged typed-FK migration executed unchanged. Function owners/EXECUTE ACLs, column grants, indexes and type modifiers are not replayed. Test requests explicitly add a synthetic date. This is not a full database restore, cloud acceptance, actual UI writer payload, media or Android test. Scope proposal remains outside production migration.','','Checks:',...events.map(x=>'- '+x),'','Cleanup: '+(clean?'dedicated containers, anonymous volumes and network removed':'FAILED; inspect temporary resources'),'','Reproduce: `node tools/tk603-real-auth-captured-schema.cjs` with Docker running and listed cached images. Generated local secrets remain in memory only and are never printed or committed.'].join('\n');
   fs.writeFileSync(path.join(root,'docs/TK603_REAL_AUTH_CAPTURED_SCHEMA_20261107.md'),report+'\n');
  }
 })();

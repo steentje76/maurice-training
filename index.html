@@ -5713,7 +5713,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     </div>
     <div id="los-body"></div>
     <div style="margin-top:14px">
-      <button class="btn btn-r" style="width:100%" onclick="saveLosOefening(this)">Opslaan</button>
+      <button class="btn btn-r" style="width:100%" id="los-save-btn" onclick="saveLosOefening(this)">Opslaan</button>
     </div>
   </div>
 </div>
@@ -7850,7 +7850,11 @@ async function afterAuthSuccess(){
   await startAppAfterAuth();
 }
 async function authSignOut(){
-  if(!await confirmModal('Weet je zeker dat je wilt uitloggen?',{title:'Uitloggen',okLabel:'Uitloggen'}))return;
+  const owner=typeof tk603LosOwner==='function'?tk603LosOwner():null;
+  const pending=typeof tk603LosHasPending==='function'&&tk603LosHasPending();
+  const question=pending?'Er staat nog een registratie klaar voor bevestiging. Uitloggen verwijdert die van dit toestel. De registratie kan al zijn ontvangen; controleer je historie voordat je opnieuw registreert. Toch uitloggen?':'Weet je zeker dat je wilt uitloggen?';
+  if(!await confirmModal(question,{title:'Uitloggen',okLabel:pending?'Uitloggen en verwijderen':'Uitloggen'}))return;
+  if(typeof tk603LosOwner==='function'&&tk603LosOwner()!==owner)return;
   clearAuthSession();
   wipePersonalCache(); // v332: niet wachten tot volgende login, meteen wissen bij uitloggen
   if(window.OrganizationContextRuntime) window.OrganizationContextRuntime.resetOrgContext(); // MS-F11-05: nooit tenant-branding van deze gebruiker laten hangen voor de volgende
@@ -17672,6 +17676,7 @@ let losConfirmAction=null;
 // niet-berekende invoervelden, of een afgevinkte set) — bepaalt of Terug/Annuleren/Oefening
 // wijzigen een bevestiging tonen (#9/#10/#11).
 function losHasUnsavedData(){
+  if(typeof tk603LosPending!=='undefined'&&tk603LosPending)return true;
   const body=document.getElementById('los-body');
   if(!body)return false;
   const inputs=body.querySelectorAll('input');
@@ -17685,7 +17690,8 @@ function losHasUnsavedData(){
   try{ if(typeof tkC2IsLoggableSummary==='function'&&sessionLog[LOS_DOMID]&&tkC2IsLoggableSummary(sessionLog[LOS_DOMID].c2))return true; }catch(_){}
   return false;
 }
-function clearLosSessionState(){
+function clearLosSessionState(keepPending=false){
+  if(typeof tk603LosReset==='function')tk603LosReset(keepPending);
   // FASE 2A (H4): verlaten/wisselen/opslaan van een losse oefening is terminaal voor de Concept2-
   // execution op 'los' -- geen BikeErg-state die doorlekt naar een volgende RowErg/SkiErg.
   try{ if(typeof tkC2ExecutionCleanup==='function') tkC2ExecutionCleanup([LOS_DOMID],'leave_execution'); }catch(_cl){}
@@ -17698,7 +17704,7 @@ function clearLosSessionState(){
   delete rpeManual[LOS_DOMID];
 }
 // Reset alleen de oefeningkeuze + body (voor "Oefening wijzigen"/"Terug") — de modal blijft open.
-function resetLosExerciseSelection(){
+function resetLosExerciseSelection(keepPending=false){
   losSelectedExId=null;
   losCurEx=null;
   document.getElementById('los-ex-trigger-lbl').textContent='Kies oefening…';
@@ -17706,17 +17712,18 @@ function resetLosExerciseSelection(){
   document.getElementById('los-new-fields').style.display='none';
   document.getElementById('los-wu-count').value='0';
   document.getElementById('los-body').innerHTML='';
-  clearLosSessionState();
+  clearLosSessionState(keepPending);
 }
 // Volledige reset (voor Annuleren/openen) — ook het "eigen oefening"-formulier.
-function resetLosAllState(){
-  resetLosExerciseSelection();
+function resetLosAllState(keepPending=false){
+  resetLosExerciseSelection(keepPending);
   document.getElementById('los-ex-new').value='';
   document.getElementById('los-ex-new-type').value='strength';
   document.getElementById('los-new-wodfmt-row').style.display='none';
 }
 // Voert `action` direct uit als er niets is ingevuld; toont anders "Log verlaten?".
 function losRequestLeave(action){
+  if(typeof tk603LosPending!=='undefined'&&tk603LosPending)return tk603LosConfirmDiscard(action);
   if(losHasUnsavedData()){
     losConfirmAction=action;
     openModal('m-los-confirm-leave');
@@ -17749,8 +17756,22 @@ function losExitToHub(){
 }
 
 async function openLosOefening(){
+  const owner=tk603LosOwner(),epoch=tk603LosEpoch;if(!owner)return;
   await ensureExercisesLoaded();
-  resetLosAllState();
+  if(tk603LosOwner()!==owner||tk603LosEpoch!==epoch)return;
+  if(TK504_TYPED_FK_SESSION_RELEASE===true){
+    let d;try{d=tk603LosReadPending();}catch(_){await tk603LosOfferDiscard(owner,epoch);return;}
+    if(d){
+      const resume=await confirmModal('Er staat nog een registratie klaar voor bevestiging. Wil je die hervatten?',{title:'Registratie hervatten',okLabel:'Hervatten',cancelLabel:'Later'});
+      if(!resume||tk603LosOwner()!==owner||tk603LosEpoch!==epoch)return;
+      if(!tk504ValidateCatalogSourceRef(d.selected_id,d.source_ref)){await tk603LosOfferDiscard(owner,epoch);return;}
+      await tk603LosRestorePending(d,owner);return;
+    }
+  }
+  if(TK504_TYPED_FK_SESSION_RELEASE!==true){
+    try{if(tk603LosReadPending()){toast('Hervatten is in deze versie niet beschikbaar.');await tk603LosOfferDiscard(owner,epoch);return;}}catch(_){}
+  }
+  resetLosAllState(TK504_TYPED_FK_SESSION_RELEASE!==true);
   openModal('m-los-oefening');
 }
 // Zoekbare/filterbare oefening-picker. Toont standaard ALLE oefeningen (niet gefilterd
@@ -18391,9 +18412,15 @@ function onLosNewTypeChange(){
 // PLUS dezelfde tip/video/spiergroep/1RM/equipment-panelen als renderTrainScreen, zodat het
 // logging-scherm van een losse oefening er identiek uitziet als tijdens Training A/B.
 let losCurEx=null;
-function onLosWuChange(){renderLosBody(losCurEx);}
+function onLosWuChange(){if(tk603LosPending){tk603LosFreezePending();return;}renderLosBody(losCurEx);}
 async function renderLosBody(existingEx=null){
+  const owner=tk603LosOwner(),epoch=tk603LosEpoch;
+  const same=()=>!!owner&&tk603LosOwner()===owner&&tk603LosEpoch===epoch&&losCurEx===existingEx;
   const container=document.getElementById('los-body');
+  if(TK504_TYPED_FK_SESSION_RELEASE===true&&tk603LosPending&&tk603LosPending.owner_uid===owner){
+    losCurEx=existingEx||null;tk603LosFreezePending();return;
+  }
+  if(container)container.style.whiteSpace='';
   let ex=existingEx;
   losCurEx=existingEx||null;
   const wuCount=parseInt(document.getElementById('los-wu-count')?.value)||0;
@@ -18416,7 +18443,7 @@ async function renderLosBody(existingEx=null){
   let panels='';
   if(ex.id==='__new__'&&TK504_TYPED_FK_SESSION_RELEASE===true)tk603SetLiveSource(LOS_DOMID,ex.id,null); // personal, never a stale catalog claim
   if(ex.id!=='__new__'){
-    await ensureEquipmentTypesLoaded();
+    await ensureEquipmentTypesLoaded();if(!same())return;
     // #603: loose exercise — only an actual canonical picker object yields a source claim.
     const _losRef=(TK504_TYPED_FK_SESSION_RELEASE===true&&ex._catalog===true)?tk603CatalogRefFromPickerSelection(ex):null;
     if(TK504_TYPED_FK_SESSION_RELEASE===true){
@@ -18426,18 +18453,153 @@ async function renderLosBody(existingEx=null){
     if(TK504_TYPED_FK_SESSION_RELEASE===true&&ex._catalog===true){
       if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id,_losRef||{invalid:true});await loadStrengthBasis(ex.id,_losRef||{invalid:true});}
     }else if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
-    const eqList=await loadEquipment(ex.id);
+    if(!same())return;
+    const eqList=await loadEquipment(ex.id);if(!same())return;
     panels=`${ex.tip?`<div style="background:var(--g1);border-left:3px solid var(--y);padding:8px 12px;font-size:12px;color:var(--g4);margin:8px 0;border-radius:0 8px 8px 0">💡 ${ex.tip}</div>`:''}
       ${buildVideoMuscle(ex)}
       ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex,tk603LiveIsCatalog(LOS_DOMID)):''}
       ${buildEquipmentPanel(ex.id,eqList)}`;
   }
   const askBtn=`<button onclick="askCoachEx('${(ex.name||'deze oefening').replace(/'/g,"\\'")}',null,'${ex.id}')" style="margin:8px 0 4px;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--f)">🤖 Vraag de coach</button>`;
+  if(!same())return;
   container.innerHTML=panels+bodyHTML+askBtn;
 }
-async function saveLosOefening(btnEl){
-  if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
+
+const TK603_LOS_PENDING_KEY='tk603_los_pending_v1';
+let tk603LosEpoch=0,tk603LosPending=null,tk603LosBusy=null;
+function tk603LosOwner(){return typeof tkEigenaarUid==='function'?tkEigenaarUid():null;}
+function tk603LosHasPending(){
+  if(tk603LosPending&&tk603LosPending.owner_uid===tk603LosOwner())return true;
+  try{return !!localStorage.getItem(TK603_LOS_PENDING_KEY);}catch(_){return false;}
+}
+function tk603LosContext(){
+  return {owner:tk603LosOwner(),epoch:tk603LosEpoch,selected:losSelectedExId,log:sessionLog};
+}
+function tk603LosCurrent(c){
+  return !!(c&&c.owner&&tk603LosOwner()===c.owner&&tk603LosEpoch===c.epoch&&
+    losSelectedExId===c.selected&&sessionLog===c.log);
+}
+function tk603LosReset(keepPending=false){
+  tk603LosEpoch++;tk603LosBusy=null;tk603LosPending=null;
+  const button=document.getElementById('los-save-btn');if(button)button.disabled=false;
+  const wu=document.getElementById('los-wu-count');if(wu)wu.disabled=false;
+  const body=document.getElementById('los-body');if(body){body.innerHTML='';body.textContent='';}
+  if(!keepPending&&TK504_TYPED_FK_SESSION_RELEASE===true)try{localStorage.removeItem(TK603_LOS_PENDING_KEY);}catch(_){}
+}
+function tk603LosReadPending(){
   try{
+    const raw=localStorage.getItem(TK603_LOS_PENDING_KEY);if(!raw)return null;
+    const d=JSON.parse(raw),r=d&&d.row,ref=d&&d.source_ref;
+    if(!d||d.v!==1||d.owner_uid!==tk603LosOwner()||!ref||
+       ref.kind!=='movekit-catalog-v1'||d.selected_id!==ref.catalog_id||
+       !r||r.exercise_id!==d.selected_id||
+       typeof r.id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(r.id))
+      throw new Error('tk603_los_pending_invalid');
+    return d;
+  }catch(e){if(e&&e.message==='tk603_los_pending_invalid')throw e;throw new Error('tk603_los_storage_unavailable');}
+}
+function tk603LosStorePending(ex,row,c){
+  if(!tk603LosCurrent(c))throw new Error('tk603_los_changed');
+  const ref=tk603CatalogRefFromPickerSelection(ex);
+  if(!ref)throw new Error('tk603_los_source_invalid');
+  const existing=tk603LosReadPending();
+  if(existing)throw new Error('tk603_los_pending_conflict'); // another tab/attempt must be resumed explicitly
+  const id=newClientRowId();
+  if(typeof id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+    throw new Error('tk603_los_uuid_unavailable');
+  const d={v:1,owner_uid:c.owner,selected_id:ex.id,source_ref:ref,row:{...row,id:id}};
+  const bytes=JSON.stringify(d);
+  localStorage.setItem(TK603_LOS_PENDING_KEY,bytes);
+  if(localStorage.getItem(TK603_LOS_PENDING_KEY)!==bytes)throw new Error('tk603_los_not_durable');
+  tk603LosPending=JSON.parse(bytes);tk603LosFreezePending();return tk603LosPending;
+}
+function tk603LosFreezePending(){
+  const d=tk603LosPending;if(!d||d.owner_uid!==tk603LosOwner())return;
+  const row=d.row,lines=['Deze registratie wacht op bevestiging. Opslaan verstuurt dezelfde gegevens opnieuw.'];
+  const labels={date:'Datum',sets:'Sets',weight:'Gewicht (kg)',reps:'Herhalingen',rpe:'RPE',
+    time_str:'Tijd',distance:'Afstand (m)',watt:'Vermogen (W)',stroke_rate:'Slagen/cadans',
+    rounds:'Rondes',extra_reps:'Extra herhalingen',calories:'Calorieën',note:'Notitie'};
+  Object.keys(labels).forEach(k=>{if(row[k]!=null&&row[k]!=='')lines.push(labels[k]+': '+row[k]);});
+  if(Array.isArray(row.sets_detail))row.sets_detail.forEach((set,i)=>{
+    lines.push('Set '+(i+1)+': '+(set.effKg!=null?set.effKg:set.kg)+' kg × '+set.reps+(set.rpe!=null?' · RPE '+set.rpe:''));
+  });
+  const body=document.getElementById('los-body');
+  if(body){body.innerHTML='';body.style.whiteSpace='pre-line';body.textContent=lines.join('\n');}
+  const wu=document.getElementById('los-wu-count');if(wu)wu.disabled=true;
+  const rowEl=document.getElementById('los-wu-row');if(rowEl)rowEl.style.display='none';
+}
+async function tk603LosConfirmDiscard(action){
+  const owner=tk603LosOwner(),epoch=tk603LosEpoch;
+  const discard=await confirmModal('Deze registratie kan al in je historie staan. Verwijderen stopt het hervatten; controleer je historie voordat je opnieuw registreert.',{title:'Registratie verwijderen?',okLabel:'Verwijderen',cancelLabel:'Bewaren',danger:true});
+  if(discard&&tk603LosOwner()===owner&&tk603LosEpoch===epoch&&typeof action==='function')action();
+}
+async function tk603LosOfferDiscard(owner,epoch){
+  let before;try{before=localStorage.getItem(TK603_LOS_PENDING_KEY);}catch(_){toast('Je registratie kan nu niet worden gelezen. Probeer opnieuw.');return false;}
+  const discard=await confirmModal('Deze registratie kan nu niet worden hervat. Je kunt haar bewaren of verwijderen. Controleer je historie voordat je opnieuw registreert: de registratie kan al zijn ontvangen.',{title:'Eerdere registratie',okLabel:'Verwijderen',cancelLabel:'Bewaren',danger:true});
+  if(!discard||tk603LosOwner()!==owner||tk603LosEpoch!==epoch)return false;
+  try{if(localStorage.getItem(TK603_LOS_PENDING_KEY)!==before){toast('De registratie is gewijzigd. Open haar opnieuw.');return false;}
+    localStorage.removeItem(TK603_LOS_PENDING_KEY);}catch(_){toast('Verwijderen is niet gelukt. Probeer opnieuw.');return false;}
+  resetLosAllState();openModal('m-los-oefening');return true;
+}
+
+async function tk603LosWritePending(c){
+  if(!tk603LosCurrent(c)||TK504_TYPED_FK_SESSION_RELEASE!==true)return false;
+  const d=tk603LosReadPending();
+  if(!d||d.selected_id!==c.selected||!tk504ValidateCatalogSourceRef(d.selected_id,d.source_ref))
+    throw new Error('tk603_los_source_invalid');
+  const binding=await tk504VerifySessionBinding({id:d.selected_id,tk504_catalog_ref:d.source_ref});
+  if(!tk603LosCurrent(c)||!binding||binding.owner_uid!==c.owner)return false;
+  const ok=await writeSessionRow(JSON.parse(JSON.stringify(d.row)),{tk504_binding:binding});
+  return tk603LosCurrent(c)&&ok===true;
+}
+function tk603LosRemoveConfirmed(c,id){
+  if(!tk603LosCurrent(c))return false;
+  const d=tk603LosReadPending();
+  if(!d||d.row.id!==id)return false;
+  localStorage.removeItem(TK603_LOS_PENDING_KEY);tk603LosPending=null;return true;
+}
+async function tk603LosReplayPending(c){
+  const d=tk603LosReadPending();if(!d||!tk603LosCurrent(c))return false;
+  if(!await tk603LosWritePending(c)||!tk603LosCurrent(c))return false;
+  if(d.row.training_instance_id){
+    try{await completeTrainingInstance(d.row.training_instance_id);}catch(_){}
+    if(!tk603LosCurrent(c))return false;
+  }
+  if(!tk603LosRemoveConfirmed(c,d.row.id))return false;
+  closeModal('m-los-oefening');resetLosAllState();toast('Opgeslagen');return true;
+}
+async function tk603LosRestorePending(d,owner){
+  if(tk603LosOwner()!==owner||!d||d.owner_uid!==owner)return false;
+  if(!tk504ValidateCatalogSourceRef(d.selected_id,d.source_ref)){
+    toast('Deze oefening kan nu niet worden hervat. Je registratie blijft bewaard.');return false;
+  }
+  const ex=catalogToPickerEx(ExerciseCatalogService.byId(d.selected_id));if(!ex)return false;
+  resetLosAllState(true);
+  losSelectedExId=d.selected_id;tk603LosPending=d;
+  const c=tk603LosContext();
+  document.getElementById('los-ex-trigger-lbl').textContent=tkPickerDisplayName(ex);
+  document.getElementById('los-ex-trigger-lbl').className='';
+  openModal('m-los-oefening');
+  await renderLosBody(ex);
+  if(!tk603LosCurrent(c))return false;
+  const body=document.getElementById('los-body');
+  if(body){
+    tk603LosFreezePending();
+  }
+  return true;
+}
+
+async function saveLosOefening(btnEl){
+  if(btnEl&&btnEl.disabled)return;
+  const c=tk603LosContext();if(!c.owner)return;
+  if(tk603LosBusy&&tk603LosCurrent(tk603LosBusy))return;
+  tk603LosBusy=c;if(btnEl)btnEl.disabled=true;
+  try{
+  if(TK504_TYPED_FK_SESSION_RELEASE===true&&tk603LosPending){
+    try{if(!await tk603LosReplayPending(c)&&tk603LosCurrent(c))toast('Nog niet opgeslagen. Controleer verbinding en toegang en probeer opnieuw.');}
+    catch(_){if(tk603LosCurrent(c))toast('Nog niet opgeslagen. Je registratie blijft bewaard.');}
+    return;
+  }
   let exId=losSelectedExId;
   if(!exId){toast('Kies een oefening');return;}
   const isNew=exId==='__new__';
@@ -18463,6 +18625,7 @@ async function saveLosOefening(btnEl){
       // hier.
       ex={id,name:naam,category:'Overig',type,wod_format:wodFormat,sort_order:99,active:true,pr:null,yt:null,rest_seconds:null,muscle_primary:primary,muscle_secondary:secondary,scope:'personal'};
       const ok=await sbPostQ('exercises',ex);
+      if(!tk603LosCurrent(c))return;
       if(!ok){toast('Fout bij aanmaken oefening');return;}
       exercises.push(ex);
       exId=id;
@@ -18542,15 +18705,16 @@ async function saveLosOefening(btnEl){
     try{
       const ref=tk603CatalogRefFromPickerSelection(ex);
       if(!ref)throw new Error('tk504_catalog_provenance_invalid');
-      const binding=await tk504VerifySessionBinding({id:exId,tk504_catalog_ref:ref});
-      if(!binding)throw new Error('tk504_catalog_fk_unverified');
-      // Stable original UUID across retry/timeout; new authority is rechecked.
-      row.id=tk504StableSessionId(sessionLog[LOS_DOMID]||(sessionLog[LOS_DOMID]={}));
-      ok=await writeSessionRow(row,{tk504_binding:binding});
-    }catch(_){toast('Beveiligde oefening niet opgeslagen: controleer verbinding en toegang');return;}
+      const pending=tk603LosStorePending(ex,row,c);
+      row.id=pending.row.id;
+      ok=await tk603LosWritePending(c);
+      if(!tk603LosCurrent(c))return;
+    }catch(_){if(tk603LosCurrent(c))toast('Beveiligde oefening niet opgeslagen: controleer verbinding en toegang');return;}
   }else{
     await ensureExerciseRow(exId); // unchanged V1/personal FK compatibility
+    if(!tk603LosCurrent(c))return;
     ok=await writeSessionRow(row);
+    if(!tk603LosCurrent(c))return;
   }
   if(!ok){toast('Fout bij opslaan');return;} // retry -- state unchanged
   // FASE 2A.1 (H5): een losse Concept2-execution met ad-hoc instance wordt via de BESTAANDE canonieke
@@ -18562,16 +18726,23 @@ async function saveLosOefening(btnEl){
     try{ await completeTrainingInstance(row.training_instance_id); }
     catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)',e&&e.message); }catch(_){ } }
   }
+  if(!tk603LosCurrent(c))return;
   // P1 route-unificatie: PR-cache ook bijwerken bij een losse oefening (was inconsistent — finishSession
   // en Guided deden dit al). Zelfde deterministische regel: nieuw record → upsert 'pr'.
   // Sprint 12: zelfde recordregel als bij het afronden van een training (DecisionCore, record.v1).
   if(tk603CanUpdatePersonalRecord(null,ex&&ex._catalog===true)){
     try{ const _r=DecisionCore.releaseRecord(row.weight, prFor(exId)); if(_r.isRecord) await upsertExerciseGoalField(exId,'pr',_r.waarde); }catch(_){}
   }
+  if(!tk603LosCurrent(c))return;
+  if(TK504_TYPED_FK_SESSION_RELEASE===true&&ex._catalog===true){
+    try{if(!tk603LosRemoveConfirmed(c,row.id))return;}
+    catch(_){toast('Bevestiging nog niet afgerond. Probeer opnieuw; dezelfde registratie blijft bewaard.');return;}
+  }
   closeModal('m-los-oefening');
   resetLosAllState();
   toast('Opgeslagen');
-  }finally{if(btnEl)btnEl.disabled=false;}
+  }finally{if(tk603LosBusy===c)tk603LosBusy=null;
+    if(btnEl&&tk603LosOwner()===c.owner&&!tk603LosBusy)btnEl.disabled=false;}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -36381,7 +36552,7 @@ const CACHE_OWNER_KEY='tk_cache_owner_uid';
 // persoonsgegeven) en 'tk_ns_migrated' (eenmalige namespace-migratie van het toestel zelf).
 const PERSONAL_CACHE_KEYS=[
   'tk_atleet','tk_trainings','tk_trainings_onbevestigd','tk_supp_defs','tk_voeding_shells','tk_active_sport','tk_draft_training','tk_last_training',
-  'tk_ai_consent','tk_gw_active','tk_gw_hist','tk_gw_log',
+  'tk_ai_consent','tk_gw_active','tk_gw_hist','tk_gw_log','tk603_los_pending_v1',
   'tk_product_telemetry_consent', // MS-TELEMETRY-01: toestemming geldt per gebruiker, nooit geerfd op een gedeeld toestel
   'tk_wb_draft','tk_wb_saved','tk_wb_favs','tk_wb_migrated_v1','tk_vt_meta',
   'tk_lib_favs','tk_lib_recent','tk_lib_recentq',
@@ -36391,6 +36562,7 @@ const PERSONAL_CACHE_KEYS=[
   'tk_hyrox_active' // FASE 4-INTEGRATIE — lopende HYROX/triathlon-race is persoonsgebonden, moet bij eigenaarwissel op een gedeeld toestel gewist worden
 ];
 function wipePersonalCache(){
+  if(typeof tk603LosReset==='function'){tk603LosReset(true);losSelectedExId=null;losCurEx=null;if(typeof sessionLog!=='undefined')delete sessionLog[LOS_DOMID];}
   PERSONAL_CACHE_KEYS.forEach(k=>localStorage.removeItem(k));
   Object.keys(localStorage).filter(k=>k.startsWith('tk_1rm_')).forEach(k=>localStorage.removeItem(k));
   // RC0: 'sel_<cardiotype>' bewaart welke machine de sporter als laatste koos (bv.
@@ -36421,6 +36593,7 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
   progExData={};
   estOneRMCache={};
   repPRCache={};
+  if(typeof tk603LosReset==='function'){tk603LosReset();losSelectedExId=null;losCurEx=null;}
   tk603LiveSource=Object.create(null); // #603: no catalog source claim survives an account switch
   // #603: strengthBasisCache is a const object (personal AND owner-keyed catalog entries).
   Object.keys(strengthBasisCache).forEach(k=>{delete strengthBasisCache[k];});

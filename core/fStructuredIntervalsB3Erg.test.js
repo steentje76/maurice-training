@@ -171,13 +171,14 @@ function sandbox() {
   eq((code.match(/await writeSessionRow\((?:tk504RewriteVerifiedSessionRow\()?\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
   const looseWriter=extractFn('saveLosOefening');
   const looseWriterCalls=(looseWriter.match(/writeSessionRow\(/g)||[]).length;
-  eq(looseWriterCalls,2,'persistence: losse oefening heeft 2 schrijfvarianten, alleen in exclusieve branches');
+  eq(looseWriterCalls,1,'persistence: losse oefening heeft 1 legacy write en de exclusieve durable typed adapter');
   ok(/if\(TK504_TYPED_FK_SESSION_RELEASE===true&&ex\._catalog===true\)/.test(looseWriter) &&
-     /ok=await writeSessionRow\(row,\{tk504_binding:binding\}\)/.test(looseWriter) &&
+     /ok=await tk603LosWritePending\(c\)/.test(looseWriter) &&
      /\}else\{[\s\S]*ok=await writeSessionRow\(row\)/.test(looseWriter),
      'persistence: catalogus-getypeerde en legacy losse schrijftakken zijn strikt exclusief');
-  eq((code.match(/writeSessionRow\(/g)||[]).length-looseWriterCalls,5,
-     'persistence: overige writer-bronnen blijven exact gelijk (1 definitie + 4 bestaande paden)');
+  eq((code.match(/writeSessionRow\(/g)||[]).length-looseWriterCalls,6,
+     'persistence: 1 definitie + 4 bestaande paden + 1 durable typed adapter, geen tweede pipeline');
+  ok(/await writeSessionRow\(JSON.parse\(JSON.stringify\(d.row\)\),\{tk504_binding:binding\}\)/.test(extractFn('tk603LosWritePending')), 'durable typed adapter gebruikt uitsluitend bestaande centrale writer met actuele binding');
   ok(!/sbPostQ\('activities'/.test(SRC.finishIntervalExecution) && !/activity_laps/.test(SRC.finishIntervalExecution), 'persistence: erg schrijft niet naar activities/activity_laps');
   ok(/_tkErgPending&&_tkErgPending\.exId===exId/.test(SRC.startIntervalExecution) && /buildIntervalPrescriptionFromForm/.test(SRC.startIntervalExecution), 'executie: snapshot-prescriptie heeft voorrang, formulier blijft fallback voor ad-hoc');
   ok(/IntervalEngineCore\.stateAt/.test(SRC.tkErgCloseBlockActual) && /IntervalEngineCore\.nextBlockIndex/.test(SRC.advanceIntervalBlock), 'engine: bloksemantiek uit IntervalEngineCore');

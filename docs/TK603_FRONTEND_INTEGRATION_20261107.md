@@ -28,7 +28,7 @@ Independent review and exact-head GitHub Quality Gate are recorded in the PR onc
 
 - Scope-trigger proposal remains local-only; reviewed complete migration/provisioning and rollback are still required.
 - Complete UI-writer/schema parity, real cloud Auth/Storage and Android/WebView/media/Range/expiry acceptance.
-- Further async account-fence audit (including coach request caller and other legacy loaders); program-definition source references and loose-exercise restart.
+- Further async account-fence audit (including coach request caller and other legacy loaders); program-definition source references and remaining pre-Save/legacy loose-exercise restart. Typed pending registration durability is implemented in TK603_LOOSE_DURABLE_RESTART_20261107.md.
 - Full historical read behavior after entitlement revocation requires verification; no personal-history fallback is permitted.
 - Licensed content/publication/entitlement approval and protected media cutover; legacy public media is intentionally retained until replacement is proven.
 - Earlier #577/#582/#584/#586 findings and owner-led mobile UX review before any new APK.
@@ -39,4 +39,4 @@ No changes to production/main, real entitlements, sporter data, publication or r
 
 Claude performed a read-only review of the isolated frontend diff and modified test harnesses. It found no weakened assertions and no blockers with release flags OFF. It identified an all-catalog coach fallback and a custom-resume owner check after state reset. Both are now fixed: an explicitly empty personal-ID set makes no personal-history request, and custom resume verifies ownership before reset and after asynchronous loading. A new actual-function regression covers empty/mixed/legacy coach requests and account changes during confirmation, exercise loading and equipment loading (12 assertions PASS). The personal PR persistence test now reads the whole helper rather than a truncated 1600-character window; its 39 assertions pass unchanged.
 
-Other reviewer findings remain open: loose-exercise UUID is not durable outside a training; legacy pre-fix normal drafts have no resolved provenance; stats discovery may create hundreds of requests; legacy stats/timeline/previous-performance readers still need owner fences. This draft does not approve enabling any flag.
+Other reviewer findings remain open: typed loose-exercise UUID/durable pending recovery has since been implemented (see TK603_LOOSE_DURABLE_RESTART_20261107.md); legacy personal UUID/pre-Save recovery remains open; legacy pre-fix normal drafts have no resolved provenance; stats discovery may create hundreds of requests; legacy stats/timeline/previous-performance readers still need owner fences. This draft does not approve enabling any flag.

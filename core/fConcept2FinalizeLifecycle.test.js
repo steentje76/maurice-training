@@ -35,7 +35,7 @@ function constSrc(html, decl) {
   const s = html.indexOf(decl); let d = 0; const b = html.indexOf('{', s);
   for (let k = b; k < html.length; k++) { if (html[k] === '{') d++; else if (html[k] === '}') { d--; if (d === 0) return html.slice(s, k + 1) + ';'; } }
 }
-const FNS = ['tkHuidigeUid','tkEigenaarUid','tk603CanUpdatePersonalRecord','finishSession', 'tkSessieOptsVoor', 'tkSessieSchrijfOpts', 'tkSessieUitkomst', 'saveLosOefening', 'clearLosSessionState', 'losHasUnsavedData', 'tkErgStartProtocol',
+const FNS = ['tk603LosOwner','tk603LosContext','tk603LosCurrent','tk603LosReset','tkHuidigeUid','tkEigenaarUid','tk603CanUpdatePersonalRecord','finishSession', 'tkSessieOptsVoor', 'tkSessieSchrijfOpts', 'tkSessieUitkomst', 'saveLosOefening', 'clearLosSessionState', 'losHasUnsavedData', 'tkErgStartProtocol',
   'tkErgOnCanonicalMeasurement', 'tkC2IsLoggableSummary', 'tkC2Converter', 'tkC2SessionRowFromLog', 'tkC2ExecutionCleanup',
   'tkErgDisconnect', 'tkErgDisconnectAll', '_c2rtTeardown', '_c2rtSet', '_c2rtGet', '_c2repaint', '_c2idleInner', '_c2note', '_c2btn',
   'cardioDataToRow', 'resolveCardioType', 'tkErgProtocolSection', 'tkErgProtocolProjectionFor', 'tkErgProtocolInstanceId',
@@ -84,6 +84,7 @@ function makeWorld(html, over) {
     Concept2Live: C2L, DeviceCore: DC, DecisionCore: DecisionCore, sessionPrBase: {}, prFor: () => null, upsertExerciseGoalField: async () => {}, tkSetEvidence: UNDEF, CardioCore: CardioCore, ErgProtocolIdentity: EPI, IntervalEngineCore: IEC,
     liveWorkoutToActual: UNDEF, TKWeather: UNDEF, tkC2DiagFinishPath: UNDEF, tkC2DiagFinishEx: UNDEF, tkC2DiagFinishCalled: UNDEF, tkC2DiagOnCanonical: UNDEF,
     curT: 't1', trainStart: Date.now() - 60000, pausedAccumMs: 0, activeInstanceId: over.activeInstanceId || null,
+    tk603LosEpoch:0,tk603LosPending:null,tk603LosBusy:null,TK603_LOS_PENDING_KEY:'tk603_los_pending_v1',
     authSession:{user:{id:'u-test'}}, TK504_TYPED_FK_SESSION_RELEASE:false,
     _finishSessionContext:null, activePlannedAssignmentId:null,
     sessionLog: {}, sessionExtra: [], _c2completion: {}, _c2packetMeta: {}, finishSessionBezig: false, _tkErgPending: null, _ergProtocol: {}, _c2pair: {}, _c2rt: {}, _c2liveLast: {},

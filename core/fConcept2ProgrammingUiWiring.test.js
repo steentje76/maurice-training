@@ -19,7 +19,7 @@ function loadHelper(env) {
 // ── statische invarianten op de productiecode ────────────────────────────────
 ok(/st\._prog=Concept2Programming\.createProgrammingController\(/.test(html), 'W1: controller per verbinding aangemaakt');
 ok(/write:function\(b\)\{ return t\.writeControlFrame\(b\); \}/.test(html), 'W2: write gaat via transport.writeControlFrame');
-ok(/t\.setControlResponseHandler\(function\(bytes,ctx\)\{ if\(st\._prog\) st\._prog\.handleControlResponse\(bytes,ctx\); \}\)/.test(html), 'W3: CE060022 routing naar de controller');
+ok(/t\.setControlResponseHandler\(function\(bytes,ctx\)\{\s*if\(st\._prog\) st\._prog\.handleControlResponse\(bytes,ctx\);/.test(html), 'W3: CE060022 routing naar de bestaande fixed-distance controller');
 ok(/_c2rtTeardown\(exId,'disconnect'\)/.test(html), 'W4: disconnect ruimt de runtime op via de owner (cancel + reset)');
 ok(/t\.setControlResponseHandler\(null\)/.test(html), 'W5: response-handler geneutraliseerd bij disconnect');
 ok(/if\(progRes&&progRes\.attempted&&!progRes\.confirmed\)\{/.test(html), 'W6: vastleggen stopt wanneer programmering niet bevestigd is');

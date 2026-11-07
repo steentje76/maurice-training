@@ -3059,3 +3059,11 @@ publicatiestatus op "Testing", dan publiceren ("In production"). Zie `docs/B9_H3
 Zolang de status "Testing" is, moet elke koppeling na 7 dagen opnieuw worden gelegd.
 
 **Status.** NOT VERIFIED. Niet vast te stellen zonder Console-toegang.
+
+## DEC-TK587-INT-001 — Integratie #587 met MoveKit-main en één geïsoleerde test-APK (7 november 2026)
+- Datum: 7 november 2026
+- Beslissing: #587 wordt samengevoegd met main op `integration/tk587-main-20261107`. Bij overlap gelden beide sporen: eigenaarsbinding en catalogusherkomst (#603) én behoud van uitgevoerde sets, uitvoeringsdraft en bevestigde instance-afronding (#587). Herstel zonder bewezen eigenaar is onbekend (`overall:null`), niet 100%. Eén test-APK als aparte variant naast de bestaande app.
+- Reden: PO-opdracht 7 november; 582 oefeningen en functionele herstelpunten in één testversie, zonder productie- of datarisico.
+- Alternatieven: alleen #587 (verliest MoveKit/#603) of alleen main (verliest herstelpunten) — afgewezen.
+- Impact: geen migratie, geen historische datawijziging. 226 legacy-media blijven aparte schuld. Productie-merge alleen na groene CI, onafhankelijke review en Samsung-acceptatie.
+- Verantwoordelijke: Maurice

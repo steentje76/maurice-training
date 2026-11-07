@@ -27,7 +27,7 @@ function extractFn(name) {
 }
 const FNS = ['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection','tk504ValidateCatalogSourceRef','tk504BuilderRefsFromPlan','tk504AttachSavedCatalogRefs',
   'tkErgSportForExercise', 'tkErgDefinitionValid', 'saveIntervalWorkout', 'ivRaw', 'ivFromRaw', 'snapshotFromCustomTraining', 'startInstanceFromDefinition',
-  'startIntervalExecution', 'advanceIntervalBlock', 'tkErgCloseBlockActual', 'finishIntervalExecution', 'buildIntervalPrescriptionFromForm',
+  'tkErgResolveIntervalPrescription', 'startIntervalExecution', 'advanceIntervalBlock', 'tkErgCloseBlockActual', 'finishIntervalExecution', 'buildIntervalPrescriptionFromForm',
   'renderErgSessionStructuredHtml', 'tkErgActualText', 'structuredBlockLabel', 'tkIvTerminationText', 'tkIvTargetText'];
 const SRC = {}; FNS.forEach((n) => { SRC[n] = extractFn(n); ok(SRC[n], 'functie gevonden: ' + n); });
 const CONST = (html.match(/const TK_IV_BLOCK_LABEL=\{[^\n]*\n/) || [''])[0] + (html.match(/const TK_IV_SPORT_LABEL=\{[^\n]*\n/) || [''])[0]
@@ -180,7 +180,7 @@ function sandbox() {
      'persistence: 1 definitie + 4 bestaande paden + 1 durable typed adapter, geen tweede pipeline');
   ok(/await writeSessionRow\(JSON.parse\(JSON.stringify\(d.row\)\),\{tk504_binding:binding\}\)/.test(extractFn('tk603LosWritePending')), 'durable typed adapter gebruikt uitsluitend bestaande centrale writer met actuele binding');
   ok(!/sbPostQ\('activities'/.test(SRC.finishIntervalExecution) && !/activity_laps/.test(SRC.finishIntervalExecution), 'persistence: erg schrijft niet naar activities/activity_laps');
-  ok(/_tkErgPending&&_tkErgPending\.exId===exId/.test(SRC.startIntervalExecution) && /buildIntervalPrescriptionFromForm/.test(SRC.startIntervalExecution), 'executie: snapshot-prescriptie heeft voorrang, formulier blijft fallback voor ad-hoc');
+  ok(/_tkErgPending&&_tkErgPending\.exId===exId/.test(SRC.tkErgResolveIntervalPrescription) && /buildIntervalPrescriptionFromForm/.test(SRC.tkErgResolveIntervalPrescription) && /tkErgResolveIntervalPrescription\(exId,cardioType\)/.test(SRC.startIntervalExecution), 'executie: snapshot-prescriptie heeft voorrang, formulier blijft fallback voor ad-hoc');
   ok(/IntervalEngineCore\.stateAt/.test(SRC.tkErgCloseBlockActual) && /IntervalEngineCore\.nextBlockIndex/.test(SRC.advanceIntervalBlock), 'engine: bloksemantiek uit IntervalEngineCore');
   ok(!/ErgIntervalEngine|Concept2IntervalEngine|RowErgEngine/.test(html), 'engine: geen tweede interval-engine geïntroduceerd');
   ok(/TK_ERG_SPORTS\.indexOf\(norm\.sport\)!==-1/.test(PREVIEW_START) && /tkErgDefinitionValid\(norm\.sport,def\.exercises\|\|\[\]\)/.test(PREVIEW_START) && /_tkErgPending=\{exId:_exId/.test(PREVIEW_START), 'start: erg-tak valideert de Definition-invariant en zet de snapshot-prescriptie klaar');

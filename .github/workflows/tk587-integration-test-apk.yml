@@ -1,0 +1,216 @@
+name: TK587 integration — verification and isolated test APK
+
+# One isolated Android test candidate for the #587 x MoveKit integration (7 November 2026).
+# PO authorisation: exactly one test APK after the repair and safety tests; NOT a production
+# update, NOT a replacement of the installed app. The APK is built from the exact PR head
+# commit, only after the full regression is green, and is published as a GitHub prerelease
+# only after emulator acceptance on API 30 and API 34 passed for that same file and hash.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tk587-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TK_BRANCH: integration/tk587-main-20261107
+  TK_PKG: com.trainingskompas.app.tk587test20261107
+  TK_LABEL: TK Test 7 november
+
+jobs:
+  regression:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'integration/tk587-main-20261107'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run cap:copy
+      - name: Full release gate on exact source (all core suites, syntax, purity)
+        run: |
+          git rev-parse HEAD
+          npm test
+          npm run test:native
+          node coaching.test.js
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - name: Real Chromium acceptance (TK577 input/picker, TK584 execution, 320-430px set fields)
+        run: |
+          node scripts/tk577-browser-acceptance.cjs
+          node scripts/tk584-browser-acceptance.cjs
+          node scripts/tk-all-browser-acceptance.cjs
+      - name: No secrets or licensed MoveKit sources in the web bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -rIlE 'service_role|SUPABASE_SERVICE|sk_live_|BEGIN (RSA |EC )?PRIVATE KEY' www/ --include='*.html' --include='*.js' --include='*.json'
+          ! find www -type f \( -iname '*.mp4' -o -iname '*.mov' -o -iname '*.webm' -o -iname '*licen*' \) | grep -q .
+
+  apk:
+    needs: regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      source_sha: ${{ steps.provenance.outputs.source_sha }}
+      apk_name: ${{ steps.provenance.outputs.apk_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - run: npm ci && npm run cap:sync
+      - name: Build only the isolated test variant
+        run: chmod +x android/gradlew && cd android && ./gradlew assembleTk587test --no-daemon
+      - name: Verify package, label, version, signing, embedded sources, secrets and checksum
+        id: provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          APK=android/app/build/outputs/apk/tk587test/app-tk587test.apk
+          test -f "$APK"
+          mkdir -p candidate
+          "$BT/aapt" dump badging "$APK" > candidate/package-verification.txt
+          grep -q "package: name='$TK_PKG' versionCode='47027' versionName='4.70.27-tk587test20261107'" candidate/package-verification.txt
+          grep -q "application-label:'$TK_LABEL'" candidate/package-verification.txt
+          "$BT/aapt" dump xmltree "$APK" AndroidManifest.xml > candidate/manifest-verification.txt
+          if grep -qE 'android:scheme.*"trainingskompas"' candidate/manifest-verification.txt; then echo 'test app must not intercept the installed app OAuth return'; exit 1; fi
+          "$BT/apksigner" verify --verbose --print-certs "$APK" > candidate/signature-verification.txt
+          node tools/verify-ocr-packaging.js --apk "$APK"
+          unzip -p "$APK" assets/public/index.html > /tmp/embedded-index.html
+          cmp www/index.html /tmp/embedded-index.html
+          grep -q "const APP_VER = 'v4.70.27'" /tmp/embedded-index.html
+          if unzip -l "$APK" | grep -qiE '\.(mp4|mov|webm)$|licen[cs]e.*movekit|movekit.*licen'; then echo 'licensed media must not be bundled'; exit 1; fi
+          if unzip -p "$APK" 'assets/public/*' 2>/dev/null | grep -aqE 'service_role|SUPABASE_SERVICE|BEGIN (RSA |EC )?PRIVATE KEY'; then echo 'secret material in APK'; exit 1; fi
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          NAME="Trainingskompas-v4.70.27-${SOURCE_SHA:0:9}-tk587test7nov.apk"
+          cp "$APK" "candidate/$NAME"
+          printf '%s\n' "$SOURCE_SHA" > candidate/source-commit.txt
+          (cd candidate && sha256sum "$NAME" > "$NAME.sha256")
+          cat candidate/*.sha256
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "apk_name=$NAME" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tk587-apk-${{ steps.provenance.outputs.source_sha }}
+          path: candidate/
+          retention-days: 30
+          if-no-files-found: error
+
+  android:
+    needs: apk
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [30, 34]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.apk.outputs.source_sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+      - uses: actions/download-artifact@v4
+        with:
+          name: tk587-apk-${{ needs.apk.outputs.source_sha }}
+          path: candidate
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        env:
+          TK_EMULATOR_ONLY: '1'
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: node scripts/tk587-android-acceptance.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tk587-android-api${{ matrix.api }}-${{ needs.apk.outputs.source_sha }}
+          path: android-test-evidence/
+          if-no-files-found: warn
+
+  publish:
+    # Only the exact file that passed API 30 and API 34 is published, as a prerelease.
+    needs: [apk, android]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.apk.outputs.source_sha }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: tk587-apk-${{ needs.apk.outputs.source_sha }}
+          path: candidate
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tk587-android-api*-${{ needs.apk.outputs.source_sha }}
+          path: evidence
+      - name: Create GitHub prerelease with APK, checksum and verification evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.apk.outputs.source_sha }}
+          NAME: ${{ needs.apk.outputs.apk_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd candidate && sha256sum -c "$NAME.sha256")
+          for api in 30 34; do
+            f=$(ls evidence/tk587-android-api$api-*/result.json)
+            grep -q '"status": "PASS"' "$f"
+            cp "$f" "candidate/android-api$api-result.json"
+          done
+          TAG="tk587-test-20261107-${SHA:0:9}"
+          HASH=$(cut -d' ' -f1 "candidate/$NAME.sha256")
+          {
+            echo "# Trainingskompas v4.70.27 — TK Test 7 november (integratie #587 + MoveKit)"
+            echo
+            echo "**Testversie, geen productie-update.** Installeert als **$TK_LABEL** naast de bestaande app; de APK van 25 oktober en de productie-app blijven ongemoeid."
+            echo
+            echo "- Broncommit: \`$SHA\`"
+            echo "- Pakket: \`$TK_PKG\` · versionName \`4.70.27-tk587test20261107\` · versionCode \`47027\`"
+            echo "- Bestand: \`$NAME\` · SHA-256 \`$HASH\`"
+            echo "- Ondertekening: debug-sleutel van de CI-runner (testvariant, niet uploadbaar naar Play)."
+            echo "- Android-emulator API 30 en API 34: PASS op exact dit bestand (zie android-api*-result.json)."
+            echo
+            echo "Volledige changelog, open punten en Samsung-acceptatiestappen: docs/TK587_INTEGRATION_20261107.md in de broncommit."
+          } > candidate/release-notes.md
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$SHA" --prerelease \
+            --title "Trainingskompas v4.70.27 — TK Test 7 november (#587 + MoveKit, testversie)" \
+            --notes-file candidate/release-notes.md candidate/*

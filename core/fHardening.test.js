@@ -350,7 +350,7 @@ ok(/rest_sec:s\.rest_sec/.test(html), 'H3: buildStrengthSessionRow() geeft rest_
   let sessionLog = {}, lastSetDoneAt = {};
   const toggleSrc = extractFn('toggleSetDone');
   const mod = new Function('sessionLog','lastSetDoneAt','document','updateProgress','updateSummary','scheduleAutosave','refreshActiveSetBanner','unlockAudio','showPostSetAdvice','showSetCompletionFeedback','autoRestAfterSet','curT',
-    toggleSrc + '\nreturn toggleSetDone;'
+    'const logSet=()=>{},persistTrainingDraft=()=>{};\n'+toggleSrc + '\nreturn toggleSetDone;'
   )(sessionLog, lastSetDoneAt,
     { getElementById: () => ({ classList: { contains:()=>false, toggle:()=>{}, add:()=>{}, remove:()=>{} } }) },
     ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, ()=>{}, 'Kracht');
@@ -528,8 +528,8 @@ ok(/openExPicker\(async function\(newEx\)/.test(execReplaceSrc), 'T1 (EX-REPLACE
 ok(/const replaced=newEx;/.test(execReplaceSrc) && /tk603CatalogRefFromPickerSelection\(replaced\)/.test(execReplaceSrc) && !/resolvePickerEx\(newEx\.id\)/.test(execReplaceSrc),
   'T2 (EX-REPLACE-3 / #603): gebruikt de expliciete geselecteerde bron uit de bestaande unified picker; geen ongetypeerde ID-herresolutie');
 ok(/heeftData=execExerciseHasData\(exId\)/.test(execReplaceSrc), 'T3 (EX-REPLACE-2): controleert expliciet op reeds geregistreerde data vóór vervangen');
-ok(/gaan die gegevens verloren -- ze worden NIET automatisch overgezet/.test(execReplaceSrc), 'T3b: waarschuwt expliciet dat data NIET automatisch wordt omgezet -- exacte, veilige productregel uit de opdracht');
-ok(/delete sessionLog\[exId\]/.test(execReplaceSrc), 'T4: oude sessionLog-data voor de vervangen oefening wordt opgeruimd -- geen orphan/ghost-koppeling aan de nieuwe oefening');
+ok(/uitgevoerde sets blijven onder deze oefening bewaard/.test(execReplaceSrc), 'T3b TK584: meldt behoud onder oorspronkelijke oefening; geen actuals-overdracht');
+ok(!/delete sessionLog\[exId\]/.test(execReplaceSrc)&&/_retainedPerformed:true/.test(execReplaceSrc), 'T4 TK584: oude actuals blijven zichtbaar onder oorspronkelijke ID, geen ghost-koppeling');
 ok(/renderTrainScreen\(t\)/.test(execReplaceSrc), 'T5: hergebruikt de bestaande renderTrainScreen() -- geen tweede render-/execution-pad');
 
 const execRemoveSrc = html.slice(html.indexOf('async function execRemoveExercise('), html.indexOf('async function execRemoveExercise(') + 1300);
@@ -602,7 +602,14 @@ ok(!calcSrcV.includes('openRecoveryDetail') && !calcSrcV.includes('consistentieB
 
 /* ── W. A5 — DEVICE CONNECT HARDENING (v4.66.0) — mid-workout connect, geen state loss ── */
 console.log('\nW. A5: device-connect-hardening -- geen gestapelde subscriptions, geen dubbel-tik-race, geen aanraking van trainingsstaat');
-const connDevSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 6600);
+// Parse the complete function: a fixed character window can omit error exits as wiring grows.
+function hardeningFunctionSource(name){
+  const start=html.indexOf('function '+name+'(');if(start<0)throw Error(name);
+  for(let end=html.indexOf('}',start);end>=0;end=html.indexOf('}',end+1)){
+    const candidate=html.slice(start,end+1);try{new Function('return ('+candidate+')');return candidate;}catch(_){}
+  }throw Error('Incomplete '+name);
+}
+const connDevSrc = hardeningFunctionSource('tkErgConnectDevice');
 ok(/typeof st\._unsubMetrics==='function'/.test(connDevSrc), 'W1 (bewezen bug, gerepareerd): ruimt vóór elke nieuwe subscribeMetrics()-aanroep de eerder VASTGELEGDE, exercise-specifieke unsubscribe-functie op -- voorkomt gestapelde listeners bij dubbel verbinden');
 ok(/typeof st\._unsubConn==='function'/.test(connDevSrc), 'W2: idem voor de connection-listener (subscribeConnection)');
 ok(/st\._unsubConn=t\.subscribeConnection\(/.test(connDevSrc), 'W3: legt de door subscribeConnection() teruggegeven unsubscribe-functie vast -- niet alleen aanroepen en negeren');
@@ -617,7 +624,7 @@ const pairSrc = html.slice(html.indexOf('function tkErgPair('), html.indexOf('fu
 ok(/if\(st\._scanning\)return/.test(pairSrc.replace(/\s/g,'')), 'W10 (Sectie 9): dubbel tikken op "apparaat koppelen" tijdens het scannen wordt genegeerd -- geen twee overlappende discover()-aanroepen');
 ok((pairSrc.match(/_scanning=false/g)||[]).length>=3, 'W11: de scan-busy-guard wordt in alle uitgangen correct teruggezet');
 
-const normalizeSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgConnectDevice(') + 5600);
+const normalizeSrc = html.slice(html.indexOf('function tkErgConnectDevice('), html.indexOf('function tkErgDisconnectAll(')); // omvat volledige connect-handler, ook na uitbreiding met #579 BLE-routing
 ok(/Concept2Live\.createPm5LiveAggregator/.test(normalizeSrc) && /st\._agg\.push\(/.test(normalizeSrc), 'W12 (Sectie 18, live metric ownership): ruwe device-events gaan UITSLUITEND via de Concept2Live PM5-aggregator (die intern normalizeLiveMetric aanroept) naar een canoniek object -- nooit ongefilterd RAW naar de UI/sessionLog');
 
 /* ── X. A5-VERVOLG (v4.67.0) — device-cleanup bij discard/finish (Prioriteiten 9/10) ── */

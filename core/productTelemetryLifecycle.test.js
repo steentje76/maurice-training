@@ -126,7 +126,7 @@ function world(html, o) {
     sessionLog: {}, sessionExtra: [], finishSessionBezig: false, _finishSessionContext:null, tkEigenaarUid:()=> 'u-test', _tkErgPending: null, _ergProtocol: {}, _c2pair: {}, _c2rt: {}, _c2liveLast: {}, LOS_DOMID: 'los',
     exercisesList: [], getSessionExs: () => env.exercisesList, getExerciseMuscles: () => [], ensureSessionExerciseRows: async () => {},
     writeSessionRow: async row => { if (o.writeThrows) throw new Error('net'); if (o.writeFalse) return false; writes.push(row); return true; },
-    completeTrainingInstance: async () => {}, sbPatchQ: async () => true,
+    sessionProgramSnapshot:{items:[]}, createTrainingInstance:async()=> 'synthetic-instance', completeTrainingInstance: async () => true, sbPatchQ: async () => true,
     tkProductTelemetry: o.teleThrows ? (() => { throw new Error('tele boom'); }) : ((ev, p) => { tele.push({ ev, p: JSON.parse(JSON.stringify(p || {})) }); return true; }),
     localStorage: { getItem: () => '', setItem() {}, removeItem() {} },
     document: { getElementById: () => element(), querySelectorAll: () => [], querySelector: () => null },

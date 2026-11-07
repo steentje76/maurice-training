@@ -23,7 +23,9 @@ function normal(storage=store()){
   applySessionRecovery:(t,list)=>list,tk504ValidateCatalogSourceRef:(id,r)=>r?.catalog_id===id?r:null,
   window:{},Date,Object,JSON
  });
- for(const name of ['currentWorkoutElapsedMs','persistTrainingDraft','restoreTrainingDraft','getSessionExs','tk504StableSessionId','startT'])vm.runInContext(extract(name),s);
+ // #587 execution draft (skips, focus, immutable program snapshot) is part of the real persist/restore path.
+ s.sessionProgramSnapshot=null;
+ for(const name of ['currentWorkoutElapsedMs','execSkipSet','restoreExecutionDraft','persistTrainingDraft','restoreTrainingDraft','getSessionExs','tk504StableSessionId','startT'])vm.runInContext(extract(name),s);
  if(html.includes('function tk603DraftOwnerMatches('))vm.runInContext(extract('tk603DraftOwnerMatches'),s);
  return {s,state,storage};
 }

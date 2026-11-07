@@ -20,7 +20,7 @@ legacyScreens.forEach(function(id){
 
 // Alle 6 domain-cards op het nieuwe Inzicht-overzicht wijzen naar een bewezen, bestaand scherm.
 const inzichtSrc = html.slice(html.indexOf('function inzichtRenderDomains'), html.indexOf('function inzichtRenderDomains') + 1500);
-['s-stats','s-lich-health','s-lich-metingen','s-lich-verbanden'].forEach(function(dest){
+['s-stats','s-lich-health','s-lich-verbanden'].forEach(function(dest){
   ok(inzichtSrc.includes("go:'" + dest + "'"), '2.' + dest + ': minstens 1 domain-card wijst naar dit bewezen, bestaande scherm');
 });
 
@@ -30,7 +30,7 @@ const inzichtScherm = html.slice(html.indexOf('<div class="scr" id="s-inzicht">'
 ok(!html.includes('<div class="scr" id="s-lichaam">') && html.includes("if(id==='s-lichaam'){id='s-inzicht';}"), '1.s-lichaam: geen eigen scherm meer; de oude route leidt om naar Inzicht');
 ok(inzichtScherm.includes("go('s-lich-cyclus')"), '3: Cyclus is rechtstreeks vanaf Inzicht bereikbaar');
 ok(inzichtScherm.includes("go('s-lich-gegevens')"), '4: Gegevens & koppelingen is rechtstreeks vanaf Inzicht bereikbaar');
-ok(inzichtSrc.includes("go:'s-lich-metingen'"), '5: Lichaamsmetingen is bereikbaar via het domein Lichaam');
+ok(inzichtScherm.includes("go('s-lich-metingen')") && inzichtScherm.includes('<b>Lichaamssamenstelling</b>'), '5: lichaamsmetingen blijven bereikbaar via Lichaamssamenstelling onder Gegevens & context');
 ok(inzichtSrc.includes("go:'s-lich-health'"), '6: Gezondheid & herstel is bereikbaar via het domein Herstel');
 ok(inzichtScherm.includes("go('s-lich-spieren')") && inzichtScherm.includes("go('s-nutrition')"), '6b: spiergroepen en de vrije voedingsinvoer (legacy) blijven bereikbaar vanaf Inzicht');
 

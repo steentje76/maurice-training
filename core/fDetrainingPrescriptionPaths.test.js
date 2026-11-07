@@ -107,7 +107,7 @@ const hist = (n) => ({ 'ex-squat': [{ weight: 100, reps: 5, rpe: 8, date: dAgo(n
   const rnb = cn.resolveProgramItemWeight('ex-squat', '5', 8, null);
   ok(rnb.suggested === null && rnb.reason === 'no-base' && rnb.days === null, 'H: zonder 1RM/historie → no-base, geen verzonnen gewicht');
   const pnb = cn.computeProgPrefill({ id: 'ex-squat', reps: '5', rpe: 8 }, { weight: 80, reps: 5 }, null);
-  eq(pnb.kg, 80, 'H: zonder 1RM valt computeProgPrefill terug op vorige gewicht als ruwe referentie (ongewijzigd)');
+  eq(pnb.kg, '', 'H: zonder berekeningsbasis blijft voorschrift leeg; vorige prestatie blijft een afzonderlijke referentie');
   // ── M: readiness/recovery-keten rekent niet met dagen (aparte laag, ongewijzigd) ──
   const RECADJ = extractFn('recoveryAdjustmentForToday') || '';
   ok(RECADJ && !/detrainingFactor|resolveWorkingWeight|daysBetweenDates/.test(RECADJ), 'M: recoveryAdjustmentForToday bevat geen detraining (aparte laag, geen dubbele toepassing)');

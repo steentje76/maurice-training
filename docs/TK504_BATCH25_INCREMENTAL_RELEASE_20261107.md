@@ -44,7 +44,10 @@ nieuwe bereik, niet alleen het verschil met de vorige levering.
   harnessinputs; dit bewijst geen werkelijke serverpublicatie of gebruiksrechten.
   Ruwe metadata en proefoutput blijven buiten Git.
 - Webbuild geslaagd via node scripts/build-www.mjs.
-- Volledige Windows-projectgate wordt afzonderlijk gerapporteerd.
+- Volledige Windows-projectgate: 497 uitgevoerd, 1 skipped, 16 rood. Een afzonderlijke schone checkout van b5615fe met dezelfde dependencies geeft exact dezelfde 16 falende testnamen; geen nieuwe fouten. De volledige releasegate blijft rood.
+- Batch 01 opnieuw tegen private bron geverifieerd: 50/50 SHA-256 + bytes checks PASS, 25/25 inhoudelijk goedgekeurd, totaal 86.068.969 mediabytes.
+- Runtime-cache en static-cache gebumpt naar v470277 zodat een latere deployment de aangepaste ECS-bridge ophaalt; private-media-cutover blijft false. SW-guard 5/5 en cutoverguard 15/15 PASS.
+- GitHub Quality Gate 42385920026 SUCCESS op implementatiecommit ebb33e8; de laatste cache/documentatiecommit krijgt een eigen controle.
 
 ## Resterend voor daadwerkelijke beschikbaarheid
 

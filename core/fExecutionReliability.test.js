@@ -42,7 +42,7 @@ function extractFunctionBody(source, name) {
   const body = extractFunctionBody(html, 'finishSession');
   ok(body !== null, 'finishSession() wordt gevonden');
   if (body) {
-    ok(/if\s*\(\s*finishSessionBezig\s*\)\s*return/.test(body),
+    ok(/if\s*\(\s*finishSessionBezig&&_finishSessionContext&&_finishSessionContext\.log===sessionLog&&_finishSessionContext\.owner===owner\)return/.test(body),
       'finishSession() weigert een tweede, gelijktijdige aanroep (dubbele-tap-bescherming)');
     ok(/finally\s*{[\s\S]*finishSessionBezig\s*=\s*false/.test(body),
       'finishSession() reset de dubbele-tap-guard gegarandeerd via finally (ook bij een fout)');

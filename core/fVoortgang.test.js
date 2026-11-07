@@ -21,6 +21,17 @@ const C = require('./calculation.js');
 const D = require('./decision.js');
 const DC = require('./deviceIntegration.js');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+// Parse the complete actual function; fixed character windows truncate expanded guards.
+function completeAppFunction(name){
+  const m=new RegExp('(?:async\\s+)?function\\s+'+name+'\\s*\\(').exec(html);
+  if(!m)throw new Error('Missing actual app function: '+name);
+  for(let end=html.indexOf('}',m.index);end>=0;end=html.indexOf('}',end+1)){
+    const candidate=html.slice(m.index,end+1);
+    try{new (require('node:vm').Script)(candidate);return candidate;}catch(_){}
+  }
+  throw new Error('Incomplete actual app function: '+name);
+}
+
 
 let pass = 0, fail = 0;
 function ok(c, m){ if (c) pass++; else { fail++; console.log('  ✗ ' + m); } }
@@ -217,7 +228,7 @@ ok(!progressionSrcI.includes('tkWeekOverview') && !progressionSrcI.includes('com
 
 /* ── J. A2.6 — EXERCISE DETAIL DRILL-DOWN (v4.63.0) — uitbreiding van de bestaande show1RMChart(), geen nieuwe modal/engine ── */
 console.log('\nJ. A2.6: Exercise Detail Drill-down — 100% uitbreiding van bestaande modal, geen nieuwe Calculation Engine');
-const show1RMSrc = html.slice(html.indexOf('async function show1RMChart('), html.indexOf('async function show1RMChart(') + 4200);
+const show1RMSrc = completeAppFunction('show1RMChart');
 ok(/await computeExerciseTrends\(\)/.test(show1RMSrc), 'J1: hergebruikt de gedeelde, canonieke computeExerciseTrends() -- exact dezelfde bron als Voortgang en de AI-coachcontext, geen nieuwe trendberekening');
 ok(/await loadRepPRs\(exId\)/.test(show1RMSrc), 'J2: hergebruikt de bestaande, canonieke loadRepPRs()/computeRepPRsFromSessions() -- geen nieuwe PR-definitie');
 ok(/peakGoalFor\(exId\)/.test(show1RMSrc), 'J3: hergebruikt de bestaande peakGoalFor() voor het doel -- geen nieuw doelbegrip, geen nieuwe percentageberekening (Math.round(beste\\/doel\\*100) is dezelfde formule als elders al gebruikt)');

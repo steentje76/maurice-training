@@ -24,7 +24,7 @@ function extract(name){
 const funcs=['catalogToPickerEx','tk504CatalogSourceRefFromCatalog',
  'tk504CatalogSourceRefFromSelection','tk603CatalogRefFromPickerSelection',
  'tk504ValidateCatalogSourceRef','tk504VerifySessionBinding',
- 'tk504RewriteVerifiedSessionRow','tk504StableSessionId','writeSessionRow','saveLosOefening'];
+ 'tk504RewriteVerifiedSessionRow','tk504StableSessionId','tk603CanUpdatePersonalRecord','writeSessionRow','saveLosOefening'];
 function world({release=true,personal=false,spoof=false}={}){
  const state={owner:'synthetic-A',online:true,mode:'ok',committed:0,uuidCount:0,
   writes:[],rpcs:[],shadow:0,cleanup:0,complete:0,toasts:[],

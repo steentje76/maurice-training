@@ -23,7 +23,7 @@ function extract(name){
 }
 const functions=['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection',
  'tk504ValidateCatalogSourceRef','tk504VerifySessionBinding',
- 'tk504HistoricalSourceForSession','tk603ReadExerciseSessions','tk603PickerSourceKey',
+ 'tk504HistoricalSourceForSession','tk603OwnRows','tk603ReadExerciseSessions','tk603PickerSourceKey',
  'tk603RecentPickerSourceKeys','loadStrengthBasis','canonicalNewExerciseItem'];
 function env(){
  const state={owner:'A',online:true,release:true, mode:'ok',queries:[],

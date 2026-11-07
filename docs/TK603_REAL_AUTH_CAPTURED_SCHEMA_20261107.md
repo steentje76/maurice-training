@@ -1,6 +1,6 @@
 # TK603 real local Auth acceptance — 7 November 2026
 
-Status: PASS. 53 checks. Run completed 2026-11-07T04:09:25.809Z
+Status: PASS. 53 checks. Run completed 2026-11-07T09:51:14.367Z
 
 Actual services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5, dedicated internal backend plus dedicated frontend Docker network; only ephemeral loopback Auth/REST ports. Two synthetic email/password accounts received independent JWTs; tokens verified by GoTrue and PostgREST. No cloud project, production data, media or credentials used.
 

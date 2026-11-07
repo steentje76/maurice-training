@@ -19,8 +19,10 @@ function eq(a, b, l) { ok(a === b, l + ' (verwacht ' + JSON.stringify(b) + ', kr
 function extractFn(name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
   const m = re.exec(html); if (!m) return null;
-  let i = html.indexOf('{', m.index), d = 0;
-  for (let j = i; j < html.length; j++) { if (html[j] === '{') d++; else if (html[j] === '}') { d--; if (d === 0) return html.slice(m.index, j + 1); } }
+  for(let end=html.indexOf('}',m.index);end>=0;end=html.indexOf('}',end+1)){
+    const candidate=html.slice(m.index,end+1);
+    try{new vm.Script(candidate);return candidate;}catch(_){}
+  }
   return null;
 }
 const FNS = ['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection','tk504ValidateCatalogSourceRef','tk504BuilderRefsFromPlan','tk504AttachSavedCatalogRefs',
@@ -162,7 +164,9 @@ function sandbox() {
   }
   // ── Statisch: keten, één engine, geen dual-write, geen activities ──
   const code = html.replace(/\/\/[^\n]*/g, '');
-  ok(/intervals_detail:\(l\.intervalsDetail\|\|null\)/.test(FINISH_SESSION_WRITE) && /exercise_id:ex\.id/.test(FINISH_SESSION_WRITE) && /training_instance_id:activeInstanceId\|\|_ergInst\|\|null/.test(FINISH_SESSION_WRITE), 'persistence: intervals_detail gaat mee in DEZELFDE, enige sessierij (Erg Continuous Protocol Identity: activeInstanceId houdt voorrang; _ergInst is uitsluitend de ad-hoc losse-Erg-instance als er geen programma-instance is -- nog steeds EEN sessierij, geen dual-write)');
+  ok(/intervals_detail:\(l\.intervalsDetail\|\|null\)/.test(FINISH_SESSION_WRITE) && /exercise_id:ex\.id/.test(FINISH_SESSION_WRITE) && /training_instance_id:context\.instanceId\|\|_ergInst\|\|null/.test(FINISH_SESSION_WRITE), 'persistence: intervals_detail gaat mee in DEZELFDE, enige sessierij (Erg Continuous Protocol Identity: activeInstanceId houdt voorrang; _ergInst is uitsluitend de ad-hoc losse-Erg-instance als er geen programma-instance is -- nog steeds EEN sessierij, geen dual-write)');
+  ok(/const context=\{owner:owner,t:curT,log:sessionLog,instanceId:activeInstanceId,/.test(extractFn('finishSession')),
+    'persistence: instanceId is de vastgelegde actieve instance voor alle asynchrone schrijftakken');
   eq((code.match(/intervals_detail:/g) || []).length, 1, 'persistence: exact één schrijfplek voor intervals_detail (geen tweede write)');
   eq((code.match(/await writeSessionRow\((?:tk504RewriteVerifiedSessionRow\()?\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
   const looseWriter=extractFn('saveLosOefening');

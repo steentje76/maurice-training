@@ -18,19 +18,24 @@ let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.log('MISLUKT: ' + m); } };
 const eq = (a, b, m) => ok(a === b, m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')');
 
+let fnCacheHtml=null,fnCache=Object.create(null);
 function fnSrc(html, name) {
+  if(fnCacheHtml!==html){fnCacheHtml=html;fnCache=Object.create(null);}
+  if(fnCache[name])return fnCache[name];
   let start = html.indexOf('async function ' + name + '(');
   if (start === -1) start = html.indexOf('function ' + name + '(');
   if (start === -1) throw new Error('niet gevonden: ' + name);
-  let d = 0; const b = html.indexOf('{', html.indexOf(')', start));
-  for (let k = b; k < html.length; k++) { if (html[k] === '{') d++; else if (html[k] === '}') { d--; if (d === 0) return html.slice(start, k + 1); } }
+  for(let end=html.indexOf('}',start);end>=0;end=html.indexOf('}',end+1)){
+    const candidate=html.slice(start,end+1);
+    try{new (require('node:vm').Script)(candidate);fnCache[name]=candidate;return candidate;}catch(_){}
+  }
   throw new Error('onvolledig: ' + name);
 }
 function constSrc(html, decl) {
   const s = html.indexOf(decl); let d = 0; const b = html.indexOf('{', s);
   for (let k = b; k < html.length; k++) { if (html[k] === '{') d++; else if (html[k] === '}') { d--; if (d === 0) return html.slice(s, k + 1) + ';'; } }
 }
-const FNS = ['finishSession', 'tkSessieOptsVoor', 'tkSessieSchrijfOpts', 'tkSessieUitkomst', 'saveLosOefening', 'clearLosSessionState', 'losHasUnsavedData', 'tkErgStartProtocol',
+const FNS = ['tkHuidigeUid','tkEigenaarUid','tk603CanUpdatePersonalRecord','finishSession', 'tkSessieOptsVoor', 'tkSessieSchrijfOpts', 'tkSessieUitkomst', 'saveLosOefening', 'clearLosSessionState', 'losHasUnsavedData', 'tkErgStartProtocol',
   'tkErgOnCanonicalMeasurement', 'tkC2IsLoggableSummary', 'tkC2Converter', 'tkC2SessionRowFromLog', 'tkC2ExecutionCleanup',
   'tkErgDisconnect', 'tkErgDisconnectAll', '_c2rtTeardown', '_c2rtSet', '_c2rtGet', '_c2repaint', '_c2idleInner', '_c2note', '_c2btn',
   'cardioDataToRow', 'resolveCardioType', 'tkErgProtocolSection', 'tkErgProtocolProjectionFor', 'tkErgProtocolInstanceId',
@@ -79,6 +84,8 @@ function makeWorld(html, over) {
     Concept2Live: C2L, DeviceCore: DC, DecisionCore: DecisionCore, sessionPrBase: {}, prFor: () => null, upsertExerciseGoalField: async () => {}, tkSetEvidence: UNDEF, CardioCore: CardioCore, ErgProtocolIdentity: EPI, IntervalEngineCore: IEC,
     liveWorkoutToActual: UNDEF, TKWeather: UNDEF, tkC2DiagFinishPath: UNDEF, tkC2DiagFinishEx: UNDEF, tkC2DiagFinishCalled: UNDEF, tkC2DiagOnCanonical: UNDEF,
     curT: 't1', trainStart: Date.now() - 60000, pausedAccumMs: 0, activeInstanceId: over.activeInstanceId || null,
+    authSession:{user:{id:'u-test'}}, TK504_TYPED_FK_SESSION_RELEASE:false,
+    _finishSessionContext:null, activePlannedAssignmentId:null,
     sessionLog: {}, sessionExtra: [], _c2completion: {}, _c2packetMeta: {}, finishSessionBezig: false, _tkErgPending: null, _ergProtocol: {}, _c2pair: {}, _c2rt: {}, _c2liveLast: {},
     LOS_DOMID: 'los', losSelectedExId: null,
     exercisesList: [], getSessionExs: () => env.exercisesList, getExerciseMuscles: () => [],

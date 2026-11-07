@@ -278,7 +278,7 @@ t('D3: de uitkomst wordt gecachet zodat een periodewissel niets herberekent', fu
 
 t('D4: de ruwe rijen worden één keer geladen', function () {
   var blok = HTML.slice(HTML.indexOf('async function tkRelData'), HTML.indexOf('function tkAthleteBronnen'));
-  assert.ok(blok.indexOf('if(_tkRelRows) return') > 0, 'elke aanroep doet opnieuw een query');
+  assert.ok(/if\(_tkRelRows&&\(!ownerGuard\|\|\(typeof _tkRelOwner!=='undefined'&&_tkRelOwner===owner\)\)\) return/.test(blok), 'cache wordt alleen voor dezelfde bewezen eigenaar hergebruikt');
 });
 
 t('D5: er zit een bovengrens op het aantal getoonde relaties', function () {

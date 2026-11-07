@@ -77,7 +77,9 @@ function cacheZandbak() {
     exercises: [{ id: 'ex' }], _exercisesLoading: {}, favoriteExIds: new Set(['f']),
     _favoritesLoaded: true, exerciseGoals: new Map([['a', 1]]), _exerciseGoalsLoaded: true,
     equipmentTypes: [{ id: 'q' }], _equipmentTypesLoading: {},
-    equipmentCatalog: [{ id: 'c' }], _equipmentCatalogLoading: {}
+    equipmentCatalog: [{ id: 'c' }], _equipmentCatalogLoading: {},
+    /* #603: const object in index.html — de reset leegt hem in place */
+    strengthBasisCache: { a: { recent: null } }
   };
   vm.createContext(ctx);
   vm.runInContext([konstVar('CACHE_OWNER_KEY'), konstVar('PERSONAL_CACHE_KEYS'),

@@ -26,7 +26,7 @@ function extract(name){
   }
   throw Error('unclosed '+name);
 }
-const FUNCS=['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection',
+const FUNCS=['tk603ReadContext','tk603ReadCurrent','tk603ReadRows','tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection',
   'tk504ValidateCatalogSourceRef','tk504VerifySessionBinding','tk504HistoricalSourceForSession',
   'tk603OwnRows','tk603ReadExerciseSessions','tk603SetLiveSource','tk603LiveSourceKey','tk603CatalogDisplayName',
   'tk603ActiveCatalogForTypedFk','nearestRepBucket','computeRepPRsFromSessions','loadRepPRs',
@@ -459,10 +459,10 @@ function setInputs(a,exId,n,kg,reps){
      !/buildRmPanel\(ex\)/.test(html),'both manual-1RM panel callers pass the explicit live source');
   ok(/out\.strengthBasis=opts\.sourceBound===true\?null:/.test(extract('resolveWorkingWeight')),
     'strengthBasisProvenance (manual-1RM provenance) is never consulted for a source-bound resolve');
-  ok(html.includes('progCatalogData=await tk603CatalogProgressEntries();')&&html.includes('h+=tk603ProgCatalogRowsHtml();'),
+  ok(html.includes('const nextCatalog=await tk603CatalogProgressEntries();')&&html.includes('progExData=nextProg;progCatalogData=nextCatalog;')&&html.includes('h+=tk603ProgCatalogRowsHtml();'),
     'refreshStatsScreen/renderProgList render the catalog entries in the existing list');
   ok(html.includes("if(TK504_TYPED_FK_SESSION_RELEASE===true)tk603SetLiveSource(ex.id,ex.id,_tkRef);")&&
-     html.includes("await loadRepPRs(ex.id,_tkRef);await loadStrengthBasis(ex.id,_tkRef);"),
+     /await loadRepPRs\(ex.id,_tkRef\);[\s\S]*?await loadStrengthBasis\(ex.id,_tkRef\);/.test(extract('renderTrainScreen')),
     'training prefetch propagates the actual item ref to Rep-PR/basis');
   ok(html.includes("const _losRef=(TK504_TYPED_FK_SESSION_RELEASE===true&&ex._catalog===true)?tk603CatalogRefFromPickerSelection(ex):null;"),
     'loose exercise derives source only from the actual canonical picker object');

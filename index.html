@@ -7703,6 +7703,7 @@ function loadAuthSession(){
   }catch(e){return null;}
 }
 function saveAuthSession(s){
+  if((authSession?.user?.id||null)!==(s?.user?.id||null)&&typeof tk603BumpReadEpoch==='function')tk603BumpReadEpoch();
   if(authSession&&authSession.user&&s&&s.user&&authSession.user.id!==s.user.id){tk504InvalidateProtectedMedia();tk504ClearPublishedCatalog();}
   authSession=s;
   localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s));
@@ -7711,6 +7712,7 @@ function saveAuthSession(s){
 }
 function clearAuthSession(){
   tk504InvalidateProtectedMedia();
+  if(typeof tk603BumpReadEpoch==='function')tk603BumpReadEpoch();
   tk504ClearPublishedCatalog();
   authSession=null;
   localStorage.removeItem(AUTH_SESSION_KEY);
@@ -18039,6 +18041,27 @@ function tkSessieUitkomst(opts){ if(opts&&opts.status==='failed') throw new Erro
 // Owner is captured BEFORE any await (legacy and typed). A changed owner discards
 // the response; a row that explicitly carries another user_id is dropped (rows
 // whose select omitted user_id are kept — RLS remains the authority).
+
+var tk603ReadEpoch=typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0;
+function tk603BumpReadEpoch(){tk603ReadEpoch=(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)+1;}
+function tk603ReadContext(){
+  const owner=typeof tkEigenaarUid==='function'?tkEigenaarUid():null;
+  return owner?{owner:owner,epoch:typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0}:null;
+}
+function tk603ReadCurrent(c){
+  return !!(c&&typeof tkEigenaarUid==='function'&&tkEigenaarUid()===c.owner&&
+    (typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)===c.epoch);
+}
+async function tk603ReadRows(c,reader,table,suffix=''){
+  if(!tk603ReadCurrent(c))return [];
+  if(reader!==sbGet&&reader!==v43SafeGet)throw new Error('tk603_read_adapter_invalid');
+  // Personal views narrow authorized coach/RLS rows to their declared owner.
+  const own=['sessions','hrv_log','body_comp','activities','chat_history'].includes(table);
+  const q=(suffix||'')+(own?'&user_id=eq.'+encodeURIComponent(c.owner):'');
+  const rows=await reader(table,q);
+  return tk603ReadCurrent(c)?tk603OwnRows(Array.isArray(rows)?rows:[],c.owner):[];
+}
+
 function tk603OwnRows(rows,owner){
   if(!Array.isArray(rows))return rows;
   return owner?rows.filter(x=>x&&(!Object.prototype.hasOwnProperty.call(x,'user_id')||x.user_id===owner)):rows;
@@ -18047,11 +18070,11 @@ function tk603CanUpdatePersonalRecord(sourceRef=null,catalogSelection=false){
   return typeof TK504_TYPED_FK_SESSION_RELEASE==='undefined'||TK504_TYPED_FK_SESSION_RELEASE!==true||(!catalogSelection&&sourceRef==null);
 }
 async function tk603ReadExerciseSessions(exId,sourceRef=null,querySuffix='&order=date.desc,created_at.desc&limit=30',meta=null){
-  const owner=tkEigenaarUid();
+  const owner=tkEigenaarUid(),readEpoch=typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0;
   if(!owner)return [];
   if(TK504_TYPED_FK_SESSION_RELEASE!==true||sourceRef==null){
-    const legacyRows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(exId)+querySuffix);
-    if(tkEigenaarUid()!==owner)return [];
+    const legacyRows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(exId)+querySuffix+'&user_id=eq.'+encodeURIComponent(owner));
+    if((tkEigenaarUid()!==owner||(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch))return [];
     return tk603OwnRows(legacyRows,owner);
   }
   const ref=tk504ValidateCatalogSourceRef(exId,sourceRef);
@@ -18059,9 +18082,9 @@ async function tk603ReadExerciseSessions(exId,sourceRef=null,querySuffix='&order
   if(!owner||typeof navigator!=='undefined'&&navigator.onLine===false)return [];
   try{
     const binding=await tk504VerifySessionBinding({id:exId,tk504_catalog_ref:ref});
-    if(!binding||binding.owner_uid!==owner||tkEigenaarUid()!==owner)return [];
-    const rows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(binding.fk_id)+querySuffix);
-    if(tkEigenaarUid()!==owner||!Array.isArray(rows))return [];
+    if(!binding||binding.owner_uid!==owner||(tkEigenaarUid()!==owner||(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch))return [];
+    const rows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(binding.fk_id)+querySuffix+'&user_id=eq.'+encodeURIComponent(owner));
+    if((tkEigenaarUid()!==owner||(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch)||!Array.isArray(rows))return [];
     const own=tk603OwnRows(rows,owner).filter(x=>x&&x.exercise_id===binding.fk_id);
     if(meta&&typeof meta==='object'){meta.verified=true;meta.fk_id=binding.fk_id;meta.owner_uid=owner;}
     return own;
@@ -18118,15 +18141,15 @@ async function tk603ActiveCatalogForTypedFk(fkId){
 // from a bare TK- id or a name; no metadata guessed. Flag OFF → [] with no request.
 async function tk603CatalogPerformanceSources(){
   if(TK504_TYPED_FK_SESSION_RELEASE!==true)return [];
-  const owner=tkEigenaarUid();
+  const owner=tkEigenaarUid(),readEpoch=typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0;
   if(!owner||typeof navigator!=='undefined'&&navigator.onLine===false)return [];
   try{
-    const rows=await sbGet('sessions','&exercise_id=like.TKC-*&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=1000');
-    if(tkEigenaarUid()!==owner)return [];
+    const rows=await sbGet('sessions','&exercise_id=like.TKC-*&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=1000&user_id=eq.'+encodeURIComponent(owner));
+    if((tkEigenaarUid()!==owner||(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch))return [];
     const fks=[...new Set((tk603OwnRows(Array.isArray(rows)?rows:[],owner)||[])
       .map(x=>x&&x.exercise_id).filter(id=>typeof id==='string'&&/^TKC-[0-9]{6}$/.test(id)))].slice(0,60);
     const checked=await Promise.all(fks.map(fk=>tk603ActiveCatalogForTypedFk(fk)));
-    if(tkEigenaarUid()!==owner)return [];
+    if((tkEigenaarUid()!==owner||(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch))return [];
     return checked.filter(c=>c&&c.owner_uid===owner).map(c=>Object.freeze({
       id:c.catalog_id,fk_id:c.fk_id,name:c.name,label:c.name+' (Movekit-catalogus)',
       sourceRef:c.ref,owner_uid:owner,sourceKey:'catalog:'+c.catalog_id}));
@@ -18940,15 +18963,15 @@ const strengthBasisCache={};
 async function loadStrengthBasis(eid,sourceRef=null){
   const sourceBound=typeof TK504_TYPED_FK_SESSION_RELEASE!=='undefined'&&
     TK504_TYPED_FK_SESSION_RELEASE===true&&sourceRef!=null;
-  const owner=tkEigenaarUid(); // legacy too: captured before the async read
-  const rawRows=sourceBound?await tk603ReadExerciseSessions(eid,sourceRef):
-    await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(eid)+'&order=date.desc,created_at.desc&limit=30');
+  const owner=tkEigenaarUid(),readEpoch=typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0; // legacy too: captured before the async read
+  const rawRows=!owner?[]:sourceBound?await tk603ReadExerciseSessions(eid,sourceRef):
+    await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(eid)+'&order=date.desc,created_at.desc&limit=30&user_id=eq.'+encodeURIComponent(owner));
   // Explicit foreign user_id rows are dropped; rows without user_id (narrow select) are kept.
-  const rows=(owner&&Array.isArray(rawRows))?rawRows.filter(x=>x&&(x.user_id==null||x.user_id===owner)):rawRows;
+  const rows=(owner&&Array.isArray(rawRows))?rawRows.filter(x=>x&&(!Object.prototype.hasOwnProperty.call(x,'user_id')||x.user_id===owner)):rawRows;
   // A fresh login while the RLS read was in flight must discard stale
   // rows BEFORE the Calculation Engine sees them and must not write the
   // previous owner's caches. No duplicate calculation.
-  const validOwner=tkEigenaarUid()===owner&&(!sourceBound||!!owner);
+  const validOwner=tkEigenaarUid()===owner&&(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)===readEpoch&&!!owner;
   const b=CalcCore.selectStrengthBasis(validOwner?(rows||[]):[],{maxReps:10});
   if(!validOwner)return b;
   const key=sourceBound?'catalog:'+owner+':'+eid:eid;
@@ -20072,13 +20095,14 @@ async function buildTrainIntro(t,list){
   </div>`;
 }
 async function renderTrainScreen(t){
-  await ensureEquipmentTypesLoaded();
-  await loadTrainCfg();
+  const _oc=tk603ReadContext();if(!_oc)return;
+  await ensureEquipmentTypesLoaded();if(!tk603ReadCurrent(_oc))return;
+  await loadTrainCfg();if(!tk603ReadCurrent(_oc))return;
   const list=getSessionExs(t);
   const container=document.getElementById('train-'+t.toLowerCase()+'-list');
   if(!container)return; // Unified Training Editor: dezelfde functie rendert Training A/B én Workout (custom_*)
   container.innerHTML='';
-  try{const _intro=await buildTrainIntro(t,list);if(_intro){const _d=document.createElement('div');_d.innerHTML=_intro;if(_d.firstElementChild)container.appendChild(_d.firstElementChild);}}catch(_){}
+  try{const _intro=await buildTrainIntro(t,list);if(!tk603ReadCurrent(_oc))return;if(_intro){const _d=document.createElement('div');_d.innerHTML=_intro;if(_d.firstElementChild)container.appendChild(_d.firstElementChild);}}catch(_){}
 
   // Weather 1.0 — compacte omgevingscontextbalk direct onder de trainingsheader, vóór de eerste
   // oefening. Sessievariant: outdoor als de training een outdoor-capabele cardio bevat, anders indoor.
@@ -20089,7 +20113,7 @@ async function renderTrainScreen(t){
       for(const ex of list){ const ct=resolveCardioType(ex); if(ct && TKWeather.OUTDOOR_CAPABLE[ct]){ _sOut=true; _sMod=TKWeather.OUTDOOR_CAPABLE[ct]; break; } }
       const _wd=document.createElement('div'); _wd.id='train-weather-ctx'; _wd.style.margin='0 0 6px';
       container.appendChild(_wd);
-      setTimeout(function(){ tkWeatherPaint('train-weather-ctx','training',_sOut,_sMod); },0);
+      setTimeout(function(){ if(!tk603ReadCurrent(_oc))return;tkWeatherPaint('train-weather-ctx','training',_sOut,_sMod); },0);
     }
   }catch(_){}
 
@@ -20103,15 +20127,18 @@ async function renderTrainScreen(t){
     if(TK504_TYPED_FK_SESSION_RELEASE===true)tk603SetLiveSource(ex.id,ex.id,_tkRef);
     if(_tkRef){
       const prev=await tk603ReadExerciseSessions(ex.id,_tkRef,'&order=date.desc,created_at.desc&limit=1');
-      if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id,_tkRef);await loadStrengthBasis(ex.id,_tkRef);}
+      if(!tk603ReadCurrent(_oc))return {};
+    if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id,_tkRef);if(!tk603ReadCurrent(_oc))return {};await loadStrengthBasis(ex.id,_tkRef);if(!tk603ReadCurrent(_oc))return {};}
       const eqList=await loadEquipment(ex.id);
       return {prevS:(prev||[])[0],eqList};
     }
-    const prev=await v43SafeGet('sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=1');
-    if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);await loadEstOneRM(ex.id);}
+    const prev=await tk603ReadRows(_oc,v43SafeGet,'sessions','&exercise_id=eq.'+ex.id+'&order=date.desc,created_at.desc&limit=1');
+    if(!tk603ReadCurrent(_oc))return {};
+    if(ex.type==='strength'||!ex.type){await loadRepPRs(ex.id);if(!tk603ReadCurrent(_oc))return {};await loadEstOneRM(ex.id);if(!tk603ReadCurrent(_oc))return {};}
     const eqList=await loadEquipment(ex.id);
     return {prevS:prev[0],eqList};
   }));
+  if(!tk603ReadCurrent(_oc))return;
   let _pi=0;
   for(const ex of list){
     // Load previous session data (voorgeladen in _pref — zelfde waarden, parallel opgehaald)
@@ -27246,6 +27273,7 @@ async function showCardioDetail(exId, naam, type){
   }catch(e){ if(window.toast)toast('Detail kon niet worden geladen'); }
 }
 async function refreshCardioProgress(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   var el=document.getElementById('stats-cardio-list'); if(!el) return;
   try{
     if(typeof resolveCardioType!=='function' || typeof cardioPerfFromSession!=='function'){ el.innerHTML=''; return; }
@@ -27253,7 +27281,8 @@ async function refreshCardioProgress(){
     var perfsByEx=[];
     for(var i=0;i<cardioExs.length;i++){
       var e=cardioExs[i], type=resolveCardioType(e);
-      var ss=await v43SafeGet('sessions','&exercise_id=eq.'+encodeURIComponent(e.id)+'&order=date.desc,created_at.desc&limit=50');
+      var ss=await tk603ReadRows(_oc,v43SafeGet,'sessions','&exercise_id=eq.'+encodeURIComponent(e.id)+'&order=date.desc,created_at.desc&limit=50');
+  if(!tk603ReadCurrent(_oc))return;
       var perfs=(ss||[]).map(function(s){ return cardioPerfFromSession(s,type); }).filter(Boolean);
       if(perfs.length) perfsByEx.push({id:e.id, naam:(e.name||e.naam||(CARDIO_TYPES[type]&&CARDIO_TYPES[type].naam)||type), type:type, perfs:perfs});
     }
@@ -27306,10 +27335,12 @@ function renderImprovements(el, digest){
   el.innerHTML='<div style="font-size:13px;margin-bottom:2px">'+head.join(' · ')+'</div>'+lines;
 }
 async function refreshImprovements(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   var el=document.getElementById('stats-improve-list'); if(!el) return;
   try{
     if(typeof CoachingCore==='undefined'){ el.innerHTML=''; return; }
-    var all=await v43SafeGet('sessions','&order=date.desc,created_at.desc&limit=500');
+    var all=await tk603ReadRows(_oc,v43SafeGet,'sessions','&order=date.desc,created_at.desc&limit=500');
+  if(!tk603ReadCurrent(_oc))return;
     renderImprovements(el, CoachingCore.improvementsDigest(buildImprovementItems(all)));
   }catch(err){ /* stil: stats-scherm blijft werken */ }
 }
@@ -29870,9 +29901,11 @@ function renderConsistency(el, c){
     '<div style="font-size:12px;color:var(--g4);margin-top:5px">Gemiddeld '+c.avgPerWeek+' /week (laatste 8 weken)</div>';
 }
 async function refreshConsistency(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   var el=document.getElementById('stats-consistency-list'); if(!el) return;
   try{
-    var ss=await v43SafeGet('sessions','&select=date&order=date.desc,created_at.desc&limit=400');
+    var ss=await tk603ReadRows(_oc,v43SafeGet,'sessions','&select=date&order=date.desc,created_at.desc&limit=400');
+  if(!tk603ReadCurrent(_oc))return;
     var dates=(ss||[]).map(function(s){return s.date;}).filter(Boolean);
     renderConsistency(el, tkConsistencyCounts(dates, new Date()));
   }catch(err){ /* stil: stats-scherm blijft werken */ }
@@ -29894,10 +29927,12 @@ async function refreshConsistency(){
 // Hergebruikt de bestaande, sport-neutrale RunningIntelligenceCore.
 // weeklyVolume() -- geen derde, multisport-specifieke aggregatie-engine.
 async function refreshMultisportOverview(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   var el=document.getElementById('stats-multisport-overview');
   if(!el)return;
   try{
-    var activities=await sbGet('activities', "&sport=in.(running,cycling)&order=recorded_at.asc&limit=1000");
+    var activities=await tk603ReadRows(_oc,sbGet,'activities', "&sport=in.(running,cycling)&order=recorded_at.asc&limit=1000");
+  if(!tk603ReadCurrent(_oc))return;
     if(!activities.length){
       el.innerHTML='<div style="font-size:13px;color:var(--g4);padding:6px 0">Nog geen hardloop- of fietstrainingen gelogd. Zodra je traint, verschijnt hier je gecombineerde overzicht.</div>';
       return;
@@ -29930,15 +29965,18 @@ function weekBounds(dateStr){
   return {maandag,zondag};
 }
 async function tkWeekOverview(){
+  const _oc=tk603ReadContext();if(!_oc)return null;
   const {maandag,zondag}=weekBounds(td());
   // GAP-P4-003: program_blocks uitsluitend via de eigen programma's (programs.user_id -> program_id=in.),
   // dezelfde canonical owner-helper als de Context-adapter (#351). Geen uid/programma's/lookup-fout -> [].
   const [blocksWeek,sessiesWeek,prEvents]=await Promise.all([
     tkOwnedProgramBlocksInWindow(authSession?.user?.id||null, maandag, zondag),
-    sbGet('sessions','&date=gte.'+maandag+'&date=lte.'+zondag),
+    tk603ReadRows(_oc,sbGet,'sessions','&date=gte.'+maandag+'&date=lte.'+zondag),
     tkPrTimeline()
   ]);
+  if(!tk603ReadCurrent(_oc))return null;
   const progress=blocksWeek.length?await computeProgramProgress(blocksWeek):null; // ongewijzigde, canonieke functie
+  if(!tk603ReadCurrent(_oc))return null;
   const uniekeDagen=new Set((sessiesWeek||[]).map(s=>s.date)).size;
   const metDuur=(sessiesWeek||[]).filter(s=>s.duration_s!=null&&s.duration_s>0);
   let duurTekst=null;
@@ -29953,15 +29991,18 @@ async function tkWeekOverview(){
   });
   const prsDezeWeek=(prEvents||[]).filter(e=>e.date>=maandag&&e.date<=zondag);
   const trends=await computeExerciseTrends(); // zelfde gedeelde, canonieke bron als de AI-coachcontext
+  if(!tk603ReadCurrent(_oc))return null;
   const stijgend=Object.keys(trends).filter(id=>trends[id]&&trends[id].status==='trend'&&trends[id].improving===true);
   const dalend=Object.keys(trends).filter(id=>trends[id]&&trends[id].status==='trend'&&trends[id].improving===false);
   return {maandag,zondag,uniekeDagen,gepland:blocksWeek.length,progress,duurTekst,volumeKg:heeftVolume?Math.round(volumeKg):null,prsDezeWeek,stijgend,dalend};
 }
 async function renderWeekOverview(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   const el=document.getElementById('stats-week-overview');
   if(!el)return;
   try{
     const w=await tkWeekOverview();
+  if(!tk603ReadCurrent(_oc))return;
     // Niets zinvols om te tonen: geen geplande blocks, geen sessies, geen PR's deze week.
     if(!w.gepland&&!w.uniekeDagen&&!w.prsDezeWeek.length){ el.innerHTML=''; return; }
     let rows='';
@@ -29983,13 +30024,14 @@ async function renderWeekOverview(){
       prBlock='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--g2)"><span style="font-weight:800">'+w.prsDezeWeek.length+'</span> nieuwe PR'+(w.prsDezeWeek.length===1?'':'\'s')+' deze week</div>';
     }
     el.innerHTML='<div class="card"><div class="card-hd"><div class="card-title">Deze week</div><div class="card-sub">'+v48FmtDatum(w.maandag)+' – '+v48FmtDatum(w.zondag)+'</div></div><div class="card-body">'+rows+progressieBlock+prBlock+'</div></div>';
-  }catch(e){ el.innerHTML=''; }
+  }catch(e){ if(!tk603ReadCurrent(_oc))return;el.innerHTML=''; }
 }
 async function refreshStatsScreen(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   renderWeekOverview(); // A2.5A — onafhankelijk, niet-blokkerend voor de rest van het scherm
-  await ensureFavoritesLoaded();
-  await ensureExerciseGoalsLoaded();
-  computeExerciseTrends().then(t=>{progExTrends=t;renderProgList();}).catch(()=>{}); // A2.5B — niet-blokkerend, her-rendert de lijst zodra klaar
+  await ensureFavoritesLoaded();if(!tk603ReadCurrent(_oc))return;
+  await ensureExerciseGoalsLoaded();if(!tk603ReadCurrent(_oc))return;
+  computeExerciseTrends().then(t=>{if(!tk603ReadCurrent(_oc))return;progExTrends=t;renderProgList();}).catch(()=>{}); // A2.5B — niet-blokkerend, her-rendert de lijst zodra klaar
   // 1RM data ophalen (één keer per refresh) — nieuwe oefeningen komen hier automatisch in
   // zodra ze een sessie hebben, geen aparte registratiestap nodig.
   const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
@@ -29997,19 +30039,23 @@ async function refreshStatsScreen(){
   // Perf-fix: was een N+1-lus (één sequentiële sbGet per oefening → ~80 rondjes na elkaar).
   // Nu parallel via Promise.all — exact dezelfde queries/data, alleen gelijktijdig opgehaald.
   const _perEx=await Promise.all(strExs.map(ex=>
-    sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30')
+    tk603ReadRows(_oc,sbGet,'sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30')
       .then(ss=>({ex,ss:ss||[]})).catch(()=>({ex,ss:[]}))
   ));
+  if(!tk603ReadCurrent(_oc))return;
+  const nextProg={};
   _perEx.forEach(({ex,ss})=>{
     // Strength Basis Recency B1: analytics tonen de historische PIEK (CALC-STR-006 peak), via de canonical selector.
     const _b=CalcCore.selectStrengthBasis(ss,{maxReps:10});
     const disp=(_b.peak&&_b.peak.e1rm)?_b.peak.e1rm:prFor(ex.id);
     if(!disp)return;
     const tgt=peakGoalFor(ex.id);const pct=tgt?Math.round(disp/tgt*100):null;
-    progExData[ex.id]={disp,tgt,pct,lastDate:ss[0]?ss[0].date:null};
+    nextProg[ex.id]={disp,tgt,pct,lastDate:ss[0]?ss[0].date:null};
   });
   // #603: owner-verified catalog performance as SEPARATE entries (never in progExData).
-  progCatalogData=await tk603CatalogProgressEntries();
+  const nextCatalog=await tk603CatalogProgressEntries();
+  if(!tk603ReadCurrent(_oc))return;
+  progExData=nextProg;progCatalogData=nextCatalog;
   // filters opbouwen o.b.v. oefeningen die daadwerkelijk data hebben
   const dataExs=strExs.filter(e=>progExData[e.id]);
   const psports=new Set(), ptypes=new Set(), pmuscles=new Set();
@@ -30027,7 +30073,8 @@ async function refreshStatsScreen(){
   // nul en suggereerde een instorting die nooit gemeten is. Dagen zonder meting worden nu
   // overgeslagen — een gat blijft een gat, precies zoals healthSeries en dataquality.v1 het
   // elders al doen. De trend eronder komt uit trend.v1 en claimt niets bij te weinig punten.
-  const hd=await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit=14');
+  const hd=await tk603ReadRows(_oc,v43SafeGet,'hrv_log','&order=date.desc,created_at.desc&limit=14');
+  if(!tk603ReadCurrent(_oc))return;
   const hrvPunten=hd.slice().reverse().filter(function(r){ return r && r.hrv!=null && r.hrv!==''; });
   if(hrvPunten.length>1){
     drawChart('stats-hrv-chart', hrvPunten.map(function(r){ return parseFloat(r.hrv); }), hrvPunten.map(function(r){ return r.date; }));
@@ -30035,7 +30082,8 @@ async function refreshStatsScreen(){
   try{ tkTrendRegel('stats-hrv-trend', hrvPunten.map(function(r){ return r.hrv; }), hd.length, 'HRV'); }catch(_){}
 
   // Roeien
-  const rd=await v43SafeGet('sessions','&exercise_id=eq.roeien&order=date.desc,created_at.desc&limit=8');
+  const rd=await tk603ReadRows(_oc,v43SafeGet,'sessions','&exercise_id=eq.roeien&order=date.desc,created_at.desc&limit=8');
+  if(!tk603ReadCurrent(_oc))return;
   let rh=rd.length?'':'<div class="tk-empty"><div class="tk-empty-emo">🚣</div>Nog geen roeisessies gelogd.</div>';
   rd.forEach(s=>{
     let split='';
@@ -30053,7 +30101,8 @@ async function refreshStatsScreen(){
   // "Cardio records"-kaart hieronder NIET dekt: dat is een beste-PR-kaart,
   // geen recente-sessies-lijst. Beide kaarten zijn complementair, geen
   // duplicatie: PR versus geschiedenis.
-  const skd=await v43SafeGet('sessions','&exercise_id=eq.skierg&order=date.desc,created_at.desc&limit=8');
+  const skd=await tk603ReadRows(_oc,v43SafeGet,'sessions','&exercise_id=eq.skierg&order=date.desc,created_at.desc&limit=8');
+  if(!tk603ReadCurrent(_oc))return;
   let skh=skd.length?'':'<div class="tk-empty"><div class="tk-empty-emo">⛷️</div>Nog geen SkiErg-sessies gelogd.</div>';
   skd.forEach(s=>{
     let split='';
@@ -30069,7 +30118,8 @@ async function refreshStatsScreen(){
   // BikeErg — zelfde patroon, split/500m blijft de Concept2-canonieke
   // referentie-eenheid ook voor BikeErg (CALC-END-001/002, applicability
   // expliciet RowErg/BikeErg/SkiErg gelijk).
-  const bkd=await v43SafeGet('sessions','&exercise_id=eq.bikeerg&order=date.desc,created_at.desc&limit=8');
+  const bkd=await tk603ReadRows(_oc,v43SafeGet,'sessions','&exercise_id=eq.bikeerg&order=date.desc,created_at.desc&limit=8');
+  if(!tk603ReadCurrent(_oc))return;
   let bkh=bkd.length?'':'<div class="tk-empty"><div class="tk-empty-emo">🚴</div>Nog geen BikeErg-sessies gelogd.</div>';
   bkd.forEach(s=>{
     let split='';
@@ -30083,7 +30133,8 @@ async function refreshStatsScreen(){
   const elbk=document.getElementById('stats-bikeerg-list');if(elbk)elbk.innerHTML=bkh;
 
   // Body comp
-  const bc=await v43SafeGet('body_comp','&order=date.desc,created_at.desc&limit=4');
+  const bc=await tk603ReadRows(_oc,v43SafeGet,'body_comp','&order=date.desc,created_at.desc&limit=4');
+  if(!tk603ReadCurrent(_oc))return;
   let bh='';
   if(!bc.length)bh='<p style="color:var(--g4);font-size:13px">Nog geen metingen — invoer via Beheer</p>';
   else{
@@ -30106,22 +30157,26 @@ async function refreshStatsScreen(){
     refreshMultisportOverview().catch(()=>{}) // B9-06 multisport endurance
   ]);
   // v4.21.0 (Sprint 5.2) — Doelen geïntegreerd in Voortgang; herstel/belasting-heatmaps leven op Lichaam.
+  if(!tk603ReadCurrent(_oc))return;
   renderStatsHero();
   renderDoelenScreen();
 }
 // v4.21.0 (Sprint 5.2) — premium "Deze week"-hero op echte data (volume/trainingen/herstel).
 async function renderStatsHero(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   const el=document.getElementById('stats-hero'); if(!el) return;
   const now=new Date();
   const d7=new Date(now); d7.setDate(d7.getDate()-7);
   const d14=new Date(now); d14.setDate(d14.getDate()-14);
   const iso=x=>x.toISOString().split('T')[0];
   let rows=[];
-  try{ rows=await v43SafeGet('sessions','&date=gte.'+iso(d14)+'&weight=not.is.null&reps=not.is.null&sets=not.is.null'); }catch(_){ rows=[]; }
+  try{ rows=await tk603ReadRows(_oc,v43SafeGet,'sessions','&date=gte.'+iso(d14)+'&weight=not.is.null&reps=not.is.null&sets=not.is.null'); }catch(_){ rows=[]; }
+  if(!tk603ReadCurrent(_oc))return;
   let volThis=0, volPrev=0; const daysThis=new Set();
   rows.forEach(s=>{ const v=CalcCore.calculateVolume({sets:s.sets||1,reps:s.reps||1,weight:s.weight||0}); if(s.date>=iso(d7)){volThis+=v; if(s.date)daysThis.add(s.date);} else volPrev+=v; });
   let herstel=null;
   try{ const rec=window.v43LichRec||(typeof v43OverallRecovery==='function'?await v43OverallRecovery():null); if(rec&&rec.hasData)herstel=rec.overall; }catch(_){}
+  if(!tk603ReadCurrent(_oc))return;
   const trendPct = volPrev>0 ? Math.round((volThis-volPrev)/volPrev*100) : null;
   const up = trendPct!=null && trendPct>=0;
   el.innerHTML = `
@@ -30138,6 +30193,7 @@ async function renderStatsHero(){
 // Krachtverhoudingen-kaart: verwachte 1RM per lift t.o.v. backsquat (anker),
 // op basis van fase1-standaardratio of fase2-geleerde ratio uit eigen data.
 async function refreshRatioFactors(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   const el=document.getElementById('stats-ratio-list');
   if(!el)return;
   const anchor='backsquat';
@@ -30146,7 +30202,8 @@ async function refreshRatioFactors(){
 
   const data={};
   for(const lift of lifts){
-    const ss=await v43SafeGet('sessions','&exercise_id=eq.'+lift+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
+    const ss=await tk603ReadRows(_oc,v43SafeGet,'sessions','&exercise_id=eq.'+lift+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
+  if(!tk603ReadCurrent(_oc))return;
     data[lift]=weightedEst1RM(ss);
   }
   const anchorEst=data[anchor];
@@ -30177,11 +30234,14 @@ async function refreshRatioFactors(){
 // STATS (in admin)
 // ══════════════════════════════════════════════════════════
 async function refreshStats(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   await ensureExerciseGoalsLoaded();
+  if(!tk603ReadCurrent(_oc))return;
   const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
   let h='';
   for(const ex of strExs){
-    const ss=await v43SafeGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
+    const ss=await tk603ReadRows(_oc,v43SafeGet,'sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
+  if(!tk603ReadCurrent(_oc))return;
     // Strength Basis Recency B1: Stats toont de historische PIEK (analytics), via de canonical selector.
     const _b=CalcCore.selectStrengthBasis(ss,{maxReps:10});
     const disp=(_b.peak&&_b.peak.e1rm)?_b.peak.e1rm:prFor(ex.id);if(!disp)continue;
@@ -30575,6 +30635,7 @@ function returnToTraining(){
 // v306 #6/#8: opent een NIEUW gesprek gekoppeld aan de huidige training/oefening — laadt
 // nooit het oude (algemene) gesprek. ctx: {exId, exNaam, trainingType}
 function openCoachSession(ctx){
+  tk603CancelCoachSend();tk603CoachHistoryOwner=tk603ReadContext()?.owner||null;
   activeSessionId='sess_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
   activeSessionCtx=ctx;
   chatHist=[{role:'assistant',content:'Waar kan ik je mee helpen?'}];
@@ -30604,13 +30665,15 @@ function renderQuickChips(){
   wrap.innerHTML=chips.map(([label,q])=>`<button class="coach-chip" onclick="${q?`sendMsg('${q.replace(/'/g,"\\'")}')`:`document.getElementById('chat-inp').focus()`}">${label}</button>`).join('');
 }
 async function focusCoach(){
+  const _oc=tk603ReadContext();if(!_oc)return;
+  if(tk603CoachHistoryOwner!==_oc.owner){tk603ResetCoachAccount();tk603CoachHistoryOwner=_oc.owner;}
   const backBar=document.getElementById('coach-back-bar');
   if(backBar)backBar.style.display=coachReturn?'block':'none';
   const chipsWrap=document.getElementById('coach-chips');
   const labelEl=document.getElementById('coach-session-label');
   if(!_openingCoachViaSession){
     // Genavigeerd via onderste navigatiebalk (niet via een sessie-opener) → terug naar algemeen gesprek
-    if(activeSessionId){activeSessionId=null;activeSessionCtx=null;chatHist=[];}
+    if(activeSessionId){tk603CancelCoachSend();activeSessionId=null;activeSessionCtx=null;chatHist=[];}
     coachReturn=null;
     if(backBar)backBar.style.display='none';
   }
@@ -30622,12 +30685,21 @@ async function focusCoach(){
     if(labelEl)labelEl.textContent='Algemeen gesprek';
     if(chipsWrap)chipsWrap.style.display='none';
     if(chatHist.length===0){
-      const d=await sbGet('chat_history','&session_id=is.null&order=created_at.asc&limit=20');
-      chatHist=d.length?d.map(r=>({role:r.role,content:r.content})):[{role:'assistant',content:'Goedemorgen. Deel je HRV, RHR en slaap via het 📊 icoontje, of stel direct een vraag.'}];
+      const _load=++tk603CoachLoadEpoch,_hist=chatHist;
+      const pending={owner:_oc,epoch:_load,promise:null};
+      tk603CoachHistoryLoad=pending;
+      pending.promise=(async()=>{
+        const d=await tk603ReadRows(_oc,sbGet,'chat_history','&session_id=is.null&order=created_at.asc&limit=20');
+        if(!tk603ReadCurrent(_oc)||_load!==tk603CoachLoadEpoch||activeSessionId||chatHist!==_hist)return;
+        chatHist=d.length?d.map(r=>({role:r.role,content:r.content})):[{role:'assistant',content:'Goedemorgen. Deel je ochtenddata of stel direct een vraag.'}];
+      })();
+      try{await pending.promise;}finally{if(tk603CoachHistoryLoad===pending)tk603CoachHistoryLoad=null;}
+      if(!tk603ReadCurrent(_oc)||_load!==tk603CoachLoadEpoch)return;
     }
   }
+  if(!tk603ReadCurrent(_oc))return;
   renderChatHist();
-  setTimeout(()=>{const w=document.getElementById('chat-wrap');if(w)w.scrollTop=w.scrollHeight;},100);
+  setTimeout(()=>{if(!tk603ReadCurrent(_oc))return;const w=document.getElementById('chat-wrap');if(w)w.scrollTop=w.scrollHeight;},100);
 }
 
 // v323/v327: sport-specifieke AI-context. buildCtx() was volledig hardcoded op het
@@ -30941,12 +31013,14 @@ async function tkProgramEventContext(){
 // CalcCore.oneRMRaw() (beide protected, ongewijzigd). Retourneert per oefening met
 // >=3 vergelijkbare sessies het trendBy()-resultaat, ongewijzigd doorgegeven.
 async function computeExerciseTrends(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   const AC=(typeof AthleteCore!=='undefined')?AthleteCore:null;
   const PC=(typeof ProgressionCore!=='undefined')?ProgressionCore:null;
   const CC=(typeof CalcCore!=='undefined')?CalcCore:null;
   if(!AC||!PC||!CC)return {};
   await tkRelData();
-  const sessies=_tkRelSessies||[];
+  if(!tk603ReadCurrent(_oc))return {};
+  const sessies=tk603OwnRows(_tkRelSessies||[],_oc.owner);
   if(!sessies.length)return {};
   const perOefening={};
   sessies.forEach(function(s){
@@ -31359,6 +31433,7 @@ const AI_CONSENT_TEXT_BY_PURPOSE = {
 };
 const AI_CONSENT_STORAGE_KEY_BY_PURPOSE = { DAILY_COACH: 'tk_ai_consent', KNOWLEDGE_AI: 'tk_ai_consent_knowledge' };
 async function ensureAiConsent(purpose){
+  const _oc=tk603ReadContext();if(!_oc)return false;
   const p = (purpose === 'KNOWLEDGE_AI') ? 'KNOWLEDGE_AI' : 'DAILY_COACH'; // ontbrekend/onbekend purpose valt terug op het bestaande, bredere Daily Coach-gedrag -- nooit omgekeerd (nooit stilzwijgend de kortere Kennis-tekst voor Daily Coach gebruiken)
   const storageKey = AI_CONSENT_STORAGE_KEY_BY_PURPOSE[p];
   const stored=localStorage.getItem(storageKey);
@@ -31368,48 +31443,101 @@ async function ensureAiConsent(purpose){
     AI_CONSENT_TEXT_BY_PURPOSE[p],
     {title:'AI Coach — toestemming', okLabel:'Toestaan', cancelLabel:'Niet toestaan'}
   );
+  if(!tk603ReadCurrent(_oc))return false;
   localStorage.setItem(storageKey, granted?'1':'0');
   return granted;
 }
+
+let tk603CoachRequest=null,tk603CoachHistoryOwner=null,tk603CoachLoadEpoch=0,tk603CoachHistoryLoad=null;
+function tk603CancelCoachSend(){
+  tk603CoachRequest=null;tk603CoachLoadEpoch++;tk603CoachHistoryLoad=null;sending=false;
+  const b=document.getElementById('send-btn');if(b)b.disabled=false;
+  const st=document.getElementById('coach-st');if(st)st.textContent='Klaar';
+}
+function tk603ResetCoachAccount(){
+  tk603CancelCoachSend();chatHist=[];tk603CoachHistoryOwner=null;
+  activeSessionId=null;activeSessionCtx=null;coachReturn=null;_openingCoachViaSession=false;
+  const wrap=document.getElementById('chat-wrap');if(wrap)wrap.innerHTML='';
+}
+function tk603CoachSameView(c){
+  const now=tk603ReadContext();
+  return !!(now&&now.owner===c.owner.owner&&now.epoch===c.owner.epoch&&
+    activeSessionId===c.sessionId&&activeSessionCtx===c.sessionCtx&&chatHist===c.history);
+}
+function tk603CoachConversationCurrent(c){
+  return tk603ReadCurrent(c.owner)&&activeSessionId===c.sessionId&&
+    activeSessionCtx===c.sessionCtx&&chatHist===c.history;
+}
+
 async function sendChat(){const inp=document.getElementById('chat-inp');const txt=inp.value.trim();if(!txt||sending)return;inp.value='';inp.style.height='';sendMsg(txt);}
 async function sendMsg(txt){
-  if(sending)return;
-  sending=true;document.getElementById('send-btn').disabled=true;document.getElementById('coach-st').textContent='Coach denkt mee…';
-  const consent=await ensureAiConsent('DAILY_COACH');
-  if(!consent){
-    addMsg('user',txt);
-    addMsg('coach','De AI Coach is uitgeschakeld omdat je geen toestemming hebt gegeven voor het delen van je gegevens. Je kunt dit aanzetten via Instellingen → Privacy.');
-    sending=false;document.getElementById('send-btn').disabled=false;document.getElementById('coach-st').textContent='Klaar';
-    return;
+  const owner=tk603ReadContext();if(!owner)return;
+  if(sending&&(!tk603CoachRequest||tk603CoachConversationCurrent(tk603CoachRequest)))return;
+  if(tk603CoachHistoryOwner!==owner.owner){
+    tk603CancelCoachSend();chatHist=[];activeSessionId=null;activeSessionCtx=null;coachReturn=null;
+    tk603CoachHistoryOwner=owner.owner;
   }
-  addMsg('user',txt);chatHist.push({role:'user',content:txt});
-  await sbPost('chat_history',{role:'user',content:txt,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
-  const tid=addMsg('coach','<span class="tk-typing"><span></span><span></span><span></span></span>',true,true);
+  const pending=tk603CoachHistoryLoad;
+  if(pending){
+    await pending.promise;
+    if(!tk603ReadCurrent(owner)||pending.epoch!==tk603CoachLoadEpoch)return;
+    if(sending)return;
+  }
+  const c={owner:owner,sessionId:activeSessionId,sessionCtx:activeSessionCtx,history:chatHist};
+  const current=()=>tk603CoachRequest===c&&tk603CoachConversationCurrent(c);
+  tk603CoachRequest=c;sending=true;
+  document.getElementById('send-btn').disabled=true;document.getElementById('coach-st').textContent='Coach denkt mee...';
+  let tid=null;
   try{
-    const sys=await buildCtx(activeSessionCtx);
-    const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-12)})});
+    const consent=await ensureAiConsent('DAILY_COACH');
+    if(!current())return;
+    if(!consent){
+      addMsg('user',txt);
+      addMsg('coach','De AI Coach is uitgeschakeld omdat je geen toestemming hebt gegeven voor het delen van je gegevens. Je kunt dit aanzetten via Instellingen → Privacy.');
+      return;
+    }
+    addMsg('user',txt);c.history.push({role:'user',content:txt});
+    await sbPost('chat_history',{role:'user',content:txt,session_id:c.sessionId,session_label:c.sessionCtx?.exNaam||null});
+    if(!current())return;
+    tid=addMsg('coach','<span class="tk-typing"><span></span><span></span><span></span></span>',true,true);
+    const sys=await buildCtx(c.sessionCtx);
+    if(!current()||!sys)return;
+    const res=await fetch(tkApiUrl('/.netlify/functions/coach'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:SB_H.Authorization},body:JSON.stringify({requestType:'chat',model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:c.history.slice(-12)})});
+    if(!current())return;
     const d=await res.json();
-    if(d.error){removeMsg(tid);console.warn('coach error',d.error);addMsg('coach',commercialErrorMessage(d.error,'de Trainingskompas Coach'));}
+    if(!current())return;
+    if(d.error){removeMsg(tid);tid=null;console.warn('coach error',d.error);addMsg('coach',commercialErrorMessage(d.error,'de Trainingskompas Coach'));}
     else{
       const r=d.content[0].text;
-      removeMsg(tid);
-      // AI-OUTPUT-CONTRACT-001: de opgeslagen geschiedenis (zowel in-memory als DB) moet
-      // exact reflecteren wat de gebruiker te zien kreeg. Anders zou een afgekeurde,
-      // verboden tekst alsnog in chatHist/chat_history belanden en bij de VOLGENDE beurt
-      // als "eerder eigen antwoord" terug naar het model gaan — precies het lek dat deze
-      // laag moet voorkomen.
+      removeMsg(tid);tid=null;
+      // AI-OUTPUT-CONTRACT-001: persist only the same validated reply shown to the user.
       const check=(window.AIOutputContract)?AIOutputContract.validateAiOutputText(r):{valid:true};
       const opgeslagenTekst=check.valid?r:AIOutputContract.safeCoachFallback();
       renderCoachReply(r);
-      chatHist.push({role:'assistant',content:opgeslagenTekst});
-      await sbPost('chat_history',{role:'assistant',content:opgeslagenTekst,session_id:activeSessionId,session_label:activeSessionCtx?.exNaam||null});
-      if(!activeSessionId){ // opschonen alleen voor het algemene gesprek (bestaand gedrag)
-        const all=await sbGet('chat_history','&session_id=is.null&order=created_at.asc');
-        if(all.length>40)for(const x of all.slice(0,all.length-40))await sbDel('chat_history','id=eq.'+x.id);
+      c.history.push({role:'assistant',content:opgeslagenTekst});
+      await sbPost('chat_history',{role:'assistant',content:opgeslagenTekst,session_id:c.sessionId,session_label:c.sessionCtx?.exNaam||null});
+      if(!current())return;
+      if(!c.sessionId){
+        const all=await tk603ReadRows(c.owner,sbGet,'chat_history','&session_id=is.null&order=created_at.asc');
+        if(!current())return;
+        if(all.length>40)for(const x of all.slice(0,all.length-40)){
+          if(!current())return;
+          await sbDel('chat_history','id=eq.'+x.id);
+          if(!current())return;
+        }
       }
     }
-  }catch(e){removeMsg(tid);addMsg('coach','Geen verbinding — ik kan de coach nu niet bereiken. Controleer je internet en probeer het opnieuw.');}
-  sending=false;document.getElementById('send-btn').disabled=false;document.getElementById('coach-st').textContent='Klaar';
+  }catch(e){
+    if(current()){if(tid)removeMsg(tid);tid=null;addMsg('coach','Geen verbinding — ik kan de coach nu niet bereiken. Controleer je internet en probeer het opnieuw.');}
+  }finally{
+    if(tk603CoachRequest===c){
+      tk603CoachRequest=null;sending=false;
+      if(tk603CoachSameView(c)){
+        if(tid)removeMsg(tid);
+        document.getElementById('send-btn').disabled=false;document.getElementById('coach-st').textContent='Klaar';
+      }
+    }
+  }
 }
 // v306 #9: parseert [[APPLY:exId:kg]]-markers uit het coach-antwoord naar een Toepassen-knop.
 const APPLY_RE=/\[\[APPLY:([a-zA-Z0-9_\-]+):([\d.]+)\]\]/g;
@@ -31461,22 +31589,33 @@ function applyCoachSuggestion(exId,kg,btn){
 }
 // Wist alleen het HUIDIGE gesprek (algemeen óf de actieve sessie) — niet alle geschiedenis.
 async function clearChat(){
+  const _oc=tk603ReadContext();if(!_oc)return;
+  const _sid=activeSessionId,_hist=chatHist;
+  const current=()=>tk603ReadCurrent(_oc)&&activeSessionId===_sid&&chatHist===_hist;
   if(!await confirmModal('Het huidige gesprek wordt gewist.',{title:'Gesprek wissen',okLabel:'Wissen',danger:true}))return;
-  if(activeSessionId){
-    const all=await sbGet('chat_history','&session_id=eq.'+activeSessionId);
-    for(const r of all)await sbDel('chat_history','id=eq.'+r.id);
+  if(!current())return;
+  tk603CancelCoachSend();
+  if(_sid){
+    const all=await tk603ReadRows(_oc,sbGet,'chat_history','&session_id=eq.'+_sid);
+    if(!current())return;
+    for(const r of all){if(!current())return;await sbDel('chat_history','id=eq.'+r.id);if(!current())return;}
     chatHist=[{role:'assistant',content:'Nieuw gesprek. Stel je vraag.'}];
   }else{
-    const all=await sbGet('chat_history','&session_id=is.null');
-    for(const r of all)await sbDel('chat_history','id=eq.'+r.id);
+    const all=await tk603ReadRows(_oc,sbGet,'chat_history','&session_id=is.null');
+    if(!current())return;
+    for(const r of all){if(!current())return;await sbDel('chat_history','id=eq.'+r.id);if(!current())return;}
     chatHist=[{role:'assistant',content:'Nieuw gesprek. Deel je ochtenddata of stel een vraag.'}];
   }
+  if(!tk603ReadCurrent(_oc)||activeSessionId!==_sid)return;
+  tk603CoachHistoryOwner=_oc.owner;
   renderChatHist();
 }
 // v306: Gespreksgeschiedenis — lijst van eerdere oefening/training-sessies (los van het
 // algemene gesprek), kunnen opnieuw geopend worden.
 async function openCoachHistory(){
-  const rows=await sbGet('chat_history','&session_id=not.is.null&order=created_at.desc&limit=200');
+  const _oc=tk603ReadContext();if(!_oc)return;
+  const rows=await tk603ReadRows(_oc,sbGet,'chat_history','&session_id=not.is.null&order=created_at.desc&limit=200');
+  if(!tk603ReadCurrent(_oc))return;
   const seen=new Set(),sessions=[];
   rows.forEach(r=>{if(!seen.has(r.session_id)){seen.add(r.session_id);sessions.push({id:r.session_id,label:r.session_label||'Gesprek',date:r.created_at});}});
   const body=document.getElementById('coach-history-list');
@@ -31484,8 +31623,12 @@ async function openCoachHistory(){
   openModal('m-coach-history');
 }
 async function loadCoachSession(sessionId,label){
+  const _oc=tk603ReadContext();if(!_oc)return;
+  tk603CancelCoachSend();const _load=tk603CoachLoadEpoch;
   closeModal('m-coach-history');
-  const rows=await sbGet('chat_history','&session_id=eq.'+sessionId+'&order=created_at.asc');
+  const rows=await tk603ReadRows(_oc,sbGet,'chat_history','&session_id=eq.'+sessionId+'&order=created_at.asc');
+  if(!tk603ReadCurrent(_oc)||_load!==tk603CoachLoadEpoch)return;
+  tk603CoachHistoryOwner=_oc.owner;
   activeSessionId=sessionId;activeSessionCtx={exNaam:label};coachReturn=null;
   chatHist=rows.map(r=>({role:r.role,content:r.content}));
   _openingCoachViaSession=true;
@@ -33603,9 +33746,12 @@ function v43SafeGet(table,q,ms){
   ]).catch(()=>[]);
 }
 async function v43OverallRecovery(){
+  const _oc=tk603ReadContext();
+  if(!_oc)return {overall:100,rows:[],pctBySvgId:{},hasData:false};
   const twoWeeksAgo=new Date();twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
   const dateStr=twoWeeksAgo.toISOString().split('T')[0];
-  let ss=await v43SafeGet('sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  let ss=await tk603ReadRows(_oc,v43SafeGet,'sessions','&date=gte.'+dateStr+'&order=date.desc,created_at.desc');
+  if(!tk603ReadCurrent(_oc))return {overall:100,rows:[],pctBySvgId:{},hasData:false};
   if(!Array.isArray(ss))ss=[];
   const lastHit={},lastHitSvg={};
   ss.forEach(s=>{
@@ -33653,6 +33799,7 @@ function v43HomeHeader(dfInfo,checkinVandaag){
   </div>`;
 }
 async function renderV43Home(dfInfo,lh,nextT,recRows){
+  const _oc=tk603ReadContext();if(!_oc)return;
   // Alleen een dagfactor mét basis is hier een dagfactor (DEC-DQ-002). Gemeten waarden (slaap,
   // spierherstel) blijven staan; alleen het oordeel vervalt.
   dfInfo=tkDagfactorVoorAdvies(dfInfo);
@@ -33660,6 +33807,7 @@ async function renderV43Home(dfInfo,lh,nextT,recRows){
   v43HomeHeader(dfInfo,checkinVandaag);
   let rec={overall:100,pctBySvgId:{},rows:[],hasData:false};
   try{rec=await v43OverallRecovery();}catch(e){}
+  if(!tk603ReadCurrent(_oc))return;
   window.v43LichRec=rec;
   // HERO — Herstel nu
   const heroEl=document.getElementById('home-hero');
@@ -34059,8 +34207,10 @@ function v47dToggleWhy(btn){
 }
 // LICHAAM-tab — hergebruikt de anatomie-engine + herstelberekening.
 async function renderLichaam(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   let rec={overall:100,pctBySvgId:{},rows:[],hasData:false};
   try{rec=await v43OverallRecovery();}catch(e){}
+  if(!tk603ReadCurrent(_oc))return;
   window.v43LichRec=rec;
   const ov=document.getElementById('v43-lich-overall');
   if(ov){ov.textContent=rec.hasData?rec.overall+'%':'—';ov.style.color=rec.hasData?v43RecColor(rec.overall):'var(--g4)';}
@@ -34532,6 +34682,7 @@ async function renderLichaamSpierOefeningen(){
 }
 
 async function renderLichaamSpierDetail(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   const el = document.getElementById('lich-spier-body');
   if(!el) return;
   const naam = lichSpierSel;
@@ -34548,7 +34699,7 @@ async function renderLichaamSpierDetail(){
 
   // Herstel uit dezelfde bron als het overzicht — één waarheid.
   let rec = window.v43LichRec;
-  if(!rec || !Array.isArray(rec.rows)){ try{ rec = await v43OverallRecovery(); window.v43LichRec = rec; }catch(_){ rec = {rows:[]}; } }
+  if(!rec || !Array.isArray(rec.rows)){ try{ rec = await v43OverallRecovery(); if(!tk603ReadCurrent(_oc))return;window.v43LichRec = rec; }catch(_){ rec = {rows:[]}; } }
   const rij = (rec.rows||[]).filter(r => r.muscle === naam)[0] || {pct:null, hours:null};
   const st = rij.pct != null ? lichRecStatus(rij.pct) : ['Geen gegevens','var(--g4)'];
 
@@ -35065,31 +35216,41 @@ let tkRelPeriode = 90;                       // standaardvenster van het details
 async function tkRelData(){
   const ownerGuard=typeof tkEigenaarUid==='function';
   const owner=ownerGuard?tkEigenaarUid():null;
+  const readEpoch=typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0;
+  const ownQuery=ownerGuard?'&user_id=eq.'+encodeURIComponent(owner):'';
+  const current=()=>!ownerGuard||(tkEigenaarUid()===owner&&(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)===readEpoch);
   const empty={hrv:[],weight:[],sessies:[],nutritionMeals:[],nutritionHydration:[]};
   if(ownerGuard&&!owner)return empty;
   if(_tkRelRows&&(!ownerGuard||(typeof _tkRelOwner!=='undefined'&&_tkRelOwner===owner))) return {hrv:_tkRelRows, weight:_tkRelWeight};
   const lim=_tkHealthLimitFor(TK_REL_VENSTER);
   let hrv=[], wl=[];
-  try{ hrv = await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit='+lim,4000) || []; }catch(_){ hrv=[]; }
-  try{ wl  = await v43SafeGet('weight_log','&order=date.desc,created_at.desc&limit='+lim,4000) || []; }catch(_){ wl=[]; }
+  try{ hrv = await v43SafeGet('hrv_log','&order=date.desc,created_at.desc&limit='+lim+ownQuery,4000) || []; }catch(_){ hrv=[]; }
+  if(!current())return empty;
+  try{ wl  = await v43SafeGet('weight_log','&order=date.desc,created_at.desc&limit='+lim+ownQuery,4000) || []; }catch(_){ wl=[]; }
+  if(!current())return empty;
   /* Sprint 21 — de trainingskant. Dezelfde timeout-bescherming; het aantal sessies per
      dag ligt hoger dan het aantal metingen, vandaar de ruimere limiet. */
   let ss=[];
-  try{ ss = await v43SafeGet('sessions','&order=date.desc,created_at.desc&limit=2000',4000) || []; }catch(_){ ss=[]; }
+  try{ ss = await v43SafeGet('sessions','&order=date.desc,created_at.desc&limit=2000'+ownQuery,4000) || []; }catch(_){ ss=[]; }
+  if(!current())return empty;
   /* NUT-REL-01B — uitsluitend Foundation 2.0 (nutrition_meals + hun items,
      nutrition_hydration_entries). NOOIT nutrition_entries (legacy,
      NUT-CANON-01). order=consumed_at, niet occurred_at (NUT-TIME-01). */
   let nm=[], nh=[];
   try{
-    nm = await v43SafeGet('nutrition_meals','&order=consumed_at.desc&limit='+lim,4000) || [];
+    nm = await v43SafeGet('nutrition_meals','&order=consumed_at.desc&limit='+lim+ownQuery,4000) || [];
+    if(!current())return empty;
+    if(ownerGuard)nm=nm.filter(r=>r&&(!Object.prototype.hasOwnProperty.call(r,'user_id')||r.user_id===owner));
     if(nm.length){
       const ids=nm.map(function(m){return m.id;}).join(',');
       const items = await v43SafeGet('nutrition_meal_items','&meal_id=in.('+ids+')',4000) || [];
+      if(!current())return empty;
       nm.forEach(function(m){ m.items=items.filter(function(it){return it.meal_id===m.id;}); });
     }
   }catch(_){ nm=[]; }
-  try{ nh = await v43SafeGet('nutrition_hydration_entries','&order=consumed_at.desc&limit='+lim,4000) || []; }catch(_){ nh=[]; }
-  if(ownerGuard&&tkEigenaarUid()!==owner)return empty;
+  if(!current())return empty;
+  try{ nh = await v43SafeGet('nutrition_hydration_entries','&order=consumed_at.desc&limit='+lim+ownQuery,4000) || []; }catch(_){ nh=[]; }
+  if(ownerGuard&&(tkEigenaarUid()!==owner||(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch))return empty;
   if(ownerGuard){
     const own=rows=>(rows||[]).filter(r=>r&&(!Object.prototype.hasOwnProperty.call(r,'user_id')||r.user_id===owner));
     hrv=own(hrv); wl=own(wl); ss=own(ss); nm=own(nm); nh=own(nh);
@@ -35990,14 +36151,16 @@ function computePrTimelineFromSessions(exId,exNaam,sessions){
   return events;
 }
 async function tkPrTimeline(limiet){
+  const _oc=tk603ReadContext();if(!_oc)return;
   const strExs=exercises.filter(e=>e.type==='strength'||!e.type);
   const alleEvents=[];
   // Hergebruikt dezelfde sessie-ophaal-query als loadRepPRs() (limit 300, meest recente eerst
   // voor de LOOKUP, hier oplopend gesorteerd voor de RECONSTRUCTIE binnen computePrTimelineFromSessions).
   const perEx=await Promise.all(strExs.map(ex=>
-    sbGet('sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.asc,created_at.asc&limit=300')
+    tk603ReadRows(_oc,sbGet,'sessions','&exercise_id=eq.'+ex.id+'&weight=not.is.null&reps=not.is.null&order=date.asc,created_at.asc&limit=300')
       .then(ss=>({ex,ss:ss||[]})).catch(()=>({ex,ss:[]}))
   ));
+  if(!tk603ReadCurrent(_oc))return [];
   perEx.forEach(({ex,ss})=>{
     if(!ss.length)return;
     alleEvents.push(...computePrTimelineFromSessions(ex.id,ex.naam||ex.name,ss));
@@ -36008,18 +36171,22 @@ async function tkPrTimeline(limiet){
     const owner=tkEigenaarUid();
     const extra=[];
     for(const src of await tk603CatalogPerformanceSources()){
+      if(!tk603ReadCurrent(_oc))return [];
       const meta={};
       const cs=await tk603ReadExerciseSessions(src.id,src.sourceRef,'&weight=not.is.null&reps=not.is.null&order=date.asc,created_at.asc&limit=300',meta);
+      if(!tk603ReadCurrent(_oc))return [];
       if(meta.verified!==true||meta.fk_id!==src.fk_id||meta.owner_uid!==owner)continue;
       extra.push(...computePrTimelineFromSessions(src.sourceKey,src.label,cs));
     }
     if(owner&&tkEigenaarUid()===owner)alleEvents.push(...extra);
   }
+  if(!tk603ReadCurrent(_oc))return [];
   alleEvents.sort((a,b)=>a.date<b.date?1:(a.date>b.date?-1:0)); // meest recente eerst
   return limiet?alleEvents.slice(0,limiet):alleEvents;
 }
 
 async function loadRepPRs(exId,sourceRef=null){
+  const readEpoch=typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0;
   if(TK504_TYPED_FK_SESSION_RELEASE===true&&sourceRef!=null){
     // #603: explicit catalog source → ONLY verified TKC- rows, owner-keyed cache.
     // The personal repPRCache[exId] is never read or written here.
@@ -36029,24 +36196,27 @@ async function loadRepPRs(exId,sourceRef=null){
     const key='catalog:'+owner+':'+exId;
     const meta={};
     const cs=await tk603ReadExerciseSessions(exId,sourceRef,'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=300',meta);
+    if((typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch)return empty;
     if(meta.verified!==true||meta.owner_uid!==owner||tkEigenaarUid()!==owner){delete repPRCache[key];return empty;}
     repPRCache[key]=computeRepPRsFromSessions(cs||[]);
     return repPRCache[key];
   }
   const owner=tkEigenaarUid(); // captured before the async read
   const ss = await tk603ReadExerciseSessions(exId,null,'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=300');
-  if(tkEigenaarUid()!==owner)return computeRepPRsFromSessions([]); // never write A's cache after B login
+  if(!owner||tkEigenaarUid()!==owner||(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch)return computeRepPRsFromSessions([]); // never write A's cache after B login
   repPRCache[exId] = computeRepPRsFromSessions(ss||[]);
   return repPRCache[exId];
 }
 
 async function refreshRepPRs(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   const el = document.getElementById('stats-reppr-content');
   if(!el) return;
   const strExs = exercises.filter(e=>e.type==='strength'||!e.type);
   let html = '';
   for(const ex of strExs){
     const prs = await loadRepPRs(ex.id);
+  if(!tk603ReadCurrent(_oc))return;
     // Alleen oefeningen tonen die daadwerkelijk uitgevoerd zijn (minstens 1 bucket gevuld)
     if(!REP_PR_BUCKETS.some(b=>prs[b])) continue;
     const cells = REP_PR_BUCKETS.map(b=>{
@@ -36066,7 +36236,9 @@ async function refreshRepPRs(){
     const owner=tkEigenaarUid();
     const extra=[];
     for(const src of await tk603CatalogPerformanceSources()){
+  if(!tk603ReadCurrent(_oc))return;
       const prs=await loadRepPRs(src.id,src.sourceRef);
+  if(!tk603ReadCurrent(_oc))return;
       if(!REP_PR_BUCKETS.some(b=>prs[b]))continue;
       const cells=REP_PR_BUCKETS.map(b=>{
         const rec=prs[b];
@@ -36083,15 +36255,18 @@ async function refreshRepPRs(){
     if(tkEigenaarUid()!==owner)return; // account switched while loading: render nothing stale
     html+=extra.join('');
   }
+  if(!tk603ReadCurrent(_oc))return;
   el.innerHTML = html || '<p style="color:var(--g4);font-size:13px">Log sets om PR\'s per herhaling te zien</p>';
 }
 // A2.5C — Recente-records-kaart: puur presentatie van tkPrTimeline() (hierboven),
 // geen enkele eigen berekening.
 async function refreshPrTimeline(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   const el=document.getElementById('stats-pr-timeline');
   if(!el)return;
   try{
     const events=await tkPrTimeline(10);
+  if(!tk603ReadCurrent(_oc))return;
     if(!events.length){ el.innerHTML='<p style="color:var(--g4);font-size:13px">Nog geen records geregistreerd — log meer trainingen om je eerste PR te zien.</p>'; return; }
     el.innerHTML=events.map(function(e){
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--g1)">'+
@@ -36099,7 +36274,7 @@ async function refreshPrTimeline(){
         '<div style="font-size:11px;color:var(--g4)">PR@'+e.bucket+' &middot; '+v48FmtDatum(e.date)+'</div></div>'+
         '<div style="font-size:14px;font-weight:800;color:var(--dark)">'+e.weight+' kg</div></div>';
     }).join('');
-  }catch(err){ el.innerHTML=''; }
+  }catch(err){ if(!tk603ReadCurrent(_oc))return;el.innerHTML=''; }
 }
 
 /* Sprint 16 — presentatiehulpjes voor Voortgang. Beide rekenen NIETS uit: de eerste maakt een
@@ -36127,13 +36302,15 @@ function tkTrendRegel(elId, waarden, totaalDagen, naam){
     (dagen&&dagen>gemeten?(' (van '+dagen+' dagen)'):'')+'.</div>';
 }
 async function refreshVolumeSpiergroep(){
+  const _oc=tk603ReadContext();if(!_oc)return;
   const el = document.getElementById('stats-volume-chart');
   if(!el) return;
   // Get sessions from last 7 days
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate()-7);
   const dateStr = weekAgo.toISOString().split('T')[0];
-  const ss = await v43SafeGet('sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
+  const ss = await tk603ReadRows(_oc,v43SafeGet,'sessions','&date=gte.'+dateStr+'&weight=not.is.null&sets=not.is.null&reps=not.is.null');
+  if(!tk603ReadCurrent(_oc))return;
   /* Sprint 16: het tonnage per spiergroep werd hier met de hand uitgerekend
      ((sets||1)*(reps||1)*(weight||0)) terwijl CalcCore.calculateVolume (volume.v1) bestaat en
      elders al vijf keer gebruikt wordt — een zesde losse kopie van dezelfde formule. Loopt nu
@@ -36562,6 +36739,9 @@ const PERSONAL_CACHE_KEYS=[
   'tk_hyrox_active' // FASE 4-INTEGRATIE — lopende HYROX/triathlon-race is persoonsgebonden, moet bij eigenaarwissel op een gedeeld toestel gewist worden
 ];
 function wipePersonalCache(){
+  if(typeof tk603BumpReadEpoch==='function')tk603BumpReadEpoch();
+  if(typeof window!=='undefined')window.v43LichRec=null;
+  if(typeof tk603ResetCoachAccount==='function')tk603ResetCoachAccount();
   if(typeof tk603LosReset==='function'){tk603LosReset(true);losSelectedExId=null;losCurEx=null;if(typeof sessionLog!=='undefined')delete sessionLog[LOS_DOMID];}
   PERSONAL_CACHE_KEYS.forEach(k=>localStorage.removeItem(k));
   Object.keys(localStorage).filter(k=>k.startsWith('tk_1rm_')).forEach(k=>localStorage.removeItem(k));

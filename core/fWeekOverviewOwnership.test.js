@@ -19,7 +19,7 @@ function extractFn(name) {
   for (let j = i; j < html.length; j++) { if (html[j] === '{') d++; else if (html[j] === '}') { d--; if (d === 0) return html.slice(m.index, j + 1); } }
   return null;
 }
-const FNS = ['tkWeekOverview', 'tkOwnedProgramBlocksInWindow', 'tkOwnedProgramBlocks', 'weekBounds', 'isoWeekday', 'addDaysStr', 'renderKalender', 'inzichtRenderDevelopment'];
+const FNS = ['tk603OwnRows','tk603ReadContext','tk603ReadCurrent','tk603ReadRows','tkWeekOverview', 'tkOwnedProgramBlocksInWindow', 'tkOwnedProgramBlocks', 'weekBounds', 'isoWeekday', 'addDaysStr', 'renderKalender', 'inzichtRenderDevelopment'];
 const SRC = {}; FNS.forEach((n) => { SRC[n] = extractFn(n); ok(SRC[n], 'functie gevonden: ' + n); });
 const T = '2026-09-14';
 const PROGRAMS = { A: [{ id: 'pA' }], B: [{ id: 'pB' }] };
@@ -28,6 +28,7 @@ function sandbox(uid, mode) {
   const calls = [];
   const ctx = {
     CalcCore, console, Date, Promise, Math, Set, Object, Array, String, Number, isNaN, isFinite, parseFloat, encodeURIComponent, window: {},
+    tkEigenaarUid:()=>ctx.authSession?.user?.id||null,
     td: () => T, authSession: uid ? { user: { id: uid } } : null,
     tkPrTimeline: async () => [], computeProgramProgress: async (b) => ({ n: b.length }), computeExerciseTrends: async () => ({}),
     sbGet: async (t, q) => {
@@ -63,7 +64,7 @@ function sandbox(uid, mode) {
   const e = sandbox('A', 'throw'); const wE = await e.tkWeekOverview();
   ok(wE.gepland === 0 && !e._calls.some((q) => q.startsWith('program_blocks')), 'D: ownership-lookup gooit → [] (fail-safe), geen ongescoopte fallback');
   const n = sandbox(null); const wN = await n.tkWeekOverview();
-  ok(wN.gepland === 0 && !n._calls.some((q) => q.startsWith('programs') || q.startsWith('program_blocks')), 'D: geen uid → geen programs-/blocks-query');
+  ok(wN === null && !n._calls.some((q) => q.startsWith('programs') || q.startsWith('program_blocks')), 'D: geen uid → geen weekoverzicht of programs-/blocks-query');
   // generieke helper: extraQ toegevoegd NA de program_id-scope; nullOnError-semantiek
   const g = sandbox('A'); const rows = await g.tkOwnedProgramBlocks('A', '&order=week_nr.asc');
   ok(rows.length === 1 && g._calls.some((q) => q === 'program_blocks&program_id=in.(pA)&order=week_nr.asc'), 'F: generieke helper: program_id-scope vóór extraQ (kalender-variant)');

@@ -1,10 +1,10 @@
 # TK603 real local Auth acceptance — 7 November 2026
 
-Status: PASS. 63 checks. Run completed 2026-11-07T10:30:02.537Z
+Status: PASS. 66 checks. Run completed 2026-11-07T11:25:10.966Z
 
 Actual services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5, dedicated internal backend plus dedicated frontend Docker network; only ephemeral loopback Auth/REST ports. Two synthetic email/password accounts received independent JWTs; tokens verified by GoTrue and PostgREST. No cloud project, production data, media or credentials used.
 
-Schema: captured 21 exercise and 39 session columns, constraints, table ACLs, RLS policies, three functions and two noninternal triggers pinned through a normalized full-contract SHA256; synthetic dependency tables are locked with synthetic ACL/RLS, not production dependency-table parity. Unmodified captured scope trigger RED was required before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases. Original staged typed-FK migration executed unchanged. Function owners/EXECUTE ACLs, column grants, indexes and type modifiers are not replayed. Direct synthetic REST requests add a synthetic date. A separate probe extracts the actual strength builder, source validation, binding RPC, sbFetch, sbPostQ and central writer from index.html, sends the actual generated strength fields (UUID and date are explicit harness inputs, not a durability proof), loses the ACK after a real COMMIT and replays the same bytes from a fresh JS VM using a renewed binding. Independent B JWT replay is denied. Transport maps only the local REST prefix; FIFO discovery, DOM and timeout scheduling are adapters. This is not full browser/loose-modal acceptance, a full database restore, cloud, media or Android test. Scope proposal remains outside production migration.
+Schema: captured 21 exercise and 39 session columns, constraints, table ACLs, RLS policies, three functions and two noninternal triggers pinned through a normalized full-contract SHA256; synthetic dependency tables are locked with synthetic ACL/RLS, not production dependency-table parity. Unmodified captured scope trigger RED was required before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases. Original staged typed-FK migration executed unchanged. Function owners/EXECUTE ACLs, column grants, indexes and type modifiers are not replayed. Direct synthetic REST requests add a synthetic date. A separate probe extracts the actual strength builder, source validation, binding RPC, sbFetch, sbPostQ and central writer from index.html, sends the actual generated strength fields (UUID and date are explicit harness inputs, not a durability proof), loses the ACK after a real COMMIT and replays the same bytes from a fresh JS VM using a renewed binding. Independent B JWT replay is denied. Transport maps only the local REST prefix; FIFO discovery, DOM and timeout scheduling are adapters. This is not full browser/loose-modal acceptance, a full database restore, cloud, media or Android test. The actual personal-reader adapter is additionally executed under the real B coach JWT with active access to A: date-only SELECT still explicitly narrows user_id to B and returns no A rows. Scope proposal remains outside production migration.
 
 Checks:
 - GoTrue independently verifies owner-a password-login JWT
@@ -49,7 +49,7 @@ Checks:
 - actual sbFetch emits identical replay payload and canonical idempotent Prefer header
 - actual writer with independent B JWT receives exact HTTP 403 for A UUID replay
 - denied real B replay preserves original A payload
-- actual extracted writer source unchanged during probe; SHA256 76c18ddb352dcfe7ddee67879d772ab82dfffdb6af9127f0d57cec95236f1cc4
+- actual extracted writer source unchanged during probe; SHA256 26cca2def281a01dcab7cf600e741c5d3a5c0411bbba120f14773f1d82112db7
 - each VM independently resolves binding and no typed failure enters offline queue
 - revoked binding no longer resolves
 - revocation blocks new catalog session at database boundary (SQLSTATE 23514)
@@ -61,6 +61,9 @@ Checks:
 - B cannot elevate synthetic profile privileges
 - real B JWT cannot read athlete A with disabled coach scope
 - real B coach JWT reads A only after server-enabled scope
+- personal-reader probe precondition: real B coach JWT can read A rows through RLS
+- actual own-reader with narrow date-only SELECT excludes authorized athlete A from personal B view
+- actual sbGet sends explicit captured-owner predicate to real PostgREST despite omitted user_id in result
 - explicit own-user filter excludes authorized athlete rows
 - historical identity RPC remains own-only despite coach read scope
 - coach read permission never grants athlete UPDATE

@@ -59,8 +59,8 @@ ok(html.includes("core/aiOutputContract.js"), 'aiOutputContract.js wordt daadwer
 
 // ---- E. Historie-lek-fix: afgekeurde tekst mag nooit alsnog in chatHist/chat_history belanden ----
 ok(html.includes('const opgeslagenTekst=check.valid?r:AIOutputContract.safeCoachFallback();') &&
-   html.includes("chatHist.push({role:'assistant',content:opgeslagenTekst});") &&
-   html.includes("content:opgeslagenTekst,session_id:activeSessionId"),
+   html.includes("c.history.push({role:'assistant',content:opgeslagenTekst});") &&
+   html.includes("content:opgeslagenTekst,session_id:c.sessionId"),
   'sendMsg(): de opgeslagen chat-geschiedenis (in-memory EN chat_history-tabel) gebruikt de gevalideerde/fallback-tekst, nooit de ruwe, mogelijk afgekeurde respons -- anders zou een afgewezen tekst bij de volgende beurt alsnog als "eigen eerder antwoord" naar het model teruggaan');
 
 console.log('fAiOutputContract: ' + pass + ' geslaagd, ' + fail + ' mislukt');

@@ -4958,7 +4958,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
     <div class="v43-lbl" style="margin:20px 0 8px">Maken &amp; ontdekken</div>
     <div class="tk-card tk-card-l3 v43-tmt v43-tmt-inset" style="padding:2px 0">
       <button class="row" onclick="go('s-builder');if(window.WBUI)WBUI.render()"><span class="tk-icon-box"><svg class="tk-icon" data-icon="bewerken" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16z"/></svg></span><span class="b"><span class="t">Training maken <span class="ilbl" style="background:var(--color-primary-surface);color:#fff;padding:1px 6px;border-radius:8px;font-size:9px;vertical-align:middle">AI</span></span><span class="s">AI stelt een training samen op je herstel</span></span><span class="ar">›</span></button>
-      <button class="row" onclick="go('s-library');if(window.renderLibrary)renderLibrary()" style="border-top:1px solid var(--color-border)"><span class="tk-icon-box"><svg class="tk-icon" data-icon="zoeken" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="M20 20l-5.5-5.5"/></svg></span><span class="b"><span class="t">Oefeningen</span><span class="s">206 oefeningen &#183; video&#8217;s &#183; alternatieven</span></span><span class="ar">›</span></button>
+      <button class="row" onclick="go('s-library');if(window.renderLibrary)renderLibrary()" style="border-top:1px solid var(--color-border)"><span class="tk-icon-box"><svg class="tk-icon" data-icon="zoeken" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="M20 20l-5.5-5.5"/></svg></span><span class="b"><span class="t">Oefeningen</span><span class="s"><span id="tk-train-exercise-count" aria-live="polite">Oefeningen laden...</span> &#183; video&#8217;s &#183; alternatieven</span></span><span class="ar">›</span></button>
     </div>
 
     <!-- SECTION 5 — Terugkijken: wat heb ik gedaan (geen progressie-interpretatie, dat
@@ -9629,10 +9629,23 @@ const TK504_PUBLISHED_CATALOG_RELEASE = true;
 // The bridge is deliberately part of the real ExerciseCatalogService, not a
 // demo catalog. No network access or UI differences while the flag is OFF.
 let tk504PublishedCatalogRuntime=null;
+// One source of truth for both exercise counts: the canonical ExerciseCatalogService.
+// The 356 authorized MoveKit items arrive asynchronously after sign-in.
+function tk504SyncExerciseCount(){
+  if(typeof ExerciseCatalogService==='undefined'||
+     typeof ExerciseCatalogService.count!=='function')return;
+  const count=ExerciseCatalogService.count();
+  if(!Number.isInteger(count)||count<0)return;
+  const trainLabel=document.getElementById('tk-train-exercise-count');
+  if(trainLabel)trainLabel.textContent=count+' oefeningen';
+  const libraryLabel=document.getElementById('lib-total');
+  if(libraryLabel)libraryLabel.textContent=String(count);
+}
 function tk504ClearPublishedCatalog(){
   if(tk504PublishedCatalogRuntime){
     try{if(tk504PublishedCatalogRuntime.clear())tk504InvalidateProtectedMedia();}catch(_){}
   }
+  tk504SyncExerciseCount();
 }
 async function tk504RefreshPublishedCatalog(){
   if(TK504_PUBLISHED_CATALOG_RELEASE!==true ||
@@ -9660,8 +9673,7 @@ async function tk504RefreshPublishedCatalog(){
     // The private V2 broker snapshots catalog identities at construction.
     // Rebuild it after the new 356 entries become part of the SAME ECS.
     tk504InvalidateProtectedMedia();
-    const countLabel=document.getElementById('lib-total');
-    if(countLabel)countLabel.textContent=ExerciseCatalogService.count();
+    tk504SyncExerciseCount();
     const libPage=document.getElementById('s-library');
     if(libPage&&libPage.classList.contains('active')&&typeof renderLibBody==='function')
       renderLibBody();
@@ -36858,6 +36870,7 @@ async function startAppAfterAuth(){
   }
   refreshHome();
   tkPaintBnav('s-home'); // App Shell: s-home is statisch al .active bij boot, go()-wrapper vuurt pas bij een echte wissel
+  tk504SyncExerciseCount();
   ensureExercisesLoaded().then(()=>loadTrainCfg());
   tk504RefreshPublishedCatalog(); // only when independently released; no second ECS
   ensureEquipmentTypesLoaded();

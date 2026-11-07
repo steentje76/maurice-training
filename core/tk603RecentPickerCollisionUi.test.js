@@ -31,6 +31,9 @@ const s=vm.createContext({
  TYPE_LABELS:{strength:'Kracht'},
  escHtml:String,
  window:{ExerciseAssetProvider:{poster:()=>null}},
+ tk504PickerPosterObserver:null,tk504ObservePickerPosters:()=>{},
+ tk504PrivateEnabled:()=>false,
+ ExerciseCatalogService:{byId:()=>null},
  document:{getElementById:id=>{
   if(!DOM[id])DOM[id]={value:'',innerHTML:'',textContent:''};return DOM[id];
  }},

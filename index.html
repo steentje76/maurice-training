@@ -1102,6 +1102,12 @@ canvas{width:100%;height:100%}
 .vid-wrap{position:relative;width:100%;padding-top:56.25%;border-radius:10px;overflow:hidden;margin:8px 14px 4px;background:#000;cursor:pointer;width:calc(100% - 28px)}
 .vid-wrap img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
 .vid-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:rgba(61,214,214,0.95);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--dark)}
+/* TK504: the protected-media CTA is a legible button, not a 48px icon. */
+.tk504-private-video .tk504-video-poster{object-fit:contain;opacity:0;transition:opacity .2s ease}
+.tk504-private-video .tk504-video-poster.is-loaded{opacity:1}
+.tk504-private-video .tk504-private-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;width:auto;min-width:166px;max-width:85%;height:auto;min-height:46px;display:flex;align-items:center;justify-content:center;gap:9px;padding:10px 18px;border-radius:24px;border:1px solid rgba(255,255,255,.9);background:#09b69b;color:#fff;font-size:14px;font-weight:750;line-height:1.25;white-space:nowrap;box-shadow:0 4px 18px rgba(0,0,0,.4);cursor:pointer}
+.tk504-private-video .tk504-private-play:disabled{opacity:.8;cursor:progress}
+.tk504-private-video .vid-label{z-index:2}
 .vid-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:18px 10px 8px;font-size:11px;color:#fff;font-weight:700;letter-spacing:.3px}
 .vid-wrap.vid-poster{cursor:default;background:var(--g1)}
 .vid-wrap.vid-poster img{object-fit:contain} /* poster = primaire bewegingsbron → volledig tonen, nooit boven/onder afsnijden (video-thumbs houden cover) */ /* F18 — statisch bewegingsbeeld (geen video/play) */
@@ -2862,6 +2868,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 #m-ex-picker .pk-gcard{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:9px;position:relative;cursor:pointer;text-align:left;border:0;font-family:var(--f);width:100%}
 #m-ex-picker .pk-pt{width:100%;aspect-ratio:1/1;border-radius:13px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0E3B4A,#0a2731)}
 #m-ex-picker .pk-pt img{width:100%;height:100%;object-fit:cover}
+#m-ex-picker .pk-pt .tk504-picker-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .24s ease}
+#m-ex-picker .pk-pt .tk504-picker-poster.is-loaded{opacity:1;background:#f5f7f6}
 #m-ex-picker .pk-pt svg{width:34px;height:34px;stroke:var(--accent);fill:none;stroke-width:2;opacity:.92}
 #m-ex-picker .pk-pt .mg{position:absolute;left:8px;bottom:8px;font-size:8.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:rgba(255,255,255,.82);background:rgba(0,0,0,.3);padding:2px 7px;border-radius:7px}
 #m-ex-picker .pk-fav{position:absolute;top:15px;right:15px;z-index:2;width:27px;height:27px;border-radius:50%;background:rgba(0,0,0,.34);border:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;cursor:pointer;line-height:1}
@@ -6548,6 +6556,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/athlete.js"></script>
 <script src="core/movement.js"></script>
 <script src="core/privateMoveKitV2MediaClient.js"></script>
+<script src="core/tk504EphemeralMediaSession.js"></script>
 <script src="core/movekitV2ExerciseMediaBridge.js"></script>
 <script src="core/tk504ProtectedPlayback.js"></script>
 <script src="core/tk504BatchReleaseLedger.js"></script>
@@ -18318,6 +18327,22 @@ function setExPickerFilter(type,val){
   });
   renderExPickerList();
 }
+let tk504PickerPosterObserver=(typeof IntersectionObserver!=='undefined')
+  ?new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        _libLoad(entry.target);
+        tk504PickerPosterObserver.unobserve(entry.target);
+      }
+    });
+  },{rootMargin:'180px 0px'}):null;
+function tk504ObservePickerPosters(root){
+  if(!root)return;
+  root.querySelectorAll('img.tk504-picker-poster[data-aid]').forEach(img=>{
+    if(tk504PickerPosterObserver)tk504PickerPosterObserver.observe(img);
+    else _libLoad(img);
+  });
+}
 function renderExPickerList(){
   const q=(document.getElementById('ex-pick-search').value||'').trim().toLowerCase();
   let list=exPickerPool(); // F41: legacy + 206 catalogus (dedup op id)
@@ -18354,15 +18379,23 @@ function renderExPickerList(){
     return;
   }
   const A=window.ExerciseAssetProvider;
+  if(tk504PickerPosterObserver)tk504PickerPosterObserver.disconnect();
   // #603: compute collision labels once, not by scanning all 582 cards repeatedly.
   const pickerIdCounts=new Map();
   list.forEach(e=>pickerIdCounts.set(e.id,(pickerIdCounts.get(e.id)||0)+1));
   el.innerHTML='<div class="pk-grid">'+list.map(e=>{
     // #603: a personal TK-shaped ID cannot borrow the catalog's licensed media.
     const personalCatalogCollision=e._catalog!==true&&e.scope==='personal'&&/^TK-[0-9]{6}$/.test(e.id||'');
-    let poster=null;try{poster=(!personalCatalogCollision&&A&&A.poster)?(A.poster(e.id)||A.poster(e.catalog_id||'')):null;}catch(_){poster=null;}
+    const published=e._catalog===true&&typeof ExerciseCatalogService!=='undefined'&&
+      ExerciseCatalogService.byId(e.id);
+    const protectedPoster=published&&published.source&&
+      published.source.provider==='movekit'&&
+      typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(e.id);
+    let poster=null;if(!protectedPoster)try{poster=(!personalCatalogCollision&&A&&A.poster)?(A.poster(e.id)||A.poster(e.catalog_id||'')):null;}catch(_){poster=null;}
     const mu=(e.muscle_primary&&e.muscle_primary[0])||TYPE_LABELS[e.type]||e.type||'Overig';
-    const box=poster
+    const box=protectedPoster
+      ?`<div class="pk-pt"><span class="mg">${escHtml(mu)}</span>${_pkIcon(e)}<img class="tk504-picker-poster" data-aid="${e.id}" alt="" loading="lazy"></div>`
+      :poster
       ?`<div class="pk-pt"><img src="${poster}" alt="" loading="lazy"></div>`
       :`<div class="pk-pt"><span class="mg">${escHtml(mu)}</span>${_pkIcon(e)}</div>`;
     const fav=isExerciseFavorite(e.id);
@@ -18379,6 +18412,7 @@ function renderExPickerList(){
       <div class="pk-mu">${escHtml(mu)}</div>
     </button>`;
   }).join('')+'</div>';
+  tk504ObservePickerPosters(el);
 }
 // v4.18.0 — fallback-icoon per oefeningtype voor de posterkaart (geen media beschikbaar).
 function _pkIcon(e){
@@ -21057,6 +21091,23 @@ var VIDEO_MANIFEST={"TK-000206":{"catalog_id":"TK-000206","slug":"wall-sit","pos
 const TK504_PRIVATE_MEDIA_RELEASE = false;
 const TK504_NEW_PRIVATE_MEDIA_RELEASE = true;
 let tk504MediaRuntime = null;
+let tk504MediaTickets = null;
+let tk504PosterRequests = null;
+// Signed URL tickets exist only in memory, for <30 seconds and only for one
+// authenticated owner. Never cache licensed bytes or signed URLs on disk.
+function tk504SignedMediaTicket(runtime,catalogId,type,force){
+  if(typeof TK504EphemeralMediaSession==='undefined')return runtime.signed(catalogId,type);
+  if(!tk504MediaTickets)tk504MediaTickets=TK504EphemeralMediaSession.create({
+    ownerProvider:()=>authSession&&authSession.user&&authSession.user.id||null
+  });
+  return tk504MediaTickets.signed(catalogId,type,
+    ()=>runtime.signed(catalogId,type),force===true);
+}
+function tk504PosterRequestQueue(){
+  if(typeof TK504EphemeralMediaSession==='undefined')return null;
+  if(!tk504PosterRequests)tk504PosterRequests=TK504EphemeralMediaSession.queue({maxActive:4});
+  return tk504PosterRequests;
+}
 // Invalidates outstanding signed poster requests and DOM sources on account changes.
 let tk504PosterEpoch = 0;
 function tk504PrivateEnabled(catalogId){
@@ -21093,10 +21144,11 @@ function tk504GetMediaRuntime(catalogId){
 }
 function tk504InvalidateProtectedMedia(){
   tk504PosterEpoch++;
+  if(tk504MediaTickets)tk504MediaTickets.invalidate();
   // Remove account-scoped thumbnails even if the library cards remain mounted.
   try{document.querySelectorAll('img[data-tk504-protected]').forEach(img=>{
     img.removeAttribute('src');img.classList.remove('is-loaded');
-    img.removeAttribute('data-tk504-protected');img._done=0;
+    img.removeAttribute('data-tk504-protected');img._done=0;img._tk504PosterTries=0;
   });}catch(_){}
   if(tk504MediaRuntime)tk504MediaRuntime.invalidate();
   tk504MediaRuntime=null; // rebind current ECS after catalog mount/unmount
@@ -21104,19 +21156,32 @@ function tk504InvalidateProtectedMedia(){
     v.pause();v.removeAttribute('src');v.removeAttribute('poster');v.load();
   });}catch(_){}
 }
+function tk504QueuePrivateVideoPosters(){
+  if(typeof requestAnimationFrame!=='function')return;
+  requestAnimationFrame(()=>{
+    if(typeof document==='undefined'||typeof _libLoad!=='function')return;
+    document.querySelectorAll('.tk504-video-poster[data-aid]').forEach(img=>{
+      if(!img._done&&img.isConnected&&img.getClientRects().length)_libLoad(img);
+    });
+  });
+}
 function tk504PrivateVideoMarkup(catalogId,poster,label){
   if(!/^TK-\d{6}$/.test(catalogId))return '';
   const title=escHtml(label||'Oefening');
+  tk504QueuePrivateVideoPosters();
   return '<div class="vid-wrap tk504-private-video">'+
-    /* Never expose a legacy public/embedded MoveKit poster in secured markup. */
-    '<button type="button" class="vid-play" style="position:absolute;left:40%;top:40%;z-index:1" onclick="tk504PlayPrivateVideo(this.parentElement,\''+catalogId+'\')">▶ Video afspelen</button>'+
-    '<div class="vid-label">'+title+' — techniek video</div></div>';
+    /* Sign the poster independently; never insert a public supplier URL. */
+    '<img class="tk504-video-poster" data-aid="'+catalogId+'" alt="" aria-hidden="true" loading="lazy">'+
+    '<button type="button" class="tk504-private-play" onclick="tk504PlayPrivateVideo(this.parentElement,\''+catalogId+'\')"><span aria-hidden="true">▶</span><span>Video afspelen</span></button>'+
+    '<div class="vid-label">'+title+' — techniekvideo</div></div>';
 }
 async function tk504PlayPrivateVideo(container,catalogId){
   if(!tk504PrivateEnabled(catalogId)||!container||!/^TK-\d{6}$/.test(catalogId))return false;
   const owner=authSession&&authSession.user&&authSession.user.id;
   if(!owner){container.textContent='Log in om de video af te spelen.';return false;}
-  container.textContent='Video laden…';
+  const startButton=container.querySelector&&container.querySelector('.tk504-private-play');
+  if(startButton){startButton.disabled=true;startButton.textContent='Video laden…';}
+  else container.textContent='Video laden…';
   const denied=()=>{
     // Revoked/denied playback must not leave a signed media source in memory.
     try{const video=container.querySelector&&container.querySelector('video[data-tk504-protected]');
@@ -21126,7 +21191,7 @@ async function tk504PlayPrivateVideo(container,catalogId){
   };
   try{
     const runtime=tk504GetMediaRuntime(catalogId);
-    const ticket=await runtime.signed(catalogId,'video');
+    const ticket=await tk504SignedMediaTicket(runtime,catalogId,'video');
     if(!container.isConnected||!authSession||authSession.user.id!==owner){
       if(container.isConnected)container.textContent='Video onderbroken na wijzigen van account.';
       return false;
@@ -21160,7 +21225,7 @@ async function tk504PlayPrivateVideo(container,catalogId){
       const resume=reason==='error'||v.paused===false;
       inFlight=(async()=>{
         try{
-          const fresh=await runtime.signed(catalogId,'video');
+          const fresh=await tk504SignedMediaTicket(runtime,catalogId,'video',true);
           if(!stillCurrent()||terminal)return false;
           activeTicket=fresh;
           // Attach before load(): a fast WebView may emit synchronously.
@@ -21184,7 +21249,7 @@ async function tk504PlayPrivateVideo(container,catalogId){
     container.replaceChildren(v);
     // Only the server may sign the private optimized poster for this account.
     // A poster failure never blocks an otherwise authorized video.
-    runtime.signed(catalogId,'poster').then(posterTicket=>{
+    tk504SignedMediaTicket(runtime,catalogId,'poster').then(posterTicket=>{
       if(container.isConnected&&v.parentNode===container&&authSession&&
          authSession.user&&authSession.user.id===owner&&
          posterTicket.type==='poster')v.poster=posterTicket.url;
@@ -21690,21 +21755,45 @@ function tk504LoadPrivateLibraryPoster(img,catalogId){
   img.setAttribute('data-tk504-protected','true');
   const owner=authSession&&authSession.user&&authSession.user.id;
   const epoch=tk504PosterEpoch;
-  const denied=()=>{if(img.isConnected&&img.parentNode)img.parentNode.classList.add('no-img');};
+  const valid=()=>img.isConnected&&img.getAttribute('data-aid')===catalogId&&
+    tk504PosterEpoch===epoch&&authSession&&authSession.user&&
+    authSession.user.id===owner;
+  const denied=()=>{if(valid()&&img.parentNode)img.parentNode.classList.add('no-img');};
+  const retry=()=>{
+    if(!valid())return;
+    const attempt=img._tk504PosterTries||0;
+    if(attempt>=2){denied();return;}
+    img._tk504PosterTries=attempt+1;
+    img._done=0;
+    img.onload=null;img.onerror=null;
+    img.removeAttribute('src');img.classList.remove('is-loaded');
+    setTimeout(()=>{if(valid())_libLoad(img);},attempt===0?700:1900);
+  };
   if(!owner){denied();return;}
   let runtime;
   try{runtime=tk504GetMediaRuntime(catalogId);}catch(_){denied();return;}
-  Promise.resolve().then(()=>runtime.signed(catalogId,'poster')).then(ticket=>{
-    if(!img.isConnected||img.getAttribute('data-aid')!==catalogId||
-       tk504PosterEpoch!==epoch||!authSession||!authSession.user||
-       authSession.user.id!==owner)return;
+  // Bounded signing avoids overwhelming the server on 19-card searches.
+  const tasks=tk504PosterRequestQueue();
+  const sign=()=>tk504SignedMediaTicket(runtime,catalogId,'poster',
+    (img._tk504PosterTries||0)>0);
+  const request=tasks?tasks.schedule(sign,valid):Promise.resolve().then(sign);
+  request.then(ticket=>{
+    if(!valid())return;
     if(!ticket||ticket.type!=='poster'||ticket.catalogId!==catalogId||
-       typeof ticket.url!=='string'){denied();return;}
+       typeof ticket.url!=='string'){retry();return;}
     img.referrerPolicy='no-referrer';
-    img.onload=()=>{if(tk504PosterEpoch===epoch)img.classList.add('is-loaded');};
-    img.onerror=()=>{img.removeAttribute('src');img.classList.remove('is-loaded');denied();};
+    img.onload=()=>{
+      if(!valid())return;
+      img.classList.add('is-loaded');
+      if(img.parentNode)img.parentNode.classList.remove('no-img');
+      img._tk504PosterTries=0;
+    };
+    img.onerror=retry;
+    // A reused short-lived signed URL can hit the browser's own HTTP cache.
+    // No media bytes or bearer links are written to persistent app storage.
     img.src=ticket.url;
-  }).catch(denied);
+    if(img.complete&&img.naturalWidth>0)img.onload();
+  }).catch(()=>{if(valid())retry();});
 }
 function _libLoad(img){
   if(img._done)return;
@@ -21723,7 +21812,7 @@ function _libLoad(img){
   if(src){img.onload=function(){img.classList.add('is-loaded');};img.src=src;}
   else{var box=img.parentNode;if(box)box.classList.add('no-img');}
 }
-function _libObserve(root){if(!root)return;var imgs=root.querySelectorAll('.lib-img[data-aid]');for(var i=0;i<imgs.length;i++){if(_libIO)_libIO.observe(imgs[i]);else _libLoad(imgs[i]);}}
+function _libObserve(root){if(!root)return;var imgs=root.querySelectorAll('.lib-img[data-aid],.tk504-video-poster[data-aid]');for(var i=0;i<imgs.length;i++){if(_libIO)_libIO.observe(imgs[i]);else _libLoad(imgs[i]);}}
 function _imgBox(id,name,extra,overlay){return '<span class="lib-imgbox'+(extra?' '+extra:'')+'"><span class="lib-skel"></span><img class="lib-img" alt="'+escHtml(name||'')+'" data-aid="'+id+'">'+(overlay||'')+'</span>';}
 function _libRipple(e){var b=e.currentTarget;if(!b)return;var r=b.getBoundingClientRect();var s=document.createElement('span');s.className='lib-ripple';var d=Math.max(r.width,r.height);s.style.width=s.style.height=d+'px';s.style.left=((e.clientX||r.left+r.width/2)-r.left-d/2)+'px';s.style.top=((e.clientY||r.top+r.height/2)-r.top-d/2)+'px';b.appendChild(s);setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},520);}
 

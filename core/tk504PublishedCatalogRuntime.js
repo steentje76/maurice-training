@@ -1,14 +1,16 @@
 'use strict';
 // #504/#603 — product-level bridge for the EXISTING ExerciseCatalogService.
 // Nothing is released unless the backend explicitly returns an authorized
-// published 356-row payload; in production the caller's feature flag is OFF.
+// published batch payload; in production the caller's feature flag is OFF.
 // No second exercise catalog, personal exercise row, or session writer.
 (function(root,factory){
   const value=factory();
   if(typeof module==='object'&&module.exports)module.exports=value;
   if(root)root.TK504PublishedCatalogRuntime=value;
 })(typeof globalThis!=='undefined'?globalThis:null,function(){
-  const PREFIX='TK-',NEW_START=227,TOTAL=582,EXISTING=226;
+  const PREFIX='TK-',NEW_START=227,MAX_NEW=356,EXISTING=226;
+  const batchCount=n=>Number.isSafeInteger(n)&&n>0&&n<=MAX_NEW&&
+    (n%25===0||n===MAX_NEW);
   const id=n=>PREFIX+String(n).padStart(6,'0');
   const safeText=s=>typeof s==='string'&&s.trim().length>0&&
     s.length<=400&&!/[<>\u0000-\u001f]/.test(s);
@@ -17,8 +19,8 @@
   function validate(payload,baseline){
     if(!payload||payload.schema!=='tk504-authorized-catalog-v2/1.0'||
       payload.status!=='PUBLISHED_AND_ENTITLED'||
-      payload.total!==TOTAL||payload.new_count!==356||
-      !Array.isArray(payload.items)||payload.items.length!==356)throw Error('TK504_NOT_RELEASED_OR_INCOMPLETE');
+       !batchCount(payload.new_count)||payload.total!==EXISTING+payload.new_count||
+      !Array.isArray(payload.items)||payload.items.length!==payload.new_count)throw Error('TK504_NOT_RELEASED_OR_INCOMPLETE');
     if(!baseline||baseline.length!==EXISTING)throw Error('TK504_EXISTING_BASELINE_CHANGED');
     const known=new Map(),provider=new Set();
     for(let i=0;i<EXISTING;i++){
@@ -28,7 +30,7 @@
       known.set(c.catalog_id,c);provider.add(c.source.provider_id);
     }
     const next=[];
-    for(let i=0;i<356;i++){
+    for(let i=0;i<payload.new_count;i++){
       const c=payload.items[i],cid=id(NEW_START+i),s=c&&c.source;
       if(!c||c.catalog_id!==cid||known.has(cid)||s?.provider!=='movekit'||
         !safeSlug(s.provider_id)||provider.has(s.provider_id)||
@@ -111,10 +113,10 @@
       // Install only after complete validation AND one final owner check.
       if(ownerNow()!==uid)throw Error('TK504_AUTH_OWNER_CHANGED');
       if(owner!==null)clear();
-      catalog.catalog=original.concat(list);catalog.count=TOTAL;
+      catalog.catalog=original.concat(list);catalog.count=EXISTING+list.length;
       if(Array.isArray(catalog.sources)){
         catalog.sources=catalog.sources.map(s=>s&&s.provider==='movekit'
-          ?{...s,count:TOTAL}:s);
+          ?{...s,count:catalog.count}:s);
       }
       owner=uid;notify();
       if(ownerNow()!==uid){clear();throw Error('TK504_AUTH_OWNER_CHANGED');}

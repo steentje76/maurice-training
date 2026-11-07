@@ -15,7 +15,7 @@ const WWW = path.join(ROOT, 'www');
 // ── verse build afdwingen: nooit op een bestaande www/ vertrouwen ────────────
 fs.rmSync(WWW, { recursive: true, force: true });
 ok(!fs.existsSync(WWW), 'A1: oude www/ verwijderd vóór de build');
-execFileSync('npm', ['run', 'build:www'], { cwd: ROOT, stdio: 'pipe' });
+execFileSync(process.execPath, [path.join(ROOT, 'scripts/build-www.mjs')], { cwd: ROOT, stdio: 'pipe' });
 ok(fs.existsSync(WWW), 'A2: verse build heeft www/ geproduceerd');
 
 const read = f => fs.readFileSync(path.join(WWW, f), 'utf8');

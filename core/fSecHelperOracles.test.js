@@ -7,12 +7,13 @@
  * (7) geen TK-client roept de helpers direct aan; (8) rollback-verificatiescript + auditdocument; (9) sabotage.
  * Live-evidence: docs/SECURITY_AUDIT_PRIVILEGED_FUNCTIONS.md. */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs'); const path = require('path');
 const ROOT = path.join(__dirname, '..');
-const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+const rd = f => readText(path.join(ROOT, f));
 const fnDir = path.join(ROOT, 'netlify/functions');
 const SRC = { mig: rd('migratie_v574.sql'), index: rd('index.html'), verify: rd('tools/verify-f-sec-003.sql'), doc: rd('docs/SECURITY_AUDIT_PRIVILEGED_FUNCTIONS.md'),
-  fns: fs.readdirSync(fnDir).filter(f => /\.js$/.test(f)).map(f => fs.readFileSync(path.join(fnDir, f), 'utf8')).join('\n') };
+  fns: fs.readdirSync(fnDir).filter(f => /\.js$/.test(f)).map(f => readText(path.join(fnDir, f))).join('\n') };
 let pass = 0, fail = 0, mute = false;
 const ok = (c, m) => { if (c) pass++; else { fail++; if (!mute) console.log('MISLUKT: ' + m); } };
 const code = s => s.split('\n').filter(l => !/^\s*--/.test(l)).join('\n');

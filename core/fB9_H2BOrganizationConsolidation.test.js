@@ -3,6 +3,7 @@
  * idempotentie, role-mapping, geen dual-write, geen UI-wijziging.
  */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -11,9 +12,9 @@ let pass = 0, fail = 0;
 const msgs = [];
 function ok(cond, label) { if (cond) { pass++; } else { fail++; msgs.push('MISLUKT: ' + label); } }
 
-const migratie = fs.readFileSync(path.join(ROOT, 'migratie_v539.sql'), 'utf8');
-const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-const delAcct = fs.readFileSync(path.join(ROOT, 'netlify/functions/delete-account.js'), 'utf8');
+const migratie = readText(path.join(ROOT, 'migratie_v539.sql'));
+const html = readText(path.join(ROOT, 'index.html'));
+const delAcct = readText(path.join(ROOT, 'netlify/functions/delete-account.js'));
 
 // ---- 1. Strategy C blijft canoniek (deterministische org-id = gym-id) ----
 ok(migratie.includes('select distinct on (g.id) g.id, g.name, u.id::uuid'),

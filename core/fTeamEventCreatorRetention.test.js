@@ -5,10 +5,11 @@
  * Daarnaast moet notify_team_event_created() na NULL-provenance fail-closed blijven.
  */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
-const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+const rd = f => readText(path.join(ROOT, f));
 const SRC = {
   mig: rd('migratie_v577.sql'),
   del: rd('netlify/functions/delete-account.js'),

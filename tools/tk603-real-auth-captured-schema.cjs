@@ -1,10 +1,15 @@
 'use strict';
 // Real local Auth + captured schema contract; never targets a remote service.
-// LOCAL-ONLY scope proposal follows mandatory baseline RED. No production migration.
+// Mandatory baseline RED, then local-only proposal or opt-in staged migration.
+// Never applies schema to production.
 // Ephemeral containers, generated credentials, synthetic accounts, no licensed media.
 const {execFileSync}=require('node:child_process');
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..');
+const batch25=process.argv.includes('--batch25');
+const stagedScope=process.argv.includes('--staged-scope');
+if(stagedScope&&!batch25)throw Error('--staged-scope requires --batch25');
+let finishStagedScope=null;
 const capturedSchema=require('./tk603CapturedSchemaFixture.cjs');
 const id='tk603-auth-'+Date.now(),network=id+'-net',names=[];
 const password=crypto.randomBytes(32).toString('hex'),secret=crypto.randomBytes(48).toString('hex');
@@ -36,7 +41,8 @@ async function account(label){const email='tk603-'+label+'-'+Date.now()+'@exampl
   let blocked=false;
   try{sql("insert into public.exercises(id,name,category,type,scope,active) values('TKC-000582','Synthetic red proof','system','strength','global',false)");}catch(e){blocked=e.message.includes('Alleen een gym-owner');}
   assert(blocked,'captured production scope trigger blocks unowned admin alias before proposal');
-  sql(capturedSchema.proposal(captured.scope));
+  if(stagedScope)finishStagedScope=require('./tk603StagedScopeProbe.cjs')({root,sql,assert,scope:captured.scope});
+  else sql(capturedSchema.proposal(captured.scope));
   sql(`select set_config('request.jwt.claims',json_build_object('sub','${A.id}','role','authenticated')::text,false);
 insert into public.exercises(id,name,category,type,scope,created_by,user_id) values('TK-000038','synthetic personal','Strength','strength','personal','${A.id}','${A.id}');
 select set_config('request.jwt.claims','',false);
@@ -116,13 +122,21 @@ update public.movekit_catalog_fk_bindings set active=true,reviewed_at=clock_time
   r=await query('/exercises',{token:serviceJwt},'POST',{id:'TKC-000001',name:'synthetic service spoof',category:'system',type:'strength',scope:'global',created_by:null,user_id:null,gym_id:null});
   assert(r.status===403,'locally signed service_role JWT cannot provision reserved global aliases');
 
+  if(batch25)await require('./tk504Batch25RealAuthProbe.cjs')({root,rest,auth,A,B,query,sql,assert,serviceJwt});
+  if(finishStagedScope)finishStagedScope();
+
   console.log('RESULT '+checks+' real local Auth/PostgREST/PostgreSQL assertions PASS');
  }catch(e){console.error('FAIL '+String(e.message).replaceAll(password,'[redacted]').replaceAll(secret,'[redacted]'));process.exitCode=1;}
  finally{
   let clean=true;for(const n of names.reverse()){try{docker(['rm','--force','--volumes',n]);}catch{clean=false;}}
   if(net)for(const n of [network,id+'-front'])try{docker(['network','rm',n]);}catch{clean=false;}
   if(!clean){console.error('FAIL temporary resource cleanup; inspect '+id);process.exitCode=1;}else console.log('CLEANUP PASS: all dedicated containers/anonymous volumes/network removed');
-  const report=['# TK603 real local Auth acceptance — 7 November 2026','','Status: '+(process.exitCode?'FAILED / incomplete':'PASS')+'. '+checks+' checks. Run completed '+new Date().toISOString(),'','Actual services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5, dedicated internal backend plus dedicated frontend Docker network; only ephemeral loopback Auth/REST ports. Two synthetic email/password accounts received independent JWTs; tokens verified by GoTrue and PostgREST. No cloud project, production data, media or credentials used.','','Schema: captured 21 exercise and 39 session columns, constraints, table ACLs, RLS policies, three functions and two noninternal triggers pinned through a normalized full-contract SHA256; synthetic dependency tables are locked with synthetic ACL/RLS, not production dependency-table parity. Unmodified captured scope trigger RED was required before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases. Original staged typed-FK migration executed unchanged. Function owners/EXECUTE ACLs, column grants, indexes and type modifiers are not replayed. Direct synthetic REST requests add a synthetic date. A separate probe extracts the actual strength builder, source validation, binding RPC, sbFetch, sbPostQ and central writer from index.html, sends the actual generated strength fields (UUID and date are explicit harness inputs, not a durability proof), loses the ACK after a real COMMIT and replays the same bytes from a fresh JS VM using a renewed binding. Independent B JWT replay is denied. Transport maps only the local REST prefix; FIFO discovery, DOM and timeout scheduling are adapters. This is not full browser/loose-modal acceptance, a full database restore, cloud, media or Android test. The actual personal-reader adapter is additionally executed under the real B coach JWT with active access to A: date-only SELECT still explicitly narrows user_id to B and returns no A rows. Scope proposal remains outside production migration.','','Checks:',...events.map(x=>'- '+x),'','Cleanup: '+(clean?'dedicated containers, anonymous volumes and network removed':'FAILED; inspect temporary resources'),'','Reproduce: `node tools/tk603-real-auth-captured-schema.cjs` with Docker running and listed cached images. Generated local secrets remain in memory only and are never printed or committed.'].join('\n');
-  fs.writeFileSync(path.join(root,'docs/TK603_REAL_AUTH_CAPTURED_SCHEMA_20261107.md'),report+'\n');
+  const report=[(batch25?'# TK504 batch-25 plus TK603 real local Auth acceptance':'# TK603 real local Auth acceptance')+' — 7 November 2026','','Status: '+(process.exitCode?'FAILED / incomplete':'PASS')+'. '+checks+' checks. Run completed '+new Date().toISOString(),'','Actual services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5, dedicated internal backend plus dedicated frontend Docker network; only ephemeral loopback Auth/REST ports. Two synthetic email/password accounts received independent JWTs; tokens verified by GoTrue and PostgREST. No cloud project, production data, media or credentials used.','','Schema: captured 21 exercise and 39 session columns, constraints, table ACLs, RLS policies, three functions and two noninternal triggers pinned through a normalized full-contract SHA256; synthetic dependency tables are locked with synthetic ACL/RLS, not production dependency-table parity. Unmodified captured scope trigger RED was required before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases. Original staged typed-FK migration executed unchanged. Function owners/EXECUTE ACLs, column grants, indexes and type modifiers are not replayed. Direct synthetic REST requests add a synthetic date. A separate probe extracts the actual strength builder, source validation, binding RPC, sbFetch, sbPostQ and central writer from index.html, sends the actual generated strength fields (UUID and date are explicit harness inputs, not a durability proof), loses the ACK after a real COMMIT and replays the same bytes from a fresh JS VM using a renewed binding. Independent B JWT replay is denied. Transport maps only the local REST prefix; FIFO discovery, DOM and timeout scheduling are adapters. This is not full browser/loose-modal acceptance, a full database restore, cloud, media or Android test. The actual personal-reader adapter is additionally executed under the real B coach JWT with active access to A: date-only SELECT still explicitly narrows user_id to B and returns no A rows. Scope proposal remains outside production migration.','',...(batch25?['Batch scope: 25 canonical IDs TK-000227..TK-000251 with synthetic display/domain metadata. Actual broker, local grants/publications, real ECS and 25 extracted strength-writer probes; no claim about the exercise-specific training prescription. A 26th published control row is physically present but excluded by the release filter. Lost-ACK/retry, cross-owner HTTP403, FK denial and mid-read grant revocation are tested. No Storage/signing/Range/playback, real browser or Android acceptance.','']:[]),'Checks:',...events.map(x=>'- '+x),'','Cleanup: '+(clean?'dedicated containers, anonymous volumes and network removed':'FAILED; inspect temporary resources'),'','Reproduce: `node tools/tk603-real-auth-captured-schema.cjs'+(batch25?' --batch25':'')+'` with Docker running and listed cached images. Generated local secrets remain in memory only and are never printed or committed.'].join('\n');
+  const finalReport=stagedScope?report
+   .replace('# TK504 batch-25 plus TK603 real local Auth acceptance','# TK603 staged scope transition plus batch-25 Auth acceptance')
+   .replace('before a LOCAL-ONLY guarded proposal enabled 582 synthetic aliases.','before the actual staged scope migration enabled 582 synthetic aliases in temporary containers.')
+   .replace('Scope proposal remains outside production migration.','The scope migration is staged in Git; it has not been applied to production. Its drift/guard checks, local privilege preservation and explicit rollback were exercised. Rollback compares complete row-content SHA256 digests for exercises, sessions, bindings and publications.')
+   .replace('node tools/tk603-real-auth-captured-schema.cjs --batch25`','node tools/tk603-real-auth-captured-schema.cjs --batch25 --staged-scope`'):report;
+  fs.writeFileSync(path.join(root,stagedScope?'docs/TK603_STAGED_SCOPE_BATCH25_20261107.md':batch25?'docs/TK504_BATCH25_REAL_AUTH_20261107.md':'docs/TK603_REAL_AUTH_CAPTURED_SCHEMA_20261107.md'),finalReport+'\n');
  }
 })();

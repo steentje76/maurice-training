@@ -4,11 +4,12 @@
  * te raken; (2) de guard accepteert correcte migraties en weigert elke overtreding (R1–R5); (3) de guard draait op
  * alle migraties na v575 in deze repo; (4) sabotage van guard of migratie wordt gedetecteerd. */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs'); const path = require('path'); const os = require('os');
 const ROOT = path.join(__dirname, '..');
-const GUARD_SRC = fs.readFileSync(path.join(ROOT, 'tools/check-function-grants.js'), 'utf8');
-const MIG = fs.readFileSync(path.join(ROOT, 'migratie_v576.sql'), 'utf8');
-const V571 = fs.readFileSync(path.join(ROOT, 'migratie_v571.sql'), 'utf8');
+const GUARD_SRC = readText(path.join(ROOT, 'tools/check-function-grants.js'));
+const MIG = readText(path.join(ROOT, 'migratie_v576.sql'));
+const V571 = readText(path.join(ROOT, 'migratie_v571.sql'));
 let pass = 0, fail = 0, mute = false;
 const ok = (c, m) => { if (c) pass++; else { fail++; if (!mute) console.log('MISLUKT: ' + m); } };
 function loadGuard(src) { const m = { exports: {} }; new Function('module', 'exports', 'require', '__dirname', src.replace(/^#!.*\n/, ''))(m, m.exports, require, path.join(ROOT, 'tools')); return m.exports; }

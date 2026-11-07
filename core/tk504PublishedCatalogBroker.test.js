@@ -152,6 +152,55 @@ async function status(res,wanted,code){
   403,'ENTITLEMENT_REVOKED');
  const direct=broker.validatePublished(goodRows,goodBindings,cfg);
  assert.equal(direct.length,356);checks++;
+
+ // A completed prefix can be released independently; remaining rows cannot
+ // leak through either the query or a misbehaving backend response.
+ for(const count of [...Array.from({length:14},(_,i)=>(i+1)*25),356]){
+  reset();
+  const config={...cfg,entries:cfg.entries.slice(0,count*2)};
+  auth.rows=goodRows.slice(0,count);auth.bindings=goodBindings.slice(0,count);
+  const res=await broker.handle(event(),{env:goodEnv,fetch:fetchStub,release:config});
+  await status(res,200);
+  const answer=JSON.parse(res.body);
+  assert.equal(answer.new_count,count);checks++;
+  assert.equal(answer.total,226+count);checks++;
+  assert.equal(answer.items.length,count);checks++;
+  for(const call of auth.calls.filter(c=>c.url.includes('/movekit_v2_catalog_publications?')||
+    c.url.includes('/movekit_catalog_fk_bindings?'))){
+   const query=new URL(call.url).searchParams;
+   assert.equal(query.get('catalog_id'),'in.('+newRows.slice(0,count).map(x=>x.catalog_id).join(',')+')');checks++;
+   assert.equal(query.get('limit'),String(count+1));checks++;
+  }
+ }
+ const first={...cfg,entries:cfg.entries.slice(0,50)};
+ reset();auth.rows=goodRows.slice(0,26);auth.bindings=goodBindings.slice(0,25);
+ await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub,release:first}),
+  503,'CATALOG_DATA_NOT_APPROVED');
+ reset();auth.rows=goodRows.slice(0,25);auth.bindings=goodBindings.slice(0,26);
+ await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub,release:first}),
+  503,'CATALOG_DATA_NOT_APPROVED');
+ for(const entries of [
+  cfg.entries.slice(0,48), // incomplete batch
+  cfg.entries.slice(0,52), // 26 rather than 25
+  cfg.entries.slice(50,100), // gap: batch two without batch one
+  cfg.entries.slice(0,49), // missing poster
+  [...first.entries,first.entries[0]], // ambiguous duplicate video
+  first.entries.map((x,i)=>i===0?{...x,upload_verified:false}:x),
+  [...first.entries,{catalog_id:'TK-999999',media_type:'video'}],
+  first.entries.map((x,i)=>i===0?{...x,media_type:'audio'}:x)
+ ]){
+  reset();
+  await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub,
+   release:{...cfg,entries}}),503,'CATALOG_DATA_NOT_APPROVED');
+  assert.equal(auth.calls.length,0,'invalid batch rejected before account/metadata lookup');checks++;
+ }
+ reset();auth.rows=goodRows.slice(0,25);auth.bindings=goodBindings.slice(0,25);
+ const denied=async(url,opts)=>url.includes('/movekit_media_grants?')
+  ?response([]):fetchStub(url,opts);
+ await status(await broker.handle(event(),{env:goodEnv,fetch:denied,release:first}),
+  403,'NO_ENTITLEMENT');
+ assert(!auth.calls.some(c=>c.url.includes('/movekit_v2_catalog_publications?')));checks++;
+
  console.log('TK504 authenticated 356-catalog broker: '+checks+
   ' security/functional asserts PASS; no rights => 0 private content, release OFF');
 })().catch(err=>{console.error(err);process.exitCode=1;});

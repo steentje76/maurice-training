@@ -1,7 +1,8 @@
 /* MS-BETA-01 Slice A — deterministic feedback contract tests (positive, negative, sabotage). */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs'); const path = require('path');
-const SRC = fs.readFileSync(path.join(__dirname, 'betaFeedback.js'), 'utf8');
+const SRC = readText(path.join(__dirname, 'betaFeedback.js'));
 let pass = 0, fail = 0, mute = false;
 const ok = (c, m) => { if (c) pass++; else { fail++; if (!mute) console.log('MISLUKT: ' + m); } };
 const eq = (a, b, m) => ok(JSON.stringify(a) === JSON.stringify(b), m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')');

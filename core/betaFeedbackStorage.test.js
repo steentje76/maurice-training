@@ -6,13 +6,14 @@
  *  R  cleanup-beta-feedback: 365 dagen, strikte boundary, één gefilterde DELETE, fail-safe, @daily;
  *  X  sabotage. */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs'); const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const BF = require(path.join(ROOT, 'core/betaFeedback.js'));
-const ING = fs.readFileSync(path.join(ROOT, 'netlify/functions/beta-feedback.js'), 'utf8');
-const CLN = fs.readFileSync(path.join(ROOT, 'netlify/functions/cleanup-beta-feedback.js'), 'utf8');
-const SQL = fs.readFileSync(path.join(ROOT, 'migratie_v568.sql'), 'utf8');
-const TOML = fs.readFileSync(path.join(ROOT, 'netlify.toml'), 'utf8');
+const ING = readText(path.join(ROOT, 'netlify/functions/beta-feedback.js'));
+const CLN = readText(path.join(ROOT, 'netlify/functions/cleanup-beta-feedback.js'));
+const SQL = readText(path.join(ROOT, 'migratie_v568.sql'));
+const TOML = readText(path.join(ROOT, 'netlify.toml'));
 let pass = 0, fail = 0, finished = false, mute = false;
 process.on('exit', c => { if (!finished && c === 0) { console.log('MISLUKT: test eindigde zonder samenvatting'); process.exitCode = 1; } });
 const ok = (c, m) => { if (c) pass++; else { fail++; if (!mute) console.log('MISLUKT: ' + m); } };

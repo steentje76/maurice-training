@@ -122,5 +122,38 @@ ok(html.includes("protectedCatalog||ExerciseAssetProvider.has(id,'video')"),
 const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 ok(sw.includes("'/core/tk504PublishedCatalogRuntime.js'"),
  'serviceworker precaches the new core bridge');
+
+// Exercise the actual ECS for every completed 25-item cumulative batch,
+// including shrink on re-login and the final six. No new catalog or picker.
+for(const count of [...Array.from({length:14},(_,i)=>(i+1)*25),356,25]){
+ const partial={...payload,total:226+count,new_count:count,items:items.slice(0,count)};
+ const installed=runtime.mount(partial,currentUser,owner);
+ eq(installed.added,count);eq(real.count(),226+count);eq(c.count,226+count);
+ ok(real.byId('TK-'+String(226+count).padStart(6,'0')));
+ if(count<356)eq(real.byId('TK-'+String(227+count).padStart(6,'0')),null);
+ ok(real.search('unieke oefening 1').some(x=>x.catalog_id==='TK-000227'));
+ ok(c.catalog.slice(0,226).every((r,i)=>r.catalog_id===baseline.catalog[i].catalog_id));
+}
+const firstBatch={...payload,total:251,new_count:25,items:items.slice(0,25)};
+for(const count of [0,1,24,26,49,351,355,357,'25',null]){
+ reject(()=>runtime.mount({...payload,total:226+count,new_count:count,
+  items:items.slice(0,count)},currentUser,owner),/NOT_RELEASED_OR_INCOMPLETE/);
+ eq(real.count(),251,'rejection preserves last verified batch');
+}
+reject(()=>runtime.mount({...firstBatch,total:582},currentUser,owner),/NOT_RELEASED_OR_INCOMPLETE/);
+reject(()=>runtime.mount({...firstBatch,items:items.slice(25,50)},currentUser,owner),/UNREVIEWED_OR_DUPLICATE/);
+reject(()=>runtime.mount({...firstBatch,items:items.slice(0,26)},currentUser,owner),/NOT_RELEASED_OR_INCOMPLETE/);
+const futureRelation=structuredClone(firstBatch);
+futureRelation.items[0].relations.alternatives=['TK-000252'];
+reject(()=>runtime.mount(futureRelation,currentUser,owner),/UNKNOWN_RELATION_ID/);
+eq(real.count(),251);
+const allowedRelation=structuredClone(firstBatch);
+allowedRelation.items[0].relations.alternatives=['TK-000251',baseline.catalog[0].catalog_id];
+eq(runtime.mount(allowedRelation,currentUser,owner).count,251);
+ok(runtime.clear());
+eq(real.count(),226);
+eq(real.byId('TK-000227'),null);
+eq(real.search('unieke oefening 1').length,0);
+
 console.log('TK504 actual ECS authorized 356-catalog mount: '+n+
  ' assertions PASS; existing search+picker, strict 582 identities, no public assets, owner reset, no new UX');

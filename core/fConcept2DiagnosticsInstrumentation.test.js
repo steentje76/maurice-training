@@ -258,7 +258,7 @@ async function run() {
     eq(JSON.stringify(mk(bridge)(Lm, () => {})), JSON.stringify(mk(stripped)(Lm, undefined)), 'H7: identiek op het handmatige pad'); }
 
   // ── I. Developer Mode-weergave ──
-  const DM = await import(path.join(ROOT, 'native/src/developerMode.mjs'));
+  const DM = await import(require('node:url').pathToFileURL(path.join(ROOT, 'native/src/developerMode.mjs')).href);
   { const w = world(); w.cons('roeien', { distanceM: 10, machineType: 'rowerg' });
     const snapLc = w.snap();
     const fakeT = { VERSION: 'x', getMultiplexedDiagnostics: () => t.getMultiplexedDiagnostics(), getConnectionDiagnostics: () => ({ state: 'connected' }) };

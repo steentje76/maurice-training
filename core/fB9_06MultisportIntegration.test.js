@@ -40,7 +40,7 @@ ok(migratie533.includes("sport in ('running','cycling','rowing','swimming')"),
   ok(activitiesSchrijfActies === 3,
     'C1: exact 3 schrijfacties naar activities met sport running/cycling bestaan (de bekende Running/Cycling-standalone-flows) -- geen extra, onverwachte schrijfpad vanuit HYROX/Triathlon/Brick-code');
 }
-ok(html.includes(`sbGet('activities', "&sport=in.(running,cycling)&order=recorded_at.asc&limit=1000")`),
+ok(html.includes(`tk603ReadRows(_oc,sbGet,'activities', "&sport=in.(running,cycling)&order=recorded_at.asc&limit=1000")`),
   'C3: het multisport-overzicht filtert expliciet op sport=in.(running,cycling) -- voorkomt dat Rowing/andere sporten per ongeluk meetellen in een overzicht dat bewust alleen Running+Cycling combineert');
 
 ok(!html.match(/race_segments[\s\S]{0,300}insert into activities|activities[\s\S]{0,300}race_segments.*insert/i),

@@ -17,18 +17,22 @@ function eq(a, b, l) { ok(a === b, l + ' (verwacht ' + JSON.stringify(b) + ', kr
 function extractFn(name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
   const m = re.exec(html); if (!m) return null;
-  let i = html.indexOf('{', m.index), d = 0;
-  for (let j = i; j < html.length; j++) { if (html[j] === '{') d++; else if (html[j] === '}') { d--; if (d === 0) return html.slice(m.index, j + 1); } }
+  // Parse complete real functions, including expanded source/ownership guards.
+  for(let end=html.indexOf('}',m.index);end>=0;end=html.indexOf('}',end+1)){
+    const candidate=html.slice(m.index,end+1);
+    try{new vm.Script(candidate);return candidate;}catch(_){}
+  }
   return null;
 }
 const FNS = ['canonicalNewExerciseItem', 'loadStrengthBasis', 'loadPrevPerformance', 'strengthBasisProvenance', 'resolveWorkingWeight', 'detrainingFactor',
   'daysBetweenDates', 'suggestWeightForRepsRpe', 'repsPrefillFromRange', 'resolvePrescriptionRepTarget', 'previewOneRM', 'estimatedOneRM', 'getOneRM',
-  'oneRMFor', 'manualOneRMDate', 'roundKg', 'applySessionRecovery', 'recoveryWeightFactor', 'computeProgAdjustment', 'epley1RMRaw'];
+  'oneRMFor', 'manualOneRMDate', 'roundKg', 'applySessionRecovery', 'recoveryWeightFactor', 'computeProgAdjustment', 'epley1RMRaw',
+  'tk603OwnRows', 'tk603LiveSourceKey', 'tk603LiveOneRM', 'tk603LiveIsCatalog'];
 const SRC = {}; FNS.forEach((n) => { SRC[n] = extractFn(n); ok(SRC[n], 'functie gevonden: ' + n); });
 const RULES_SRC = (html.match(/const DETRAINING_RULES_V1=\{[\s\S]*?\n\};/) || [''])[0];
 const CONFIRM = extractFn('confirmSwapExercise'), REPLACE = extractFn('execReplaceExercise'), ADD = extractFn('addExConfirm'), RENDER = extractFn('renderTrainScreen');
-const GW_REPLACE = (html.match(/function replaceEx\(newId\)\{[\s\S]*?persist\(\);return true;\}/) || [''])[0];
-const GW_ASYNC = (html.match(/async function replaceExAsync\(newId\)\{[^\n]*/) || [''])[0];
+const GW_REPLACE = extractFn('replaceEx')||'';
+const GW_ASYNC = extractFn('replaceExAsync')||'';
 ok(CONFIRM && REPLACE && ADD && RENDER && GW_REPLACE && GW_ASYNC, 'swap/replace/add/guided-functies gevonden');
 const TODAY = '2026-09-14';
 const dAgo = (n) => new Date(Date.parse(TODAY + 'T00:00:00Z') - n * 86400000).toISOString().slice(0, 10);
@@ -39,7 +43,9 @@ function sandbox(sessionsByEx, goals) {
     DecisionCore, CalcCore, console, Date, Math, JSON, Promise, Object, Array, String, Number, isFinite, isNaN, parseFloat, parseInt, encodeURIComponent,
     td: () => TODAY, estOneRMCache: {}, strengthBasisCache: {}, exerciseGoals: new Map(Object.entries(goals || {})), localStorage: { getItem: () => null }, window: {},
     resolveCardioType: () => null, sessionRxAdj: {},
-    sbGet: async (t, q) => { if (t !== 'sessions') return []; const m = /exercise_id=eq\.([^&]+)/.exec(q); const rows = (sessionsByEx[decodeURIComponent(m[1])] || []).slice().sort((a, b) => b.date.localeCompare(a.date)); const l = /limit=(\d+)/.exec(q); return rows.slice(0, l ? +l[1] : rows.length); }
+    TK504_TYPED_FK_SESSION_RELEASE:false, tk603LiveSource:Object.create(null),
+    sbGet: async (t, q) => { if (t !== 'sessions') return []; const m = /exercise_id=eq\.([^&]+)/.exec(q); const rows = (sessionsByEx[decodeURIComponent(m[1])] || []).slice().sort((a, b) => b.date.localeCompare(a.date)); const l = /limit=(\d+)/.exec(q); return rows.slice(0, l ? +l[1] : rows.length); },
+    tkEigenaarUid: () => 'synthetic-owner' // #603: loadStrengthBasis captures the owner before its read
   };
   vm.createContext(ctx);
   vm.runInContext(RULES_SRC + '\nconst DETRAINING_RULES=DETRAINING_RULES_V1;\n' + FNS.map((n) => SRC[n]).join('\n'), ctx);
@@ -84,10 +90,50 @@ const intentA = { id: 'A', naam: 'A', type: 'strength', sets: 4, reps: '5', rpe:
   c = sandbox({ B: B_RECENT }); const addRx = await c.canonicalNewExerciseItem('B', { sets: 4, reps: '6-8', rpe: '8' });
   eq(addRx.suggestedWeight, c.roundKg(c.suggestWeightForRepsRpe(70, 6, 8)), '7: toegevoegde oefening: canonical basis van B met low-end reps (6) van de intent');
   // 8. Guided replaceEx: prev.date via strengthBasisCache → detraining correct
-  ok(/prev:\(cb&&cb\.prev\)\|\|null/.test(GW_REPLACE) && /strengthBasisCache\[newId\]/.test(GW_REPLACE), '8: Guided replaceEx geeft canonical prev (incl. date) aan de resolver');
-  ok(/await loadStrengthBasis\(newId\)/.test(GW_ASYNC) && /GW\.replaceExAsync\(alts\[0\]\.catalog_id\)/.test(html), '8: Guided laadt de basis vóór replaceEx (replaceExAsync) op het call-pad');
+  ok(/prev:\(cb&&cb\.prev\)\|\|null/.test(GW_REPLACE) && /strengthBasisCache\[(?:newId|basisKey)\]/.test(GW_REPLACE), '8: Guided replaceEx geeft canonical prev (incl. date) aan de resolver');
+  ok(/await loadStrengthBasis\(newId\)/.test(GW_ASYNC) && /GW\.replaceExAsync\(alts\[0\]\.catalog_id,tk504CatalogSourceRefFromCatalog\(alts\[0\]\)\)/.test(html), '8: Guided laadt de basis vóór replaceEx (replaceExAsync) op het call-pad');
   ok(/window\._tkGuidedRxAdj/.test(GW_REPLACE) && /c\._weightOverride=false; c\._rxOverrideBypass=false/.test(GW_REPLACE), '8: Guided past readiness één keer (opgeslagen adjustment) toe en reset override-vlaggen');
   ok(!/c\.prev&&c\.prev\.weight!=null\)\?c\.prev\.weight/.test(GW_REPLACE.replace(/\/\/[^\n]*/g, '')), '8: Guided valt niet meer terug op guided-historie-gewicht (geen verzonnen basis)');
+  ok(/basisKey=sourceBound\?'catalog:'\+tkEigenaarUid\(\)\+':'\+newId:newId/.test(GW_REPLACE)&&/sourceBound:true,oneRM:/.test(GW_REPLACE),
+    '8: Guided leest een expliciete catalogusbasis uitsluitend uit de eigenaar-/brongebonden sleutel');
+  ok(/await canonicalNewExerciseItem\(newId,intent\)/.test(GW_ASYNC)&&/tkEigenaarUid\(\)!==owner/.test(GW_ASYNC),
+    '8: typed Guided gebruikt dezelfde canonical resolver en weigert een accountwissel tijdens het laden');
+  // Actual Guided replacement functions: no fake source/ownership validators.
+  const actualCatalog=JSON.parse(html.match(/^const EX_CATALOG = (\{.*\});?\s*$/m)[1]).catalog;
+  const guidedCatalog=actualCatalog.find(e=>e.catalog_id==='TK-000038');
+  const guidedId=guidedCatalog.catalog_id;
+  const guidedFns=['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection','tk504ValidateCatalogSourceRef',
+    'tk603DraftOwnerMatches','ownsActive','cur','hist','histKey','prevOf'];
+  function guidedSandbox(typed){
+    const x=sandbox({});x.TK504_TYPED_FK_SESSION_RELEASE=typed;
+    x._owner='synthetic-owner';x.tkEigenaarUid=()=>x._owner;
+    x.ExerciseCatalogService={byId:id=>actualCatalog.find(e=>e.catalog_id===id)||null};
+    x.window.ExerciseCatalogService=x.ExerciseCatalogService;
+    x.st={active:{owner_uid:'synthetic-owner',gi:0,items:[{id:'A',label:'A',reps:'5',setsDone:[],weight:100}]}};
+    x.lsGet=()=>({});x.persist=()=>true;
+    vm.runInContext(guidedFns.map(extractFn).join('\n')+'\n'+extractFn('ex')+'\n'+GW_REPLACE,x);
+    return x;
+  }
+  const baseC=sandbox({B:B_RECENT});const canonicalB=await baseC.canonicalNewExerciseItem('B',{reps:'5',rpe:'8'});
+  const basisB=baseC.strengthBasisCache.B;
+  const guidedAdj=DecisionCore.computeProgAdjustment(0.85,[],null,null);
+  const adjustedB=baseC.roundKg(canonicalB.suggestedWeight*baseC.recoveryWeightFactor('5',guidedAdj.rpeDelta));
+  let guided=guidedSandbox(false);guided.strengthBasisCache[guidedId]=basisB;
+  guided.estOneRMCache[guidedId]=basisB.recent.e1rm; // actual legacy loadStrengthBasis populates both caches
+  guided.window._tkGuidedRxAdj=guidedAdj;
+  ok(guided.replaceEx(guidedId)===true&&guided.st.active.items[0].weight===adjustedB,
+    '8 gedrag: legacy Guided replacement past opgeslagen readiness exact een keer toe');
+  guided=guidedSandbox(true);guided.strengthBasisCache['catalog:synthetic-owner:'+guidedId]=basisB;
+  guided.window._tkGuidedRxAdj=guidedAdj;
+  const guidedRef=guided.tk504CatalogSourceRefFromCatalog(guidedCatalog);
+  ok(guided.replaceEx(guidedId,guidedRef,canonicalB)===true&&guided.st.active.items[0].weight===adjustedB,
+    '8 gedrag: typed Guided replacement behoudt readiness na de canonical resolver (geen onadjusted overschrijving)');
+  guided=guidedSandbox(true);guided._owner='other-owner';
+  ok(guided.replaceEx(guidedId,guidedRef,canonicalB)===false&&guided.st.active.items[0].id==='A',
+    '8 gedrag: echte ownershiphelper weigert Guided replacement na accountwissel');
+  guided=guidedSandbox(true);
+  ok(guided.replaceEx(guidedId,{...guidedRef,provider_id:'spoof'},canonicalB)===false&&guided.st.active.items[0].id==='A',
+    '8 gedrag: echte catalogusvalidator weigert vervalste bron zonder mutatie');
   // 10. volgende logging: nieuwe identity → nieuwe CALC-STR-006-basis
   c = sandbox({ B: [S(58.5, 5, 0), S(60, 5, 3)] }); const b2 = await c.loadStrengthBasis('B');
   ok(b2.recent.weight === 58.5 && b2.recent.date === TODAY, '10: na loggen onder de nieuwe identity is die sessie de nieuwe recente basis');

@@ -279,6 +279,8 @@ async function main() {
   // vermelding (bv. sbPost('hrv_log',…), een fetch naar /rest/v1/hrv_log of een tabellijst
   // voor een schrijflus) valt buiten de allowlist en laat de gate falen.
   const LEES_VOOR = [
+    /tk603ReadRows\(_oc,(?:sbGet|v43SafeGet),\s*['"]$/, // bounded personal read adapter
+    /const own=\['sessions','$/, // table-name list in the verified read-only adapter
     /(?:sbGet|v43SafeGet|inzichtGetOrNull|exportCSV)\(\s*['"]$/,        // lezen / CSV-export
     /\bdata\.$/,                                                          // sleutel in het importbestand
     /\bsrc:\s*'$/,                                                        // metric-configuratie (leesbron)
@@ -307,6 +309,7 @@ async function main() {
   eq(overtredingenHtml(HTML), [], 'E1 index.html: elke code-vermelding van hrv_log staat in een bekende lees-context (geen directe writer)');
   ok((HTML.match(/sbRpc\('upsert_daily_health'/g) || []).length === 2, 'E2 index.html: precies twee aanroepen van de canonieke writer (upsertHrvLog + tkImportHrvRows)');
   ok(/const tables = \['sessions','weight_log','hrv_log','body_comp','exercises'\];[\s\S]{0,200}backup\[t\] = await sbGet\(t,/.test(HTML), 'E3 de tabellijst met hrv_log hoort bij exportJSON en wordt alleen gelezen (sbGet)');
+  ok(/reader!==sbGet&&reader!==v43SafeGet/.test(HTML), 'E3b bounded read adapter rejects every writer function');
   // De guard moet zelf aantoonbaar falen op een opnieuw toegevoegde directe writer.
   [
     "await fetch(`${SB_URL}/rest/v1/hrv_log`,{method:'POST',headers:SB_H,body:JSON.stringify(h)});",

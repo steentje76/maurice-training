@@ -21,10 +21,10 @@ function extract(name){
  }
  throw Error('unclosed '+name);
 }
-const funcs=['catalogToPickerEx','tk504CatalogSourceRefFromCatalog',
+const funcs=['tk603LosConfirmDiscard','tk603LosOfferDiscard',"tk603LosOwner","tk603LosContext","tk603LosCurrent","tk603LosReset","tk603LosReadPending","tk603LosStorePending","tk603LosFreezePending","tk603LosWritePending","tk603LosRemoveConfirmed","tk603LosReplayPending","tk603LosRestorePending"].concat(['catalogToPickerEx','tk504CatalogSourceRefFromCatalog',
  'tk504CatalogSourceRefFromSelection','tk603CatalogRefFromPickerSelection',
  'tk504ValidateCatalogSourceRef','tk504VerifySessionBinding',
- 'tk504RewriteVerifiedSessionRow','tk504StableSessionId','writeSessionRow','saveLosOefening'];
+ 'tk504RewriteVerifiedSessionRow','tk504StableSessionId','tk603CanUpdatePersonalRecord','writeSessionRow','saveLosOefening']);
 function world({release=true,personal=false,spoof=false}={}){
  const state={owner:'synthetic-A',online:true,mode:'ok',committed:0,uuidCount:0,
   writes:[],rpcs:[],shadow:0,cleanup:0,complete:0,toasts:[],
@@ -34,6 +34,8 @@ function world({release=true,personal=false,spoof=false}={}){
   {id,name:canonical.identity.name,type:'strength',_catalog:true,catalog_id:id};
  state.selected=ex;
  const s=vm.createContext({
+   TK603_LOS_PENDING_KEY:'tk603_los_pending_v1',tk603LosEpoch:0,tk603LosPending:null,tk603LosBusy:null,
+   localStorage:(()=>{const m=new Map();return {getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)};})(),
    ExerciseCatalogService:{byId:k=>k===id?canonical:null},
    TK504_TYPED_FK_SESSION_RELEASE:release,
    navigator:{get onLine(){return state.online;}},
@@ -79,7 +81,7 @@ async function caseRun(opts,change){
  if(change)change(w);
  const button={disabled:false};
  await w.s.saveLosOefening(button);
- ok(button.disabled===false,'button restored on save/fail');
+ ok(w.state.owner!=='synthetic-A'||button.disabled===false,'button restored on same-owner save/fail; stale owner cannot mutate next account controls');
  return w;
 }
 (async()=>{

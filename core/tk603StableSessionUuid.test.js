@@ -31,7 +31,7 @@ assert.match(html,/if\(_soS\.tk504_binding\)row\.id=tk504StableSessionId\(l\)/);
 n++;
 assert.match(html,/\.\.\.\(_so\.tk504_binding\?\{id:tk504StableSessionId\(l\)\}:\{\}\)/);
 n++;
-assert.match(html,/row\.id=tk504StableSessionId\(sessionLog\[LOS_DOMID\]/);
+assert.match(html,/const pending=tk603LosStorePending\(ex,row,c\);\s+row\.id=pending\.row\.id;/);
 n++;
 assert.match(html,/const TK504_TYPED_FK_SESSION_RELEASE = false;/);
 n++;

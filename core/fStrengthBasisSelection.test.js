@@ -38,7 +38,8 @@ function sandbox(sessions, goals) {
     DecisionCore, CalcCore, console, Date, Math, JSON, Promise, Object, Array, String, Number, isFinite, isNaN, parseFloat, parseInt, encodeURIComponent,
     td: () => TODAY, estOneRMCache: {}, previewCtx: null, window: {}, localStorage: { getItem: () => null }, escHtml: (x) => String(x),
     exerciseGoals: new Map(goals ? [['ex', goals]] : []), strengthBasisCache: {},
-    sbGet: async (t, q) => { const m = /limit=(\d+)/.exec(q); const rows = sessions.slice().sort((a, b) => b.date.localeCompare(a.date)); return rows.slice(0, m ? +m[1] : rows.length); }
+    sbGet: async (t, q) => { const m = /limit=(\d+)/.exec(q); const rows = sessions.slice().sort((a, b) => b.date.localeCompare(a.date)); return rows.slice(0, m ? +m[1] : rows.length); },
+    tkEigenaarUid: () => 'synthetic-owner' // #603: loadStrengthBasis captures the owner before its read
   };
   vm.createContext(ctx);
   vm.runInContext(RULES_SRC + '\nconst DETRAINING_RULES=DETRAINING_RULES_V1;\n' + FNS.map((n) => SRC[n]).join('\n'), ctx);
@@ -111,7 +112,7 @@ async function resolveAll(c) {
   // ── Static gates: één canonical selectie-helper; PR-proxy weg; provenance-datum bij manual ──
   const code = html.replace(/\/\/[^\n]*/g, '');
   eq((code.match(/if\(!best\|\|est>best\)best=est/g) || []).length, 0, 'static: geen losse "max over 30"-selectie meer in index.html');
-  eq((code.match(/CalcCore\.selectStrengthBasis\(/g) || []).length, 3, 'static: selectStrengthBasis gebruikt door helper + progress-context + stats (peak = analytics)');
+  eq((code.match(/CalcCore\.selectStrengthBasis\(/g) || []).length, 4, 'static: selectStrengthBasis gebruikt door helper + progress-context + stats + brongetypeerde catalogusprogressie');
   ok(!/return prFor\(exId\)\|\|null;/.test(SRC.getOneRM), 'static: getOneRM zonder prFor-fallback');
   ok(/patch\.updated_at=\(value==null\?null:new Date\(\)\.toISOString\(\)\)/.test(SRC.upsertExerciseGoalField) && /if\(field==='one_rm'\)/.test(SRC.upsertExerciseGoalField), 'static: updated_at alleen bij one_rm-wijziging');
   ok(fs.existsSync(path.join(ROOT, 'migratie_v564.sql')) && /add column if not exists updated_at timestamptz null/.test(fs.readFileSync(path.join(ROOT, 'migratie_v564.sql'), 'utf8')), 'migratie_v564: nullable updated_at, idempotent');

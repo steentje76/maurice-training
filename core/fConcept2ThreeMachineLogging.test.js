@@ -28,11 +28,15 @@ const helperSrc = ['tkC2IsLoggableSummary', 'tkC2Converter', 'tkC2SessionRowFrom
   return html.match(new RegExp('function ' + n + '\\([^)]*\\)\\{[\\s\\S]*?\\n\\}'))[0];
 }).join('\n');
 function buildRow(l, today, t, instanceId) {
-  return new Function('l', 'today', 't', 'activeInstanceId', 'Concept2Live', 'cardioDataToRow',
+  return new Function('l', 'today', 't', 'context', 'Concept2Live', 'cardioDataToRow',
     helperSrc + '\n' + bridgeSrc + '\nreturn {row:cRow, viaC2:_c2ok};')(
-      l, today, t, instanceId, C2L,
+      l, today, t, {instanceId}, C2L,
       function () { return { __manual: true, extraNote: 'handmatig' }; });
 }
+ok(/const context=\{owner:owner,t:curT,log:sessionLog,instanceId:activeInstanceId,/.test(html),
+   'finishSession captures the active instance once before asynchronous work');
+ok(!/training_instance_id:activeInstanceId/.test(bridgeSrc),
+   'completion bridge uses captured context, never a later mutable active instance');
 ok(!/typeof liveWorkoutToActual/.test(bridgeSrc), 'FASE2A: bridge gebruikt geen bare liveWorkoutToActual-global (bestaat niet in de browser)');
 
 // ── fixtures met onderscheidende waarden per machine ──────────────────────

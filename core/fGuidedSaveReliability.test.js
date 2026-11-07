@@ -50,10 +50,10 @@ ok(DOPERSIST.indexOf('if(!it._rowId)') < DOPERSIST.indexOf('writeSessionRow('), 
 ok(!/written\+\+/.test(DOPERSIST), 'bron: geen blinde teller meer');
 ok(/if\(st8!=='failed'\)\{/.test(DOPERSIST) && DOPERSIST.indexOf('if(st8!==\'failed\'){') < DOPERSIST.indexOf('upsertExerciseGoalField'), 'bron: PR-record alleen na een opgeslagen rij');
 ok(/!n\.failed && typeof completeTrainingInstance==='function'/.test(DOPERSIST), 'bron: instance pas afronden als alles opgeslagen is');
-ok(/if\(status==='failed'\)\{ persist\(\); \}\s*else \{ a\.sessionsLogged=true; clearActive\(\); \}/.test(DOPERSIST), 'bron: lokale kopie pas weg na opslag');
+ok(/if\(status==='failed'\)\{ persist\(\); \}\s*else \{ a\.sessionsLogged=true; clearActive\(a\); \}/.test(DOPERSIST) && /st\.active!==expectedActive\|\|!ownsActive\(expectedActive\)/.test(extractFn(HTML,'clearActive')), 'bron: lokale kopie pas weg na opslag');
 ok(FINISH && !/clearActive\(\)/.test(FINISH), 'bron: finish() wist de lokale kopie niet meer zelf');
 ok(/if\(!a\._gelogd\)/.test(FINISH), 'bron: één samenvatting per training');
-ok(/function abort\(\)\{if\(unsaved\(st\.active\)\)return false;/.test(HTML), 'bron: abort() gooit een niet-opgeslagen training niet weg');
+ok(/if\(a&&\(!ownsActive\(a\)\|\|unsaved\(a\)\)\)return false;/.test(extractFn(HTML,'abort')) && extractFn(HTML,'abort').indexOf('unsaved(a)') < extractFn(HTML,'abort').indexOf('clearActive(a)'), 'bron: abort() gooit een niet-opgeslagen training niet weg');
 ok(/if\(tkGuidedStartGeblokkeerd\(mode\)\)return;/.test(extractFn(HTML, 'previewStartTraining')) && extractFn(HTML, 'previewStartTraining').indexOf('tkGuidedStartGeblokkeerd') < extractFn(HTML, 'previewStartTraining').indexOf('startInstanceFromDefinition('), 'bron: geen nieuwe begeleide start over een niet-opgeslagen training, vóór het aanmaken van een instance');
 
 // ══ DEEL 2 — ECHTE PAGINA ══

@@ -128,8 +128,9 @@ console.log('\nF. Eerste record van een oefening zonder rij in exercise_goals');
 // in het geheugen bestond. upsertExerciseGoalField zag die entry, koos daarom PATCH, en die
 // PATCH raakte nul rijen. Het allereerste record van elke oefening verdween zonder melding.
 ok(/_alleenGeheugen:true/.test(logSetBron), 'F1: logSet markeert een alleen-in-geheugen aangemaakte doelrij');
+// Read the complete actual function; ownership guards expanded it beyond the old window.
 const upsertBron = html.slice(html.indexOf('async function upsertExerciseGoalField'),
-                              html.indexOf('async function upsertExerciseGoalField') + 1600);
+                              html.indexOf('// Cardio type definities',html.indexOf('async function upsertExerciseGoalField')));
 ok(/if\(existing && !existing\._alleenGeheugen\)/.test(upsertBron),
    'F2: upsertExerciseGoalField PATCHt alleen bij een echte rij');
 ok(upsertBron.indexOf('sbPostQ') > 0 && upsertBron.indexOf('sbPatchQ') > 0,

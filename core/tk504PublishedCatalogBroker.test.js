@@ -104,8 +104,9 @@ async function status(res,wanted,code){
   await status(await broker.handle(event(),{env:{...goodEnv,[flag]:'false'},
    fetch:fetchStub,release:cfg}),503,'MOVEKIT_CATALOG_NOT_RELEASED');
  }
- await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub}),
-  503,'MOVEKIT_CATALOG_NOT_RELEASED'); // real central release doc remains blocked
+ await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub,
+    release:{...cfg,status:'BLOCKED_NOT_REVIEWED'}}),
+  503,'MOVEKIT_CATALOG_NOT_RELEASED'); // explicit disabled fixture must still fail closed
  await status(await broker.handle(event({method:'GET'}),{env:goodEnv,
   fetch:fetchStub,release:cfg}),405,'METHOD_NOT_ALLOWED');
  await status(await broker.handle(event({origin:'https://attacker.example'}),{env:goodEnv,

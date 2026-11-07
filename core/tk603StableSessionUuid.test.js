@@ -33,6 +33,6 @@ assert.match(html,/\.\.\.\(_so\.tk504_binding\?\{id:tk504StableSessionId\(l\)\}:
 n++;
 assert.match(html,/const pending=tk603LosStorePending\(ex,row,c\);\s+row\.id=pending\.row\.id;/);
 n++;
-assert.match(html,/const TK504_TYPED_FK_SESSION_RELEASE = false;/);
+assert.match(html,/const TK504_TYPED_FK_SESSION_RELEASE = true;/);
 n++;
 console.log('TK603 typed FK stable UUID: '+n+' real-code assertions PASS; only catalog bound branches assign stable id');

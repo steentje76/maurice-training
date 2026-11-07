@@ -109,11 +109,14 @@ eq(second.count,582);
 eq(real.byId('TK-000227').source.provider_id,v2[0].provider_id);
 ok(runtime.clear(),'Re-login able to revoke again');
 eq(real.count(),226);
-// Existing product wires the same ECS and protected media; flags hard off.
-ok(html.includes("TK504_PUBLISHED_CATALOG_RELEASE = false"),
- 'real app does NOT load unpublished content on startup');
-ok(html.includes("TK504_TYPED_FK_SESSION_RELEASE = false"),
- 'catalog cannot bypass typed session logging gate');
+// Live product mounts only the authorized server response; typed logging remains mandatory.
+ok(html.includes("TK504_PUBLISHED_CATALOG_RELEASE = true"),
+ 'published extension is enabled only behind the server auth gate');
+ok(html.includes("TK504_TYPED_FK_SESSION_RELEASE = true"),
+ 'catalog logging uses the typed FK route');
+ok(html.includes("TK504_PRIVATE_MEDIA_RELEASE = false")&&
+   html.includes("TK504_NEW_PRIVATE_MEDIA_RELEASE = true"),
+ '356-only private media does not disable original 226 video paths');
 ok(html.includes("tk504PublishedCatalogRuntime.mount(answer,current,tkEigenaarUid)"),
  'approved response installs into the actual ECS, not a parallel UI');
 ok(html.includes("tk504InvalidateProtectedMedia();"),

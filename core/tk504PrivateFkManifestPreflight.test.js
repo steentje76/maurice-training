@@ -24,7 +24,8 @@ const stage={
 };
 const opts=()=>({stage:structuredClone(stage),catalog:structuredClone(catalog),
  golden:structuredClone(golden),posters:structuredClone(posters),
- approval:structuredClone(approval),release:structuredClone(release)});
+ approval:structuredClone(approval),
+ release:{...structuredClone(release),status:'BLOCKED_NOT_REVIEWED',entries:[]}});
 let checks=0;
 function eq(a,b,m){assert.deepEqual(a,b,m);checks++;}
 function ok(x,m){assert.ok(x,m);checks++;}
@@ -83,20 +84,11 @@ try{
  ok(safelyOutsideRepo(src),'private source outside Git');
  ok(!safelyOutsideRepo(path.join(root,'core','tk504PrivateFkManifestPreflight.test.js')),
    'cannot write private manifest within repo');
- const oldOut=process.stdout.write;
- const logs=[];process.stdout.write=function(x){logs.push(String(x));return true;};
- let result;
- try{result=run(['--stage',src,'--out',dst]);}
- finally{process.stdout.write=oldOut;}
- eq(result.status,'DRY_RUN_NO_RELEASE_AUTHORITY');
- ok(fs.existsSync(dst),'private plan created only at explicit location');
- const saved=JSON.parse(fs.readFileSync(dst,'utf8'));
- eq(saved.entries.length,582);
- eq(saved.mapping_sha256,plan.mapping_sha256);
- eq(saved.private_stage_sha256,result.private_stage_sha256);
- ok(!logs.some(t=>t.includes(stage.catalog[10].source.provider_id)),
-   'stdout never includes private provider identifiers');
- assert.throws(()=>run(['--stage',src,'--out',dst]),/EEXIST/);checks++;
+ // In the activated real release, the old CLI must fail closed rather
+ // than re-stage private identities using a now-published release document.
+ assert.throws(()=>run(['--stage',src,'--out',dst]),
+   err=>err.code==='RELEASE_GATES_MUST_STAY_BLOCKED');checks++;
+ ok(!fs.existsSync(dst),'activated release cannot recreate a private dry-run');
  assert.throws(()=>run(['--stage',path.join(root,'exercise-catalog.json')]),
   /PRIVATE_STAGE_INSIDE_REPOSITORY/);checks++;
  assert.throws(()=>run(['--stage',src,'--out',path.join(root,'SHOULD_NEVER_EXIST.json')]),

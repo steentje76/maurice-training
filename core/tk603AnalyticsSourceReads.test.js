@@ -13,7 +13,7 @@ const catalog=JSON.parse(match[1]).catalog;
 const C=catalog.find(x=>x.catalog_id==='TK-000038');
 assert(C&&C.source&&C.source.provider_id);
 const CATALOG_NAME=(C.identity&&((C.identity.nl&&C.identity.nl.trim())||C.identity.name))||'TK-000038';
-assert.match(html,/const TK504_TYPED_FK_SESSION_RELEASE = false;/,'release flag must stay OFF in source');
+assert.match(html,/const TK504_TYPED_FK_SESSION_RELEASE = true;/,'typed source-aware reads are activated');
 let checked=0;
 const ok=(x,why)=>{assert(x,why);checked++;};
 function extract(name){

@@ -131,9 +131,9 @@ function build(opts = {}) {
     assert.equal(v.mock.calls.length,4);
     assert.match(result.url,/\/exercise-posters\/movekit\/v2\/poster-optimized\//);
   });
-  await check('default checked-in release registry blocks without network', async()=>{
+  await check('explicitly disabled registry blocks without network', async()=>{
     const defaults=require('../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
-    const v=build({release:defaults});
+    const v=build({release:{...defaults,status:'BLOCKED_NOT_REVIEWED'}});
     await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/MEDIA_NOT_RELEASED/);
     assert.equal(v.mock.calls.length,0);
   });

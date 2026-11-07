@@ -36,9 +36,9 @@ eq(ledger.BATCHES[14].cumulative_new,356);eq(ledger.BATCHES[14].cumulative_total
 eq(ledger.batchOf('TK-000226'),null);eq(ledger.batchOf('TK-000583'),null);
 eq(ledger.batchOf('TK-000251').batch,1);eq(ledger.batchOf('TK-000252').batch,2);
 eq(ledger.batchOf('TK-000577').batch,15);
-// Central release doc stays blocked: no package may be live from this branch.
-eq(releaseDoc.status,'BLOCKED_NOT_REVIEWED');eq(releaseDoc.entries.length,0);
-eq(ledger.releasedScope(releaseDoc),null,'central release document releases zero packages');
+// Production release is now explicitly pinned to ALL 15 owner-approved packages.
+eq(releaseDoc.status,'RELEASE_APPROVED');eq(releaseDoc.entries.length,1164);
+eq(ledger.releasedScope(releaseDoc).total,582,'approved scope is exactly 582');
 
 // 2. Real ECS + picker provenance from the actual app.
 const ecsStart=html.indexOf('var ExerciseCatalogService=(function(){');

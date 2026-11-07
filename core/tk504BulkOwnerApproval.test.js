@@ -42,7 +42,8 @@ check(golden.items.length===582&&golden.items.slice(226).length===356,'Golden so
 check(catalog.count===226&&catalog.catalog.length===226,'Production catalog still 226');
 check(!catalog.catalog.some(x=>Number(x.catalog_id.slice(3))>=227),
       'Zero unpublished rows in production catalog');
-check(release.status==='BLOCKED_NOT_REVIEWED'&&release.entries.length===0,'Central release gate unchanged');
+check(release.status==='RELEASE_APPROVED'&&release.entries.length===1164&&
+      release.released_batches?.length===15,'Central release only uses the exact owner-approved 582 pairs');
 check(/const TK504_PRIVATE_MEDIA_RELEASE = false;/.test(html),'Private playback release stays off');
 check(/const TK504_PRIVATE_MEDIA_CUTOVER = false;/.test(sw),'Service-worker cutover stays off');
 console.log('TK504 bulk owner approval: '+n+

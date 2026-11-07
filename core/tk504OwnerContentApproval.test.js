@@ -38,7 +38,8 @@ check(/^[a-f0-9]{64}$/.test(review.evidence.screenshot_sha256),'Screenshot proof
 check(review.access_release.owner_content_approved===true,'Owner approval captured');
 const flags=Object.entries(review.access_release).filter(([name])=>name!=='owner_content_approved');
 check(flags.length>=8&&flags.every(([,v])=>v===false),'All release gates remain false');
-check(release.status==='BLOCKED_NOT_REVIEWED'&&release.entries.length===0,'Production server release gate unchanged');
+check(release.status==='RELEASE_APPROVED'&&release.entries.length===1164&&
+      release.released_batches?.length===15,'Separate release decision includes all media pairs');
 check(catalog.catalog.length===226&&!catalog.catalog.some(v=>v.catalog_id===id),'No public catalog row published');
 check(inventory.items.length===582,'Complete source inventory retained');
 check(inventory.items.filter(v=>Number(v.catalog_id.slice(3))>=227).length===356,'356 candidates kept staged');

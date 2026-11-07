@@ -48,7 +48,7 @@ check(evaluate({...bad,embeddedPosters:1}).includes('EMBEDDED_PUBLIC_POSTERS_STI
 check(evaluate({...bad,worker:false}).includes('CLIENT_SW_RELEASE_MISMATCH'),'Mismatch always blocked');
 check(evaluate({...bad,publicVideos:0,embeddedPosters:0}).includes('NO_SECURE_PLAYBACK_PROOF'),'Missing real playback proof blocks');
 check(evaluate({...bad,publicVideos:0,embeddedPosters:0}).includes('DIRECT_CDN_PATH_NOT_VERIFIED_GONE'),'Network-level verification required');
-check(evaluate({...bad,publicVideos:0,embeddedPosters:0}).includes('SERVER_MEDIA_RELEASE_NOT_APPROVED'),'Release registry must be approved separately');
+check(evaluate({...bad,publicVideos:0,embeddedPosters:0,releaseStatus:'BLOCKED_NOT_REVIEWED'}).includes('SERVER_MEDIA_RELEASE_NOT_APPROVED'),'Release registry must be approved separately');
 const approved={client:true,worker:true,publicVideos:0,embeddedPosters:0,
   releaseStatus:'RELEASE_APPROVED',releaseEntries:2,brokerVerified:true,oldRoutesVerifiedGone:true};
 check(evaluate(approved).length===0,'An independently proven private release passes gate');

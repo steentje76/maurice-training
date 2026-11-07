@@ -11,27 +11,22 @@ const inventory=require('../../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json')
 const HASH=/^[0-9a-f]{64}$/;
 const providerById=new Map(inventory.items.map(x=>[x.catalog_id,x.provider_id]));
 const SCHEMA='tk504-authorized-catalog-v2/1.0';
-const RESULT_MAX=356;
-// Release scope comes only from validated media approvals. Accept completed
-// prefixes of 25 (plus the final six), never gaps or arbitrary row counts.
+const ledger=require('../../core/tk504BatchReleaseLedger.js');
+// Release scope comes only from validated media approvals bound to the exact
+// owner-approved package prefix 1..N (canonical ledger). Never gaps, partial
+// packages, foreign fingerprints or arbitrary row counts.
+function releasedScope(config){
+ const scope=ledger.releasedScope(config);
+ if(!scope)return null;
+ for(const entry of config.entries)if(!providerById.has(entry.catalog_id))return null;
+ for(const cid of scope.ids){
+  if(!media.descriptor(cid,'video',config)||!media.descriptor(cid,'poster',config))return null;
+ }
+ return scope;
+}
 function releasedCatalogIds(config){
- if(!Array.isArray(config?.entries))return null;
- const selected=new Set();
- for(const entry of config.entries){
-  const cid=entry?.catalog_id;
-  if(!providerById.has(cid))return null;
-  if(Number(cid.slice(3))<227)continue;
-  if(!['video','poster'].includes(entry.media_type))return null;
-  selected.add(cid);
- }
- const ids=[...selected].sort(),count=ids.length;
- if(!count||count>RESULT_MAX||(count%25!==0&&count!==RESULT_MAX))return null;
- for(let i=0;i<count;i++){
-  const cid='TK-'+String(227+i).padStart(6,'0');
-  if(ids[i]!==cid||!media.descriptor(cid,'video',config)||
-    !media.descriptor(cid,'poster',config))return null;
- }
- return ids;
+ const scope=releasedScope(config);
+ return scope?scope.ids.slice():null;
 }
 function headers(event){
  const origin=(event?.headers||{}).origin||(event?.headers||{}).Origin||'';
@@ -92,6 +87,8 @@ function validatePublished(rows,bindings,config){
     !meta.identity||!meta.intelligence||!meta.relations||!meta.flags||
     meta.assets&&(!Array.isArray(meta.assets)||meta.assets.length!==0))
     return null;
+  // Each row must be stamped with the exact owner approval of ITS package.
+  if(!ledger.rowApprovalValid(cid,meta))return null;
   out.push({
     catalog_id:cid,source:meta.source,
     identity:meta.identity,intelligence:meta.intelligence,
@@ -111,8 +108,10 @@ async function handle(event,deps={}){
  if(event?.httpMethod==='OPTIONS')return result(event,204,{});
  if(event?.httpMethod!=='POST')return deny(event,405,'METHOD_NOT_ALLOWED');
  if(!enabled(env,active))return deny(event,503,'MOVEKIT_CATALOG_NOT_RELEASED');
- const ids=releasedCatalogIds(active);
- if(!ids)return deny(event,503,'CATALOG_DATA_NOT_APPROVED');
+ const scope=releasedScope(active);
+ if(!scope)return deny(event,503,'CATALOG_DATA_NOT_APPROVED');
+ const ids=scope.ids;
+ const batch=ledger.BATCHES[scope.batch-1];
  if(env.SUPABASE_URL!==BASE||typeof env.SUPABASE_ANON_KEY!=='string'||
    !env.SUPABASE_ANON_KEY||!env.SUPABASE_SERVICE_ROLE_KEY||
    typeof fn!=='function')return deny(event,503,'BACKEND_NOT_READY');
@@ -141,11 +140,14 @@ async function handle(event,deps={}){
   if(!again.ok)return deny(event,403,'ENTITLEMENT_REVOKED');
   return result(event,200,{
     schema:SCHEMA,status:'PUBLISHED_AND_ENTITLED',total:226+approved.length,
-    new_count:approved.length,items:approved
+    new_count:approved.length,
+    release:{batch:batch.batch,through:batch.through,
+      display_sha256:batch.display_sha256,decision_id:ledger.DECISION_ID},
+    items:approved
   });
  }catch(_){return deny(event,503,'CATALOG_BACKEND_UNAVAILABLE');}
 }
 exports.handler=event=>handle(event,{env:process.env,fetch:globalThis.fetch,now:Date.now});
-exports._internal=Object.freeze({enabled,handle,validatePublished,releasedCatalogIds,headers,SCHEMA});
+exports._internal=Object.freeze({enabled,handle,validatePublished,releasedCatalogIds,releasedScope,headers,SCHEMA});
 // Match the canonical Android API preflight contract (I22), not a parallel CORS stack.
 exports.handler = require('./_cors.js').withCors(exports.handler);

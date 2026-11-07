@@ -27,6 +27,9 @@ def stage_content(stage,translation,approval,ecs=None):
     report=reconcile(stage,translation,approval,ecs)
     require(report["status"]=="EXACT_OWNER_APPROVED_DISPLAY_FIELDS",
             "EXACT_OWNER_BATCH_DISPLAY_FINGERPRINT_NOT_MATCHED")
+    batches=approval["content_fingerprint"]["batches"]
+    require(len(batches)==15 and sum(b["count"] for b in batches)==356,
+            "APPROVAL_BATCH_TABLE_INVALID")
     by_stage={x["catalog_id"]:x for x in stage}
     by_trans={x["catalog_id"]:x for x in translation}
     records=[]
@@ -81,6 +84,10 @@ def stage_content(stage,translation,approval,ecs=None):
           "provenance":{
               "owner_display_approval":approval["decision_id"],
               "approved_item_fingerprint":digest(seen),
+              # Canonical package binding checked by the catalog server
+              # (core/tk504BatchReleaseLedger.js rowApprovalValid).
+              "approved_batch":(i-START)//25+1,
+              "approved_batch_display_sha256":batches[(i-START)//25]["display_sha256"],
               "unreviewed_taxonomy_metadata":True,
               "unreviewed_scientific_claims_excluded":True,
               "media_rights_not_granted":True

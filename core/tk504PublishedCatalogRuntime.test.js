@@ -4,6 +4,9 @@
 // no Supabase, media, grant, UX change or release.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const Runtime=require('./tk504PublishedCatalogRuntime.js');
+const ledger=require('./tk504BatchReleaseLedger.js');
+const rel=count=>{const b=ledger.batchForNewCount(count);return b?{batch:b.batch,
+ through:b.through,display_sha256:b.display_sha256,decision_id:ledger.DECISION_ID}:undefined;};
 const root=path.join(__dirname,'..');
 const baseline=require('../exercise-catalog.json');
 const golden=require('../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json');
@@ -32,7 +35,7 @@ const items=v2.map((row,i)=>({
  assets:[],flags:structuredClone(sample.flags)
 }));
 const payload={schema:'tk504-authorized-catalog-v2/1.0',
- status:'PUBLISHED_AND_ENTITLED',total:582,new_count:356,items};
+ status:'PUBLISHED_AND_ENTITLED',total:582,new_count:356,release:rel(356),items};
 const c=structuredClone(baseline);
 const context=vm.createContext({EX_CATALOG:c,
  localStorage:{getItem:()=>null,setItem:()=>{}},favoriteExIds:new Set(),
@@ -126,7 +129,7 @@ ok(sw.includes("'/core/tk504PublishedCatalogRuntime.js'"),
 // Exercise the actual ECS for every completed 25-item cumulative batch,
 // including shrink on re-login and the final six. No new catalog or picker.
 for(const count of [...Array.from({length:14},(_,i)=>(i+1)*25),356,25]){
- const partial={...payload,total:226+count,new_count:count,items:items.slice(0,count)};
+ const partial={...payload,total:226+count,new_count:count,release:rel(count),items:items.slice(0,count)};
  const installed=runtime.mount(partial,currentUser,owner);
  eq(installed.added,count);eq(real.count(),226+count);eq(c.count,226+count);
  ok(real.byId('TK-'+String(226+count).padStart(6,'0')));
@@ -134,7 +137,7 @@ for(const count of [...Array.from({length:14},(_,i)=>(i+1)*25),356,25]){
  ok(real.search('unieke oefening 1').some(x=>x.catalog_id==='TK-000227'));
  ok(c.catalog.slice(0,226).every((r,i)=>r.catalog_id===baseline.catalog[i].catalog_id));
 }
-const firstBatch={...payload,total:251,new_count:25,items:items.slice(0,25)};
+const firstBatch={...payload,total:251,new_count:25,release:rel(25),items:items.slice(0,25)};
 for(const count of [0,1,24,26,49,351,355,357,'25',null]){
  reject(()=>runtime.mount({...payload,total:226+count,new_count:count,
   items:items.slice(0,count)},currentUser,owner),/NOT_RELEASED_OR_INCOMPLETE/);
@@ -154,6 +157,15 @@ ok(runtime.clear());
 eq(real.count(),226);
 eq(real.byId('TK-000227'),null);
 eq(real.search('unieke oefening 1').length,0);
+// Server-declared package boundary and owner fingerprint must match exactly.
+reject(()=>runtime.mount({...firstBatch,release:undefined},currentUser,owner),/RELEASE_PACKAGE_MISMATCH/);
+reject(()=>runtime.mount({...firstBatch,release:rel(50)},currentUser,owner),/RELEASE_PACKAGE_MISMATCH/);
+reject(()=>runtime.mount({...firstBatch,release:{...rel(25),display_sha256:'f'.repeat(64)}},currentUser,owner),/RELEASE_PACKAGE_MISMATCH/);
+reject(()=>runtime.mount({...firstBatch,release:{...rel(25),decision_id:'TK504-OTHER'}},currentUser,owner),/RELEASE_PACKAGE_MISMATCH/);
+eq(real.count(),226,'package mismatch never mutates the ECS');
+eq(runtime.mount(firstBatch,currentUser,owner).batch,1);
+eq(runtime.batch(),1);
+ok(runtime.clear());eq(runtime.batch(),null);
 
 console.log('TK504 actual ECS authorized 356-catalog mount: '+n+
  ' assertions PASS; existing search+picker, strict 582 identities, no public assets, owner reset, no new UX');

@@ -7,6 +7,11 @@ const media=require('../netlify/functions/exercise-media-v2-url.js')._internal;
 const old=require('../exercise-catalog.json');
 const golden=require('../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json');
 const poster=require('../docs/generated/MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.json');
+const ledger=require('./tk504BatchReleaseLedger.js');
+const scoped=(entries,batch)=>({...cfg,...ledger.releasedHeader(batch),entries});
+const prov=cid=>({owner_display_approval:ledger.DECISION_ID,
+ approved_item_fingerprint:'0'.repeat(64),approved_batch:ledger.batchOf(cid).batch,
+ approved_batch_display_sha256:ledger.batchOf(cid).display_sha256});
 const newRows=golden.items.filter(x=>Number(x.catalog_id.slice(3))>=227)
  .sort((a,b)=>a.catalog_id.localeCompare(b.catalog_id));
 const postMap=new Map(poster.items.map(x=>[x.catalog_id,x]));
@@ -20,7 +25,7 @@ const goodRows=newRows.map((x,i)=>({
   identity:{...SAMPLE.identity,name:'Synthetic movement '+(i+1),nl:'Nieuwe oefening '+(i+1)},
   intelligence:SAMPLE.intelligence,
   relations:{alternatives:[],progressions:[],regressions:[]},
-  flags:SAMPLE.flags,assets:[]},
+  flags:SAMPLE.flags,assets:[],provenance:prov(x.catalog_id)},
  status:'published',approved_at:'2026-11-06T00:00:00Z',
  published_at:'2026-11-06T00:00:00Z'
 }));
@@ -31,6 +36,7 @@ const goodBindings=newRows.map(x=>({
 }));
 const cfg={
  schema:'trainingskompas-movekit-v2-release/1.0',status:'RELEASE_APPROVED',
+ ...ledger.releasedHeader(15),
  inventory_sha256:media.inventorySha,poster_digest_sha256:media.posterSha,
  entries:newRows.flatMap(x=>[
   {catalog_id:x.catalog_id,media_type:'video',reviewed:true,
@@ -137,7 +143,7 @@ async function status(res,wanted,code){
  reset();auth.bindings=goodBindings.map((x,i)=>i===0?{...x,active:false}:x);
  await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub,release:cfg}),
   503,'CATALOG_DATA_NOT_APPROVED');
- reset();const config={...cfg,entries:cfg.entries.slice(2)};
+ reset();const config=scoped(cfg.entries.slice(2),15);
  await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub,release:config}),
   503,'CATALOG_DATA_NOT_APPROVED');
  reset();
@@ -157,7 +163,7 @@ async function status(res,wanted,code){
  // leak through either the query or a misbehaving backend response.
  for(const count of [...Array.from({length:14},(_,i)=>(i+1)*25),356]){
   reset();
-  const config={...cfg,entries:cfg.entries.slice(0,count*2)};
+  const config=scoped(cfg.entries.slice(0,count*2),ledger.batchForNewCount(count).batch);
   auth.rows=goodRows.slice(0,count);auth.bindings=goodBindings.slice(0,count);
   const res=await broker.handle(event(),{env:goodEnv,fetch:fetchStub,release:config});
   await status(res,200);
@@ -172,7 +178,7 @@ async function status(res,wanted,code){
    assert.equal(query.get('limit'),String(count+1));checks++;
   }
  }
- const first={...cfg,entries:cfg.entries.slice(0,50)};
+ const first=scoped(cfg.entries.slice(0,50),1);
  reset();auth.rows=goodRows.slice(0,26);auth.bindings=goodBindings.slice(0,25);
  await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub,release:first}),
   503,'CATALOG_DATA_NOT_APPROVED');
@@ -191,7 +197,7 @@ async function status(res,wanted,code){
  ]){
   reset();
   await status(await broker.handle(event(),{env:goodEnv,fetch:fetchStub,
-   release:{...cfg,entries}}),503,'CATALOG_DATA_NOT_APPROVED');
+   release:scoped(entries,1)}),503,'CATALOG_DATA_NOT_APPROVED');
   assert.equal(auth.calls.length,0,'invalid batch rejected before account/metadata lookup');checks++;
  }
  reset();auth.rows=goodRows.slice(0,25);auth.bindings=goodBindings.slice(0,25);

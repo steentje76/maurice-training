@@ -9,8 +9,11 @@
   if(root)root.TK504PublishedCatalogRuntime=value;
 })(typeof globalThis!=='undefined'?globalThis:null,function(){
   const PREFIX='TK-',NEW_START=227,MAX_NEW=356,EXISTING=226;
-  const batchCount=n=>Number.isSafeInteger(n)&&n>0&&n<=MAX_NEW&&
-    (n%25===0||n===MAX_NEW);
+  // Canonical package ledger (browser: core/tk504BatchReleaseLedger.js loaded first).
+  const ledger=(typeof module==='object'&&module.exports&&typeof require==='function')
+    ?require('./tk504BatchReleaseLedger.js')
+    :(typeof globalThis!=='undefined'?globalThis.TK504BatchReleaseLedger:null);
+  const batchCount=n=>!!(ledger&&ledger.batchForNewCount(n));
   const id=n=>PREFIX+String(n).padStart(6,'0');
   const safeText=s=>typeof s==='string'&&s.trim().length>0&&
     s.length<=400&&!/[<>\u0000-\u001f]/.test(s);
@@ -21,6 +24,9 @@
       payload.status!=='PUBLISHED_AND_ENTITLED'||
        !batchCount(payload.new_count)||payload.total!==EXISTING+payload.new_count||
       !Array.isArray(payload.items)||payload.items.length!==payload.new_count)throw Error('TK504_NOT_RELEASED_OR_INCOMPLETE');
+    // The server must name the exact owner-approved package boundary it serves.
+    if(!ledger.responseReleaseValid(payload.release,payload.new_count))
+      throw Error('TK504_RELEASE_PACKAGE_MISMATCH');
     if(!baseline||baseline.length!==EXISTING)throw Error('TK504_EXISTING_BASELINE_CHANGED');
     const known=new Map(),provider=new Set();
     for(let i=0;i<EXISTING;i++){
@@ -94,7 +100,7 @@
       throw Error('TK504_ECS_NOT_READY');
     const original=catalog.catalog.slice();
     if(original.length!==EXISTING)throw Error('TK504_UNEXPECTED_INITIAL_CATALOG');
-    let owner=null;
+    let owner=null,release=null;
     const notify=()=>{service.rebuildIndex();if(typeof invalidatePicker==='function')invalidatePicker();};
     function clear(){
       if(owner===null)return false;
@@ -103,7 +109,7 @@
         catalog.sources=catalog.sources.map(s=>s&&s.provider==='movekit'
           ?{...s,count:EXISTING}:s);
       }
-      owner=null;notify();
+      owner=null;release=null;notify();
       return true;
     }
     function mount(payload,uid,ownerNow){
@@ -118,11 +124,12 @@
         catalog.sources=catalog.sources.map(s=>s&&s.provider==='movekit'
           ?{...s,count:catalog.count}:s);
       }
-      owner=uid;notify();
+      owner=uid;release=payload.release.batch;notify();
       if(ownerNow()!==uid){clear();throw Error('TK504_AUTH_OWNER_CHANGED');}
-      return {count:service.count(),added:list.length,owner_uid:uid};
+      return {count:service.count(),added:list.length,owner_uid:uid,batch:release};
     }
-    return Object.freeze({mount,clear,owner:()=>owner,count:()=>service.count()});
+    return Object.freeze({mount,clear,owner:()=>owner,batch:()=>release,
+      count:()=>service.count()});
   }
   return Object.freeze({create,validate});
 });

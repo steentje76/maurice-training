@@ -10,7 +10,13 @@ const owner = '12345678-1234-4234-8234-123456789abc';
 const other = '12345678-1234-4234-8234-123456789def';
 const source = golden.items.find(x => x.catalog_id === 'TK-000227');
 const optimized = posterIndex.items.find(x => x.catalog_id === source.catalog_id);
-const registry = {
+// #504: a new-catalog ID is only signable inside a complete owner-approved
+// package (ledger). TK-000227 is released as part of the whole package 01.
+const ledger = require('./tk504BatchReleaseLedger.js');
+const package01 = ledger.buildReleaseCandidate(1, { inventory: golden, posters: posterIndex,
+  inventorySha: service.inventorySha, posterSha: service.posterSha,
+  reviewReference: 'TK504-20261103-105', uploadReference: 'TK504-20261103-106' });
+const lonelyRegistry = {
   schema: service.SCHEMA,
   status: 'RELEASE_APPROVED',
   inventory_sha256: service.inventorySha,
@@ -26,6 +32,9 @@ const registry = {
       review_reference: 'TK504-20261103-103', upload_reference: 'TK504-20261103-104' }
   ]
 };
+const registry = { ...package01, status: 'RELEASE_APPROVED',
+  entries: package01.entries.map(e => e.catalog_id === source.catalog_id
+    ? lonelyRegistry.entries.find(x => x.media_type === e.media_type) : e) };
 const env = {
   SUPABASE_URL: service.BASE,
   SUPABASE_SERVICE_ROLE_KEY: 'fake-server-credential',
@@ -103,6 +112,11 @@ function build(opts = {}) {
     assert.match(result.url,/\/exercise-media\/movekit\/v2\/video\//);
     assert.equal(v.client.activeUi,false);
     assert.equal(v.client.offlineDownloadReleased,false);
+  });
+  await check('lone new-catalog entry outside a complete owner-approved package is never signed', async()=>{
+    const v=build({release:lonelyRegistry});
+    await assert.rejects(()=>v.client.get(source.catalog_id,'video',owner),/MEDIA_NOT_FOUND|MEDIA_NOT_RELEASED/);
+    assert.equal(v.mock.calls.length,0,'no auth, entitlement or signing calls for a partial package');
   });
   await check('new 356 canonical rows require independently verified logging and FK mapping', async()=>{
     const v=build({env:{...env,MOVEKIT_V2_NEW_CATALOG_EXECUTION_VERIFIED:'false'}});

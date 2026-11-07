@@ -29,6 +29,13 @@ const code=[
  "assert plan['records'][0]['metadata']['assets']==[]",
  "assert plan['records'][0]['metadata']['relations']['alternatives']==[]",
  "assert plan['records'][0]['metadata']['provenance']['unreviewed_taxonomy_metadata']",
+ // #504: every staged row carries the approval of ITS package (server-checked).
+ "fp=sample.decision['content_fingerprint']['batches']",
+ "for i,want in ((0,1),(24,1),(25,2),(349,14),(350,15),(355,15)):",
+ "    p=plan['records'][i]['metadata']['provenance']",
+ "    assert p['approved_batch']==want, (i,p)",
+ "    assert p['approved_batch_display_sha256']==fp[want-1]['display_sha256']",
+ "    assert p['owner_display_approval']==sample.decision['decision_id']",
  "assert not plan['publication_authorized'] and not plan['media_entitlements_created'] and not plan['db_writes']",
  "assert all(r['status']=='staged' and r['approved_at'] is None for r in plan['records'])",
  'print("TK504 356 owner-approved content staging: deterministic synthetic PASS; zero release rights")'

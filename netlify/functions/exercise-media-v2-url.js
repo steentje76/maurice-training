@@ -29,6 +29,7 @@ const ALLOWED_ORIGINS = new Set([
 const inventory = require('../../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json');
 const posterRegistry = require('../../docs/generated/MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.json');
 const release = require('../../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
+const ledger = require('../../core/tk504BatchReleaseLedger.js');
 const inventorySha = 'a8500ce902bbea4f1ff5ad0be6576f70b44616f8803367a27122e5449c815a66';
 const posterSha = '07fe0762c6eb5814d03d006e060b8eec0dd4e47cd053a3d3846ff003cc8559a4';
 const byId = new Map();
@@ -245,6 +246,14 @@ async function handle(event, deps = {}) {
   if (catalogNumber >= 227 && catalogNumber <= 582 &&
       env.MOVEKIT_V2_NEW_CATALOG_EXECUTION_VERIFIED !== 'true') {
     return failure(event, 503, 'NEW_CATALOG_EXECUTION_UNVERIFIED');
+  }
+  // A new-catalog item is signable only inside an exact, owner-fingerprinted
+  // cumulative package prefix. A lone entry, gap or partial package fails.
+  if (catalogNumber >= 227 && catalogNumber <= 582) {
+    const scope = ledger.releasedScope(activeRelease);
+    if (!scope || !scope.ids.includes(body.catalog_id)) {
+      return failure(event, 404, 'MEDIA_NOT_APPROVED');
+    }
   }
   if (body.type === 'poster' && env.MOVEKIT_V2_POSTER_UPLOAD_VERIFIED !== 'true') {
     return failure(event, 503, 'POSTERS_NOT_RELEASED');

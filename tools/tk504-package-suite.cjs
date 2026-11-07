@@ -3,7 +3,8 @@
 // that guard the 15-package integration path. Exit code != 0 on any failure.
 const {spawnSync}=require('node:child_process'),path=require('node:path');
 const root=path.resolve(__dirname,'..');
-const tests=['tk504Batch15Integration','tk504PublishedCatalogBroker','tk504PublishedCatalogRuntime',
+const tests=['tk504Batch15Integration','tk504SignedStorageAcceptance',
+  'tk504PublishedCatalogBroker','tk504PublishedCatalogRuntime',
   'movekitV2ClientServerContract','movekitV2Broker','movekitV2ExerciseMediaBridge',
   'tk504MediaRenewalBoundary','tk504ProtectedPlayback','tk504V1SigningRetirement',
   'tk504ProtectedPlayerFlow','tk504PrivateReleaseCutoverGuard','sw-guard',

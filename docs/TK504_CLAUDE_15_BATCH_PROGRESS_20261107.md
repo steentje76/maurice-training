@@ -80,3 +80,18 @@ tokenlevensduur van de harness verlengd; de herhaalde run is volledig PASS.
   inventory-digests in Git.
 - Echte browser-playback in de app, Android/WebView, productie-RLS/grants,
   licentiehouder- en eigenaar-releasebesluit.
+
+
+## PR #608 — onafhankelijke bron-, browser- en cloudcontrole (7 november 2026)
+
+**Nieuwe directe verificatie, na Claude-sessie; eerdere synthetische tests blijven afzonderlijk aangeduid.**
+
+- Originele prive bestanden onder C:\Movikit: alle 15 cumulatieve pakketten (356 nieuwe IDs) exact gekoppeld aan de eigenaar-goedgekeurde Nederlandse zichtbare velden: **15/15 contentfingerprints**. Golden V2 MP4 en WebP poster per nieuwe ID met werkelijke byte/SHA-256 controle: **712/712 PASS**. Niets gepubliceerd of gekopieerd naar Git. Privaat bewijs: .tk-private-review/TK504-PR608-PRIVATE-SOURCE-ALL15-20261107.json, script en bronbestanden buiten deze repo.
+- Werkelijke lokale Chromium-browser met originele TK-appshell en **private review-overlay**, echte 25 video-binaries voor TK-000227..251: **25/25** videometadata geladen, seek naar midden, play en voortgang; 25 unieke kaarten/zoekfunctie; 25 goedgekeurde labels. CDP exitcode **0**. Herhaalbaar via bestaande tools/tk504_batch25_cdp_qa.mjs met optionele --all-approved mode (zonder privemedia in Git). Dit bewijst **geen** live signed-Storage/Android appafspeelbaarheid.
+- Bestaande prive loopback preview (127.0.0.1) met werkelijke MP4 bytes: **25/25** HTTP Range-requests geven **206** en correcte Content-Range; foutbereik HTTP **416**; Cache-Control private/no-store. Dit is lokale Python HTTP-server, **niet Supabase signed URL**.
+- Supabase projectcontrole uitsluitend **read-only**: exercise-media **582** en exercise-posters **582** objects, public=false voor beide; objectmetadata max-age=60 voor beide. Geen nieuwe productiegrants of schema's: gevraagde release-/grantregistries zijn nog niet live. Publieke/anonieme GET + Range op de eerste V2-video/poster geeft **HTTP 400**, dus geen anonieme raw-mediatoegang aangetoond.
+- npm.cmd run cap:copy na webbuild: **PASS**, OCR-assets aanwezig in Android assets, geen APK. Daarna volledige npm.cmd test: **501 uitgevoerd, 0 geskipte, 0 gefaald**, exitcode **0**. De eerdere 1 rode OCR-fixture is daarmee verholpen; de afzonderlijke licentie/security/releaseacceptatie is NIET weggevallen.
+- Officiele Supabase Storage-documentatie: een afgegeven signed URL kan niet individueel worden ingetrokken en edge-cache TTL en tokentijd zijn onafhankelijke parameters. De V2-signing TTL is 60 seconden en opslagcache maximaal 60 seconden volgens metadata. **Niet claimen dat logout/revocation een reeds gedeelde getekende URL onmiddellijk ongeldig maakt.** Beoordeling van deze resttoegang is harde security-/license-check voor release.
+- Primaire codeverandering in deze QA-ronde: optionele --all-approved real-Chromium acceptatiemodus voor alle 25; bestaande default test (1+24/3 samples) behouden. Nooit private media, private credentials of signed URLs loggen in PR/CI.
+
+**Release blijft geblokkeerd:** geen echte uitgegeven cloud-signed URL + Range/Cache test voor een bevoegde eindgebruiker, geen fysieke Android/Capacitor browseracceptatie met accountwissel, geen uitrol van benodigde getypeerde migraties/grants/RLS, geen afgeronde licentiehouders- en publieke V1-cutovercontrole, geen afzonderlijke releasebeslissing. Beide catalogus/typed-FK releaseflags blijven false; behoud 226 productieoefeningen en bestaande auteurschap/historie. Groene algemene npm-gate betekent niet dat #504/#603 gesloten zijn.

@@ -5,6 +5,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 
 const url=process.argv[2]||'http://127.0.0.1:18779/';
 const debuggerPort=Number(process.argv[3]||18780);
+const allApproved=process.argv.includes('--all-approved');
 if(!/^http:\/\/127\.0\.0\.1:\d+\/$/.test(url) ||
    ![18779,18780,18781].includes(debuggerPort))throw Error('LOCAL_ONLY');
 const targets=await (await fetch('http://127.0.0.1:'+debuggerPort+'/json/list')).json();
@@ -23,11 +24,11 @@ const invoke=(method,params)=>new Promise((resolve,reject)=>{
  const id=++sequence;waiting.set(id,{resolve,reject});
  ws.send(JSON.stringify({id,method,params}));
 });
-const check=async function(){
+const check=async function(allApproved){
  const summary=Array.from(document.querySelectorAll('#tk504-batch-items button[data-catalog-id]'));
  const root=document.querySelector('#tk504-batch-review');
  if(!root||summary.length!==25)return {ok:false,problem:'NOT_25_CARDS',cards:summary.length};
- const expected=['TK-000227','TK-000238','TK-000251'];
+ const expected=allApproved?summary.map(x=>x.dataset.catalogId):['TK-000227','TK-000238','TK-000251'];
  const browser={cards:summary.length,unique:new Set(summary.map(x=>x.dataset.catalogId)).size,
    approved:document.querySelectorAll('#tk504-batch-items .approved').length,
    concept:document.querySelectorAll('#tk504-batch-items .status:not(.approved)').length,
@@ -78,16 +79,16 @@ const check=async function(){
       width:video.videoWidth,height:video.videoHeight,
       progress_seconds:Math.round(progress*100)/100});
  }
- return {ok:browser.cards===25&&browser.unique===25&&browser.approved===1&&
-    browser.concept===24&&browser.search&&browser.selected.every(x=>x.ok),
+ return {ok:browser.cards===25&&browser.unique===25&&browser.approved===(allApproved?25:1)&&
+    browser.concept===(allApproved?0:24)&&browser.search&&browser.selected.every(x=>x.ok),
     ...browser};
 };
 try{
  const r=await Promise.race([
    invoke('Runtime.evaluate',{
-      expression:'('+check.toString()+')()',returnByValue:true,awaitPromise:true
+      expression:'('+check.toString()+')('+JSON.stringify(allApproved)+')',returnByValue:true,awaitPromise:true
    }),
-   delay(65000,null,{ref:false}).then(()=>{throw Error('TIMEOUT')})
+   delay(allApproved?250000:65000,null,{ref:false}).then(()=>{throw Error('TIMEOUT')})
  ]);
  const result=r?.result?.value;
  console.log('TK504_BATCH25_CHROMIUM='+JSON.stringify(result));

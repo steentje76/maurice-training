@@ -213,6 +213,8 @@ async function deel2() {
     const errs = []; page.on('pageerror', function (e) { errs.push(e.message); });
     await page.goto(url); await page.waitForTimeout(500);
     await page.evaluate(function (a) {
+      // #603: personal reads are owner-scoped; synthetic signed-in owner, never a real account.
+      tkEigenaarUid = function () { return 'synthetic-browser-owner'; };
       exercises = [{ id: 'sq', naam: 'Squat', muscle_primary: ['Quadriceps'], muscle_secondary: [] }];
       window.sbGet = async function (t) { return t === 'hrv_log' ? a[0] : (t === 'sessions' ? a[1] : []); };
       window.fetchWearableStatus = async function () { return { connected: false }; };

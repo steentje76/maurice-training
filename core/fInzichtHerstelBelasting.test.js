@@ -91,6 +91,8 @@ let chromium;
 try { chromium = require('playwright').chromium; } catch (e) { chromium = null; }
 
 const FIXTURE = function () {
+  // #603: personal reads are owner-scoped; synthetic signed-in owner, never a real account.
+  tkEigenaarUid = function () { return 'synthetic-browser-owner'; };
   const d = function (n) { const x = new Date(); x.setDate(x.getDate() - n); return x.toISOString().split('T')[0]; };
   exercises = [
     { id: 'sq', naam: 'Squat', muscle_primary: ['Quadriceps', 'Billen'], muscle_secondary: ['Hamstrings', 'Core'] },

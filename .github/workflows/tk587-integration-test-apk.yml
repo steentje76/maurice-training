@@ -58,6 +58,41 @@ jobs:
           ! grep -rIlE 'service_role|SUPABASE_SERVICE|sk_live_|BEGIN (RSA |EC )?PRIVATE KEY' www/ --include='*.html' --include='*.js' --include='*.json'
           ! find www -type f \( -iname '*.mp4' -o -iname '*.mov' -o -iname '*.webm' -o -iname '*licen*' \) | grep -q .
 
+  broad-browser:
+    # Reported, not hidden: the full gate WITH Chromium. Main's own Quality Gate runs without
+    # Chromium (browser parts SKIP). Known identical-to-main red: fGuidedIntegrationAvoidSave C1-C5
+    # (simulated server lacks the #603 binding RPC). Not a dependency of the test APK.
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'integration/tk587-main-20261107'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run cap:copy
+      - run: npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - name: Full gate with real Chromium
+        shell: bash
+        run: |
+          mkdir -p broad-browser
+          set +e
+          npm test 2>&1 | tee broad-browser/full-gate-chromium.log
+          echo "exit=${PIPESTATUS[0]}" | tee -a broad-browser/full-gate-chromium.log
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tk587-broad-browser
+          path: broad-browser/
+
   apk:
     needs: regression
     runs-on: ubuntu-24.04

@@ -35,6 +35,8 @@ Aanvullende integratiefouten gevonden en hersteld:
 
 Testharnassen van #587 laden nu ook de echte #603-helpers die de productiefuncties aanroepen. Geen asserties verwijderd; twee zijn aangescherpt (instancebinding, `overall:null`).
 
+Browsertests van main (`fGuidedPreviewAthleteConstraints`, `fHomeDagfactorBasisSafety`, `fInzichtHerstelBelasting`, `fGuidedIntegrationAvoidSave`) draaiden in main-CI zonder Chromium (SKIP) en faalden met Chromium al op main zelf: hun fixtures hadden geen aangemelde eigenaar terwijl #603 drafts en reads aan een eigenaar bindt. Ze krijgen nu een synthetische eigenaar. `fGuidedIntegrationAvoidSave` C1–C5 blijft identiek aan main rood (25/40): de gesimuleerde server kent de #603-bindings-RPC niet, waardoor Guided-opslag van catalogusoefeningen terecht fail-closed weigert. Dat is een bestaande harnasbeperking van main, geen regressie van deze merge. `fHomeDagfactorBasisSafety` R4 (regelafbreking op 360 px) faalt lokaal ook op #587 zelf; lettertype-afhankelijk.
+
 ## B. Gebruikersbevindingen
 
 Status: CODE = in code hersteld, TEST = geautomatiseerd bewezen, DEVICE = fysiek Samsung/PM5 bevestigd.
@@ -46,7 +48,7 @@ Status: CODE = in code hersteld, TEST = geautomatiseerd bewezen, DEVICE = fysiek
 | Programma-uitvoering origineel + gewijzigd (01-11) | CODE+TEST (acceptatieproef 8 oefeningen). DEVICE open. |
 | Set toevoegen (25-013) | CODE+TEST, blijft na hervatten. DEVICE open. |
 | Hervatten exact aangepaste uitvoering (25-011) | CODE+TEST, incl. procesherstart in emulator. DEVICE open. |
-| Training afsluiten, offline/retries | CODE+TEST: gedeeltelijke fout behoudt draft, retry zonder dubbele rijen, alle rijen aan één instance. DEVICE open. |
+| Training afsluiten, offline/retries | CODE+TEST: gedeeltelijke fout behoudt draft, retry zonder dubbele rijen, alle rijen aan één instance. MoveKit-catalogusoefeningen worden offline niet gequeued maar fail-closed bewaard tot online (bestaand #603-gedrag van main). DEVICE open. |
 | Trainingshistorie gepland/aangepast/uitgevoerd | CODE+TEST. |
 | Spierbelasting alleen uit opgeslagen sets (24-007) | CODE+TEST, eigenaar-gescopt. Oorspronkelijke waarneming niet fysiek gereproduceerd. |
 | Trainingsadvies gewicht/reps/RPE (25-009/012) | CODE+TEST: bestaande resolver, target-RPE wint, geen verzonnen gewicht. Verdere integratieproef open. |
@@ -83,7 +85,7 @@ Niet aangetoond: read-after-write met een echt account in de APK (CI heeft geen 
 3. Start een programmatraining. Log oefening 1 met 67,5 kg; voeg een set toe.
 4. Vervang een nog niet uitgevoerde oefening via de bibliotheek; vervang een half uitgevoerde oefening en controleer dat de gedane sets zichtbaar blijven.
 5. Sluit de app geforceerd; open en hervat: dezelfde aangepaste lijst, sets en extra set.
-6. Zet vliegtuigmodus aan, rond af: geen "Training opgeslagen", wel synchronisatiemelding. Vliegtuigmodus uit: na synchronisatie exact één rij per uitgevoerde oefening.
+6. Zet vliegtuigmodus aan, rond af. Eigen/legacy-oefeningen worden gequeued (synchronisatiemelding, geen "Training opgeslagen"). MoveKit-catalogusoefeningen worden offline bewust niet bevestigd (#603 fail-closed: herkomst moet online worden geverifieerd): melding "mislukt — probeer opnieuw", de training blijft bewaard. Vliegtuigmodus uit, opnieuw afronden: exact één rij per uitgevoerde oefening, geen dubbele.
 7. Controleer Logboek/Programma-historie: gepland, aangepast en uitgevoerd afzonderlijk; volumes kloppen.
 8. Afmelden; ander account aanmelden: geen posters, draft of trainingen van het eerste account zichtbaar.
 9. PM5: verbind, roei een vaste afstand; resultaatvelden gevuld, RPE zelf invullen, gemeten splits niet gelijk verdeeld. Intervalprogrammering alleen als experiment; noteer wat de PM5 toont.

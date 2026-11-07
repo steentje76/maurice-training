@@ -71,7 +71,8 @@ function installeer(cfg) {
   if (!browser) { console.log('fGuidedIntegrationAvoidSave: deel 2 SKIP (Chromium niet beschikbaar in deze omgeving)'); }
   else {
     const URL = 'file://' + path.join(ROOT, 'index.html');
-    async function pagina(ctx) { const p = await ctx.newPage(); await p.goto(URL); await p.waitForTimeout(500); return p; }
+    // #603: Guided state and session writes are owner-bound; synthetic signed-in owner, never a real account.
+    async function pagina(ctx) { const p = await ctx.newPage(); await p.goto(URL); await p.waitForTimeout(500); await p.evaluate(function () { tkEigenaarUid = function () { return 'synthetic-browser-owner'; }; }); return p; }
     try {
       // ── A. AthleteConstraints: automatische keuze ──
       const ctxA = await browser.newContext(); const pA = await pagina(ctxA);

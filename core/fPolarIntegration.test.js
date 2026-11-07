@@ -6,6 +6,7 @@
  * en de verplichte Polar-gebruikersregistratiestap wordt niet overgeslagen.
  */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -14,11 +15,11 @@ let pass = 0, fail = 0;
 const msgs = [];
 function ok(cond, label) { if (cond) { pass++; } else { fail++; msgs.push('MISLUKT: ' + label); } }
 
-const authStart = fs.readFileSync(path.join(ROOT, 'netlify/functions/polar-auth-start.js'), 'utf8');
-const authCallback = fs.readFileSync(path.join(ROOT, 'netlify/functions/polar-auth-callback.js'), 'utf8');
-const sync = fs.readFileSync(path.join(ROOT, 'netlify/functions/polar-sync.js'), 'utf8');
-const disconnect = fs.readFileSync(path.join(ROOT, 'netlify/functions/polar-disconnect.js'), 'utf8');
-const status = fs.readFileSync(path.join(ROOT, 'netlify/functions/polar-status.js'), 'utf8');
+const authStart = readText(path.join(ROOT, 'netlify/functions/polar-auth-start.js'));
+const authCallback = readText(path.join(ROOT, 'netlify/functions/polar-auth-callback.js'));
+const sync = readText(path.join(ROOT, 'netlify/functions/polar-sync.js'));
+const disconnect = readText(path.join(ROOT, 'netlify/functions/polar-disconnect.js'));
+const status = readText(path.join(ROOT, 'netlify/functions/polar-status.js'));
 
 console.log('DEVICES/WEARABLES MASTER SPRINT — Polar AccessLink integratie');
 

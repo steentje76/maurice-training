@@ -9,11 +9,12 @@
  * Sabotageblok onderaan bewijst dat de tests de reparaties raken. RESET wordt NIET getest
  * omdat hij bewust niet is toegevoegd (alleen: afwezig). */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs'); const path = require('path');
 const ROOT = path.join(__dirname, '..');
-const csafeSrc = fs.readFileSync(path.join(ROOT, 'core/concept2Csafe.js'), 'utf8');
-const progSrc = fs.readFileSync(path.join(ROOT, 'core/concept2Programming.js'), 'utf8');
-const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+const csafeSrc = readText(path.join(ROOT, 'core/concept2Csafe.js'));
+const progSrc = readText(path.join(ROOT, 'core/concept2Programming.js'));
+const html = readText(path.join(ROOT, 'index.html'));
 // De ECHTE read-back-helper uit index.html (geen spiegel-implementatie), met Concept2Live in scope.
 const readbackSrc = (html.match(/function tkC2ReadbackFromPacket\(evt, vctx\)\{[\s\S]*?\n\}/) || [''])[0];
 const tkC2ReadbackFromPacket = readbackSrc ? new Function('Concept2Live', readbackSrc + '\nreturn tkC2ReadbackFromPacket;')(require(path.join(ROOT, 'core/concept2Live.js'))) : null;
@@ -198,10 +199,10 @@ async function suite(CS, PROG) {
   // productie-wiring
   ok(/_rt\.prog\.verifyFromTelemetry\(tkC2ReadbackFromPacket\(evt,_vctx\), _vctx\)/.test(html) && !/verifyFromTelemetry\(_rt\.agg\.getMergedRaw\(\)/.test(html), 'WIRING: index.html verifieert met de read-back van het packet zelf (nooit merged state)');
   ok(typeof tkC2ReadbackFromPacket === 'function' && /Concept2Live\.pm5RawToCanonical\(pkt\)/.test(readbackSrc), 'WIRING: echte helper tkC2ReadbackFromPacket geëxtraheerd en gebruikt');
-  ok(/raw\.packetSeq = muxDiag\.globalSeq;/.test(fs.readFileSync(path.join(ROOT, 'native/src/nativeConcept2BleTransport.js'), 'utf8')), 'WIRING: transport stempelt elke multiplexed notificatie met packetSeq');
+  ok(/raw\.packetSeq = muxDiag\.globalSeq;/.test(readText(path.join(ROOT, 'native/src/nativeConcept2BleTransport.js'))), 'WIRING: transport stempelt elke multiplexed notificatie met packetSeq');
 
   // Developer Mode toont de acknowledgement (#464-diagnostiek uitgebreid)
-  { const DM = await import(path.join(ROOT, 'native/src/developerMode.mjs'));
+  { const DM = await import(require('node:url').pathToFileURL(path.join(ROOT, 'native/src/developerMode.mjs')).href);
     DM.setProgrammingSource(() => ({ getDiagnostics: () => ({ state: 'VERIFYING', directResponseHex: 'f18181f2', directPreviousFrameStatus: 'ok',
       ackFrameHex: 'f18080f2', ackWriteAttempted: 1, ackWriteCompleted: 1, ackResponseHex: 'f10505f2', ackPreviousFrameStatus: 'ok', ackStateMachineState: 'in_use',
       acceptedMuxSeq: 40, readbackPacketId: '0x31', readbackPacketSeq: 41, acceptedWorkoutTypes: [2, 3] }) }));

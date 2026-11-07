@@ -6,12 +6,13 @@
  *     product_telemetry_events, strikte expiry-boundary (created_at < nu-90d), fail-safe;
  *  X  sabotage. Echte functies uit index.html / netlify/functions, geen spiegelimplementaties. */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs'); const path = require('path');
 const ROOT = path.join(__dirname, '..');
-const HTML = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-const TOML = fs.readFileSync(path.join(ROOT, 'netlify.toml'), 'utf8');
+const HTML = readText(path.join(ROOT, 'index.html'));
+const TOML = readText(path.join(ROOT, 'netlify.toml'));
 const CLEAN_PATH = path.join(ROOT, 'netlify/functions/cleanup-product-telemetry.js');
-const CLEAN_SRC = fs.readFileSync(CLEAN_PATH, 'utf8');
+const CLEAN_SRC = readText(CLEAN_PATH);
 const PTC = require(path.join(ROOT, 'core/productTelemetry.js'));
 let pass = 0, fail = 0, finished = false, mute = false;
 process.on('exit', c => { if (!finished && c === 0) { console.log('MISLUKT: test eindigde zonder samenvatting'); process.exitCode = 1; } });

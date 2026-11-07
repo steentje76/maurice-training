@@ -6,9 +6,10 @@
  * en zonder service key helemaal niet (fail-safe); (5) rollback-verificatiescript en auditdocument aanwezig;
  * (6) sabotage wordt gedetecteerd. Live-evidence: docs/SECURITY_AUDIT_PRIVILEGED_FUNCTIONS.md. */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs'); const path = require('path');
 const ROOT = path.join(__dirname, '..');
-const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+const rd = f => readText(path.join(ROOT, f));
 const SRC = { mig: rd('migratie_v573.sql'), coach: rd('netlify/functions/coach.js'), verify: rd('tools/verify-f-sec-002.sql'), doc: rd('docs/SECURITY_AUDIT_PRIVILEGED_FUNCTIONS.md') };
 let pass = 0, fail = 0, mute = false;
 const ok = (c, m) => { if (c) pass++; else { fail++; if (!mute) console.log('MISLUKT: ' + m); } };

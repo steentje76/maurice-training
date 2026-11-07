@@ -10,7 +10,7 @@
 'use strict';
 const fs = require('fs'); const path = require('path');
 const ROOT = path.join(__dirname, '..');
-const HTML = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+const HTML = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8').replace(/\r\n/g,'\n');
 const PTC = require(path.join(ROOT, 'core/productTelemetry.js'));
 const C2L = require(path.join(ROOT, 'core/concept2Live.js'));
 const DC = require(path.join(ROOT, 'core/deviceIntegration.js'));
@@ -114,7 +114,7 @@ const UNDEF = Symbol('undef');
 function deepNoop() { const f = function () { return deepNoop(); }; return new Proxy(f, { get: (t, k) => (k === 'then' || k === Symbol.toPrimitive) ? undefined : deepNoop(), apply: () => deepNoop() }); }
 function element() { return { value: '', style: {}, textContent: '', className: '', innerHTML: '', disabled: false, classList: { toggle() {}, add() {}, remove() {}, contains: () => false }, querySelectorAll: () => [], querySelector: () => null, setAttribute() {} }; }
 const FNS = ['finishSession', 'cardioDataToRow', 'resolveCardioType', 'tkC2IsLoggableSummary', 'tkC2Converter', 'tkC2SessionRowFromLog', 'tkC2ExecutionCleanup',
-  'tkErgProtocolProjectionFor', 'tkErgProtocolInstanceId', 'tkIsErgCardioType', '_c2rtTeardown', 'tkErgDisconnect', 'tkErgDisconnectAll', 'buildStrengthSessionRow', 'tkC2TrainingExecIds'];
+  'tkSessieSchrijfOpts','tkSessieOptsVoor','tkSessieUitkomst','tk603CanUpdatePersonalRecord', 'tkErgProtocolProjectionFor', 'tkErgProtocolInstanceId', 'tkIsErgCardioType', '_c2rtTeardown', 'tkErgDisconnect', 'tkErgDisconnectAll', 'buildStrengthSessionRow', 'tkC2TrainingExecIds'];
 function world(html, o) {
   o = o || {};
   const tele = [], writes = [], toasts = [];
@@ -123,7 +123,7 @@ function world(html, o) {
     sessionPrBase: {}, prFor: () => null, upsertExerciseGoalField: async () => {}, tkSetEvidence: UNDEF, liveWorkoutToActual: UNDEF, TKWeather: UNDEF,
     tkC2DiagFinishPath: UNDEF, tkC2DiagFinishEx: UNDEF, tkC2DiagFinishCalled: UNDEF,
     curT: o.curT || 'A', trainStart: Date.now() - 60000, pausedAccumMs: 0, activeInstanceId: null, activePlannedAssignmentId: null,
-    sessionLog: {}, sessionExtra: [], finishSessionBezig: false, _tkErgPending: null, _ergProtocol: {}, _c2pair: {}, _c2rt: {}, _c2liveLast: {}, LOS_DOMID: 'los',
+    sessionLog: {}, sessionExtra: [], finishSessionBezig: false, _finishSessionContext:null, tkEigenaarUid:()=> 'u-test', _tkErgPending: null, _ergProtocol: {}, _c2pair: {}, _c2rt: {}, _c2liveLast: {}, LOS_DOMID: 'los',
     exercisesList: [], getSessionExs: () => env.exercisesList, getExerciseMuscles: () => [], ensureSessionExerciseRows: async () => {},
     writeSessionRow: async row => { if (o.writeThrows) throw new Error('net'); if (o.writeFalse) return false; writes.push(row); return true; },
     completeTrainingInstance: async () => {}, sbPatchQ: async () => true,
@@ -233,12 +233,12 @@ function assertAll(html, A, label) {
   const sab = [
     ['consent-gate weg', h => h.replace("if(!tkProductTelemetryConsent())return false;", ''), A2 => A2.E.noConsent.calls.length > 0],
     ['registry-validatie omzeild', h => h.replace("if(!built||!built.ok)return false;", "if(!built||!built.ok)built={ok:true,event:{event:eventId,app_version:'x',environment:'unknown',platform:'unknown'}};"), A2 => A2.E.hrv.calls.length > 0 || A2.E.unreg.calls.length > 0],
-    ['completed vóór de saved===0-guard', h => h.replace("  try{tkProductTelemetry('training.workout.completed',{source_type:(String(t||'').indexOf('prog_')===0)?'program':'my_training'});}catch(_pt){}\r\n", '')
-        .replace("  if(failed>0){\r\n", "  try{tkProductTelemetry('training.workout.completed',{source_type:(String(t||'').indexOf('prog_')===0)?'program':'my_training'});}catch(_pt){}\r\n  if(failed>0){\r\n"), A2 => A2.F.writeFalse.tele.length > 0 || A2.F.empty.tele.length > 0],
+    ['completed vóór de saved===0-guard', h => h.replace("  try{tkProductTelemetry('training.workout.completed',{source_type:(String(t||'').indexOf('prog_')===0)?'program':'my_training'});}catch(_pt){}\n", '')
+        .replace("  if(failed>0){\n", "  try{tkProductTelemetry('training.workout.completed',{source_type:(String(t||'').indexOf('prog_')===0)?'program':'my_training'});}catch(_pt){}\n  if(failed>0){\n"), A2 => A2.F.writeFalse.tele.length > 0 || A2.F.empty.tele.length > 0],
     ['try/catch rond completed weg', h => h.replace("try{tkProductTelemetry('training.workout.completed',{source_type:(String(t||'').indexOf('prog_')===0)?'program':'my_training'});}catch(_pt){}", "tkProductTelemetry('training.workout.completed',{source_type:(String(t||'').indexOf('prog_')===0)?'program':'my_training'});"), A2 => !A2.F.teleThrows.toasts.some(t => /oefeningen opgeslagen/.test(t))],
     ['resume-guard startT weg', h => h.replace("if(!resumeDraft){try{tkProductTelemetry('training.workout.started'", "if(true){try{tkProductTelemetry('training.workout.started'"), null],
     ['athlete-waarde in call', h => h.replace("tkProductTelemetry('training.opened',{route_id:'s-train-mgr'})", "tkProductTelemetry('training.opened',{route_id:'s-train-mgr',hrv:x.hrv})"), null],
-    ['fetch-exception niet afgevangen', h => h.replace("  }catch(_){ return false; }\r\n}\r\n</script>", "  }finally{}\r\n}\r\n</script>"), A2 => A2.E.fetchThrows.threw]
+    ['fetch-exception niet afgevangen', h => h.replace("  }catch(_){ return false; }\n}\n</script>", "  }finally{}\n}\n</script>"), A2 => A2.E.fetchThrows.threw]
   ];
   for (const [name, mut, detect] of sab) {
     const h2 = mut(HTML);

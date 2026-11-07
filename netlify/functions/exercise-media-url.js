@@ -131,6 +131,13 @@ async function handle(event, deps) {
   if (event && event.httpMethod === 'OPTIONS') return reply(event, 204, {});
   if (!event || event.httpMethod !== 'POST') return reply(event, 405, { ok: false, error: 'METHOD_NOT_ALLOWED' });
 
+  // Explicit server-only retirement gate for the eventual verified V2 cutover.
+  // Default OFF preserves current playback. Never configured by the client,
+  // and when enabled no Auth or Storage request can issue another V1 URL.
+  if (env.MOVEKIT_V1_SIGNING_DISABLED === 'true') {
+    return reply(event, 410, { ok: false, error: 'V1_SIGNING_RETIRED' });
+  }
+
   const base = env.SUPABASE_URL || 'https://mhfxhzkdmgkaplicdszg.supabase.co';
   const service = env.SUPABASE_SERVICE_ROLE_KEY;
   const anon = env.SUPABASE_ANON_KEY || 'sb_publishable_iialkxwRf3vu7gsZKaSzGw_YijcP3mY';

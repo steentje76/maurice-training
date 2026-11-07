@@ -19,11 +19,14 @@ function eq(a, b, l) { ok(a === b, l + ' (verwacht ' + JSON.stringify(b) + ', kr
 function extractFn(name) {
   const re = new RegExp('(?:async\\s+)?function\\s+' + name + '\\s*\\(');
   const m = re.exec(html); if (!m) return null;
-  let i = html.indexOf('{', m.index), d = 0;
-  for (let j = i; j < html.length; j++) { if (html[j] === '{') d++; else if (html[j] === '}') { d--; if (d === 0) return html.slice(m.index, j + 1); } }
+  for(let end=html.indexOf('}',m.index);end>=0;end=html.indexOf('}',end+1)){
+    const candidate=html.slice(m.index,end+1);
+    try{new vm.Script(candidate);return candidate;}catch(_){}
+  }
   return null;
 }
-const FNS = ['tkErgSportForExercise', 'tkErgDefinitionValid', 'saveIntervalWorkout', 'ivRaw', 'ivFromRaw', 'snapshotFromCustomTraining', 'startInstanceFromDefinition',
+const FNS = ['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection','tk504ValidateCatalogSourceRef','tk504BuilderRefsFromPlan','tk504AttachSavedCatalogRefs',
+  'tkErgSportForExercise', 'tkErgDefinitionValid', 'saveIntervalWorkout', 'ivRaw', 'ivFromRaw', 'snapshotFromCustomTraining', 'startInstanceFromDefinition',
   'startIntervalExecution', 'advanceIntervalBlock', 'tkErgCloseBlockActual', 'finishIntervalExecution', 'buildIntervalPrescriptionFromForm',
   'renderErgSessionStructuredHtml', 'tkErgActualText', 'structuredBlockLabel', 'tkIvTerminationText', 'tkIvTargetText'];
 const SRC = {}; FNS.forEach((n) => { SRC[n] = extractFn(n); ok(SRC[n], 'functie gevonden: ' + n); });
@@ -32,7 +35,7 @@ const CONST = (html.match(/const TK_IV_BLOCK_LABEL=\{[^\n]*\n/) || [''])[0] + (h
   + (html.match(/const TK_ERG_INTERVALS_VERSION='[^']*';\r?\n/) || [''])[0]
   + (html.match(/const CARDIO_TYPE_BY_ID = \{[^\n]*\n/) || [''])[0];
 ok(/TK_ERG_SPORTS/.test(CONST) && /TK_ERG_EXERCISE_ID/.test(CONST) && /CARDIO_TYPE_BY_ID/.test(CONST), 'B3-constanten gevonden');
-const PREVIEW_START = extractFn('previewStartTraining'), FINISH_SESSION_WRITE = (html.match(/await writeSessionRow\(\{date:today,exercise_id:ex\.id[^\n]*/) || [''])[0];
+const PREVIEW_START = extractFn('previewStartTraining'), FINISH_SESSION_WRITE = (html.match(/await writeSessionRow\((?:tk504RewriteVerifiedSessionRow\()?\{date:today,exercise_id:ex\.id[^\n]*/) || [''])[0];
 const ERGS = [['rowing', 'roeien', 'RowErg'], ['bikeerg', 'bikeerg', 'BikeErg'], ['skierg', 'skierg', 'SkiErg']];
 const T0 = 1_800_000_000_000;
 
@@ -161,10 +164,21 @@ function sandbox() {
   }
   // ── Statisch: keten, één engine, geen dual-write, geen activities ──
   const code = html.replace(/\/\/[^\n]*/g, '');
-  ok(/intervals_detail:\(l\.intervalsDetail\|\|null\)/.test(FINISH_SESSION_WRITE) && /exercise_id:ex\.id/.test(FINISH_SESSION_WRITE) && /training_instance_id:activeInstanceId\|\|_ergInst\|\|null/.test(FINISH_SESSION_WRITE), 'persistence: intervals_detail gaat mee in DEZELFDE, enige sessierij (Erg Continuous Protocol Identity: activeInstanceId houdt voorrang; _ergInst is uitsluitend de ad-hoc losse-Erg-instance als er geen programma-instance is -- nog steeds EEN sessierij, geen dual-write)');
+  ok(/intervals_detail:\(l\.intervalsDetail\|\|null\)/.test(FINISH_SESSION_WRITE) && /exercise_id:ex\.id/.test(FINISH_SESSION_WRITE) && /training_instance_id:context\.instanceId\|\|_ergInst\|\|null/.test(FINISH_SESSION_WRITE), 'persistence: intervals_detail gaat mee in DEZELFDE, enige sessierij (Erg Continuous Protocol Identity: activeInstanceId houdt voorrang; _ergInst is uitsluitend de ad-hoc losse-Erg-instance als er geen programma-instance is -- nog steeds EEN sessierij, geen dual-write)');
+  ok(/const context=\{owner:owner,t:curT,log:sessionLog,instanceId:activeInstanceId,/.test(extractFn('finishSession')),
+    'persistence: instanceId is de vastgelegde actieve instance voor alle asynchrone schrijftakken');
   eq((code.match(/intervals_detail:/g) || []).length, 1, 'persistence: exact één schrijfplek voor intervals_detail (geen tweede write)');
-  eq((code.match(/await writeSessionRow\(\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
-  eq((code.match(/writeSessionRow\(/g) || []).length, 5, 'persistence: totaal aantal writeSessionRow-aanroepen ongewijzigd (definitie + 4 bestaande schrijfpaden; geen extra schrijfweg)');
+  eq((code.match(/await writeSessionRow\((?:tk504RewriteVerifiedSessionRow\()?\{date:today,exercise_id:ex\.id/g) || []).length, 1, 'persistence: exact één writeSessionRow-aanroep in de cardio-tak (geen duplicate session write)');
+  const looseWriter=extractFn('saveLosOefening');
+  const looseWriterCalls=(looseWriter.match(/writeSessionRow\(/g)||[]).length;
+  eq(looseWriterCalls,1,'persistence: losse oefening heeft 1 legacy write en de exclusieve durable typed adapter');
+  ok(/if\(TK504_TYPED_FK_SESSION_RELEASE===true&&ex\._catalog===true\)/.test(looseWriter) &&
+     /ok=await tk603LosWritePending\(c\)/.test(looseWriter) &&
+     /\}else\{[\s\S]*ok=await writeSessionRow\(row\)/.test(looseWriter),
+     'persistence: catalogus-getypeerde en legacy losse schrijftakken zijn strikt exclusief');
+  eq((code.match(/writeSessionRow\(/g)||[]).length-looseWriterCalls,6,
+     'persistence: 1 definitie + 4 bestaande paden + 1 durable typed adapter, geen tweede pipeline');
+  ok(/await writeSessionRow\(JSON.parse\(JSON.stringify\(d.row\)\),\{tk504_binding:binding\}\)/.test(extractFn('tk603LosWritePending')), 'durable typed adapter gebruikt uitsluitend bestaande centrale writer met actuele binding');
   ok(!/sbPostQ\('activities'/.test(SRC.finishIntervalExecution) && !/activity_laps/.test(SRC.finishIntervalExecution), 'persistence: erg schrijft niet naar activities/activity_laps');
   ok(/_tkErgPending&&_tkErgPending\.exId===exId/.test(SRC.startIntervalExecution) && /buildIntervalPrescriptionFromForm/.test(SRC.startIntervalExecution), 'executie: snapshot-prescriptie heeft voorrang, formulier blijft fallback voor ad-hoc');
   ok(/IntervalEngineCore\.stateAt/.test(SRC.tkErgCloseBlockActual) && /IntervalEngineCore\.nextBlockIndex/.test(SRC.advanceIntervalBlock), 'engine: bloksemantiek uit IntervalEngineCore');
@@ -192,7 +206,7 @@ function sandbox() {
   ok(!/service_role|SUPABASE_SERVICE_ROLE_KEY|SB_KEY_ADMIN/i.test(ergCodeBlock), 'ownership C: geen enkel Erg/B3-codepad gebruikt een elevated/service-role-sleutel — uitsluitend de normale, auth-gebonden sbGet/sbPostQ-weg (RLS blijft de enige poortwachter)');
   ok(!/user_id\s*:/.test(FINISH_SESSION_WRITE), 'ownership D: de sessierij-insert (incl. intervals_detail) stuurt zelf GEEN user_id mee — het veld wordt structureel niet clientside gezet, dus een client kan niet eens proberen een andermans user_id te spoofen; toewijzing gebeurt uitsluitend serverside (kolom-default/RLS), ongewijzigd door B3');
   ok(!/sbGet\('sessions',[^)]*user_id=eq\.'\+(?!authSession|uid)/.test(SRC.renderErgSessionStructuredHtml || ''), 'ownership E: History-renderer bevat geen eigen, potentieel foutieve user_id-filterlogica — vertrouwt (zoals B1/B2) volledig op de database-RLS, geen tweede/eigen autorisatiemodel');
-  msgs.push('LIMITATIE (erkend, niet dit-PR-specifiek): een live, twee-gebruikers Postgres-RLS-proef (authSession A vs. authSession B tegen een echte sessions/training_instances-tabel) is met de huidige repository-testinfrastructuur niet uitvoerbaar — er bestaat nergens in deze codebase een lokale Postgres/pgTAP-testharness. Bovenstaande is het sterkste offline-bewijs dat deze architectuur toelaat: geen nieuwe/zwakkere toegangsweg, geen elevated sleutel, geen clientside user_id-spoofing mogelijk, RLS-policies ongewijzigd.');
+  msgs.push('LIMITATIE: de geisoleerde PostgreSQL 17 Docker/ROLLBACK-proef met twee synthetische eigenaren (tools/tk603-local-two-account-db-proof.ps1) controleert de staged TK504 RLS/FK-migratie. Dit bewijst GEEN echte Supabase Auth JWT/PostgREST-integratie, geen productie-sessions schema en geen live twee-accountacceptatie; deze gates blijven open.');
 
   if (msgs.length) console.log(msgs.join('\n'));
   console.log('fStructuredIntervalsB3Erg: ' + pass + ' geslaagd, ' + fail + ' mislukt');

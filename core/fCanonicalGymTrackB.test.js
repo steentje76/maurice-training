@@ -22,6 +22,7 @@
  *   niet alle 5; anon wordt op functieniveau geweigerd (org_has_role).
  */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -30,7 +31,7 @@ let pass = 0, fail = 0;
 const msgs = [];
 function ok(cond, label) { if (cond) { pass++; } else { fail++; msgs.push('MISLUKT: ' + label); } }
 
-const gymTeam = fs.readFileSync(path.join(ROOT, 'netlify/functions/gym-team.js'), 'utf8');
+const gymTeam = readText(path.join(ROOT, 'netlify/functions/gym-team.js'));
 
 // ---- 1. list-actie leest canonical (organizations/memberships), niet legacy users.gym_role ----
 ok(gymTeam.includes("fetch(`${supabaseUrl}/rest/v1/organizations?id=eq.${orgId}") &&

@@ -5,6 +5,7 @@
  * DEFINER-functie), XSS-veilige weergave, geen extra bottom-nav.
  */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -13,9 +14,9 @@ let pass = 0, fail = 0;
 const msgs = [];
 function ok(cond, label) { if (cond) { pass++; } else { fail++; msgs.push('MISLUKT: ' + label); } }
 
-const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-const migratie = fs.readFileSync(path.join(ROOT, 'migratie_v535.sql'), 'utf8');
-const delAcct = fs.readFileSync(path.join(ROOT, 'netlify/functions/delete-account.js'), 'utf8');
+const html = readText(path.join(ROOT, 'index.html'));
+const migratie = readText(path.join(ROOT, 'migratie_v535.sql'));
+const delAcct = readText(path.join(ROOT, 'netlify/functions/delete-account.js'));
 
 // ---- A. Sharing: uitsluitend via de bestaande, canonieke whitelist ----
 ok(html.includes('SocialSharingCore.sanitizeShare('),

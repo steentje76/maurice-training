@@ -32,15 +32,15 @@ var REPLACE_FN = extractFn('execReplaceExercise');
 
 /* ══ A. confirmSwapExercise() -- wist stale suggestedWeight ══ */
 console.log('A. confirmSwapExercise() invalideert suggestedWeight');
-ok(/canonicalNewExerciseItem\(newId, sessionExtra\[idx\]\)/.test(CONFIRM_FN) && CONFIRM_FN.indexOf('suggestedWeight:null') === -1, 'A1 (GAP-P3-033): confirmSwapExercise() vervangt A-gewicht door de canonical prescription van B (geen carry-over, geen wissen-naar-prevS)');
-ok(/id:newId,naam:newEx\.name,type:newEx\.type\|\|sessionExtra\[idx\]\.type,\.\.\._rx\}/.test(CONFIRM_FN),
-  'A2: de canonical herbepaling zit in dezelfde object-override als de identity-wissel (geen tussenliggende stale-render mogelijk)');
+ok(/canonicalNewExerciseItem\(newId,\{\.\.\.sessionExtra\[idx\],tk504_catalog_ref:sourceRef\}\)/.test(CONFIRM_FN) && CONFIRM_FN.indexOf('suggestedWeight:null') === -1, 'A1 (GAP-P3-033): confirmSwapExercise() vervangt A-gewicht door de canonical prescription van B (geen carry-over, geen wissen-naar-prevS)');
+ok(/id:newId,naam:newEx\.name,type:newEx\.type\|\|sessionExtra\[idx\]\.type,\.\.\._rx,tk504_catalog_ref:sourceRef\}/.test(CONFIRM_FN),
+  'A2: canonical prescription en nieuwe getypeerde bron staan in dezelfde atomische identity-wissel');
 
 /* ══ B. execReplaceExercise() -- beide state-spiegels consistent ══ */
 console.log('B. execReplaceExercise() -- resolvedWorkout.items EN sessionExtra beide consistent');
-ok(/const _rx=await canonicalNewExerciseItem\(replaced\.id, old\)/.test(REPLACE_FN) && /resolvedWorkout\.items\[idx\]=Object\.assign\(\{\},old,\{id:replaced\.id,naam:replaced\.name\},_rx\)/.test(REPLACE_FN),
+ok(/const _rx=await canonicalNewExerciseItem\(replaced\.id,\{\.\.\.old,tk504_catalog_ref:sourceRef\}\)/.test(REPLACE_FN) && /resolvedWorkout\.items\[idx\]=Object\.assign\(\{\},old,\{id:replaced\.id,naam:replaced\.name\},_rx,\{tk504_catalog_ref:sourceRef\}\)/.test(REPLACE_FN),
   'B1 (GAP-P3-033): resolvedWorkout.items-spiegel krijgt de canonical prescription van de nieuwe oefening');
-ok(/const _rx2=await canonicalNewExerciseItem\(replaced\.id, sessionExtra\[sxIdx\]\)/.test(REPLACE_FN) && /sessionExtra\[sxIdx\]=Object\.assign\(\{\},sessionExtra\[sxIdx\],\{id:replaced\.id,naam:replaced\.name\},_rx2\)/.test(REPLACE_FN),
+ok(/const _rx2=await canonicalNewExerciseItem\(replaced\.id,\{\.\.\.sessionExtra\[sxIdx\],tk504_catalog_ref:sourceRef\}\)/.test(REPLACE_FN) && /sessionExtra\[sxIdx\]=Object\.assign\(\{\},sessionExtra\[sxIdx\],\{id:replaced\.id,naam:replaced\.name\},_rx2,\{tk504_catalog_ref:sourceRef\}\)/.test(REPLACE_FN),
   'B2 (GAP-P3-033): sessionExtra-spiegel krijgt dezelfde canonical prescription -- beide spiegels consistent');
 
 /* ══ C. sets/reps/RPE blijven bewust behouden (PRESERVE, geen scope-uitbreiding) ══ */

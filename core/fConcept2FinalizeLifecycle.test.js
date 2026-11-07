@@ -18,19 +18,24 @@ let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.log('MISLUKT: ' + m); } };
 const eq = (a, b, m) => ok(a === b, m + ' (verwacht ' + JSON.stringify(b) + ', kreeg ' + JSON.stringify(a) + ')');
 
+let fnCacheHtml=null,fnCache=Object.create(null);
 function fnSrc(html, name) {
+  if(fnCacheHtml!==html){fnCacheHtml=html;fnCache=Object.create(null);}
+  if(fnCache[name])return fnCache[name];
   let start = html.indexOf('async function ' + name + '(');
   if (start === -1) start = html.indexOf('function ' + name + '(');
   if (start === -1) throw new Error('niet gevonden: ' + name);
-  let d = 0; const b = html.indexOf('{', html.indexOf(')', start));
-  for (let k = b; k < html.length; k++) { if (html[k] === '{') d++; else if (html[k] === '}') { d--; if (d === 0) return html.slice(start, k + 1); } }
+  for(let end=html.indexOf('}',start);end>=0;end=html.indexOf('}',end+1)){
+    const candidate=html.slice(start,end+1);
+    try{new (require('node:vm').Script)(candidate);fnCache[name]=candidate;return candidate;}catch(_){}
+  }
   throw new Error('onvolledig: ' + name);
 }
 function constSrc(html, decl) {
   const s = html.indexOf(decl); let d = 0; const b = html.indexOf('{', s);
   for (let k = b; k < html.length; k++) { if (html[k] === '{') d++; else if (html[k] === '}') { d--; if (d === 0) return html.slice(s, k + 1) + ';'; } }
 }
-const FNS = ['finishSession', 'tkSessieOptsVoor', 'tkSessieSchrijfOpts', 'tkSessieUitkomst', 'saveLosOefening', 'clearLosSessionState', 'losHasUnsavedData', 'tkErgStartProtocol',
+const FNS = ['tk603LosOwner','tk603LosContext','tk603LosCurrent','tk603LosReset','tkHuidigeUid','tkEigenaarUid','tk603CanUpdatePersonalRecord','finishSession', 'tkSessieOptsVoor', 'tkSessieSchrijfOpts', 'tkSessieUitkomst', 'saveLosOefening', 'clearLosSessionState', 'losHasUnsavedData', 'tkErgStartProtocol',
   'tkErgOnCanonicalMeasurement', 'tkC2IsLoggableSummary', 'tkC2Converter', 'tkC2SessionRowFromLog', 'tkC2ExecutionCleanup',
   'tkErgDisconnect', 'tkErgDisconnectAll', '_c2rtTeardown', '_c2rtSet', '_c2rtGet', '_c2repaint', '_c2idleInner', '_c2note', '_c2btn',
   'cardioDataToRow', 'resolveCardioType', 'tkErgProtocolSection', 'tkErgProtocolProjectionFor', 'tkErgProtocolInstanceId',
@@ -79,6 +84,9 @@ function makeWorld(html, over) {
     Concept2Live: C2L, DeviceCore: DC, DecisionCore: DecisionCore, sessionPrBase: {}, prFor: () => null, upsertExerciseGoalField: async () => {}, tkSetEvidence: UNDEF, CardioCore: CardioCore, ErgProtocolIdentity: EPI, IntervalEngineCore: IEC,
     liveWorkoutToActual: UNDEF, TKWeather: UNDEF, tkC2DiagFinishPath: UNDEF, tkC2DiagFinishEx: UNDEF, tkC2DiagFinishCalled: UNDEF, tkC2DiagOnCanonical: UNDEF,
     curT: 't1', trainStart: Date.now() - 60000, pausedAccumMs: 0, activeInstanceId: over.activeInstanceId || null,
+    tk603LosEpoch:0,tk603LosPending:null,tk603LosBusy:null,TK603_LOS_PENDING_KEY:'tk603_los_pending_v1',
+    authSession:{user:{id:'u-test'}}, TK504_TYPED_FK_SESSION_RELEASE:false,
+    _finishSessionContext:null, activePlannedAssignmentId:null,
     sessionLog: {}, sessionExtra: [], _c2completion: {}, _c2packetMeta: {}, finishSessionBezig: false, _tkErgPending: null, _ergProtocol: {}, _c2pair: {}, _c2rt: {}, _c2liveLast: {},
     LOS_DOMID: 'los', losSelectedExId: null,
     exercisesList: [], getSessionExs: () => env.exercisesList, getExerciseMuscles: () => [],
@@ -476,9 +484,9 @@ process.on('exit', function (code) { if (!finished && code === 0) { console.log(
     ['losse cleanup weg (H4)', h => h.replace("try{ if(typeof tkC2ExecutionCleanup==='function') tkC2ExecutionCleanup([LOS_DOMID],'leave_execution'); }catch(_cl){}", ""), R2 => R2.b8proto || R2.b8rt],
     ['instance vóór programmering (oude H5)', h => h.replace("instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot});\n  }", "}").replace("  let instanceId=null;\n  try{\n", "  let instanceId=await createTrainingInstance({vasteTrainingId:null,customTrainingId:null,snapshot});\n  try{\n"), R2 => R2.t10creates > 0],
     ['losse completion weg (H5 2A.1)', h => h.replace("    try{ await completeTrainingInstance(row.training_instance_id); }\r\n    catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)'", "    try{ void 0; }\r\n    catch(e){ try{ console.warn('completeTrainingInstance mislukt (losse oefening is wel opgeslagen)'"), R2 => R2.c1.completes.length === 0],
-    ['losse completion vóór de write (H5 2A.1)', h => h.replace("  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)", "  if(row.training_instance_id){ try{ await completeTrainingInstance(row.training_instance_id); }catch(_s){} }\r\n  const ok=await sbPostQ('sessions',row); // == writeSessionRow(row)"), R2 => R2.c2a.completes.length > 0],
+    ['losse completion vóór de write (H5 2A.1)', h => h.replace("    ok=await writeSessionRow(row);", "    if(row.training_instance_id){ try{ await completeTrainingInstance(row.training_instance_id); }catch(_s){} }\r\n    ok=await writeSessionRow(row);"), R2 => R2.c2a.completes.length > 0],
     ['false telt weer als opgeslagen (training)', h => h.replace(" if(_wOk!==true) throw new Error('session_write_rejected');", ""), R2 => R2.p2a.completes > 0 || R2.p2a.okToast],
-    ['retry-marker weg (kracht)', h => h.replace("if(!l._sessionRowPersistedAt){ const _wOkS=", "if(true){ const _wOkS="), R2 => R2.p3b.rows.filter(x => x === 'squat').length > 1],
+    ['retry-marker weg (kracht)', h => h.replace("if(!l._sessionRowPersistedAt){ if(_soS.tk504_binding)row.id=tk504StableSessionId(l); const _wOkS=", "if(true){ if(_soS.tk504_binding)row.id=tk504StableSessionId(l); const _wOkS="), R2 => R2.p3b.rows.filter(x => x === 'squat').length > 1],
     ['watt-normalisatie weg', h => h.replace("async function sbPostQ(t,d,opts){\r\n  const detail=!!(opts&&opts.detail);\r\n  if(t==='sessions'&&typeof tkNormalizeSessionsRow==='function') d=tkNormalizeSessionsRow(d);", "async function sbPostQ(t,d,opts){\r\n  const detail=!!(opts&&opts.detail);\r\n"), R2 => R2.p1.rows !== 1 || R2.p1.watt !== 167],
     ['eligibility te ruim (0 m / 0 s)', h => h.replace("return (isFinite(dn)&&dn>0)||(isFinite(en)&&en>0);", "return true;"), R2 => R2.t4zero > 0]
   ];

@@ -1,0 +1,66 @@
+{
+  "schema": "trainingskompas-movekit-v2-owner-content-review/1.0",
+  "decision_id": "TK504-20261105-227",
+  "decision_date": "2026-11-05",
+  "decision_status": "OWNER_CONTENT_APPROVED_FOR_SINGLE_ITEM_PILOT",
+  "decision_origin": "product_owner_explicit_chat_message_goedgekeurd_after_pilot_screenshot",
+  "evidence_type": "owner_chat_explicit_not_cryptographically_signed",
+  "exercise": {
+    "catalog_id": "TK-000227",
+    "provider": "movekit",
+    "provider_id": "90-90-hip-switches",
+    "en_name": "90/90 Hip Switches",
+    "nl_name": "90/90 heupwissels",
+    "taxonomy": {
+      "category": "mobility",
+      "type": "mobility",
+      "pattern": "mobility",
+      "family": "mobility",
+      "equipment": [
+        "bodyweight"
+      ],
+      "level": "beginner",
+      "supplier_primary_muscle": "Glutes"
+    }
+  },
+  "approved_sections": [
+    "pilot_visual_presentation",
+    "nl_display_name",
+    "nl_short_description",
+    "nl_execution_steps",
+    "nl_common_mistakes",
+    "proposed_mobility_classification"
+  ],
+  "non_approved_sections": [
+    "nl_long_description",
+    "nl_benefits",
+    "nl_use_cases",
+    "nl_tags",
+    "all_other_355_exercises",
+    "exercise_program_prescriptions",
+    "calculation_engine_changes"
+  ],
+  "evidence": {
+    "screenshot_sha256": "efa77fbb9f8b5bcc2cb52ce394368b27b834eae277a747925de20d5466a239ad",
+    "local_pilot_html_sha256": "54de26ef731e3119ae9e2792edfe44211f4dcc0abbc336230ad9df7390a813a4",
+    "supplier_record_sha256": "dbaa21ec2a34f2da6c01d7aa53f994936199fbd3ffbf15cd0ae2ad584da46329",
+    "video_sha256": "5609ac513f9ad7576ba3730bdfd47c5a294beb164909a7ff0b9de643b6202b12",
+    "poster_sha256": "cc006e005c3916ce2d475253f6586f25fc2501096e01ab33e05e08a8422016aa",
+    "local_pilot_test": "TK504_REAL_CHROMIUM_PLAYBACK ok=true; 6.33 s; seek 3.42 s; playback resumed"
+  },
+  "access_release": {
+    "owner_content_approved": true,
+    "formal_release_signed_by_authenticated_product_reviewer": false,
+    "license_grant_verified_for_deployment": false,
+    "server_entitlement_approved": false,
+    "independent_remote_storage_sha256_verified": false,
+    "signed_url_production_tested": false,
+    "android_physical_device_tested": false,
+    "production_release_authorized": false,
+    "grant_migration_authorized": false,
+    "public_media_cutover_authorized": false,
+    "batch_356_release_authorized": false
+  },
+  "source_of_truth": "content-only approval sidecar; release remains governed by MOVEKIT_V2_RELEASE_GATES.json",
+  "restrictions": "Never infer a production release, upload verification, user grant or approval of TK-000228..TK-000582 from this record."
+}

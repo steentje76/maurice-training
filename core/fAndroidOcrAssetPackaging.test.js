@@ -10,6 +10,7 @@
  * fAndroidRelease.test.js.
  */
 var assert = require('assert');
+const readText = require('../tools/test-source-text.cjs').readText;
 var fs = require('fs');
 var os = require('os');
 var path = require('path');
@@ -71,7 +72,7 @@ function nepApk(indexHtml, extra) {
 
 /* ══ A. WEB/PWA: ongewijzigd, .gz + gzip:true ═══════════════════════════════ */
 console.log('\nA. Web/PWA-bron');
-var REPO_HTML = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+var REPO_HTML = readText(path.join(ROOT, 'index.html'));
 t('A1 repo-index.html bevat precies één Tesseract-config, met gzip:true en lokale langPath', function () {
   var c = V.parseTesseractConfigs(REPO_HTML);
   assert.strictEqual(c.length, 1);
@@ -89,7 +90,7 @@ t('A4 er is één canonieke taaldata-bron voor runtime (geen uitgepakte kopie in
 console.log('\nB. www/ na build:www');
 assert.ok(fs.existsSync(path.join(WWW, 'index.html')), 'www/ ontbreekt — draai eerst: npm run cap:copy');
 var UITGEPAKT = zlib.gunzipSync(fs.readFileSync(GZ_BRON));
-var WWW_HTML = fs.readFileSync(path.join(WWW, 'index.html'), 'utf8');
+var WWW_HTML = readText(path.join(WWW, 'index.html'));
 t('B1 OCR-controle slaagt op www/', function () { geenFouten(V.verify('native', WWW), 'www'); });
 t('B2 www/core/vendor/eng.traineddata is byte-exact gunzip(canonieke .gz)', function () {
   assert.strictEqual(sha(fs.readFileSync(path.join(WWW, 'core', 'vendor', 'eng.traineddata'))), sha(UITGEPAKT));
@@ -162,12 +163,12 @@ t('E2 APK met gzip:true + alleen eng.traineddata faalt (regressie van v4.70.7-ee
   faalt(nepApk(html(true), { 'core/vendor/eng.traineddata': RAW }), /niet verpakt.*wel aanwezig/);
 });
 t('E3 de APK-workflow inspecteert de gebouwde APK met deze controle', function () {
-  var wf = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'android-debug-apk.yml'), 'utf8');
+  var wf = readText(path.join(ROOT, '.github', 'workflows', 'android-debug-apk.yml'));
   assert.ok(/node tools\/verify-ocr-packaging\.js --apk "?\$APK"?/.test(wf), 'APK-controle ontbreekt in android-debug-apk.yml');
   assert.ok(wf.indexOf('verify-ocr-packaging.js --apk') > wf.indexOf('gradlew assembleDebug'), 'APK-controle moet na de build staan');
 });
 t('E4 build:www voert de controle zelf uit en sluit core/fixtures uit', function () {
-  var b = fs.readFileSync(path.join(ROOT, 'scripts', 'build-www.mjs'), 'utf8');
+  var b = readText(path.join(ROOT, 'scripts', 'build-www.mjs'));
   assert.ok(b.indexOf("verify-ocr-packaging.js") > 0 && b.indexOf("naam === 'fixtures'") > 0 && b.indexOf('gunzipSync') > 0);
 });
 

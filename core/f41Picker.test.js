@@ -5,9 +5,9 @@
  * getest wordt — niet een kopie. Draai: node core/f41Picker.test.js
  * Verifieert de F41-contracten:
  *   - id = catalog_id (identiteit behouden)
- *   - dedup UITSLUITEND op id (nooit fuzzy op naam): legacy TK-id niet dubbel;
- *     legacy-slug + distinct catalog-id blijven BEIDE staan
- *   - resolvePickerEx: legacy-first, dan catalogus-fallback, anders null
+ *   - dedup op (catalog-id, bron), nooit fuzzy op naam: gelijk-ID persoonlijke
+ *     rijen en canonieke catalogus moeten afzonderlijk aanspreekbaar blijven
+ *   - resolvePickerEx: legacy-first zonder bron, expliciet catalogus of legacy als bron
  */
 const fs = require('fs');
 const path = require('path');
@@ -80,14 +80,17 @@ ExerciseCatalogService = {
   ok(pool.every(e => e.id && e.id.indexOf('TK-') === 0), 'exPickerPool: alle uit catalogus hebben TK-id');
 })();
 
-// ── 3. exPickerPool: dedup op id — legacy TK-id NIET dubbel ──
+// ── 3. #603: gelijke ID maar verschillende bron => afzonderlijke keuzes ──
 (() => {
   exercises = [ { id:'TK-000019', name:'Bench (legacy row)', type:'strength' } ];
   const pool = exPickerPool();
   const bench = pool.filter(e => e.id === 'TK-000019');
-  eq(bench.length, 1, 'exPickerPool: TK-000019 verschijnt precies 1× (dedup op id)');
-  eq(bench[0].name, 'Bench (legacy row)', 'exPickerPool: legacy-row wint (behoudt historie/naam)');
-  eq(pool.length, 3, 'exPickerPool: totaal 3 (1 legacy + 2 resterende catalogus)');
+  eq(bench.length, 2, 'exPickerPool: TK-000019 toont persoonlijke en catalogusbron afzonderlijk');
+  eq(bench[0].name, 'Bench (legacy row)', 'exPickerPool: persoonlijke rij behoudt eigen naam en historie');
+  eq(bench[1]._catalog, true, 'exPickerPool: canonieke TK-bron blijft apart selecteerbaar');
+  eq(resolvePickerEx('TK-000019','catalog')._catalog,true,'brongetypeerde selectie geeft catalogus');
+  eq(resolvePickerEx('TK-000019','legacy').name,'Bench (legacy row)','brongetypeerde selectie behoudt persoonlijk');
+  eq(pool.length, 4, 'exPickerPool: 1 legacy + 3 catalogus, incl. dezelfde ID met andere bron');
 })();
 
 // ── 4. exPickerPool: legacy-slug + distinct catalog-id → BEIDE (nooit fuzzy op naam) ──

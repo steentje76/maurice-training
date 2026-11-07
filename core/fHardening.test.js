@@ -21,6 +21,17 @@ const D = require('./decision.js');
 const K = require('./coaching.js');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
+// Parse the complete actual function; fixed character windows truncate expanded guards.
+function completeAppFunction(name){
+  const m=new RegExp('(?:async\\s+)?function\\s+'+name+'\\s*\\(').exec(html);
+  if(!m)throw new Error('Missing actual app function: '+name);
+  for(let end=html.indexOf('}',m.index);end>=0;end=html.indexOf('}',end+1)){
+    const candidate=html.slice(m.index,end+1);
+    try{new (require('node:vm').Script)(candidate);return candidate;}catch(_){}
+  }
+  throw new Error('Incomplete actual app function: '+name);
+}
+
 
 let pass = 0, fail = 0;
 function ok(c, m){ if (c) pass++; else { fail++; console.log('  ✗ ' + m); } }
@@ -300,7 +311,7 @@ console.log('\nG. duration_s wordt vastgelegd bij het afronden van een sessie');
 // voegde een toelichtingsblok + projectie-afleiding toe binnen finishSession(), waardoor het
 // krachtschrijfpad buiten het oude, vaste venster viel. Puur een leesvenster-correctie --
 // de onderliggende asserties (G3/I5) zijn ongewijzigd en toetsen exact hetzelfde gedrag.
-const finishSrc = html.slice(html.indexOf('async function finishSession('), html.indexOf('async function finishSession(') + 8600);
+const finishSrc = completeAppFunction('finishSession');
 ok(/const _duurS = trainStart \? Math\.max\(0, Math\.round\(\(Date\.now\(\)-trainStart-\(pausedAccumMs\|\|0\)\)\/1000\)\) : null;/.test(finishSrc),
   'G1: duration_s hergebruikt EXACT dezelfde formule als de al bestaande live-klok (startTrainTimer) -- geen tweede, losse tijdsberekening');
 ok(/duration_s:_duurS/.test(finishSrc), 'G2: het cardio-schrijfpad geeft duration_s mee');
@@ -484,8 +495,8 @@ ok(!decisionSrc.includes('TrainingLoadCore') && !decisionSrc.includes('classifyA
 
 /* ── R. AI COACH: PROGRESSIE-TREND PER OEFENING (v4.59.0) — 100% hergebruik protected ProgressionCore ── */
 console.log('\nR. AI Coach: progressie-trend per oefening — geen nieuwe Calculation Engine, geen eigen 1RM-formule');
-const computeTrendsSrc = html.slice(html.indexOf('async function computeExerciseTrends('), html.indexOf('async function computeExerciseTrends(') + 1600);
-const progTrendFnSrc = html.slice(html.indexOf('async function tkProgressionTrendContext('), html.indexOf('async function tkProgressionTrendContext(') + 900);
+const computeTrendsSrc = completeAppFunction('computeExerciseTrends');
+const progTrendFnSrc = completeAppFunction('tkProgressionTrendContext');
 ok(/PC\.trendBy\(/.test(computeTrendsSrc), 'R1: gebruikt UITSLUITEND ProgressionCore.trendBy() -- geen eigen trendberekening (v4.62.0: nu in de gedeelde computeExerciseTrends(), hergebruikt door zowel AI-context als Voortgang-trendlabels)');
 ok(/CC\.oneRMRaw\(/.test(computeTrendsSrc), 'R2: gebruikt UITSLUITEND CalcCore.oneRMRaw() (Epley, protected) -- geen eigen 1RM-formule');
 ok(/hist\.length<3\)return/.test(computeTrendsSrc), 'R3: respecteert dezelfde minimale-data-drempel (3) als het bestaande post-sessie-signaal, geen verlaagde drempel');
@@ -514,7 +525,8 @@ ok(!/deloadSignaalTekst/.test(decisionSrc) && !/corroboratedLoadSignal/.test(dec
 console.log('\nT. Execution: vervangen/verwijderen/verwerpen tijdens actieve sessie — geen tweede execution path');
 const execReplaceSrc = html.slice(html.indexOf('function execReplaceExercise('), html.indexOf('function execReplaceExercise(') + 2600); // venster verbreed (GAP-P3-033: canonical re-resolve in dezelfde functie)
 ok(/openExPicker\(async function\(newEx\)/.test(execReplaceSrc), 'T1 (EX-REPLACE-1): hergebruikt de bestaande, unified openExPicker() -- geen tweede picker');
-ok(/resolvePickerEx\(newEx\.id\)/.test(execReplaceSrc), 'T2 (EX-REPLACE-3): gebruikt resolvePickerEx() voor het canonieke catalog_id, exact hetzelfde pad als addExConfirm()');
+ok(/const replaced=newEx;/.test(execReplaceSrc) && /tk603CatalogRefFromPickerSelection\(replaced\)/.test(execReplaceSrc) && !/resolvePickerEx\(newEx\.id\)/.test(execReplaceSrc),
+  'T2 (EX-REPLACE-3 / #603): gebruikt de expliciete geselecteerde bron uit de bestaande unified picker; geen ongetypeerde ID-herresolutie');
 ok(/heeftData=execExerciseHasData\(exId\)/.test(execReplaceSrc), 'T3 (EX-REPLACE-2): controleert expliciet op reeds geregistreerde data vóór vervangen');
 ok(/gaan die gegevens verloren -- ze worden NIET automatisch overgezet/.test(execReplaceSrc), 'T3b: waarschuwt expliciet dat data NIET automatisch wordt omgezet -- exacte, veilige productregel uit de opdracht');
 ok(/delete sessionLog\[exId\]/.test(execReplaceSrc), 'T4: oude sessionLog-data voor de vervangen oefening wordt opgeruimd -- geen orphan/ghost-koppeling aan de nieuwe oefening');

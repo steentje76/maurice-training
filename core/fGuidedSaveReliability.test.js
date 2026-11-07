@@ -35,22 +35,25 @@ function extractFn(src, name) {
 const POSTQ = extractFn(HTML, 'sbPostQ');
 const DOPERSIST = extractFn(HTML, 'doPersist');
 const FINISH = (function () { const i = HTML.indexOf('  function finish(){\n    if(!st.active)return Promise.resolve(null);'); return i < 0 ? '' : HTML.slice(i, HTML.indexOf('\n  }\n', i)); })();
-ok(/async function writeSessionRow\(row, opts\)\{ return await sbPostQ\('sessions', row, opts\); \}/.test(HTML), 'bron: writeSessionRow geeft opts door');
+const WRITER=extractFn(HTML,'writeSessionRow');
+ok(/return await sbPostQ\('sessions', prepared, opts\);/.test(WRITER)&&/opts&&opts\.tk504_binding/.test(WRITER), 'bron: 1 centrale writeSessionRow geeft opts door en mapt uitsluitend geverifieerde optionele FK');
 ok(/const detail=!!\(opts&&opts\.detail\);/.test(POSTQ), 'bron: sbPostQ kent een optionele detail-uitkomst');
-eq((POSTQ.match(/return (?:uit|queue)\(/g) || []).length, 6, 'bron: elke uitgang van sbPostQ loopt via één uitkomst (uit(), sinds v4.70.24 ook via queue() die zelf uit() gebruikt)');
+eq((POSTQ.match(/return (?:uit|queue)\(/g) || []).length, 10, 'bron: alle sbPostQ-uitgangen gebruiken uit()/queue(), inclusief de nieuwe fail-closed TKC-paden');
+ok(/if\(confirmedOnly\)return uit\('failed',http,reden\|\|'offline'\)/.test(POSTQ) && /const confirmedOnly=t==='sessions'&&!!\(opts&&opts\.tk504_binding\)/.test(POSTQ),
+  'bron: getypeerde catalogus-FK mag bij netwerkfout nooit in de offline-wachtrij');
 ok(/return detail\?tkSchrijfUitkomst\(status,http(?:,reden)?\)/.test(POSTQ), 'bron: detail geeft tkSchrijfUitkomst');
 ok(/q===true\?uit\('queued',http,reden\):uit\('failed',http,'opslag'\)/.test(POSTQ), 'bron: queued alleen als queuen zelf lukte');
 ok(/:\(status==='confirmed'\|\|status==='queued'\)/.test(POSTQ), 'bron: zonder detail true alleen bij confirmed of queued (Sprint 6, DEC-QUEUE-001)');
-ok(/writeSessionRow\(built\.row,\{detail:true[,}]/.test(DOPERSIST), 'bron: Guided vraagt de echte uitkomst op');
+ok(/writeSessionRow\(built\.row,\{detail:true,queueOnly:exStatus==='queued'/.test(DOPERSIST), 'bron: Guided vraagt de echte uitkomst op en behoudt de offline-queue-conditie');
 ok(/built\.row\.id=it\._rowId;/.test(DOPERSIST), 'bron: stabiel client-id per rij');
 ok(DOPERSIST.indexOf('if(!it._rowId)') < DOPERSIST.indexOf('writeSessionRow('), 'bron: id vastgelegd vóór de write');
 ok(!/written\+\+/.test(DOPERSIST), 'bron: geen blinde teller meer');
 ok(/if\(st8!=='failed'\)\{/.test(DOPERSIST) && DOPERSIST.indexOf('if(st8!==\'failed\'){') < DOPERSIST.indexOf('upsertExerciseGoalField'), 'bron: PR-record alleen na een opgeslagen rij');
 ok(/!n\.failed && typeof completeTrainingInstance==='function'/.test(DOPERSIST), 'bron: instance pas afronden als alles opgeslagen is');
-ok(/if\(status==='failed'\)\{ persist\(\); \}\s*else \{ a\.sessionsLogged=true; clearActive\(\); \}/.test(DOPERSIST), 'bron: lokale kopie pas weg na opslag');
+ok(/if\(status==='failed'\)\{ persist\(\); \}\s*else \{ a\.sessionsLogged=true; clearActive\(a\); \}/.test(DOPERSIST) && /st\.active!==expectedActive\|\|!ownsActive\(expectedActive\)/.test(extractFn(HTML,'clearActive')), 'bron: lokale kopie pas weg na opslag');
 ok(FINISH && !/clearActive\(\)/.test(FINISH), 'bron: finish() wist de lokale kopie niet meer zelf');
 ok(/if\(!a\._gelogd\)/.test(FINISH), 'bron: één samenvatting per training');
-ok(/function abort\(\)\{if\(unsaved\(st\.active\)\)return false;/.test(HTML), 'bron: abort() gooit een niet-opgeslagen training niet weg');
+ok(/if\(a&&\(!ownsActive\(a\)\|\|unsaved\(a\)\)\)return false;/.test(extractFn(HTML,'abort')) && extractFn(HTML,'abort').indexOf('unsaved(a)') < extractFn(HTML,'abort').indexOf('clearActive(a)'), 'bron: abort() gooit een niet-opgeslagen training niet weg');
 ok(/if\(tkGuidedStartGeblokkeerd\(mode\)\)return;/.test(extractFn(HTML, 'previewStartTraining')) && extractFn(HTML, 'previewStartTraining').indexOf('tkGuidedStartGeblokkeerd') < extractFn(HTML, 'previewStartTraining').indexOf('startInstanceFromDefinition('), 'bron: geen nieuwe begeleide start over een niet-opgeslagen training, vóór het aanmaken van een instance');
 
 // ══ DEEL 2 — ECHTE PAGINA ══

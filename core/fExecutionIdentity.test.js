@@ -80,8 +80,14 @@ const RESETS_INSTANCE_ID = /activeInstanceId\s*=\s*(null|draft\.instanceId|_draf
 {
   const body = extractFunctionBody(html, 'launchProgramTrainScreen');
   if (body) {
-    ok(/if\(_resume\)\{\s*activeInstanceId=_draft\.instanceId\|\|null/.test(body),
+    const resumeBranch=(body.match(/if\(_resume\)\{([\s\S]*?)\}\s*else\{/)||[])[1]||'';
+    ok(/activeInstanceId=_draft\.instanceId\|\|null/.test(resumeBranch),
       'launchProgramTrainScreen() gebruikt bij resume de eigen draft-instanceId');
+    if(body.includes('tk603DraftOwnerMatches')){
+      ok(resumeBranch.indexOf('if(!tk603DraftOwnerMatches(_draft))return;')>=0&&
+        resumeBranch.indexOf('if(!tk603DraftOwnerMatches(_draft))return;')<resumeBranch.indexOf('activeInstanceId='),
+        'resume weigert een vreemde eigenaar voordat de draft-instanceId wordt overgenomen');
+    }
     ok(/activeInstanceId=await createTrainingInstance\(/.test(body),
       'launchProgramTrainScreen() maakt bij een verse start een echte, nieuwe training_instances-rij aan (GAP-P1-006-closure — vóór deze fix bleef activeInstanceId hier altijd null)');
   }

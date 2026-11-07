@@ -5,8 +5,8 @@
 // Reden: de static-fetch is cache-first over ALLE caches; een oude core-entry in de niet-gebumpte
 // dynamische cache kon de nieuwe precache overschaduwen (stale serve na deploy). Door CACHE_NAME mee te
 // bumpen ruimt de activate-handler de oude dynamische cache op. REGEL: core wijzigt -> bump CACHE_NAME + CACHE_STATIC.
-const CACHE_NAME = 'trainingskompas-v470250';
-const CACHE_STATIC = 'trainingskompas-static-v470250';
+const CACHE_NAME = 'trainingskompas-v470278';
+const CACHE_STATIC = 'trainingskompas-static-v470278';
 // F1.9 SW-GUARD: CRLF-agnostische hash van de kritieke canonical core-set,
 // inclusief ContextEngineCore nu deze door buildCtx() in productie wordt gebruikt.
 // core/sw-guard.test.js faalt als de core wijzigt zonder dat deze CORE_SIG + CACHE_STATIC gebumpt zijn.
@@ -15,6 +15,9 @@ const CACHE_STATIC = 'trainingskompas-static-v470250';
 const CORE_SIG = '75307d7e99767d1d';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';
+// TK504: must match TK504_PRIVATE_MEDIA_RELEASE in index.html at any cutover.
+// Only after verified private playback, securely purge the old raw MP4 cache.
+const TK504_PRIVATE_MEDIA_CUTOVER = false;
 const VIDEO_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB LRU-plafond
 const VIDEO_META_KEY = '/__tkvideometa__';
 
@@ -88,6 +91,11 @@ const STATIC_ASSETS = [
   '/core/relationship.js',
   '/core/athlete.js',
   '/core/movement.js',
+  '/core/privateMoveKitV2MediaClient.js',
+  '/core/movekitV2ExerciseMediaBridge.js',
+  '/core/tk504ProtectedPlayback.js',
+  '/core/tk504BatchReleaseLedger.js',
+  '/core/tk504PublishedCatalogRuntime.js',
   '/core/organizationCore.js',
   '/core/brandingCore.js',
   '/core/organizationContextRuntime.js',
@@ -145,13 +153,13 @@ self.addEventListener('install', e => {
   );
 });
 
-// ── ACTIVATE: clean old caches (video-cache NOOIT verwijderen) ────────────
+// ── ACTIVATE: old public video cache kept until private cutover ────────────
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
         keys
-          .filter(k => k !== CACHE_NAME && k !== CACHE_STATIC && k !== CACHE_VIDEOS)
+          .filter(k => k !== CACHE_NAME && k !== CACHE_STATIC && (k !== CACHE_VIDEOS || TK504_PRIVATE_MEDIA_CUTOVER))
           .map(k => {
             console.log('SW: deleting old cache', k);
             return caches.delete(k);
@@ -255,6 +263,14 @@ async function handleVideo(request) {
 // ── FETCH: offline-first strategy ─────────────────────────
 self.addEventListener('fetch', e => {
   const url = e.request.url;
+
+  // When signing replaces V1 media, old public raw MP4 requests may not be
+  // replayed or re-cached by the service worker, even while a stale client runs.
+  if (TK504_PRIVATE_MEDIA_CUTOVER && e.request.method === 'GET' &&
+      /\/videos\/[^?#]+\.(mp4|webm|mov)(?:[?#]|$)/i.test(url)) {
+    e.respondWith(new Response('', {status:403, statusText:'private-media-only'}));
+    return;
+  }
 
   // Laat API calls altijd door — nooit cachen
   if (NO_CACHE_PATTERNS.some(p => url.includes(p))) {

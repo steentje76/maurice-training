@@ -1,5 +1,6 @@
 /* fGymsColumnLeakFix.test.js — F11 Final Audit regressietest. */
 'use strict';
+const readText = require('../tools/test-source-text.cjs').readText;
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -8,7 +9,7 @@ let pass = 0, fail = 0;
 const msgs = [];
 function ok(cond, label) { if (cond) { pass++; } else { fail++; msgs.push('MISLUKT: ' + label); } }
 
-const v521 = fs.readFileSync(path.join(ROOT, 'migratie_v521.sql'), 'utf8');
+const v521 = readText(path.join(ROOT, 'migratie_v521.sql'));
 
 ok(v521.includes('drop policy if exists gyms_select_org_member on public.gyms'),
   'A1: de brede gyms_select_org_member-policy is expliciet verwijderd');

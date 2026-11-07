@@ -74,7 +74,7 @@ function extractFunctionBody(source, name) {
     ok(/program_id:prog\?\.id\|\|null/.test(body),
       'de snapshot bewaart het program-ID (herleidbaarheid naar het originele programma)');
     // Resume-invariant (uit MS-F2-07) mag niet zijn verdwenen: bij resume géén nieuwe instance.
-    ok(/if\(_resume\)\{\s*activeInstanceId=_draft\.instanceId\|\|null/.test(body),
+    ok(/if\(_resume\)\{\s*if\(!tk603DraftOwnerMatches\(_draft\)\)return;\s*activeInstanceId=_draft\.instanceId\|\|null/.test(body),
       'bij resume wordt de BESTAANDE instance van de draft hergebruikt — geen dubbele instance voor dezelfde, nog niet afgeronde sessie');
   }
 }

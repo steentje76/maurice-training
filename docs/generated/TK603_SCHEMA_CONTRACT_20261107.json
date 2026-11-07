@@ -1,0 +1,1376 @@
+{
+  "scope": "schema-only public.exercises/public.sessions; no row values",
+  "tables": [
+    {
+      "owner": "postgres",
+      "table": "exercises",
+      "schema": "public",
+      "rls_forced": false,
+      "rls_enabled": true
+    },
+    {
+      "owner": "postgres",
+      "table": "sessions",
+      "schema": "public",
+      "rls_forced": false,
+      "rls_enabled": true
+    }
+  ],
+  "columns": [
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "exercises",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 1,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "exercises",
+      "column_name": "name",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 2,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "exercises",
+      "column_name": "category",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 3,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "exercises",
+      "column_name": "type",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 4,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "exercises",
+      "column_name": "pr",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 5,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "exercises",
+      "column_name": "sort_order",
+      "is_nullable": "YES",
+      "column_default": "99",
+      "ordinal_position": 6,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "exercises",
+      "column_name": "active",
+      "is_nullable": "YES",
+      "column_default": "true",
+      "ordinal_position": 7,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "exercises",
+      "column_name": "created_at",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "ordinal_position": 8,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "exercises",
+      "column_name": "yt",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 9,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "exercises",
+      "column_name": "gym_id",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 10,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "exercises",
+      "column_name": "one_rm",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 11,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "exercises",
+      "column_name": "rest_seconds",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 12,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "_text",
+      "data_type": "ARRAY",
+      "table_name": "exercises",
+      "column_name": "muscle_primary",
+      "is_nullable": "YES",
+      "column_default": "'{}'::text[]",
+      "ordinal_position": 13,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "_text",
+      "data_type": "ARRAY",
+      "table_name": "exercises",
+      "column_name": "muscle_secondary",
+      "is_nullable": "YES",
+      "column_default": "'{}'::text[]",
+      "ordinal_position": 14,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "exercises",
+      "column_name": "wod_format",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 15,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "exercises",
+      "column_name": "user_id",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 16,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "_text",
+      "data_type": "ARRAY",
+      "table_name": "exercises",
+      "column_name": "sports",
+      "is_nullable": "YES",
+      "column_default": "'{}'::text[]",
+      "ordinal_position": 18,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "exercises",
+      "column_name": "ratio_anchor",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 19,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "exercises",
+      "column_name": "ratio_factor",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 20,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "exercises",
+      "column_name": "created_by",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 21,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "exercises",
+      "column_name": "scope",
+      "is_nullable": "NO",
+      "column_default": "'personal'::text",
+      "ordinal_position": 22,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "sessions",
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "ordinal_position": 1,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "date",
+      "data_type": "date",
+      "table_name": "sessions",
+      "column_name": "date",
+      "is_nullable": "NO",
+      "column_default": null,
+      "ordinal_position": 2,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "exercise_id",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 3,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "sets",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 4,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "reps",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 5,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "sessions",
+      "column_name": "weight",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 6,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "sessions",
+      "column_name": "rpe",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 7,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "distance",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 8,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "time_str",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 9,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "watt",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 10,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "stroke_rate",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 11,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "stops",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 12,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "wod_name",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 13,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "wod_type",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 14,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "score",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 15,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "note",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 16,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "training_type",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 17,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "sessions",
+      "column_name": "created_at",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "ordinal_position": 18,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "sessions",
+      "column_name": "user_id",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 19,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "sessions",
+      "column_name": "calories",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 20,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "rounds",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 21,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "extra_reps",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 22,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "bool",
+      "data_type": "boolean",
+      "table_name": "sessions",
+      "column_name": "completed",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 23,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "hr_avg",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 24,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "numeric",
+      "data_type": "numeric",
+      "table_name": "sessions",
+      "column_name": "pace_sec",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 25,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "stroke_type",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 26,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "sessions",
+      "column_name": "gym_id",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 27,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "jsonb",
+      "data_type": "jsonb",
+      "table_name": "sessions",
+      "column_name": "sets_detail",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 28,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "uuid",
+      "data_type": "uuid",
+      "table_name": "sessions",
+      "column_name": "training_instance_id",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 29,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "duration_s",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 30,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "jsonb",
+      "data_type": "jsonb",
+      "table_name": "sessions",
+      "column_name": "weather",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 31,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "segment_index",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 32,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "sessions",
+      "column_name": "start_at",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 33,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "timestamptz",
+      "data_type": "timestamp with time zone",
+      "table_name": "sessions",
+      "column_name": "finish_at",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 34,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "edit_revision",
+      "is_nullable": "NO",
+      "column_default": "0",
+      "ordinal_position": 35,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "watt_source",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 36,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "jsonb",
+      "data_type": "jsonb",
+      "table_name": "sessions",
+      "column_name": "intervals_detail",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 37,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "text",
+      "data_type": "text",
+      "table_name": "sessions",
+      "column_name": "protocol_type",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 38,
+      "character_maximum_length": null
+    },
+    {
+      "udt_name": "int4",
+      "data_type": "integer",
+      "table_name": "sessions",
+      "column_name": "protocol_value",
+      "is_nullable": "YES",
+      "column_default": null,
+      "ordinal_position": 39,
+      "character_maximum_length": null
+    }
+  ],
+  "indexes": [
+    {
+      "indexdef": "CREATE UNIQUE INDEX exercises_pkey ON public.exercises USING btree (id)",
+      "indexname": "exercises_pkey",
+      "tablename": "exercises",
+      "schemaname": "public",
+      "tablespace": null
+    },
+    {
+      "indexdef": "CREATE INDEX idx_exercises_created_by ON public.exercises USING btree (created_by)",
+      "indexname": "idx_exercises_created_by",
+      "tablename": "exercises",
+      "schemaname": "public",
+      "tablespace": null
+    },
+    {
+      "indexdef": "CREATE INDEX idx_sessions_exercise_id ON public.sessions USING btree (exercise_id)",
+      "indexname": "idx_sessions_exercise_id",
+      "tablename": "sessions",
+      "schemaname": "public",
+      "tablespace": null
+    },
+    {
+      "indexdef": "CREATE INDEX idx_sessions_training_instance_id ON public.sessions USING btree (training_instance_id)",
+      "indexname": "idx_sessions_training_instance_id",
+      "tablename": "sessions",
+      "schemaname": "public",
+      "tablespace": null
+    },
+    {
+      "indexdef": "CREATE INDEX idx_sessions_user_date ON public.sessions USING btree (user_id, date DESC)",
+      "indexname": "idx_sessions_user_date",
+      "tablename": "sessions",
+      "schemaname": "public",
+      "tablespace": null
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX sessions_pkey ON public.sessions USING btree (id)",
+      "indexname": "sessions_pkey",
+      "tablename": "sessions",
+      "schemaname": "public",
+      "tablespace": null
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "DELETE",
+      "qual": "(((scope = 'personal'::text) AND (created_by = auth.uid())) OR ((scope = 'gym'::text) AND (gym_id = ( SELECT users.gym_id\n   FROM users\n  WHERE (users.id = (auth.uid())::text))) AND (( SELECT users.gym_role_level\n   FROM users\n  WHERE (users.id = (auth.uid())::text)) >= 1)) OR ((scope = 'global'::text) AND (( SELECT users.system_role\n   FROM users\n  WHERE (users.id = (auth.uid())::text)) = ANY (ARRAY['developer'::text, 'support'::text]))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "exercises",
+      "permissive": "PERMISSIVE",
+      "policyname": "exercises_delete_v333",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "exercises",
+      "permissive": "PERMISSIVE",
+      "policyname": "exercises_insert_v333",
+      "schemaname": "public",
+      "with_check": "((scope = 'personal'::text) OR ((scope = 'gym'::text) AND (( SELECT users.gym_role_level\n   FROM users\n  WHERE (users.id = (auth.uid())::text)) >= 1)) OR ((scope = 'global'::text) AND (( SELECT users.system_role\n   FROM users\n  WHERE (users.id = (auth.uid())::text)) = ANY (ARRAY['developer'::text, 'support'::text]))))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "((scope = 'global'::text) OR ((scope = 'gym'::text) AND (gym_id = ( SELECT users.gym_id\n   FROM users\n  WHERE (users.id = (auth.uid())::text)))) OR ((scope = 'personal'::text) AND (created_by = auth.uid())) OR ((scope = 'personal'::text) AND (EXISTS ( SELECT 1\n   FROM content_shares cs\n  WHERE ((cs.content_type = 'exercise'::text) AND (cs.content_id = exercises.id) AND (cs.shared_with = auth.uid()))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "exercises",
+      "permissive": "PERMISSIVE",
+      "policyname": "exercises_select_v333",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(((scope = 'personal'::text) AND (created_by = auth.uid())) OR ((scope = 'gym'::text) AND (gym_id = ( SELECT users.gym_id\n   FROM users\n  WHERE (users.id = (auth.uid())::text))) AND (( SELECT users.gym_role_level\n   FROM users\n  WHERE (users.id = (auth.uid())::text)) >= 1)) OR ((scope = 'global'::text) AND (( SELECT users.system_role\n   FROM users\n  WHERE (users.id = (auth.uid())::text)) = ANY (ARRAY['developer'::text, 'support'::text]))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "exercises",
+      "permissive": "PERMISSIVE",
+      "policyname": "exercises_update_v333",
+      "schemaname": "public",
+      "with_check": "(((scope = 'personal'::text) AND (created_by = auth.uid())) OR ((scope = 'gym'::text) AND (gym_id = ( SELECT users.gym_id\n   FROM users\n  WHERE (users.id = (auth.uid())::text))) AND (( SELECT users.gym_role_level\n   FROM users\n  WHERE (users.id = (auth.uid())::text)) >= 1)) OR ((scope = 'global'::text) AND (( SELECT users.system_role\n   FROM users\n  WHERE (users.id = (auth.uid())::text)) = ANY (ARRAY['developer'::text, 'support'::text]))))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "coach_has_scope(auth.uid(), user_id, 'TRAINING_CORE'::text)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "sessions",
+      "permissive": "PERMISSIVE",
+      "policyname": "coach_reads_training_core_sessions",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(user_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "tablename": "sessions",
+      "permissive": "PERMISSIVE",
+      "policyname": "eigen_data_alleen",
+      "schemaname": "public",
+      "with_check": "(user_id = auth.uid())"
+    }
+  ],
+  "triggers": [
+    {
+      "name": "RI_ConstraintTrigger_a_17608",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_17608\" AFTER DELETE ON exercises FROM sessions NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_del\"()",
+      "function_name": "RI_FKey_noaction_del",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_17609",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_17609\" AFTER UPDATE ON exercises FROM sessions NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_upd\"()",
+      "function_name": "RI_FKey_noaction_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_17935",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_17935\" AFTER DELETE ON exercises FROM training_exercises NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_del\"()",
+      "function_name": "RI_FKey_noaction_del",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_17936",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_17936\" AFTER UPDATE ON exercises FROM training_exercises NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_upd\"()",
+      "function_name": "RI_FKey_noaction_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_17994",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_17994\" AFTER DELETE ON exercises FROM program_block_exercises NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_del\"()",
+      "function_name": "RI_FKey_noaction_del",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_17995",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_17995\" AFTER UPDATE ON exercises FROM program_block_exercises NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_upd\"()",
+      "function_name": "RI_FKey_noaction_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_18008",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_18008\" AFTER DELETE ON exercises FROM exercise_favorites NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_del\"()",
+      "function_name": "RI_FKey_noaction_del",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_18009",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_18009\" AFTER UPDATE ON exercises FROM exercise_favorites NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_upd\"()",
+      "function_name": "RI_FKey_noaction_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_18886",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_18886\" AFTER DELETE ON exercises FROM goals NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_setnull_del\"()",
+      "function_name": "RI_FKey_setnull_del",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_18887",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_18887\" AFTER UPDATE ON exercises FROM goals NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_upd\"()",
+      "function_name": "RI_FKey_noaction_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_18962",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_18962\" AFTER DELETE ON exercises FROM exercise_goals NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_del\"()",
+      "function_name": "RI_FKey_noaction_del",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_18963",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_18963\" AFTER UPDATE ON exercises FROM exercise_goals NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_upd\"()",
+      "function_name": "RI_FKey_noaction_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_19797",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_19797\" AFTER DELETE ON exercises FROM race_segments NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_del\"()",
+      "function_name": "RI_FKey_noaction_del",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_19798",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_19798\" AFTER UPDATE ON exercises FROM race_segments NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_upd\"()",
+      "function_name": "RI_FKey_noaction_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_c_18633",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_18633\" AFTER INSERT ON exercises FROM auth.users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_ins\"()",
+      "function_name": "RI_FKey_check_ins",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_c_18634",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_18634\" AFTER UPDATE ON exercises FROM auth.users NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_upd\"()",
+      "function_name": "RI_FKey_check_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "trg_set_exercise_scope_context",
+      "table": "exercises",
+      "enabled": "O",
+      "internal": false,
+      "definition": "CREATE TRIGGER trg_set_exercise_scope_context BEFORE INSERT ON exercises FOR EACH ROW EXECUTE FUNCTION set_exercise_scope_context()",
+      "function_name": "set_exercise_scope_context",
+      "function_schema": "public",
+      "security_definer": true,
+      "search_path_config": [
+        "search_path=public, pg_temp"
+      ],
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_20702",
+      "table": "sessions",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_20702\" AFTER DELETE ON sessions FROM activities NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_cascade_del\"()",
+      "function_name": "RI_FKey_cascade_del",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_a_20703",
+      "table": "sessions",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_a_20703\" AFTER UPDATE ON sessions FROM activities NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_noaction_upd\"()",
+      "function_name": "RI_FKey_noaction_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_c_17610",
+      "table": "sessions",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_17610\" AFTER INSERT ON sessions FROM exercises NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_ins\"()",
+      "function_name": "RI_FKey_check_ins",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_c_17611",
+      "table": "sessions",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_17611\" AFTER UPDATE ON sessions FROM exercises NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_upd\"()",
+      "function_name": "RI_FKey_check_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_c_19052",
+      "table": "sessions",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_19052\" AFTER INSERT ON sessions FROM training_instances NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_ins\"()",
+      "function_name": "RI_FKey_check_ins",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "RI_ConstraintTrigger_c_19053",
+      "table": "sessions",
+      "enabled": "O",
+      "internal": true,
+      "definition": "CREATE CONSTRAINT TRIGGER \"RI_ConstraintTrigger_c_19053\" AFTER UPDATE ON sessions FROM training_instances NOT DEFERRABLE INITIALLY IMMEDIATE FOR EACH ROW EXECUTE FUNCTION \"RI_FKey_check_upd\"()",
+      "function_name": "RI_FKey_check_upd",
+      "function_schema": "pg_catalog",
+      "security_definer": false,
+      "search_path_config": null,
+      "function_identity_arguments": ""
+    },
+    {
+      "name": "trg_set_user_id",
+      "table": "sessions",
+      "enabled": "O",
+      "internal": false,
+      "definition": "CREATE TRIGGER trg_set_user_id BEFORE INSERT ON sessions FOR EACH ROW EXECUTE FUNCTION set_user_id_from_auth()",
+      "function_name": "set_user_id_from_auth",
+      "function_schema": "public",
+      "security_definer": true,
+      "search_path_config": [
+        "search_path=public, pg_temp"
+      ],
+      "function_identity_arguments": ""
+    }
+  ],
+  "captured_at": "2026-11-06T22:53:17.673206+00:00",
+  "constraints": [
+    {
+      "name": "exercises_created_by_fkey",
+      "type": "f",
+      "table": "exercises",
+      "validated": true,
+      "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "exercises_pkey",
+      "type": "p",
+      "table": "exercises",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "exercises_scope_chk",
+      "type": "c",
+      "table": "exercises",
+      "validated": true,
+      "definition": "CHECK (scope = ANY (ARRAY['personal'::text, 'gym'::text, 'global'::text]))"
+    },
+    {
+      "name": "sessions_duration_s_range",
+      "type": "c",
+      "table": "sessions",
+      "validated": true,
+      "definition": "CHECK (duration_s IS NULL OR duration_s > 0 AND duration_s <= 86400)"
+    },
+    {
+      "name": "sessions_exercise_id_fkey",
+      "type": "f",
+      "table": "sessions",
+      "validated": true,
+      "definition": "FOREIGN KEY (exercise_id) REFERENCES exercises(id)"
+    },
+    {
+      "name": "sessions_pkey",
+      "type": "p",
+      "table": "sessions",
+      "validated": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "sessions_protocol_type_check",
+      "type": "c",
+      "table": "sessions",
+      "validated": true,
+      "definition": "CHECK (protocol_type IS NULL OR (protocol_type = ANY (ARRAY['manual'::text, 'distance'::text, 'time'::text])))"
+    },
+    {
+      "name": "sessions_protocol_value_check",
+      "type": "c",
+      "table": "sessions",
+      "validated": true,
+      "definition": "CHECK (protocol_type IS NULL AND protocol_value IS NULL OR protocol_type = 'manual'::text AND protocol_value IS NULL OR (protocol_type = ANY (ARRAY['distance'::text, 'time'::text])) AND protocol_value IS NOT NULL AND protocol_value > 0)"
+    },
+    {
+      "name": "sessions_training_instance_id_fkey",
+      "type": "f",
+      "table": "sessions",
+      "validated": true,
+      "definition": "FOREIGN KEY (training_instance_id) REFERENCES training_instances(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "sessions_watt_source_check",
+      "type": "c",
+      "table": "sessions",
+      "validated": true,
+      "definition": "CHECK (watt_source IS NULL OR (watt_source = ANY (ARRAY['concept2_measured'::text, 'concept2_derived'::text, 'manual'::text, 'imported_unknown'::text, 'unknown'::text])))"
+    }
+  ],
+  "project_ref": "mhfxhzkdmgkaplicdszg",
+  "role_grants": [
+    {
+      "grantee": "anon",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "exercises",
+      "is_grantable": "NO",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "anon",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "table_name": "sessions",
+      "is_grantable": "NO",
+      "privilege_type": "UPDATE"
+    }
+  ],
+  "dependent_functions": [
+    {
+      "schema": "public",
+      "name": "coach_has_scope",
+      "arguments": "p_coach_id uuid, p_athlete_id uuid, p_scope text",
+      "security_definer": true,
+      "config": [
+        "search_path=public"
+      ],
+      "definition": "CREATE OR REPLACE FUNCTION public.coach_has_scope(p_coach_id uuid, p_athlete_id uuid, p_scope text)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select auth.uid() is not null\n    and auth.uid() in (p_coach_id, p_athlete_id)\n    and exists (\n      select 1 from public.coach_athlete_relationships r\n      join public.coach_access_scopes s on s.relationship_id = r.id\n      where r.coach_user_id = p_coach_id and r.athlete_user_id = p_athlete_id\n        and r.status = 'active' and s.scope = p_scope and s.enabled = true\n    );\n$function$\n",
+      "definition_sha256": "722614b3e243b7df0b5a3a4e4023ffe6d772704842281f948db0974e896db756"
+    },
+    {
+      "schema": "public",
+      "name": "set_exercise_scope_context",
+      "arguments": "",
+      "security_definer": true,
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "definition": "CREATE OR REPLACE FUNCTION public.set_exercise_scope_context()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\nDECLARE\r\n  caller_gym_id text;\r\n  caller_role_level int;\r\nBEGIN\r\n  SELECT gym_id, gym_role_level INTO caller_gym_id, caller_role_level\r\n  FROM users WHERE id = auth.uid()::text;\r\n\r\n  IF NEW.scope IS NULL THEN NEW.scope := 'personal'; END IF;\r\n\r\n  IF NEW.scope = 'personal' THEN\r\n    NEW.gym_id := NULL;\r\n    NEW.created_by := auth.uid();\r\n  ELSIF NEW.scope = 'gym' THEN\r\n    IF caller_role_level IS NULL OR caller_role_level < 1 THEN\r\n      RAISE EXCEPTION 'Alleen coach, manager of owner mag oefeningen gym-breed delen';\r\n    END IF;\r\n    NEW.gym_id := caller_gym_id;\r\n    NEW.created_by := auth.uid();\r\n  ELSIF NEW.scope = 'global' THEN\r\n    IF caller_role_level IS NULL OR caller_role_level < 3 THEN\r\n      RAISE EXCEPTION 'Alleen een gym-owner mag oefeningen aan de globale bibliotheek toevoegen';\r\n    END IF;\r\n    NEW.gym_id := NULL;\r\n    NEW.created_by := auth.uid();\r\n  ELSE\r\n    RAISE EXCEPTION 'Ongeldige scope: %', NEW.scope;\r\n  END IF;\r\n  RETURN NEW;\r\nEND;\r\n$function$\n",
+      "definition_sha256": "aec91b07589aa1c6b4451067d0db3380e416e44548207a93334a81399954034b"
+    },
+    {
+      "schema": "public",
+      "name": "set_user_id_from_auth",
+      "arguments": "",
+      "security_definer": true,
+      "config": [
+        "search_path=public, pg_temp"
+      ],
+      "definition": "CREATE OR REPLACE FUNCTION public.set_user_id_from_auth()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\n    BEGIN\r\n      IF auth.uid() IS NOT NULL THEN\r\n        NEW.user_id := auth.uid();\r\n      END IF;\r\n      RETURN NEW;\r\n    END;\r\n    $function$\n",
+      "definition_sha256": "22d0c3dd2070ea2037d02ba9690b5f02c3462306303e1d86093768b3cdcd8b8d"
+    }
+  ],
+  "capture_method": "Read-only PostgreSQL catalogs/information_schema; no application/auth row values",
+  "incoming_foreign_keys": [
+    {
+      "referencing_table": "activities",
+      "name": "activities_session_id_fkey",
+      "referenced_table": "sessions",
+      "definition": "FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE"
+    },
+    {
+      "referencing_table": "exercise_favorites",
+      "name": "exercise_favorites_exercise_id_fkey",
+      "referenced_table": "exercises",
+      "definition": "FOREIGN KEY (exercise_id) REFERENCES exercises(id)"
+    },
+    {
+      "referencing_table": "exercise_goals",
+      "name": "exercise_goals_exercise_id_fkey",
+      "referenced_table": "exercises",
+      "definition": "FOREIGN KEY (exercise_id) REFERENCES exercises(id)"
+    },
+    {
+      "referencing_table": "goals",
+      "name": "goals_exercise_id_fkey",
+      "referenced_table": "exercises",
+      "definition": "FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE SET NULL"
+    },
+    {
+      "referencing_table": "program_block_exercises",
+      "name": "program_block_exercises_exercise_id_fkey",
+      "referenced_table": "exercises",
+      "definition": "FOREIGN KEY (exercise_id) REFERENCES exercises(id)"
+    },
+    {
+      "referencing_table": "race_segments",
+      "name": "race_segments_exercise_id_fkey",
+      "referenced_table": "exercises",
+      "definition": "FOREIGN KEY (exercise_id) REFERENCES exercises(id)"
+    },
+    {
+      "referencing_table": "sessions",
+      "name": "sessions_exercise_id_fkey",
+      "referenced_table": "exercises",
+      "definition": "FOREIGN KEY (exercise_id) REFERENCES exercises(id)"
+    },
+    {
+      "referencing_table": "training_exercises",
+      "name": "training_exercises_exercise_id_fkey",
+      "referenced_table": "exercises",
+      "definition": "FOREIGN KEY (exercise_id) REFERENCES exercises(id)"
+    }
+  ],
+  "assessment_status": "PRODUCTION_RELEASE_BLOCKED_SCHEMA_PARITY_NOT_PROVEN"
+}

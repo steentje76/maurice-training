@@ -46,7 +46,7 @@ assert.equal(context.tkCatalogDisplayName(byId.get('TK-000019')),
   byId.get('TK-000019').identity.name);
 assert.equal(byId.get('TK-000227'),undefined);
 assert.equal(html.includes('function exPickerPool(){'),true);
-assert.equal(html.includes('function resolvePickerEx(id){'),true);
+assert.equal(html.includes('function resolvePickerEx(id,source='),true);
 assert.equal(html.includes('function ensureExerciseRowStatus(exId){'),true);
 assert.equal(html.includes('function renderExPickerList(){'),true);
 assert.equal(html.includes('tkPickerSearchText(e).includes(q)'),true);

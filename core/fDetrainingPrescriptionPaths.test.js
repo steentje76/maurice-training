@@ -40,7 +40,8 @@ function sandbox(sessionsByEx) {
     DecisionCore, CalcCore, console, Date, Math, JSON, Promise, Object, Array, String, Number, isFinite, isNaN, parseFloat, parseInt, encodeURIComponent,
     td: () => TODAY, estOneRMCache: {}, previewCtx: null, window: {},
     sbGet: async (table, q) => { if (table !== 'sessions') return []; const m = /exercise_id=eq\.([^&]+)/.exec(q); return (sessionsByEx[decodeURIComponent(m[1])] || []).slice(); },
-    prFor: () => null, escHtml: (x) => String(x)
+    prFor: () => null, escHtml: (x) => String(x),
+    tkEigenaarUid: () => 'synthetic-owner' // #603: loadStrengthBasis captures the owner before its read
   };
   vm.createContext(ctx);
   ctx.exerciseGoals = new Map(); ctx.localStorage = { getItem: () => null }; ctx.strengthBasisCache = {};

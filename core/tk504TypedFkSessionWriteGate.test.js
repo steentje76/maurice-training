@@ -3,8 +3,8 @@
 // are from the public 226 baseline. No live Supabase, owner data or media.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
-assert.match(html,/const TK504_TYPED_FK_SESSION_RELEASE = false;/,
- 'The real product release flag MUST stay off');
+assert.match(html,/const TK504_TYPED_FK_SESSION_RELEASE = true;/,
+ 'The activated typed FK writer must remain source-qualified and account-bound');
 const match=html.match(/^const EX_CATALOG = (\{.*\});?\s*$/m);
 assert(match,'Single current catalog exists');
 const catalog=JSON.parse(match[1]).catalog;

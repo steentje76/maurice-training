@@ -17,7 +17,8 @@ const stage={_status:'PRIVATE_REVIEW_NOT_RELEASED',
    confirmed_by_authenticated_reviewer:false,media_entitlement_status:'NOT_VERIFIED',
    supplier_metadata_modified:false}}:{})
  }))};
-const manifest={...verify({stage,catalog,golden,posters,approval,release}),
+const manifest={...verify({stage,catalog,golden,posters,approval,
+  release:{...release,status:'BLOCKED_NOT_REVIEWED',entries:[]}}),
  private_stage_sha256:'a'.repeat(64)};
 let checks=0;
 function ok(v,m){assert.ok(v,m);checks++;}

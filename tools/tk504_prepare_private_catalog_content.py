@@ -23,6 +23,14 @@ def safe_text(v,max_len=400):
 def safe_array(a):
     return isinstance(a,list) and len(a)<=40 and all(safe_text(x) for x in a)
 
+def approved_steps(value):
+    # The canonical 582-translation overlay stores reviewed steps as a
+    # semicolon-separated string; the existing app's review importer uses
+    # precisely this split. Preserve order and words, do not invent cues.
+    if isinstance(value,str):
+        return [part.strip() for part in value.split(';') if part.strip()]
+    return value
+
 def stage_content(stage,translation,approval,ecs=None):
     report=reconcile(stage,translation,approval,ecs)
     require(report["status"]=="EXACT_OWNER_APPROVED_DISPLAY_FIELDS",
@@ -46,8 +54,8 @@ def stage_content(stage,translation,approval,ecs=None):
                 "CANONICAL_PROVIDER_MISMATCH")
         approved_name=seen["name_nl"]
         short=seen["short_description_nl"]
-        cues=seen["instructions_nl"]
-        mistakes=seen["common_mistakes_nl"]
+        cues=approved_steps(seen["instructions_nl"])
+        mistakes=approved_steps(seen["common_mistakes_nl"])
         category=seen["proposed_category"]
         difficulty=seen["difficulty"]
         require(all(safe_text(x) for x in

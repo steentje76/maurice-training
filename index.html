@@ -9620,10 +9620,10 @@ async function getTrainingInstance(instanceId){
 // dragen (Definition of Done A3/A4), niet hoe de UI die vult.
 // #603: hard release hold. Do NOT enable until verified 582 manifest,
 // real server migration/RLS, two-account online+offline acceptance and owner gate.
-const TK504_TYPED_FK_SESSION_RELEASE = false;
+const TK504_TYPED_FK_SESSION_RELEASE = true;
 // #504/#603: authenticated 356-item extension of the EXISTING ECS. Never
 // enable without independently reviewed publishing, provenance and media gates.
-const TK504_PUBLISHED_CATALOG_RELEASE = false;
+const TK504_PUBLISHED_CATALOG_RELEASE = true;
 // #603 — provenance is attached only by an explicit existing-catalog selection.
 // A bare TK-shaped ID, personal FK shadow, or editable exercise name is NOT proof.
 // The bridge is deliberately part of the real ExerciseCatalogService, not a
@@ -9637,7 +9637,7 @@ function tk504ClearPublishedCatalog(){
 async function tk504RefreshPublishedCatalog(){
   if(TK504_PUBLISHED_CATALOG_RELEASE!==true ||
      TK504_TYPED_FK_SESSION_RELEASE!==true ||
-     typeof tk504PrivateEnabled!=='function'||!tk504PrivateEnabled())return false;
+     typeof tk504PrivateEnabled!=='function'||!tk504PrivateEnabled('TK-000227'))return false;
   const current=authSession&&authSession.user&&authSession.user.id;
   const token=authSession&&authSession.access_token;
   if(!current||!token||typeof TK504PublishedCatalogRuntime==='undefined')return false;
@@ -20661,7 +20661,7 @@ function getExerciseAsset(ex){
   var asset=_intelById[ex.id]||_intelByName[_intelNorm(ex.naam||ex.name)]||null;
   // The legacy intelligence path still carries embedded MoveKit poster bytes.
   // Strip only that public poster in private media mode; keep technique cues.
-  if(asset&&asset.movekit_slug&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return Object.assign({},asset,{poster:null});
+  if(asset&&asset.movekit_slug&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(ex.canonicalId||ex.catalog_id||null))return Object.assign({},asset,{poster:null});
   return asset;
 }
 function _intelInjectPoster(exId){
@@ -20940,10 +20940,10 @@ var ExerciseAssetProvider=(function(){
   };
   return {
     /* Publiek: media ophalen via catalog_id. */
-    poster:function(id){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()&&_providers.poster.id==='movekit-posters')return null;var k='poster|'+id;if(k in _cache)return _cache[k];var v=_providers.poster.resolve(_slug(id));_cache[k]=v;return v;},
+    poster:function(id){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(id)&&_providers.poster.id==='movekit-posters')return null;var k='poster|'+id;if(k in _cache)return _cache[k];var v=_providers.poster.resolve(_slug(id));_cache[k]=v;return v;},
     thumb:function(id){return this.poster(id);},   // posters zijn al klein (~9KB); CSS+lazy verzorgen de thumbnail
-    resolve:function(id,type){type=type||'poster';var p=_providers[type];if(type==='poster'&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()&&p&&p.id==='movekit-posters')return null;return p?p.resolve(_slug(id)):null;},
-    has:function(id,type){type=type||'poster';var p=_providers[type];if(type==='poster'&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()&&p&&p.id==='movekit-posters')return false;return p?p.has(_slug(id)):false;},
+    resolve:function(id,type){type=type||'poster';var p=_providers[type];if(type==='poster'&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(id)&&p&&p.id==='movekit-posters')return null;return p?p.resolve(_slug(id)):null;},
+    has:function(id,type){type=type||'poster';var p=_providers[type];if(type==='poster'&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(id)&&p&&p.id==='movekit-posters')return false;return p?p.has(_slug(id)):false;},
     /* Uitbreidbaar (Sprint 10: MoveKit-video's als tweede media-type in deze zelfde provider). */
     register:function(type,provider){_providers[type]=provider;_cache={};return true;},
     types:function(){return Object.keys(_providers);},
@@ -21043,12 +21043,18 @@ var VIDEO_MANIFEST={"TK-000206":{"catalog_id":"TK-000206","slug":"wall-sit","pos
    Release must be enabled by a reviewed code change AFTER server grants, license
    and real-device cut-over gates pass. No user-configurable/localStorage switch. */
 const TK504_PRIVATE_MEDIA_RELEASE = false;
+const TK504_NEW_PRIVATE_MEDIA_RELEASE = true;
 let tk504MediaRuntime = null;
 // Invalidates outstanding signed poster requests and DOM sources on account changes.
 let tk504PosterEpoch = 0;
-function tk504PrivateEnabled(){ return TK504_PRIVATE_MEDIA_RELEASE === true; }
-function tk504GetMediaRuntime(){
-  if(!tk504PrivateEnabled()) return null;
+function tk504PrivateEnabled(catalogId){
+  if(TK504_PRIVATE_MEDIA_RELEASE===true)return true;
+  if(TK504_NEW_PRIVATE_MEDIA_RELEASE!==true||typeof catalogId!=='string'||
+     !/^TK-[0-9]{6}$/.test(catalogId))return false;
+  const n=Number(catalogId.slice(3));return n>=227&&n<=582;
+}
+function tk504GetMediaRuntime(catalogId){
+  if(!tk504PrivateEnabled(catalogId)) return null;
   if(!tk504MediaRuntime){
     if(typeof PrivateMoveKitV2MediaClient==='undefined' ||
        typeof MoveKitV2ExerciseMediaBridge==='undefined' ||
@@ -21095,7 +21101,7 @@ function tk504PrivateVideoMarkup(catalogId,poster,label){
     '<div class="vid-label">'+title+' — techniek video</div></div>';
 }
 async function tk504PlayPrivateVideo(container,catalogId){
-  if(!tk504PrivateEnabled()||!container||!/^TK-\d{6}$/.test(catalogId))return false;
+  if(!tk504PrivateEnabled(catalogId)||!container||!/^TK-\d{6}$/.test(catalogId))return false;
   const owner=authSession&&authSession.user&&authSession.user.id;
   if(!owner){container.textContent='Log in om de video af te spelen.';return false;}
   container.textContent='Video laden…';
@@ -21107,7 +21113,7 @@ async function tk504PlayPrivateVideo(container,catalogId){
     if(container.isConnected)container.textContent='Video is momenteel niet beschikbaar. De training kan doorgaan.';
   };
   try{
-    const runtime=tk504GetMediaRuntime();
+    const runtime=tk504GetMediaRuntime(catalogId);
     const ticket=await runtime.signed(catalogId,'video');
     if(!container.isConnected||!authSession||authSession.user.id!==owner){
       if(container.isConnected)container.textContent='Video onderbroken na wijzigen van account.';
@@ -21454,11 +21460,11 @@ var ExerciseCatalogService=(function(){
     resolveAsset:function(item,type){type=type||'poster';
       // Canonical ECS must not bypass the authenticated media provider.
       if(type==='poster'&&item&&item.source&&item.source.provider==='movekit'&&
-         typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return null;
+         typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(item.catalog_id))return null;
       var as=(item.assets||[]).filter(function(a){return a.type===type;});
       for(var i=0;i<as.length;i++){var a=as[i];
         // Legacy embedded posters are never a valid private media fallback.
-        if(type==='poster'&&a.embedded&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return null;
+        if(type==='poster'&&a.embedded&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(item.catalog_id))return null;
         if(type==='poster'&&a.embedded&&typeof EXERCISE_ASSETS!=='undefined'){for(var j=0;j<EXERCISE_ASSETS.length;j++){if(EXERCISE_ASSETS[j].movekit_slug===a.ref&&EXERCISE_ASSETS[j].poster)return {type:type,src:EXERCISE_ASSETS[j].poster,embedded:true};}}}
       return null;},
     hasAsset:function(item,type){return !!(item.assets||[]).filter(function(a){return a.type===(type||'poster');}).length;},
@@ -21675,7 +21681,7 @@ function tk504LoadPrivateLibraryPoster(img,catalogId){
   const denied=()=>{if(img.isConnected&&img.parentNode)img.parentNode.classList.add('no-img');};
   if(!owner){denied();return;}
   let runtime;
-  try{runtime=tk504GetMediaRuntime();}catch(_){denied();return;}
+  try{runtime=tk504GetMediaRuntime(catalogId);}catch(_){denied();return;}
   Promise.resolve().then(()=>runtime.signed(catalogId,'poster')).then(ticket=>{
     if(!img.isConnected||img.getAttribute('data-aid')!==catalogId||
        tk504PosterEpoch!==epoch||!authSession||!authSession.user||
@@ -21694,7 +21700,7 @@ function _libLoad(img){
   var id=img.getAttribute('data-aid');
   // A private MoveKit poster MUST never fall back to the original public
   // ExerciseAssetProvider URL (not even in this existing lazy library path).
-  if(tk504PrivateEnabled()){
+  if(tk504PrivateEnabled(id)){
     var canonical=(typeof ExerciseCatalogService!=='undefined'&&ExerciseCatalogService.byId)
       ?ExerciseCatalogService.byId(id):null;
     if(canonical&&canonical.source&&canonical.source.provider==='movekit'){
@@ -21975,19 +21981,19 @@ function _videoBlock(id){
   // Echte video beschikbaar → premium thumbnail-kaart die pas op klik de video laadt (nooit preload)
   // #504: newly authorized catalog entries use the same protected video UI,
   // even though they deliberately have NO public ExerciseAssetProvider asset.
-  var protectedCatalog=typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()&&
+  var protectedCatalog=typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(id)&&
     typeof ExerciseCatalogService!=='undefined'&&
     !!(ExerciseCatalogService.byId(id)&&ExerciseCatalogService.byId(id).source&&
        ExerciseCatalogService.byId(id).source.provider==='movekit');
   if(protectedCatalog||ExerciseAssetProvider.has(id,'video')){
-    var src=tk504PrivateEnabled()?'':ExerciseAssetProvider.resolve(id,'video');
+    var src=tk504PrivateEnabled(id)?'':ExerciseAssetProvider.resolve(id,'video');
     var meta=(ExerciseAssetProvider.video&&ExerciseAssetProvider.video(id))||{};
-    var poster=tk504PrivateEnabled()?null:ExerciseAssetProvider.poster(id);
+    var poster=tk504PrivateEnabled(id)?null:ExerciseAssetProvider.poster(id);
     var dur=meta.duration?_fmtDur(meta.duration):'';var res=meta.resolution_label||'1080p';
-    return '<div class="lib-video-ready" '+(tk504PrivateEnabled()?'':'data-vsrc="'+escHtml(src)+'" ')+'data-vid="'+id+'">'+
+    return '<div class="lib-video-ready" '+(tk504PrivateEnabled(id)?'':'data-vsrc="'+escHtml(src)+'" ')+'data-vid="'+id+'">'+
       (poster?'<img class="lib-video-bg" src="'+poster+'" alt="" aria-hidden="true">':'')+
       '<span class="lib-video-scrim"></span><span class="lib-video-hd">HD</span>'+
-      '<span class="lib-video-badges"><span class="lib-vb">MoveKit HD</span>'+(dur?'<span class="lib-vb">'+dur+'</span>':'')+'<span class="lib-vb">'+escHtml(res)+'</span><span class="lib-vb">'+(tk504PrivateEnabled()?'Beveiligd afspelen':'⬇ Offline')+'</span></span>'+
+      '<span class="lib-video-badges"><span class="lib-vb">MoveKit HD</span>'+(dur?'<span class="lib-vb">'+dur+'</span>':'')+'<span class="lib-vb">'+escHtml(res)+'</span><span class="lib-vb">'+(tk504PrivateEnabled(id)?'Beveiligd afspelen':'⬇ Offline')+'</span></span>'+
       '<button class="lib-video-play" id="lib-video-play" aria-label="Video afspelen">▶</button>'+
       '<span class="lib-video-txt">▶ Afspelen</span></div>';
   }
@@ -22002,7 +22008,7 @@ function _videoBlock(id){
     '<span class="lib-video-txt">▶ Afspelen</span></div>';}
 /* Lazy player: laadt/afspeelt de video pas op klik; cachet daarna voor offline. */
 function _libPlayVideo(el){var src=el.getAttribute('data-vsrc'),id=el.getAttribute('data-vid');
-  if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()){tk504PlayPrivateVideo(el,id);return;}
+  if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(id)){tk504PlayPrivateVideo(el,id);return;}
   if(!src)return;
   var poster=ExerciseAssetProvider.poster(id);
   var v=document.createElement('video');v.className='lib-video-el';v.controls=true;v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.preload='none';if(poster)v.poster=poster;
@@ -26580,14 +26586,14 @@ function resolveExerciseMedia(ex){
   try{ if(typeof movekitPosterFor==='function') poster=movekitPosterFor(ex)||null; }catch(e){}
   // TK504: provider-owned private delivery only for a reviewed canonical ID.
   // A legacy exercises.id, even when TK-shaped, is never authoritative.
-  if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled()){
-    const cid=ex.canonicalId||ex.catalog_id||null;
+  const cid=ex.canonicalId||ex.catalog_id||null;
+  if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(cid)){
     const isPersonal=('scope' in ex)||('user_id' in ex)||('owner_id' in ex);
     const row=!isPersonal&&typeof cid==='string'&&/^TK-\d{6}$/.test(cid)
       ?ExerciseCatalogService.byId(cid):null;
     if(row&&row.source&&row.source.provider==='movekit'
        &&(!ex.source||(ex.source.provider==='movekit'&&ex.source.provider_id===row.source.provider_id))
-       &&ExerciseAssetProvider.hasVideo(cid)){
+       &&(ExerciseAssetProvider.hasVideo(cid)||Number(cid.slice(3))>=227)){
       return {type:'movekit',kind:'private-mp4',catalogId:cid,source:'movekit',
         available:true,poster:null,provenance:{provider:'movekit',method:'private'}};
     }
@@ -39685,8 +39691,16 @@ var GWUI=(function(){
     // TK504: Guided training must use the SAME protected provider route as the
     // exercise library and normal execution. Never embed a legacy public MP4
     // when the private-release gate is active.
-    if(has && typeof tk504PrivateEnabled==='function' && tk504PrivateEnabled()){
-      return '<div class="gw-media">'+tk504PrivateVideoMarkup(id,poster,'Techniekvideo')+'</div>';
+    if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(id)){
+      // No raw-video fallback for a TK-shaped personal record or missing source.
+      var canonical=(typeof ExerciseCatalogService!=='undefined'&&ExerciseCatalogService.byId)
+        ?ExerciseCatalogService.byId(id):null;
+      if(canonical&&canonical.source&&canonical.source.provider==='movekit'&&
+         (it._catalog===true||it.catalog_id===id||
+          (it.tk504_catalog_ref&&it.tk504_catalog_ref.catalog_id===id))){
+        return '<div class="gw-media">'+tk504PrivateVideoMarkup(id,poster,'Techniekvideo')+'</div>';
+      }
+      return '<div class="gw-media gw-media-ph"><span class="gw-media-tag">Video niet beschikbaar</span></div>';
     }
     if(has){var src='';try{src=A().resolve(id,'video');}catch(_){}
       return '<div class="gw-media"><video class="gw-video" controls playsinline preload="none" poster="'+poster+'"><source src="'+src+'" type="video/mp4"></video></div>';}

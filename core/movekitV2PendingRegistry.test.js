@@ -41,6 +41,8 @@ for(let n=0;n<356;n++){
 }
 assert.equal(ids.size,356);
 assert.equal(providers.size,356);
-assert.equal((main.match(/TK-000227/g)||[]).length,0,
- 'cannot silently wire candidate into public UI');
+assert(main.includes("tk504PrivateEnabled('TK-000227')"),
+ 'new private catalog is explicitly scoped and requires the signed broker');
+assert(!main.includes('movekit/v2/video/'),
+ 'no raw V2 Storage object path may enter the public HTML');
 console.log('TK504 356 candidate IDs: exactly 356 nonpublished, no media/content or runtime execution; published 226 unchanged. PASS');

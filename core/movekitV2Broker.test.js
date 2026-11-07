@@ -94,8 +94,8 @@ function check(label, func) {
     e => { e.message = label + ': ' + e.message; throw e; });
 }
 (async () => {
-  await check('default release is fully disabled', async () => {
-    const r = await invoke(event(), { release: defaultRelease });
+  await check('an explicitly disabled release is fully denied', async () => {
+    const r = await invoke(event(), { release: {...defaultRelease,status:'BLOCKED_NOT_REVIEWED'} });
     assert.equal(r.resp.statusCode, 503);
     assert.equal(r.data.error, 'V2_NOT_RELEASED');
     assert.equal(r.calls.length, 0);

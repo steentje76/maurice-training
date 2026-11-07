@@ -63,12 +63,15 @@ ok(/core\/privateMoveKitV2MediaClient\.js/.test(html),'Existing HTML loads media
 ok(/core\/tk504ProtectedPlayback\.js/.test(html),'Existing HTML loads canonical adapter');
 // Guided Workout is a fourth video renderer; it must not bypass private signing.
 const guidedSource=segment('  function media(it){','  function detailPanel(it,e){');
-function guided(privateEnabled){
+function guided(privateEnabled,qualified=true){
   const ctx=vm.createContext({A:()=>assets,tk504PrivateEnabled:()=>privateEnabled,
+    ExerciseCatalogService:{byId:id=>published.get(id)||null},
     tk504PrivateVideoMarkup:(id)=>'<button data-tk504-private="'+id+'">Play</button>'});
-  return vm.runInContext(guidedSource+'\nmedia({id:"TK-000001"})',ctx);
+  return vm.runInContext(guidedSource+'\nmedia({id:"TK-000001",_catalog:'+Boolean(qualified)+'})',ctx);
 }
 ok(guided(true).includes('data-tk504-private="TK-000001"'),'Guided Workout uses the protected player');
+ok(!guided(true,false).includes('<source')&&guided(true,false).includes('Video niet beschikbaar'),
+   'Unqualified TK-shaped personal ID cannot fall back to a public video');
 ok(!guided(true).includes('<source'),'Guided Workout never embeds public MP4 in private mode');
 ok(!guided(true).includes('maurice-art.netlify.app'),'Guided Workout exposes no public URL in private mode');
 ok(guided(false).includes('maurice-art.netlify.app'),'Guided Workout legacy playback unchanged with release OFF');

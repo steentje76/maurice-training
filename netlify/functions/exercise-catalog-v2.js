@@ -1,5 +1,5 @@
 'use strict';
-// TK504 #603: authenticated publication of the 356 licensed MoveKit records
+// TK504 #603: authenticated publication of licensed MoveKit batches
 // into the EXISTING ExerciseCatalogService. Hard-blocked until owner/content,
 // media/upload, typed-FK and customer-entitlement gates are explicitly green.
 // NEVER include the private supplier stage/overlays in this GitHub function.
@@ -12,6 +12,27 @@ const HASH=/^[0-9a-f]{64}$/;
 const providerById=new Map(inventory.items.map(x=>[x.catalog_id,x.provider_id]));
 const SCHEMA='tk504-authorized-catalog-v2/1.0';
 const RESULT_MAX=356;
+// Release scope comes only from validated media approvals. Accept completed
+// prefixes of 25 (plus the final six), never gaps or arbitrary row counts.
+function releasedCatalogIds(config){
+ if(!Array.isArray(config?.entries))return null;
+ const selected=new Set();
+ for(const entry of config.entries){
+  const cid=entry?.catalog_id;
+  if(!providerById.has(cid))return null;
+  if(Number(cid.slice(3))<227)continue;
+  if(!['video','poster'].includes(entry.media_type))return null;
+  selected.add(cid);
+ }
+ const ids=[...selected].sort(),count=ids.length;
+ if(!count||count>RESULT_MAX||(count%25!==0&&count!==RESULT_MAX))return null;
+ for(let i=0;i<count;i++){
+  const cid='TK-'+String(227+i).padStart(6,'0');
+  if(ids[i]!==cid||!media.descriptor(cid,'video',config)||
+    !media.descriptor(cid,'poster',config))return null;
+ }
+ return ids;
+}
 function headers(event){
  const origin=(event?.headers||{}).origin||(event?.headers||{}).Origin||'';
  // Only emit CORS for the exact already-approved TK origins.
@@ -46,8 +67,9 @@ async function getRows(table,query,key,fetchFn){
  return Array.isArray(rows)?rows:null;
 }
 function validatePublished(rows,bindings,config){
- if(!Array.isArray(rows)||rows.length!==RESULT_MAX||
-   !Array.isArray(bindings))return null;
+ const ids=releasedCatalogIds(config);
+ if(!ids||!Array.isArray(rows)||rows.length!==ids.length||
+   !Array.isArray(bindings)||bindings.length!==ids.length)return null;
  const bMap=new Map();
  for(const b of bindings){
   if(!b||bMap.has(b.catalog_id)||b.active!==true||
@@ -56,8 +78,8 @@ function validatePublished(rows,bindings,config){
   bMap.set(b.catalog_id,b);
  }
  const out=[];
- for(let i=0;i<RESULT_MAX;i++){
-  const cid='TK-'+String(227+i).padStart(6,'0'),r=rows[i],meta=r?.metadata;
+ for(let i=0;i<ids.length;i++){
+  const cid=ids[i],r=rows[i],meta=r?.metadata;
   if(!r||r.catalog_id!==cid||r.provider_id!==providerById.get(cid)||
     r.status!=='published'||!r.approved_at||!r.published_at||
     !bMap.has(cid)||!meta||typeof meta!=='object'||Array.isArray(meta)||
@@ -89,6 +111,8 @@ async function handle(event,deps={}){
  if(event?.httpMethod==='OPTIONS')return result(event,204,{});
  if(event?.httpMethod!=='POST')return deny(event,405,'METHOD_NOT_ALLOWED');
  if(!enabled(env,active))return deny(event,503,'MOVEKIT_CATALOG_NOT_RELEASED');
+ const ids=releasedCatalogIds(active);
+ if(!ids)return deny(event,503,'CATALOG_DATA_NOT_APPROVED');
  if(env.SUPABASE_URL!==BASE||typeof env.SUPABASE_ANON_KEY!=='string'||
    !env.SUPABASE_ANON_KEY||!env.SUPABASE_SERVICE_ROLE_KEY||
    typeof fn!=='function')return deny(event,503,'BACKEND_NOT_READY');
@@ -102,11 +126,13 @@ async function handle(event,deps={}){
  try{
   const rows=await getRows('movekit_v2_catalog_publications',{
     select:'catalog_id,provider_id,metadata,status,approved_at,published_at',
-    status:'eq.published',order:'catalog_id.asc',limit:'357'
+    status:'eq.published',catalog_id:'in.('+ids.join(',')+')',
+    order:'catalog_id.asc',limit:String(ids.length+1)
   },env.SUPABASE_SERVICE_ROLE_KEY,fn);
   const bindings=await getRows('movekit_catalog_fk_bindings',{
     select:'catalog_id,provider_id,exercise_id,active,reviewed_at',
-    active:'eq.true',order:'catalog_id.asc',limit:'583'
+    active:'eq.true',catalog_id:'in.('+ids.join(',')+')',
+    order:'catalog_id.asc',limit:String(ids.length+1)
   },env.SUPABASE_SERVICE_ROLE_KEY,fn);
   const approved=validatePublished(rows,bindings,active);
   if(!approved)return deny(event,503,'CATALOG_DATA_NOT_APPROVED');
@@ -114,12 +140,12 @@ async function handle(event,deps={}){
   const again=await media.verifyEntitlement(uid,env.SUPABASE_SERVICE_ROLE_KEY,fn,now);
   if(!again.ok)return deny(event,403,'ENTITLEMENT_REVOKED');
   return result(event,200,{
-    schema:SCHEMA,status:'PUBLISHED_AND_ENTITLED',total:582,
-    new_count:356,items:approved
+    schema:SCHEMA,status:'PUBLISHED_AND_ENTITLED',total:226+approved.length,
+    new_count:approved.length,items:approved
   });
  }catch(_){return deny(event,503,'CATALOG_BACKEND_UNAVAILABLE');}
 }
 exports.handler=event=>handle(event,{env:process.env,fetch:globalThis.fetch,now:Date.now});
-exports._internal=Object.freeze({enabled,handle,validatePublished,headers,SCHEMA});
+exports._internal=Object.freeze({enabled,handle,validatePublished,releasedCatalogIds,headers,SCHEMA});
 // Match the canonical Android API preflight contract (I22), not a parallel CORS stack.
 exports.handler = require('./_cors.js').withCors(exports.handler);

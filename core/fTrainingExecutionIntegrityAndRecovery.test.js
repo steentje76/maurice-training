@@ -50,7 +50,7 @@ ok(html.indexOf('function draftHasData') > 0, 'recovery: het systeem onderscheid
   ok(cacheKeysSrc.indexOf("'tk_draft_training'") > 0, 'cross-user: tk_draft_training staat in PERSONAL_CACHE_KEYS -- wordt bij eigenaarwissel/logout gewist, geen lek van user A\'s actieve training naar user B op een gedeeld toestel');
   ok(cacheKeysSrc.indexOf("'tk_hyrox_active'") > 0, 'cross-user: tk_hyrox_active is eveneens expliciet opgenomen (met commentaar dat dit exacte scenario benoemt) -- Hyrox-state heeft dezelfde bescherming');
 }
-ok(html.indexOf('async function authSignOut') > 0 && html.slice(html.indexOf('async function authSignOut'), html.indexOf('async function authSignOut') + 400).indexOf('wipePersonalCache()') > 0, 'cross-user: authSignOut() roept wipePersonalCache() synchroon aan bij uitloggen (niet pas bij de volgende login)');
+ok(html.indexOf('async function authSignOut') > 0 && html.slice(html.indexOf('async function authSignOut'), html.indexOf('async function deleteAccount',html.indexOf('async function authSignOut'))).indexOf('wipePersonalCache()') > 0, 'cross-user: authSignOut() roept wipePersonalCache() synchroon aan bij uitloggen (niet pas bij de volgende login)');
 ok(html.indexOf('function resetPersonalCacheIfNewDeviceOwner') > 0 && html.indexOf('resetPersonalCacheIfNewDeviceOwner(authSession?.user?.id)') > 0, 'cross-user: een tweede beveiligingslaag -- ook bij een gemiste/overgeslagen logout wordt de cache gewist zodra een ANDERE gebruiker op hetzelfde toestel inlogt (owner-wissel-detectie)');
 
 // ═══ ENTRYPOINT ID-COLLISION (generic/Programma/Mijn trainingen/Hyrox) ═══

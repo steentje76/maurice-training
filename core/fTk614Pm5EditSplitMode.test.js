@@ -65,6 +65,10 @@ const src = [
   fn('updateSplitSummary'), fn('onCardioFieldInput'),
   fn('logCardio'), fn('cardioDataToRow'),
   'let curEditSess=null, curAddExId=null, curAddExName=null, curAddDate=null, curAddTT=null; let curEditExObj=null; const ES_DOMID="es";',
+  // #614 P2 (note-provenance): renderEditSessFields/saveEditSession gebruiken deze helpers.
+  (html.indexOf('function tkCardioEditNoteParts(') >= 0
+    ? html.slice(html.indexOf('const TK_C2_NOTE_TAG_RE='), html.indexOf('\n', html.indexOf('const TK_C2_NOTE_TAG_RE='))) + '\n' + fn('tkCardioEditNoteParts') + '\n' + fn('tkCardioEditNoteCompose')
+    : ''),
   fn('openEditSess'), fn('renderEditSessFields'),
   fn('saveEditSession', 'async function ')
 ].join('\n');

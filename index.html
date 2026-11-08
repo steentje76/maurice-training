@@ -27129,6 +27129,75 @@ function openEditSess(id,name,session){
   openModal('m-edit-session');
 }
 
+// #614 P2 — PM5-notitieprovenance. Ontleedt een opgeslagen cardio-note volgens de BESTAANDE
+// grammatica: [vrije notitie · ]<tokens>, waarbij ' · ' de scheider is van liveWorkoutToActual
+// (split · drag · hr · [c2:id]), de P1-exNote-compositie en saveEditSession, en ' | ' die van
+// cardioDataToRow (split | drag | splits:…). Classificatie per deel:
+//  - derived: tokens die cardioDataToRow bij opslaan uit de editvelden opnieuw maakt (zelfde
+//    template-probe/regex als de veldextractie) → niet in het notitieveld, dus geen dubbel;
+//  - prov: bronprovenance zonder editveld: [c2:id]/[c2local:id] (dedupe-identiteit, zelfde
+//    grammatica als Concept2Live.alreadyLoggedLive / DeviceCore._idsFromSessions) en — alleen
+//    naast zo'n tag — gemeten 'drag N'/'hr N' waarvoor dit apparaat geen veld heeft;
+//  - user: al het overige, ongewijzigd en in volgorde → het bewerkbare notitieveld.
+// values: de per-veld geëxtraheerde waarde (eerste voorkomen, identiek aan de veldextractie).
+const TK_C2_NOTE_TAG_RE=/\[c2(?:local)?:[^\]]+\]/gi;
+function tkCardioEditNoteParts(rawNote,cfg){
+  const raw=String(rawNote==null?'':rawNote);
+  const out={raw,user:'',derived:[],prov:[],values:{},splitsToken:null};
+  if(!raw.trim()) return out;
+  const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const fieldRes=[];
+  ((cfg&&cfg.fields)||[]).forEach(fld=>{
+    const m=cfg.rowMap&&cfg.rowMap[fld];
+    if(!m||m.col!=='extraNote'||typeof m.template!=='function') return;
+    let probe,probeM; try{ probe=String(m.template('\u0001',{machine:''})); probeM=String(m.template('\u0001',{machine:'\u0002'})); }catch(_){ return; }
+    const parts=probe.split('\u0001'); if(parts.length!==2) return;
+    const p0=esc(parts[0].trim()), p1=esc(parts[1].trim());
+    const mm=raw.match(new RegExp(p0+'\\s*([^·|]*?)\\s*'+p1+'(?=\\s*(?:·|\\||$))','i'));
+    if(!(mm && mm[1]!=null && mm[1].trim()!=='')) return;
+    out.values[fld]=mm[1].trim();
+    const pre=(probeM!==probe)?'(?:[^·|]+\\s)?':''; // optionele machinenaam-prefix (alleen split-template)
+    fieldRes.push({val:out.values[fld],re:new RegExp('^'+pre+p0+'\\s*([^·|]*?)\\s*'+p1+'$','i')});
+  });
+  if(cfg&&cfg.splits){
+    const sp=raw.match(/splits:([0-9=.,]+)/i);
+    if(sp && sp[1].split(',').some(pair=>{const kv=pair.split('=');return parseInt(kv[0])&&isFinite(Number(kv[1]));})) out.splitsToken='splits:'+sp[1];
+  }
+  const hasTag=new RegExp(TK_C2_NOTE_TAG_RE.source,'i').test(raw);
+  const addProv=t=>{ if(out.prov.indexOf(t)<0) out.prov.push(t); };
+  const userSegs=[];
+  raw.split(/\s*·\s*/).forEach(seg=>{
+    const userSubs=[];
+    seg.split(/\s*\|\s*/).forEach(sub=>{
+      sub=sub.trim(); if(!sub) return;
+      if(fieldRes.some(r=>{const x=sub.match(r.re); return !!(x && x[1]!=null && x[1].trim()===r.val);})
+         || (out.splitsToken && sub.toLowerCase()===out.splitsToken.toLowerCase())){ out.derived.push(sub); return; }
+      // bronidentiteit nooit als bewerkbare tekst: ook een in tekst ingebedde tag gaat naar prov
+      const tags=sub.match(TK_C2_NOTE_TAG_RE);
+      if(tags){ tags.forEach(addProv); sub=sub.replace(TK_C2_NOTE_TAG_RE,' ').replace(/\s{2,}/g,' ').trim(); if(!sub) return; }
+      if(hasTag && /^(?:drag|hr) \d+(?:\.\d+)?$/i.test(sub)){ addProv(sub); return; }
+      userSubs.push(sub);
+    });
+    if(userSubs.length) userSegs.push(userSubs.join(' | '));
+  });
+  out.user=userSegs.join(' · ');
+  return out;
+}
+// Tegenhanger voor saveEditSession (bewerken van een bestaande rij). Ongewijzigde vrije tekst
+// én exact dezelfde opnieuw gegenereerde tokens → de opgeslagen note byte-identiek terug
+// (enkel openen+opslaan wijzigt niets). Anders: [vrije tekst · ]extraNote[ · prov…], prov
+// uitsluitend uit de opgeslagen rij (nooit uit UI-invoer; getypte [c2:]-tags worden gestript).
+function tkCardioEditNoteCompose(parts,userNote,extraNote){
+  const ex=String(extraNote||'').trim();
+  const user=String(userNote==null?'':userNote).trim();
+  const regen=ex?ex.split(/\s*\|\s*/).filter(Boolean):[];
+  const derived=(parts&&parts.derived)||[];
+  const sorted=a=>a.slice().sort();
+  const sameTokens=regen.length===derived.length&&sorted(regen).every((t,i)=>t===sorted(derived)[i]);
+  if(parts&&parts.raw&&user===parts.user&&sameTokens) return parts.raw;
+  const cleanUser=user.replace(TK_C2_NOTE_TAG_RE,' ').replace(/\s{2,}/g,' ').trim();
+  return [cleanUser,ex].concat((parts&&parts.prov)||[]).filter(Boolean).join(' · ');
+}
 function renderEditSessFields(ex,session){
   let f='';
   const cardioType=resolveCardioType(ex);
@@ -27171,6 +27240,7 @@ function renderEditSessFields(ex,session){
   // notitieveld toont daarna alleen de vrije gebruikersnotitie zodat hersave niet dubbelt.
   if(cardioType && session){
     const cfg=CARDIO_TYPES[cardioType]; const rawNote=String(session.note||''); let extractedAny=false;
+    const noteParts=tkCardioEditNoteParts(rawNote,cfg); // #614 P2: zelfde parser voor notitieveld én save
     (cfg.fields||[]).forEach(fld=>{
       const el=document.getElementById(ES_DOMID+'-'+fld); const m=cfg.rowMap&&cfg.rowMap[fld];
       if(!el||!m) return;
@@ -27206,7 +27276,10 @@ function renderEditSessFields(ex,session){
       if(typeof updateSplitSummary==='function') updateSplitSummary(ES_DOMID,cardioType);
     }
     const noteEl=document.getElementById('es-note');
-    if(noteEl && extractedAny){ const idx=rawNote.lastIndexOf(' · '); noteEl.value = idx>=0 ? rawNote.slice(0,idx).trim() : ''; }
+    // #614 P2: vroeger 'alles vóór de laatste " · "' → bij een PM5-note (split · [c2:id]) verdween
+    // de [c2:id]-tag en kwam split: als "vrije tekst" terug (dubbel bij save). Nu alleen echte
+    // vrije tekst; afgeleide tokens komen uit de velden, provenance blijft beschermd (save).
+    if(noteEl && (extractedAny || noteParts.derived.length || noteParts.prov.length)) noteEl.value=noteParts.user;
   }
 }
 
@@ -27239,7 +27312,11 @@ async function saveEditSession(btnEl){
     const cRow=cardioDataToRow(cardioType,d);
     const extraNote=cRow.extraNote;delete cRow.extraNote;
     Object.assign(row,cRow);
-    if(extraNote)row.note=(note?note+' · ':'')+extraNote;
+    // #614 P2: bewerken van een bestaande rij → note uit de OPGESLAGEN rij ontleden (zelfde
+    // parser als de prefill) zodat [c2:id]/gemeten tokens behouden blijven en split: niet dubbelt.
+    // Nieuw toevoegen (geen curEditSess) houdt de bestaande compositie.
+    if(curEditSess) row.note=tkCardioEditNoteCompose(tkCardioEditNoteParts(curEditSess.note,cfg),note,extraNote);
+    else if(extraNote)row.note=(note?note+' · ':'')+extraNote;
   } else if(ex.type==='wod'){
     const fmtEl=document.getElementById(ES_DOMID+'-wodfmt');
     const fmt=fmtEl?fmtEl.value:'for_time';

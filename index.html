@@ -20092,6 +20092,9 @@ function isSameLocalDay(ts){
 }
 async function startT(t){
   execFocus[t]=0; if(typeof execSkipped!=='undefined')execSkipped[t]=new Set(); // F0.7P/Q: verse start bij eerste oefening, geen skips
+  // A session copy of TRAIN_CFG (execEnsureEditableWorkout) belongs to one unfinished execution only:
+  // a later fresh start must use the template and must not inherit another training's instance.
+  if(resolvedWorkout&&resolvedWorkout._sessionCopy===true&&curT!==t)resolvedWorkout=null;
   // Werkblok D: als dit startpad NIET het zojuist door Preview klaargezette
   // resolvedWorkout voor déze training is, is elke bestaande activeInstanceId
   // sowieso niet van toepassing — nooit een verouderd/ander instance-id meenemen.
@@ -25204,7 +25207,8 @@ function execEnsureEditableWorkout(t,exId){
   if(resolvedWorkout&&resolvedWorkout.t===t)return resolvedWorkout.items.some(e=>e.id===exId);
   const tpl=(typeof TRAIN_CFG!=='undefined'&&TRAIN_CFG[t])||[];
   if(!tpl.some(e=>e.id===exId))return false;
-  resolvedWorkout={t:t,items:tpl.map(e=>({...e})),instanceId:activeInstanceId||null};
+  // _sessionCopy: not a Preview start; startT/startRepeatWorkout never treat it as one.
+  resolvedWorkout={t:t,items:tpl.map(e=>({...e})),instanceId:activeInstanceId||null,_sessionCopy:true};
   return true;
 }
 async function execRemoveExercise(t,exId){
@@ -33875,6 +33879,7 @@ async function startRepeatWorkout(){
   }catch(e){ activeInstanceId=null; /* instance-tracking mag nooit de repeat-start zelf blokkeren */ }
   window._prefillMap=prefillMap;
   await ensureVasteTrainingScreenExists(t);
+  resolvedWorkout=null; // repeat never runs via Preview: no stale Preview list or session copy
   curT=t;sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
   await renderTrainScreen(t);
   window._prefillMap=null;

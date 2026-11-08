@@ -39,7 +39,7 @@ Browsertests van main (`fGuidedPreviewAthleteConstraints`, `fHomeDagfactorBasisS
 
 ## Onafhankelijke review (tweede agent, merge `51f4cb9`)
 
-Geen blockers. Drie majors en vier minors hersteld in een vervolgcommit, elk met een proef die op de oude code faalt (`core/fTk587ReviewFindings.test.js` G1–G4, `core/fTk587IntegrationAcceptance.test.js` G1–G3; mutatiegetest).
+Geen blockers. Drie majors en vier minors hersteld in een vervolgcommit, elk met een proef die op de oude code faalt (`core/fTk587ReviewFindings.test.js` G1–G5, `core/fTk587IntegrationAcceptance.test.js` G1–G3; mutatiegetest).
 
 | Bevinding | Herstel |
 |---|---|
@@ -51,6 +51,8 @@ Geen blockers. Drie majors en vier minors hersteld in een vervolgcommit, elk met
 | MINOR-3 Late instance-id werd vóór de eigenaarscontrole globaal gezet; oude snapshot kon in een nieuwe programmastart blijven | Toewijzing pas na `isCurrent()`; snapshot gereset vóór elke verse start. |
 | MINOR-4 Lege afronding maakte een wees-instance; programmadraft zonder snapshot (oudere build) kon nooit worden afgerond | Instance alleen bij uitgevoerde sets; zonder snapshot afronden zoals vóór #587 (rijen zonder instance). |
 | MINOR-5 Spierbelasting/herstel voor coachaccounts niet eigenaar-gescopt | Open, bestaand in beide ouders; zie B. |
+| Hercontrole: sessiekopie van MINOR-2 kon in een latere verse start van dezelfde training blijven (oude aangepaste lijst, programma-instance van een andere training) | Kopie gemarkeerd `_sessionCopy`; `startT` laat hem vallen bij een andere actieve training, `startRepeatWorkout` start altijd zonder Preview-lijst. Proef G5. |
+| Hercontrole INFO: afronding met alleen opwarmsets maakt nog een instance; programma-afronding met verlopen sessie offline blijft geblokkeerd (draft behouden) | Open, geen dataverlies. |
 
 Tijdens de herverificatie gevonden: `core/tk603NormalAsyncOwnerRace.test.js` gaf in de release-gate "ok" terwijl na de merge 4 van 8 proeven faalden. Oorzaak: het harnas kende de #587-helpers niet (`newClientRowId`, `persistTrainingDraft`, `execSkipSet`, `sessionProgramSnapshot`) en de bevestigde instance-afronding (#587 verwacht `true`), en een nooit afgehandelde promise liet node met exitcode 0 stoppen voordat de fout werd gemeld. Harnas aangevuld met de echte helpers; de runner faalt nu als niet alle proeven afronden. Resultaat 8/8. Alle 527 core-suites daarnaast los gedraaid en op verborgen fouten gecontroleerd.
 

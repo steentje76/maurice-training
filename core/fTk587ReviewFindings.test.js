@@ -105,5 +105,31 @@ function load(ctx, names) { vm.createContext(ctx); names.forEach(n => vm.runInCo
   e.execReplaceExercise('A', 'ghost'); await e.pick({ id: 'incline', name: 'Incline', scope: 'personal' });
   ok(e.resolvedWorkout === null && !e.toasts.some(t => /Vervangen door/.test(t)), 'G4 unknown item: no fake success, nothing materialised');
 
+  // ── G5 A session copy never leaks into a later fresh start (re-review finding).
+  const el = { classList: { add: noop, remove: noop } };
+  const s = load({
+    console, Object, JSON, Array, Set, Date, Number, toasts: [], toast: noop, exercises: [],
+    ExerciseCatalogService: { byId: () => null },
+    resolvedWorkout: null, TRAIN_CFG: { A: tpl() }, sessionExtra: [], sessionLog: {}, activeInstanceId: null, curT: null,
+    execFocus: {}, execSkipped: {}, pctSelection: {}, rpeManual: {}, warmupState: {}, cardioSplitMode: {}, cardioSplits: {}, manualKgSets: {}, sessionRxAdj: {},
+    trainPaused: false, pausedAccumMs: 0, lastSetDoneAt: {}, saveState: '', lastSaveTs: null, trainStart: 0,
+    applySessionRecovery: (t, base) => base, openExPicker: async cb => { s.pick = cb; }, confirmModal: async () => true,
+    canonicalNewExerciseItem: async () => ({ suggestedWeight: null }), renderTrainScreen: async () => {}, scheduleAutosave: noop,
+    cleanupOtherTrainScreens: noop, ensureVasteTrainingScreenExists: async () => {}, consumeHomeResumeIntent: () => false,
+    restoreTrainingDraft: () => s.draft, isSameLocalDay: () => true, draftHasData: () => true, clearTrainingDraft: () => { s.draft = null; },
+    getExerciseMuscles: () => [], recoveryAdjustmentForToday: async () => ({ rpeDelta: 0, setsDelta: 0 }), recoveryAdjustToast: noop,
+    updateSaveIndicator: noop, startTrainTimer: noop, tkProductTelemetry: noop, tk603DraftOwnerMatches: () => true,
+    restoreExecutionDraft: noop, restoreSessionLogToDom: noop, document: { getElementById: () => el, querySelectorAll: () => [] }
+  }, [...REF_FNS, 'getSessionExs', 'execExerciseHasData', 'execEnsureEditableWorkout', 'execReplaceExercise', 'startT']);
+  s.curT = 'A'; s.sessionLog = { bench: { sets: [{ kg: '100', reps: '5' }] } };
+  s.execReplaceExercise('A', 'bench'); await s.pick({ id: 'incline', name: 'Incline', scope: 'personal' });
+  ok(s.resolvedWorkout && s.resolvedWorkout._sessionCopy === true, 'G5 TRAIN_CFG edit creates a marked session copy');
+  // Pause A, start program P (own instance), pause, then start A fresh from Trainen.
+  s.curT = 'prog_P'; s.activeInstanceId = 'P_inst'; s.draft = { t: 'prog_P', ts: Date.now() };
+  await s.startT('A');
+  ok(s.resolvedWorkout === null && s.activeInstanceId === null, 'G5 fresh start drops the session copy and never inherits the program instance');
+  ok(s.getSessionExs('A').map(x => x.id).join() === 'bench,row', 'G5 fresh start uses the unchanged template');
+  ok(fn('startRepeatWorkout').includes('resolvedWorkout=null;'), 'G5 repeat start never reuses a Preview list or session copy');
+
   console.log('RESULTAAT: ' + pass + ' geslaagd, 0 mislukt');
 })().catch(err => { console.error(err); console.log('RESULTAAT: ' + pass + ' geslaagd, 1 mislukt'); process.exitCode = 1; });

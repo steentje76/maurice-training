@@ -25411,7 +25411,7 @@ async function finishSession(){
       // v4.70.4: alleen een AANTOONBAAR geslaagde write telt (sbPostQ geeft bij een PostgREST-400 false).
       // Retry schrijft een al gepersisteerde oefening niet opnieuw (geen dubbele rij).
       const _so=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:context.instanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,...(_so.tk504_binding?{id:tk504StableSessionId(l)}:{})},_so); if(!isCurrent())return; if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); }
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:context.instanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,...(_so.tk504_binding?{id:tk504StableSessionId(l)}:{})},_so); if(!isCurrent())return; if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); l._sessionRowQueued=_so.status==='queued'; } else if(l._sessionRowQueued===true)queued++; /* #614: eerder alleen gequeued ≠ serverbevestigd */
       saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -25429,7 +25429,7 @@ async function finishSession(){
       // P1: oefeningsnotitie meeschrijven in de note-kolom (additief; buildStrengthSessionRow ongewijzigd).
       if(l.exNote)row.note=(row.note?row.note+' · ':'')+'Notitie: '+l.exNote;
       const _soS=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ if(_soS.tk504_binding)row.id=tk504StableSessionId(l); const _wOkS=await writeSessionRow(row,_soS); if(!isCurrent())return; if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); } // v4.70.4
+      if(!l._sessionRowPersistedAt){ if(_soS.tk504_binding)row.id=tk504StableSessionId(l); const _wOkS=await writeSessionRow(row,_soS); if(!isCurrent())return; if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); l._sessionRowQueued=_soS.status==='queued'; } else if(l._sessionRowQueued===true)queued++; // v4.70.4 · #614: eerder alleen gequeued ≠ serverbevestigd
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
@@ -25458,7 +25458,17 @@ async function finishSession(){
   // NIET wissen (sessionLog/modal blijven intact) zodat de sporter opnieuw kan proberen.
   if(!isCurrent())return;
   if(failed>0){
-    if(window.toast)toast(saved>0?(saved+' opgeslagen, '+failed+' mislukt — controleer je verbinding en probeer opnieuw'):('Opslaan mislukt ('+failed+') — probeer opnieuw'));
+    // #614: de per-oefening bevestigingsmarkers (_sessionRowPersistedAt) stonden na een gedeeltelijke
+    // fout alleen in het geheugen. Na een procesherstart zonder pagehide/visibilitychange-flush
+    // verstuurde een retry de reeds bevestigde rijen opnieuw met een NIEUWE client-UUID (dubbele
+    // historie). Leg ze direct duurzaam vast — alleen voor dezelfde, nog actuele eigenaar/sessie
+    // (isCurrent() is hierboven gecontroleerd); er wordt niets naar de server geschreven.
+    if(saved>0&&typeof persistTrainingDraft==='function'){try{persistTrainingDraft(true);}catch(_){}}
+    // #614: een gequeuede rij is NIET door de server bevestigd en mag niet als 'opgeslagen' tellen.
+    const _bevestigd=saved-queued;
+    if(window.toast)toast(saved>0?(queued>0
+      ?(_bevestigd+' opgeslagen, '+queued+' in wachtrij (nog niet bevestigd), '+failed+' mislukt — controleer je verbinding en probeer opnieuw')
+      :(saved+' opgeslagen, '+failed+' mislukt — controleer je verbinding en probeer opnieuw')):('Opslaan mislukt ('+failed+') — probeer opnieuw'));
     return;
   }
   closeModal('m-session-end');stopTrainTimer();

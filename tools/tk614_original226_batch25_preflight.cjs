@@ -871,4 +871,4 @@ module.exports=Object.freeze({EXPECTED_MAPPING_SHA256,EXPECTED_SOURCE_CATALOG_SH
   sourceCatalogSha,batchRange,batchSchedule,batchOf,planBatch,verifyBatchPlan,assertDisposableTargetState,
   planAll,verifyAllPlan,simulateBatches,assertAll226Staged,
   renderRollbackSql,renderSandboxHarness,renderAllRollbackSql,renderAllSandboxHarness,deriveAdversarialVariant,
-  parseArgs,run});
+  renderBatchBlock,parseArgs,run});

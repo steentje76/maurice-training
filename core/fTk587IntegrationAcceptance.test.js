@@ -214,6 +214,25 @@ const loggedSets = log => Object.entries(log).flatMap(([id, l]) => (l.sets || []
     ok(history.includes(label), 'F1 history shows ' + label);
   ok(!/p6<\/b>|p7<\/b>|p8<\/b>/.test(history), 'F1 unperformed planned items not shown as performed');
 
+  // ── G. Lazy program instance edge cases (review MINOR-3/4).
+  {
+    const snap1 = { version: 'program_snapshot.v1', items: [{ exercise_id: 'g1', sets: 1, reps: '5' }] };
+    const mk = snapshot => { const g = env(); g.sessionProgramSnapshot = snapshot; g.sessionExtra = [{ id: 'g1', _t: g.curT, type: 'strength', sets: 1, reps: '5' }]; g.field('ai-summary-body'); g.creates = 0; return g; };
+    let g = mk(snap1);
+    g.createTrainingInstance = async () => { g.creates++; return 'orphan'; };
+    await g.finishSession();
+    ok(g.creates === 0 && g.server.size === 0, 'G1 empty finish creates no orphan program instance');
+    g = mk(snap1); fill(g, 'g1', [[80, 5]]); await complete(g, 'g1');
+    g.createTrainingInstance = async () => { g.creates++; g.owner = OWNER_B; return 'instance-of-A'; };
+    await g.finishSession();
+    ok(g.creates === 1 && g.activeInstanceId === null && g.server.size === 0, 'G2 account switch during late create: instance id never lands in the other account, no rows');
+    g = mk(null); fill(g, 'g1', [[80, 5]]); await complete(g, 'g1');
+    g.createTrainingInstance = async () => { g.creates++; return 'x'; };
+    await g.finishSession();
+    const gRows = [...g.server.values()];
+    ok(g.creates === 0 && g.cleared === true && gRows.length === 1 && gRows[0].training_instance_id == null, 'G3 older draft without plan snapshot finishes (rows without instance) instead of being trapped');
+  }
+
   console.log('fTk587IntegrationAcceptance: ' + pass + ' geslaagd, 0 mislukt — 8 oefeningen, ' + expected.length + ' sets, ' + expectedVolume + ' kg');
   console.log('RESULTAAT: ' + pass + ' geslaagd, 0 mislukt');
 })().catch(e => { console.error(e); console.log('RESULTAAT: ' + pass + ' geslaagd, 1 mislukt'); process.exitCode = 1; });

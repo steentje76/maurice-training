@@ -13,7 +13,8 @@ function extract(name) { const s = html.search(new RegExp('(?:async )?function '
 const INTEGRATION_FNS = ['logSet', 'toggleSetDone', 'getSessionExs', 'execCompleteExercise', 'execExerciseHasData', 'addWorkSet',
   'confirmSwapExercise', 'execReplaceExercise', 'persistTrainingDraft', 'restoreExecutionDraft', 'tk603DraftOwnerMatches',
   'buildStrengthSessionRow', 'finishSession', 'programHistoryHtml', 'previewApplySwap', 'previewChooseReplacement',
-  'previewAddExercise', 'selectExPickerItem', 'cleanupExPickerKeyboard', 'v43OverallRecovery', 'tk603CatalogRefFromPickerSelection'];
+  'previewAddExercise', 'selectExPickerItem', 'cleanupExPickerKeyboard', 'v43OverallRecovery', 'tk603CatalogRefFromPickerSelection',
+  'strengthExecutionPrefill', 'execEnsureEditableWorkout', 'execRemoveExercise'];
 const evidence = { package: PKG, checks: [], physicalSamsung: false, pm5: false, account: 'none (synthetic, no login)' };
 const pass = c => { evidence.checks.push(c); console.log('PASS ' + c); };
 

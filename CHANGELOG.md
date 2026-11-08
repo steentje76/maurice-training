@@ -5,6 +5,7 @@
 - #587 (decimalen, programma-uitvoering, extra sets, hervatten, logging, historie, spierbelasting-provenance, PM5-resultaten en gemeten splits) samengevoegd met main: 582 MoveKit-oefeningen, beveiligde posters/video, getypeerde FK en eigenaarsbinding blijven intact.
 - Integratiefouten hersteld: sessierijen van een programma krijgen weer de lui aangemaakte instance; Preview-toevoeging uit de bibliotheek draagt MoveKit-herkomst; herstel zonder eigenaar is onbekend in plaats van 100%.
 - Nieuwe acceptatieproef: 8 oefeningen met vervangen, toevoegen, extra set, herstart, offline afronden en idempotente retry; opgeslagen sets gelijk aan geregistreerde sets.
+- Review-herstel: persoonlijke tegel krijgt in Preview nooit een MoveKit-claim; uitvoeringsprefill van catalogusoefeningen gebruikt geen persoonlijke 1RM; behouden oefening niet dubbel herstel-aangepast; vervangen/verwijderen werkt ook bij vaste training zonder Preview; geen wees-instance bij lege afronding; oudere programmadraft zonder snapshot is afrondbaar; secret-/mediacontrole in de APK-workflow kan nu echt falen.
 - Android: variant `com.trainingskompas.app.tk587test20261107` (**TK Test 7 november**), debug-ondertekend, naast de bestaande app. Ongeldig `gebruikerstest`-blok uit `signingConfigs` naar buildTypes verplaatst.
 - Open: fysieke Samsung/PM5-acceptatie, #579 intervalprogrammering, 226 legacy-media, UX-plaatsingswensen 25-002/003. Zie docs/TK587_INTEGRATION_20261107.md.
 

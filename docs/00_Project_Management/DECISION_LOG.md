@@ -3067,3 +3067,11 @@ Zolang de status "Testing" is, moet elke koppeling na 7 dagen opnieuw worden gel
 - Alternatieven: alleen #587 (verliest MoveKit/#603) of alleen main (verliest herstelpunten) — afgewezen.
 - Impact: geen migratie, geen historische datawijziging. 226 legacy-media blijven aparte schuld. Productie-merge alleen na groene CI, onafhankelijke review en Samsung-acceptatie.
 - Verantwoordelijke: Maurice
+
+## DEC-TK587-INT-002 — Eén herkomstbron per wisselpad en geen 1RM-fallback voor catalogusitems (8 november 2026)
+- Datum: 8 november 2026
+- Beslissing: in Preview bepaalt het bibliotheekpad de herkomst uitsluitend uit de getikte tegel en het "Kies"-pad uitsluitend uit het aangeboden alternatief. De uitvoeringsprefill van een catalogus-gebonden item gebruikt alleen de eigen catalogusbasis (`sourceBound`). Vaste trainingen zonder Preview krijgen bij vervangen/verwijderen een sessiekopie van het sjabloon; het sjabloon zelf wijzigt nooit.
+- Reden: onafhankelijke review van de integratiemerge vond een herkomstlek en een verkeerd voorgeschreven gewicht door de combinatie van #587 en #603.
+- Alternatieven: vervangen bij vaste training zonder Preview weigeren — afgewezen, de knop bestaat al en zou dan voor dit startpad nooit werken.
+- Impact: geen migratie, geen datawijziging. Spierbelasting voor coachaccounts blijft open (bestaand).
+- Verantwoordelijke: Maurice

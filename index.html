@@ -10729,18 +10729,20 @@ async function previewChooseReplacement(){
   await openExPicker(function(ex){
     if(previewCtx!==owner||owner.swapPickerFor!==origId)return;
     // #603: only the actually tapped picker object may carry a MoveKit source claim.
-    previewApplySwap(origId,ex.id,tk603CatalogRefFromPickerSelection(ex));
+    previewApplySwap(origId,ex.id,tk603CatalogRefFromPickerSelection(ex),true);
   });
 }
-async function previewApplySwap(origExId,newExId,pickerRef){
+async function previewApplySwap(origExId,newExId,pickerRef,fromPicker){
   const owner=previewCtx;
   if(!owner||!owner.order.includes(origExId))return;
   if(previewWorkingList().some(it=>it.original_exercise_id!==origExId&&it.exercise_id===newExId)){
     toast('Deze oefening staat al in je training');return;
   }
-  // The preview swap UI selects only real catalog alternatives, not bare IDs.
-  const offered=owner.swapCandidateFor===origExId&&owner.swapCandidateRefs&&owner.swapCandidateRefs[newExId];
-  const sourceRef=tk504ValidateCatalogSourceRef(newExId,offered||pickerRef||null);
+  // #603: exactly one source decides provenance. The library picker uses only the tapped tile
+  // (a personal tile with a catalog-shaped ID stays personal, even while the panel still offers
+  // that ID); the panel's "Kies" buttons use only the offered catalog alternative, never a bare ID.
+  const offered=fromPicker!==true&&owner.swapCandidateFor===origExId&&owner.swapCandidateRefs&&owner.swapCandidateRefs[newExId];
+  const sourceRef=tk504ValidateCatalogSourceRef(newExId,fromPicker===true?(pickerRef||null):(offered||null));
   const replacement=resolvePickerEx(newExId,sourceRef?'catalog':'auto');
   const original=resolvePickerEx(owner.swaps[origExId]||origExId);
   if(!replacement||replacement.active===false)return;
@@ -20353,7 +20355,10 @@ function strengthExecutionPrefill(ex,prevS){
   const reps=resolvePrescriptionRepTarget(ex.reps)||repsPrefillFromRange(ex.reps)||null;
   let kg=ex.suggestedWeight, resolved=null;
   if(kg==null){
-    resolved=resolveWorkingWeight(ex.id,{reps:reps,rpe:ex.rpe,prev:prevS,oneRM:getOneRM(ex.id)||estimatedOneRM(ex.id)||null});
+    // #603: a catalog-bound live item uses only its own catalog basis, never the personal same-ID manual 1RM.
+    const catalogBound=typeof tk603LiveIsCatalog==='function'&&tk603LiveIsCatalog(ex.id)===true;
+    const oneRM=catalogBound?tk603LiveOneRM(ex.id,'manual-first'):(getOneRM(ex.id)||estimatedOneRM(ex.id));
+    resolved=resolveWorkingWeight(ex.id,{reps:reps,rpe:ex.rpe,prev:prevS,oneRM:oneRM||null,sourceBound:catalogBound});
     kg=resolved?.suggested??null;
   }
   return {kg:kg,reps:reps,rpe:ex.rpe??'',sets:ex.sets??4,detrain:resolved};
@@ -25191,6 +25196,17 @@ function execExerciseHasData(exId){
   const wuData=(l.wu||[]).some(s=>s&&(s.kg||s.reps));
   return setsData||wuData||!!(l.cardio&&(l.cardio.time||l.cardio.dist||l.cardio.dist_km||l.cardio.cals))||!!(typeof tkC2IsLoggableSummary==='function'&&tkC2IsLoggableSummary(l.c2));
 }
+// A vaste training started without Preview runs straight from TRAIN_CFG (the user's template).
+// Replace/remove then need a session-only copy, otherwise the edit silently does nothing while the
+// UI reports success. TRAIN_CFG itself is never mutated. False = item not in this training.
+function execEnsureEditableWorkout(t,exId){
+  if(sessionExtra.some(e=>e.id===exId&&e._t===t))return true;
+  if(resolvedWorkout&&resolvedWorkout.t===t)return resolvedWorkout.items.some(e=>e.id===exId);
+  const tpl=(typeof TRAIN_CFG!=='undefined'&&TRAIN_CFG[t])||[];
+  if(!tpl.some(e=>e.id===exId))return false;
+  resolvedWorkout={t:t,items:tpl.map(e=>({...e})),instanceId:activeInstanceId||null};
+  return true;
+}
 async function execRemoveExercise(t,exId){
   const nm=(exercises.find(e=>e.id===exId)||{}).naam||'deze oefening';
   const heeftData=execExerciseHasData(exId);
@@ -25200,6 +25216,7 @@ async function execRemoveExercise(t,exId){
     {title:'Oefening verwijderen',okLabel:'Verwijderen',cancelLabel:'Annuleren',danger:heeftData}
   );
   if(!ok)return;
+  if(!execEnsureEditableWorkout(t,exId)){toast('Deze oefening kan hier niet worden verwijderd');return;}
   if(resolvedWorkout&&resolvedWorkout.t===t)resolvedWorkout.items=resolvedWorkout.items.filter(e=>e.id!==exId);
   sessionExtra=sessionExtra.filter(e=>!(e.id===exId&&e._t===t));
   delete sessionLog[exId]; // voorkomt orphan/ghost-data in finishSession() voor een niet meer zichtbare oefening
@@ -25216,12 +25233,15 @@ function execReplaceExercise(t,exId){
     if(!newEx||!newEx.id||newEx.id===exId)return;
     const replaced=newEx; // #603: preserve actual selected catalog/personal object
     if(getSessionExs(t).some(e=>e.id===newEx.id)){toast('Deze oefening staat al in deze training');return;}
-    const _original=getSessionExs(t).find(e=>e.id===exId);
     const heeftData=execExerciseHasData(exId);
     if(heeftData){
       const ok=await confirmModal('Voor '+nm+' zijn al sets geregistreerd in deze sessie. De uitgevoerde sets blijven onder deze oefening bewaard. De vervangende oefening begint zonder uitgevoerde sets.',{title:'Oefening vervangen',okLabel:'Toch vervangen',cancelLabel:'Annuleren',danger:true});
       if(!ok)return;
     }
+    if(!execEnsureEditableWorkout(t,exId)){toast('Deze oefening kan hier niet worden vervangen');return;}
+    // Raw source item, not the recovery-adjusted getSessionExs() view (that would adjust the retained copy twice).
+    const _rawOriginal=(resolvedWorkout&&resolvedWorkout.t===t&&resolvedWorkout.items.find(e=>e.id===exId))||sessionExtra.find(e=>e.id===exId&&e._t===t)||null;
+    const _original=_rawOriginal?{..._rawOriginal}:null;
     // GAP-P3-033: intent behouden, load/provenance canonical opnieuw voor de NIEUWE oefening (geen prevS-fallback van A).
     const sourceRef=tk603CatalogRefFromPickerSelection(replaced);
     if(resolvedWorkout&&resolvedWorkout.t===t){
@@ -25769,12 +25789,15 @@ async function finishSession(){
   try{
   const t=curT,list=getSessionExs(t),today=td();let saved=0,failed=0;
   // A program finish must not discard its only plan snapshot when instance creation failed.
-  if(t.startsWith('prog_')&&!activeInstanceId){
-    if(!sessionProgramSnapshot){toast('Programmasnapshot ontbreekt; concept blijft bewaard.');return;}
-    activeInstanceId=await createTrainingInstance({snapshot:sessionProgramSnapshot});
-    if(!activeInstanceId){toast('Programma-instantie kon niet worden opgeslagen; concept blijft bewaard.');return;}
+  // Created lazily only when there is something to save (no orphan instance on an empty finish).
+  // A draft from an older build without programSnapshot finishes as before (rows without instance)
+  // instead of being trapped in local storage.
+  if(t.startsWith('prog_')&&!activeInstanceId&&sessionProgramSnapshot&&list.some(e=>execExerciseHasData(e.id))){
+    const _lateInstanceId=await createTrainingInstance({snapshot:sessionProgramSnapshot});
     if(!isCurrent())return; // #603: a late instance create never binds to another owner/session
-    context.instanceId=activeInstanceId; // all rows of this finish carry the same instance
+    if(!_lateInstanceId){toast('Programma-instantie kon niet worden opgeslagen; concept blijft bewaard.');return;}
+    activeInstanceId=_lateInstanceId;
+    context.instanceId=_lateInstanceId; // all rows of this finish carry the same instance
     persistTrainingDraft(true);
   }
   // ROADMAP POST-V1 #1 — duration_s per sessie vastleggen (RAW DATA). Hergebruikt
@@ -33421,6 +33444,7 @@ async function launchProgramTrainScreen(adjustment){
     if(!tk603DraftOwnerMatches(_draft))return;
     activeInstanceId=_draft.instanceId||null;
   }else{
+    sessionProgramSnapshot=null; // never carry a previous (possibly other-account) snapshot into this start
     try{
       sessionProgramSnapshot={
           source:'program_block',

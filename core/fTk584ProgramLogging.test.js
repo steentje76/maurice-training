@@ -111,7 +111,7 @@ function fields(c,id,kg,reps,n=3){for(let i=1;i<=n;i++){
   sbPatchQ:async()=>true,generateSessionSummaryAI:async()=>'',openModal:()=>{},refreshStats:()=>{}});
  c.field('ai-summary-body');c.sessionExtra=fixture.map(([id])=>({id,_t:c.curT,type:'strength',sets:3}));
  for(const [id,kg,reps] of fixture)c.sessionLog[id]={sets:Array.from({length:3},()=>({kg:String(kg),reps:String(reps),done:true}))};
- for(const n of ['tk603CanUpdatePersonalRecord','buildStrengthSessionRow','finishSession'])vm.runInContext(fn(n),c);
+ for(const n of ['tk603CanUpdatePersonalRecord','execExerciseHasData','buildStrengthSessionRow','finishSession'])vm.runInContext(fn(n),c);
  const warn=c.console.warn;c.console={...console,warn:()=>{}};
  c.activeInstanceId=null;c.createTrainingInstance=async()=>null;
  await c.finishSession();assert.equal(server.size,0,'failed instance persistence cannot silently lose the original plan');assert(!c.cleared);

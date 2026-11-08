@@ -37,6 +37,25 @@ Testharnassen van #587 laden nu ook de echte #603-helpers die de productiefuncti
 
 Browsertests van main (`fGuidedPreviewAthleteConstraints`, `fHomeDagfactorBasisSafety`, `fInzichtHerstelBelasting`, `fGuidedIntegrationAvoidSave`) draaiden in main-CI zonder Chromium (SKIP) en faalden met Chromium al op main zelf: hun fixtures hadden geen aangemelde eigenaar terwijl #603 drafts en reads aan een eigenaar bindt. Ze krijgen nu een synthetische eigenaar. `fGuidedIntegrationAvoidSave` C1–C5 blijft identiek aan main rood (25/40): de gesimuleerde server kent de #603-bindings-RPC niet, waardoor Guided-opslag van catalogusoefeningen terecht fail-closed weigert. Dat is een bestaande harnasbeperking van main, geen regressie van deze merge. `fHomeDagfactorBasisSafety` R4 (regelafbreking op 360 px) faalt lokaal ook op #587 zelf; lettertype-afhankelijk.
 
+## Onafhankelijke review (tweede agent, merge `51f4cb9`)
+
+Geen blockers. Drie majors en vier minors hersteld in een vervolgcommit, elk met een proef die op de oude code faalt (`core/fTk587ReviewFindings.test.js` G1–G4, `core/fTk587IntegrationAcceptance.test.js` G1–G3; mutatiegetest).
+
+| Bevinding | Herstel |
+|---|---|
+| MAJOR-1 Preview "Kies zelf uit de bibliotheek": persoonlijke tegel met catalogusvormige ID kreeg de MoveKit-claim van het aangeboden alternatief | Per pad precies één bron: bibliotheek alleen de getikte tegel, "Kies" alleen het aangeboden alternatief. |
+| MAJOR-2 Uitvoeringsprefill (#587) gebruikte voor een catalogus-gebonden item de persoonlijke 1RM met gelijke ID | `tk603LiveIsCatalog` → alleen eigen catalogusbasis, `sourceBound`. |
+| MAJOR-3 Secret-/licentiemediacontrole in de APK-workflow kon nooit falen (`!` negeert `set -e`; `grep -q` in pipe met `pipefail`) | Bestandsscanner `tools/tk587-bundle-scan.cjs` met zelftest (herkent service_role-JWT, video, licentiebestand); geen pipes. Gecontroleerd op de APK van 1 november: 0 bevindingen. |
+| MINOR-1 Behouden uitgevoerde oefening dubbel herstel-aangepast | Origineel uit de ruwe bron, niet uit de aangepaste weergave. |
+| MINOR-2 Vervangen/verwijderen bij vaste training zonder Preview deed niets maar meldde succes; dubbele kaart en dubbel volume | Sessiekopie van het sjabloon (`execEnsureEditableWorkout`); `TRAIN_CFG` blijft ongewijzigd; onbekend item → melding, geen nepsucces. |
+| MINOR-3 Late instance-id werd vóór de eigenaarscontrole globaal gezet; oude snapshot kon in een nieuwe programmastart blijven | Toewijzing pas na `isCurrent()`; snapshot gereset vóór elke verse start. |
+| MINOR-4 Lege afronding maakte een wees-instance; programmadraft zonder snapshot (oudere build) kon nooit worden afgerond | Instance alleen bij uitgevoerde sets; zonder snapshot afronden zoals vóór #587 (rijen zonder instance). |
+| MINOR-5 Spierbelasting/herstel voor coachaccounts niet eigenaar-gescopt | Open, bestaand in beide ouders; zie B. |
+
+Tijdens de herverificatie gevonden: `core/tk603NormalAsyncOwnerRace.test.js` gaf in de release-gate "ok" terwijl na de merge 4 van 8 proeven faalden. Oorzaak: het harnas kende de #587-helpers niet (`newClientRowId`, `persistTrainingDraft`, `execSkipSet`, `sessionProgramSnapshot`) en de bevestigde instance-afronding (#587 verwacht `true`), en een nooit afgehandelde promise liet node met exitcode 0 stoppen voordat de fout werd gemeld. Harnas aangevuld met de echte helpers; de runner faalt nu als niet alle proeven afronden. Resultaat 8/8. Alle 527 core-suites daarnaast los gedraaid en op verborgen fouten gecontroleerd.
+
+Info uit de review: `tkSessieOptsVoor` is in de acceptatieproef gestubd, dus de getypeerde FK-binding is niet end-to-end in die proef gedekt (wel in de bestaande #603-suites). De tweede `saved===0`-tak in `finishSession` is onbereikbaar. De testvarianten zijn debugbuilds: via adb is WebView-debugging mogelijk, dus het toestel niet aan derden uitlenen met een aangemeld account.
+
 ## B. Gebruikersbevindingen
 
 Status: CODE = in code hersteld, TEST = geautomatiseerd bewezen, DEVICE = fysiek Samsung/PM5 bevestigd.
@@ -50,7 +69,7 @@ Status: CODE = in code hersteld, TEST = geautomatiseerd bewezen, DEVICE = fysiek
 | Hervatten exact aangepaste uitvoering (25-011) | CODE+TEST, incl. procesherstart in emulator. DEVICE open. |
 | Training afsluiten, offline/retries | CODE+TEST: gedeeltelijke fout behoudt draft, retry zonder dubbele rijen, alle rijen aan één instance. MoveKit-catalogusoefeningen worden offline niet gequeued maar fail-closed bewaard tot online (bestaand #603-gedrag van main). DEVICE open. |
 | Trainingshistorie gepland/aangepast/uitgevoerd | CODE+TEST. |
-| Spierbelasting alleen uit opgeslagen sets (24-007) | CODE+TEST, eigenaar-gescopt. Oorspronkelijke waarneming niet fysiek gereproduceerd. |
+| Spierbelasting alleen uit opgeslagen sets (24-007) | CODE+TEST voor de eigen weergave; `v43OverallRecovery` is eigenaar-gescopt. Open (bestaand in beide ouders): `muscleLoadBySvgId`, `getRelevantMuscleRecovery` en `refreshMuscleRecoveryHeatmap` filteren niet op eigenaar, waardoor bij een coachaccount sessies van atleten (RLS v507) meetellen. Voor een niet-coachaccount geen effect. Oorspronkelijke waarneming niet fysiek gereproduceerd. |
 | Trainingsadvies gewicht/reps/RPE (25-009/012) | CODE+TEST: bestaande resolver, target-RPE wint, geen verzonnen gewicht. Verdere integratieproef open. |
 | Mobiele setvelden (25-010) | CODE+TEST: 320/360/390/430 px bij 100% en 130%. DEVICE open. |
 | Apparaatinstellingen (25-008) | CODE+TEST per eigenaar/apparaatvariant. DEVICE open. |
@@ -75,6 +94,7 @@ Technisch:
 - Aparte applicationId: eigen WebView-opslag, eigen draft en offlinewachtrij. Geen gedeelde lokale staat met de productie-app.
 - Zelfde productie-backend (Supabase `mhfxhzkdmgkaplicdszg`, Netlify `maurice-art`). Geen nieuwe migraties. Alleen-lezen vastgesteld: `training_instances.snapshot` (jsonb) mag door de eigenaar worden bijgewerkt (RLS `auth.uid() = user_id`, geen blokkerende trigger); `sessions.intervals_detail`, `protocol_*`, `training_instance_id`, `sets_detail`, `edit_revision` bestaan.
 - Writes zijn eigenaar-gebonden en idempotent.
+- Debugbuild (debuggable): met USB-debugging en adb is de WebView, inclusief sessietoken, uitleesbaar. Alleen op het eigen toestel gebruiken.
 
 Niet aangetoond: read-after-write met een echt account in de APK (CI heeft geen account) en fysiek Samsung-gedrag. Daarom **geen formele vrijgave voor persoonlijk gebruik**. Advies: eerst de acceptatiestappen hieronder; train nooit tegelijk in beide apps; koppel geen wearables in de testapp (OAuth-terugkeer is bewust uitgeschakeld).
 

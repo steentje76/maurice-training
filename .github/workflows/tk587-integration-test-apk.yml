@@ -52,11 +52,11 @@ jobs:
           node scripts/tk584-browser-acceptance.cjs
           node scripts/tk-all-browser-acceptance.cjs
       - name: No secrets or licensed MoveKit sources in the web bundle
-        shell: bash
+        # Plain exit code of a file scanner (no negation, no pipe): a finding always fails the job.
+        # The self-test first proves the scanner detects a service_role JWT, a video and a licence file.
         run: |
-          set -euo pipefail
-          ! grep -rIlE 'service_role|SUPABASE_SERVICE|sk_live_|BEGIN (RSA |EC )?PRIVATE KEY' www/ --include='*.html' --include='*.js' --include='*.json'
-          ! find www -type f \( -iname '*.mp4' -o -iname '*.mov' -o -iname '*.webm' -o -iname '*licen*' \) | grep -q .
+          node tools/tk587-bundle-scan.cjs --self-test
+          node tools/tk587-bundle-scan.cjs www
 
   broad-browser:
     # Reported, not hidden: the full gate WITH Chromium. Main's own Quality Gate runs without
@@ -138,8 +138,13 @@ jobs:
           unzip -p "$APK" assets/public/index.html > /tmp/embedded-index.html
           cmp www/index.html /tmp/embedded-index.html
           grep -q "const APP_VER = 'v4.70.27'" /tmp/embedded-index.html
-          if unzip -l "$APK" | grep -qiE '\.(mp4|mov|webm)$|licen[cs]e.*movekit|movekit.*licen'; then echo 'licensed media must not be bundled'; exit 1; fi
-          if unzip -p "$APK" 'assets/public/*' 2>/dev/null | grep -aqE 'service_role|SUPABASE_SERVICE|BEGIN (RSA |EC )?PRIVATE KEY'; then echo 'secret material in APK'; exit 1; fi
+          # No pipes into grep -q (pipefail + SIGPIPE would mask a hit): list to a file, extract to a dir.
+          unzip -Z1 "$APK" > /tmp/apk-entries.txt
+          if grep -iE '\.(mp4|mov|webm|m4v)$|licen[cs]e.*movekit|movekit.*licen' /tmp/apk-entries.txt; then echo 'licensed media must not be bundled'; exit 1; fi
+          rm -rf /tmp/apk-assets && mkdir -p /tmp/apk-assets
+          unzip -q "$APK" 'assets/*' -d /tmp/apk-assets
+          node tools/tk587-bundle-scan.cjs --self-test
+          node tools/tk587-bundle-scan.cjs /tmp/apk-assets/assets
           SOURCE_SHA="$(git rev-parse HEAD)"
           NAME="Trainingskompas-v4.70.27-${SOURCE_SHA:0:9}-tk587test7nov.apk"
           cp "$APK" "candidate/$NAME"

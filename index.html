@@ -23700,6 +23700,10 @@ function recomputeCardioFields(exId,cardioType,changedField){
 // ══════════════════════════════════════════════════════════
 let cardioSplitMode={};
 let cardioSplits={};
+// #614 (TK-UT-20261108-039/040): geschatte (gelijk verdeelde) deeltijden bij de wissel
+// Automatisch → Handmatig. Uitsluitend presentatie (placeholder); NOOIT handmatige invoer,
+// NOOIT persistentie, NOOIT terugschrijven naar gemeten tijd/split/watt.
+let cardioSplitEstimates={};
 // GAP-P2-013: houdt per exId bij of de laatst-bekende watt-waarde direct
 // door de gebruiker is ingetypt (device-gemeten, van het scherm van de
 // erg afgelezen) of automatisch is afgeleid uit de split (CALC-END-002).
@@ -23721,11 +23725,13 @@ function splitRowsHtml(exId,cardioType){
   const mode=cardioSplitMode[exId]||'auto';
   const n=numSplitsFor(exId,cfg);
   const s=cardioSplits[exId]||{};
+  const est=mode==='handmatig'?(cardioSplitEstimates[exId]||{}):{};
   let rows='';
   for(let q=1;q<=n;q++){
     const val=s[q]!=null?CardioEngine.formatTime(s[q]):'';
+    const ph=(val===''&&est[q]!=null)?` placeholder="${CardioEngine.formatTime(est[q])}" title="Geschat (niet gemeten)"`:'';
     rows+=`<div class="split-lbl">${q}. ${q*cfg.splitDist}${cfg.unit}</div>
-      <input class="split-inp${mode==='auto'?' computed':''}" type="text" id="${exId}-sp${q}" value="${val}" ${mode==='auto'?'readonly':''}
+      <input class="split-inp${mode==='auto'?' computed':''}" type="text" id="${exId}-sp${q}" value="${val}"${ph} ${mode==='auto'?'readonly':''}
         oninput="onManualSplitChange('${exId}','${cardioType}',${q})">`;
   }
   return rows;
@@ -23748,10 +23754,20 @@ function renderSplitRows(exId,cardioType){
   grid.innerHTML=splitRowsHtml(exId,cardioType);
 }
 function setCardioSplitMode(exId,cardioType,mode){
+  const prevMode=cardioSplitMode[exId]||'auto';
   cardioSplitMode[exId]=mode;
   const wrap=document.getElementById('splitmode-'+exId);
   if(wrap)wrap.querySelectorAll('.rower-chip').forEach(b=>b.classList.toggle('sel',(b.textContent==='Automatisch')===(mode==='auto')));
   if(mode==='auto')computeAutoSplits(exId,cardioType);
+  else if(prevMode==='auto'){
+    // #614: de automatische verdeling is een SCHATTING, geen invoer. Bij de wissel naar
+    // Handmatig worden de geschatte deeltijden alleen nog als placeholder getoond; de
+    // handmatige splitset start leeg zodat er nooit fictieve splits worden opgeslagen
+    // en nooit een 250m-deeltijd de gemeten tijd/split/watt overschrijft.
+    computeAutoSplits(exId,cardioType);
+    cardioSplitEstimates[exId]=cardioSplits[exId]||{};
+    cardioSplits[exId]={};
+  }
   renderSplitRows(exId,cardioType);
   updateSplitSummary(exId,cardioType);
   logCardio(exId,cardioType);
@@ -23769,31 +23785,50 @@ function onManualSplitChange(exId,cardioType,q){
   const val=CardioEngine.parseTime(getCardioVal(exId,'sp'+q));
   if(!cardioSplits[exId])cardioSplits[exId]={};
   cardioSplits[exId][q]=val;
-  updateSplitSummary(exId,cardioType);
+  updateSplitSummary(exId,cardioType,{writeBack:true}); // #614: alleen ECHTE split-invoer mag topvelden voeden
   logCardio(exId,cardioType);
 }
-function updateSplitSummary(exId,cardioType){
+// #614: tijd met tienden (bestaande DeviceCore-formatter, zelfde als de PM5-schrijver) zodat
+// 2:08.3 niet stil als 2:08 terug in een duurzaam veld belandt. Fallback: bestaande formatTime.
+function cardioFmtPrecise(sec){
+  if(typeof DeviceCore!=='undefined'&&DeviceCore&&typeof DeviceCore.formatDurationStr==='function'){
+    const s=DeviceCore.formatDurationStr(sec); if(s)return s;
+  }
+  return CardioEngine.formatTime(sec);
+}
+// opts.writeBack: ALLEEN true vanuit onManualSplitChange (gebruiker typt een deeltijd).
+// Moduswissel, edit-heropening en topveld-invoer zijn presentatie/herberekening van splits en
+// mogen gemeten tijd/split/watt NOOIT overschrijven (#614, TK-UT-20261108-039/040).
+function updateSplitSummary(exId,cardioType,opts){
   const cfg=CARDIO_TYPES[cardioType];
   const mode=cardioSplitMode[exId]||'auto';
   const n=numSplitsFor(exId,cfg);
   const s=cardioSplits[exId]||{};
   const summaryEl=document.getElementById('splitsummary-'+exId);
   const agg=CardioEngine.fromManualSplits(s);
-  if(!agg){ if(summaryEl)summaryEl.textContent=''; return; }
+  const perLbl=' per '+cfg.splitDist+cfg.unit;
+  if(!agg){ if(summaryEl)summaryEl.textContent=(mode==='handmatig'&&cardioSplitEstimates[exId]&&Object.keys(cardioSplitEstimates[exId]).length)?('0/'+n+' splits ingevuld · grijze waarden zijn geschat'+perLbl):''; return; }
   if(mode==='handmatig'){
-    // Totale tijd/gem. split alleen "definitief" terugschrijven naar de topvelden wanneer
-    // alle intervallen zijn ingevuld — anders zou een gedeeltelijke som misleiden.
-    if(agg.count===n){
-      setCardioVal(exId,'time',CardioEngine.formatTime(agg.total));
+    // Totale tijd/split alleen "definitief" terugschrijven naar de topvelden wanneer
+    // alle intervallen door de gebruiker zijn ingevuld — anders zou een gedeeltelijke som misleiden.
+    if(opts&&opts.writeBack&&agg.count===n){
+      setCardioVal(exId,'time',cardioFmtPrecise(agg.total));
       const outField=cfg.calc?.type==='pace'?'pace':'split';
-      setCardioVal(exId,outField,CardioEngine.formatTime(agg.avg));
-      if(cfg.fields.includes('watt')&&cfg.calc?.basis===500)setCardioVal(exId,'watt',Math.round(CardioEngine.wattFromSplit500(agg.avg)));
+      // #614: agg.avg is seconden per cfg.splitDist (bv. 250m); het topveld is per cfg.calc.basis
+      // (SkiErg/RowErg 500m). Omrekenen via de bestaande CardioEngine — nooit 250m als /500m tonen.
+      const distVal=numNL(getCardioVal(exId,cfg.calc?.distField))||(n*cfg.splitDist); // zelfde fallback-grondslag als numSplitsFor
+      const basisSplit=(cfg.calc&&distVal)?CardioEngine.splitFromDistTime(distVal,agg.total,cfg.calc.basis):null;
+      if(basisSplit)setCardioVal(exId,outField,cardioFmtPrecise(basisSplit));
+      if(basisSplit&&cfg.fields.includes('watt')&&cfg.calc?.basis===500){
+        setCardioVal(exId,'watt',Math.round(CardioEngine.wattFromSplit500(basisSplit)));
+        cardioWattSource[exId]='concept2_derived'; // afgeleid uit handmatige splits, nooit 'measured'
+      }
     }
     if(summaryEl)summaryEl.textContent=agg.count===n
-      ? 'Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total)
+      ? 'Gem.'+perLbl+': '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+cardioFmtPrecise(agg.total)
       : agg.count+'/'+n+' splits ingevuld';
   } else {
-    if(summaryEl)summaryEl.textContent='Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total);
+    if(summaryEl)summaryEl.textContent='Geschat'+perLbl+': '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+cardioFmtPrecise(agg.total);
   }
 }
 // v306.2: centrale input-handler voor alle top-level cardiovelden — vervangt calcCardioSplit()
@@ -27097,6 +27132,11 @@ function openEditSess(id,name,session){
 function renderEditSessFields(ex,session){
   let f='';
   const cardioType=resolveCardioType(ex);
+  // #614: geen stale edit-state van een vorige bewerking (watt-herkomst/geschatte splits) laten
+  // doorlekken; een onaangeraakte opgeslagen watt_source (bv. concept2_measured) blijft zo
+  // server-side ongewijzigd omdat saveEditSession dan geen watt_source meestuurt.
+  delete cardioWattSource[ES_DOMID];
+  delete cardioSplitEstimates[ES_DOMID];
   if(cardioType){
     f+=buildCardioBody(ES_DOMID, cardioType);
   } else if(ex.type==='wod'){
@@ -27193,6 +27233,9 @@ async function saveEditSession(btnEl){
     const d={machine:localStorage.getItem('sel_'+cardioType)||''};
     cfg.fields.forEach(fld=>{d[fld]=document.getElementById(ES_DOMID+'-'+fld)?.value||'';});
     if(cfg.splits){ d.splitMode=cardioSplitMode[ES_DOMID]||'auto'; d.splits=cardioSplits[ES_DOMID]?{...cardioSplits[ES_DOMID]}:{}; }
+    // #614: alleen als de watt in DIT modal opnieuw is ingevoerd/afgeleid; anders blijft de
+    // bestaande (bv. gemeten) watt_source op de rij staan (PATCH zonder die kolom).
+    if(cfg.fields.includes('watt') && cardioWattSource[ES_DOMID]) d.wattSource=cardioWattSource[ES_DOMID];
     const cRow=cardioDataToRow(cardioType,d);
     const extraNote=cRow.extraNote;delete cRow.extraNote;
     Object.assign(row,cRow);

@@ -45,8 +45,8 @@ Gedekt: SHA-reproductie t.o.v. de gepinde privé-digest; schedule/gaten; batch 1
 | Batch | IDs | Status |
 |---|---|---|
 | 1 | TK-000001..025 | privé bron + 128 checks + PostgreSQL rollback-proef PASS; **niet in productiedatabase geactiveerd** |
-| 2–9 | 026..225 | alleen geschema'd; CLI weigert |
-| 10 | 226 | alleen geschema'd; CLI weigert |
+| 2–9 | 026..225 | voorbereid (CLI `--batch 2..9`/`all`, inactief); zie `TK614_ALL_226_BINDINGS_20261108.md` |
+| 10 | 226 | voorbereid (CLI `--batch 10`/`all`, inactief); zie `TK614_ALL_226_BINDINGS_20261108.md` |
 
 `TK-000063` zit in batch 3, `TK-000188` in batch 8 — de gebruikersklacht wordt dus **niet** door batch 1 opgelost.
 

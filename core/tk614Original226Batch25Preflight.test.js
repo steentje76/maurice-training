@@ -100,8 +100,14 @@ ok(/b\.active=true\s+and b\.reviewed_at is not null/.test(migration),
  'resolver only returns active+reviewed bindings, so batch1 stays unresolvable');
 for(const flag of ['--activate','--reviewed','--grant','--commit','--live'])
   throwsCode(()=>T.parseArgs(['--manifest',path.join(os.tmpdir(),'x.json'),flag,'1']),'USAGE');
-throwsCode(()=>T.parseArgs(['--manifest',path.join(os.tmpdir(),'x.json'),'--batch','2']),
- 'BATCH_NOT_IN_PREVIEW_SCOPE');
+// TK614 all-226: batches 2..10 and 'all' are now in PREPARATION scope (never activation).
+for(const b of ['2','3','8','9','10'])
+  eq(T.parseArgs(['--manifest',path.join(os.tmpdir(),'x.json'),'--batch',b]).batch,Number(b),'batch '+b+' preparable');
+eq(T.parseArgs(['--manifest',path.join(os.tmpdir(),'x.json'),'--batch','all']).batch,'all');
+for(const b of ['0','11','01','1.0','-1','ALL','2,3',' 2'])
+  throwsCode(()=>T.parseArgs(['--manifest',path.join(os.tmpdir(),'x.json'),'--batch',b]),
+   'BATCH_NOT_IN_PREVIEW_SCOPE','batch '+JSON.stringify(b));
+eq(T.PREVIEW_BATCHES,[1,2,3,4,5,6,7,8,9,10]);
 throwsCode(()=>T.parseArgs(['--manifest','relative.json']),'MANIFEST_PATH_MUST_BE_ABSOLUTE');
 
 // ---- origin catalog drift / ID-shadow / slug collision

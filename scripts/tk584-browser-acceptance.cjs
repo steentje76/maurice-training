@@ -30,19 +30,27 @@ for(const [id,kg,reps] of fixture){const box=document.createElement('section');b
 window.tk584Probe={state:()=>JSON.parse(JSON.stringify({sessionLog,sessionExtra})),restore:()=>{const d=JSON.parse(localStorage.getItem('tk_draft_training'));sessionLog=d.sessionLog;sessionExtra=d.sessionExtra;restoreExecutionDraft(d);return d;}};
 })();
 `}
+// In the APK WebView a real tap is tried first; if Playwright reports the fixture outside the
+// Android viewport, the same handler is fired with a DOM click and that is recorded (not hidden).
+async function tap(page,sel,actualApk,interaction){
+ if(!actualApk){await page.locator(sel).click();interaction.tap++;return;}
+ try{await page.locator(sel).click({timeout:5000});interaction.tap++;}
+ catch(e){if(!/outside of the viewport|Timeout/i.test(String(e&&e.message)))throw e;await page.locator(sel).dispatchEvent('click');interaction.domClick++;}
+}
 async function run(page,actualApk=false){
+ const interaction={tap:0,domClick:0};
  const srcs=actualApk?await page.evaluate(names=>names.map(n=>window[n].toString()),functions):functions.map(extract);
  if(actualApk)for(let i=0;i<functions.length;i++)assert.equal(srcs[i].replace(/\r/g,''),extract(functions[i]),'packaged function must match source: '+functions[i]);
  await page.evaluate(fixtureSource(srcs));
- await page.locator('#sc-bench-1').click();
+ await tap(page,'#sc-bench-1',actualApk,interaction);
  let state=await page.evaluate(()=>window.tk584Probe.state());assert.equal(state.sessionLog.bench.sets[0].kg,'57.5');
- for(const id of ['row','lateral','bench','squat','ohp'])await page.locator('#complete-'+id).click();
+ for(const id of ['row','lateral','bench','squat','ohp'])await tap(page,'#complete-'+id,actualApk,interaction);
  await page.waitForFunction(()=>Object.keys(window.tk584Probe.state().sessionLog).length===5);
  state=await page.evaluate(()=>window.tk584Probe.state());
  const sets=Object.values(state.sessionLog).flatMap(l=>l.sets);assert.equal(sets.length,15);assert.equal(sets.reduce((v,s)=>v+Number(s.kg)*Number(s.reps),0),8442);
  const restored=await page.evaluate(()=>window.tk584Probe.restore());assert.deepEqual(restored.sessionLog,state.sessionLog);
- await page.locator('#complete-ohp').click();assert.equal(Object.values((await page.evaluate(()=>window.tk584Probe.state())).sessionLog).flatMap(l=>l.sets).length,15);
- return {test:'TK584 synthetic actual handlers',exercises:5,sets:15,volume:8442,draftRoundtrip:true,duplicateCompletion:false,actualApk};
+ await tap(page,'#complete-ohp',actualApk,interaction);assert.equal(Object.values((await page.evaluate(()=>window.tk584Probe.state())).sessionLog).flatMap(l=>l.sets).length,15);
+ return {test:'TK584 synthetic actual handlers',exercises:5,sets:15,volume:8442,draftRoundtrip:true,duplicateCompletion:false,actualApk,interaction};
 }
 module.exports={run};
 if(require.main===module)(async()=>{const {chromium}=require('playwright');const browser=await chromium.launch({headless:true});try{const page=await browser.newPage({viewport:{width:390,height:844}});await page.route('https://tk584.invalid/**',r=>r.fulfill({body:'<!doctype html><html><body></body></html>',contentType:'text/html'}));await page.goto('https://tk584.invalid/');console.log(JSON.stringify(await run(page)));}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

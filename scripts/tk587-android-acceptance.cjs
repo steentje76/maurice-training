@@ -18,15 +18,42 @@ const INTEGRATION_FNS = ['logSet', 'toggleSetDone', 'getSessionExs', 'execComple
 const evidence = { package: PKG, checks: [], physicalSamsung: false, pm5: false, account: 'none (synthetic, no login)' };
 const pass = c => { evidence.checks.push(c); console.log('PASS ' + c); };
 
-async function launch(device) {
+function withTimeout(p, ms, what) {
+  let t; return Promise.race([p, new Promise((_, rej) => { t = setTimeout(() => rej(new Error(what + ' timeout ' + ms + 'ms')), ms); })]).finally(() => clearTimeout(t));
+}
+async function diag(device, tag) {
+  try { fs.writeFileSync(`android-test-evidence/${tag}-screen.png`, await withTimeout(device.screenshot(), 30000, 'screenshot')); } catch (_) {}
+  try { fs.writeFileSync(`android-test-evidence/${tag}-activity.txt`, (await withTimeout(device.shell('dumpsys activity activities | head -80'), 30000, 'dumpsys')).toString()); } catch (_) {}
+}
+async function launch(device, tag) {
   await device.shell(`am force-stop ${PKG}`);
-  await device.shell(`monkey -p ${PKG} -c android.intent.category.LAUNCHER 1`);
-  const webview = await device.webView({ pkg: PKG }, { timeout: 120000 });
-  const page = await webview.page();
-  await page.waitForFunction(() => typeof window.toggleSetDone === 'function' && typeof window.ExerciseCatalogService !== 'undefined', null, { timeout: 120000 });
-  return page;
+  // Explicit launcher activity + am start -W (monkey is unreliable on newer images).
+  const resolved = (await device.shell(`cmd package resolve-activity --brief -c android.intent.category.LAUNCHER ${PKG}`)).toString().trim().split('\n').pop().trim();
+  assert(resolved.startsWith(PKG + '/'), 'launcher activity not resolved: ' + resolved);
+  evidence.launchActivity = resolved;
+  await device.shell(`am start -W -n ${resolved}`);
+  // Diagnostic only: wait until the WebView devtools socket exists (debuggable test variant).
+  const t0 = Date.now(); let sock = '';
+  while (Date.now() - t0 < 180000) {
+    try { sock = (await device.shell('cat /proc/net/unix')).toString().split('\n').filter(l => /webview_devtools_remote/.test(l)).length; } catch (_) { sock = 'unreadable'; break; }
+    if (sock) break; await new Promise(r => setTimeout(r, 2000));
+  }
+  evidence['devtoolsSocket_' + tag] = sock || 0;
+  try {
+    const webview = await withTimeout(device.webView({ pkg: PKG }, { timeout: 120000 }), 150000, 'webView');
+    const page = await withTimeout(webview.page(), 60000, 'webview.page');
+    await page.waitForFunction(() => typeof window.toggleSetDone === 'function' && typeof window.ExerciseCatalogService !== 'undefined', null, { timeout: 120000 });
+    return page;
+  } catch (e) { await diag(device, 'launch-' + tag); throw e; }
 }
 
+function writeFail(e) {
+  fs.mkdirSync('android-test-evidence', { recursive: true });
+  evidence.status = 'FAIL'; evidence.error = String(e && e.stack || e);
+  fs.writeFileSync('android-test-evidence/result.json', JSON.stringify(evidence, null, 2));
+}
+// Watchdog: a hung WebView/adb connection must fail fast with evidence, not run into the job timeout.
+const watchdog = setTimeout(() => { writeFail(new Error('watchdog: acceptance exceeded 20 minutes')); console.error('TK587 ANDROID ACCEPTANCE TIMEOUT'); process.exit(1); }, 20 * 60 * 1000);
 (async () => {
   assert.equal(process.env.TK_EMULATOR_ONLY, '1', 'emulator-only guard required');
   const devices = await _android.devices(); assert.equal(devices.length, 1); const device = devices[0];
@@ -38,8 +65,9 @@ async function launch(device) {
   await device.installApk(fs.readFileSync(path.join('candidate', apk)));
   pass('install');
 
-  let page = await launch(device);
-  pass('launch+webview');
+  let page = await launch(device, 'first');
+  pass('launch+webview (' + evidence.launchActivity + ')');
+  await page.screenshot({ path: 'android-test-evidence/after-launch.png' }).catch(() => {});
   const ver = await page.evaluate(() => typeof APP_VER !== 'undefined' ? APP_VER : null);
   assert.equal(ver, html.match(/const APP_VER = '([^']+)'/)[1], 'packaged APP_VER equals source');
   evidence.appVer = ver; pass('app-version ' + ver);
@@ -68,7 +96,7 @@ async function launch(device) {
   evidence.execution = r; pass('execution-handlers ' + JSON.stringify(r));
 
   // Process restart: only the isolated fixture draft is read back.
-  page = await launch(device);
+  page = await launch(device, 'restart');
   const raw = await page.evaluate(() => localStorage.getItem('tk_draft_training'));
   assert(raw, 'draft survives process restart');
   const d = JSON.parse(raw);
@@ -79,10 +107,12 @@ async function launch(device) {
   evidence.status = 'PASS';
   fs.writeFileSync('android-test-evidence/result.json', JSON.stringify(evidence, null, 2));
   console.log('TK587 ANDROID ACCEPTANCE PASS api=' + evidence.api);
+  clearTimeout(watchdog);
   await device.close();
+  process.exit(0);
 })().catch(e => {
-  fs.mkdirSync('android-test-evidence', { recursive: true });
-  evidence.status = 'FAIL'; evidence.error = String(e && e.stack || e);
-  fs.writeFileSync('android-test-evidence/result.json', JSON.stringify(evidence, null, 2));
-  console.error(e); process.exitCode = 1;
+  writeFail(e);
+  console.error(e);
+  // The open adb/WebView connection keeps node alive; exit explicitly so the job fails now.
+  process.exit(1);
 });

@@ -113,6 +113,14 @@ Niet aangetoond: read-after-write met een echt account in de APK (CI heeft geen 
 9. PM5: verbind, roei een vaste afstand; resultaatvelden gevuld, RPE zelf invullen, gemeten splits niet gelijk verdeeld. Intervalprogrammering alleen als experiment; noteer wat de PM5 toont.
 10. Controleer in de productie-app dat dezelfde training één keer zichtbaar is.
 
+## Emulatorproef: eerste CI-run
+
+Eerste run op `d963b96`: regressie, APK-build en Quality Gate groen. API 30 en API 34 liepen beide in de jobtimeout van 45 minuten.
+- API 30: installatie, start, `APP_VER`, 24 geïntegreerde functies gelijk aan de bron en MoveKit-afscherming (anoniem 401, publiek 226) PASS. De tik op het synthetische fixture-element faalde ("outside of the viewport" in de Android-WebView), waarna het script bleef hangen omdat de adb-verbinding node in leven hield.
+- API 34: installatie PASS, daarna kwam de WebView niet beschikbaar en hing de start zonder fout.
+
+Herstel in de testtooling (geen appwijziging): expliciete start van de launcher-activity met `am start -W`, harde time-outs met schermafbeelding en activitydump als bewijs, watchdog van 20 minuten, expliciete exit bij fout. In de APK wordt eerst een echte tik geprobeerd; meldt Playwright het element buiten de Android-viewport, dan wordt dezelfde handler met een DOM-click aangeroepen en wordt dat in het bewijs geteld (`interaction.tap` / `interaction.domClick`). Fysieke tikken worden in Chromium op 320–430 px en op de Samsung bewezen.
+
 ## Reproduceerbaar
 
 `npm test`; `node core/fTk587IntegrationAcceptance.test.js`; `node scripts/tk577-browser-acceptance.cjs`; `node scripts/tk584-browser-acceptance.cjs`; `node scripts/tk-all-browser-acceptance.cjs`; workflow `.github/workflows/tk587-integration-test-apk.yml` (regressie → APK → emulator API 30/34 → prerelease).

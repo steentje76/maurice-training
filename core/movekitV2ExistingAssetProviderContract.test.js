@@ -34,8 +34,8 @@ function check(title,condition){assert.ok(condition,title);pass++;}
 (async()=>{
   check('226 catalog entries are still the sole canonical source',bridge.registeredMoveKitExercises===226);
   check('production provider still has video media',provider.has('TK-000206','video'));
-  check('production provider points to its preexisting version 1 video',
-    provider.resolve('TK-000206','video')==='https://maurice-art.netlify.app/videos/wall-sit.mp4');
+  check('published original selects protected V2, not a raw public V1 video',
+    provider.resolve('TK-000206','video')===null);
   check('production unknown video still unavailable',provider.resolve('TK-999999','video')===null);
   check('old provider methods still all present',keysBefore.includes('poster')&&keysBefore.includes('video'));
   check('new bridge does not mutate legacy types',JSON.stringify(typesBefore)===JSON.stringify(provider.types()));
@@ -50,8 +50,8 @@ function check(title,condition){assert.ok(condition,title);pass++;}
     catalog.catalog.find(c=>c.catalog_id==='TK-000206'),'video','synthetic-user'),/MEDIA_NOT_RELEASED/);
   pass++;
   check('V2 denial does not silently cause direct public V1 media fallback',calls===1);
-  check('V1 media behavior remains unchanged after V2 refusal',
-    provider.resolve('TK-000206','video')==='https://maurice-art.netlify.app/videos/wall-sit.mp4');
+  check('V2 refusal does not fall back to an old public V1 video',
+    provider.resolve('TK-000206','video')===null);
   enabled=true;
   const request=await bridge.requestStaged(
     catalog.catalog.find(c=>c.catalog_id==='TK-000206'),'poster','synthetic-user');

@@ -4,7 +4,8 @@
 const {execFileSync}=require('node:child_process');
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..');
-const id='tk603-auth-'+Date.now(),network=id+'-net',names=[];
+const unified582=process.argv.includes('--tk614-unified-582');
+const id=(unified582?'tk614-auth582-':'tk603-auth-')+Date.now(),network=id+'-net',names=[];
 const password=crypto.randomBytes(32).toString('hex'),secret=crypto.randomBytes(48).toString('hex');
 let net=false,checks=0;const events=[];
 function assert(v,msg){if(!v)throw Error(msg);checks++;events.push(msg);console.log('PASS '+msg);}
@@ -80,13 +81,90 @@ update public.movekit_catalog_fk_bindings set active=true,reviewed_at=clock_time
   r=await query('/rpc/tk504_historical_catalog_id',B,'POST',{p_exercise_id:'TKC-000038'});assert(r.status===200&&r.data===null,'history identity RPC denies account without own saved session');
   r=await query('/sessions?id=eq.'+sa,A,'PATCH',{note:'history retained'},'return=representation');assert(r.status===200&&r.data[0].exercise_id==='TKC-000038','existing history editable after revocation');
   r=await query('/sessions?id=eq.'+sp,A);assert(r.status===200&&r.data.length===1&&r.data[0].exercise_id==='TK-000038','personal TK collision session preserved separately');
+  if(unified582){
+    // Extension #614: exact SAME PostgREST/GoTrue session writer and source-qualified
+    // server resolver for BOTH cohorts after a hypothetical release. This test DB
+    // is EPHEMERAL, has synthetic provider slugs, and is NEVER a production server.
+    sql("update public.movekit_catalog_fk_bindings set active=true,reviewed_at=clock_timestamp() where active=false;");
+    const format=n=>String(n).padStart(6,'0');
+    const actors=[['A',A],['B',B]];
+    for(const [label,actor] of actors){
+      let valid=0;
+      for(let n=1;n<=582;n++){
+        const num=format(n);
+        const reply=await query('/rpc/tk504_resolve_catalog_fk',actor,'POST',{
+          p_catalog_id:'TK-'+num,p_provider_id:'synthetic-vendor-'+num});
+        if(reply.status!==200||reply.data!=='TKC-'+num)
+          throw Error('ACTUAL_POSTGREST_582_IDENTITY_FAILURE_'+label+'_'+num+'_HTTP_'+reply.status);
+        valid++;
+      }
+      assert(valid===582,'real signed JWT account '+label+': all 582 post-approval canonical catalog FKs resolve');
+    }
+    for(const n of [1,63,188,226,227,300,582]){
+      const slug='synthetic-vendor-'+format(n);
+      let reply=await query('/rpc/tk504_resolve_catalog_fk',A,'POST',{
+        p_catalog_id:'TK-'+format(n),p_provider_id:slug+'-forged'});
+      assert(reply.status===200&&reply.data===null,'provider spoof denied for both-cohort representative TK-'+format(n));
+    }
+    const ids=[1,63,188,226,227,300,582],created={A:new Map(),B:new Map()};
+    for(const [label,actor] of actors){
+      for(const n of ids){
+        const uuid=crypto.randomUUID(),num=format(n);
+        const reply=await query('/sessions',actor,'POST',{
+          id:uuid,user_id:actor.id,exercise_id:'TKC-'+num,
+          note:'TK614 local synthetic signed JWT session '+label
+        },'return=representation');
+        if(reply.status!==201||reply.data?.[0]?.user_id!==actor.id||
+          reply.data?.[0]?.exercise_id!=='TKC-'+num)throw Error('REAL_AUTH_WRITE_FAILED_'+label+'_'+num);
+        created[label].set(n,uuid);
+      }
+      assert(created[label].size===7,'real GoTrue JWT '+label+' can write same 7 cross-cohort catalog sessions');
+    }
+    for(const [label,actor,otherLabel,other] of [['A',A,'B',B],['B',B,'A',A]]){
+      const own=created[label].get(63),foreign=created[otherLabel].get(188);
+      let reply=await query('/sessions?id=eq.'+own,actor);
+      assert(reply.status===200&&reply.data?.length===1&&reply.data[0].user_id===actor.id,
+        'JWT '+label+' can read own original-226 session');
+      reply=await query('/sessions?id=eq.'+foreign,actor);
+      assert(reply.status===200&&reply.data?.length===0,
+        'JWT '+label+' cannot read '+otherLabel+' original-226 history');
+      reply=await query('/sessions',actor,'POST',{
+        id:crypto.randomUUID(),user_id:other.id,exercise_id:'TKC-000188',note:'cross-owner-forged'});
+      assert(reply.status===403,'JWT '+label+' cannot forge other owner original-226 write');
+      reply=await query('/sessions?on_conflict=id',actor,'POST',{
+        id:own,user_id:actor.id,exercise_id:'TKC-000063',note:'TK614 idempotent retry '+label
+      },'resolution=merge-duplicates,return=representation');
+      assert(reply.status<300,'JWT '+label+' original-226 retry does not create duplicate');
+      reply=await query('/sessions?id=eq.'+own,actor);
+      assert(reply.status===200&&reply.data?.length===1&&reply.data[0].note==='TK614 idempotent retry '+label,
+        'JWT '+label+' single UUID remains unique after retry');
+      reply=await query('/sessions?on_conflict=id',actor,'POST',{
+        id:foreign,user_id:actor.id,exercise_id:'TKC-000188',note:'cross-owner-replay'
+      },'resolution=merge-duplicates,return=representation');
+      assert(reply.status===403,'JWT '+label+' cross-owner UUID replay forbidden');
+    }
+    sql("update public.movekit_catalog_fk_bindings set active=false where catalog_id='TK-000188';");
+    for(const [label,actor] of actors){
+      let reply=await query('/rpc/tk504_resolve_catalog_fk',actor,'POST',{
+        p_catalog_id:'TK-000188',p_provider_id:'synthetic-vendor-000188'});
+      assert(reply.status===200&&reply.data===null,'JWT '+label+' sees revoked original-226 binding denied');
+      reply=await query('/sessions',actor,'POST',{
+        id:crypto.randomUUID(),user_id:actor.id,exercise_id:'TKC-000188'});
+      assert([400,409].includes(reply.status)&&reply.data?.code==='23514',
+        'JWT '+label+' cannot insert after original-226 revocation');
+      reply=await query('/sessions?id=eq.'+created[label].get(188),actor);
+      assert(reply.status===200&&reply.data?.length===1,
+        'JWT '+label+' retains own historical original-226 session after revocation');
+    }
+    console.log('TK614 UNIFIED_582_SIGNED_JWT_POSTGREST PASS: 2 GoTrue accounts, 1164 real RPC calls, 14 real local session writes, separate-owner RLS, retries and revocation');
+  }
   console.log('RESULT '+checks+' real local Auth/PostgREST/PostgreSQL assertions PASS');
  }catch(e){console.error('FAIL '+String(e.message).replaceAll(password,'[redacted]').replaceAll(secret,'[redacted]'));process.exitCode=1;}
  finally{
   let clean=true;for(const n of names.reverse()){try{docker(['rm','--force','--volumes',n]);}catch{clean=false;}}
   if(net)for(const n of [network,id+'-front'])try{docker(['network','rm',n]);}catch{clean=false;}
   if(!clean){console.error('FAIL temporary resource cleanup; inspect '+id);process.exitCode=1;}else console.log('CLEANUP PASS: all dedicated containers/anonymous volumes/network removed');
-  const report=['# TK603 real local Auth acceptance — 7 November 2026','','Status: '+(process.exitCode?'FAILED / incomplete':'PASS')+'. '+checks+' checks. Run completed '+new Date().toISOString(),'','Actual services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5, dedicated internal backend plus dedicated frontend Docker network; only ephemeral loopback Auth/REST ports. Two synthetic email/password accounts received independent JWTs; tokens verified by GoTrue and PostgREST. No cloud project, production data, media or credentials used.','','Schema: synthetic minimal exercises/sessions fixture based on the committed SQL security smoke; actual staged typed-FK migration executed unchanged. This is not a full production-schema restore or cloud-hosted Supabase acceptance. No Android, Storage playback, real entitlements or browser restart test.','','Checks:',...events.map(x=>'- '+x),'','Cleanup: '+(clean?'dedicated containers, anonymous volumes and network removed':'FAILED; inspect temporary resources'),'','Reproduce: `node tools/tk603-real-auth-acceptance.cjs` with Docker running and listed cached images. Generated local secrets remain in memory only and are never printed or committed.'].join('\n');
-  fs.writeFileSync(path.join(root,'docs/TK603_REAL_AUTH_ACCEPTANCE_20261107.md'),report+'\n');
+  const report=['# '+(unified582?'TK614 unified 582 real local Auth acceptance — 9 November 2026':'TK603 real local Auth acceptance — 7 November 2026'),'','Status: '+(process.exitCode?'FAILED / incomplete':'PASS')+'. '+checks+' checks. Run completed '+new Date().toISOString(),'','Actual services: cached Supabase PostgreSQL 17.11.0.006, GoTrue v2.197.0, PostgREST v16.5, dedicated internal backend plus dedicated frontend Docker network; only ephemeral loopback Auth/REST ports. Two synthetic email/password accounts received independent JWTs; tokens verified by GoTrue and PostgREST. No cloud project, production data, media or credentials used.','','Schema: synthetic minimal exercises/sessions fixture based on the committed SQL security smoke; actual staged typed-FK migration executed unchanged. This is not a full production-schema restore or cloud-hosted Supabase acceptance. No Android, Storage playback, real entitlements or browser restart test.','','Checks:',...events.map(x=>'- '+x),'','Cleanup: '+(clean?'dedicated containers, anonymous volumes and network removed':'FAILED; inspect temporary resources'),'','Reproduce: `node tools/tk603-real-auth-acceptance.cjs` with Docker running and listed cached images. Generated local secrets remain in memory only and are never printed or committed.'].join('\n');
+  fs.writeFileSync(path.join(root,unified582?'docs/TK614_UNIFIED_582_REAL_AUTH_ACCEPTANCE_20261109.md':'docs/TK603_REAL_AUTH_ACCEPTANCE_20261107.md'),report+'\n');
  }
 })();

@@ -3,6 +3,8 @@
 // Synthetic only: ephemeral Ed25519 test keys (never stored), fake UUIDs, stub fetch that
 // throws on any network use. No real credential, device, media, DB or network.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const vm=require('node:vm'),{createRequire}=require('node:module'),{execFileSync}=require('node:child_process');
+// PRODUCTION gate: real module, real pinned owner key. Synthetic keys must never pass here.
 const G=require('../tools/tk614_original226_media_eligibility.cjs');
 const M=require('../tools/tk614_original226_private_media_staging.cjs');
 const P=require('../tools/tk614_original226_review_packet.cjs');
@@ -26,6 +28,22 @@ const {privateKey:k1}=crypto.generateKeyPairSync('ed25519');
 const {privateKey:k2}=crypto.generateKeyPairSync('ed25519');
 const spki=k=>crypto.createPublicKey(k).export({format:'der',type:'spki'});
 const fp1=sha(spki(k1));
+// STRICTLY TEST-ONLY gate instance: the unmodified production source, compiled in THIS realm
+// (vm.runInThisContext -> no cross-realm deepEqual issues) with a custom require that swaps
+// only './tk614_original226_admin_release.cjs' for a fake carrying the ephemeral test key.
+// The production module has no test mode, toggle, factory or key override; this lives here only.
+const GATE_FILE=path.join(ROOT,'tools','tk614_original226_media_eligibility.cjs');
+const ADMIN_FILE=path.join(ROOT,'tools','tk614_original226_admin_release.cjs');
+function loadTestGate(ownerKeys){
+  const realRequire=createRequire(GATE_FILE),realA=realRequire(ADMIN_FILE);
+  const fakeA=Object.freeze({...realA,TRUSTED_OWNER_KEY_SHA256:Object.freeze([...ownerKeys])});
+  const req=id=>realRequire.resolve(id)===ADMIN_FILE?fakeA:realRequire(id);
+  const wrapper=vm.runInThisContext('(function(exports,require,module,__filename,__dirname){'+
+    fs.readFileSync(GATE_FILE,'utf8')+'\n})',{filename:GATE_FILE+'#test-only-vm'});
+  const mod={exports:{}};wrapper(mod.exports,req,mod,GATE_FILE,path.dirname(GATE_FILE));
+  return mod.exports;
+}
+const TG=loadTestGate([fp1]);
 const sig=(msg,k)=>({alg:'ed25519',public_key_spki_der_base64:spki(k).toString('base64'),
   value_base64:crypto.sign(null,msg,k).toString('base64')});
 const kind=t=>{const e=manifest.entries.filter(x=>x.media_type===t),b=e.reduce((s,x)=>s+x.bytes,0);
@@ -64,8 +82,10 @@ const base=()=>({
     manifest_all_sha256:manifest.totals.all_sha256,published_at:'2026-11-09T12:00:00Z',revoked_at:null},
   grant:{user_id:UA,scope:'movekit_v2',active:true,expires_at:null,revoked_at:null,media_decision_id:DECISION},
   expectedAsset:{path:golden.path,sha256:golden.sha256,bytes:golden.bytes},
-  now:NOW,trustedKeys:[fp1]});
-const run=f=>{const i=base();if(f)f(i);return G.evaluate(i);};
+  now:NOW});
+// All behavioural cases run against the test-only gate (trusts fp1 via pinned fake constant).
+const run=f=>{const i=base();if(f)f(i);return TG.evaluate(i);};
+const runProd=f=>{const i=base();if(f)f(i);return G.evaluate(i);};
 const denied=(r,m)=>{eq([r.authorized,r.decision,r.status,r.error],[false,'DENY',404,'MEDIA_NOT_APPROVED'],m);
   ok(Object.isFrozen(r)&&Object.isFrozen(r.blockers),m+' frozen');};
 const blocked=(f,code,m)=>{const r=run(f);denied(r,m);eq(r.eligible,false,m+' not eligible');
@@ -80,6 +100,33 @@ const blocked=(f,code,m)=>{const r=run(f);denied(r,m);eq(r.eligible,false,m+' no
    const pp=broker.postersById.get(ID);i.expectedAsset={path:pp.path,sha256:pp.sha256,bytes:pp.bytes};
    ok(e.sha256===pp.sha256,'poster parity');});
  eq([p.eligible,p.authorized],[true,false],'poster eligible, unauthorized');}
+// ---- 1b. TRUST ANCHOR: production rejects synthetic keys; keys never come from input/args/env
+{eq(TG.OWNER_KEYS,[fp1],'test-only gate pinned to ephemeral key');ok(Object.isFrozen(TG.OWNER_KEYS)&&Object.isFrozen(G.OWNER_KEYS));
+ eq(G.OWNER_KEYS,['9a4e3f7ee3cab1792fcc00efca3992c10bb251c0840f47c0a0a224106f280c63'],'production pin = reviewed owner key');
+ ok(!G.OWNER_KEYS.includes(fp1),'synthetic key is not production-trusted');
+ ok(!G.INPUT_KEYS.includes('trustedKeys')&&Object.isFrozen(G.INPUT_KEYS),'no trust-anchor input field');
+ const r=runProd();denied(r,'production gate, synthetic world');eq(r.eligible,false,'production rejects synthetic signatures');
+ ok(r.blockers.includes('ORIGINAL226_MEDIA_RECORD_INVALID')&&r.blockers.includes('ORIGINAL226_BYTE_ATTESTATION_KEY_NOT_TRUSTED'),
+   'production: media record + attestation untrusted '+JSON.stringify(r.blockers));
+ for(const [gate,label] of [[G,'production'],[TG,'test-only']]){
+   for(const v of [[fp1],[],['0'.repeat(64)],null]){
+     const x=gate.evaluate({...base(),trustedKeys:v});denied(x,label+' input.trustedKeys');
+     ok(!x.eligible&&x.blockers.includes('ORIGINAL226_INPUT_UNEXPECTED_FIELD'),label+' input.trustedKeys rejected '+JSON.stringify(v));}
+   for(const extra of [{trustAnchor:[fp1]},{ownerKeys:[fp1]},{trusted_owner_key_sha256:[fp1]}]){
+     const x=gate.evaluate({...base(),...extra});ok(!x.eligible&&x.blockers.includes('ORIGINAL226_INPUT_UNEXPECTED_FIELD'),label+' '+Object.keys(extra)[0]);}}
+ eq(G.attestationProblems(attestation,[fp1]),['ORIGINAL226_BYTE_ATTESTATION_KEY_NOT_TRUSTED'],'prod attestation ignores caller keys');
+ eq(G.attestationProblems(attestation),['ORIGINAL226_BYTE_ATTESTATION_KEY_NOT_TRUSTED'],'prod attestation pinned');
+ eq(TG.attestationProblems(attestation),[],'test-only gate: synthetic attestation verifies');
+ eq(TG.attestationProblems(attest({},k2),[sha(spki(k2))]),['ORIGINAL226_BYTE_ATTESTATION_KEY_NOT_TRUSTED'],'test gate ignores caller keys too');
+ // a client cannot self-assert a verified identity via a different claim shape
+ for(const acc of [{user_id:UA,verified:true,is_anonymous:false},{user_id:UA,verified:'server_auth_v1_user'},
+   {user_id:UA,verified:'server_auth_v1_user',is_anonymous:'false'}])
+   ok(run(i=>{i.account=acc;}).blockers.includes('ORIGINAL226_ACCOUNT_NOT_AUTHENTICATED'),'account claim shape '+JSON.stringify(acc));
+ const ENVK=['NODE_ENV','TK614_TEST_MODE','ORIGINAL226_TRUSTED_KEYS','ORIGINAL226_MEDIA_CUTOVER_ENABLED'];
+ const saved=ENVK.map(k=>[k,process.env[k]]);
+ for(const k of ENVK)process.env[k]=k==='ORIGINAL226_TRUSTED_KEYS'?fp1:'test';
+ const e=runProd();eq([e.eligible,e.authorized],[false,false],'no env toggle trusts synthetic key in production gate');
+ for(const [k,v] of saved){if(v===undefined)delete process.env[k];else process.env[k]=v;}}
 // 226/226 video+poster checksum parity of the pinned manifest with the broker's canonical assets
 {let n=0;for(const e of manifest.entries){const c=e.media_type==='video'?broker.byId.get(e.catalog_id).video:broker.postersById.get(e.catalog_id);
   assert.deepEqual([c.path,c.sha256,c.bytes],[e.storage_path,e.sha256,e.bytes]);n++;}
@@ -119,7 +166,6 @@ blocked(i=>{i.mediaRecord=gates[P.RECORD_KEY];},'ORIGINAL226_FK_ONLY_RECORD_IS_N
 blocked(i=>{i.mediaRecord={...mediaRecord,signature:null};},'ORIGINAL226_MEDIA_RECORD_INVALID','unsigned owner record');
 blocked(i=>{i.mediaRecord=record({},k2);},'ORIGINAL226_MEDIA_RECORD_INVALID','wrong Ed25519 owner key');
 blocked(i=>{i.mediaRecord={...mediaRecord,approved_by:'Someone Else'};},'ORIGINAL226_MEDIA_RECORD_INVALID','tampered after signing');
-blocked(i=>{delete i.trustedKeys;},'ORIGINAL226_MEDIA_RECORD_INVALID','synthetic key is not the pinned production owner key');
 blocked(i=>{i.account.user_id=UB;i.grant.user_id=UB;},'ORIGINAL226_ACCOUNT_NOT_IN_MEDIA_RECORD','wrong user (not in record)');
 
 // ---- 5. D: byte-integrity attestation
@@ -181,26 +227,25 @@ for(const extra of [{approved:true},{released:true},{authorized:true},{cutover:{
 for(const v of [undefined,null,0,'',[],'x',{}]){const r=G.evaluate(v);denied(r,'malformed input '+JSON.stringify(v));ok(!r.eligible);}
 
 // ---- 8. sanitized output: fixed codes only, no user ids / paths / urls
-{const all=[run(),run(i=>{i.account.user_id=UB;i.grant.user_id=UB;}),G.brokerShadow(ID,'video')];
+{const all=[run(),runProd(),run(i=>{i.account.user_id=UB;i.grant.user_id=UB;})];
  for(const r of all){const t=JSON.stringify(r)+JSON.stringify(G.publicLog(r));
    ok(!t.includes(UA)&&!t.includes(UB)&&!/movekit\/v2|https?:|token|supabase/i.test(t),'sanitized output');
    ok(r.blockers.every(x=>/^ORIGINAL226_[A-Z0-9_]+$/.test(x)),'fixed codes');}
  eq(Object.keys(G.publicLog(run())),['gate','decision','error','blockers']);
- const shadow=G.brokerShadow('TK-000001','video');
- assert.strictEqual(shadow,G.brokerShadow('TK-000226','poster'),'precomputed identical deny object; no per-request hash/scans'); checks++;
- denied(shadow,'precomputed shadow deny');
- ok(!shadow.eligible && shadow.blockers.includes(LOCK),'shadow deny even when input shaped differently');}
+ ok(!('brokerShadow' in G)&&!('brokerShadow' in TG),'no broker shadow hook exported');}
 
 // ---- 9. module hygiene: pure, keyless, offline, literal lock
 {const code=read('tools/tk614_original226_media_eligibility.cjs').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
  eq([...code.matchAll(/require\('([^']+)'\)/g)].map(m=>m[1]),['./tk614_original226_private_media_staging.cjs',
    './tk614_original226_admin_release.cjs','../docs/generated/TK614_ORIGINAL226_PRIVATE_MEDIA_STAGING_MANIFEST_20261109.json','node:crypto']);
- ok(!/process\.env|fetch\(|generateKeyPair|createPrivateKey|crypto\.sign\(|Date\.now|movekit_media_grants|supabase\.co|writeFile/.test(code),
-   'no env, network, clock, key generation, signing, grants or writes');
+ ok(!/process\.env|NODE_ENV|\bvm\b|runInThisContext|createRequire|input\.trustedKeys|trustedKeys\s*[,}]|trustedKeys\s*===|fetch\(|generateKeyPair|createPrivateKey|crypto\.sign\(|Date\.now|movekit_media_grants|supabase\.co|writeFile/.test(code),
+   'no env/test-mode/VM shim/caller key override, network, clock, key generation, signing, grants or writes');
+ ok(/trustedKeys: OWNER_KEYS \}/.test(code)&&/const trusted = OWNER_KEYS;/.test(code),'only the pinned constant reaches signature checks');
+ ok(/const OWNER_KEYS = Object\.freeze\(Array\.isArray\(A\.TRUSTED_OWNER_KEY_SHA256\)/.test(code),'pin derived from reviewed admin_release constant');
  ok(/const CUTOVER = Object\.freeze\(\{ version: GATE_VERSION, enabled: false \}\);/.test(code),'lock is a literal false');
  ok(/authorized: false, eligible/.test(code)&&!/authorized:(?!\s*false\b)/.test(code),'authorized is only ever literal false');}
 
-// ---- 10. broker wiring: shadow evaluation, still 404 before auth/grant/sign; 356 unchanged
+// ---- 10. broker: gate NOT loaded; unconditional 404 before auth/grant/sign; 356 unchanged
 const env=Object.freeze({SUPABASE_URL:broker.BASE,SUPABASE_ANON_KEY:'synthetic-anon',SUPABASE_SERVICE_ROLE_KEY:'synthetic-service',
   MOVEKIT_V2_SIGNING_ENABLED:'true',MOVEKIT_V2_PERMISSION_REVIEWED:'true',MOVEKIT_V2_PRIVATE_UPLOAD_VERIFIED:'true',
   MOVEKIT_V2_POSTER_UPLOAD_VERIFIED:'true',MOVEKIT_V2_NEW_CATALOG_EXECUTION_VERIFIED:'true',
@@ -223,9 +268,19 @@ async function call(id,type,release=gates,extra={}){
 }
 (async()=>{
   const src=read('netlify/functions/exercise-media-v2-url.js').replace(/\r\n/g,'\n');
-  ok(src.includes("const original226Gate = require('../../tools/tk614_original226_media_eligibility.cjs');"),'broker imports gate');
-  ok(/original226Gate\.brokerShadow\(body\.catalog_id, body\.type\);\n    return failure\(event, 404, 'MEDIA_NOT_APPROVED'\);/.test(src),
-    'shadow evaluation followed by the unconditional 404');
+  const srcCode=src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  ok(!/tk614_original226_media_eligibility|original226Gate|brokerShadow|tk614_original226_private_media_staging|tk614_original226_admin_release/.test(srcCode),
+    'production media function does not reference the staged gate or its toolchain');
+  ok(/if \(catalogNumber >= 1 && catalogNumber <= 226\) \{\n    return failure\(event, 404, 'MEDIA_NOT_APPROVED'\);\n  \}/.test(src),
+    'original-226 block is a bare unconditional 404');
+  {const at=src.indexOf('catalogNumber <= 226) {');
+   ok(at>0&&at<src.indexOf('await identifyUser(')&&at<src.indexOf('await verifyEntitlement(')&&at<src.indexOf('await sign('),
+     '226 block precedes auth, grant and signing');}
+  {const loaded=JSON.parse(execFileSync(process.execPath,['-e',
+     "require('./netlify/functions/exercise-media-v2-url.js');process.stdout.write(JSON.stringify(Object.keys(require.cache)))"],
+     {cwd:ROOT,encoding:'utf8'}));
+   ok(loaded.length>0&&!loaded.some(f=>/tk614_original226_|TK614_ORIGINAL226_PRIVATE_MEDIA_STAGING_MANIFEST/.test(f)),
+     'fresh process: media function loads no gate/staging/admin module or 452-manifest');}
   {const r=await call('TK-000001','video');
    eq([r.status,r.body.error,r.calls.length],[404,'MEDIA_NOT_APPROVED',0],'404, zero outgoing requests');}
   let n=0;
@@ -238,6 +293,7 @@ async function call(id,type,release=gates,extra={}){
     ok(r.calls.length===4&&typeof r.body.url==='string'&&r.body.expires_in<=60,'356 normal auth+grant+sign+recheck '+id);
   }
   eq(sha(read(GATES_REL).replace(/\r\n/g,'\n')),gatesShaBefore,'release gates file unchanged');
-  console.log('TK614 original-226 media eligibility gate: '+checks+' assertions PASS; all-green synthetic = eligible but '+
-    'authorized=false (cutover locked); 452/452 originals 404 with 0 requests; 356 unchanged');
+  console.log('TK614 original-226 media eligibility gate: '+checks+' assertions PASS; production gate rejects synthetic keys; '+
+    'test-only VM gate all-green = eligible but authorized=false (cutover locked); input.trustedKeys rejected; '+
+    'media function does not load gate; 452/452 originals 404 with 0 requests; 356 unchanged');
 })().catch(e=>{console.error(e.stack||e);process.exitCode=1;});

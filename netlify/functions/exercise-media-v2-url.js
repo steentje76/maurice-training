@@ -31,7 +31,6 @@ const inventory = require('../../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json
 const posterRegistry = require('../../docs/generated/MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.json');
 const release = require('../../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
 const ledger = require('../../core/tk504BatchReleaseLedger.js');
-const original226Gate = require('../../tools/tk614_original226_media_eligibility.cjs');
 const inventorySha = 'a8500ce902bbea4f1ff5ad0be6576f70b44616f8803367a27122e5449c815a66';
 const posterSha = '07fe0762c6eb5814d03d006e060b8eec0dd4e47cd053a3d3846ff003cc8559a4';
 const byId = new Map();
@@ -262,11 +261,10 @@ async function handle(event, deps = {}) {
   // these are NOT an independent media release decision. Never sign original
   // media on the basis of entries, FK approval, runtime env, or test overrides.
   // A future owner-signed media release requires a separate reviewed code change.
+  // Unconditional: runs before auth, grant lookup or signing. The pure eligibility
+  // gate (tools/tk614_original226_media_eligibility.cjs) is code-only staging and is
+  // deliberately NOT loaded here; wiring it requires a separate reviewed release.
   if (catalogNumber >= 1 && catalogNumber <= 226) {
-    // TK504 shadow readiness: pure, zero I/O. Its result is only introspection
-    // (authorized is a literal false, cutover locked); the hard block below is
-    // unconditional and runs before auth, grant lookup or signing.
-    original226Gate.brokerShadow(body.catalog_id, body.type);
     return failure(event, 404, 'MEDIA_NOT_APPROVED');
   }
   if (body.type === 'poster' && env.MOVEKIT_V2_POSTER_UPLOAD_VERIFIED !== 'true') {

@@ -24,6 +24,16 @@
  *
  * Pure: no env, no network, no clock (caller passes `now`), no DB, no signing, no keys.
  * Output contains fixed codes only: never user ids, paths, URLs or tokens.
+ *
+ * TRUST ANCHOR: the ONLY Ed25519 keys accepted for (C) and (D) are OWNER_KEYS, a frozen
+ * module-scoped snapshot of the reviewed admin_release TRUSTED_OWNER_KEY_SHA256 pin. No
+ * input field, option, argument or env var can add, replace or widen trusted keys.
+ *
+ * CODE-ONLY STAGING: this module is NOT loaded or called by any production function. A
+ * future broker integration is a separate, reviewed code release and must (1) take the
+ * account id only from server-side identifyUser() (never from a request-supplied
+ * `account.verified` claim), (2) read publication/grant/attestation only from
+ * server-only sources with trusted provenance, and (3) run AFTER auth, never pre-auth.
  */
 const M = require('./tk614_original226_private_media_staging.cjs');
 const A = require('./tk614_original226_admin_release.cjs');
@@ -42,6 +52,9 @@ const ATTESTATION_DOMAIN = 'TK504-ORIGINAL226-BYTE-INTEGRITY-ATTESTATION/1\n';
 const PUBLICATION_SCHEMA = 'tk614-original226-media-publication/1.0';
 const GRANT_SCOPE = 'movekit_v2';
 const DENY = Object.freeze({ status: 404, error: 'MEDIA_NOT_APPROVED' });
+// Pinned owner trust anchor, captured once at module load from the reviewed admin_release
+// constant. Server-side and immutable; the sole key set for media record + attestation.
+const OWNER_KEYS = Object.freeze(Array.isArray(A.TRUSTED_OWNER_KEY_SHA256) ? [...A.TRUSTED_OWNER_KEY_SHA256] : []);
 
 const CID = /^TK-[0-9]{6}$/;
 const HEX64 = /^[0-9a-f]{64}$/;
@@ -49,8 +62,9 @@ const HEX40 = /^[0-9a-f]{40}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const ISO_Z = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
 const PUB_REF = /^TK614-PUB226-[0-9]{8}-[0-9]{3,6}$/;
-const INPUT_KEYS = ['request', 'account', 'releaseGates', 'mediaRecord', 'attestation', 'publication',
-  'grant', 'expectedAsset', 'now', 'trustedKeys'];
+// Deliberately no key/trust-anchor field: trusted keys can never come from the caller.
+const INPUT_KEYS = Object.freeze(['request', 'account', 'releaseGates', 'mediaRecord', 'attestation',
+  'publication', 'grant', 'expectedAsset', 'now']);
 const KIND_KEYS = ['expected', 'checked', 'pass', 'fail', 'unable', 'expected_bytes', 'verified_bytes'];
 const REPORT_KEYS = ['schema', 'mode', 'project_ref', 'manifest_all_sha256', 'verdict', 'checked', 'pass',
   'fail', 'unable', 'video', 'poster'];
@@ -83,7 +97,8 @@ function expectedKind(type) {
   return { expected: e.length, checked: e.length, pass: e.length, fail: 0, unable: 0,
     expected_bytes: bytes, verified_bytes: bytes };
 }
-function attestationProblems(a, trustedKeys) {
+// Verifies only against the pinned OWNER_KEYS; any extra argument is ignored.
+function attestationProblems(a) {
   if (!isObj(a)) return ['ORIGINAL226_BYTE_ATTESTATION_MISSING'];
   // The verifier's own unsigned report (schema tk504-private-storage-byte-sha-report) is NOT an attestation.
   if (a.schema === VERIFIER_REPORT_SCHEMA || own(a, 'authorizes_nothing'))
@@ -108,7 +123,7 @@ function attestationProblems(a, trustedKeys) {
   try { digest = attestationDigest(a); } catch (_) { digest = null; }
   if (!digest || a.attestation_sha256 !== digest) p.add('ORIGINAL226_BYTE_ATTESTATION_DIGEST_MISMATCH');
   const s = a.signature;
-  const trusted = trustedKeys === undefined ? A.TRUSTED_OWNER_KEY_SHA256 : trustedKeys;
+  const trusted = OWNER_KEYS;
   if (!sameKeys(s, ['alg', 'public_key_spki_der_base64', 'value_base64']) || s.alg !== 'ed25519' ||
       typeof s.public_key_spki_der_base64 !== 'string' || typeof s.value_base64 !== 'string') {
     p.add('ORIGINAL226_BYTE_ATTESTATION_SIGNATURE_REQUIRED');
@@ -139,7 +154,6 @@ function evaluate(input) {
   // Unknown fields (e.g. approved:true, released:true, an env flag) are a hard error, never a hint.
   if (Object.keys(input).some(k => !INPUT_KEYS.includes(k))) b.add('ORIGINAL226_INPUT_UNEXPECTED_FIELD');
   const { request, account, mediaRecord, attestation, publication, grant, expectedAsset } = input;
-  const trustedKeys = input.trustedKeys;
 
   // A: source-qualified original catalog item, never a personal/custom TK-lookalike.
   let entry = null;
@@ -169,14 +183,15 @@ function evaluate(input) {
   try { gp = M.releaseGatesSeparationProblems(input.releaseGates, PINNED_MANIFEST); } catch (_) { gp = ['X']; }
   if (gp.length) b.add('ORIGINAL226_RELEASE_GATES_SEPARATION_FAILED');
 
-  // E (identity part): server-verified, non-anonymous account.
+  // E (identity part): server-verified, non-anonymous account. The `account` object must be
+  // built by the future broker from identifyUser(); it is never forwarded from a request body.
   const uid = isObj(account) && account.verified === 'server_auth_v1_user' && account.is_anonymous === false &&
     typeof account.user_id === 'string' && UUID.test(account.user_id) ? account.user_id : null;
   if (!uid) b.add('ORIGINAL226_ACCOUNT_NOT_AUTHENTICATED');
 
   // C: owner-signed media release record (reuses existing validator; FK-only record rejected there).
   let rp;
-  try { rp = M.mediaReleaseRecordProblems(mediaRecord, PINNED_MANIFEST, { accountUserId: uid || undefined, trustedKeys }); }
+  try { rp = M.mediaReleaseRecordProblems(mediaRecord, PINNED_MANIFEST, { accountUserId: uid || undefined, trustedKeys: OWNER_KEYS }); }
   catch (_) { rp = ['MEDIA_RECORD_SHAPE_INVALID']; }
   if (rp.includes('FK_IDENTITY_RECORD_IS_NOT_MEDIA_APPROVAL')) b.add('ORIGINAL226_FK_ONLY_RECORD_IS_NOT_MEDIA_APPROVAL');
   else if (rp.includes('MEDIA_RECORD_MISSING')) b.add('ORIGINAL226_MEDIA_RECORD_MISSING');
@@ -186,7 +201,7 @@ function evaluate(input) {
   const decisionId = recordOk ? mediaRecord.decision_id : null;
 
   // D: signed byte attestation, bound to the signed media record's evidence hash.
-  const ap = attestationProblems(attestation, trustedKeys);
+  const ap = attestationProblems(attestation);
   for (const x of ap) b.add(x);
   if (!ap.length && !(recordOk && isObj(mediaRecord.evidence) &&
       mediaRecord.evidence.byte_level_download_sha256_proof === attestation.attestation_sha256))
@@ -223,19 +238,6 @@ function result(set) {
     status: DENY.status, error: DENY.error, blockers: Object.freeze(blockers) });
 }
 
-// Broker shadow for requests that have not been authenticated yet. Because the original
-// media is unconditionally locked in this version, the denial is a precomputed constant:
-// never scan/hash the 452-item manifest or verify signatures on an unauthenticated 404.
-// Future release evaluation must happen AFTER server-side auth and entitlement loading.
-const BROKER_SHADOW_DENY = result(new Set([
-  'ORIGINAL226_CUTOVER_LOCKED_IN_THIS_VERSION',
-  'ORIGINAL226_MEDIA_RECORD_MISSING'
-]));
-function brokerShadow(catalogId, mediaType) {
-  void catalogId;
-  void mediaType;
-  return BROKER_SHADOW_DENY;
-}
 // Sanitized log line: fixed codes and counts only.
 function publicLog(r) {
   return { gate: GATE_VERSION, decision: 'DENY', error: DENY.error,
@@ -243,5 +245,5 @@ function publicLog(r) {
 }
 
 module.exports = Object.freeze({ GATE_VERSION, CUTOVER, PINNED_MANIFEST_SHA256, ATTESTATION_SCHEMA, ATTESTATION_KIND,
-  ATTESTATION_DOMAIN, PUBLICATION_SCHEMA, VERIFIER_REPORT_SCHEMA, INPUT_KEYS,
-  attestationDigest, attestationSigningMessage, attestationProblems, evaluate, brokerShadow, publicLog });
+  ATTESTATION_DOMAIN, PUBLICATION_SCHEMA, VERIFIER_REPORT_SCHEMA, INPUT_KEYS, OWNER_KEYS,
+  attestationDigest, attestationSigningMessage, attestationProblems, evaluate, publicLog });

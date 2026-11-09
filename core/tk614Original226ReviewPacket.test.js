@@ -166,8 +166,8 @@ const withRecord=(g,record)=>({...g,[P.RECORD_KEY]:record});
 ok(P.RECORD_KEY in repoGates,'real repo gates carry the separate FK-only owner record');
 eq(repoGates[P.RECORD_KEY].decision_id,D.DECISION_ID);
 eq(R.original226Released(repoGates),LICENSE_BOUND,'repo FK-only record valid only once the license sha256 is bound');
-eq(R.activationBlockers(repoGates),LICENSE_BOUND?['ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY']:[...P.EXPECTED_ACTIVATION_BLOCKERS],
-  'real repo: owner-key blocker always present');
+eq(R.activationBlockers(repoGates),LICENSE_BOUND?[]:['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES'],
+  'owner fingerprint pinned: metadata readiness is not a signed B activation');
 eq(R.original226Released(addMedia226(repoGates)),false,'RED: appending 001..226 to MEDIA released_batches is rejected');
 eq(R.original226Released(addMedia226(S.SYNTHETIC_RELEASE_GATES),SD),false,'RED: media mixing rejected even with a bound record');
 eq(R.original226Released(withRecord(S.SYNTHETIC_RELEASE_GATES,tpl),SD),false,'PENDING template is not a release');
@@ -176,10 +176,11 @@ eq(R.original226Released(withRecord(S.SYNTHETIC_RELEASE_GATES,valid),SD),false,
 {const r=structuredClone(S.SYNTHETIC_RELEASE_GATES[P.RECORD_KEY]);r.batches[0].status='PENDING_OWNER_REVIEW';
  eq(R.original226Released(withRecord(S.SYNTHETIC_RELEASE_GATES,r),SD),false,'partial approval is not a release');}
 eq(R.original226Released(S.SYNTHETIC_RELEASE_GATES,SD),true,'GREEN: 15/1164 media scope + decision-bound FK-only record');
-eq(R.activationBlockers(S.SYNTHETIC_RELEASE_GATES,undefined,SD),['ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY'],
-  'even a complete record leaves the owner-key blocker');
+eq(R.activationBlockers(S.SYNTHETIC_RELEASE_GATES,undefined,SD),[],
+  'public key pin alone does not sign synthetic approval');
 eq(R.original226Released(S.SYNTHETIC_RELEASE_GATES,{...SD,reviewPacket:null}),false,'no packet -> fail closed');
-ok(Object.isFrozen(R.TRUSTED_OWNER_KEY_SHA256)&&R.TRUSTED_OWNER_KEY_SHA256.length===0,'no owner key pinned');
+ok(Object.isFrozen(R.TRUSTED_OWNER_KEY_SHA256)&&R.TRUSTED_OWNER_KEY_SHA256.length===1&&
+  R.TRUSTED_OWNER_KEY_SHA256[0]==='9a4e3f7ee3cab1792fcc00efca3992c10bb251c0840f47c0a0a224106f280c63','one public owner key fingerprint pinned');
 
 // ---- 9. the 356 stay unaffected
 eq(repoGates.status,'RELEASE_APPROVED');
@@ -254,4 +255,4 @@ for(const bad of [['--activate'],['--approve'],['--release'],['--reviewed'],['--
 ok(fs.readFileSync(GATES_FILE).equals(gatesBytesBefore),'MOVEKIT_V2_RELEASE_GATES.json byte-identical after all runs');
 
 console.log('TK614 original-226 owner review packet: '+checks+
-  ' assertions PASS; 226/226 PENDING_OWNER_REVIEW in 10 batches, no approval, activation still BLOCKED');
+  ' assertions PASS; review packet stays PENDING; bulk owner decision separate; no real B activation');

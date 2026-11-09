@@ -189,10 +189,10 @@ eq(R.mediaGateProblems(gates),[]);
 
 // ---- 6. admin release gate: approved owner content, still NO_PINNED_OWNER_KEY
 eq(R.original226Released(gates),LICENSE_BOUND,'FK-only owner release recognised once license evidence is bound');
-eq(R.activationBlockers(gates),LICENSE_BOUND?['ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY']:
-  ['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY']);
-ok(Object.isFrozen(R.TRUSTED_OWNER_KEY_SHA256)&&R.TRUSTED_OWNER_KEY_SHA256.length===0,'TRUSTED_OWNER_KEY_SHA256 stays []');
-ok(/const TRUSTED_OWNER_KEY_SHA256=Object\.freeze\(\[\]\);/.test(read('tools/tk614_original226_admin_release.cjs')));
+eq(R.activationBlockers(gates),LICENSE_BOUND?[]:['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES']);
+ok(Object.isFrozen(R.TRUSTED_OWNER_KEY_SHA256)&&R.TRUSTED_OWNER_KEY_SHA256.length===1&&
+  R.TRUSTED_OWNER_KEY_SHA256[0]==='9a4e3f7ee3cab1792fcc00efca3992c10bb251c0840f47c0a0a224106f280c63','only owner PUBLIC pin configured');
+ok(read('tools/tk614_original226_admin_release.cjs').includes("const TRUSTED_OWNER_KEY_SHA256=Object.freeze(['9a4e3f7ee3cab1792fcc00efca3992c10bb251c0840f47c0a0a224106f280c63']);"));
 // RED: the old unsafe model (append 001..226 to MEDIA released_batches) is now itself a rejection.
 {const g={...gates,released_batches:[...gates.released_batches,{batch:16,from:'TK-000001',through:'TK-000226',count:226,
    display_sha256:'c'.repeat(64)}]};
@@ -275,4 +275,4 @@ ok(read('docs/TK614_ORIGINAL226_BULK_OWNER_FK_APPROVAL_20261109.md').includes(D.
 
 console.log('TK614 original-226 owner FK-only approval: '+checks+' assertions PASS; decision '+D.DECISION_ID+
   ', 10 batches/226 IDs, media scope 15/1164 unchanged, '+(LICENSE_BOUND?'record bound':'license hash PENDING')+
-  ', activation still BLOCKED (no pinned owner key)');
+  ', public key fingerprint pinned; no real owner-signed B decision or DB activation');

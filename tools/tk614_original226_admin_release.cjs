@@ -58,7 +58,9 @@ const ADVISORY_KEY='614226,603';
 // Owner Ed25519 public keys (sha256 of SPKI DER) trusted to sign ACTIVATION.
 // Intentionally EMPTY: only a separately reviewed commit may add a key.
 // Empty list => activation rendering is BLOCKED (fail closed).
-const TRUSTED_OWNER_KEY_SHA256=Object.freeze([]);
+// Owner Ed25519 PUBLIC SPKI DER SHA256; private key remains DPAPI-protected off-repository.
+// A pin is NOT an activation approval: verifySignature still requires a separately signed B decision.
+const TRUSTED_OWNER_KEY_SHA256=Object.freeze(['9a4e3f7ee3cab1792fcc00efca3992c10bb251c0840f47c0a0a224106f280c63']);
 const ACTIVATION_GATES=Object.freeze(['source','owner','review','license','rollback','ab_acceptance']);
 // prosrc digest of tk504_protect_reserved_catalog_fk pinned independently by
 // the TK603 staged migration; used to self-check the repo extraction method.

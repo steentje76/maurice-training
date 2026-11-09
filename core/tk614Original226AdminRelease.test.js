@@ -57,8 +57,8 @@ const SD={ownerDecision:S.SYNTHETIC_OWNER_DECISION};
 // Repo state: the owner FK-only record is committed; it becomes valid only once the
 // sha256 of the private LICENSE.txt is bound (tools/tk614_original226_owner_decision.cjs --bind-license).
 const LICENSE_BOUND=require('../tools/tk614_original226_owner_decision.cjs').repoOwnerDecision().license.file_sha256!==null;
-const REPO_BLOCKERS=LICENSE_BOUND?['ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY']:
-  ['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY'];
+const PUBLIC_PIN='9a4e3f7ee3cab1792fcc00efca3992c10bb251c0840f47c0a0a224106f280c63';
+const REPO_BLOCKERS=LICENSE_BOUND?[]:['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES'];
 const KEYS=crypto.generateKeyPairSync('ed25519'),OTHER=crypto.generateKeyPairSync('ed25519');
 const KEY_SHA=sha(KEYS.publicKey.export({format:'der',type:'spki'}));
 const trustOK={trustedOwnerKeySha256:[KEY_SHA],...SD};
@@ -218,9 +218,11 @@ RED('manifest not JSON','MANIFEST_NOT_JSON',aS,{manifestBytes:Buffer.from('{nope
 RED('guard drift in repo','REPO_GUARD_DIGEST_METHOD_MISMATCH',aS,{tk504Sql:tk504Sql.replace('admin-managed','x')});
 
 // ---- 5. phase B (activate): fail-closed by default, GREEN only with pinned key + release gate
-ok(Object.isFrozen(R.TRUSTED_OWNER_KEY_SHA256)&&R.TRUSTED_OWNER_KEY_SHA256.length===0,'no owner key pinned in repo');
-eq(R.activationBlockers(repoGates),REPO_BLOCKERS,'repo: never activatable (no pinned owner key)');
-ok(R.activationBlockers(repoGates).includes('ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY'),'owner-key blocker always present in repo');
+ok(Object.isFrozen(R.TRUSTED_OWNER_KEY_SHA256)&&R.TRUSTED_OWNER_KEY_SHA256.length===1&&
+  R.TRUSTED_OWNER_KEY_SHA256[0]===PUBLIC_PIN,'exactly one owner PUBLIC key fingerprint pinned');
+eq(R.activationBlockers(repoGates),REPO_BLOCKERS,'public key pin is not a signed owner approval');
+ok(!R.activationBlockers(repoGates).includes('ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY'),
+  'owner public key pinned; independent signed approval still required');
 eq(R.activationBlockers(GATES_OK,[KEY_SHA],SD),[]);
 eq(R.activationBlockers(GATES_OK,[KEY_SHA]),['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES'],
   'synthetic decision is never accepted against the committed sidecar');
@@ -258,11 +260,13 @@ eq(R.activationBlockers(GATES_COVERAGE_ONLY,[KEY_SHA],SD),['ACTIVATION_BLOCKED_O
  eq(P.releaseRecordProblems(g[P.RECORD_KEY],P.repoReviewPacket()),[],'shape-valid');
  ok(R.original226ReleaseRecordProblems(g,SD).includes('RELEASE_RECORD_NOT_BOUND_TO_OWNER_DECISION'),'unbound evidence rejected');
  eq(R.original226Released(g,SD),false);}
-const REPO_ACT_BLOCK=LICENSE_BOUND?'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY':'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES';
+const REPO_ACT_BLOCK=LICENSE_BOUND?'ACTIVATION_SIGNATURE_REQUIRED':'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES';
 const aA=mk('activate'),sA=R.signApproval(aA,KEYS.privateKey);
 throwsCode(()=>prep('activate',aA),REPO_ACT_BLOCK,'repo gate/key blocks activation');
-throwsCode(()=>prep('activate',sA),REPO_ACT_BLOCK,'even a validly signed approval');
-throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK},SD),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY','no pinned key');
+throwsCode(()=>prep('activate',sA),LICENSE_BOUND?'OWNER_KEY_NOT_TRUSTED':'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
+  'synthetic signing key is not the owner public key');
+throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK},SD),'OWNER_KEY_NOT_TRUSTED',
+  'public pin refuses a synthetic signer');
 throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK}),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
   'synthetic gates without the library-only synthetic decision stay blocked');
 throwsCode(()=>prep('activate',sA,{releaseGates:GATES_COVERAGE_ONLY},trustOK),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
@@ -299,7 +303,8 @@ throwsCode(()=>prep('activate',aS,{releaseGates:GATES_OK},trustOK),'APPROVAL_PHA
 throwsCode(()=>prep('stage',sA),'APPROVAL_PHASE_MISMATCH');
 {const saved={...process.env};
  process.env.TK614_ALLOW_ACTIVATION='true';process.env.TK614_FORCE='1';process.env.ALLOW_ACTIVATION='true';
- try{throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK},SD),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY','env flags are ignored');}
+ try{throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK},SD),'OWNER_KEY_NOT_TRUSTED',
+   'env flags cannot bypass the pinned owner public key');}
  finally{for(const k of ['TK614_ALLOW_ACTIVATION','TK614_FORCE','ALLOW_ACTIVATION'])if(!(k in saved))delete process.env[k];}}
 ok(!/process\.env/.test(read('tools/tk614_original226_admin_release.cjs')),'generator never reads environment variables');
 const rA=prep('activate',sA,{releaseGates:GATES_OK},trustOK),sqlA=rA.sql;
@@ -437,7 +442,8 @@ try{
   throwsCode(()=>R.run(renderArgs('stage',draft,'TK614-OWNER-STAGE-20261108-XX',dj.approval_sha256,bad),io),'APPROVAL_CONFIRMATION_MISMATCH');
   const actFile=path.join(tmp,'activate-signed.json');fs.writeFileSync(actFile,JSON.stringify(sA));
   throwsCode(()=>R.run(renderArgs('activate',actFile,ACT_ID,sA.approval_sha256,bad),io),
-    REPO_ACT_BLOCK,'CLI activation blocked even with a signed, accepted approval');
+    LICENSE_BOUND?'OWNER_KEY_NOT_TRUSTED':'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
+    'CLI rejects an untrusted synthetic signer even with accepted gates');
   for(const extra of [['--allow-activation','true'],['--force','1'],['--trusted-key',KEY_SHA],['--release-gates',fpFile],
     ['--expected-mapping-sha','a'.repeat(64)],['--now','0']])
     throwsCode(()=>R.run([...renderArgs('activate',actFile,ACT_ID,sA.approval_sha256,bad),...extra],io),'USAGE','flag '+extra[0]);
@@ -464,7 +470,8 @@ try{
   ok(sj.approval_sha256!==aj.approval_sha256&&sj.signature===null,'seal recomputes digest and clears any signature');
   const st=R.run(['status','--manifest',mf],io);
   eq([st.stage,st.activate,st.reverse,st.database_writes_performed],['RENDERABLE_WITH_DBA_APPROVED_OWNER_DECISION_AND_LIVE_FINGERPRINT',
-    'BLOCKED','RENDERABLE_WITH_DBA_APPROVED_OWNER_DECISION',false]);
+    LICENSE_BOUND?'RENDERABLE_WITH_SIGNED_OWNER_DECISION':'BLOCKED',
+    'RENDERABLE_WITH_DBA_APPROVED_OWNER_DECISION',false]);
   eq(st.activation_blockers,REPO_BLOCKERS);
   eq(st.original_226_fk_release_problems,LICENSE_BOUND?[]:
     ['OWNER_DECISION_LICENSE_EVIDENCE_PENDING','RELEASE_RECORD_EVIDENCE_MISSING_OR_INVALID'],'status reports the FK-only record state');
@@ -520,4 +527,4 @@ eq(S.SYNTHETIC_RELEASE_GATES.entries.length,1164);
  ok(!/process\.env/.test(src),'smoke never reads environment variables');}
 
 console.log('TK614 original-226 admin release candidate: '+checks+
-  ' assertions PASS; phases A/B/C rendered and guarded, activation BLOCKED by default (no pinned owner key, 001..226 not in release gate)');
+  ' assertions PASS; phases A/B/C guarded, owner public pin accepted; real activation still requires a separately signed B decision');

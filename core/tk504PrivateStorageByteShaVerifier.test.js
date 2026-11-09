@@ -117,8 +117,18 @@ const hitsFor = e => hits.get(V.OBJECT_PREFIX + e.bucket + '/' + e.storage_path)
   }
   for (const argv of [['--live', '--check'], ['--bogus'], ['--live', '--concurrency', '4'], ['--live', '--concurrency', '0'],
     ['--live', '--report-out', path.join(__dirname, 'leak.json')], ['--live', '--report-out', 'relative.json'],
-    ['--report-out', path.join(os.tmpdir(), 'x.json')], ['--live', '--url', 'https://evil.example']]) {
+    ['--report-out', path.join(os.tmpdir(), 'x.json')], ['--live', '--url', 'https://evil.example'],
+    ['--live', 'constructor', '5'], ['--live', '__proto__', '5']]) {
     eq(await V.run(argv, { env: { [V.KEY_ENV]: FAKE_JWT_KEY }, out: () => {}, err: () => {}, fetchImpl: noNetwork }), 2, 'usage fail-closed: ' + argv.join(' '));
+  }
+  // Prefix .. in a folder name is NOT outside the repository; guard against a false outside verdict.
+  {
+    const root = path.resolve(__dirname, '..');
+    const insideDotDotPrefix = fs.mkdtempSync(path.join(root, '..tk504-report-test-'));
+    try {
+      assert.throws(() => V.parseArgs(['--live', '--report-out', path.join(insideDotDotPrefix, 'private.json')]),
+        e => e.code === 'REPORT_OUT_INSIDE_REPO'); checks++;
+    } finally { fs.rmSync(insideDotDotPrefix, { recursive: true, force: true }); }
   }
   // Malformed / tampered manifest file -> exit 2 before any network use.
   {

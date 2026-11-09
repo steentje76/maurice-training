@@ -285,7 +285,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--check') seen.check = true;
     else if (a === '--live') seen.live = true;
-    else if (ints[a]) {
+    else if (Object.hasOwn(ints, a)) {
       const v = argv[++i];
       need(typeof v === 'string' && /^[0-9]{1,9}$/.test(v), 'ARGS_INVALID');
       o[ints[a]] = Number(v);
@@ -302,8 +302,13 @@ function parseArgs(argv) {
   if (o.reportOut !== null) {
     need(o.mode === 'live', 'REPORT_OUT_LIVE_ONLY');
     need(path.isAbsolute(o.reportOut), 'REPORT_OUT_NOT_ABSOLUTE');
-    const rel = path.relative(ROOT, path.resolve(o.reportOut));
-    need(rel.startsWith('..') || path.isAbsolute(rel), 'REPORT_OUT_INSIDE_REPO');
+    const reportFile = path.resolve(o.reportOut);
+    const rootReal = fs.realpathSync(ROOT);
+    let parentReal;
+    try { parentReal = fs.realpathSync(path.dirname(reportFile)); }
+    catch (_) { fail('REPORT_OUT_PARENT_UNREADABLE'); }
+    const rel = path.relative(rootReal, parentReal);
+    need(rel === '..' || rel.startsWith('..' + path.sep) || path.isAbsolute(rel), 'REPORT_OUT_INSIDE_REPO');
   }
   return o;
 }

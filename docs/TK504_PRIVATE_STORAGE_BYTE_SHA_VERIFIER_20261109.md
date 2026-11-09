@@ -41,11 +41,18 @@ builds all 452 request targets and prints the plan size. Exit 0.
 Live (**only with separate coordinator authorization**):
 
 ```
-# PowerShell, key typed/pasted from the secret store into THIS process only:
-$env:TK504_STORAGE_VERIFY_KEY = '<service key from secret store>'
-node tools/tk504_private_storage_byte_sha_verify.cjs --live --concurrency 2 `
-  --report-out C:\private-evidence\tk504-bytesha-<date>.json
-Remove-Item Env:TK504_STORAGE_VERIFY_KEY
+# PowerShell: avoid typing/pasting the secret into a command recorded by PSReadLine history.
+# Prefer a dedicated scoped, read-only credential from the approved secret manager.
+$secure = Read-Host 'Storage read credential' -AsSecureString
+$bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+try {
+  $env:TK504_STORAGE_VERIFY_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
+  node tools/tk504_private_storage_byte_sha_verify.cjs --live --concurrency 2 `
+    --report-out C:\private-evidence\tk504-bytesha-<date>.json
+} finally {
+  Remove-Item Env:TK504_STORAGE_VERIFY_KEY -ErrorAction SilentlyContinue
+  [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+}
 ```
 
 - Credential is read only from `process.env.TK504_STORAGE_VERIFY_KEY`; never from a file, never

@@ -55,11 +55,10 @@ const ISO_Z=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
 const MAX_APPROVAL_AGE_MS=14*24*3600*1000,MAX_CLOCK_SKEW_MS=5*60*1000;
 const MIN_SERVER_VERSION_NUM=150000;
 const ADVISORY_KEY='614226,603';
-// Owner Ed25519 public keys (sha256 of SPKI DER) trusted to sign ACTIVATION.
-// Intentionally EMPTY: only a separately reviewed commit may add a key.
-// Empty list => activation rendering is BLOCKED (fail closed).
-// Owner Ed25519 PUBLIC SPKI DER SHA256; private key remains DPAPI-protected off-repository.
-// A pin is NOT an activation approval: verifySignature still requires a separately signed B decision.
+// Owner Ed25519 PUBLIC SPKI DER SHA256: the pinned public fingerprint was approved in
+// a separate review; the DPAPI-protected private key stays outside all repositories.
+// A public pin alone is NOT an activation approval: verifySignature additionally
+// requires a separate signed B_ACTIVATE decision with six accepted evidence gates.
 const TRUSTED_OWNER_KEY_SHA256=Object.freeze(['9a4e3f7ee3cab1792fcc00efca3992c10bb251c0840f47c0a0a224106f280c63']);
 const ACTIVATION_GATES=Object.freeze(['source','owner','review','license','rollback','ab_acceptance']);
 // prosrc digest of tk504_protect_reserved_catalog_fk pinned independently by

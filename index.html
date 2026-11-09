@@ -21065,23 +21065,23 @@ var VIDEO_MANIFEST={"TK-000206":{"catalog_id":"TK-000206","slug":"wall-sit","pos
   window.MediaUrlResolver=MediaUrlResolver;
 
   ExerciseAssetProvider.register('video',{id:'movekit-videos',type:'video',format:'mp4',
-    resolve:function(slug){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return null;var e=_bySlug[slug];var f=(e&&e.videos&&e.videos[0])?e.videos[0].file:null;return f?MediaUrlResolver.resolve(f):null;},
+    resolve:function(slug){var e=_bySlug[slug];if(e&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(e.catalog_id))return null;var f=(e&&e.videos&&e.videos[0])?e.videos[0].file:null;return f?MediaUrlResolver.resolve(f):null;},
     has:function(slug){var e=_bySlug[slug];return !!(e&&e.videos&&e.videos.length);}});
   /* Publieke video-API (videos[]-model: meerdere video's per oefening voorbereid). */
   /* videos(): file blijft het canonieke manifestpad; url is het runtime-adres (MEDIA-0C). */
   ExerciseAssetProvider.videos=function(catalogId){var e=VIDEO_MANIFEST[catalogId];if(!(e&&e.videos))return [];
-    return e.videos.map(function(v){var c={};for(var k in v)c[k]=v[k];c.url=(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())?null:MediaUrlResolver.resolve(v.file);return c;});};
+    return e.videos.map(function(v){var c={};for(var k in v)c[k]=v[k];c.url=(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(catalogId))?null:MediaUrlResolver.resolve(v.file);return c;});};
   ExerciseAssetProvider.video=function(catalogId,i){var v=this.videos(catalogId);return v[i||0]||null;};
   ExerciseAssetProvider.hasVideo=function(catalogId){return this.videos(catalogId).length>0;};
   ExerciseAssetProvider.videoManifest=function(){return VIDEO_MANIFEST;};
   ExerciseAssetProvider.videoStats=function(){var n=0,items=0,provs={};for(var c in VIDEO_MANIFEST){n++;VIDEO_MANIFEST[c].videos.forEach(function(v){items++;provs[v.provider]=1;});}return {exercisesWithVideo:n,videoCount:items,providers:Object.keys(provs),cache:VCACHE};};
   function _files(catalogId){return ExerciseAssetProvider.videos(catalogId).map(function(v){return v.file;});}
   /* Offline-API (architectuur voorbereid; nog geen UI in 11A). Async via de Cache Storage API. */
-  ExerciseAssetProvider.downloadOffline=function(catalogId){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return Promise.resolve(false);var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
+  ExerciseAssetProvider.downloadOffline=function(catalogId){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(catalogId))return Promise.resolve(false);var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
     return caches.open(VCACHE).then(function(c){return Promise.all(fs.map(function(f){return c.add(new Request(f)).catch(function(){});})).then(function(){return true;});}).catch(function(){return false;});};
   ExerciseAssetProvider.removeOffline=function(catalogId){var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
     return caches.open(VCACHE).then(function(c){return Promise.all(fs.map(function(f){return c.delete(f).catch(function(){});})).then(function(){return true;});}).catch(function(){return false;});};
-  ExerciseAssetProvider.isOffline=function(catalogId){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return Promise.resolve(false);var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
+  ExerciseAssetProvider.isOffline=function(catalogId){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(catalogId))return Promise.resolve(false);var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
     return caches.open(VCACHE).then(function(c){return Promise.all(fs.map(function(f){return c.match(f);})).then(function(rs){return rs.length>0&&rs.every(Boolean);});}).catch(function(){return false;});};
 })();
 

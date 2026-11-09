@@ -20,6 +20,10 @@ const src = html.slice(start, end);
 const flags = html.match(/const TK504_PRIVATE_MEDIA_RELEASE = (true|false);\s*const TK504_NEW_PRIVATE_MEDIA_RELEASE = (true|false);/);
 ok(flags && flags[1] === 'false' && flags[2] === 'true',
   'original server-release gate stays disabled, existing V2 transport enabled');
+// 226/356 share the V2 client transport (226 still server-denied); the legacy
+// V1 cutover flag must never influence the route predicate.
+ok(!src.includes('TK504_PRIVATE_MEDIA_RELEASE'),
+  'tk504PrivateEnabled never reads legacy V1 TK504_PRIVATE_MEDIA_RELEASE');
 const evaluate = enabled => vm.runInNewContext(
   'const TK504_NEW_PRIVATE_MEDIA_RELEASE = ' + enabled + ';\n' + src + '\ntk504PrivateEnabled',
   Object.create(null), { timeout: 1000 });

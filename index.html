@@ -21087,7 +21087,10 @@ var VIDEO_MANIFEST={"TK-000206":{"catalog_id":"TK-000206","slug":"wall-sit","pos
 
 /* TK504: preparatory protected-media runtime on the EXISTING exercise path.
    Release must be enabled by a reviewed code change AFTER server grants, license
-   and real-device cut-over gates pass. No user-configurable/localStorage switch. */
+   and real-device cut-over gates pass. No user-configurable/localStorage switch.
+   TK504_PRIVATE_MEDIA_RELEASE: legacy V1 public-media SW/cache cutover marker only
+   (mirrors TK504_PRIVATE_MEDIA_CUTOVER in sw.js); it does NOT select the playback
+   route anymore. TK504_NEW_PRIVATE_MEDIA_RELEASE alone routes all 582 IDs to V2. */
 const TK504_PRIVATE_MEDIA_RELEASE = false;
 const TK504_NEW_PRIVATE_MEDIA_RELEASE = true;
 let tk504MediaRuntime = null;

@@ -47,3 +47,11 @@ De eenmalige, offline generator is `node tools/tk614_original226_private_media_s
 6. **Oude openbare MP4-route uitzetten:** pas als de nieuwe mediaketen op web én Android bewezen werkt. Controleer oude directe URL's en Cache Storage/service-worker caches op toegankelijkheid, bewaak rollback zonder mediarechten te verruimen.
 
 **Operationele beslissing:** deze stap is *code-only* en maakt de bronverificatie reproduceerbaar. Geen nieuwe videoupload, publicatie, databasewrite of release is uitgevoerd.
+
+## Aanvulling: server-side eligibility gate (TK504, fail-closed)
+
+`tools/tk614_original226_media_eligibility.cjs` is de herbruikbare, pure poort die een toekomstige broker voor 001–226 moet bevragen. Hij toetst (A) catalogus-gekwalificeerde selectie zonder persoonlijke/custom botsing, (B) het gepinde 452-manifest (`all_sha256` 8492f2c1…) plus exacte pad/SHA/bytes-pariteit met de broker en ongewijzigde 356-releasegates, (C) een Ed25519-ondertekend **media**besluit via `mediaReleaseRecordProblems` (FK-only geweigerd), (D) een door de eigenaar ondertekende **attestatie** van het live byte-SHA-rapport (exact 452 pass, 0 fail, 0 unable, zelfde manifestdigest, gebonden aan `evidence.byte_level_download_sha256_proof`; ongetekende verifier-JSON wordt geweigerd), (E) publicatie + accountgebonden actieve grant, beide gebonden aan hetzelfde mediabesluit en een server-geverifieerde, niet-anonieme account, en (F) een letterlijke cutover-lock `enabled:false`.
+
+Uitkomst in deze versie is **altijd** `authorized:false`, `DENY`, `404 MEDIA_NOT_APPROVED`; `eligible:true` is alleen introspectie. Geen env-variabele, inputveld of optie kan dit wijzigen; vrijgave vereist een aparte gereviewde codewijziging. De broker roept `brokerShadow()` aan in de 226-tak (pure, 0 netwerkverzoeken) en blokkeert daarna onvoorwaardelijk. De 356 zijn ongewijzigd. Toets: `node core/tk614Original226MediaEligibility.test.js` (synthetisch).
+
+Open vóór gebruik: (1) er bestaat nog geen attestatie-, publicatie- of `media_decision_id`-grantbron server-side; (2) `trustedKeys` is in tests injecteerbaar en moet bij activatie verdwijnen (alleen de gepinde eigenaarssleutel); (3) functiebundel groeit ~0,4 MB door manifest en toolketen.

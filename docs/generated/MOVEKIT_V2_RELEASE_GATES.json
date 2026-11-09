@@ -12919,5 +12919,137 @@
       "sha256": "d84b44bc4c047b07a87d8075eef31cf767c45acbafe76dc1204c8da2bb52c503",
       "bytes": 12892
     }
-  ]
+  ],
+  "original_226_fk_identity_release": {
+    "schema": "tk614-original226-fk-identity-release/1.0",
+    "status": "OWNER_APPROVED_FK_IDENTITY_ONLY",
+    "decision_id": "TK614-OWNER-REVIEW226-20261109-BULK01",
+    "approved_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+    "approved_at": "2026-11-09T00:00:00.000Z",
+    "binding_kind": "FK_IDENTITY_BINDING_ONLY",
+    "media_grants": 0,
+    "media_access": "NOT_RELEASED",
+    "review_packet": {
+      "schema": "tk614-original226-owner-review-packet/1.0",
+      "all_sha256": "bb7badb23244ad47659b8170e9f154aa7bbcfc7fd69c1c1c4b42b2a65bd98487",
+      "source_catalog_sha256": "b278938498ffd0d713a4ad23184bfdd037fab65fd2ce5c9e0f7662a6e96bf4af"
+    },
+    "evidence": {
+      "source_evidence_sha256": "494ed563dd063369aca56e2f8af3381b6502c23ef02b779915ff9036041243b0",
+      "license_evidence_sha256": "6d92f6774cfa2e30ec7c367ae8b8e5bece9a4f7d6a17510e292f29303e468b19",
+      "owner_review_evidence_sha256": "b55041cfdbfb87356183baad6b4b3cdf0c34ac011f4491f126dfee659e424b73"
+    },
+    "batches": [
+      {
+        "batch": 1,
+        "from": "TK-000001",
+        "through": "TK-000025",
+        "count": 25,
+        "batch_sha256": "d5f42ae16c763d64320c39952c5a852a33a23ccd4acd2b3f37bc0faa3c2e51b1",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "102f8a39432ab7f5beb1f6b521064a8de6d7142a9f15e3aa77ee9d3de0cf4a48"
+      },
+      {
+        "batch": 2,
+        "from": "TK-000026",
+        "through": "TK-000050",
+        "count": 25,
+        "batch_sha256": "dadec463778229c372691e9512fe1673b4835dae5284be1731792afd9b9997ce",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "22547890b0850d3c16d731cb1ae01bb5930f6cfb9fd77fa4904cbc6741f608c9"
+      },
+      {
+        "batch": 3,
+        "from": "TK-000051",
+        "through": "TK-000075",
+        "count": 25,
+        "batch_sha256": "70534ae2d37d556816e5b46dfea0e47cb6241539b97890e3b10cf3e22067b598",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "a933b9fcc99012f030d51bccf278cec8b237941be54cba75633747cdc4226c24"
+      },
+      {
+        "batch": 4,
+        "from": "TK-000076",
+        "through": "TK-000100",
+        "count": 25,
+        "batch_sha256": "2f6491a1216722af3c8c31bc1f9006e4886dbffbeb5b4fd83ba4a60247ab4b64",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "6aebf38229cc8cf78a99ea6c1082ea919d16470ac112bce8011e8cd2baa57ae0"
+      },
+      {
+        "batch": 5,
+        "from": "TK-000101",
+        "through": "TK-000125",
+        "count": 25,
+        "batch_sha256": "3a318f383f44c962c6ebad0b32f4a35d99b00e616c865527db40731b2e687a14",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "db82e1b9473ae4a601b4d145b09cdb5d7caf2c3d5fde7f40a0202f86b2a94ebb"
+      },
+      {
+        "batch": 6,
+        "from": "TK-000126",
+        "through": "TK-000150",
+        "count": 25,
+        "batch_sha256": "d027197a381d47cc14d126fe31163c2f5dc241a5a45492020ba86a9876474d38",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "531359930215d16972d99aa3fc2222b6433f59591e60f8ba5d13168b15a328fb"
+      },
+      {
+        "batch": 7,
+        "from": "TK-000151",
+        "through": "TK-000175",
+        "count": 25,
+        "batch_sha256": "065530d712ee81645b48069a3936213719e71e586f34fea7c28150214baaa88d",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "f72f2b8382ce172d439d78fd18e87c164341c0bb06c3c907806393e775e5e76d"
+      },
+      {
+        "batch": 8,
+        "from": "TK-000176",
+        "through": "TK-000200",
+        "count": 25,
+        "batch_sha256": "f5bbf824f0dc256252305bc7e127fa806ba8364796ab04762d441eda4f7792e1",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "42de1a07fc163c6ab8f2df637b958a4b49366ca984fd7dbce50733161692860d"
+      },
+      {
+        "batch": 9,
+        "from": "TK-000201",
+        "through": "TK-000225",
+        "count": 25,
+        "batch_sha256": "aea72156e3c2eede6a54b6d66e766af26452722f1300e5afc91bfad64de89778",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "ac7b6aa55e74c66238fb467b5d28ccf423ae85337d343de12df9c18431445c34"
+      },
+      {
+        "batch": 10,
+        "from": "TK-000226",
+        "through": "TK-000226",
+        "count": 1,
+        "batch_sha256": "436635dd7435e584ac09a5c6e585e8d8981e687c2516fc63a0e8ab934edb5590",
+        "status": "OWNER_APPROVED",
+        "reviewed_by": "Trainingskompas owner (self-attested MoveKit buyer)",
+        "reviewed_at": "2026-11-09T00:00:00.000Z",
+        "evidence_sha256": "565d6904ed44be869f6bc22d4929b175def066348f18595f195ee38c21dce5b9"
+      }
+    ]
+  }
 }

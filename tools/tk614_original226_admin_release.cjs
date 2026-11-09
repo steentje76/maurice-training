@@ -21,9 +21,12 @@
  * precondition + registry snapshot fingerprints. The DBA must re-type the
  * decision ID and the approval digest on the command line (two channels).
  * ACTIVATION additionally needs an Ed25519 owner signature from a key pinned in
- * TRUSTED_OWNER_KEY_SHA256 (empty = BLOCKED) AND the existing public release
- * gate (docs/generated/MOVEKIT_V2_RELEASE_GATES.json) must cover 001..226.
- * There is no environment variable or CLI flag that can bypass either.
+ * TRUSTED_OWNER_KEY_SHA256 (empty = BLOCKED) AND the public release gates
+ * (docs/generated/MOVEKIT_V2_RELEASE_GATES.json) must carry a valid, SEPARATE
+ * FK-identity-only owner record (original_226_fk_identity_release) bound to the
+ * owner decision sidecar, while the MEDIA scope (released_batches) stays exactly
+ * the 15 ledger batches of 227..582. There is no environment variable or CLI flag
+ * that can bypass either.
  *
  * planAll / verifyAllPlan / renderBatchBlock are reused unchanged from
  * tools/tk614_original226_batch25_preflight.cjs.
@@ -32,6 +35,8 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const {safelyOutsideRepo}=require('./tk504_prepare_private_fk_manifest.cjs');
 const T=require('./tk614_original226_batch25_preflight.cjs');
 const P=require('./tk614_original226_review_packet.cjs');
+const D=require('./tk614_original226_owner_decision.cjs');
+const L=require('../core/tk504BatchReleaseLedger.js');
 
 const ROOT=path.resolve(__dirname,'..');
 const ORIGINAL=226,TOTAL=582,EXISTING=TOTAL-ORIGINAL,LEGACY_TK_ROWS=23;
@@ -156,32 +161,48 @@ function signApproval(a,privateKey){
     value_base64:crypto.sign(null,Buffer.from(a.approval_sha256,'hex'),key).toString('base64')}};
 }
 
-// Public release gate for 001..226. Coverage of 001..226 by released_batches is
-// NECESSARY but NOT SUFFICIENT (TK614 phase-B review 2026-11-09): a range entry
-// carries no owner review, no evidence and no packet binding. The gates must
-// ALSO carry a valid owner release record (gates.original_226_fk_identity_release)
-// bound to the deterministic 226 review packet: FK-identity binding only, all 10
-// batches OWNER_APPROVED with evidence, zero media grants. See
-// tools/tk614_original226_review_packet.cjs releaseRecordProblems().
-function original226Released(gates,opts={}){
-  if(!isObj(gates)||gates.status!=='RELEASE_APPROVED'||!Array.isArray(gates.released_batches))return false;
-  const covered=new Set();
-  for(const b of gates.released_batches){
-    if(!isObj(b)||!/^TK-[0-9]{6}$/.test(b.from||'')||!/^TK-[0-9]{6}$/.test(b.through||''))continue;
-    const f=num(b.from),t=num(b.through);
-    if(t<f||t>TOTAL)continue;
-    for(let n=f;n<=t;n++)covered.add(n);
-  }
-  for(let n=1;n<=ORIGINAL;n++)if(!covered.has(n))return false;
-  return original226ReleaseRecordProblems(gates,opts).length===0;
+// FK-identity release gate for 001..226 (TK614 owner decision 2026-11-09).
+//
+// MEDIA and FK-IDENTITY are SEPARATE scopes in MOVEKIT_V2_RELEASE_GATES.json:
+//  - released_batches + entries = the MEDIA release of the 356 (TK-000227..582),
+//    exactly 15 ledger batches and 1164 media entries (core/tk504BatchReleaseLedger.js
+//    releasedScope()). It must NEVER be extended with 001..226: that would be a
+//    media release model change and could grant access.
+//  - original_226_fk_identity_release = the owner FK-only record for 001..226,
+//    bound to the review packet AND to the owner decision sidecar
+//    (tools/tk614_original226_owner_decision.cjs). Media grants 0, NOT_RELEASED.
+// Pre-2026-11-09 behaviour (RED): coverage of 001..226 inside released_batches was
+// required; that mixing is now itself a rejection reason.
+const MEDIA_RELEASED_BATCHES=15,MEDIA_ENTRIES=1164,MEDIA_FIRST=ORIGINAL+1;
+function mediaGateProblems(gates){
+  const p=new Set();
+  if(!isObj(gates))return ['RELEASE_GATES_MISSING'];
+  if(gates.status!=='RELEASE_APPROVED')p.add('RELEASE_GATES_NOT_RELEASE_APPROVED');
+  const rb=gates.released_batches;
+  if(!Array.isArray(rb)||rb.length!==MEDIA_RELEASED_BATCHES)p.add('MEDIA_RELEASED_BATCHES_NOT_EXACTLY_15');
+  if(Array.isArray(rb)&&rb.some(b=>!isObj(b)||!/^TK-[0-9]{6}$/.test(b.from||'')||!/^TK-[0-9]{6}$/.test(b.through||'')||
+     num(b.from)<MEDIA_FIRST||num(b.through)<MEDIA_FIRST||num(b.through)>TOTAL))
+    p.add('MEDIA_RELEASE_SCOPE_INCLUDES_ORIGINAL_226_OR_INVALID');
+  if(!Array.isArray(gates.entries)||gates.entries.length!==MEDIA_ENTRIES)p.add('MEDIA_ENTRIES_NOT_1164');
+  const scope=L.releasedScope(gates);
+  if(!scope||scope.batch!==MEDIA_RELEASED_BATCHES||scope.new_count!==EXISTING||scope.total!==TOTAL)
+    p.add('MEDIA_LEDGER_356_INTEGRITY_FAILED');
+  return [...p].sort();
 }
 function original226ReleaseRecordProblems(gates,opts={}){
   const packet=opts.reviewPacket===undefined?P.repoReviewPacket():opts.reviewPacket;
-  return P.releaseRecordProblems(isObj(gates)?gates[P.RECORD_KEY]:undefined,packet);
+  const decision=opts.ownerDecision===undefined?D.repoOwnerDecision():opts.ownerDecision;
+  return D.recordBindingProblems(isObj(gates)?gates[P.RECORD_KEY]:undefined,decision,packet);
 }
-function activationBlockers(releaseGates,trustedKeys=TRUSTED_OWNER_KEY_SHA256){
+function original226ReleaseProblems(gates,opts={}){
+  return [...new Set([...mediaGateProblems(gates),...original226ReleaseRecordProblems(gates,opts)])].sort();
+}
+function original226Released(gates,opts={}){
+  return original226ReleaseProblems(gates,opts).length===0;
+}
+function activationBlockers(releaseGates,trustedKeys=TRUSTED_OWNER_KEY_SHA256,opts={}){
   const out=[];
-  if(!original226Released(releaseGates))out.push('ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES');
+  if(!original226Released(releaseGates,opts))out.push('ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES');
   if(!Array.isArray(trustedKeys)||trustedKeys.length===0)out.push('ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY');
   return out;
 }
@@ -259,7 +280,7 @@ function verifyApproval(a,opts){
     }
     const rv=a.gates.review.completed_at;
     need(typeof rv==='string'&&ISO_Z.test(rv)&&Date.parse(rv)<=at,'REVIEW_TIMESTAMP_INVALID');
-    need(original226Released(opts.releaseGates,{reviewPacket:opts.reviewPacket}),
+    need(original226Released(opts.releaseGates,{reviewPacket:opts.reviewPacket,ownerDecision:opts.ownerDecision}),
       'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES');
     verifySignature(a,opts.trustedOwnerKeySha256===undefined?TRUSTED_OWNER_KEY_SHA256:opts.trustedOwnerKeySha256);
   }else need(!('gates' in a)&&!('signature' in a),'APPROVAL_SHAPE_INVALID');
@@ -735,6 +756,7 @@ function parseFingerprintOutput(text){
  *   tk504Sql, auditSql, releaseGates, now}
  * trust (library callers only, NEVER reachable from the CLI or env):
  *  {trustedOwnerKeySha256:[hex]}  -- default: the pinned (empty) list.
+ *  {ownerDecision:object}         -- default: the committed owner decision sidecar.
  */
 function prepareRelease(phase,input,trust={}){
   need(PHASES.includes(phase),'PHASE_INVALID');
@@ -748,7 +770,7 @@ function prepareRelease(phase,input,trust={}){
   verifyApproval(a,{phase,plan,manifestSha256,confirmDecisionId:input.confirmDecisionId,
     confirmApprovalSha256:input.confirmApprovalSha256,now:input.now,releaseGates:input.releaseGates,
     reviewPacket:phase==='activate'?P.buildReviewPacket(input.catalogBytes):undefined,
-    trustedOwnerKeySha256:trust.trustedOwnerKeySha256});
+    trustedOwnerKeySha256:trust.trustedOwnerKeySha256,ownerDecision:trust.ownerDecision});
   const digests=repoFunctionDigests(input.tk504Sql,input.auditSql);
   const sql=guardPhaseSql(phase,(phase==='stage'?renderStage:phase==='activate'?renderActivate:renderReverse)(
     plan,entries,a,digests),a);
@@ -819,6 +841,7 @@ function run(argv,io={}){
     report={schema:SCHEMA_REPORT,status:'STATUS',all_sha256:plan.all_sha256,private_manifest_sha256:sha(manifestBytes),
       stage:'RENDERABLE_WITH_DBA_APPROVED_OWNER_DECISION_AND_LIVE_FINGERPRINT',
       activate:blockers.length?'BLOCKED':'RENDERABLE_WITH_SIGNED_OWNER_DECISION',activation_blockers:blockers,
+      original_226_fk_release_problems:original226ReleaseProblems(r.releaseGates),
       reverse:'RENDERABLE_WITH_DBA_APPROVED_OWNER_DECISION',database_writes_performed:false};
   }else if(cmd==='approval-template'){
     const r=repoInputs(),manifestBytes=fs.readFileSync(o['--manifest']);
@@ -857,5 +880,5 @@ module.exports=Object.freeze({SCHEMA_APPROVAL,SCHEMA_REPORT,FINGERPRINT_KIND,PHA
   TRUSTED_OWNER_KEY_SHA256,ACTIVATION_GATES,TK603_RESERVED_GUARD_SHA256,GUARDED_FUNCTIONS,MAX_APPROVAL_AGE_MS,
   PRECONDITION_EXPR,REGISTRY_EXPR,PROBE_UID,
   canonicalJson,approvalDigest,buildApproval,sealApproval,signApproval,pendingGates,validateFingerprint,
-  original226Released,original226ReleaseRecordProblems,activationBlockers,verifyApproval,repoFunctionDigests,renderFingerprintSql,
+  original226Released,original226ReleaseRecordProblems,original226ReleaseProblems,mediaGateProblems,activationBlockers,verifyApproval,repoFunctionDigests,renderFingerprintSql,
   parseFingerprintOutput,guardPhaseSql,prepareRelease,parseArgs,run});

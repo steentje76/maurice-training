@@ -35,9 +35,10 @@ const MIGRATIONS=Object.freeze([
   ['tk603-scope-stage.sql','supabase/migrations/20261107154937_tk603_reserved_scope_provisioning_stage.sql'],
   ['tk614-audit-stage.sql','supabase/migrations/20261108120000_tk614_admin_release_audit_stage.sql']]);
 const P=require('./tk614_original226_review_packet.cjs');
-// SYNTHETIC smoke-only owner release record (throw-away evidence digests). Coverage
-// alone is no longer accepted by original226Released(); the record must be bound
-// to the deterministic review packet of the repo catalog. Never a real approval.
+const D=require('./tk614_original226_owner_decision.cjs');
+// SYNTHETIC record with throw-away evidence digests: structurally valid for
+// P.releaseRecordProblems() but bound to NO owner decision, so original226Released()
+// rejects it (RELEASE_RECORD_NOT_BOUND_TO_OWNER_DECISION). Used for RED tests only.
 function syntheticRelease226Record(packet){
   const ev=k=>crypto.createHash('sha256').update('tk614-synthetic-smoke-evidence-'+k).digest('hex');
   return {schema:P.SCHEMA_RECORD,status:P.RECORD_STATUS_APPROVED,decision_id:'TK614-OWNER-REVIEW226-20261109-SYNTH01',
@@ -51,9 +52,19 @@ function syntheticRelease226Record(packet){
       status:P.BATCH_STATUS_APPROVED,reviewed_by:'Synthetic Smoke Reviewer',reviewed_at:'2026-11-08T23:00:00.000Z',
       evidence_sha256:ev('batch-'+b.batch)}))};
 }
-const SYNTHETIC_RELEASE_GATES=Object.freeze({status:'RELEASE_APPROVED',
-  released_batches:[{from:'TK-000001',through:'TK-000226'}],
-  [P.RECORD_KEY]:syntheticRelease226Record(P.repoReviewPacket()),_synthetic_smoke_only:true});
+// SYNTHETIC smoke-only gates: the REAL media scope of the repo (15 released_batches
+// 227..582, 1164 entries -- never extended with 001..226) plus an FK-only record
+// bound to a SYNTHETIC owner decision whose license hash is a throw-away value.
+// The synthetic decision is accepted ONLY through the library `trust.ownerDecision`
+// argument, which the CLI cannot reach. Never a real approval.
+const SYNTHETIC_LICENSE_FILE_SHA256=crypto.createHash('sha256').update('tk614-synthetic-smoke-license-NOT-REAL').digest('hex');
+const SYNTHETIC_OWNER_DECISION=Object.freeze(D.buildOwnerDecision(P.repoReviewPacket(),SYNTHETIC_LICENSE_FILE_SHA256));
+const SYNTHETIC_RELEASE_GATES=Object.freeze((()=>{
+  const repo=JSON.parse(fs.readFileSync(path.join(ROOT,'docs','generated','MOVEKIT_V2_RELEASE_GATES.json'),'utf8'));
+  const media={};for(const k of Object.keys(repo))if(k!==P.RECORD_KEY)media[k]=repo[k];
+  return {...media,[P.RECORD_KEY]:D.buildReleaseRecord(SYNTHETIC_OWNER_DECISION,P.repoReviewPacket()),
+    _synthetic_smoke_only:true};
+})());
 const LEGACY_GLOBAL=[1,5,38,100,150,201,226],LEGACY_PERSONAL=[2,3,4,10,25,26,50,60,63,70,80,90,120,188,200,225];
 const pad=n=>String(n).padStart(6,'0');
 const sha=s=>crypto.createHash('sha256').update(s).digest('hex');
@@ -306,7 +317,8 @@ function run(argv){
     releaseGates:JSON.parse(fs.readFileSync(path.join(ROOT,'docs','generated','MOVEKIT_V2_RELEASE_GATES.json'),'utf8'))};
   const manifestSha256=sha(manifestBytes);
   const keys=crypto.generateKeyPairSync('ed25519');
-  const trust={trustedOwnerKeySha256:[sha(keys.publicKey.export({format:'der',type:'spki'}))]};
+  const trust={trustedOwnerKeySha256:[sha(keys.publicKey.export({format:'der',type:'spki'}))],
+    ownerDecision:SYNTHETIC_OWNER_DECISION};
   const day=new Date().toISOString().slice(0,10).replace(/-/g,'');
   const id=(phase,s)=>`TK614-OWNER-${phase.toUpperCase()}-${day}-${s}`;
   const gates=()=>{const g={},at=new Date(Date.now()-120000).toISOString();
@@ -475,4 +487,5 @@ if(require.main===module){
   try{run(process.argv.slice(2));}
   catch(e){process.stderr.write('TK614_ADMIN_RELEASE_SMOKE_BLOCKED: '+(e.code||e.message)+'\n');process.exitCode=1;}
 }
-module.exports=Object.freeze({UA,UB,SYNTHETIC_RELEASE_GATES,syntheticRelease226Record,parseArgs,buildSetupSql,buildProbeSql,buildFinalSql,judge,run});
+module.exports=Object.freeze({UA,UB,SYNTHETIC_RELEASE_GATES,SYNTHETIC_OWNER_DECISION,SYNTHETIC_LICENSE_FILE_SHA256,
+  syntheticRelease226Record,parseArgs,buildSetupSql,buildProbeSql,buildFinalSql,judge,run});

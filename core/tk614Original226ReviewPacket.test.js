@@ -156,19 +156,29 @@ eq(P.releaseRecordProblems(valid,null),['REVIEW_PACKET_REQUIRED']);
 eq(P.releaseRecordProblems(valid,{...packet,batches:packet.batches.slice(0,9)}),['REVIEW_PACKET_REQUIRED']);
 
 // ---- 8. integration with the admin release gate (product code)
-const add226=(g,record)=>({...g,released_batches:[...g.released_batches,{batch:16,from:'TK-000001',through:'TK-000226',count:226}],
-  ...(record===undefined?{}:{[P.RECORD_KEY]:record})});
-eq(R.original226Released(repoGates),false,'real repo gates: 001..226 not released');
-eq(R.activationBlockers(repoGates),[...P.EXPECTED_ACTIVATION_BLOCKERS],'real repo: both activation blockers');
-ok(!(P.RECORD_KEY in repoGates),'real repo gates carry no 226 owner record');
-eq(R.original226Released(add226(repoGates)),false,'RED: appending a bare 001..226 range is not a release');
-eq(R.original226Released(add226(repoGates,tpl)),false,'PENDING template is not a release');
-eq(R.original226Released(add226(repoGates,(()=>{const r=structuredClone(valid);r.batches[0].status='PENDING_OWNER_REVIEW';return r;})())),
-  false,'partial approval is not a release');
-eq(R.original226Released(add226(repoGates,valid)),true,'GREEN: coverage + complete packet-bound owner record');
-eq(R.activationBlockers(add226(repoGates,valid)),['ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY'],
+// MEDIA scope (released_batches, 15 x 227..582) and FK-identity scope
+// (original_226_fk_identity_release) are separate since the 2026-11-09 owner decision.
+const D=require('../tools/tk614_original226_owner_decision.cjs');
+const LICENSE_BOUND=D.repoOwnerDecision().license.file_sha256!==null;
+const SD={ownerDecision:S.SYNTHETIC_OWNER_DECISION};
+const addMedia226=g=>({...g,released_batches:[...g.released_batches,{batch:16,from:'TK-000001',through:'TK-000226',count:226}]});
+const withRecord=(g,record)=>({...g,[P.RECORD_KEY]:record});
+ok(P.RECORD_KEY in repoGates,'real repo gates carry the separate FK-only owner record');
+eq(repoGates[P.RECORD_KEY].decision_id,D.DECISION_ID);
+eq(R.original226Released(repoGates),LICENSE_BOUND,'repo FK-only record valid only once the license sha256 is bound');
+eq(R.activationBlockers(repoGates),LICENSE_BOUND?['ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY']:[...P.EXPECTED_ACTIVATION_BLOCKERS],
+  'real repo: owner-key blocker always present');
+eq(R.original226Released(addMedia226(repoGates)),false,'RED: appending 001..226 to MEDIA released_batches is rejected');
+eq(R.original226Released(addMedia226(S.SYNTHETIC_RELEASE_GATES),SD),false,'RED: media mixing rejected even with a bound record');
+eq(R.original226Released(withRecord(S.SYNTHETIC_RELEASE_GATES,tpl),SD),false,'PENDING template is not a release');
+eq(R.original226Released(withRecord(S.SYNTHETIC_RELEASE_GATES,valid),SD),false,
+  'RED: structurally valid record with synthetic evidence is not bound to the owner decision');
+{const r=structuredClone(S.SYNTHETIC_RELEASE_GATES[P.RECORD_KEY]);r.batches[0].status='PENDING_OWNER_REVIEW';
+ eq(R.original226Released(withRecord(S.SYNTHETIC_RELEASE_GATES,r),SD),false,'partial approval is not a release');}
+eq(R.original226Released(S.SYNTHETIC_RELEASE_GATES,SD),true,'GREEN: 15/1164 media scope + decision-bound FK-only record');
+eq(R.activationBlockers(S.SYNTHETIC_RELEASE_GATES,undefined,SD),['ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY'],
   'even a complete record leaves the owner-key blocker');
-eq(R.original226Released(add226(repoGates,valid),{reviewPacket:null}),false,'no packet -> fail closed');
+eq(R.original226Released(S.SYNTHETIC_RELEASE_GATES,{...SD,reviewPacket:null}),false,'no packet -> fail closed');
 ok(Object.isFrozen(R.TRUSTED_OWNER_KEY_SHA256)&&R.TRUSTED_OWNER_KEY_SHA256.length===0,'no owner key pinned');
 
 // ---- 9. the 356 stay unaffected

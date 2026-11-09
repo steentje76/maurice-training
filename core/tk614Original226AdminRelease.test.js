@@ -50,10 +50,18 @@ const FP={kind:R.FINGERPRINT_KIND,server_version_num:'170004',precondition_sha25
 // Coverage alone is no longer a release (TK614 phase-B review 2026-11-09): the
 // synthetic gate must also carry a packet-bound owner release record.
 const GATES_COVERAGE_ONLY={status:'RELEASE_APPROVED',released_batches:[{from:'TK-000001',through:'TK-000226'}]};
+// SYNTHETIC gates = real 15-batch/1164-entry MEDIA scope + FK-only record bound to a
+// synthetic owner decision, accepted only via the library trust/opts argument.
 const GATES_OK=structuredClone(S.SYNTHETIC_RELEASE_GATES);
+const SD={ownerDecision:S.SYNTHETIC_OWNER_DECISION};
+// Repo state: the owner FK-only record is committed; it becomes valid only once the
+// sha256 of the private LICENSE.txt is bound (tools/tk614_original226_owner_decision.cjs --bind-license).
+const LICENSE_BOUND=require('../tools/tk614_original226_owner_decision.cjs').repoOwnerDecision().license.file_sha256!==null;
+const REPO_BLOCKERS=LICENSE_BOUND?['ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY']:
+  ['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY'];
 const KEYS=crypto.generateKeyPairSync('ed25519'),OTHER=crypto.generateKeyPairSync('ed25519');
 const KEY_SHA=sha(KEYS.publicKey.export({format:'der',type:'spki'}));
-const trustOK={trustedOwnerKeySha256:[KEY_SHA]};
+const trustOK={trustedOwnerKeySha256:[KEY_SHA],...SD};
 const STAGE_ID='TK614-OWNER-STAGE-20261108-A1',ACT_ID='TK614-OWNER-ACTIVATE-20261108-B1',
   REV_ID='TK614-OWNER-REVERSE-20261108-C1';
 function accepted(){
@@ -211,24 +219,52 @@ RED('guard drift in repo','REPO_GUARD_DIGEST_METHOD_MISMATCH',aS,{tk504Sql:tk504
 
 // ---- 5. phase B (activate): fail-closed by default, GREEN only with pinned key + release gate
 ok(Object.isFrozen(R.TRUSTED_OWNER_KEY_SHA256)&&R.TRUSTED_OWNER_KEY_SHA256.length===0,'no owner key pinned in repo');
-eq(R.activationBlockers(repoGates),['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY']);
-eq(R.activationBlockers(GATES_OK,[KEY_SHA]),[]);
-eq(R.original226Released(repoGates),false,'existing release gate covers only 227..582');
-eq(R.original226Released(GATES_OK),true);
-eq(R.original226Released({...GATES_OK,released_batches:[{from:'TK-000001',through:'TK-000100'},
-  {from:'TK-000101',through:'TK-000226'}]}),true);
-eq(R.original226Released({...GATES_OK,released_batches:[{from:'TK-000001',through:'TK-000225'}]}),false);
-eq(R.original226Released({...GATES_OK,status:'BLOCKED_NOT_REVIEWED'}),false);
-eq(R.original226Released({...GATES_OK,released_batches:[{from:'TK-000226',through:'TK-000001'}]}),false);
-eq(R.original226Released(null),false);
+eq(R.activationBlockers(repoGates),REPO_BLOCKERS,'repo: never activatable (no pinned owner key)');
+ok(R.activationBlockers(repoGates).includes('ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY'),'owner-key blocker always present in repo');
+eq(R.activationBlockers(GATES_OK,[KEY_SHA],SD),[]);
+eq(R.activationBlockers(GATES_OK,[KEY_SHA]),['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES'],
+  'synthetic decision is never accepted against the committed sidecar');
+eq(R.original226Released(repoGates),LICENSE_BOUND,'repo FK-only record valid only once the license hash is bound');
+eq(R.mediaGateProblems(repoGates),[],'repo MEDIA gate intact: RELEASE_APPROVED, 15 batches 227..582, 1164 entries');
+eq(R.original226Released(GATES_OK,SD),true);
+// RED (unsafe media mixing): 001..226 inside MEDIA released_batches is rejected, in any shape.
+const mix=extra=>({...GATES_OK,released_batches:[...GATES_OK.released_batches,...extra]});
+for(const extra of [[{batch:16,from:'TK-000001',through:'TK-000226',count:226,display_sha256:'a1'.repeat(32)}],
+  [{from:'TK-000001',through:'TK-000100'},{from:'TK-000101',through:'TK-000226'}],[{from:'TK-000226',through:'TK-000226'}]]){
+  eq(R.original226Released(mix(extra),SD),false,'appended media batch '+extra[0].from+' rejected');
+  ok(R.mediaGateProblems(mix(extra)).includes('MEDIA_RELEASED_BATCHES_NOT_EXACTLY_15'));
+}
+{const g=structuredClone(GATES_OK);g.released_batches[0]={...g.released_batches[0],from:'TK-000001'};
+ ok(R.mediaGateProblems(g).includes('MEDIA_RELEASE_SCOPE_INCLUDES_ORIGINAL_226_OR_INVALID'),'replaced media batch 001.. rejected');
+ eq(R.original226Released(g,SD),false);}
+eq(R.original226Released({...GATES_OK,released_batches:[{from:'TK-000001',through:'TK-000226'}]},SD),false,
+  'old model: 001..226 as the only media range is rejected');
+{const g=structuredClone(GATES_OK);g.released_batches.pop();
+ ok(R.mediaGateProblems(g).includes('MEDIA_RELEASED_BATCHES_NOT_EXACTLY_15'));eq(R.original226Released(g,SD),false,'14 media batches');}
+{const g=structuredClone(GATES_OK);g.released_batches[3].display_sha256='b'.repeat(64);
+ ok(R.mediaGateProblems(g).includes('MEDIA_LEDGER_356_INTEGRITY_FAILED'),'foreign media fingerprint');}
+{const g=structuredClone(GATES_OK);g.entries.pop();
+ ok(R.mediaGateProblems(g).includes('MEDIA_ENTRIES_NOT_1164'));eq(R.original226Released(g,SD),false,'media entry removed');}
+{const g=structuredClone(GATES_OK);g.content_approval.decision_id='TK614-OWNER-REVIEW226-20261109-BULK01';
+ ok(R.mediaGateProblems(g).includes('MEDIA_LEDGER_356_INTEGRITY_FAILED'),'FK decision cannot replace the 356 content approval');}
+eq(R.original226Released({...GATES_OK,status:'BLOCKED_NOT_REVIEWED'},SD),false);
+eq(R.original226Released(null,SD),false);
 // RED for the pre-2026-11-09 behaviour: a bare coverage range (no owner record/evidence) used to pass.
-eq(R.original226Released(GATES_COVERAGE_ONLY),false,'coverage-only gate without owner record is rejected');
-eq(R.original226ReleaseRecordProblems(GATES_COVERAGE_ONLY),['RELEASE_RECORD_MISSING']);
-eq(R.activationBlockers(GATES_COVERAGE_ONLY,[KEY_SHA]),['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES']);
+eq(R.original226Released(GATES_COVERAGE_ONLY,SD),false,'coverage-only gate without owner record is rejected');
+ok(R.original226ReleaseRecordProblems(GATES_COVERAGE_ONLY,SD).includes('RELEASE_RECORD_MISSING'));
+eq(R.activationBlockers(GATES_COVERAGE_ONLY,[KEY_SHA],SD),['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES']);
+// RED: structurally valid record with generic/synthetic evidence digests is no proof.
+{const g={...GATES_OK,[P.RECORD_KEY]:S.syntheticRelease226Record(P.repoReviewPacket())};
+ eq(P.releaseRecordProblems(g[P.RECORD_KEY],P.repoReviewPacket()),[],'shape-valid');
+ ok(R.original226ReleaseRecordProblems(g,SD).includes('RELEASE_RECORD_NOT_BOUND_TO_OWNER_DECISION'),'unbound evidence rejected');
+ eq(R.original226Released(g,SD),false);}
+const REPO_ACT_BLOCK=LICENSE_BOUND?'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY':'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES';
 const aA=mk('activate'),sA=R.signApproval(aA,KEYS.privateKey);
-throwsCode(()=>prep('activate',aA),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','repo gate blocks activation');
-throwsCode(()=>prep('activate',sA),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','even a validly signed approval');
-throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK}),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY','no pinned key');
+throwsCode(()=>prep('activate',aA),REPO_ACT_BLOCK,'repo gate/key blocks activation');
+throwsCode(()=>prep('activate',sA),REPO_ACT_BLOCK,'even a validly signed approval');
+throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK},SD),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY','no pinned key');
+throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK}),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
+  'synthetic gates without the library-only synthetic decision stay blocked');
 throwsCode(()=>prep('activate',sA,{releaseGates:GATES_COVERAGE_ONLY},trustOK),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
   'coverage-only gate stays blocked even with a valid signature from a trusted key');
 {const g=structuredClone(GATES_OK);g[P.RECORD_KEY].batches[9].status=P.PACKET_STATUS;
@@ -237,7 +273,7 @@ throwsCode(()=>prep('activate',sA,{releaseGates:GATES_COVERAGE_ONLY},trustOK),'A
 {const g=structuredClone(GATES_OK);g[P.RECORD_KEY].media_grants=1;
  throwsCode(()=>prep('activate',sA,{releaseGates:g},trustOK),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
   'a release record that grants media is never accepted');}
-throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK},{trustedOwnerKeySha256:['not-hex']}),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY');
+throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK},{trustedOwnerKeySha256:['not-hex'],...SD}),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY');
 throwsCode(()=>prep('activate',aA,{releaseGates:GATES_OK},trustOK),'ACTIVATION_SIGNATURE_REQUIRED');
 throwsCode(()=>prep('activate',R.signApproval(aA,OTHER.privateKey),{releaseGates:GATES_OK},trustOK),'OWNER_KEY_NOT_TRUSTED');
 {const b=structuredClone(sA),v=Buffer.from(b.signature.value_base64,'base64');v[0]^=1;b.signature.value_base64=v.toString('base64');
@@ -263,7 +299,7 @@ throwsCode(()=>prep('activate',aS,{releaseGates:GATES_OK},trustOK),'APPROVAL_PHA
 throwsCode(()=>prep('stage',sA),'APPROVAL_PHASE_MISMATCH');
 {const saved={...process.env};
  process.env.TK614_ALLOW_ACTIVATION='true';process.env.TK614_FORCE='1';process.env.ALLOW_ACTIVATION='true';
- try{throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK}),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY','env flags are ignored');}
+ try{throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK},SD),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY','env flags are ignored');}
  finally{for(const k of ['TK614_ALLOW_ACTIVATION','TK614_FORCE','ALLOW_ACTIVATION'])if(!(k in saved))delete process.env[k];}}
 ok(!/process\.env/.test(read('tools/tk614_original226_admin_release.cjs')),'generator never reads environment variables');
 const rA=prep('activate',sA,{releaseGates:GATES_OK},trustOK),sqlA=rA.sql;
@@ -401,7 +437,7 @@ try{
   throwsCode(()=>R.run(renderArgs('stage',draft,'TK614-OWNER-STAGE-20261108-XX',dj.approval_sha256,bad),io),'APPROVAL_CONFIRMATION_MISMATCH');
   const actFile=path.join(tmp,'activate-signed.json');fs.writeFileSync(actFile,JSON.stringify(sA));
   throwsCode(()=>R.run(renderArgs('activate',actFile,ACT_ID,sA.approval_sha256,bad),io),
-    'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','CLI activation blocked even with a signed, accepted approval');
+    REPO_ACT_BLOCK,'CLI activation blocked even with a signed, accepted approval');
   for(const extra of [['--allow-activation','true'],['--force','1'],['--trusted-key',KEY_SHA],['--release-gates',fpFile],
     ['--expected-mapping-sha','a'.repeat(64)],['--now','0']])
     throwsCode(()=>R.run([...renderArgs('activate',actFile,ACT_ID,sA.approval_sha256,bad),...extra],io),'USAGE','flag '+extra[0]);
@@ -429,7 +465,9 @@ try{
   const st=R.run(['status','--manifest',mf],io);
   eq([st.stage,st.activate,st.reverse,st.database_writes_performed],['RENDERABLE_WITH_DBA_APPROVED_OWNER_DECISION_AND_LIVE_FINGERPRINT',
     'BLOCKED','RENDERABLE_WITH_DBA_APPROVED_OWNER_DECISION',false]);
-  eq(st.activation_blockers,['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY']);
+  eq(st.activation_blockers,REPO_BLOCKERS);
+  eq(st.original_226_fk_release_problems,LICENSE_BOUND?[]:
+    ['OWNER_DECISION_LICENSE_EVIDENCE_PENDING','RELEASE_RECORD_EVIDENCE_MISSING_OR_INVALID'],'status reports the FK-only record state');
   throwsCode(()=>R.run(['activate-now'],io),'USAGE');
   throwsCode(()=>R.run(renderArgs('publish',actFile,ACT_ID,sA.approval_sha256,path.join(tmp,'p.sql')),io),'PHASE_INVALID');
   throwsCode(()=>R.run(['fingerprint','--out','relative.sql'],io),'PATH_MUST_BE_ABSOLUTE');
@@ -473,7 +511,10 @@ eq(S.judge({marker:'M'},0,'M','ERROR: y'),false);
 eq(S.judge({error:'TK614_X'},3,'','psql:f:1: ERROR:  TK614_X'),true);
 eq(S.judge({error:'TK614_X'},0,'',''),false,'a negative must really fail');
 eq(S.judge({error:'TK614_X'},3,R.MARKERS.stage,'ERROR:  TK614_X'),false,'a committed phase marker is never a negative pass');
-ok(R.original226Released(S.SYNTHETIC_RELEASE_GATES)&&S.SYNTHETIC_RELEASE_GATES._synthetic_smoke_only===true);
+ok(R.original226Released(S.SYNTHETIC_RELEASE_GATES,SD)&&S.SYNTHETIC_RELEASE_GATES._synthetic_smoke_only===true);
+ok(!R.original226Released(S.SYNTHETIC_RELEASE_GATES),'smoke gates need the library-only synthetic decision');
+eq(S.SYNTHETIC_RELEASE_GATES.released_batches,repoGates.released_batches,'smoke keeps the real 15 media batches');
+eq(S.SYNTHETIC_RELEASE_GATES.entries.length,1164);
 {const src=read('tools/tk614_admin_release_docker_smoke.cjs');
  ok(src.includes("'--pull','never'")&&src.includes("'--network','none'")&&src.includes("['rm','-f',name]"),'disposable, offline, removed');
  ok(!/process\.env/.test(src),'smoke never reads environment variables');}

@@ -223,10 +223,18 @@ function result(set) {
     status: DENY.status, error: DENY.error, blockers: Object.freeze(blockers) });
 }
 
-// Broker shadow: what the live broker can supply today (no server-side record,
-// attestation, publication or decision-bound grant exist). Pure, zero I/O.
+// Broker shadow for requests that have not been authenticated yet. Because the original
+// media is unconditionally locked in this version, the denial is a precomputed constant:
+// never scan/hash the 452-item manifest or verify signatures on an unauthenticated 404.
+// Future release evaluation must happen AFTER server-side auth and entitlement loading.
+const BROKER_SHADOW_DENY = result(new Set([
+  'ORIGINAL226_CUTOVER_LOCKED_IN_THIS_VERSION',
+  'ORIGINAL226_MEDIA_RECORD_MISSING'
+]));
 function brokerShadow(catalogId, mediaType) {
-  return evaluate({ request: { catalog_id: catalogId, media_type: mediaType, selection: null } });
+  void catalogId;
+  void mediaType;
+  return BROKER_SHADOW_DENY;
 }
 // Sanitized log line: fixed codes and counts only.
 function publicLog(r) {

@@ -185,7 +185,11 @@ for(const v of [undefined,null,0,'',[],'x',{}]){const r=G.evaluate(v);denied(r,'
  for(const r of all){const t=JSON.stringify(r)+JSON.stringify(G.publicLog(r));
    ok(!t.includes(UA)&&!t.includes(UB)&&!/movekit\/v2|https?:|token|supabase/i.test(t),'sanitized output');
    ok(r.blockers.every(x=>/^ORIGINAL226_[A-Z0-9_]+$/.test(x)),'fixed codes');}
- eq(Object.keys(G.publicLog(run())),['gate','decision','error','blockers']);}
+ eq(Object.keys(G.publicLog(run())),['gate','decision','error','blockers']);
+ const shadow=G.brokerShadow('TK-000001','video');
+ assert.strictEqual(shadow,G.brokerShadow('TK-000226','poster'),'precomputed identical deny object; no per-request hash/scans'); checks++;
+ denied(shadow,'precomputed shadow deny');
+ ok(!shadow.eligible && shadow.blockers.includes(LOCK),'shadow deny even when input shaped differently');}
 
 // ---- 9. module hygiene: pure, keyless, offline, literal lock
 {const code=read('tools/tk614_original226_media_eligibility.cjs').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');

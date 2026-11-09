@@ -1,12 +1,12 @@
 # TK614 / #603 — Admin-releasekandidaat voor de 226 oorspronkelijke MoveKit-bindings
 
-**Datum:** 8 november 2026
+**Datum:** 8 november 2026; **statusbijwerking migratieversie:** 9 november 2026
 **Branch:** `fix/tk614-all226-admin-release-candidate-20261108` op PR #615 `8b60ec517bbb27cb87f41b63f7bb00b0ddcdf777`
 **Scope:** uitsluitend `TK-000001..TK-000226` → `TKC-000001..TKC-000226`. De 356 bestaande gereviewde bindings (`TK-000227..582`), de 23 historische `TK-######`-rijen (7 global, 16 personal) en alle sessies vallen buiten de schrijfscope.
 
-> **Status: OFFLINE GEVERIFIEERD — NIET IN PRODUCTIE VRIJGEGEVEN.** De oorspronkelijke auteursessie kon Node/Docker niet starten, maar een afzonderlijke ChatGPT-review op 8 november 2026 heeft daarna alle onderstaande tests daadwerkelijk uitgevoerd: **351/351** nieuwe admin-asserties, **367/367** all-226 preflight, **57/57** Docker PostgreSQL 17-smoke-stappen (disposable container, `--network none`) en **512/512** volledige lokale releasecontroles (0 skips/0 failures). Er zijn geen live databasewrites, sessiereplays of APK-builds uitgevoerd. Een lokale commit en concept-PR zijn voorbereiding, geen productieactivatie.
+> **Historische beginsituatie op 8 november 2026:** fase A was toen nog niet toegepast. De auditmigratie en 226 inactieve bindings zijn vervolgens op 8 november **wel** in productie geplaatst, onder besluit `TK614-OWNER-STAGE-20261108-CHAT02`. Per 9 november bestaat ook de afzonderlijke owner-FK-only-goedkeuring en de lokale publieke Ed25519-sleutelpin (Draft PR #617). **Fase B is niet ondertekend en niet geactiveerd**. De testresultaten en eerdere blokkades hieronder beschrijven de beginsituatie. De oorspronkelijke auteursessie kon Node/Docker niet starten, maar een afzonderlijke ChatGPT-review op 8 november 2026 heeft daarna alle onderstaande tests daadwerkelijk uitgevoerd: **351/351** nieuwe admin-asserties, **367/367** all-226 preflight, **57/57** Docker PostgreSQL 17-smoke-stappen (disposable container, `--network none`) en **512/512** volledige lokale releasecontroles (0 skips/0 failures). Er zijn geen live databasewrites, sessiereplays of APK-builds uitgevoerd. Een lokale commit en concept-PR zijn voorbereiding, geen productieactivatie.
 >
-> **ACTIVATIE (fase B) staat fail-closed op BLOCKED**, om twee bestaande, aantoonbare redenen:
+> **Historische blokkades op 8 november, vóór eigenaarstoestemming en publieke sleutelpin:**
 > 1. `docs/generated/MOVEKIT_V2_RELEASE_GATES.json` dekt alleen `TK-000227..TK-000582`. Er is geen release-record voor 001..226.
 > 2. Er is geen owner-signeersleutel gepind (`TRUSTED_OWNER_KEY_SHA256 = []`).
 >
@@ -23,7 +23,7 @@ Dat wordt bewezen in de fase-A-SQL zelf (`TK614_RESOLVER_226_NOT_0`), in de Dock
 | Bestand | Wat |
 |---|---|
 | `tools/tk614_original226_admin_release.cjs` (nieuw) | Fail-closed generator. Hergebruikt `planAll`/`verifyAllPlan`/`renderBatchBlock` rechtstreeks. Commando's `fingerprint`, `approval-template`, `seal`, `render`, `status`. Output alleen privé (buiten de repo, `wx`, 0600). |
-| `supabase/migrations/20261108120000_tk614_admin_release_audit_stage.sql` (nieuw, **STAGED, niet live**) | Append-only ledger `public.tk614_admin_release_audit`: `decision_id UNIQUE` (geen replay), `prior_decision_id`-keten, registry-voor/na-hash, `backend_pid`, `txid`. RLS aan, `revoke all` voor public/anon/authenticated/service_role, geen policy, guard-trigger (alleen INSERT, alleen postgres zonder JWT, geen TRUNCATE). |
+| `supabase/migrations/20261108223504_tk614_admin_release_audit_stage.sql` (**LIVE toegepast op 8 november 2026**, staging-fase A; de naam is uit de werkelijke Supabase-migratiehistorie overgenomen) | Append-only ledger `public.tk614_admin_release_audit`: `decision_id UNIQUE` (geen replay), `prior_decision_id`-keten, registry-voor/na-hash, `backend_pid`, `txid`. RLS aan, `revoke all` voor public/anon/authenticated/service_role, geen policy, guard-trigger (alleen INSERT, alleen postgres zonder JWT, geen TRUNCATE). |
 | `tools/tk614_admin_release_docker_smoke.cjs` (nieuw) | Wegwerp-`postgres:17` (`--network none`, `--pull never`). Echte COMMIT van A → B → C op de vastgelegde productie-schemacontract-fixture (TK603: echte kolommen, constraints, triggers, RLS-policies en grants) plus de drie staged migraties. |
 | `core/tk614Original226AdminRelease.test.js` (nieuw) | RED/GREEN-unittest met een synthetisch 582-manifest. Wordt automatisch opgepikt door `core/release-gate.js`. |
 | `tools/tk614_original226_batch25_preflight.cjs` (gewijzigd) | Alleen een extra export: `renderBatchBlock`. Het gedrag is ongewijzigd. |
@@ -103,7 +103,7 @@ node tools/tk614_admin_release_docker_smoke.cjs --manifest C:\Movikit\.tk-privat
 ```
 
 ## 7. Live-voorwaarden vóór fase A (open)
-1. De staged migratie `20261108120000_tk614_admin_release_audit_stage.sql` is door de DBA toegepast. Zonder die tabel faalt elke fase al bij de LOCK. **Live nog niet toegepast.**
+1. De auditmigratie is op 8 november 2026 live toegepast en geregistreerd onder `20261108223504`. Zonder die tabel faalt elke fase al bij de LOCK. **Niet opnieuw migreren/dupliceren.**
 2. De live guard-functies zijn byte-gelijk aan de repo. TK603 pinde `485486db…` op live; voor de andere 5 is dat aannemelijk maar **niet live geverifieerd**. Bij een afwijking geeft de SQL `TK614_GUARD_DEFINITION_DRIFT` (fail closed).
 3. `session_user` is `postgres` bij de DBA-verbinding (de TK603-scopefunctie eist dat ook).
 4. Backup/snapshot vóór de uitvoering; de fingerprint wordt vlak vóór het renderen genomen (de approval is maximaal 14 dagen geldig).

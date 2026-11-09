@@ -78,7 +78,7 @@ function makeWorld() {
       removeItem: k => { st.store.delete(k); } },
     navigator: { get onLine() { return st.online; } },
     tkEigenaarUid: () => st.owner,
-    // Server-RPC zoals gestaged in supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql.
+    // Server-RPC zoals gestaged in supabase/migrations/20261107191714_tk504_typed_catalog_fk_stage.sql.
     // 'missing' = functie niet uitgerold of binding niet actief/gereviewd: sbRpc levert dan null.
     sbRpc: async (fn, args) => {
       st.rpcs.push({ fn, args: Object.assign({}, args), owner: st.owner });

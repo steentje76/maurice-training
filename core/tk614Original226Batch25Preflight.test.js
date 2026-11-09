@@ -11,7 +11,7 @@ const posters=require('../docs/generated/MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.jso
 const approval=require('../docs/generated/MOVEKIT_V2_OWNER_BATCH_CONTENT_APPROVAL_20261105.json');
 const release=require('../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
 const migration=fs.readFileSync(path.join(__dirname,'..','supabase','migrations',
-  '20261106110000_tk504_typed_catalog_fk_stage.sql'),'utf8');
+  '20261107191714_tk504_typed_catalog_fk_stage.sql'),'utf8');
 
 const stage={_status:'PRIVATE_REVIEW_NOT_RELEASED',_base_count:226,_new_count:356,count:582,
  _approved_for_import:0,_media_grants_created:0,_app_activated:false,_history_updates:0,

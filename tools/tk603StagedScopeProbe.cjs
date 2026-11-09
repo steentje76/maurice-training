@@ -4,7 +4,7 @@
 const fs=require('node:fs'),path=require('node:path');
 module.exports=function({root,sql,assert,scope}){
  const migration=fs.readFileSync(path.join(root,
-  'supabase/migrations/20261107154937_tk603_reserved_scope_provisioning_stage.sql'),'utf8');
+  'supabase/migrations/20261107191728_tk603_reserved_scope_provisioning_stage.sql'),'utf8');
  const rollback=fs.readFileSync(path.join(root,'tools/tk603-scope-transition-rollback.sql'),'utf8');
  const fingerprint=()=>sql("select pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to("+
   "pg_catalog.replace(pg_catalog.pg_get_functiondef('public.set_exercise_scope_context()'::regprocedure),"+
@@ -21,7 +21,7 @@ module.exports=function({root,sql,assert,scope}){
   rejected(migration,'TK603_RESERVED_GUARD_REQUIRED','staged scope refuses disabled reserved-alias protection');
   assert(fingerprint()===original,'failed guard precondition leaves scope definition unchanged');
  }finally{sql('alter table public.exercises enable trigger tk504_reserved_catalog_fk_guard;');}
- const guardSql=fs.readFileSync(path.join(root,'supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql'),'utf8');
+ const guardSql=fs.readFileSync(path.join(root,'supabase/migrations/20261107191714_tk504_typed_catalog_fk_stage.sql'),'utf8');
  const guardDefinition=guardSql.match(/create or replace function public\.tk504_protect_reserved_catalog_fk\(\)[\s\S]*?\$tk504\$;/i)[0];
  sql(guardDefinition.replace('Reserved catalog FK rows are admin-managed','Synthetic unrelated guard drift'));
  try{

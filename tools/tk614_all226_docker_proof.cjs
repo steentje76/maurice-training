@@ -20,7 +20,7 @@ const T=require('./tk614_original226_batch25_preflight.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
 const IMAGE='postgres:17';
-const STAGE=path.join(ROOT,'supabase','migrations','20261106110000_tk504_typed_catalog_fk_stage.sql');
+const STAGE=path.join(ROOT,'supabase','migrations','20261107191714_tk504_typed_catalog_fk_stage.sql');
 const sha=s=>crypto.createHash('sha256').update(s).digest('hex');
 function fail(code){const e=new Error(code);e.code=code;throw e;}
 function need(ok,code){if(!ok)fail(code);}

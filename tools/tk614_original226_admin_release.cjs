@@ -65,8 +65,8 @@ const ACTIVATION_GATES=Object.freeze(['source','owner','review','license','rollb
 // prosrc digest of tk504_protect_reserved_catalog_fk pinned independently by
 // the TK603 staged migration; used to self-check the repo extraction method.
 const TK603_RESERVED_GUARD_SHA256='485486db293fa2f17c0d2718e3287fa8c0c6ebde9485341c991a2f132f56d92b';
-const TK504_STAGE_FILE=path.join(ROOT,'supabase','migrations','20261106110000_tk504_typed_catalog_fk_stage.sql');
-const TK614_AUDIT_FILE=path.join(ROOT,'supabase','migrations','20261108120000_tk614_admin_release_audit_stage.sql');
+const TK504_STAGE_FILE=path.join(ROOT,'supabase','migrations','20261107191714_tk504_typed_catalog_fk_stage.sql');
+const TK614_AUDIT_FILE=path.join(ROOT,'supabase','migrations','20261108223504_tk614_admin_release_audit_stage.sql');
 const RELEASE_GATES_FILE=path.join(ROOT,'docs','generated','MOVEKIT_V2_RELEASE_GATES.json');
 const GUARDED_FUNCTIONS=Object.freeze([
   {sig:'public.tk504_protect_reserved_catalog_fk()',name:'tk504_protect_reserved_catalog_fk',tag:'tk504'},

@@ -31,9 +31,9 @@ const ROOT=path.resolve(__dirname,'..');
 const IMAGE='postgres:17',DB='tk614_admin';
 const UA='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',UB='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const MIGRATIONS=Object.freeze([
-  ['tk504-typed-fk-stage.sql','supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql'],
-  ['tk603-scope-stage.sql','supabase/migrations/20261107154937_tk603_reserved_scope_provisioning_stage.sql'],
-  ['tk614-audit-stage.sql','supabase/migrations/20261108120000_tk614_admin_release_audit_stage.sql']]);
+  ['tk504-typed-fk-stage.sql','supabase/migrations/20261107191714_tk504_typed_catalog_fk_stage.sql'],
+  ['tk603-scope-stage.sql','supabase/migrations/20261107191728_tk603_reserved_scope_provisioning_stage.sql'],
+  ['tk614-audit-stage.sql','supabase/migrations/20261108223504_tk614_admin_release_audit_stage.sql']]);
 const P=require('./tk614_original226_review_packet.cjs');
 const D=require('./tk614_original226_owner_decision.cjs');
 // SYNTHETIC record with throw-away evidence digests: structurally valid for

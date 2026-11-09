@@ -31,8 +31,8 @@ const manifest={...verify({stage,catalog,golden,posters,approval:contentApproval
 const manifestBytes=Buffer.from(JSON.stringify(manifest),'utf8');
 const sha=s=>crypto.createHash('sha256').update(s).digest('hex');
 const MSHA=sha(manifestBytes);
-const tk504Sql=read('supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql');
-const auditSql=read('supabase/migrations/20261108120000_tk614_admin_release_audit_stage.sql');
+const tk504Sql=read('supabase/migrations/20261107191714_tk504_typed_catalog_fk_stage.sql');
+const auditSql=read('supabase/migrations/20261108223504_tk614_admin_release_audit_stage.sql');
 const plan=T.planAll(manifest,catalogBytes);
 const pad=n=>String(n).padStart(6,'0');
 

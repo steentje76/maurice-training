@@ -3,7 +3,7 @@
 // isolated Postgres 17 Docker container; never live Supabase.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.join(__dirname,'..');
-const sql=fs.readFileSync(path.join(root,'supabase','migrations','20261106110000_tk504_typed_catalog_fk_stage.sql'),'utf8').toLowerCase();
+const sql=fs.readFileSync(path.join(root,'supabase','migrations','20261107191714_tk504_typed_catalog_fk_stage.sql'),'utf8').toLowerCase();
 let checks=0;
 function has(name,re){assert.match(sql,re,name);checks++;}
 function not(name,re){assert.doesNotMatch(sql,re,name);checks++;}

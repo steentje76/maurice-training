@@ -3,7 +3,7 @@
 # No published media, personal data, network ports, or persistent container.
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$migration = Join-Path $repo 'supabase\migrations\20261106110000_tk504_typed_catalog_fk_stage.sql'
+$migration = Join-Path $repo 'supabase\migrations\20261107191714_tk504_typed_catalog_fk_stage.sql'
 $smoke = Join-Path $repo 'tools\tk504-typed-fk-security-smoke.sql'
 if (!(Test-Path $migration) -or !(Test-Path $smoke)) { throw 'Required staged fixtures missing' }
 $name = 'tk603-two-user-proof-' + ([guid]::NewGuid().ToString('N').Substring(0,12))

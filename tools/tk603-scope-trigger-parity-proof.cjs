@@ -65,7 +65,7 @@ try{
  docker(['run','--rm','--detach','--name',name,'--network','none','-e','POSTGRES_PASSWORD=synthetic_scope_only','postgres:17']);started=true;
  let ready=false;for(let n=0;n<45;n++){try{docker(['exec',name,'pg_isready','-U','postgres']);ready=true;break;}catch{Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,300);}}
  if(!ready)throw Error('PostgreSQL not ready');
- for(const [src,dest] of [[path.join(folder,'fixture.sql'),'tk603-parity-fixture.sql'],[path.join(folder,'proposal.sql'),'tk603-scope-proposal.sql'],[path.join(root,'supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql'),'tk504-typed-fk-stage.sql'],[path.join(__dirname,'tk603-scope-trigger-parity-smoke.sql'),'tk603-scope-smoke.sql']])docker(['cp',src,name+':/tmp/'+dest]);
+ for(const [src,dest] of [[path.join(folder,'fixture.sql'),'tk603-parity-fixture.sql'],[path.join(folder,'proposal.sql'),'tk603-scope-proposal.sql'],[path.join(root,'supabase/migrations/20261107191714_tk504_typed_catalog_fk_stage.sql'),'tk504-typed-fk-stage.sql'],[path.join(__dirname,'tk603-scope-trigger-parity-smoke.sql'),'tk603-scope-smoke.sql']])docker(['cp',src,name+':/tmp/'+dest]);
  const out=execFileSync('docker',['exec',name,'psql','-X','-v','ON_ERROR_STOP=1','-U','postgres','-d','postgres','-f','/tmp/tk603-scope-smoke.sql'],{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:120000});
  if(!out.includes('ROLLBACK'))throw Error('Missing rollback');
  const left=docker(['exec',name,'psql','-X','-Atqc',"select count(*) from information_schema.tables where table_schema='auth'",'-U','postgres','-d','postgres']).trim();

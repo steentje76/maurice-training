@@ -14,6 +14,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CID = /^TK-\d{6}$/;
 const SHA = /^[a-f0-9]{64}$/;
 const REVIEW = /^TK504-[0-9]{8}-[0-9]{3,6}$/;
+const ORIGINAL_226_MEDIA_STATE = 'STAGED_ONLY_NOT_RELEASED';
 const ALLOWED_ORIGINS = new Set([
   'https://maurice-art.netlify.app',
   'https://trainingskompas.com',
@@ -255,6 +256,13 @@ async function handle(event, deps = {}) {
       return failure(event, 404, 'MEDIA_NOT_APPROVED');
     }
   }
+  // TK614: original 226 media is STAGED_ONLY_NOT_RELEASED.
+  // Existing release.entries contain 452 original media metadata rows, but
+  // these are NOT an independent media release decision. Never sign original
+  // media on the basis of entries, FK approval, runtime env, or test overrides.
+  // A future owner-signed media release requires a separate reviewed code change.
+  if (catalogNumber >= 1 && catalogNumber <= 226)
+    return failure(event, 404, 'MEDIA_NOT_APPROVED');
   if (body.type === 'poster' && env.MOVEKIT_V2_POSTER_UPLOAD_VERIFIED !== 'true') {
     return failure(event, 503, 'POSTERS_NOT_RELEASED');
   }
@@ -296,4 +304,4 @@ async function handle(event, deps = {}) {
 exports.handler = event => handle(event, { env: process.env, fetch: globalThis.fetch, now: Date.now });
 exports._internal = { handle, releaseConfigured, descriptor, identifyUser, verifyEntitlement,
   signedUrl, sign, inventorySha, posterSha, byId, postersById,
-  BUCKET, POSTER_BUCKET, SCOPE, BASE, TTL_SECONDS, SCHEMA };
+  BUCKET, POSTER_BUCKET, SCOPE, BASE, TTL_SECONDS, SCHEMA, ORIGINAL_226_MEDIA_STATE };

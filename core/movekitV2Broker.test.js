@@ -10,7 +10,8 @@ const defaultRelease = require('../docs/generated/MOVEKIT_V2_RELEASE_GATES.json'
 const ownerA = '12345678-1234-4234-8234-123456789abc';
 const ownerB = '12345678-1234-4234-8234-123456789def';
 const origin = 'https://localhost';
-const video = inventory.items.find(x => x.catalog_id === 'TK-000001');
+// A released item (227+) exercises actual signing; the original 226 must always refuse.
+const video = inventory.items.find(x => x.catalog_id === 'TK-000227');
 assert.ok(video);
 
 const approved = Object.freeze({
@@ -29,11 +30,7 @@ const approvedPoster = Object.freeze({
   review_reference: 'TK504-20261103-003',
   upload_reference: 'TK504-20261103-004'
 });
-const release = Object.freeze({
-  schema: broker.SCHEMA, status: 'RELEASE_APPROVED',
-  inventory_sha256: broker.inventorySha,
-  poster_digest_sha256: broker.posterSha, entries: [approved, approvedPoster]
-});
+const release = defaultRelease; // Exact 15-batch release ledger is required for 227+.
 const env = Object.freeze({
   SUPABASE_URL: broker.BASE,
   SUPABASE_ANON_KEY: 'fake-public-key',
@@ -41,7 +38,8 @@ const env = Object.freeze({
   MOVEKIT_V2_SIGNING_ENABLED: 'true',
   MOVEKIT_V2_PERMISSION_REVIEWED: 'true',
   MOVEKIT_V2_PRIVATE_UPLOAD_VERIFIED: 'true',
-  MOVEKIT_V2_POSTER_UPLOAD_VERIFIED: 'true'
+  MOVEKIT_V2_POSTER_UPLOAD_VERIFIED: 'true',
+  MOVEKIT_V2_NEW_CATALOG_EXECUTION_VERIFIED: 'true'
 });
 const validGrant = Object.freeze({
   user_id: ownerA, scope: broker.SCOPE, active: true,

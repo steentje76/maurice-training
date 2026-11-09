@@ -6,18 +6,16 @@ const clientApi=require('./privateMoveKitV2MediaClient');
 const bridgeApi=require('./movekitV2ExerciseMediaBridge');
 const inventory=require('../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json');
 const catalog=require('../exercise-catalog.json');
-const item=inventory.items.find(x=>x.catalog_id==='TK-000001');
+// Signing renewal is tested on a released 227+ item; original 226 are hard-blocked.
+const item=inventory.items.find(x=>x.catalog_id==='TK-000227');
 const uid='12345678-1234-4234-8234-123456789abc';
 const origin='https://localhost';
 const epoch=Date.parse('2026-11-07T00:00:00Z');
-const release={schema:broker.SCHEMA,status:'RELEASE_APPROVED',
- inventory_sha256:broker.inventorySha,poster_digest_sha256:broker.posterSha,
- entries:[{catalog_id:item.catalog_id,media_type:'video',storage_path:item.video.path,
- sha256:item.video.sha256,bytes:item.video.bytes,reviewed:true,upload_verified:true,
- review_reference:'TK504-20261107-001',upload_reference:'TK504-20261107-002'}]};
+const release=require('../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
 const env={SUPABASE_URL:broker.BASE,SUPABASE_ANON_KEY:'synthetic-public',
  SUPABASE_SERVICE_ROLE_KEY:'synthetic-service',MOVEKIT_V2_SIGNING_ENABLED:'true',
- MOVEKIT_V2_PERMISSION_REVIEWED:'true',MOVEKIT_V2_PRIVATE_UPLOAD_VERIFIED:'true'};
+ MOVEKIT_V2_PERMISSION_REVIEWED:'true',MOVEKIT_V2_PRIVATE_UPLOAD_VERIFIED:'true',
+ MOVEKIT_V2_NEW_CATALOG_EXECUTION_VERIFIED:'true'};
 const event={httpMethod:'POST',headers:{origin,authorization:'Bearer synthetic.jwt.token'},
  body:JSON.stringify({catalog_id:item.catalog_id,type:'video',version:'v2'})};
 async function run(opts={}){

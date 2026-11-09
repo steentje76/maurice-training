@@ -261,8 +261,12 @@ async function handle(event, deps = {}) {
   // these are NOT an independent media release decision. Never sign original
   // media on the basis of entries, FK approval, runtime env, or test overrides.
   // A future owner-signed media release requires a separate reviewed code change.
-  if (catalogNumber >= 1 && catalogNumber <= 226)
+  // Unconditional: runs before auth, grant lookup or signing. The pure eligibility
+  // gate (tools/tk614_original226_media_eligibility.cjs) is code-only staging and is
+  // deliberately NOT loaded here; wiring it requires a separate reviewed release.
+  if (catalogNumber >= 1 && catalogNumber <= 226) {
     return failure(event, 404, 'MEDIA_NOT_APPROVED');
+  }
   if (body.type === 'poster' && env.MOVEKIT_V2_POSTER_UPLOAD_VERIFIED !== 'true') {
     return failure(event, 503, 'POSTERS_NOT_RELEASED');
   }

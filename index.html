@@ -21111,10 +21111,11 @@ function tk504PosterRequestQueue(){
 // Invalidates outstanding signed poster requests and DOM sources on account changes.
 let tk504PosterEpoch = 0;
 function tk504PrivateEnabled(catalogId){
-  if(TK504_PRIVATE_MEDIA_RELEASE===true)return true;
-  if(TK504_NEW_PRIVATE_MEDIA_RELEASE!==true||typeof catalogId!=='string'||
-     !/^TK-[0-9]{6}$/.test(catalogId))return false;
-  const n=Number(catalogId.slice(3));return n>=227&&n<=582;
+  // Original and newer IDs must be evaluated independently; no global bypass.
+  if(typeof catalogId!=='string'||!/^TK-[0-9]{6}$/.test(catalogId))return false;
+  const n=Number(catalogId.slice(3));
+  if(n>=1&&n<=226)return TK504_PRIVATE_MEDIA_RELEASE===true;
+  return n>=227&&n<=582&&TK504_NEW_PRIVATE_MEDIA_RELEASE===true;
 }
 function tk504GetMediaRuntime(catalogId){
   if(!tk504PrivateEnabled(catalogId)) return null;

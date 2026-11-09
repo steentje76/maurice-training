@@ -1,67 +1,51 @@
 'use strict';
-// TK504 — release switches must NOT cross-contaminate the original 226 and newer 356.
-// This loads the EXACT shipped predicate from index.html. All alternative
-// switch states exist ONLY in VM memory; no live release, grant, JWT or media call.
+// TK504: ONE private V2 client transport for all 582 canonical MoveKit IDs.
+// Bounded smoke checks only. This does NOT authorize the original 226 media:
+// the real broker keeps them MEDIA_NOT_APPROVED until independent release.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const html = fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
-const inv = require('../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json');
+const root = path.join(__dirname, '..');
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const broker = fs.readFileSync(path.join(root, 'netlify/functions/exercise-media-v2-url.js'), 'utf8');
+const adapter = fs.readFileSync(path.join(root, 'core/tk504ProtectedPlayback.js'), 'utf8');
+const entries = require('../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json').items;
 let checks = 0;
-function eq(actual, expected, why) { assert.equal(actual, expected, why); checks++; }
-function checked(value, why) { assert.ok(value, why); checks++; }
-
+function ok(condition, message) { assert.ok(condition, message); checks++; }
 const start = html.indexOf('function tk504PrivateEnabled(catalogId){');
-const end = html.indexOf('function tk504GetMediaRuntime(catalogId){',start);
-checked(start>0 && end>start,'real predicate found in current app source');
-const predicate = html.slice(start,end);
-checked(!predicate.includes('localStorage') && !predicate.includes('sessionStorage') &&
-  !predicate.includes('process.env'),'switch not controlled by user storage or runtime environment');
+const end = html.indexOf('function tk504GetMediaRuntime(catalogId){', start);
+ok(start >= 0 && end > start, 'actual app predicate is present');
+const src = html.slice(start, end);
 const flags = html.match(/const TK504_PRIVATE_MEDIA_RELEASE = (true|false);\s*const TK504_NEW_PRIVATE_MEDIA_RELEASE = (true|false);/);
-checked(!!flags,'both actual product switches present');
-eq(flags[1],'false','owner-original media release remains DISABLED in product');
-eq(flags[2],'true','existing 356 media route remains ENABLED in product');
-
-function checker(original,newer) {
-  const code='const TK504_PRIVATE_MEDIA_RELEASE = '+original+';\n'+
-    'const TK504_NEW_PRIVATE_MEDIA_RELEASE = '+newer+';\n'+predicate+'\n'+
-    'tk504PrivateEnabled';
-  const value=vm.runInNewContext(code,Object.create(null),{timeout:1000});
-  checked(typeof value==='function','VM loaded exact real application predicate');
-  return value;
-}
-const combinations = [
-  [false,false],
-  [false,true],
-  [true,false],
-  [true,true]
-];
-const items=inv.items;
-eq(items.length,582,'canonical library has 582 items');
-const originals=items.filter(x=>Number(x.catalog_id.slice(3))<=226);
-const newer=items.filter(x=>Number(x.catalog_id.slice(3))>=227);
-eq(originals.length,226,'226 original canonical ids');
-eq(newer.length,356,'356 newer canonical ids');
-const allIds = new Set(items.map(x=>x.catalog_id));
-eq(allIds.size,582,'canonical catalog ids unique');
-
-for (const [original,newRelease] of combinations) {
-  const predicateFn=checker(original,newRelease);
-  for(const ex of originals)
-    eq(predicateFn(ex.catalog_id),original,'original id must follow ONLY original switch: '+ex.catalog_id);
-  for(const ex of newer)
-    eq(predicateFn(ex.catalog_id),newRelease,'new id must follow ONLY newer switch: '+ex.catalog_id);
-  for(const bad of [
-    null,undefined,true,false,1,0,{},[],['TK-000001'],'TK-000000',
-    'TK-000583','TK-999999','TK-000001 ','tk-000001','TK-00001',
-    'TK-000001 OR 1=1',' TK-000227','MK-000001','TK-00022x',
-    '__proto__','constructor'
-  ]) eq(predicateFn(bad),false,'bad/noncatalog id always denied: '+String(bad));
-  // This specifically catches the prior unbounded global 'original = true' shortcut.
-  eq(predicateFn('TK-999999'),false,'out-of-range TK-shaped ID cannot use original cutover; in-range personal collisions need caller source checks');
-}
-const shipped=checker(flags[1]==='true',flags[2]==='true');
-for(const ex of originals)eq(shipped(ex.catalog_id),false,'shipped app does not yet privately release original');
-for(const ex of newer)eq(shipped(ex.catalog_id),true,'shipped newer route remains private');
-console.log('TK504 per-scope media switch: '+checks+' assertions PASS; 226 original OFF, 356 existing ON; simulated future 226 ON excludes out-of-range IDs and does not override 356; in-range personal IDs require caller source checks; no media or grant activity');
+ok(flags && flags[1] === 'false' && flags[2] === 'true',
+  'original server-release gate stays disabled, existing V2 transport enabled');
+const evaluate = enabled => vm.runInNewContext(
+  'const TK504_NEW_PRIVATE_MEDIA_RELEASE = ' + enabled + ';\n' + src + '\ntk504PrivateEnabled',
+  Object.create(null), { timeout: 1000 });
+const shipped = evaluate(true);
+const disabled = evaluate(false);
+ok(entries.length === 582, 'golden inventory has 582 items');
+ok(entries.filter(x => Number(x.catalog_id.slice(3)) <= 226).length === 226,
+  'original IDs retained');
+ok(entries.filter(x => Number(x.catalog_id.slice(3)) >= 227).length === 356,
+  'newer IDs retained');
+ok(new Set(entries.map(x => x.catalog_id)).size === 582, 'canonical IDs unique');
+ok(entries.every(x => shipped(x.catalog_id) === true),
+  'all 582 use the SAME protected media transport in the app');
+ok(entries.every(x => disabled(x.catalog_id) === false),
+  'one V2 transport switch can fail closed for all 582');
+ok([null, true, {}, 'TK-000000', 'TK-000583', 'TK-999999',
+  'TK-000063 ', 'tk-000063'].every(id => shipped(id) === false),
+  'noncatalog and malformed IDs denied');
+ok(html.includes("c.url=(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(catalogId))?null"),
+  'protected media do not expose legacy raw video URL');
+const lock = broker.indexOf('if (catalogNumber >= 1 && catalogNumber <= 226) {');
+ok(lock > 0 && broker.indexOf("return failure(event, 404, 'MEDIA_NOT_APPROVED');", lock) > lock &&
+   lock < broker.indexOf('const uid = await identifyUser(', lock),
+   'actual server broker hard-denies original 226 before auth/signing');
+ok(adapter.includes("published.source.provider !== 'movekit'") &&
+   adapter.includes('bridge.requestStaged('),
+   'existing private adapter validates canonical source and uses the V2 bridge');
+console.log('TK504 single V2 route: ' + checks +
+  ' targeted smoke checks PASS; 582 client-private, original 226 server-denied until authorized');

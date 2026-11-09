@@ -5,8 +5,9 @@
 # belanden, en (2) gegenereerde build-uitvoer vervuilt de geschiedenis niet.
 #
 # Elk patroon hieronder is vóór opname vergeleken met `git ls-files`: geen enkel
-# bestaand, getrackt bronbestand valt eronder. Voeg hier dus niets toe zonder die
-# controle — een te breed patroon sluit stilzwijgend projectbestanden uit.
+# bestaand, getrackt bronbestand viel eronder. TK504 vormt nu een uitzondering:
+# de 226 bestaande legacy-MP4's blijven getrackt tot een veilige cutover;
+# de nieuwe regels onderaan blokkeren alleen toekomstige mediabestanden.
 #
 # LET OP: .gitignore is een dotfile. Bij overdracht via een ZIP of een upload in de
 # GitHub-webinterface kan hij ongemerkt wegvallen; dan bestaat deze bescherming
@@ -63,3 +64,14 @@ android/app/release/
 .DS_Store
 Thumbs.db
 *.log
+# TK504 containment — prevent newly licensed/raw video assets being added to public Git.
+# NOTE: .gitignore does NOT remove the 226 legacy MP4s already tracked in Git.
+# Their removal needs the separately validated private-media cutover; old Git
+# history and external caches require their own legal/security remediation.
+videos/
+*.mp4
+*.m4v
+*.mov
+*.webm
+*.avi
+*.mkv

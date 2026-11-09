@@ -21,7 +21,7 @@ na LF-normalisatie bytegelijk aan de vastgelegde bron.
 
 1. De bestaande typed-FK-schema-migratie moet aanwezig zijn.
 2. De met Supabase CLI aangemaakte migratie
-   supabase/migrations/20261107154937_tk603_reserved_scope_provisioning_stage.sql
+   supabase/migrations/20261107191728_tk603_reserved_scope_provisioning_stage.sql
    controleert de bronfunctie en de bestaande reserved-aliasbescherming.
 3. Afzonderlijke, brongecontroleerde provisioning volgt pas na de overige gates.
    Deze migratie voegt zelf geen alias, binding, publicatie of grant toe.

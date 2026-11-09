@@ -40,7 +40,7 @@ alter table public.sessions enable row level security;
 grant select,insert,update,delete on public.sessions to authenticated;
 create policy session_owner on public.sessions for all to authenticated using(user_id=auth.uid()) with check(user_id=auth.uid());
 `;
-  sql(fixture);sql(fs.readFileSync(path.join(root,'supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql'),'utf8'));
+  sql(fixture);sql(fs.readFileSync(path.join(root,'supabase/migrations/20261107191714_tk504_typed_catalog_fk_stage.sql'),'utf8'));
   sql(`insert into public.exercises(id,name,category,type,scope,created_by,user_id) values('TK-000038','synthetic personal','Strength','strength','personal','${A.id}','${A.id}');
 insert into public.exercises(id,name,category,type,scope,active) select 'TKC-'||lpad(n::text,6,'0'),'Technical FK placeholder','system','strength','global',false from generate_series(1,582)n;
 insert into public.movekit_catalog_fk_bindings(catalog_id,exercise_id,provider_id) select 'TK-'||lpad(n::text,6,'0'),'TKC-'||lpad(n::text,6,'0'),'synthetic-vendor-'||lpad(n::text,6,'0') from generate_series(1,582)n;

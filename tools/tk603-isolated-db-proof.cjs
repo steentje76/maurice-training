@@ -11,7 +11,7 @@ try{
  let ready=false;
  for(let n=0;n<45;n++){try{docker(['exec',name,'pg_isready','-U','postgres']);ready=true;break;}catch{Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,300);}}
  if(!ready)throw Error('PostgreSQL readiness failed');
- docker(['cp',path.join(root,'supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql'),name+':/tmp/tk504-typed-fk-stage.sql']);
+ docker(['cp',path.join(root,'supabase/migrations/20261107191714_tk504_typed_catalog_fk_stage.sql'),name+':/tmp/tk504-typed-fk-stage.sql']);
  docker(['cp',path.join(root,'tools/tk504-typed-fk-security-smoke.sql'),name+':/tmp/tk504-typed-fk-smoke.sql']);
  const out=docker(['exec',name,'psql','-X','-v','ON_ERROR_STOP=1','-U','postgres','-d','postgres','-f','/tmp/tk504-typed-fk-smoke.sql']);
  if(!/two owners .+ preserved historical row PASS/.test(out)||!out.includes('ROLLBACK'))throw Error('Proof success markers missing');

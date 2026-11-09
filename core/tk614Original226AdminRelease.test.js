@@ -9,6 +9,7 @@ const {verify}=require('../tools/tk504_prepare_private_fk_manifest.cjs');
 const T=require('../tools/tk614_original226_batch25_preflight.cjs');
 const R=require('../tools/tk614_original226_admin_release.cjs');
 const S=require('../tools/tk614_admin_release_docker_smoke.cjs');
+const P=require('../tools/tk614_original226_review_packet.cjs');
 const ROOT=path.join(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(ROOT,p),'utf8');
 const catalogBytes=fs.readFileSync(path.join(ROOT,'exercise-catalog.json'));
@@ -46,7 +47,10 @@ const NOW=Date.now(),iso=ms=>new Date(ms).toISOString(),AT=iso(NOW-3600e3);
 const FP={kind:R.FINGERPRINT_KIND,server_version_num:'170004',precondition_sha256:'1'.repeat(64),
   registry_snapshot_sha256:'2'.repeat(64),session_user:'postgres',original_226_bindings:0,original_226_released:0,
   existing_356_active_reviewed:356,legacy_tk_rows:23,latest_audit_decision_id:null,latest_audit_registry_after_sha256:null};
-const GATES_OK={status:'RELEASE_APPROVED',released_batches:[{from:'TK-000001',through:'TK-000226'}]};
+// Coverage alone is no longer a release (TK614 phase-B review 2026-11-09): the
+// synthetic gate must also carry a packet-bound owner release record.
+const GATES_COVERAGE_ONLY={status:'RELEASE_APPROVED',released_batches:[{from:'TK-000001',through:'TK-000226'}]};
+const GATES_OK=structuredClone(S.SYNTHETIC_RELEASE_GATES);
 const KEYS=crypto.generateKeyPairSync('ed25519'),OTHER=crypto.generateKeyPairSync('ed25519');
 const KEY_SHA=sha(KEYS.publicKey.export({format:'der',type:'spki'}));
 const trustOK={trustedOwnerKeySha256:[KEY_SHA]};
@@ -211,16 +215,28 @@ eq(R.activationBlockers(repoGates),['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELE
 eq(R.activationBlockers(GATES_OK,[KEY_SHA]),[]);
 eq(R.original226Released(repoGates),false,'existing release gate covers only 227..582');
 eq(R.original226Released(GATES_OK),true);
-eq(R.original226Released({status:'RELEASE_APPROVED',released_batches:[{from:'TK-000001',through:'TK-000100'},
+eq(R.original226Released({...GATES_OK,released_batches:[{from:'TK-000001',through:'TK-000100'},
   {from:'TK-000101',through:'TK-000226'}]}),true);
-eq(R.original226Released({status:'RELEASE_APPROVED',released_batches:[{from:'TK-000001',through:'TK-000225'}]}),false);
+eq(R.original226Released({...GATES_OK,released_batches:[{from:'TK-000001',through:'TK-000225'}]}),false);
 eq(R.original226Released({...GATES_OK,status:'BLOCKED_NOT_REVIEWED'}),false);
-eq(R.original226Released({status:'RELEASE_APPROVED',released_batches:[{from:'TK-000226',through:'TK-000001'}]}),false);
+eq(R.original226Released({...GATES_OK,released_batches:[{from:'TK-000226',through:'TK-000001'}]}),false);
 eq(R.original226Released(null),false);
+// RED for the pre-2026-11-09 behaviour: a bare coverage range (no owner record/evidence) used to pass.
+eq(R.original226Released(GATES_COVERAGE_ONLY),false,'coverage-only gate without owner record is rejected');
+eq(R.original226ReleaseRecordProblems(GATES_COVERAGE_ONLY),['RELEASE_RECORD_MISSING']);
+eq(R.activationBlockers(GATES_COVERAGE_ONLY,[KEY_SHA]),['ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES']);
 const aA=mk('activate'),sA=R.signApproval(aA,KEYS.privateKey);
 throwsCode(()=>prep('activate',aA),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','repo gate blocks activation');
 throwsCode(()=>prep('activate',sA),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES','even a validly signed approval');
 throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK}),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY','no pinned key');
+throwsCode(()=>prep('activate',sA,{releaseGates:GATES_COVERAGE_ONLY},trustOK),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
+  'coverage-only gate stays blocked even with a valid signature from a trusted key');
+{const g=structuredClone(GATES_OK);g[P.RECORD_KEY].batches[9].status=P.PACKET_STATUS;
+ throwsCode(()=>prep('activate',sA,{releaseGates:g},trustOK),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
+  'partial owner approval (9/10 batches) blocks activation');}
+{const g=structuredClone(GATES_OK);g[P.RECORD_KEY].media_grants=1;
+ throwsCode(()=>prep('activate',sA,{releaseGates:g},trustOK),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES',
+  'a release record that grants media is never accepted');}
 throwsCode(()=>prep('activate',sA,{releaseGates:GATES_OK},{trustedOwnerKeySha256:['not-hex']}),'ACTIVATION_BLOCKED_NO_PINNED_OWNER_KEY');
 throwsCode(()=>prep('activate',aA,{releaseGates:GATES_OK},trustOK),'ACTIVATION_SIGNATURE_REQUIRED');
 throwsCode(()=>prep('activate',R.signApproval(aA,OTHER.privateKey),{releaseGates:GATES_OK},trustOK),'OWNER_KEY_NOT_TRUSTED');

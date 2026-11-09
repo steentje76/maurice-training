@@ -31,6 +31,7 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {safelyOutsideRepo}=require('./tk504_prepare_private_fk_manifest.cjs');
 const T=require('./tk614_original226_batch25_preflight.cjs');
+const P=require('./tk614_original226_review_packet.cjs');
 
 const ROOT=path.resolve(__dirname,'..');
 const ORIGINAL=226,TOTAL=582,EXISTING=TOTAL-ORIGINAL,LEGACY_TK_ROWS=23;
@@ -155,8 +156,14 @@ function signApproval(a,privateKey){
     value_base64:crypto.sign(null,Buffer.from(a.approval_sha256,'hex'),key).toString('base64')}};
 }
 
-// Existing public release gate: does any released record cover 001..226?
-function original226Released(gates){
+// Public release gate for 001..226. Coverage of 001..226 by released_batches is
+// NECESSARY but NOT SUFFICIENT (TK614 phase-B review 2026-11-09): a range entry
+// carries no owner review, no evidence and no packet binding. The gates must
+// ALSO carry a valid owner release record (gates.original_226_fk_identity_release)
+// bound to the deterministic 226 review packet: FK-identity binding only, all 10
+// batches OWNER_APPROVED with evidence, zero media grants. See
+// tools/tk614_original226_review_packet.cjs releaseRecordProblems().
+function original226Released(gates,opts={}){
   if(!isObj(gates)||gates.status!=='RELEASE_APPROVED'||!Array.isArray(gates.released_batches))return false;
   const covered=new Set();
   for(const b of gates.released_batches){
@@ -166,7 +173,11 @@ function original226Released(gates){
     for(let n=f;n<=t;n++)covered.add(n);
   }
   for(let n=1;n<=ORIGINAL;n++)if(!covered.has(n))return false;
-  return true;
+  return original226ReleaseRecordProblems(gates,opts).length===0;
+}
+function original226ReleaseRecordProblems(gates,opts={}){
+  const packet=opts.reviewPacket===undefined?P.repoReviewPacket():opts.reviewPacket;
+  return P.releaseRecordProblems(isObj(gates)?gates[P.RECORD_KEY]:undefined,packet);
 }
 function activationBlockers(releaseGates,trustedKeys=TRUSTED_OWNER_KEY_SHA256){
   const out=[];
@@ -248,7 +259,8 @@ function verifyApproval(a,opts){
     }
     const rv=a.gates.review.completed_at;
     need(typeof rv==='string'&&ISO_Z.test(rv)&&Date.parse(rv)<=at,'REVIEW_TIMESTAMP_INVALID');
-    need(original226Released(opts.releaseGates),'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES');
+    need(original226Released(opts.releaseGates,{reviewPacket:opts.reviewPacket}),
+      'ACTIVATION_BLOCKED_ORIGINAL_226_NOT_IN_RELEASE_GATES');
     verifySignature(a,opts.trustedOwnerKeySha256===undefined?TRUSTED_OWNER_KEY_SHA256:opts.trustedOwnerKeySha256);
   }else need(!('gates' in a)&&!('signature' in a),'APPROVAL_SHAPE_INVALID');
   return Object.freeze({phase,decision_id:a.decision_id,approval_sha256:a.approval_sha256});
@@ -735,6 +747,7 @@ function prepareRelease(phase,input,trust={}){
   const a=input.approval;
   verifyApproval(a,{phase,plan,manifestSha256,confirmDecisionId:input.confirmDecisionId,
     confirmApprovalSha256:input.confirmApprovalSha256,now:input.now,releaseGates:input.releaseGates,
+    reviewPacket:phase==='activate'?P.buildReviewPacket(input.catalogBytes):undefined,
     trustedOwnerKeySha256:trust.trustedOwnerKeySha256});
   const digests=repoFunctionDigests(input.tk504Sql,input.auditSql);
   const sql=guardPhaseSql(phase,(phase==='stage'?renderStage:phase==='activate'?renderActivate:renderReverse)(
@@ -844,5 +857,5 @@ module.exports=Object.freeze({SCHEMA_APPROVAL,SCHEMA_REPORT,FINGERPRINT_KIND,PHA
   TRUSTED_OWNER_KEY_SHA256,ACTIVATION_GATES,TK603_RESERVED_GUARD_SHA256,GUARDED_FUNCTIONS,MAX_APPROVAL_AGE_MS,
   PRECONDITION_EXPR,REGISTRY_EXPR,PROBE_UID,
   canonicalJson,approvalDigest,buildApproval,sealApproval,signApproval,pendingGates,validateFingerprint,
-  original226Released,activationBlockers,verifyApproval,repoFunctionDigests,renderFingerprintSql,
+  original226Released,original226ReleaseRecordProblems,activationBlockers,verifyApproval,repoFunctionDigests,renderFingerprintSql,
   parseFingerprintOutput,guardPhaseSql,prepareRelease,parseArgs,run});

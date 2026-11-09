@@ -34,8 +34,26 @@ const MIGRATIONS=Object.freeze([
   ['tk504-typed-fk-stage.sql','supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql'],
   ['tk603-scope-stage.sql','supabase/migrations/20261107154937_tk603_reserved_scope_provisioning_stage.sql'],
   ['tk614-audit-stage.sql','supabase/migrations/20261108120000_tk614_admin_release_audit_stage.sql']]);
+const P=require('./tk614_original226_review_packet.cjs');
+// SYNTHETIC smoke-only owner release record (throw-away evidence digests). Coverage
+// alone is no longer accepted by original226Released(); the record must be bound
+// to the deterministic review packet of the repo catalog. Never a real approval.
+function syntheticRelease226Record(packet){
+  const ev=k=>crypto.createHash('sha256').update('tk614-synthetic-smoke-evidence-'+k).digest('hex');
+  return {schema:P.SCHEMA_RECORD,status:P.RECORD_STATUS_APPROVED,decision_id:'TK614-OWNER-REVIEW226-20261109-SYNTH01',
+    approved_by:'Synthetic Smoke Owner',approved_at:'2026-11-09T00:00:00.000Z',binding_kind:P.BINDING_KIND,
+    media_grants:0,media_access:'NOT_RELEASED',
+    review_packet:{schema:P.SCHEMA_PACKET,all_sha256:packet.totals.all_sha256,
+      source_catalog_sha256:packet.generated_from.source_catalog_sha256},
+    evidence:{source_evidence_sha256:ev('source'),license_evidence_sha256:ev('license'),
+      owner_review_evidence_sha256:ev('owner-review')},
+    batches:packet.batches.map(b=>({batch:b.batch,from:b.from,through:b.through,count:b.count,batch_sha256:b.batch_sha256,
+      status:P.BATCH_STATUS_APPROVED,reviewed_by:'Synthetic Smoke Reviewer',reviewed_at:'2026-11-08T23:00:00.000Z',
+      evidence_sha256:ev('batch-'+b.batch)}))};
+}
 const SYNTHETIC_RELEASE_GATES=Object.freeze({status:'RELEASE_APPROVED',
-  released_batches:[{from:'TK-000001',through:'TK-000226'}],_synthetic_smoke_only:true});
+  released_batches:[{from:'TK-000001',through:'TK-000226'}],
+  [P.RECORD_KEY]:syntheticRelease226Record(P.repoReviewPacket()),_synthetic_smoke_only:true});
 const LEGACY_GLOBAL=[1,5,38,100,150,201,226],LEGACY_PERSONAL=[2,3,4,10,25,26,50,60,63,70,80,90,120,188,200,225];
 const pad=n=>String(n).padStart(6,'0');
 const sha=s=>crypto.createHash('sha256').update(s).digest('hex');
@@ -457,4 +475,4 @@ if(require.main===module){
   try{run(process.argv.slice(2));}
   catch(e){process.stderr.write('TK614_ADMIN_RELEASE_SMOKE_BLOCKED: '+(e.code||e.message)+'\n');process.exitCode=1;}
 }
-module.exports=Object.freeze({UA,UB,SYNTHETIC_RELEASE_GATES,parseArgs,buildSetupSql,buildProbeSql,buildFinalSql,judge,run});
+module.exports=Object.freeze({UA,UB,SYNTHETIC_RELEASE_GATES,syntheticRelease226Record,parseArgs,buildSetupSql,buildProbeSql,buildFinalSql,judge,run});

@@ -12,6 +12,12 @@
 // read ONLY from process.env.TK504_STORAGE_VERIFY_KEY at execution time; never from files,
 // never logged. Media bytes are never persisted; only aggregate counts are printed.
 //
+// --live --batch-start-id TK-00000N --batch-size 1..25: OPT-IN PARTIAL mode. Selects exactly the
+// video+poster rows of up to 25 consecutive original catalog IDs from the FULL validated/pinned
+// 452-entry manifest and verifies only those (max 50 GETs). A batch report is explicitly
+// NON-ATTESTABLE (mode 'live-batch', verdict 'PARTIAL_NOT_ATTESTABLE', attestation_eligible:false,
+// complete_452:false) and can never satisfy the signed full-452 attestation gate.
+//
 // Authorizes nothing: no signing, grants, uploads, DB writes, release toggles.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -45,6 +51,10 @@ const EMPTY_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b78
 const KEY_RE = /^[A-Za-z0-9._-]{20,4096}$/;
 const MAX_CONCURRENCY = 3;
 const DEFAULTS = Object.freeze({ concurrency: 2, timeoutMs: 300000, idleMs: 30000 });
+const BATCH_MAX_SIZE = 25;
+const BATCH_STATUS = Object.freeze({ PASS: 'BATCH_PASS_NOT_RELEASE_EVIDENCE',
+  FAIL_MISMATCH: 'BATCH_FAIL_MISMATCH', INCOMPLETE_UNABLE: 'BATCH_INCOMPLETE_UNABLE' });
+const BATCH_VERDICT = 'PARTIAL_NOT_ATTESTABLE';
 
 // Outcome taxonomy. FAIL = the bytes/metadata served do not match the manifest.
 // UNABLE = we could not obtain a complete, trustworthy stream (API/CDN/network/auth).
@@ -267,6 +277,39 @@ async function verifyAll(manifest, { key, origin = ORIGIN, allowLoopbackForTests
 }
 
 // ---------------------------------------------------------------------------
+// Partial batch selection (offline). Picks exactly the video+poster rows of `size` consecutive
+// catalog IDs from the FULL, already-validated manifest. Rows are the original manifest objects
+// (never copied/altered). Fails closed on any duplicate/missing kind or scope mismatch.
+const cidNum = id => Number(id.slice(3));
+const cidOf = n => 'TK-' + String(n).padStart(6, '0');
+function batchRange(startId, size, profile = PRODUCTION_PROFILE) {
+  need(typeof startId === 'string' && CID.test(startId), 'BATCH_START_ID_INVALID');
+  const first = cidNum(profile.first), last = cidNum(profile.last), start = cidNum(startId);
+  need(start >= first && start <= last, 'BATCH_START_ID_INVALID');
+  need(Number.isSafeInteger(size) && size >= 1 && size <= BATCH_MAX_SIZE, 'BATCH_SIZE_INVALID');
+  const end = start + size - 1;
+  need(end <= last, 'BATCH_RANGE_OVERFLOW');
+  return { start_id: cidOf(start), end_id: cidOf(end), size, ids: Array.from({ length: size }, (_, i) => cidOf(start + i)) };
+}
+function selectBatchEntries(manifest, startId, size, profile = PRODUCTION_PROFILE) {
+  const range = batchRange(startId, size, profile);
+  need(isObj(manifest) && Array.isArray(manifest.entries) && manifest.entries.length === profile.entries, 'BATCH_SOURCE_NOT_FULL_MANIFEST');
+  const want = new Set(range.ids);
+  const counts = new Map(range.ids.map(id => [id, { video: 0, poster: 0 }]));
+  const selected = manifest.entries.filter(e => isObj(e) && want.has(e.catalog_id));
+  for (const e of selected) {
+    need(Object.hasOwn(KINDS, e.media_type), 'BATCH_KIND_INVALID');
+    counts.get(e.catalog_id)[e.media_type]++;
+  }
+  for (const c of counts.values()) {
+    need(c.video <= 1 && c.poster <= 1, 'BATCH_DUPLICATE_KIND');
+    need(c.video === 1 && c.poster === 1, 'BATCH_MISSING_KIND');
+  }
+  need(selected.length === 2 * size, 'BATCH_SCOPE_MISMATCH');
+  return { range: { start_id: range.start_id, end_id: range.end_id, size, expected_objects: selected.length }, entries: selected };
+}
+
+// ---------------------------------------------------------------------------
 // CLI
 const USAGE = [
   'Usage:',
@@ -274,13 +317,15 @@ const USAGE = [
   '  ' + KEY_ENV + '=<key from secret store> \\',
   '    node tools/tk504_private_storage_byte_sha_verify.cjs --live [--concurrency 1..3]',
   '      [--timeout-ms N] [--idle-ms N] [--report-out <absolute path OUTSIDE the repo>]',
-  'Exit: 0 PASS/offline OK, 1 mismatch or incomplete, 2 usage/precondition (fail closed).'
+  '      [--batch-start-id TK-000001..TK-000226 --batch-size 1..25]   PARTIAL, NOT release evidence',
+  'Exit: 0 PASS/batch all-pass/offline OK, 1 mismatch or incomplete, 2 usage/precondition (fail closed).'
 ].join('\n');
 
 function parseArgs(argv) {
   const o = { mode: 'check', concurrency: DEFAULTS.concurrency, timeoutMs: DEFAULTS.timeoutMs, idleMs: DEFAULTS.idleMs, reportOut: null };
   const seen = { check: false, live: false };
   const ints = { '--concurrency': 'concurrency', '--timeout-ms': 'timeoutMs', '--idle-ms': 'idleMs' };
+  const batchArgs = {};
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--check') seen.check = true;
@@ -289,6 +334,10 @@ function parseArgs(argv) {
       const v = argv[++i];
       need(typeof v === 'string' && /^[0-9]{1,9}$/.test(v), 'ARGS_INVALID');
       o[ints[a]] = Number(v);
+    } else if (a === '--batch-start-id' || a === '--batch-size') {
+      const v = argv[++i];
+      need(!Object.hasOwn(batchArgs, a) && typeof v === 'string' && v.length > 0, 'ARGS_INVALID');
+      batchArgs[a] = v;
     } else if (a === '--report-out') {
       const v = argv[++i];
       need(typeof v === 'string' && v.length > 0, 'ARGS_INVALID');
@@ -297,6 +346,15 @@ function parseArgs(argv) {
   }
   need(!(seen.check && seen.live), 'ARGS_CONFLICT');
   if (seen.live) o.mode = 'live';
+  // Batch flags: opt-in only. `o.batch` is added ONLY when requested so full-mode opts are unchanged.
+  const hasStart = Object.hasOwn(batchArgs, '--batch-start-id'), hasSize = Object.hasOwn(batchArgs, '--batch-size');
+  if (hasStart || hasSize) {
+    need(hasStart && hasSize, 'BATCH_FLAGS_INCOMPLETE');
+    need(o.mode === 'live', 'BATCH_LIVE_ONLY');
+    need(/^[0-9]{1,9}$/.test(batchArgs['--batch-size']), 'BATCH_SIZE_INVALID');
+    const r = batchRange(batchArgs['--batch-start-id'], Number(batchArgs['--batch-size']));
+    o.batch = { startId: r.start_id, size: r.size };
+  }
   need(o.concurrency >= 1 && o.concurrency <= MAX_CONCURRENCY, 'CONCURRENCY_INVALID');
   need(o.timeoutMs >= 1000 && o.idleMs >= 1000, 'TIMEOUT_INVALID');
   if (o.reportOut !== null) {
@@ -345,6 +403,7 @@ async function run(argv = process.argv.slice(2), { env = process.env, out = s =>
   try { plan = loaded.manifest.entries.map(e => objectUrl(e)); }
   catch (e) { err(JSON.stringify({ ...baseReport(opts.mode, loaded), status: 'BLOCKED_PLAN_INVALID', reason: e.code })); return 2; }
   const m = loaded.manifest;
+  if (opts.batch) return runBatch(opts, loaded, { env, out, err, fetchImpl });
   if (opts.mode === 'check') {
     out(JSON.stringify({ ...baseReport('offline-check', loaded), status: 'OFFLINE_CHECK_OK_NO_NETWORK',
       network_requests: 0, planned_get_requests: plan.length, unique_targets: new Set(plan).size,
@@ -377,10 +436,55 @@ async function run(argv = process.argv.slice(2), { env = process.env, out = s =>
   return report.verdict === 'PASS' ? 0 : 1;
 }
 
+// Partial batch run. Kept fully separate from the full --live path so that path stays unchanged.
+async function runBatch(opts, loaded, { env, out, err, fetchImpl }) {
+  const MODE = 'live-batch';
+  const partial = { verdict: BATCH_VERDICT, attestation_eligible: false, complete_452: false,
+    full_expected: PRODUCTION_PROFILE.entries };
+  let sel;
+  try { sel = selectBatchEntries(loaded.manifest, opts.batch.startId, opts.batch.size); }
+  catch (e) {
+    err(JSON.stringify({ ...baseReport(MODE, loaded), status: 'BLOCKED_BATCH_INVALID', ...partial,
+      reason: /^[A-Z_0-9]+$/.test(e.code || '') ? e.code : 'INTERNAL_ERROR', network_requests: 0 }));
+    return 2;
+  }
+  const key = env[KEY_ENV];
+  if (typeof key !== 'string' || !KEY_RE.test(key)) {
+    err(JSON.stringify({ ...baseReport(MODE, loaded), status: 'BLOCKED_NO_CREDENTIAL', ...partial, batch: sel.range,
+      reason: KEY_ENV + ' missing or malformed in process environment', network_requests: 0 }));
+    return 2;
+  }
+  let report;
+  try {
+    // Reuse verifyAll unchanged on the selected (original, unmodified) full-manifest rows.
+    report = await verifyAll({ entries: sel.entries }, { key, fetchImpl, concurrency: opts.concurrency,
+      timeoutMs: opts.timeoutMs, idleMs: opts.idleMs });
+  } catch (e) {
+    err(JSON.stringify({ ...baseReport(MODE, loaded), status: 'BLOCKED', ...partial, batch: sel.range,
+      reason: /^[A-Z_]+$/.test(e.code || '') ? e.code : 'INTERNAL_ERROR' }));
+    return 1;
+  }
+  const { failures, verdict: batchOutcome, ...aggregate } = report;
+  const n = sel.entries.length;
+  const allPass = batchOutcome === 'PASS' && report.checked === n && report.pass === n && report.fail === 0 && report.unable === 0;
+  const status = allPass ? BATCH_STATUS.PASS
+    : batchOutcome === 'FAIL_MISMATCH' ? BATCH_STATUS.FAIL_MISMATCH : BATCH_STATUS.INCOMPLETE_UNABLE;
+  // Partial markers are spread LAST so nothing from the aggregate can override them.
+  const summary = { ...baseReport(MODE, loaded), ...aggregate, batch: sel.range, batch_outcome: batchOutcome,
+    status, ...partial };
+  out(JSON.stringify(summary));
+  if (opts.reportOut) {
+    try { fs.writeFileSync(path.resolve(opts.reportOut), JSON.stringify({ ...summary, failures }, null, 2) + '\n', { flag: 'wx' }); }
+    catch (_) { err(JSON.stringify({ status: 'PRIVATE_REPORT_WRITE_FAILED' })); return 1; }
+  }
+  return allPass ? 0 : 1;
+}
+
 if (require.main === module) {
   run().then(code => { process.exitCode = code; }, () => { console.error(JSON.stringify({ status: 'BLOCKED', reason: 'INTERNAL_ERROR' })); process.exitCode = 1; });
 }
 
 module.exports = Object.freeze({ ORIGIN, PROJECT_REF, OBJECT_PREFIX, KEY_ENV, MANIFEST_FILE, MANIFEST_REL, PRODUCTION_PROFILE,
-  KINDS, MAX_CONCURRENCY, FAIL_CATEGORIES, UNABLE_CATEGORIES, USAGE,
+  KINDS, MAX_CONCURRENCY, FAIL_CATEGORIES, UNABLE_CATEGORIES, USAGE, BATCH_MAX_SIZE, BATCH_STATUS, BATCH_VERDICT,
+  batchRange, selectBatchEntries,
   manifestProblems, productionManifestProblems, loadManifestFile, objectUrl, authHeaders, fetchAndHash, verifyAll, parseArgs, run });

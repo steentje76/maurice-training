@@ -16,6 +16,8 @@ const ok = (v, m) => { assert.ok(v, m); checks++; };
 const eq = (a, b, m) => { assert.deepEqual(a, b, m); checks++; };
 const throwsCode = (fn, code, m) => { assert.throws(fn, e => e.code === code, m || code); checks++; };
 const sha = b => crypto.createHash('sha256').update(b).digest('hex');
+const canonical = b => Buffer.from(b.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
+const canonicalSha = b => sha(canonical(b));
 const cid = n => 'TK-' + String(n).padStart(6, '0');
 const RAW = fs.readFileSync(V.MANIFEST_FILE);
 const BASE = JSON.parse(RAW.toString('utf8'));
@@ -25,7 +27,7 @@ const repinned = mutate => {
   const m = structuredClone(BASE); mutate(m);
   m.totals.all_sha256 = S.manifestDigest(m);
   const raw = Buffer.from(S.serializeManifest(m), 'utf8');
-  return { raw, pins: { fileSha256: sha(raw), allSha256: m.totals.all_sha256 } };
+  return { raw, pins: { fileSha256: canonicalSha(raw), allSha256: m.totals.all_sha256 } };
 };
 
 // 1. First packet: exactly 25 exercises / 50 rows, canonical migration columns, stable order.
@@ -42,6 +44,7 @@ ok(first.rows.every(r => r.object_name === (r.bucket_id === 'exercise-media'
   ? 'movekit/v2/video/' + r.provider_id + '.mp4' : 'movekit/v2/poster-optimized/' + r.provider_id + '.webp')), 'object_name matches migration formula');
 ok(/NOT a body SHA/.test(first.note), 'metadata-is-not-body-SHA note present');
 eq(P.buildBatchPlan(RAW, 'TK-000001', 25), first, 'deterministic');
+eq(P.buildBatchPlan(canonical(RAW), 'TK-000001', 25), first, 'LF Linux equals CRLF Windows canonical manifest');
 
 // 2. Final packet: exactly 2 rows.
 const last = P.buildBatchPlan(RAW, 'TK-000226', 1);
@@ -65,7 +68,7 @@ for (const [id, n, code] of [['TK-000000', 1, 'BATCH_START_ID_INVALID'], ['TK-00
 // 5. Digest pins and missing manifest.
 const flipped = Buffer.from(RAW); flipped[flipped.indexOf('0e5eea10')] = 0x31; // '0' -> '1' in a sha
 throwsCode(() => P.buildBatchPlan(flipped, 'TK-000001', 25), 'MANIFEST_FILE_SHA256_PIN_MISMATCH', 'file pin');
-throwsCode(() => P.buildBatchPlan(flipped, 'TK-000001', 25, { fileSha256: sha(flipped) }), 'MANIFEST_INVALID', 'self-digest');
+throwsCode(() => P.buildBatchPlan(flipped, 'TK-000001', 25, { fileSha256: canonicalSha(flipped) }), 'MANIFEST_INVALID', 'self-digest');
 throwsCode(() => P.buildBatchPlan(RAW, 'TK-000001', 25, { allSha256: '0'.repeat(64) }), 'MANIFEST_ALL_SHA256_PIN_MISMATCH', 'all pin');
 throwsCode(() => P.buildBatchPlan(Buffer.alloc(0), 'TK-000001', 25), 'MANIFEST_MISSING', 'empty');
 

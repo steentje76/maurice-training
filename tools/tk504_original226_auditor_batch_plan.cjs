@@ -5,7 +5,7 @@
 // later seed into public.tk504_original226_audit_allowed_objects for ONE batch of <= 25
 // consecutive original catalog IDs (each exactly one video + one poster).
 //
-// Fail-closed order: (1) pinned manifest FILE sha256, (2) full 452-entry validation via the
+// Fail-closed order: (1) pinned canonical manifest UTF-8 SHA256 (CRLF->LF), (2) full 452-entry validation via the
 // existing verifier's productionManifestProblems, (3) pinned totals.all_sha256, (4) only then
 // batch selection via the existing selectBatchEntries, plus strict per-row re-derivation of
 // object_name from the validated storage_path AND from the migration's generated-column formula.
@@ -27,7 +27,7 @@ const ROOT = path.resolve(__dirname, '..');
 const SCHEMA = 'tk504-original226-auditor-batch-plan/1.0';
 const MODE = 'offline-batch-plan';
 const TARGET_TABLE = 'public.tk504_original226_audit_allowed_objects';
-const PINNED_MANIFEST_FILE_SHA256 = '67dd9c9f51ace53d97dfafc047f27603c72013ada1f5fd967273806c1da7050e';
+const PINNED_MANIFEST_FILE_SHA256 = 'b60d5450a9d78d0e5cd13bde07269194fa1b87193bba64be79dc7c152b4f12ac';
 const PINNED_MANIFEST_ALL_SHA256 = '8492f2c14521b9443db3f1c875b936cd8bddc96fbacc0837c9558c5a95738b10';
 const NOTE = 'Manifest metadata (bytes/sha256 recorded at staging) is NOT a body SHA of live Storage objects; ' +
   'storage_gets=0 and live_byte_sha_verified=0. Plan only: seeding requires separate owner+DBA+security approval.';
@@ -53,7 +53,12 @@ function buildBatchPlan(raw, startId, size, pins = {}) {
   const fileSha = pins.fileSha256 === undefined ? PINNED_MANIFEST_FILE_SHA256 : pins.fileSha256;
   const allSha = pins.allSha256 === undefined ? PINNED_MANIFEST_ALL_SHA256 : pins.allSha256;
   need(Buffer.isBuffer(raw) && raw.length > 0, 'MANIFEST_MISSING');
-  const actualFileSha = sha256(raw);
+  // Git checks out JSON with LF on Linux and may use CRLF on Windows.
+  // Pin the exact UTF-8 content with CRLF normalized to LF, not platform-specific bytes.
+  const utf8 = raw.toString('utf8');
+  need(Buffer.from(utf8, 'utf8').equals(raw), 'MANIFEST_NOT_UTF8');
+  need(!/\r(?!\n)/.test(utf8), 'MANIFEST_LINE_ENDINGS_INVALID');
+  const actualFileSha = sha256(Buffer.from(utf8.replace(/\r\n/g, '\n'), 'utf8'));
   need(actualFileSha === fileSha, 'MANIFEST_FILE_SHA256_PIN_MISMATCH');
   let m;
   try { m = JSON.parse(raw.toString('utf8')); } catch (_) { fail('MANIFEST_MALFORMED_JSON'); }

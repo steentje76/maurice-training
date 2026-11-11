@@ -16,8 +16,20 @@ const ok = (v, m) => { assert.ok(v, m); checks++; };
 const eq = (a, b, m) => { assert.deepEqual(a, b, m); checks++; };
 const sha = b => crypto.createHash('sha256').update(b).digest('hex');
 const clone = o => JSON.parse(JSON.stringify(o));
-const FAKE_JWT_KEY = 'synthetic-header.synthetic-payload.synthetic-signature';
-const FAKE_OPAQUE_KEY = 'sb_secret_synthetic_only_000000000000';
+// Synthetic credentials ONLY: a fake publishable key and an unsigned-but-well-formed JWT built
+// from hardcoded fake claims + a dummy signature segment. No real credential exists here.
+const FAKE_PUBLISHABLE = 'sb_publishable_synthetic_only_000000000000';
+const FAKE_SECRET = 'sb_secret_synthetic_only_000000000000';
+const b64u = o => Buffer.from(JSON.stringify(o)).toString('base64url');
+const FAKE_CLAIMS = Object.freeze({ iss: V.AUTH_ISSUER, sub: '00000000-0000-4000-8000-000000000001', aud: 'authenticated',
+  role: 'authenticated', is_anonymous: false, iat: 1700000000, exp: 4102444800 });
+const fakeJwt = (patch = {}, header = { alg: 'HS256', typ: 'JWT' }) => {
+  const c = { ...FAKE_CLAIMS, ...patch };
+  for (const k of Object.keys(c)) if (c[k] === undefined) delete c[k];
+  return b64u(header) + '.' + b64u(c) + '.' + Buffer.from('synthetic-signature-not-real').toString('base64url');
+};
+const FAKE_JWT = fakeJwt();
+const CREDS = Object.freeze({ [V.API_KEY_ENV]: FAKE_PUBLISHABLE, [V.AUDITOR_JWT_ENV]: FAKE_JWT });
 const noNetwork = async () => { throw new Error('TEST_FORBIDS_NETWORK'); };
 
 // ---- synthetic manifest (3 originals -> 6 blobs) ---------------------------------
@@ -71,7 +83,7 @@ const hitsFor = e => hits.get(V.OBJECT_PREFIX + e.bucket + '/' + e.storage_path)
 (async () => {
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const ORIGIN = 'http://127.0.0.1:' + server.address().port;
-  const live = (opts = {}) => V.verifyAll(SYN, { key: FAKE_JWT_KEY, origin: ORIGIN, allowLoopbackForTests: true,
+  const live = (opts = {}) => V.verifyAll(SYN, { publishableKey: FAKE_PUBLISHABLE, auditorJwt: FAKE_JWT, origin: ORIGIN, allowLoopbackForTests: true,
     concurrency: 2, timeoutMs: 5000, idleMs: 1000, ...opts });
   const one = (cid, type) => r => r.failures.find(f => f.catalog_id === cid && f.media_type === type);
 
@@ -102,24 +114,58 @@ const hitsFor = e => hits.get(V.OBJECT_PREFIX + e.bucket + '/' + e.storage_path)
   // ---- 2. CLI: offline default never touches network or env ----------------------
   {
     const outs = [], errs = [];
-    const io = { env: { [V.KEY_ENV]: FAKE_JWT_KEY }, out: s => outs.push(s), err: s => errs.push(s), fetchImpl: noNetwork };
+    const io = { env: { ...CREDS }, out: s => outs.push(s), err: s => errs.push(s), fetchImpl: noNetwork };
     eq(await V.run([], io), 0, 'no args = offline OK');
     eq(await V.run(['--check'], io), 0, '--check = offline OK');
     const r = JSON.parse(outs[0]);
     eq([r.status, r.network_requests, r.planned_get_requests, r.live_verdict], ['OFFLINE_CHECK_OK_NO_NETWORK', 0, 452, 'NOT_RUN']);
-    ok(!outs.join('').includes(FAKE_JWT_KEY), 'key never printed in offline mode');
+    ok(!outs.join('').includes(FAKE_JWT) && !outs.join('').includes(FAKE_PUBLISHABLE), 'credentials never printed in offline mode');
   }
-  // --live without / with malformed key: fail closed, no network.
-  for (const env of [{}, { [V.KEY_ENV]: '' }, { [V.KEY_ENV]: 'short' }, { [V.KEY_ENV]: 'has space in key value 000000' }]) {
+  // Env names: two separate values; KEY_ENV aliases the auditor JWT; legacy single key never used.
+  eq([V.API_KEY_ENV, V.AUDITOR_JWT_ENV, V.KEY_ENV], ['TK504_STORAGE_PUBLISHABLE_KEY', 'TK504_STORAGE_AUDITOR_JWT', 'TK504_STORAGE_AUDITOR_JWT']);
+  eq(V.AUTH_ISSUER, 'https://mhfxhzkdmgkaplicdszg.supabase.co/auth/v1');
+  // --live with missing / malformed / privileged / non-auditor credentials: fail closed, generic reason, ZERO network.
+  const LEGACY = 'TK504_STORAGE_VERIFY_KEY';
+  const badEnvs = [
+    ['empty env', {}],
+    ['legacy single key only (JWT)', { [LEGACY]: FAKE_JWT }],
+    ['legacy key + publishable, no JWT', { [LEGACY]: FAKE_JWT, [V.API_KEY_ENV]: FAKE_PUBLISHABLE }],
+    ['publishable only', { [V.API_KEY_ENV]: FAKE_PUBLISHABLE }],
+    ['JWT only', { [V.AUDITOR_JWT_ENV]: FAKE_JWT }],
+    ['empty strings', { [V.API_KEY_ENV]: '', [V.AUDITOR_JWT_ENV]: '' }],
+    ['sb_secret as api key', { ...CREDS, [V.API_KEY_ENV]: FAKE_SECRET }],
+    ['JWT as api key', { ...CREDS, [V.API_KEY_ENV]: FAKE_JWT }],
+    ['service_role JWT', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ role: 'service_role' }) }],
+    ['anon JWT', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ role: 'anon' }) }],
+    ['missing is_anonymous', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ is_anonymous: undefined }) }],
+    ['wrong issuer', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ iss: 'https://otherproject.supabase.co/auth/v1' }) }],
+    ['expired', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ exp: 1700000600 }) }],
+    ['malformed JWT', { ...CREDS, [V.AUDITOR_JWT_ENV]: 'short' }]
+  ];
+  for (const [label, env] of badEnvs) {
+    const errs = [], calls = [];
+    const spyFetch = async () => { calls.push(1); throw new Error('TEST_FORBIDS_NETWORK'); };
+    eq(await V.run(['--live'], { env, out: () => { throw new Error('no stdout'); }, err: s => errs.push(s), fetchImpl: spyFetch }), 2, label + ' -> exit 2');
+    const s = JSON.parse(errs[0]);
+    eq([s.status, s.mode, s.network_requests, calls.length], ['BLOCKED_NO_CREDENTIAL', 'live', 0, 0], label + ': blocked, zero network');
+    ok(!/AUDITOR_JWT_|API_KEY_/.test(s.reason) && !errs.join('').includes(FAKE_JWT) && !errs.join('').includes(FAKE_PUBLISHABLE) &&
+      !errs.join('').includes(FAKE_SECRET), label + ': generic reason, no credential echoed');
+  }
+  // JWT that expires within one fetch timeout is refused; one that outlives it is accepted (per-fetch, not whole run).
+  {
+    const NOW = 1800000000000;
+    eq(V.auditorJwtProblem(fakeJwt({ exp: 1800000000 + 300 }), { nowMs: NOW, minValidityMs: 300000 }), 'AUDITOR_JWT_EXPIRED_OR_TOO_SHORT');
+    eq(V.auditorJwtProblem(fakeJwt({ exp: 1800000000 + 301 }), { nowMs: NOW, minValidityMs: 300000 }), null);
     const errs = [];
-    eq(await V.run(['--live'], { env, out: () => { throw new Error('no stdout'); }, err: s => errs.push(s), fetchImpl: noNetwork }), 2, 'no key -> exit 2');
-    ok(JSON.parse(errs[0]).status === 'BLOCKED_NO_CREDENTIAL', 'BLOCKED_NO_CREDENTIAL');
+    eq(await V.run(['--live', '--timeout-ms', '600000'], { env: { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ exp: 1800000000 + 400 }) },
+      now: () => NOW, out: () => {}, err: s => errs.push(s), fetchImpl: noNetwork }), 2, 'exp shorter than --timeout-ms -> blocked');
+    eq(JSON.parse(errs[0]).status, 'BLOCKED_NO_CREDENTIAL');
   }
   for (const argv of [['--live', '--check'], ['--bogus'], ['--live', '--concurrency', '4'], ['--live', '--concurrency', '0'],
     ['--live', '--report-out', path.join(__dirname, 'leak.json')], ['--live', '--report-out', 'relative.json'],
     ['--report-out', path.join(os.tmpdir(), 'x.json')], ['--live', '--url', 'https://evil.example'],
     ['--live', 'constructor', '5'], ['--live', '__proto__', '5']]) {
-    eq(await V.run(argv, { env: { [V.KEY_ENV]: FAKE_JWT_KEY }, out: () => {}, err: () => {}, fetchImpl: noNetwork }), 2, 'usage fail-closed: ' + argv.join(' '));
+    eq(await V.run(argv, { env: { ...CREDS }, out: () => {}, err: () => {}, fetchImpl: noNetwork }), 2, 'usage fail-closed: ' + argv.join(' '));
   }
   // Prefix .. in a folder name is NOT outside the repository; guard against a false outside verdict.
   {
@@ -135,10 +181,10 @@ const hitsFor = e => hits.get(V.OBJECT_PREFIX + e.bucket + '/' + e.storage_path)
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tk504-bytesha-'));
     try {
       const bad = path.join(dir, 'bad.json'); fs.writeFileSync(bad, '{"schema":');
-      eq(await V.run(['--live'], { env: { [V.KEY_ENV]: FAKE_JWT_KEY }, out: () => {}, err: () => {}, fetchImpl: noNetwork, manifestFile: bad }), 2, 'malformed JSON');
+      eq(await V.run(['--live'], { env: { ...CREDS }, out: () => {}, err: () => {}, fetchImpl: noNetwork, manifestFile: bad }), 2, 'malformed JSON');
       const dup = path.join(dir, 'dup.json'); const t = clone(prod.manifest); t.entries[2].catalog_id = 'TK-000001';
       fs.writeFileSync(dup, JSON.stringify(t));
-      eq(await V.run(['--live'], { env: { [V.KEY_ENV]: FAKE_JWT_KEY }, out: () => {}, err: () => {}, fetchImpl: noNetwork, manifestFile: dup }), 2, 'tampered manifest');
+      eq(await V.run(['--live'], { env: { ...CREDS }, out: () => {}, err: () => {}, fetchImpl: noNetwork, manifestFile: dup }), 2, 'tampered manifest');
       eq(await V.run([], { env: {}, out: () => {}, err: () => {}, fetchImpl: noNetwork, manifestFile: path.join(dir, 'missing.json') }), 2, 'missing manifest');
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
   }
@@ -147,14 +193,14 @@ const hitsFor = e => hits.get(V.OBJECT_PREFIX + e.bucket + '/' + e.storage_path)
   {
     const outs = [], seen = [];
     const stub = async (url, init) => { seen.push({ url, init }); return new Response(null, { status: 404 }); };
-    eq(await V.run(['--live', '--concurrency', '3'], { env: { [V.KEY_ENV]: FAKE_JWT_KEY }, out: s => outs.push(s), err: s => outs.push(s), fetchImpl: stub }), 1, 'all 404 -> exit 1');
+    eq(await V.run(['--live', '--concurrency', '3'], { env: { ...CREDS }, out: s => outs.push(s), err: s => outs.push(s), fetchImpl: stub }), 1, 'all 404 -> exit 1');
     eq(seen.length, 452, 'exactly one GET per object (404 is not retried)');
     ok(seen.every(s => s.url.startsWith(V.ORIGIN + V.OBJECT_PREFIX) && s.init.method === 'GET' && s.init.redirect === 'manual' &&
-      s.init.headers.apikey === FAKE_JWT_KEY && s.init.headers['Accept-Encoding'] === 'identity' && s.init.signal), 'fixed origin, GET, manual redirect, identity encoding, abortable');
+      s.init.headers.apikey === FAKE_PUBLISHABLE && s.init.headers.Authorization === 'Bearer ' + FAKE_JWT && s.init.headers['Accept-Encoding'] === 'identity' && s.init.signal), 'fixed origin, GET, manual redirect, identity encoding, abortable');
     const r = JSON.parse(outs[0]);
     eq([r.status, r.checked, r.pass, r.fail, r.unable, r.categories.OBJECT_NOT_FOUND], ['INCOMPLETE_UNABLE', 452, 0, 0, 452, 452]);
     ok(!('failures' in r), 'stdout has aggregate only');
-    ok(!outs.join('').includes(FAKE_JWT_KEY) && !outs.join('').includes('supabase.co/storage'), 'no key or URL in output');
+    ok(!outs.join('').includes(FAKE_JWT) && !outs.join('').includes(FAKE_PUBLISHABLE) && !outs.join('').includes('supabase.co/storage'), 'no key or URL in output');
   }
 
   // ---- 3. request target validation ---------------------------------------------------
@@ -166,11 +212,53 @@ const hitsFor = e => hits.get(V.OBJECT_PREFIX + e.bucket + '/' + e.storage_path)
     assert.throws(() => V.objectUrl(e, 'http://10.0.0.1:80', true), x => x.code === 'ORIGIN_NOT_ALLOWED'); checks++;
     assert.throws(() => V.objectUrl({ ...e, bucket: 'exercise-posters' }), x => x.code === 'BUCKET_NOT_ALLOWED'); checks++;
     assert.throws(() => V.objectUrl({ ...e, storage_path: 'movekit/v2/video/%2e%2e.mp4' }), x => x.code === 'PATH_NOT_CANONICAL'); checks++;
-    eq(V.authHeaders(FAKE_OPAQUE_KEY).Authorization, undefined, 'opaque key -> apikey only');
-    eq(V.authHeaders(FAKE_JWT_KEY).Authorization, 'Bearer ' + FAKE_JWT_KEY);
+    // Header separation: publishable key ONLY in apikey, auditor JWT ONLY in Authorization.
+    eq(V.authHeaders(FAKE_PUBLISHABLE, FAKE_JWT), { apikey: FAKE_PUBLISHABLE, Authorization: 'Bearer ' + FAKE_JWT,
+      'Accept-Encoding': 'identity', 'Cache-Control': 'no-cache' }, 'two credentials -> two separate headers');
+    const authCode = (k, j, o) => { try { V.authHeaders(k, j, o); return null; } catch (x) { return x.code; } };
+    eq(authCode(FAKE_SECRET, FAKE_JWT), 'API_KEY_PRIVILEGED_OR_JWT', 'sb_secret refused as apikey');
+    eq(authCode('sb_publishable_service_role_x', FAKE_JWT), 'API_KEY_PRIVILEGED_OR_JWT', 'service_role-looking key refused');
+    eq(authCode(FAKE_JWT, FAKE_JWT), 'API_KEY_PRIVILEGED_OR_JWT', 'JWT alone in apikey refused');
+    eq(authCode('legacy-opaque-key-0000000000000000', FAKE_JWT), 'API_KEY_NOT_PUBLISHABLE', 'non-publishable key refused');
+    eq(authCode(undefined, FAKE_JWT), 'API_KEY_MISSING');
+    eq(authCode(FAKE_PUBLISHABLE, undefined), 'AUDITOR_JWT_MISSING');
+    eq(authCode(FAKE_PUBLISHABLE, FAKE_PUBLISHABLE), 'AUDITOR_JWT_MALFORMED', 'publishable key is not a JWT');
+    // Untrusted local JWT sanity check (NOT authorization): each rejection is explicit and fail-closed.
+    const P = (patch, header) => V.auditorJwtProblem(fakeJwt(patch, header));
+    eq(P({}), null, 'synthetic auditor JWT passes local sanity check');
+    for (const [patch, code, label] of [
+      [{ role: 'service_role' }, 'AUDITOR_JWT_ROLE_INVALID', 'service_role JWT'],
+      [{ role: 'anon' }, 'AUDITOR_JWT_ROLE_INVALID', 'anon JWT'],
+      [{ role: undefined }, 'AUDITOR_JWT_ROLE_INVALID', 'missing role'],
+      [{ aud: 'anon' }, 'AUDITOR_JWT_AUD_INVALID', 'wrong aud'],
+      [{ aud: ['authenticated'] }, 'AUDITOR_JWT_AUD_INVALID', 'array aud not accepted'],
+      [{ is_anonymous: undefined }, 'AUDITOR_JWT_ANONYMOUS_OR_UNSPECIFIED', 'missing is_anonymous'],
+      [{ is_anonymous: true }, 'AUDITOR_JWT_ANONYMOUS_OR_UNSPECIFIED', 'anonymous user'],
+      [{ is_anonymous: 'false' }, 'AUDITOR_JWT_ANONYMOUS_OR_UNSPECIFIED', 'string is_anonymous'],
+      [{ iss: 'https://otherproject.supabase.co/auth/v1' }, 'AUDITOR_JWT_ISSUER_INVALID', 'wrong issuer'],
+      [{ iss: V.AUTH_ISSUER + '/' }, 'AUDITOR_JWT_ISSUER_INVALID', 'issuer trailing slash'],
+      [{ iss: undefined }, 'AUDITOR_JWT_ISSUER_INVALID', 'missing issuer'],
+      [{ sub: '00000000-0000-4000-8000-00000000000A' }, 'AUDITOR_JWT_SUB_INVALID', 'uppercase sub'],
+      [{ sub: 'auditor' }, 'AUDITOR_JWT_SUB_INVALID', 'non-uuid sub'],
+      [{ sub: undefined }, 'AUDITOR_JWT_SUB_INVALID', 'missing sub'],
+      [{ exp: 1700000600 }, 'AUDITOR_JWT_EXPIRED_OR_TOO_SHORT', 'expired'],
+      [{ exp: undefined }, 'AUDITOR_JWT_EXP_INVALID', 'missing exp'],
+      [{ exp: 4102444800.5 }, 'AUDITOR_JWT_EXP_INVALID', 'non-integer exp'],
+      [{ exp: '4102444800' }, 'AUDITOR_JWT_EXP_INVALID', 'string exp'],
+      [{ iat: 4102444700 }, 'AUDITOR_JWT_IAT_INVALID', 'iat in the future'],
+      [{ iat: 'x' }, 'AUDITOR_JWT_IAT_INVALID', 'non-numeric iat']
+    ]) eq(P(patch), code, label);
+    eq(P({ iat: undefined }), null, 'iat optional');
+    eq(P({}, { alg: 'none', typ: 'JWT' }), 'AUDITOR_JWT_ALG_INVALID', 'alg none refused');
+    eq(P({}, { typ: 'JWT' }), 'AUDITOR_JWT_ALG_INVALID', 'missing alg refused');
+    eq(V.auditorJwtProblem(FAKE_JWT.split('.').slice(0, 2).join('.') + '.'), 'AUDITOR_JWT_MALFORMED', 'empty signature segment');
+    eq(V.auditorJwtProblem('a.b.c'), 'AUDITOR_JWT_MALFORMED', 'non-JSON segments');
+    eq(V.auditorJwtProblem(FAKE_JWT + '.x'), 'AUDITOR_JWT_MALFORMED', 'four segments');
     eq(V.manifestProblems(SYN, PROFILE), [], 'synthetic manifest valid under its own profile');
-    await assert.rejects(V.verifyAll(SYN, { key: FAKE_JWT_KEY, origin: ORIGIN, allowLoopbackForTests: true, concurrency: 4 }), x => x.code === 'CONCURRENCY_INVALID'); checks++;
-    await assert.rejects(V.verifyAll(SYN, { key: undefined, origin: ORIGIN, allowLoopbackForTests: true }), x => x.code === 'CREDENTIAL_MISSING_OR_MALFORMED'); checks++;
+    await assert.rejects(V.verifyAll(SYN, { publishableKey: FAKE_PUBLISHABLE, auditorJwt: FAKE_JWT, origin: ORIGIN, allowLoopbackForTests: true, concurrency: 4 }), x => x.code === 'CONCURRENCY_INVALID'); checks++;
+    await assert.rejects(V.verifyAll(SYN, { origin: ORIGIN, allowLoopbackForTests: true }), x => x.code === 'API_KEY_MISSING'); checks++;
+    await assert.rejects(V.verifyAll(SYN, { publishableKey: FAKE_SECRET, auditorJwt: FAKE_JWT, origin: ORIGIN, allowLoopbackForTests: true }), x => x.code === 'API_KEY_PRIVILEGED_OR_JWT'); checks++;
+    await assert.rejects(V.verifyAll(SYN, { publishableKey: FAKE_PUBLISHABLE, auditorJwt: fakeJwt({ role: 'service_role' }), origin: ORIGIN, allowLoopbackForTests: true }), x => x.code === 'AUDITOR_JWT_ROLE_INVALID'); checks++;
   }
 
   // ---- 4. loopback HTTP scenarios ---------------------------------------------------
@@ -181,7 +269,7 @@ const hitsFor = e => hits.get(V.OBJECT_PREFIX + e.bucket + '/' + e.storage_path)
     eq([r.verdict, r.checked, r.pass, r.fail, r.unable, r.retries], ['PASS', 6, 6, 0, 0, 0]);
     eq([r.video.verified_bytes, r.poster.verified_bytes], [vTotal, pTotal]);
     ok(entries.every(e => hitsFor(e) === 1), 'one GET each');
-    ok(seenHeaders.every(h => h.method === 'GET' && h.apikey === FAKE_JWT_KEY && h.authorization === 'Bearer ' + FAKE_JWT_KEY && h['accept-encoding'] === 'identity'), 'read-only GET + identity');
+    ok(seenHeaders.every(h => h.method === 'GET' && h.apikey === FAKE_PUBLISHABLE && h.authorization === 'Bearer ' + FAKE_JWT && h.apikey !== FAKE_JWT && h['accept-encoding'] === 'identity'), 'read-only GET + identity');
     ok(maxInFlight <= 3, 'bounded concurrency <=3 (saw ' + maxInFlight + ')');
   }
   reset((req, res, blob) => serveOk(res, blob));
@@ -249,7 +337,7 @@ const hitsFor = e => hits.get(V.OBJECT_PREFIX + e.bucket + '/' + e.storage_path)
   {
     const dead = http.createServer(); await new Promise(r => dead.listen(0, '127.0.0.1', r));
     const port = dead.address().port; await new Promise(r => dead.close(r));
-    const r = await V.verifyAll(SYN, { key: FAKE_JWT_KEY, origin: 'http://127.0.0.1:' + port, allowLoopbackForTests: true, timeoutMs: 2000, idleMs: 1000 });
+    const r = await V.verifyAll(SYN, { publishableKey: FAKE_PUBLISHABLE, auditorJwt: FAKE_JWT, origin: 'http://127.0.0.1:' + port, allowLoopbackForTests: true, timeoutMs: 2000, idleMs: 1000 });
     eq([r.verdict, r.pass, r.unable, r.categories], ['INCOMPLETE_UNABLE', 0, 6, { NETWORK_ERROR: 6 }]);
   }
   ok([...V.FAIL_CATEGORIES].every(c => !V.UNABLE_CATEGORIES.has(c)), 'FAIL and UNABLE taxonomies are disjoint');

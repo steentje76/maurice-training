@@ -14,7 +14,19 @@ let checks = 0;
 const ok = (v, m) => { assert.ok(v, m); checks++; };
 const eq = (a, b, m) => { assert.deepEqual(a, b, m); checks++; };
 const throwsCode = (fn, code, m) => { assert.throws(fn, e => e.code === code, m || code); checks++; };
-const FAKE_KEY = 'sb_secret_synthetic_only_000000000000';
+// Synthetic credentials ONLY: fake publishable key + unsigned well-formed JWT from hardcoded fake claims.
+const FAKE_PUBLISHABLE = 'sb_publishable_synthetic_only_000000000000';
+const FAKE_SECRET = 'sb_secret_synthetic_only_000000000000';
+const b64u = o => Buffer.from(JSON.stringify(o)).toString('base64url');
+const fakeJwt = (patch = {}) => {
+  const c = { iss: V.AUTH_ISSUER, sub: '00000000-0000-4000-8000-000000000001', aud: 'authenticated', role: 'authenticated',
+    is_anonymous: false, iat: 1700000000, exp: 4102444800, ...patch };
+  for (const k of Object.keys(c)) if (c[k] === undefined) delete c[k];
+  return b64u({ alg: 'HS256', typ: 'JWT' }) + '.' + b64u(c) + '.' + Buffer.from('synthetic-signature-not-real').toString('base64url');
+};
+const FAKE_JWT = fakeJwt();
+const CREDS = Object.freeze({ [V.API_KEY_ENV]: FAKE_PUBLISHABLE, [V.AUDITOR_JWT_ENV]: FAKE_JWT });
+const leaks = s => s.includes(FAKE_JWT) || s.includes(FAKE_PUBLISHABLE) || s.includes(FAKE_SECRET);
 const cid = n => 'TK-' + String(n).padStart(6, '0');
 const clone = o => JSON.parse(JSON.stringify(o));
 
@@ -27,9 +39,14 @@ function stub404() {
     f.calls++; f.urls.push(url);
     assert.equal(init.method, 'GET');
     assert.ok(url.startsWith(V.ORIGIN + V.OBJECT_PREFIX), 'only canonical target');
+    // Header separation: publishable key in apikey only, auditor JWT in Authorization only.
+    assert.equal(init.headers.apikey, FAKE_PUBLISHABLE);
+    assert.equal(init.headers.Authorization, 'Bearer ' + FAKE_JWT);
+    assert.notEqual(init.headers.apikey, FAKE_JWT);
+    f.headerChecks++;
     return { status: 404, type: 'basic', url, redirected: false, body: null, bodyUsed: false, headers: new Headers() };
   };
-  f.calls = 0; f.urls = []; return f;
+  f.calls = 0; f.urls = []; f.headerChecks = 0; return f;
 }
 function envSpy(values = {}) {
   const spy = { reads: 0 };
@@ -69,10 +86,10 @@ const SIGNED_GATE = s => s.mode === 'live' && s.checked === 452 && s.pass === 45
   // 3. Invalid flags via CLI: usage exit 2, zero network, zero env reads.
   for (const argv of [['--live', '--batch-start-id', 'TK-000001', '--batch-size', '26'],
     ['--live', '--batch-start-id', 'TK-000220', '--batch-size', '25'], ['--live', '--batch-size', '5'], B]) {
-    const spy = envSpy({ [V.KEY_ENV]: FAKE_KEY });
+    const spy = envSpy({ ...CREDS });
     const r = await runCli(argv, { env: spy.env });
     eq([r.code, r.fetchImpl.calls, spy.reads, r.out], [2, 0, 0, ''], 'usage fail-closed ' + argv.join(' '));
-    ok(/"status":"USAGE_ERROR"/.test(r.err) && !r.err.includes(FAKE_KEY));
+    ok(/"status":"USAGE_ERROR"/.test(r.err) && !leaks(r.err));
   }
 
   // 4. Selection from the REAL full manifest: batch 1 = 25 video + 25 poster, original row objects.
@@ -98,7 +115,7 @@ const SIGNED_GATE = s => s.mode === 'live' && s.checked === 452 && s.pass === 45
 
   // 6. --check stays offline with no env read; no batch markers.
   {
-    const spy = envSpy({ [V.KEY_ENV]: FAKE_KEY });
+    const spy = envSpy({ ...CREDS });
     const r = await runCli(['--check'], { env: spy.env });
     const s = JSON.parse(r.out);
     eq([r.code, r.fetchImpl.calls, spy.reads, s.status, s.network_requests, 'batch' in s], [0, 0, 0, 'OFFLINE_CHECK_OK_NO_NETWORK', 0, false]);
@@ -118,15 +135,35 @@ const SIGNED_GATE = s => s.mode === 'live' && s.checked === 452 && s.pass === 45
     eq([r.code, r.fetchImpl.calls, s.mode, s.status, 'verdict' in s, 'batch' in s, 'attestation_eligible' in s],
       [2, 0, 'live', 'BLOCKED_NO_CREDENTIAL', false, false, false]);
   }
+  // Batch with unacceptable credentials: BLOCKED_NO_CREDENTIAL, zero GET, still partial, nothing echoed.
+  for (const [label, env] of [
+    ['legacy single key only', { TK504_STORAGE_VERIFY_KEY: FAKE_JWT }],
+    ['publishable only', { [V.API_KEY_ENV]: FAKE_PUBLISHABLE }],
+    ['JWT only', { [V.AUDITOR_JWT_ENV]: FAKE_JWT }],
+    ['sb_secret apikey', { ...CREDS, [V.API_KEY_ENV]: FAKE_SECRET }],
+    ['JWT in apikey', { ...CREDS, [V.API_KEY_ENV]: FAKE_JWT }],
+    ['service_role JWT', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ role: 'service_role' }) }],
+    ['anon JWT', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ role: 'anon' }) }],
+    ['missing is_anonymous', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ is_anonymous: undefined }) }],
+    ['wrong issuer', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ iss: 'https://otherproject.supabase.co/auth/v1' }) }],
+    ['expired', { ...CREDS, [V.AUDITOR_JWT_ENV]: fakeJwt({ exp: 1700000600 }) }]
+  ]) {
+    const r = await runCli(['--live', ...B], { env });
+    const s = JSON.parse(r.err);
+    eq([r.code, r.fetchImpl.calls, r.out, s.mode, s.status, s.verdict, s.attestation_eligible, s.network_requests],
+      [2, 0, '', 'live-batch', 'BLOCKED_NO_CREDENTIAL', 'PARTIAL_NOT_ATTESTABLE', false, 0], 'batch ' + label);
+    ok(!leaks(r.err) && !/AUDITOR_JWT_|API_KEY_/.test(s.reason), 'batch ' + label + ': generic, nothing echoed');
+  }
 
   // 8. Batch with synthetic key + stub 404: exactly 50 GETs, non-attestable summary + report file.
   {
     const reportOut = path.join(os.tmpdir(), 'tk504-batch25-test-' + crypto.randomBytes(6).toString('hex') + '.json');
     const f = stub404();
     try {
-      const r = await runCli(['--live', ...B, '--concurrency', '3', '--report-out', reportOut], { env: { [V.KEY_ENV]: FAKE_KEY }, fetchImpl: f });
+      const r = await runCli(['--live', ...B, '--concurrency', '3', '--report-out', reportOut], { env: { ...CREDS }, fetchImpl: f });
       const s = JSON.parse(r.out);
       eq([r.code, f.calls, new Set(f.urls).size], [1, 50, 50], '50 GET max, each target once');
+      eq(f.headerChecks, 50, 'every GET carried apikey=publishable + Authorization=Bearer auditor JWT');
       eq({ mode: s.mode, status: s.status, verdict: s.verdict, batch_outcome: s.batch_outcome,
         attestation_eligible: s.attestation_eligible, complete_452: s.complete_452, full_expected: s.full_expected,
         checked: s.checked, pass: s.pass, unable: s.unable, batch: s.batch },
@@ -138,13 +175,13 @@ const SIGNED_GATE = s => s.mode === 'live' && s.checked === 452 && s.pass === 45
       const rep = JSON.parse(file);
       eq([rep.mode, rep.status, rep.verdict, rep.attestation_eligible, rep.complete_452, rep.failures.length],
         ['live-batch', 'BATCH_INCOMPLETE_UNABLE', 'PARTIAL_NOT_ATTESTABLE', false, false, 50]);
-      ok(!r.out.includes(FAKE_KEY) && !r.err.includes(FAKE_KEY) && !file.includes(FAKE_KEY) && !file.includes('http'), 'no secrets/URLs');
+      ok(!leaks(r.out) && !leaks(r.err) && !leaks(file) && !file.includes('http'), 'no secrets/URLs');
     } finally { try { fs.unlinkSync(reportOut); } catch (_) { /* ignore */ } }
   }
   // Final batch TK-000226: exactly 2 GETs.
   {
     const f = stub404();
-    const r = await runCli(['--live', '--batch-start-id', 'TK-000226', '--batch-size', '1'], { env: { [V.KEY_ENV]: FAKE_KEY }, fetchImpl: f });
+    const r = await runCli(['--live', '--batch-start-id', 'TK-000226', '--batch-size', '1'], { env: { ...CREDS }, fetchImpl: f });
     const s = JSON.parse(r.out);
     eq([r.code, f.calls, s.checked, s.batch.end_id, s.verdict, s.attestation_eligible], [1, 2, 2, 'TK-000226', 'PARTIAL_NOT_ATTESTABLE', false]);
   }

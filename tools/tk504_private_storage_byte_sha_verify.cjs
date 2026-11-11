@@ -9,8 +9,14 @@
 // --live: streams every object over HTTPS GET from the fixed Supabase project
 // (mhfxhzkdmgkaplicdszg) authenticated Storage endpoint, hashes the full stream with
 // node:crypto, and compares SHA-256 + byte length against the manifest. Credentials are
-// read ONLY from process.env.TK504_STORAGE_VERIFY_KEY at execution time; never from files,
-// never logged. Media bytes are never persisted; only aggregate counts are printed.
+// read ONLY from TWO separate execution-time env values, never from files, never logged:
+//   TK504_STORAGE_PUBLISHABLE_KEY  sb_publishable_... project API key  -> `apikey` header
+//   TK504_STORAGE_AUDITOR_JWT      signed auditor-user access JWT       -> `Authorization: Bearer`
+// sb_secret_/service_role keys (which bypass RLS) and a JWT in `apikey` are refused, and the
+// legacy single-key TK504_STORAGE_VERIFY_KEY is never read. The JWT payload is decoded UNTRUSTED
+// purely as a fail-closed sanity check before any GET (authenticated, non-anonymous user of this
+// project, not expired); it is NEVER an authorization decision. The Storage gateway verifies the
+// signature and RLS decides access. Media bytes are never persisted; only aggregate counts are printed.
 //
 // --live --batch-start-id TK-00000N --batch-size 1..25: OPT-IN PARTIAL mode. Selects exactly the
 // video+poster rows of up to 25 consecutive original catalog IDs from the FULL validated/pinned
@@ -31,7 +37,12 @@ const REPORT_SCHEMA = 'tk504-private-storage-byte-sha-report/1.0';
 const PROJECT_REF = 'mhfxhzkdmgkaplicdszg';
 const ORIGIN = 'https://' + PROJECT_REF + '.supabase.co';
 const OBJECT_PREFIX = '/storage/v1/object/authenticated/';
-const KEY_ENV = 'TK504_STORAGE_VERIFY_KEY';
+const API_KEY_ENV = 'TK504_STORAGE_PUBLISHABLE_KEY';
+const AUDITOR_JWT_ENV = 'TK504_STORAGE_AUDITOR_JWT';
+// Back-compat export name only: now aliases the auditor JWT env. The legacy single-key env
+// (TK504_STORAGE_VERIFY_KEY) is intentionally never read.
+const KEY_ENV = AUDITOR_JWT_ENV;
+const AUTH_ISSUER = ORIGIN + '/auth/v1';
 const STAGED_SCHEMA = 'tk614-original226-private-media-staging/1.0';
 const STAGED_STATUS = 'STAGED_ONLY_NOT_RELEASED';
 
@@ -48,7 +59,14 @@ const ENTRY_KEYS = ['bucket', 'bytes', 'catalog_id', 'media_type', 'mime', 'prov
 const CID = /^TK-[0-9]{6}$/;
 const HEX64 = /^[0-9a-f]{64}$/;
 const EMPTY_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-const KEY_RE = /^[A-Za-z0-9._-]{20,4096}$/;
+const PUBLISHABLE_KEY_RE = /^sb_publishable_[A-Za-z0-9_-]+$/;
+const PUBLISHABLE_KEY_MAX = 512;
+const JWT_RE = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+const JWT_MAX = 8192;
+const JWT_ALG_RE = /^(?:(?:HS|RS|ES|PS)(?:256|384|512)|EdDSA)$/;
+const UUID_LOWER_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const CLOCK_SKEW_S = 60;
+const CREDENTIAL_ENV_REASON = 'TK504_STORAGE_PUBLISHABLE_KEY and/or TK504_STORAGE_AUDITOR_JWT missing, malformed or not acceptable in process environment';
 const MAX_CONCURRENCY = 3;
 const DEFAULTS = Object.freeze({ concurrency: 2, timeoutMs: 300000, idleMs: 30000 });
 const BATCH_MAX_SIZE = 25;
@@ -152,12 +170,75 @@ function objectUrl(entry, origin = ORIGIN, allowLoopbackForTests = false) {
     u.pathname === OBJECT_PREFIX + k.bucket + '/' + entry.storage_path, 'URL_NOT_CANONICAL');
   return u.href;
 }
-function authHeaders(key) {
-  need(typeof key === 'string' && KEY_RE.test(key), 'CREDENTIAL_MISSING_OR_MALFORMED');
-  const h = { apikey: key, 'Accept-Encoding': 'identity', 'Cache-Control': 'no-cache' };
-  // Legacy JWT-style keys go in Authorization; opaque sb_secret_ keys are apikey-only.
-  if (key.split('.').length === 3) h.Authorization = 'Bearer ' + key;
-  return h;
+// Strict base64url -> parsed JSON object, or null. Canonical round-trip only (no padding/garbage).
+function b64urlJsonObject(seg) {
+  try {
+    const buf = Buffer.from(seg, 'base64url');
+    if (buf.length === 0 || buf.toString('base64url') !== seg) return null;
+    const v = JSON.parse(buf.toString('utf8'));
+    return isObj(v) ? v : null;
+  } catch (_) { return null; }
+}
+const own = (o, k) => (Object.hasOwn(o, k) ? o[k] : undefined);
+
+// Publishable project API key only. Opaque secret / service_role / JWT-shaped keys are refused.
+function publishableKeyProblem(key) {
+  if (typeof key !== 'string' || key.length === 0) return 'API_KEY_MISSING';
+  if (/sb_secret|service_role/i.test(key) || key.includes('.')) return 'API_KEY_PRIVILEGED_OR_JWT';
+  if (key.length > PUBLISHABLE_KEY_MAX || !PUBLISHABLE_KEY_RE.test(key)) return 'API_KEY_NOT_PUBLISHABLE';
+  return null;
+}
+
+// UNTRUSTED, cheap, fail-closed sanity check of the auditor JWT before any network use.
+// The signature is NOT verified here (the Storage gateway does that) and this is NEVER an
+// authorization decision -- RLS on the server decides. Returns a problem code or null; never
+// echoes claims or token material.
+function auditorJwtProblem(jwt, { nowMs = Date.now(), minValidityMs = DEFAULTS.timeoutMs } = {}) {
+  if (typeof jwt !== 'string' || jwt.length === 0) return 'AUDITOR_JWT_MISSING';
+  if (jwt.length > JWT_MAX || !JWT_RE.test(jwt)) return 'AUDITOR_JWT_MALFORMED';
+  const [h64, p64, s64] = jwt.split('.');
+  const header = b64urlJsonObject(h64), payload = b64urlJsonObject(p64);
+  if (!header || !payload) return 'AUDITOR_JWT_MALFORMED';
+  const sig = Buffer.from(s64, 'base64url');
+  if (sig.length === 0 || sig.toString('base64url') !== s64) return 'AUDITOR_JWT_MALFORMED';
+  const alg = own(header, 'alg');
+  if (typeof alg !== 'string' || !JWT_ALG_RE.test(alg)) return 'AUDITOR_JWT_ALG_INVALID';
+  if (own(payload, 'role') !== 'authenticated') return 'AUDITOR_JWT_ROLE_INVALID';
+  if (own(payload, 'aud') !== 'authenticated') return 'AUDITOR_JWT_AUD_INVALID';
+  if (own(payload, 'is_anonymous') !== false) return 'AUDITOR_JWT_ANONYMOUS_OR_UNSPECIFIED';
+  if (own(payload, 'iss') !== AUTH_ISSUER) return 'AUDITOR_JWT_ISSUER_INVALID';
+  const sub = own(payload, 'sub');
+  if (typeof sub !== 'string' || !UUID_LOWER_RE.test(sub)) return 'AUDITOR_JWT_SUB_INVALID';
+  if (!Number.isFinite(nowMs) || !Number.isSafeInteger(minValidityMs) || minValidityMs < 0) return 'AUDITOR_JWT_CHECK_INVALID';
+  const nowS = Math.floor(nowMs / 1000);
+  const exp = own(payload, 'exp');
+  if (!Number.isSafeInteger(exp) || exp <= 0) return 'AUDITOR_JWT_EXP_INVALID';
+  // Must outlive at least one individual fetch timeout (not the whole run). Expiry mid-run is
+  // caught server-side as AUTH_REJECTED -> INCOMPLETE_UNABLE (fail closed).
+  if (exp <= nowS + Math.ceil(minValidityMs / 1000)) return 'AUDITOR_JWT_EXPIRED_OR_TOO_SHORT';
+  if (Object.hasOwn(payload, 'iat')) {
+    const iat = payload.iat;
+    if (!Number.isSafeInteger(iat) || iat <= 0 || iat > nowS + CLOCK_SKEW_S || iat >= exp) return 'AUDITOR_JWT_IAT_INVALID';
+  }
+  if (Object.hasOwn(payload, 'nbf')) {
+    const nbf = payload.nbf;
+    if (!Number.isSafeInteger(nbf) || nbf > nowS + CLOCK_SKEW_S || nbf >= exp) return 'AUDITOR_JWT_NBF_INVALID';
+  }
+  return null;
+}
+
+// Two distinct credentials -> two distinct headers. Never a JWT in `apikey`, never a secret key.
+function authHeaders(publishableKey, auditorJwt, { nowMs = Date.now(), minValidityMs = DEFAULTS.timeoutMs } = {}) {
+  const kp = publishableKeyProblem(publishableKey);
+  if (kp) fail(kp);
+  const jp = auditorJwtProblem(auditorJwt, { nowMs, minValidityMs });
+  if (jp) fail(jp);
+  return { apikey: publishableKey, Authorization: 'Bearer ' + auditorJwt, 'Accept-Encoding': 'identity', 'Cache-Control': 'no-cache' };
+}
+// Pure pre-network check for the CLI: returns a problem code or null; never throws, never logs.
+function credentialProblem(env, { nowMs = Date.now(), minValidityMs = DEFAULTS.timeoutMs } = {}) {
+  try { authHeaders(env[API_KEY_ENV], env[AUDITOR_JWT_ENV], { nowMs, minValidityMs }); return null; }
+  catch (e) { return /^[A-Z_]+$/.test((e && e.code) || '') ? e.code : 'CREDENTIAL_INVALID'; }
 }
 
 // ---------------------------------------------------------------------------
@@ -231,12 +312,13 @@ function emptyKind(expectedCount, expectedBytes) {
 }
 
 // Verify all entries with bounded concurrency. `manifest` must already be validated.
-async function verifyAll(manifest, { key, origin = ORIGIN, allowLoopbackForTests = false, fetchImpl = fetch,
+async function verifyAll(manifest, { publishableKey, auditorJwt, origin = ORIGIN, allowLoopbackForTests = false, fetchImpl = fetch,
   concurrency = DEFAULTS.concurrency, timeoutMs = DEFAULTS.timeoutMs, idleMs = DEFAULTS.idleMs, now = Date.now } = {}) {
   need(Number.isSafeInteger(concurrency) && concurrency >= 1 && concurrency <= MAX_CONCURRENCY, 'CONCURRENCY_INVALID');
   need(Number.isSafeInteger(timeoutMs) && timeoutMs >= 1 && Number.isSafeInteger(idleMs) && idleMs >= 1, 'TIMEOUT_INVALID');
   assertOrigin(origin, allowLoopbackForTests);
-  const headers = authHeaders(key);
+  // Pre-flight credential sanity (untrusted local parse; the server validates signature + RLS).
+  const headers = authHeaders(publishableKey, auditorJwt, { nowMs: now(), minValidityMs: timeoutMs });
   const entries = manifest.entries;
   const ctx = { origin, allowLoopbackForTests, headers, fetchImpl, timeoutMs, idleMs };
   const t0 = now();
@@ -314,7 +396,7 @@ function selectBatchEntries(manifest, startId, size, profile = PRODUCTION_PROFIL
 const USAGE = [
   'Usage:',
   '  node tools/tk504_private_storage_byte_sha_verify.cjs [--check]      offline manifest + plan check (default)',
-  '  ' + KEY_ENV + '=<key from secret store> \\',
+  '  ' + API_KEY_ENV + '=<sb_publishable_... key> ' + AUDITOR_JWT_ENV + '=<signed auditor-user access JWT> \\',
   '    node tools/tk504_private_storage_byte_sha_verify.cjs --live [--concurrency 1..3]',
   '      [--timeout-ms N] [--idle-ms N] [--report-out <absolute path OUTSIDE the repo>]',
   '      [--batch-start-id TK-000001..TK-000226 --batch-size 1..25]   PARTIAL, NOT release evidence',
@@ -386,7 +468,7 @@ function baseReport(mode, loaded) {
 }
 
 async function run(argv = process.argv.slice(2), { env = process.env, out = s => console.log(s), err = s => console.error(s),
-  manifestFile = MANIFEST_FILE, fetchImpl = fetch } = {}) {
+  manifestFile = MANIFEST_FILE, fetchImpl = fetch, now = Date.now } = {}) {
   let opts;
   try { opts = parseArgs(argv); }
   catch (e) { err(JSON.stringify({ status: 'USAGE_ERROR', reason: e.code || 'ARGS_INVALID' })); err(USAGE); return 2; }
@@ -403,7 +485,7 @@ async function run(argv = process.argv.slice(2), { env = process.env, out = s =>
   try { plan = loaded.manifest.entries.map(e => objectUrl(e)); }
   catch (e) { err(JSON.stringify({ ...baseReport(opts.mode, loaded), status: 'BLOCKED_PLAN_INVALID', reason: e.code })); return 2; }
   const m = loaded.manifest;
-  if (opts.batch) return runBatch(opts, loaded, { env, out, err, fetchImpl });
+  if (opts.batch) return runBatch(opts, loaded, { env, out, err, fetchImpl, now });
   if (opts.mode === 'check') {
     out(JSON.stringify({ ...baseReport('offline-check', loaded), status: 'OFFLINE_CHECK_OK_NO_NETWORK',
       network_requests: 0, planned_get_requests: plan.length, unique_targets: new Set(plan).size,
@@ -413,15 +495,15 @@ async function run(argv = process.argv.slice(2), { env = process.env, out = s =>
     return 0;
   }
   // --live: credentials only from the execution-time environment. Fail closed.
-  const key = env[KEY_ENV];
-  if (typeof key !== 'string' || !KEY_RE.test(key)) {
+  // Generic reason only: never echo which check failed, the token, or any header.
+  if (credentialProblem(env, { nowMs: now(), minValidityMs: opts.timeoutMs }) !== null) {
     err(JSON.stringify({ ...baseReport('live', loaded), status: 'BLOCKED_NO_CREDENTIAL',
-      reason: KEY_ENV + ' missing or malformed in process environment', network_requests: 0 }));
+      reason: CREDENTIAL_ENV_REASON, network_requests: 0 }));
     return 2;
   }
   let report;
   try {
-    report = await verifyAll(m, { key, fetchImpl, concurrency: opts.concurrency, timeoutMs: opts.timeoutMs, idleMs: opts.idleMs });
+    report = await verifyAll(m, { publishableKey: env[API_KEY_ENV], auditorJwt: env[AUDITOR_JWT_ENV], fetchImpl, now, concurrency: opts.concurrency, timeoutMs: opts.timeoutMs, idleMs: opts.idleMs });
   } catch (e) {
     err(JSON.stringify({ ...baseReport('live', loaded), status: 'BLOCKED', reason: /^[A-Z_]+$/.test(e.code || '') ? e.code : 'INTERNAL_ERROR' }));
     return 1;
@@ -437,7 +519,7 @@ async function run(argv = process.argv.slice(2), { env = process.env, out = s =>
 }
 
 // Partial batch run. Kept fully separate from the full --live path so that path stays unchanged.
-async function runBatch(opts, loaded, { env, out, err, fetchImpl }) {
+async function runBatch(opts, loaded, { env, out, err, fetchImpl, now = Date.now }) {
   const MODE = 'live-batch';
   const partial = { verdict: BATCH_VERDICT, attestation_eligible: false, complete_452: false,
     full_expected: PRODUCTION_PROFILE.entries };
@@ -448,16 +530,16 @@ async function runBatch(opts, loaded, { env, out, err, fetchImpl }) {
       reason: /^[A-Z_0-9]+$/.test(e.code || '') ? e.code : 'INTERNAL_ERROR', network_requests: 0 }));
     return 2;
   }
-  const key = env[KEY_ENV];
-  if (typeof key !== 'string' || !KEY_RE.test(key)) {
+  if (credentialProblem(env, { nowMs: now(), minValidityMs: opts.timeoutMs }) !== null) {
     err(JSON.stringify({ ...baseReport(MODE, loaded), status: 'BLOCKED_NO_CREDENTIAL', ...partial, batch: sel.range,
-      reason: KEY_ENV + ' missing or malformed in process environment', network_requests: 0 }));
+      reason: CREDENTIAL_ENV_REASON, network_requests: 0 }));
     return 2;
   }
   let report;
   try {
     // Reuse verifyAll unchanged on the selected (original, unmodified) full-manifest rows.
-    report = await verifyAll({ entries: sel.entries }, { key, fetchImpl, concurrency: opts.concurrency,
+    report = await verifyAll({ entries: sel.entries }, { publishableKey: env[API_KEY_ENV], auditorJwt: env[AUDITOR_JWT_ENV],
+      fetchImpl, now, concurrency: opts.concurrency,
       timeoutMs: opts.timeoutMs, idleMs: opts.idleMs });
   } catch (e) {
     err(JSON.stringify({ ...baseReport(MODE, loaded), status: 'BLOCKED', ...partial, batch: sel.range,
@@ -484,7 +566,8 @@ if (require.main === module) {
   run().then(code => { process.exitCode = code; }, () => { console.error(JSON.stringify({ status: 'BLOCKED', reason: 'INTERNAL_ERROR' })); process.exitCode = 1; });
 }
 
-module.exports = Object.freeze({ ORIGIN, PROJECT_REF, OBJECT_PREFIX, KEY_ENV, MANIFEST_FILE, MANIFEST_REL, PRODUCTION_PROFILE,
+module.exports = Object.freeze({ ORIGIN, PROJECT_REF, OBJECT_PREFIX, KEY_ENV, API_KEY_ENV, AUDITOR_JWT_ENV, AUTH_ISSUER, MANIFEST_FILE, MANIFEST_REL, PRODUCTION_PROFILE,
   KINDS, MAX_CONCURRENCY, FAIL_CATEGORIES, UNABLE_CATEGORIES, USAGE, BATCH_MAX_SIZE, BATCH_STATUS, BATCH_VERDICT,
   batchRange, selectBatchEntries,
-  manifestProblems, productionManifestProblems, loadManifestFile, objectUrl, authHeaders, fetchAndHash, verifyAll, parseArgs, run });
+  manifestProblems, productionManifestProblems, loadManifestFile, objectUrl, authHeaders, publishableKeyProblem,
+  auditorJwtProblem, credentialProblem, fetchAndHash, verifyAll, parseArgs, run });

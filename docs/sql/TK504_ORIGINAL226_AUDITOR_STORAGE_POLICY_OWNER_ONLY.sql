@@ -1,5 +1,8 @@
 -- TK504 STORAGE OWNER DDL DRAFT ONLY. DO NOT AUTO-APPLY, IMPORT, OR MERGE AS A NORMAL MIGRATION.
--- Production storage.objects owner = supabase_storage_admin; normal migration role postgres is not owner/member/superuser.
+-- Production storage.objects owner = supabase_storage_admin. Hosted Supabase may allow postgres
+-- CREATE POLICY via supautils.policy_grants (without table ownership or SET ROLE).
+-- Verified in THIS project with a false-only policy in a rolled-back transaction, 12 Nov 2026.
+-- Authorization remains a SEPARATE owner + DBA + security review; policy creation is NOT media release.
 -- Requires explicit owner+DBA+security approval, separate authorized owner-context execution, rollback plan.
 -- Preconditions: pre-release lease/allowlist tables exist and are RLS protected. DBA must separately verify NO active lease before execution.
 -- Applying this policy ALONE grants ZERO access because all leases are inactive/absent and allowlist empty.
@@ -16,11 +19,20 @@ do $$ begin
   end if;
   -- The Storage table owner need NOT have SELECT on the restricted lease table.
   -- A separate DBA preflight must assert zero active leases before approval.
+  -- On hosted Supabase, postgres can be granted policy-only DDL by supautils.
+  -- This does NOT grant table ownership, bypass RLS, or permit raw media access.
   if current_user <> (select pg_get_userbyid(c.relowner) from pg_class c
        join pg_namespace n on n.oid=c.relnamespace
        where n.nspname='storage' and c.relname='objects')
-     and not exists (select 1 from pg_roles where rolname=current_user and rolsuper) then
-    raise exception 'TK504_STORAGE_OBJECTS_OWNER_ROLE_REQUIRED';
+     and not exists (select 1 from pg_roles where rolname=current_user and rolsuper)
+     and not (
+       current_user = 'postgres'
+       and coalesce(
+         (current_setting('supautils.policy_grants', true)::jsonb -> 'postgres') ? 'storage.objects',
+         false
+       )
+     ) then
+    raise exception 'TK504_STORAGE_POLICY_DDL_PERMISSION_REQUIRED';
   end if;
 end $$;
 

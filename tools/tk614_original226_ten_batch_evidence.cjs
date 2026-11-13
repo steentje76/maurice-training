@@ -16,7 +16,11 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const M=require('./tk614_original226_private_media_staging.cjs');
 const ROOT=path.resolve(__dirname,'..');
 const MANIFEST_FILE=path.join(ROOT,'docs/generated/TK614_ORIGINAL226_PRIVATE_MEDIA_STAGING_MANIFEST_20261109.json');
+// Exactly the two known Git line-ending representations of the SAME pinned JSON.
+// Cloud audit reports were produced from the Windows CRLF file SHA (the primary pin).
+// Neither variant permits a content or path change; any third digest is rejected.
 const MANIFEST_FILE_SHA256='67dd9c9f51ace53d97dfafc047f27603c72013ada1f5fd967273806c1da7050e';
+const MANIFEST_FILE_SHA256_LF='b60d5450a9d78d0e5cd13bde07269194fa1b87193bba64be79dc7c152b4f12ac';
 const MANIFEST_ALL_SHA256='8492f2c14521b9443db3f1c875b936cd8bddc96fbacc0837c9558c5a95738b10';
 const PROJECT_REF='mhfxhzkdmgkaplicdszg';
 const REPORT_SCHEMA='tk504-private-storage-byte-sha-report/1.0';
@@ -37,7 +41,9 @@ const id=n=>'TK-'+String(n).padStart(6,'0');
 function check(condition,code){if(!condition){const e=new Error(code);e.code=code;throw e;}}
 function reportName(i){return 'TK504-Audit-B'+String(i).padStart(2,'0')+'-20261113'+(i===1?'-RETRY1':'')+'.json';}
 function parseManifest(buffer){
-  check(Buffer.isBuffer(buffer)&&hash(buffer)===MANIFEST_FILE_SHA256,'ORIGINAL226_MANIFEST_FILE_SHA_MISMATCH');
+  check(Buffer.isBuffer(buffer)&&
+    [MANIFEST_FILE_SHA256,MANIFEST_FILE_SHA256_LF].includes(hash(buffer)),
+    'ORIGINAL226_MANIFEST_FILE_SHA_MISMATCH');
   let m;try{m=JSON.parse(buffer);}catch(_){check(false,'ORIGINAL226_MANIFEST_INVALID_JSON');}
   check(m?.schema==='tk614-original226-private-media-staging/1.0'&&
     m.status==='STAGED_ONLY_NOT_RELEASED'&&m.scope?.first===id(1)&&m.scope?.last===id(226)&&
@@ -155,5 +161,5 @@ function cli(argv){
 }
 if(require.main===module){try{cli(process.argv.slice(2));}catch(e){
   process.stderr.write('TK504_EVIDENCE_BLOCKED '+(e.code||e.message)+'\n');process.exitCode=1;}}
-module.exports=Object.freeze({MANIFEST_FILE_SHA256,MANIFEST_ALL_SHA256,OUTPUT_SCHEMA,
+module.exports=Object.freeze({MANIFEST_FILE_SHA256,MANIFEST_FILE_SHA256_LF,MANIFEST_ALL_SHA256,OUTPUT_SCHEMA,
   aggregateEvidence,parseManifest,verifyBatch,reportName,cli});

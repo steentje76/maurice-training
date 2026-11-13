@@ -34,6 +34,15 @@ const mkReports=()=>Array.from({length:10},(_,i)=>{
     full_expected:452,failures:[]}));
 });
 const reports=mkReports();
+// Only these exact CRLF and LF byte layouts of the same pinned source are allowed.
+// Linux GitHub Actions checks out LF; Windows autocrlf can use CRLF.
+const canonicalLF=Buffer.from(manifestRaw.toString('utf8').replace(/\r\n/g,'\n'),'utf8');
+const canonicalCRLF=Buffer.from(canonicalLF.toString('utf8').replace(/\n/g,'\r\n'),'utf8');
+const sha256=b=>crypto.createHash('sha256').update(b).digest('hex');
+eq(sha256(canonicalLF),E.MANIFEST_FILE_SHA256_LF);
+eq(sha256(canonicalCRLF),E.MANIFEST_FILE_SHA256);
+eq(E.aggregateEvidence({manifestBuffer:canonicalLF,reportBuffers:reports}).coverage.total_objects,452);
+eq(E.aggregateEvidence({manifestBuffer:canonicalCRLF,reportBuffers:reports}).coverage.total_objects,452);
 const agg=E.aggregateEvidence({manifestBuffer:manifestRaw,reportBuffers:reports});
 eq([agg.coverage.exercises,agg.coverage.total_objects,agg.coverage.videos,agg.coverage.posters],
   [226,452,226,226]);

@@ -26,7 +26,7 @@ Gebruik onderstaande opdracht uitsluitend waar de tien eerder gecontroleerde rap
 
 De versie na review is daadwerkelijk uitgevoerd en gaf 452/452 consistent, SHA256 van uitvoerbestand `4269cc0217ed21030f6a13322b15916a5006839ee3a2d1478b762d289661c770`. Gebruik voor herhaling een NIEUW uitvoerpad. Laat de private bronrapporten en originele media buiten Git.
 
-Op POSIX kan Node.js bij het aanmaken `mode:0600` afdwingen. Op Windows erft de samenvatting de ACL van de doelmap; de tool stelt die niet zelf in. De mapbeheerder moet die toegang apart beperken. Op systemen met aangepaste Git line-endings is de byte-exact gepinde manifest-SHA bewust fail-closed; BOM-JSON wordt eveneens als ongeldig afgewezen. Dit is geen bewijs van een cloud- of OS-permissiegrens.
+Op POSIX kan Node.js bij het aanmaken `mode:0600` afdwingen. Op Windows erft de samenvatting de ACL van de doelmap; de tool stelt die niet zelf in. De mapbeheerder moet die toegang apart beperken. GitHub Linux checkt het originele JSON-manifest uit met LF; Windows autocrlf gebruikt CRLF. Alleen deze twee vooraf onafhankelijk vastgepinde SHA256-varianten van hetzelfde bronmanifest zijn geaccepteerd: CRLF `67dd9c9f51ace53d97dfafc047f27603c72013ada1f5fd967273806c1da7050e` en LF `b60d5450a9d78d0e5cd13bde07269194fa1b87193bba64be79dc7c152b4f12ac`. Iedere derde hash en elke inhoudelijke wijziging blijft fail-closed. BOM-JSON wordt ook als ongeldig afgewezen. Dit is geen bewijs van een cloud- of OS-permissiegrens.
 
 ## Vrijgavegates — NIET door dit bewijs gepasseerd
 

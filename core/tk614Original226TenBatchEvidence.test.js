@@ -22,6 +22,7 @@ const mkReports=()=>Array.from({length:10},(_,i)=>{
   };
   return Buffer.from(JSON.stringify({schema:'tk504-private-storage-byte-sha-report/1.0',
     mode:'live-batch',project_ref:'mhfxhzkdmgkaplicdszg',
+    manifest_file:'C:/TEST/TK614_ORIGINAL226_PRIVATE_MEDIA_STAGING_MANIFEST_20261109.json',
     manifest_file_sha256:E.MANIFEST_FILE_SHA256,manifest_all_sha256:E.MANIFEST_ALL_SHA256,
     app_commit:'bf94b43a9f517f9f0136a588d55571879814c87e',
     authorizes_nothing:true,media_persisted:false,credentials_logged:false,
@@ -43,6 +44,13 @@ eq([agg.status,agg.release.attestation_signed,agg.release.release_authorized,
 eq([agg.batches.length,agg.batches[9].first_id,agg.batches[9].last_id,
   agg.batches[9].objects_verified],[10,'TK-000226','TK-000226',2]);
 eq(agg.batches[0].report_sha256,crypto.createHash('sha256').update(reports[0]).digest('hex'));
+eq([agg.report_selection.source_reports_self_asserted,
+  agg.report_selection.independent_cloud_authentication,
+  agg.report_selection.original_batch01_attempt_excluded,
+  agg.batches[0].selected_report_name],
+  [true,false,'TK504-Audit-B01-20261113.json','TK504-Audit-B01-20261113-RETRY1.json']);
+eq([agg.coverage.failed_in_selected_reports,agg.coverage.unable_in_selected_reports,
+  agg.coverage.retries_inside_selected_reports],[0,0,0]);
 const mutate=(index,fn)=>{
   const out=reports.slice(),obj=JSON.parse(out[index]);
   fn(obj);out[index]=Buffer.from(JSON.stringify(obj));return out;
@@ -75,6 +83,43 @@ bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
   reportBuffers:mutate(2,r=>{r.manifest_file_sha256='0'.repeat(64);})}),'BATCH_PROVENANCE_MISMATCH');
 bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
   reportBuffers:mutate(9,r=>{r.categories={authentication_failed:1};})}),'BATCH_NOT_ALL_PASS');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(0,r=>{r.release_authorized=true;})}),'BATCH_REPORT_SHAPE_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(0,r=>{r.authorization='Bearer fake';})}),'BATCH_REPORT_SHAPE_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(0,r=>{r.batch.released=true;})}),'BATCH_REPORT_SHAPE_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(0,r=>{r.video.token='SYNTHETIC';})}),'BATCH_REPORT_SHAPE_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(0,r=>{r.duration_ms=-1;})}),'BATCH_REPORT_SHAPE_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(0,r=>{r.manifest_file='C:/fake/wrong.json';})}),'BATCH_REPORT_SHAPE_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(1,r=>{r.project_ref='wrong';})}),'BATCH_PROVENANCE_MISMATCH');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(1,r=>{r.app_commit='0'.repeat(40);})}),'BATCH_PROVENANCE_MISMATCH');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(2,r=>{r.status='RELEASED';})}),'BATCH_RELEASE_SEMANTICS_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(2,r=>{r.verdict='PASS';})}),'BATCH_RELEASE_SEMANTICS_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(3,r=>{r.complete_452=true;})}),'BATCH_RELEASE_SEMANTICS_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(3,r=>{r.full_expected=2;})}),'BATCH_RELEASE_SEMANTICS_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(3,r=>{r.media_persisted=true;})}),'BATCH_RELEASE_SEMANTICS_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(4,r=>{r.unable=1;})}),'BATCH_NOT_ALL_PASS');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(4,r=>{r.failures=['SYNTHETIC'];})}),'BATCH_NOT_ALL_PASS');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(0,r=>{r.video=null;})}),'BATCH_REPORT_SHAPE_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:mutate(0,r=>{r.credentials_logged='false';})}),'BATCH_RELEASE_SEMANTICS_INVALID');
+bad(()=>E.aggregateEvidence({manifestBuffer:manifestRaw,
+  reportBuffers:[Buffer.from('\ufeff'+reports[0].toString('utf8')),...reports.slice(1)]}),
+  'BATCH_REPORT_INVALID_JSON');
 // The CLI always outputs a private, exclusive file only after successful validation.
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tk614-original226-consistency-'));
 try{
@@ -86,6 +131,19 @@ try{
   eq([status.release_authorized,status.coverage.total_objects],[false,452]);
   eq([written.release.release_authorized,written.release.attestation_signed],[false,false]);
   eq(written.coverage,agg.coverage);
+  const blockedCli=(argv,code,outPath)=>{
+    const p=spawnSync(process.execPath,[cli,...argv],{encoding:'utf8'});
+    eq(p.status,1);assert.match(p.stderr,new RegExp(code));checks++;
+    if(outPath)eq(fs.existsSync(outPath),false);
+  };
+  blockedCli(['--reports-dir',root,'--out',path.join(temp,'from-repo.json')],
+    'PRIVATE_REPORTS_MUST_BE_OUTSIDE_REPO',path.join(temp,'from-repo.json'));
+  blockedCli(['--reports-dir',temp,'--out',path.join(root,'must-never-write.json')],
+    'PRIVATE_REPORTS_MUST_BE_OUTSIDE_REPO',path.join(root,'must-never-write.json'));
+  blockedCli(['--reports-dir',temp,'--out','relative.json'],'USAGE');
+  blockedCli(['--reports-dir',temp,'--out',path.join(temp,'stray.json'),'--out',path.join(temp,'stray2.json')],
+    'USAGE',path.join(temp,'stray.json'));
+  blockedCli(['--reports-dir',temp,'--out'],'USAGE');
   const again=spawnSync(process.execPath,[cli,'--reports-dir',temp,'--out',out],{encoding:'utf8'});
   eq(again.status,1);assert.match(again.stderr,/PRIVATE_OUTPUT_ALREADY_EXISTS/);checks++;
   fs.unlinkSync(path.join(temp,E.reportName(1)));

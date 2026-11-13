@@ -1,30 +1,37 @@
-# TK504/TK614 — MoveKit 226: batchbewijs en gesloten vrijgavepoort (13 november 2026)
+# TK504/TK614 — MoveKit 226: controle van batchrapporten en gesloten vrijgavepoort
 
-## Feitelijk gevalideerd
+Datum: 13 november 2026. Scope: oorspronkelijke oefening-ID's TK-000001 t/m TK-000226.
 
-Op 13 november zijn 226/226 oorspronkelijke oefeningen (TK-000001 t/m TK-000226) in 10 afzonderlijke geauthenticeerde batches gecontroleerd: 452/452 objecten geslaagd (226 MP4 plus 226 WebP), zonder failures, unable of retries. Bytes: 780.852.020 video + 3.879.362 poster = 784.731.382 bytes. Alle bronrapporten zijn bewust gemarkeerd als BATCH_PASS_NOT_RELEASE_EVIDENCE.
+## Wat de auditrapporten zeggen — en wat dit hulpmiddel controleert
 
-## Onderdeel dat deze branch daadwerkelijk toevoegt
+Er bestaan tien afzonderlijke geselecteerde, als live-batch gemarkeerde rapporten: negen rapporten voor elk 25 oefeningen plus één voor oefening TK-000226. Daarin staan samen 452 PASS-resultaten (226 MP4 en 226 WebP), 0 fail, 0 unable en 0 retries *binnen die geselecteerde rapporten*. De totale geclaimde en aan het manifest getoetste byteaantallen zijn 780.852.020 video en 3.879.362 poster, samen 784.731.382 bytes.
 
-- tools/tk614_original226_ten_batch_evidence.cjs is een offline, fail-closed validator die het naar Git gepinde 226/452-stagingmanifest, de tien originele private auditrapporten, de vaste catalogus-ID-ranges en de SHA-herkomst gecontroleerd combineert.
-- De video- en posterbyteaantallen worden per batch ONAFHANKELIJK vanuit het gepinde originele manifest opgeteld. Niet alleen de door het rapport geclaimde verified_bytes worden vertrouwd.
-- Iedere rapport-SHA256 wordt vastgelegd, de output bevat geen token, naam, URL of downloadbare video.
-- De validator leest geen wachtwoorden, JWT, Storage-inhoud of productiedatabase en creëert geen grants, publicaties, handtekeningen, migraties of deployments. Bij elke afwijking ontstaat geen output.
-- Een nieuw bestand wordt exclusief aangemaakt buiten Git: bestaande output wordt niet overschreven.
-- De synthetic-only test core/tk614Original226TenBatchEvidence.test.js controleert de geslaagde reeks en bewuste afwijzingen voor ontbrekende batches, foutieve ID's, corrupte bron-hash, verkeerde manifest-byteaantallen, retries, mislukte checks en onterechte vrijgaveclaims.
+BELANGRIJK: De software herberekent de batch- en bytesom vanuit het vastgepinde catalogusmanifest en vergelijkt die met de **zelf gerapporteerde**, niet-ondertekende batchsamenvattingen. Dit is een reproduceerbare consistentiecontrole, niet zelf een nieuw bewijs dat deze tien downloads werkelijk met een bevoegde account en op genoemde tijdstippen gebeurden. De rapporten bevatten geen ondertekende per-object resultaten, run-ID's of cryptografisch bevestigde tijdstempels. Een beheerder met schrijftoegang tot de private auditbestanden kan zulke samenvattingen synthetisch aanmaken. Daarom is de uitkomst GEEN onafhankelijk cloud-attest.
 
-## Gebruik op DESKTOP-DP6BUNC
+**B01 had een eerdere onvolledige poging.** `TK504-Audit-B01-20261113.json` rapporteert 0 PASS, 0 FAIL en 50 UNABLE (status `BATCH_INCOMPLETE_UNABLE`, SHA256 `ca72bf72b7b2b39d3a6316b72f72074ef1eb9ef81d80178459a64ce7792a79ef`). De aggregatie selecteert uitsluitend de latere succesvolle `TK504-Audit-B01-20261113-RETRY1.json`. De 0 retries in de aggregatie hebben betrekking op de object-retries binnen die tien geselecteerde rapporten, niet op het aantal eerdere batchpogingen.
 
-Vanuit de root van de feature-worktree, met Node.js en alleen al eerder lokaal gecontroleerde rapporten:
+## Wat de feature-branch daadwerkelijk toevoegt
 
-    node tools/tk614_original226_ten_batch_evidence.cjs --reports-dir C:\Steensoft --out C:\Steensoft\TK504-Audit-10Batch-VerifiedV2-20261113.json
+`tools/tk614_original226_ten_batch_evidence.cjs` controleert het volledige originele stagingmanifest op een exact vastgezette file-SHA256 en semantische fouten, vervolgens tien geselecteerde JSON-rapporten op vaste ID-bereiken, schema/provenance, een exacte sleutelset, video/postertotalen en expliciete niet-vrijgavestatus. Iedere gerapporteerde bytesom wordt vergeleken met de som die zelfstandig vanuit het originele manifest is opgebouwd. De tool berekent van elk rapport de SHA256, maar toetst geen individuele video-SHA opnieuw en verifieert geen externe cloud-identiteit of de git-provenance van de gerapporteerde app-commit.
 
-Dit is daadwerkelijk uitgevoerd. De gegenereerde private JSON heeft SHA256 8709b0b6a724dc5d9b267ce95f6afa0129f982d1202b1d5be84fdcf17ef3c3dd. Gebruik voor een herhaling een nieuw doelbestand. Upload de private rapporten of mediabestanden niet in Git.
+Er worden geen tokens, wachtwoorden, media-URL's of gedownloade video's naar de output gekopieerd. De tool leest geen productiedatabase en kan geen grants, publicaties, handtekeningen, migraties of deploys uitvoeren. Als één controle faalt, schrijft hij geen output. De output krijgt buiten de repository een nieuwe bestandsnaam met exclusive create; een bestaand doel wordt niet overschreven.
 
-## Wat uitdrukkelijk NIET is vrijgegeven
+`core/tk614Original226TenBatchEvidence.test.js` bevat uitsluitend synthetische gegevens en negatieve tests, waaronder gemanipuleerde sleutelsets, hash/bytes, batchgrenzen, ontbrekende rapporten en onterechte vrijgavevelden. De onafhankelijke code-review leidde tot aanvullende controles; gerichte regressietests moeten groen zijn voor verdere integratie.
 
-452/452 batchvalidatie is geen continue full-scope-authenticated live-scan en geen eigenaarsondertekende media-attestatie. In het bestaande production eligible-mechanisme tools/tk614_original226_media_eligibility.cjs is CUTOVER.enabled letterlijk false. De huidige eigenaar-attestatie vereist een aparte echte live-verifier en signature. Een live-batch-samenvatting mag niet stilzwijgend in mode live worden veranderd. Deze code wijzigt noch die signature-/attestatieregels, noch de broker.
+## Reproduceren in de afzonderlijke lokale ontwikkel-worktree
 
-De originele 226 hebben op het meetmoment nog 0/226 actieve getypeerde catalogus-FK-bindings en 0/226 publicaties; de latere 356 blijven onveranderd. De volgende stappen vereisen afzonderlijk gecontroleerde getypeerde FK-stage, eigenaar- en DBA-besluiten, signed media-rechten, account grants en een gezamenlijke V1→V2-cutover zonder verlies van bestaande weergave. Het echte browser-/Android-logging- en multiaccounttraject (#603/#614) blijft een releaseblokkade. PR #628 blijft DRAFT en mag niet automatisch worden gemerged.
+Gebruik onderstaande opdracht uitsluitend waar de tien eerder gecontroleerde rapportbestanden daadwerkelijk zijn opgeslagen:
 
-Het bewijs in deze branch is dus alleen reproducibele, niet-vrijgevende code en testinfrastructuur. Geen live datawrite, release of APK.
+    node tools/tk614_original226_ten_batch_evidence.cjs --reports-dir C:\Steensoft --out C:\Steensoft\TK504-Audit-10Batch-VerifiedV3-20261113.json
+
+De versie na review is daadwerkelijk uitgevoerd en gaf 452/452 consistent, SHA256 van uitvoerbestand `4269cc0217ed21030f6a13322b15916a5006839ee3a2d1478b762d289661c770`. Gebruik voor herhaling een NIEUW uitvoerpad. Laat de private bronrapporten en originele media buiten Git.
+
+Op POSIX kan Node.js bij het aanmaken `mode:0600` afdwingen. Op Windows erft de samenvatting de ACL van de doelmap; de tool stelt die niet zelf in. De mapbeheerder moet die toegang apart beperken. Op systemen met aangepaste Git line-endings is de byte-exact gepinde manifest-SHA bewust fail-closed; BOM-JSON wordt eveneens als ongeldig afgewezen. Dit is geen bewijs van een cloud- of OS-permissiegrens.
+
+## Vrijgavegates — NIET door dit bewijs gepasseerd
+
+De bestaande `tools/tk614_original226_media_eligibility.cjs` is een voorbereide pure securitymodule die nog NIET aan de productiebroker hangt. Hij heeft `CUTOVER.enabled = false` als harde codeconstante, vereist los daarvan een eigenaarsondertekend `mode=live`-attest, een apart ondertekend mediareleasebesluit, per-oefening publicatie en accountgebonden grant. De huidige tien losse `mode=live-batch` samenvattingen mogen nooit met het aanpassen van hun velden tot een geautoriseerd `mode=live`-attest worden vervalst.
+
+Alle 226 technische FK-aliasrows zijn al in productie gestaged (fase A), maar stonden bij de verificatie nog inactive/unreviewed en hadden 0 publicaties. De latere 356 actieve oefeningen moeten ongewijzigd blijven. Voor fase B is een afzonderlijke met de eigenaarssleutel ondertekende beslissing met zes aantoonbaar geaccepteerde evidence-gates en DBA-controle vereist; ook de mediaserver-release, begrensde accountgrants en de V1→V2 gezamenlijke cutover met echte browser-/Android-logging en multiaccount regressie blijven open (issues #504, #603, #614; PR #628 DRAFT).
+
+Deze PR bevat uitsluitend code-only, niet-vrijgevende controlemiddelen. Er is geen productie-DB-write, geen media-activatie en geen APK uitgevoerd.

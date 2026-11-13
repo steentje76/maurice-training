@@ -1,7 +1,8 @@
 'use strict';
 /**
- * TK504/#614 -- offline audit evidence for 10 distinct authenticated 25-object batches
- * (nine 25-exercise runs, one 1-exercise run).
+ * TK504/#614 -- offline consistency check of 10 selected self-reported
+ * private Storage SHA summaries (nine 25-exercise runs, one 1-exercise run).
+ * Report provenance and real cloud download are NOT independently attested here.
  *
  * Reads the ten PRIVATE reports from outside this repository and checks each against
  * the pinned original-226 staging manifest, including the manifest's own per-batch
@@ -22,6 +23,15 @@ const REPORT_SCHEMA='tk504-private-storage-byte-sha-report/1.0';
 const SOURCE_COMMIT='bf94b43a9f517f9f0136a588d55571879814c87e';
 const OUTPUT_SCHEMA='tk504-original226-ten-batch-consistency/1.0';
 const HEX64=/^[a-f0-9]{64}$/;
+const REPORT_KEYS=Object.freeze(['schema','mode','project_ref','manifest_file','manifest_file_sha256',
+  'manifest_all_sha256','app_commit','authorizes_nothing','media_persisted','credentials_logged',
+  'checked','pass','fail','unable','retries','video','poster','categories','duration_ms',
+  'batch','batch_outcome','status','verdict','attestation_eligible','complete_452',
+  'full_expected','failures']);
+const BATCH_KEYS=Object.freeze(['start_id','end_id','size','expected_objects']);
+const KIND_KEYS=Object.freeze(['expected','checked','pass','fail','unable','expected_bytes','verified_bytes']);
+const sameKeys=(obj,keys)=>obj!==null&&typeof obj==='object'&&!Array.isArray(obj)&&
+  Object.keys(obj).length===keys.length&&keys.every(k=>Object.hasOwn(obj,k));
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const id=n=>'TK-'+String(n).padStart(6,'0');
 function check(condition,code){if(!condition){const e=new Error(code);e.code=code;throw e;}}
@@ -54,6 +64,11 @@ function parseManifest(buffer){
 function verifyBatch(raw,index,manifest){
   check(Buffer.isBuffer(raw),'BATCH_REPORT_NOT_BUFFER');
   let r;try{r=JSON.parse(raw);}catch(_){check(false,'BATCH_REPORT_INVALID_JSON');}
+  check(sameKeys(r,REPORT_KEYS)&&sameKeys(r.batch,BATCH_KEYS)&&
+    sameKeys(r.video,KIND_KEYS)&&sameKeys(r.poster,KIND_KEYS)&&
+    typeof r.manifest_file==='string'&&path.basename(r.manifest_file)===
+      'TK614_ORIGINAL226_PRIVATE_MEDIA_STAGING_MANIFEST_20261109.json'&&
+    Number.isFinite(r.duration_ms)&&r.duration_ms>=0,'BATCH_REPORT_SHAPE_INVALID');
   const first=1+25*(index-1),last=Math.min(226,first+24),count=last-first+1,objects=count*2;
   check(r?.schema===REPORT_SCHEMA&&r.mode==='live-batch'&&r.project_ref===PROJECT_REF&&
     r.manifest_file_sha256===MANIFEST_FILE_SHA256&&r.manifest_all_sha256===MANIFEST_ALL_SHA256&&
@@ -81,7 +96,8 @@ function verifyBatch(raw,index,manifest){
       'BATCH_BYTE_SUM_OR_TYPE_MISMATCH');
   }
   return {batch:index,first_id:id(first),last_id:id(last),exercises:count,objects_verified:objects,
-    video_bytes:bytes.video,poster_bytes:bytes.poster,report_sha256:hash(raw)};
+    video_bytes:bytes.video,poster_bytes:bytes.poster,report_sha256:hash(raw),
+    selected_report_name:reportName(index),selected_report_retries:r.retries};
 }
 function aggregateEvidence({manifestBuffer,reportBuffers}){
   const manifest=parseManifest(manifestBuffer);
@@ -98,12 +114,19 @@ function aggregateEvidence({manifestBuffer,reportBuffers}){
     coverage:{first_id:id(1),last_id:id(226),no_gaps:true,no_overlap:true,exercises:226,
       total_objects:452,videos:226,posters:226,video_bytes:total.video_bytes,
       poster_bytes:total.poster_bytes,total_bytes:total.video_bytes+total.poster_bytes,
-      failed:0,unable:0,retries:0},
+      failed_in_selected_reports:0,unable_in_selected_reports:0,
+      retries_inside_selected_reports:0},
+    report_selection:{source_reports_self_asserted:true,independent_cloud_authentication:false,
+      signed_by_owner:false,selected_reports:10,
+      original_batch01_attempt_excluded:'TK504-Audit-B01-20261113.json',
+      selected_batch01_retry:'TK504-Audit-B01-20261113-RETRY1.json',
+      note:'The first B01 attempt was incomplete (0 PASS, 50 UNABLE); the later RETRY1 report passed. This checker only aggregates the selected successful reports.'},
     batches,release:{attestation_signed:false,release_authorized:false,cutover_authorized:false,
-      notes:'Ten distinct unsigned live-batch reports checked against a pinned manifest. Not a single continuous live verifier report, owner signature, grant or playback authorization.'}};
+      notes:'Ten unsigned, self-reported successful batch summaries checked for consistency against a pinned manifest. Not independent proof of cloud authentication, individual object hashes or a single continuous live verifier report; no owner signature, grant or playback authorization.'}};
 }
 function outsideRepo(abs){
-  const dir=fs.realpathSync(abs),root=fs.realpathSync(ROOT);
+  const resolveNative=fs.realpathSync.native||fs.realpathSync;
+  const dir=resolveNative(abs),root=resolveNative(ROOT);
   const rel=path.relative(root,dir);
   check(rel==='..'||rel.startsWith('..'+path.sep)||path.isAbsolute(rel),
     'PRIVATE_REPORTS_MUST_BE_OUTSIDE_REPO');
@@ -122,6 +145,8 @@ function cli(argv){
   check(!fs.existsSync(to),'PRIVATE_OUTPUT_ALREADY_EXISTS');
   const reportBuffers=Array.from({length:10},(_,i)=>fs.readFileSync(path.join(from,reportName(i+1))));
   const result=aggregateEvidence({manifestBuffer:fs.readFileSync(MANIFEST_FILE),reportBuffers});
+  // mode 0600 applies on POSIX; Windows inherits the destination directory ACL.
+  // The output contains only nonsecret digests/counts; operators must still restrict ACLs.
   fs.writeFileSync(to,JSON.stringify(result,null,2)+'\n',{flag:'wx',mode:0o600});
   const raw=fs.readFileSync(to);
   process.stdout.write(JSON.stringify({status:result.status,coverage:result.coverage,

@@ -36,14 +36,19 @@ do $$ begin
   end if;
 end $$;
 
--- 4. ONE additive download-only SELECT policy on existing storage.objects.
+-- 4. ONE additive auditor-only SELECT policy on existing storage.objects.
+-- Actual Supabase private GET performs object.get_authenticated_info before
+-- object.get_authenticated. Both were observed in live Storage logs on 13 Nov 2026;
+-- permit ONLY these two operations, never list/sign/write/anonymous.
 create policy tk504_original226_auditor_download_only
   on storage.objects
   as permissive
   for select
   to authenticated
   using (
-    storage.allow_only_operation('object.get_authenticated')
+    storage.allow_any_operation(array[
+      'object.get_authenticated_info', 'object.get_authenticated'
+    ]::text[])
     and bucket_id in ('exercise-media', 'exercise-posters')
     and auth.uid() is not null
     and coalesce(auth.jwt() ->> 'is_anonymous', '') = 'false'
@@ -63,6 +68,6 @@ create policy tk504_original226_auditor_download_only
     )
   );
 comment on policy tk504_original226_auditor_download_only on storage.objects is
-  'TK504 STAGED: original-226 auditor download-only (object.get_authenticated). Requires own active in-window lease (<=2h) AND exact allowlisted (bucket_id,name). Zero leases + zero allowlist = no access. Never authorizes user playback; ignores publication status by design.';
+  'TK504 STAGED: original-226 auditor metadata+body GET only (object.get_authenticated_info, object.get_authenticated). Requires own active in-window lease (<=2h) AND exact allowlisted (bucket_id,name). Zero leases + zero allowlist = no access. No list/sign/write; never authorizes user playback or media publication.';
 
 commit;

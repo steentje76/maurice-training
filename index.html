@@ -8968,7 +8968,7 @@ async function sbPostReturning(t,d){
 }
 async function sbPatch(t,f,d){try{const r=await sbFetch(`${SB_URL}/rest/v1/${t}?${f}`,{method:'PATCH',prefer:'return=representation',body:d});if(!r.ok)console.error('sbPatch',t,r.status,await r.text());return r.ok;}catch(e){console.error('sbPatch catch',t,e);return false;}}
 // sbRpc: aanroep van een Postgres-functie (bv. de atomaire upsert_daily_health, GAP-P1-008-closure).
-async function sbRpc(fn,args){try{const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});if(!r.ok){console.error('sbRpc',fn,r.status,await r.text());return null;}return await r.json();}catch(e){console.error('sbRpc catch',fn,e);return null;}}
+async function sbRpc(fn,args){try{const r=await sbFetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',body:args});if(!r.ok){console.error('sbRpc',fn,r.status,await r.text());return null;}return await r.json();}catch(e){console.error('sbRpc catch',fn,e);try{sbRpc.lastNetworkFailure={fn:fn,at:Date.now()};}catch(_){}return null;}}
 /* ── ÉÉN CANONIEKE hrv_log-RIJ PER DAG (v4.29.1 — dataverlies-fix) ─────────────
  * PROBLEEM: saveHRV()/pchkSubmit() deden een blinde INSERT in hrv_log. Vulde je in
  * de check-in alléén je rusthartslag in, dan ontstond een TWEEDE rij voor vandaag met
@@ -9332,17 +9332,19 @@ async function sbPostQ(t,d,opts){
   // queue ('failed', IndexedDB niet beschikbaar) gaf hier tot v4.70.22 true — een valse succesmelding
   // terwijl de data nergens stond. Impactanalyse van alle aanroepers: DECISION_LOG DEC-QUEUE-001.
   let queueOnly=!!(opts&&opts.queueOnly); const ignoreDup=!!(opts&&opts.ignoreDuplicates)||!!TK_IDEMPOTENT_ZONDER_UPDATE[t];
-  // #603: server-verified TKC bindings are momentary authority, never durable
-  // offline grants. A lost connection must not persist a stale typed FK for replay.
+  // #603 + DEC-OFFLINE-CAT-001: een getypeerde sessie (TKC-FK) blijft gebonden aan de eigenaar van
+  // haar binding; offline of bij een netwerkfout gaat ze in de wachtrij, de server controleert opnieuw.
   const confirmedOnly=t==='sessions'&&!!(opts&&opts.tk504_binding);
   const expectedOwner=confirmedOnly?opts.tk504_binding.owner_uid:null;
   const prefer=ignoreDup?'return=representation,resolution=ignore-duplicates':(IDEMPOTENT_TABELLEN_MET_CLIENT_ID[t]?'return=representation,resolution=merge-duplicates':'return=representation');
   const item=ignoreDup?{table:t,method:'POST',body:d,resolution:'ignore-duplicates'}:{table:t,method:'POST',body:d};
   const uit=function(status,http,reden){ if(opts&&typeof opts==='object'){opts.status=status;opts.reden=reden||null;} tkLogSchrijf(status,t,reden,http); return detail?tkSchrijfUitkomst(status,http,reden):(status==='confirmed'||status==='queued'); };
   const queue=async function(http,reden){
-    // #603: typed binding is valid for this authenticated ONLINE write only.
-    // A retry must re-verify authority; never save it for offline replay.
-    if(confirmedOnly)return uit('failed',http,reden||'offline');
+    // DEC-OFFLINE-CAT-001 (vervangt de #603-regel "nooit in de wachtrij"): een getypeerde sessie
+    // gaat nu ook in de eigenaar-gebonden wachtrij. Bij het synchroniseren controleert de database
+    // (tk504_typed_session_fk_guard) de vrijgave opnieuw; een geweigerde rij blijft zichtbaar in de
+    // wachtrij en gaat niet verloren. Alleen onder dezelfde eigenaar als de binding.
+    if(confirmedOnly&&(!expectedOwner||tkEigenaarUid()!==expectedOwner))return uit('failed',http,'account');
     const q=await offlineQueueAdd(item); updateOfflineBadge();
     return q===true?uit('queued',http,reden):uit('failed',http,'opslag');
   };
@@ -9371,7 +9373,7 @@ async function sbPostQ(t,d,opts){
     if(confirmedOnly&&tkEigenaarUid()!==expectedOwner)return uit('failed',r.status,'account');
     return uit('confirmed',r.status);
   }catch(e){
-    console.warn(confirmedOnly?'sbPostQ typed session not queued':'sbPostQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
+    console.warn('sbPostQ offline, queued',t,(e&&e.tkTimeout)?'timeout':'netwerk');
     return queue(null,(e&&e.tkTimeout)?'timeout':'netwerk');
   }
 }
@@ -9845,15 +9847,82 @@ async function tk504VerifySessionBinding(ex){
   if(!ref)throw new Error('tk504_catalog_provenance_invalid');
   const owner=tkEigenaarUid();
   if(!owner)throw new Error('tk504_account_missing');
-  if(typeof navigator!=='undefined'&&navigator.onLine===false)
+  const expected='TKC-'+ref.catalog_id.slice(3);
+  // DEC-OFFLINE-CAT-001: offline geldt de laatst van de server ontvangen vrijgavelijst van DEZE
+  // eigenaar. De database controleert de vrijgave bij het synchroniseren opnieuw
+  // (tk504_typed_session_fk_guard); een geweigerde rij blijft in de wachtrij staan.
+  if(typeof navigator!=='undefined'&&navigator.onLine===false){
+    const off=(typeof tk504OfflineBindingFor==='function')?tk504OfflineBindingFor(ref,owner,expected):null;
+    if(off&&off.kind==='movekit-catalog-v1'&&off.fk_id===expected&&off.owner_uid===owner&&tkEigenaarUid()===owner)return off;
     throw new Error('tk504_typed_fk_offline_unverified');
+  }
+  const t0=Date.now();
   const raw=await sbRpc('tk504_resolve_catalog_fk',
     {p_catalog_id:ref.catalog_id,p_provider_id:ref.provider_id});
-  const expected='TKC-'+ref.catalog_id.slice(3);
-  if(raw!==expected)throw new Error('tk504_catalog_fk_unverified');
+  if(raw!==expected){
+    // Alleen bij een NETWERKfout tijdens deze vraag (slecht bereik, "online" maar geen verbinding)
+    // telt de lokale lijst; een antwoord van de server ("niet vrijgegeven") is altijd leidend.
+    const nf=(typeof sbRpc==='function'&&sbRpc.lastNetworkFailure)||null;
+    if(raw===null&&nf&&nf.fn==='tk504_resolve_catalog_fk'&&typeof nf.at==='number'&&nf.at>=t0){
+      const off=(typeof tk504OfflineBindingFor==='function')?tk504OfflineBindingFor(ref,owner,expected):null;
+      if(off&&off.kind==='movekit-catalog-v1'&&off.fk_id===expected&&off.owner_uid===owner&&tkEigenaarUid()===owner)return off;
+      throw new Error('tk504_typed_fk_offline_unverified');
+    }
+    throw new Error('tk504_catalog_fk_unverified');
+  }
   if(tkEigenaarUid()!==owner)throw new Error('tk504_account_changed');
+  if(typeof tk504ReleasedFkRemember==='function')tk504ReleasedFkRemember(owner,ref,expected);
   return Object.freeze({kind:'movekit-catalog-v1',catalog_id:ref.catalog_id,
     provider_id:ref.provider_id,fk_id:expected,owner_uid:owner});
+}
+// ── DEC-OFFLINE-CAT-001 — vrijgavelijst per eigenaar voor offline loggen ─────────────────────
+// Bron: RPC tk504_released_catalog_fks() (alleen actieve + gereviewde bindingen). Lokaal bewaard
+// onder een eigenaar-sleutel; een volledige verversing vervangt de lijst (ingetrokken = weg).
+// De lijst autoriseert niets op de server: die controleert elke rij zelf bij het opslaan.
+const TK504_RELEASED_FK_CACHE='tk504_released_fks_v1:';
+function tk504ReleasedFkEntryValid(cid,pid,fk){
+  return typeof cid==='string'&&/^TK-[0-9]{6}$/.test(cid)&&Number(cid.slice(3))>=1&&Number(cid.slice(3))<=582&&
+    typeof pid==='string'&&pid.trim()!==''&&pid.length<=160&&fk==='TKC-'+cid.slice(3);
+}
+function tk504ReleasedFkRead(owner){
+  try{
+    if(typeof owner!=='string'||!owner)return null;
+    const raw=localStorage.getItem(TK504_RELEASED_FK_CACHE+owner);
+    const o=raw?JSON.parse(raw):null;
+    return (o&&typeof o==='object'&&o.owner_uid===owner&&o.entries&&typeof o.entries==='object')?o:null;
+  }catch(_){ return null; }
+}
+function tk504ReleasedFkWrite(owner,entries,full){
+  try{
+    localStorage.setItem(TK504_RELEASED_FK_CACHE+owner,JSON.stringify({owner_uid:owner,at:Date.now(),full:!!full,entries:entries}));
+    return true;
+  }catch(_){ return false; }
+}
+function tk504ReleasedFkRemember(owner,ref,fk){
+  if(!ref||!tk504ReleasedFkEntryValid(ref.catalog_id,ref.provider_id,fk))return false;
+  const cur=tk504ReleasedFkRead(owner);
+  const entries=Object.assign(Object.create(null),cur?cur.entries:null);
+  entries[ref.catalog_id]={p:ref.provider_id,fk:fk};
+  return tk504ReleasedFkWrite(owner,entries,cur?cur.full:false);
+}
+function tk504OfflineBindingFor(ref,owner,expected){
+  if(typeof tk504ReleasedFkRead!=='function')return null;
+  const c=tk504ReleasedFkRead(owner);
+  const e=c&&c.entries?c.entries[ref.catalog_id]:null;
+  if(!e||typeof e!=='object'||e.p!==ref.provider_id||e.fk!==expected||
+     !tk504ReleasedFkEntryValid(ref.catalog_id,e.p,e.fk))return null;
+  return Object.freeze({kind:'movekit-catalog-v1',catalog_id:ref.catalog_id,
+    provider_id:ref.provider_id,fk_id:expected,owner_uid:owner,verified:'offline-cache'});
+}
+async function tk504RefreshReleasedFkCache(){
+  if(TK504_TYPED_FK_SESSION_RELEASE!==true)return false;
+  const owner=tkEigenaarUid();
+  if(!owner||(typeof navigator!=='undefined'&&navigator.onLine===false))return false;
+  const rows=await sbRpc('tk504_released_catalog_fks',{});
+  if(!Array.isArray(rows)||tkEigenaarUid()!==owner)return false; // mislukt: laatst bekende lijst blijft
+  const entries=Object.create(null);
+  rows.forEach(r=>{ if(r&&tk504ReleasedFkEntryValid(r.catalog_id,r.provider_id,r.exercise_id))entries[r.catalog_id]={p:r.provider_id,fk:r.exercise_id}; });
+  return tk504ReleasedFkWrite(owner,entries,true);
 }
 function tk504RewriteVerifiedSessionRow(row,binding){
   if(!binding)return row; // legacy and disabled release remain byte-equivalent
@@ -37786,6 +37855,7 @@ async function startAppAfterAuth(){
   tk504SyncExerciseCount();
   ensureExercisesLoaded().then(()=>loadTrainCfg());
   tk504RefreshPublishedCatalog(); // only when independently released; no second ECS
+  tk504RefreshReleasedFkCache(); // DEC-OFFLINE-CAT-001: vrijgavelijst voor offline loggen
   tkExLinksRefresh(); // DEC-EXLINK-001: eigen oefening ↔ MoveKit (cache eerst, dan server)
   ensureEquipmentTypesLoaded();
   migrateLibraryFavoritesToSupabase(); // Sprint 6.0.1 — eenmalig, laadt ook favoriteExIds vroeg

@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## Ongereleased — Offline loggen op MoveKit-oefeningen, fase 2a (draft, 14 november 2026)
+
+- **Wens eigenaar.** Offline loggen is verplicht voor alle oefeningen.
+- **App.** `tk504VerifySessionBinding` gebruikt offline (of bij een netwerkfout tijdens de controle) de per-eigenaar vrijgavelijst; een serverweigering blijft leidend. `sbPostQ` zet een getypeerde sessie nu in de eigenaar-gebonden wachtrij (zelfde UUID, TKC-FK) in plaats van haar te laten mislukken. Lijst wordt na inloggen ververst; bevestigde bindingen worden onthouden. `sbRpc` onthoudt alleen het tijdstip van een netwerkfout.
+- **Database.** Migratie: RPC `tk504_released_catalog_fks()` (alleen-lezend, alleen ingelogd, alleen actief + gereviewd). Niet toegepast.
+- **Test.** Nieuw `core/tk504OfflineCatalogLogging.test.js` (30, incl. PGlite). Bijgewerkt naar het nieuwe contract: `tk603ConfirmedOnlySessionWrite`, `tk603LooseDurableRestart`, `tk614ProgramPartialSaveStorage`, `fGuidedSaveReliability`.
+- **Service worker.** Cache `v470283`.
+
 ## Ongereleased — Eigen oefeningen worden de MoveKit-oefening, fase 1 (draft, 14 november 2026)
 
 - **Wens eigenaar.** De 98 eigen oefeningen die bij een MoveKit-oefening horen moeten de MoveKit-oefening vervangen, niet ernaast staan. Logging blijft behouden.

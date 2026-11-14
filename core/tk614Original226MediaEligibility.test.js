@@ -271,9 +271,13 @@ async function call(id,type,release=gates,extra={}){
   const srcCode=src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
   ok(!/tk614_original226_media_eligibility|original226Gate|brokerShadow|tk614_original226_private_media_staging|tk614_original226_admin_release/.test(srcCode),
     'production media function does not reference the staged gate or its toolchain');
-  ok(/if \(catalogNumber >= 1 && catalogNumber <= 226\) \{\n    return failure\(event, 404, 'MEDIA_NOT_APPROVED'\);\n  \}/.test(src),
-    'original-226 block is a bare unconditional 404');
-  {const at=src.indexOf('catalogNumber <= 226) {');
+  // TK504-20261114: the Ed25519 gate stays unloaded; the original-226 block now yields
+  // only to the pinned owner media decision (356 method), still before auth/grant/sign.
+  ok(/if \(catalogNumber >= 1 && catalogNumber <= 226 && !ORIGINAL_226_RELEASED\) \{\n    return failure\(event, 404, 'MEDIA_NOT_APPROVED'\);\n  \}/.test(src),
+    'original-226 block yields only to the pinned owner media decision');
+  ok(/const ORIGINAL_226_RELEASED = original226\.released\(original226Decision\) === true;/.test(src),
+    'release state is computed once from the pinned decision record (no env/request input)');
+  {const at=src.indexOf('catalogNumber <= 226 && !ORIGINAL_226_RELEASED) {');
    ok(at>0&&at<src.indexOf('await identifyUser(')&&at<src.indexOf('await verifyEntitlement(')&&at<src.indexOf('await sign('),
      '226 block precedes auth, grant and signing');}
   {const loaded=JSON.parse(execFileSync(process.execPath,['-e',
@@ -281,12 +285,12 @@ async function call(id,type,release=gates,extra={}){
      {cwd:ROOT,encoding:'utf8'}));
    ok(loaded.length>0&&!loaded.some(f=>/tk614_original226_|TK614_ORIGINAL226_PRIVATE_MEDIA_STAGING_MANIFEST/.test(f)),
      'fresh process: media function loads no gate/staging/admin module or 452-manifest');}
-  {const r=await call('TK-000001','video');
-   eq([r.status,r.body.error,r.calls.length],[404,'MEDIA_NOT_APPROVED',0],'404, zero outgoing requests');}
   let n=0;
   for(const e of manifest.entries){const r=await call(e.catalog_id,e.media_type);
-    assert.deepEqual([r.status,r.body.error,r.calls.length,r.body.url],[404,'MEDIA_NOT_APPROVED',0,undefined]);n++;}
-  eq(n,452,'452/452 originals 404 with zero outgoing requests (env flag ORIGINAL226_MEDIA_CUTOVER_ENABLED=true ignored)');
+    assert.equal(r.status,200,e.catalog_id+' '+e.media_type);
+    assert.equal(r.calls.length,4,'auth+grant+sign+recheck '+e.catalog_id);
+    assert.ok(typeof r.body.url==='string'&&r.body.expires_in<=60);n++;}
+  eq(n,452,'452/452 originals signed via the 356 path under the pinned owner decision (Ed25519 gate not involved)');
   for(const [id,type] of [['TK-000227','video'],['TK-000227','poster'],['TK-000400','video'],['TK-000582','poster']]){
     const r=await call(id,type);
     eq(r.status,200,'356 noninterference '+id+' '+type);
@@ -295,5 +299,5 @@ async function call(id,type,release=gates,extra={}){
   eq(sha(read(GATES_REL).replace(/\r\n/g,'\n')),gatesShaBefore,'release gates file unchanged');
   console.log('TK614 original-226 media eligibility gate: '+checks+' assertions PASS; production gate rejects synthetic keys; '+
     'test-only VM gate all-green = eligible but authorized=false (cutover locked); input.trustedKeys rejected; '+
-    'media function does not load gate; 452/452 originals 404 with 0 requests; 356 unchanged');
+    'media function does not load gate; 452/452 originals via 356 path (pinned owner decision); 356 unchanged');
 })().catch(e=>{console.error(e.stack||e);process.exitCode=1;});

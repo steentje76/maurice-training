@@ -1,7 +1,7 @@
 'use strict';
 // TK504: ONE private V2 client transport for all 582 canonical MoveKit IDs.
-// Bounded smoke checks only. This does NOT authorize the original 226 media:
-// the real broker keeps them MEDIA_NOT_APPROVED until independent release.
+// Bounded smoke checks only. The broker signs the original 226 only under the pinned
+// owner media decision TK504-20261114-OWNER-ORIGINAL226-MEDIA (same method as the 356).
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -44,12 +44,14 @@ ok([null, true, {}, 'TK-000000', 'TK-000583', 'TK-999999',
   'noncatalog and malformed IDs denied');
 ok(html.includes("c.url=(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(catalogId))?null"),
   'protected media do not expose legacy raw video URL');
-const lock = broker.indexOf('if (catalogNumber >= 1 && catalogNumber <= 226) {');
+const lock = broker.indexOf('if (catalogNumber >= 1 && catalogNumber <= 226 && !ORIGINAL_226_RELEASED) {');
 ok(lock > 0 && broker.indexOf("return failure(event, 404, 'MEDIA_NOT_APPROVED');", lock) > lock &&
    lock < broker.indexOf('const uid = await identifyUser(', lock),
-   'actual server broker hard-denies original 226 before auth/signing');
+   'server denies original 226 before auth/signing unless the pinned owner decision is valid');
+ok(require('../netlify/functions/exercise-media-v2-url.js')._internal.ORIGINAL_226_RELEASED === true,
+   'pinned owner media decision for the original 226 is accepted by the shipped broker');
 ok(adapter.includes("published.source.provider !== 'movekit'") &&
    adapter.includes('bridge.requestStaged('),
    'existing private adapter validates canonical source and uses the V2 bridge');
 console.log('TK504 single V2 route: ' + checks +
-  ' targeted smoke checks PASS; 582 client-private, original 226 server-denied until authorized');
+  ' targeted smoke checks PASS; 582 client-private via one V2 route, original 226 released by pinned owner decision');

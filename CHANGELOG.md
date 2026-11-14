@@ -1,5 +1,20 @@
 # Trainingskompas — Changelog
 
+## Ongereleased — MoveKit fase 1: één beveiligde videoroute voor alle 582 (draft, 14 november 2026)
+
+- **Besluit (DEC-MEDIA-226-001).** De oorspronkelijke 226 MoveKit-oefeningen worden vrijgegeven op dezelfde manier als de
+  356: vastgelegd eigenaarsbesluit `docs/generated/MOVEKIT_V2_OWNER_ORIGINAL226_MEDIA_RELEASE_20261114.json`, inhoud
+  vastgepind in `core/tk504Original226MediaRelease.js`.
+- **Server.** `netlify/functions/exercise-media-v2-url.js`: de onvoorwaardelijke `404` voor `TK-000001..226` is vervangen
+  door een controle op het vastgepinde besluit. Daarna geldt exact het 356-pad (descriptor → inloggen → grant → ondertekende
+  URL ≤ 60 s → grant opnieuw). Geen env-variabele of request-veld kan dit omzetten.
+- **App.** Ongewijzigd ten opzichte van #628: alle 582 via `ExerciseAssetProvider` → `TK504ProtectedPlayback`.
+- **Tests.** Nieuw `core/tk504Original226OwnerMediaRelease.test.js` (52). Bewust bijgewerkt omdat ze een harde 404 vastlegden:
+  `tk504Original226UnifiedBrokerBridge` (552, incl. 10 mutanten en een VM-kopie met gemanipuleerd besluit die 452/452 weigert),
+  `tk614Original226MediaParity` (1033), `tk614Original226MediaEligibility` (378), `tk504ScopedPrivateMediaRelease` (14).
+- **Niet in deze wijziging.** Geen databasewijziging, geen grants, geen cataloguspublicaties of FK-activatie (fase 2),
+  openbare `videos/` en de videocache blijven bestaan, geen APK.
+
 ## v4.70.25 — Wearable-koppeling hersteld: veilige tokenopslag, Android-app bereikt de server, eerlijke koppelstatus (gebruikerstest 11 oktober 2026)
 
 - **Bug (S8-VAULT-NAME, S8-VAULT-ORPHAN).** Koppelen eindigde op "Koppelen mislukt (opslaan)". Supabase registreerde op 11 oktober tussen 06:28 en 06:29 UTC zes keer HTTP 409 op `store_wearable_token_secret`, PostgreSQL zes keer SQLSTATE 23505 op `secrets_name_idx`.

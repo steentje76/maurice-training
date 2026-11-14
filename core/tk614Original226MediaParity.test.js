@@ -1,9 +1,9 @@
 'use strict';
 // TK614/#603 -- ORIGINAL-226 PRIVATE MEDIA: staged-only contract + broker parity.
-// RED before GREEN: before the broker hardening, a release config that merely lists
-// fully-flagged TK-000001..226 entries made the broker sign originals (200). Now the
-// broker refuses all 226 x (video, poster) with 404 MEDIA_NOT_APPROVED before any
-// auth/grant/sign call, while the released 356 keep working with a valid grant.
+// History: release entries alone never released originals (hard 404). Since the
+// pinned owner media decision TK504-20261114-OWNER-ORIGINAL226-MEDIA (356 method) the
+// broker signs all 226 x (video, poster) via the identical 356 path (auth -> grant ->
+// sign -> grant) for the exact pinned asset; entitlement stays mandatory.
 // Synthetic only: no DB, network, real JWT, service key, signed URL or media bytes.
 // Signed URLs produced by the stub are never printed.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
@@ -241,7 +241,10 @@ const flagged=built.entries.map(e=>({catalog_id:e.catalog_id,media_type:e.media_
 const forged=Object.freeze({schema:broker.SCHEMA,status:'RELEASE_APPROVED',inventory_sha256:broker.inventorySha,
   poster_digest_sha256:broker.posterSha,entries:flagged});
 (async()=>{
-  eq(broker.ORIGINAL_226_MEDIA_STATE,M.STATUS,'broker state constant == staging status');
+  // TK504-20261114: original 226 media released by the pinned owner decision (356 method).
+  eq([broker.ORIGINAL_226_RELEASED,broker.ORIGINAL_226_MEDIA_STATE],[true,'OWNER_RELEASED_MEDIA'],
+    'broker: original 226 released by pinned owner media decision');
+  eq(M.STATUS,'STAGED_ONLY_NOT_RELEASED','staging manifest itself stays a staging artefact (authorizes nothing)');
   ok(read('netlify/functions/exercise-media-v2-url.js').replace(/\r\n/g,'\n').includes(
     'exports.handler = event => handle(event, { env: process.env, fetch: globalThis.fetch, now: Date.now });'),
     'production handler passes no original-226 override');
@@ -253,40 +256,45 @@ const forged=Object.freeze({schema:broker.SCHEMA,status:'RELEASE_APPROVED',inven
     ok(new URL(r.body.url).pathname.endsWith('/'+want)&&r.body.expires_in<=60,'exact asset '+id);
   }
   eq((await call('TK-000227','video',gates,{},'Bearer synthetic.account-b.jwt')).status,403,'account B without grant');
-  // all 226 x 2 refused with the real gates, before any auth/grant/sign call
-  let refused=0;
+  // all 226 x 2 now follow the identical 356 path: auth -> grant -> sign -> grant, exact pinned asset
+  let signed=0;
   for(const e of built.entries){
     const r=await call(e.catalog_id,e.media_type,gates);
-    assert.equal(r.status,404,e.catalog_id+' '+e.media_type);assert.equal(r.body.error,'MEDIA_NOT_APPROVED');
-    assert.equal(r.calls.length,0);assert.equal(r.body.url,undefined);refused++;
+    assert.equal(r.status,200,e.catalog_id+' '+e.media_type);
+    const u=new URL(r.body.url);
+    assert.equal(u.pathname,'/storage/v1/object/sign/'+e.bucket+'/'+e.storage_path,e.catalog_id+' exact asset');
+    assert.ok(r.body.expires_in<=60&&r.body.expires_in>=31);
+    assert.deepEqual(r.calls.map(c=>c.split('?')[0].replace(broker.BASE,'')),
+      ['/auth/v1/user','/rest/v1/movekit_media_grants','/storage/v1/object/sign/'+e.bucket+'/'+e.storage_path,'/rest/v1/movekit_media_grants'],
+      e.catalog_id+' same 356 call sequence');
+    signed++;
   }
-  eq(refused,452,'452/452 original media refused (real gates)');
-  // RED->GREEN: fully-flagged original entries in a release config (old unsafe model) no longer sign
-  for(const [id,type] of [['TK-000001','video'],['TK-000001','poster'],['TK-000226','video'],['TK-000113','poster']]){
-    const r=await call(id,type,forged);
-    eq([r.status,r.body.error,r.calls.length],[404,'MEDIA_NOT_APPROVED',0],'forged release '+id+' '+type);
+  eq(signed,452,'452/452 original media signed via the 356 path (real gates, synthetic grant)');
+  // entitlement is still mandatory for originals
+  for(const [id,type] of [['TK-000001','video'],['TK-000226','poster']]){
+    const b=await call(id,type,gates,{},'Bearer synthetic.account-b.jwt');
+    eq([b.status,b.body.error,b.body.url],[403,'NO_ENTITLEMENT',undefined],'account B without grant: '+id+' '+type);
+    const n=await call(id,type,gates,{},'');
+    eq([n.status,n.body.error,n.body.url],[401,'AUTH_REQUIRED',undefined],'anonymous: '+id+' '+type);
   }
+  // an original smuggled in twice (duplicate row) still fails closed before any network call
   {const mixed={...gates,entries:[...gates.entries.slice(0,1162),flagged[0],flagged[1]]};
    const r=await call('TK-000001','video',mixed);
-   eq([r.status,r.calls.length],[404,0],'original smuggled into the 356 entries');}
-  // No dependency injection, environment value, FK-only owner decision, signed
-  // looking string, or already reviewed release.entry may bypass the cutover.
-  for(const config of [gates,forged]){
-    for(const v of [undefined,null,true,'true',M.STATUS,'OWNER_APPROVED_FK_IDENTITY_ONLY',
-      'OWNER_SIGNED_MEDIA_RELEASE_VERIFIED','owner_signed_media_release_verified']){
-      const r=await call('TK-000001','video',config,{original226MediaState:v});
-      eq([r.status,r.body.error,r.calls.length],[404,'MEDIA_NOT_APPROVED',0],
-        'original media always blocked; override '+String(v));
-    }
+   eq([r.status,r.calls.length],[404,0],'duplicate original entry fails closed');}
+  // a release config cannot redirect an original to another object
+  {const moved={...gates,entries:gates.entries.map(e=>e.catalog_id==='TK-000001'&&e.media_type==='video'?
+     {...e,storage_path:golden.get('TK-000227').video.path}:e)};
+   const r=await call('TK-000001','video',moved);
+   eq([r.status,r.calls.length],[404,0],'original cannot be pointed at another asset');}
+  // no injected dependency value changes the outcome
+  for(const v of [undefined,null,false,'false','STAGED_ONLY_NOT_RELEASED']){
+    const r=await call('TK-000001','video',gates,{original226MediaState:v,original226Released:v});
+    eq(r.status,200,'injected override ignored: '+String(v));
   }
-  {const r=await call('TK-000001','video',forged,{original226MediaState:'OWNER_SIGNED_MEDIA_RELEASE_VERIFIED'},
-      'Bearer synthetic.account-b.jwt');
-   eq([r.status,r.body.error,r.calls.length],[404,'MEDIA_NOT_APPROVED',0],
-     'unentitled account cannot reach original media regardless of any override');}
   // release gates file untouched by everything above
   eq(sha(read(GATES_REL).replace(/\r\n/g,'\n')),gatesShaBefore,'MOVEKIT_V2_RELEASE_GATES.json unchanged');
   ok(read('docs/TK614_ORIGINAL226_PRIVATE_MEDIA_STAGING_CUTOVER_CHECKLIST_20261109.md').includes('STAGED_ONLY_NOT_RELEASED'),
     'cutover checklist present');
   console.log('TK614 original-226 private media parity: '+checks+' assertions PASS; 452 staged entries, '+
-    '452/452 originals refused by broker, 356 unchanged, FK-only != media; no release, grant, URL or DB write');
+    '452/452 originals signed via 356 path under pinned owner decision, 356 unchanged, grants enforced; no DB write');
 })().catch(e=>{console.error(e.stack||e);process.exitCode=1;});

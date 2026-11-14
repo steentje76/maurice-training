@@ -14,7 +14,6 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CID = /^TK-\d{6}$/;
 const SHA = /^[a-f0-9]{64}$/;
 const REVIEW = /^TK504-[0-9]{8}-[0-9]{3,6}$/;
-const ORIGINAL_226_MEDIA_STATE = 'STAGED_ONLY_NOT_RELEASED';
 const ALLOWED_ORIGINS = new Set([
   'https://maurice-art.netlify.app',
   'https://trainingskompas.com',
@@ -31,6 +30,12 @@ const inventory = require('../../docs/generated/MOVEKIT_GOLDEN_V2_INVENTORY.json
 const posterRegistry = require('../../docs/generated/MOVEKIT_V2_OPTIMIZED_POSTER_DIGESTS.json');
 const release = require('../../docs/generated/MOVEKIT_V2_RELEASE_GATES.json');
 const ledger = require('../../core/tk504BatchReleaseLedger.js');
+// TK504: owner media release for the original 226, same method as the 356
+// (pinned owner decision record). Evaluated once; no env/request override.
+const original226 = require('../../core/tk504Original226MediaRelease.js');
+const original226Decision = require('../../docs/generated/MOVEKIT_V2_OWNER_ORIGINAL226_MEDIA_RELEASE_20261114.json');
+const ORIGINAL_226_RELEASED = original226.released(original226Decision) === true;
+const ORIGINAL_226_MEDIA_STATE = ORIGINAL_226_RELEASED ? 'OWNER_RELEASED_MEDIA' : 'STAGED_ONLY_NOT_RELEASED';
 const inventorySha = 'a8500ce902bbea4f1ff5ad0be6576f70b44616f8803367a27122e5449c815a66';
 const posterSha = '07fe0762c6eb5814d03d006e060b8eec0dd4e47cd053a3d3846ff003cc8559a4';
 const byId = new Map();
@@ -256,15 +261,12 @@ async function handle(event, deps = {}) {
       return failure(event, 404, 'MEDIA_NOT_APPROVED');
     }
   }
-  // TK614: original 226 media is STAGED_ONLY_NOT_RELEASED.
-  // Existing release.entries contain 452 original media metadata rows, but
-  // these are NOT an independent media release decision. Never sign original
-  // media on the basis of entries, FK approval, runtime env, or test overrides.
-  // A future owner-signed media release requires a separate reviewed code change.
-  // Unconditional: runs before auth, grant lookup or signing. The pure eligibility
-  // gate (tools/tk614_original226_media_eligibility.cjs) is code-only staging and is
-  // deliberately NOT loaded here; wiring it requires a separate reviewed release.
-  if (catalogNumber >= 1 && catalogNumber <= 226) {
+  // TK504: original 226 media is signable only under the pinned owner media
+  // release (TK504-20261114-OWNER-ORIGINAL226-MEDIA), the same method as the 356.
+  // Entries, FK approval, runtime env or test overrides never release them.
+  // Without that exact record this stays a 404 before auth, grant lookup or signing.
+  // Afterwards the identical 356 path applies: descriptor -> auth -> grant -> sign -> grant.
+  if (catalogNumber >= 1 && catalogNumber <= 226 && !ORIGINAL_226_RELEASED) {
     return failure(event, 404, 'MEDIA_NOT_APPROVED');
   }
   if (body.type === 'poster' && env.MOVEKIT_V2_POSTER_UPLOAD_VERIFIED !== 'true') {
@@ -308,4 +310,5 @@ async function handle(event, deps = {}) {
 exports.handler = event => handle(event, { env: process.env, fetch: globalThis.fetch, now: Date.now });
 exports._internal = { handle, releaseConfigured, descriptor, identifyUser, verifyEntitlement,
   signedUrl, sign, inventorySha, posterSha, byId, postersById,
-  BUCKET, POSTER_BUCKET, SCOPE, BASE, TTL_SECONDS, SCHEMA, ORIGINAL_226_MEDIA_STATE };
+  BUCKET, POSTER_BUCKET, SCOPE, BASE, TTL_SECONDS, SCHEMA, ORIGINAL_226_MEDIA_STATE,
+  ORIGINAL_226_RELEASED };

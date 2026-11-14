@@ -1,19 +1,17 @@
 'use strict';
-// TK504 #504 -- ONE EXISTING BROKER FOR 582: original-226 bridge proof (TEST-ONLY).
+// TK504 #504 -- ONE EXISTING BROKER FOR 582: original-226 bridge proof.
 //
-// Proves, against the REAL shipped broker source, that the original TK-000001..226
-// media already reuse the exact 356 pipeline
-//   descriptor -> identifyUser -> verifyEntitlement -> sign -> verifyEntitlement
-// once (and only once) the single unconditional original-226 guard is removed.
+// Since the pinned owner media decision TK504-20261114-OWNER-ORIGINAL226-MEDIA (same
+// method as the 356) the REAL shipped broker signs the original TK-000001..226 media via
+// the exact 356 pipeline
+//   descriptor -> identifyUser -> verifyEntitlement -> sign -> verifyEntitlement.
 //
-// The guard is removed ONLY inside an in-memory VM copy of the broker built by this
-// test (exact one-block replacement, verified). Nothing is written to disk, no env /
-// NODE_ENV / test override exists in production, and the shipped handler is re-checked
-// to return 404 for all 452 original media with ZERO network calls.
+// The fail-closed side is proven on an in-memory VM copy of the broker whose require()
+// receives a TAMPERED decision record (no file is written): then all 452 originals are
+// 404 with ZERO network calls, and the 356 behave identically either way. No env /
+// NODE_ENV / test override exists in production.
 //
-// SYNTHETIC ONLY: no real JWT, service key, DB, Storage, grant row or signed URL. The
-// unlocked VM fixture does NOT mean the original media is authorized in production:
-// the 452-entry staging manifest stays STAGED_ONLY_NOT_RELEASED / authorizes nothing.
+// SYNTHETIC ONLY: no real JWT, service key, DB, Storage, grant row or signed URL.
 // Expected paths come from the independent staging manifest + inventory/poster JSON,
 // never from broker._internal, and mutation probes prove the assertions catch a wrong
 // broker (wrong path/bucket/TTL/recheck/auth/scope/digest).
@@ -87,12 +85,13 @@ function expectedFor(id, type) {
 const signTarget = x => BASE + '/storage/v1/object/sign/' + x.bucket + '/' + x.path;
 
 // ---------------------------------------------------------------------------
-// 2. Build the TEST-ONLY unlocked broker: exactly one guard block removed, in memory.
+// 2. Production broker = released; LOCKED = VM copy fed a tampered decision record.
 const SRC = fs.readFileSync(BROKER_FILE, 'utf8').replace(/\r\n/g, '\n');
-const GUARD = "  if (catalogNumber >= 1 && catalogNumber <= 226) {\n" +
+const GUARD = "  if (catalogNumber >= 1 && catalogNumber <= 226 && !ORIGINAL_226_RELEASED) {\n" +
               "    return failure(event, 404, 'MEDIA_NOT_APPROVED');\n" +
               "  }\n";
-const UNLOCK = '  /* SYNTHETIC_TEST_ONLY: original-226 guard removed in VM copy */\n';
+const DECISION_FILE = path.join(ROOT, 'docs', 'generated', 'MOVEKIT_V2_OWNER_ORIGINAL226_MEDIA_RELEASE_20261114.json');
+const decision = require(DECISION_FILE);
 function replaceOnce(src, from, to, label) {
   const at = src.indexOf(from);
   assert.ok(at >= 0 && src.indexOf(from, at + 1) === -1, label + ': exactly one occurrence required');
@@ -101,28 +100,44 @@ function replaceOnce(src, from, to, label) {
   assert.equal(out.length, src.length - from.length + to.length, label + ': no other modification');
   return out;
 }
-function loadVariant(source, tag) {
-  const req = createRequire(BROKER_FILE);
+function loadVariant(source, tag, decisionOverride) {
+  const base = createRequire(BROKER_FILE);
+  const req = decisionOverride === undefined ? base : Object.assign(
+    id => (base.resolve(id) === DECISION_FILE ? decisionOverride : base(id)), { resolve: base.resolve });
   const mod = { exports: {} };
   const fn = vm.runInThisContext('(function (exports, require, module, __filename, __dirname) {' + source + '\n})',
     { filename: BROKER_FILE + '#' + tag });
   fn(mod.exports, req, mod, BROKER_FILE, path.dirname(BROKER_FILE));
   return mod.exports._internal;
 }
-const UNLOCKED_SRC = replaceOnce(SRC, GUARD, UNLOCK, 'guard');
+const UNLOCKED_SRC = SRC; // mutants are applied on top of the exact production source
 {
-  const a = SRC.split('\n'), b = UNLOCKED_SRC.split('\n'), at = a.indexOf(GUARD.split('\n')[0]);
-  eq(b.length, a.length - 2, 'exactly the 3 guard lines collapse to 1 marker line');
-  eq(b.slice(0, at), a.slice(0, at), 'every line before the guard identical');
-  eq(b.slice(at + 1), a.slice(at + 3), 'every line after the guard identical');
-  ok(!/catalogNumber <= 226/.test(UNLOCKED_SRC), 'no other original-226 branch remains in the VM copy');
-  ok(!/SYNTHETIC_TEST_ONLY|process\.env\.NODE_ENV|ORIGINAL226_MEDIA_CUTOVER/.test(SRC), 'production source has no test hook / env toggle');
+  eq(SRC.split(GUARD).length, 2, 'exactly one original-226 guard, conditional on the pinned decision');
+  eq((SRC.match(/catalogNumber <= 226/g) || []).length, 1, 'no other original-226 branch in the broker');
+  ok(SRC.indexOf(GUARD) < SRC.indexOf('await identifyUser(') && SRC.indexOf(GUARD) < SRC.indexOf('await sign('),
+    'guard precedes auth and signing');
+  ok(!/SYNTHETIC_TEST_ONLY|process\.env\.NODE_ENV|ORIGINAL226_MEDIA_CUTOVER|env\.[A-Z_]*ORIGINAL/.test(SRC),
+    'production source has no test hook / env toggle for the originals');
   ok(SRC.includes("exports.handler = event => handle(event, { env: process.env, fetch: globalThis.fetch, now: Date.now });"),
     'production handler passes no override');
+  eq([prod.ORIGINAL_226_RELEASED, prod.ORIGINAL_226_MEDIA_STATE], [true, 'OWNER_RELEASED_MEDIA'], 'shipped broker: originals released');
 }
-const unlocked = loadVariant(UNLOCKED_SRC, 'synthetic-unlocked-test-only');
-ok(unlocked !== prod && unlocked.handle !== prod.handle, 'VM copy is a separate in-memory module');
-ok(!Object.values(require.cache).some(m => m.exports && m.exports._internal === unlocked), 'VM copy is not in require.cache');
+const unlocked = prod;
+const TAMPERED = [
+  ['decision id', { ...decision, decision_id: 'TK504-20261114-OWNER-ORIGINAL226-MEDIA-X' }],
+  ['status', { ...decision, status: 'STAGED_ONLY_NOT_RELEASED' }],
+  ['scope widened', { ...decision, scope: { ...decision.scope, last_catalog_id: 'TK-000582' } }],
+  ['manifest digest', { ...decision, media_manifest: { ...decision.media_manifest, all_sha256: '0'.repeat(64) } }],
+  ['extra field', { ...decision, approved: true }],
+  ['missing record', null]
+];
+const locked = loadVariant(SRC, 'synthetic-locked-tampered-decision', TAMPERED[1][1]);
+ok(locked !== prod && locked.handle !== prod.handle, 'VM copy is a separate in-memory module');
+ok(!Object.values(require.cache).some(m => m.exports && m.exports._internal === locked), 'VM copy is not in require.cache');
+for (const [label, rec] of TAMPERED) {
+  const v = loadVariant(SRC, 'tampered-' + label.replace(/\W+/g, '-'), rec);
+  eq([v.ORIGINAL_226_RELEASED, v.ORIGINAL_226_MEDIA_STATE], [false, 'STAGED_ONLY_NOT_RELEASED'], 'tampered decision rejected: ' + label);
+}
 
 // ---------------------------------------------------------------------------
 // 3. Strict synthetic backend: validates every outgoing request the 356 path makes.
@@ -218,25 +233,25 @@ async function probes(mod, id, type) {
 
 // ---------------------------------------------------------------------------
 (async () => {
-  // 5. PRODUCTION: all 452 originals 404 with zero network, even under the most permissive env/config.
+  // 5. TAMPERED decision: all 452 originals 404 with zero network, even under the most permissive env/config.
   {
     const permissive = { ...ENV, ORIGINAL226_MEDIA_CUTOVER_ENABLED: 'true', MOVEKIT_V2_ORIGINAL_226_RELEASED: 'true' };
     let n = 0;
     for (const o of originals) {
       for (const extra of [{}, { env: permissive }, { token: TOKEN_A, now: () => NOW + 1 }]) {
-        const r = await invoke(prod, o.id, o.type, extra);
+        const r = await invoke(locked, o.id, o.type, extra);
         assert.deepEqual([r.status, r.data.error, r.calls.length, r.data.url], [404, 'MEDIA_NOT_APPROVED', 0, undefined],
-          'production ' + o.id + ' ' + o.type);
+          'tampered decision ' + o.id + ' ' + o.type);
       }
       n++;
     }
-    eq(n, 452, 'production: 452/452 original media 404 MEDIA_NOT_APPROVED, 0 outgoing requests');
-    const pf = await probes(prod, 'TK-000001', 'video');
+    eq(n, 452, 'tampered decision: 452/452 original media 404 MEDIA_NOT_APPROVED, 0 outgoing requests');
+    const pf = await probes(locked, 'TK-000001', 'video');
     ok(pf.includes('POSITIVE_200_EXACT_URL') && pf.includes('PIPELINE_AUTH_GRANT_SIGN_RECHECK'),
-      'probe set rejects the shipped (locked) broker for originals -> probes are not constant assertions');
+      'probe set rejects the locked broker for originals -> probes are not constant assertions');
   }
 
-  // 6. UNLOCKED VM copy: every original pair through the existing 356 pipeline.
+  // 6. PRODUCTION broker: every original pair through the existing 356 pipeline.
   {
     let n = 0;
     for (const o of originals) {
@@ -251,7 +266,7 @@ async function probes(mod, id, type) {
       assert.deepEqual([r.data.catalog_id, r.data.type, r.data.version, r.data.expires_in], [o.id, o.type, 'v2', 60]);
       n++;
     }
-    eq(n, 452, 'unlocked VM: 452/452 original media signed via descriptor->identifyUser->verifyEntitlement->sign->recheck');
+    eq(n, 452, 'production: 452/452 original media signed via descriptor->identifyUser->verifyEntitlement->sign->recheck');
   }
 
   // 7. Full probe set on representative originals (incl. 001 and 226, video + poster).
@@ -260,11 +275,11 @@ async function probes(mod, id, type) {
     eq(await probes(unlocked, id, type), [], 'unlocked probes ' + id + ' ' + type);
   }
 
-  // 8. 356 unchanged: real handler == VM copy (same status, body, outgoing request sequence).
+  // 8. 356 unchanged: production == locked VM copy (same status, body, outgoing request sequence).
   for (const [id, type] of [['TK-000227', 'video'], ['TK-000227', 'poster'], ['TK-000400', 'video'], ['TK-000582', 'poster']]) {
-    const a = await invoke(prod, id, type), b = await invoke(unlocked, id, type);
+    const a = await invoke(prod, id, type), b = await invoke(locked, id, type);
     eq(a.status, 200, '356 production 200 ' + id + ' ' + type);
-    eq([b.status, b.data, b.kinds], [a.status, a.data, a.kinds], '356 identical in VM copy ' + id + ' ' + type);
+    eq([b.status, b.data, b.kinds], [a.status, a.data, a.kinds], '356 identical with or without original-226 decision ' + id + ' ' + type);
     eq(b.calls.map(c => [c.url, c.opts.method, c.opts.body]), a.calls.map(c => [c.url, c.opts.method, c.opts.body]),
       '356 identical outgoing requests ' + id + ' ' + type);
     eq(await probes(prod, id, type), [], '356 production passes the same probe set ' + id + ' ' + type);
@@ -349,7 +364,7 @@ async function probes(mod, id, type) {
     }
   }
 
-  // 10. Mutation probes: a wrong broker (each one exact edit on top of the VM copy) MUST be caught.
+  // 10. Mutation probes: a wrong broker (each one exact edit on top of the production source) MUST be caught.
   const MUTANTS = [
     ['descriptor path', "bucket: mediaType === 'video' ? BUCKET : POSTER_BUCKET, path: expected.path",
       "bucket: mediaType === 'video' ? BUCKET : POSTER_BUCKET, path: expected.path.replace('/v2/', '/v1/')"],
@@ -362,7 +377,9 @@ async function probes(mod, id, type) {
     ['grant scope', "scope: 'eq.' + SCOPE,", "scope: 'eq.movekit_v1',"],
     ['digest check', 'approved.sha256 !== expected.sha256 ||', ''],
     ['grant TTL cap', 'Math.min(TTL_SECONDS, Math.floor((entitlement.expiresAt - issuedAt) / 1000))', 'TTL_SECONDS'],
-    ['URL validation', 'if (parsed.origin !== BASE || parsed.pathname !== expected ||', 'if (parsed.pathname !== expected ||']
+    ['URL validation', 'if (parsed.origin !== BASE || parsed.pathname !== expected ||', 'if (parsed.pathname !== expected ||'],
+    ['decision ignored', 'const ORIGINAL_226_RELEASED = original226.released(original226Decision) === true;',
+      'const ORIGINAL_226_RELEASED = false;']
   ];
   for (const [label, from, to] of MUTANTS) {
     const mutant = loadVariant(replaceOnce(UNLOCKED_SRC, from, to, 'mutant ' + label), 'mutant-' + label.replace(/\W+/g, '-'));
@@ -374,7 +391,7 @@ async function probes(mod, id, type) {
   eq(sha(fs.readFileSync(BROKER_FILE)), brokerBytesBefore, 'broker source bytes unchanged');
   eq(sha(fs.readFileSync(GATES_FILE)), gatesBytesBefore, 'release gates bytes unchanged');
 
-  console.log('TK504 original-226 unified broker bridge: ' + checks + ' assertions PASS; production 452/452 original 404 with 0 requests; ' +
-    'test-only VM copy (exact 1 guard removed) signs 452/452 via the existing 356 pipeline; 356 identical; ' +
+  console.log('TK504 original-226 unified broker bridge: ' + checks + ' assertions PASS; production signs 452/452 originals via the 356 pipeline; ' +
+    'tampered/missing decision (VM copy) 452/452 404 with 0 requests; 356 identical; ' +
     MUTANTS.length + '/' + MUTANTS.length + ' wrong-broker mutants caught');
 })().catch(e => { console.error(e.stack || e); process.exitCode = 1; });

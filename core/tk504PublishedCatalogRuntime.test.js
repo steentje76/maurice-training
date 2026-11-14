@@ -116,7 +116,7 @@ ok(html.includes("TK504_TYPED_FK_SESSION_RELEASE = true"),
  'catalog logging uses the typed FK route');
 ok(html.includes("TK504_PRIVATE_MEDIA_RELEASE = false")&&
    html.includes("TK504_NEW_PRIVATE_MEDIA_RELEASE = true"),
- '356-only private media does not disable original 226 video paths');
+ 'original server release remains locked while one V2 client route serves all 582 IDs');
 ok(html.includes("tk504PublishedCatalogRuntime.mount(answer,current,tkEigenaarUid)"),
  'approved response installs into the actual ECS, not a parallel UI');
 ok(html.includes("tk504InvalidateProtectedMedia();"),

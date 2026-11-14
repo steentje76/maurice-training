@@ -3059,3 +3059,26 @@ publicatiestatus op "Testing", dan publiceren ("In production"). Zie `docs/B9_H3
 Zolang de status "Testing" is, moet elke koppeling na 7 dagen opnieuw worden gelegd.
 
 **Status.** NOT VERIFIED. Niet vast te stellen zonder Console-toegang.
+
+## DEC-MEDIA-226-001 — MoveKit oorspronkelijke 226: mediavrijgave volgens de 356-methode (14 november 2026)
+
+**Besluit.** De media (226 video's + 226 posters) van `TK-000001..TK-000226` worden vrijgegeven op dezelfde manier als de
+356 (`TK504-20261105-OWNER-BATCHES-01-15`): één vastgelegd eigenaarsbesluit, waarvan de inhoud in servercode is vastgepind.
+Besluit-ID `TK504-20261114-OWNER-ORIGINAL226-MEDIA`, record
+`docs/generated/MOVEKIT_V2_OWNER_ORIGINAL226_MEDIA_RELEASE_20261114.json`, verificatie
+`core/tk504Original226MediaRelease.js` (canonieke SHA-256 `f1558675f46b3609f9d252477e22a81583fe72d4aa296c836c7ef2116e0f41a9`).
+
+**Grondslag.** Eigenaar 13 november: "Mijn akkoord voor vrijgave hierbij" (#504). Eigenaar 14 november: keuze voor de
+356-methode in plaats van de Ed25519-route met zes bewijspoorten. Het besluit is gebonden aan het 452-mediamanifest
+(`all_sha256` `8492f2c1…`) en aan de controle van de tien batchrapporten (452/452 consistent; zelf gerapporteerde
+samenvattingen, geen ondertekend cloud-attest).
+
+**Gevolg.** `exercise-media-v2-url` signeert de 226 via exact het 356-pad: descriptor → inloggen → actieve
+`movekit_v2`-grant → ondertekende URL van max. 60 s → grant opnieuw gecontroleerd. Zonder geldig record blijft het
+`404 MEDIA_NOT_APPROVED` vóór elke netwerkaanroep. De Ed25519-poort (`tools/tk614_original226_media_eligibility.cjs`)
+blijft code-only en ongeladen; die route vervalt voor deze mediavrijgave.
+
+**Buiten dit besluit.** Cataloguspublicaties en FK-activatie voor de 226 (fase 2), accountgrants, verwijderen van de
+openbare `videos/`-route en de service-workercache, Android-release.
+
+**Status.** IMPLEMENTED in draft PR, niet gemerged. Afspelen zonder toestel- en productiebewijs: NOT VERIFIED.

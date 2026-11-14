@@ -3125,3 +3125,17 @@ openbare `videos/`-route en de service-workercache, Android-release.
 **Waarom niet direct verhuizen naar MoveKit-ID's.** Loggen op een MoveKit-ID vereist nu online verificatie (#603); MoveKit-historie heeft nog geen PR/1RM/piekdoel en programma's rekenen er niet mee. Direct verhuizen zou offline loggen van de hoofdliften breken. Dat lost fase 2 op.
 
 **Status.** Code gemerged (#634, #635). Op 14 november na expliciete go van de eigenaar uitgevoerd op productie; alle controles geslaagd (98 koppelingen, 18 samengevoegd, 10 race verborgen, 193 eigen sessies behouden).
+
+## DEC-OFFLINE-CAT-001 — Fase 2a: offline loggen op MoveKit-oefeningen (14 november 2026)
+
+**Besluit (eigenaar, 14 november).** Offline loggen is verplicht voor alle oefeningen, ook MoveKit-oefeningen die niet aan een eigen oefening gekoppeld zijn.
+
+**Wijziging t.o.v. #603.** #603 zette een getypeerde sessie (TKC-FK) nooit in de offline-wachtrij: de binding gold alleen voor één online write. Dat vervalt:
+- De app bewaart per eigenaar de lijst van vrijgegeven bindingen (nieuwe alleen-lezende RPC `tk504_released_catalog_fks()`, alleen actief + gereviewd, alleen ingelogd; de bindingentabel zelf blijft onleesbaar).
+- Offline, of bij een netwerkfout tijdens de controle, geldt die lijst. Een serverantwoord "niet vrijgegeven" is altijd leidend.
+- Een getypeerde sessie gaat bij offline/netwerkfout/tijdelijke serverfout in de bestaande eigenaar-gebonden wachtrij, met dezelfde UUID en de TKC-FK. Nooit onder een andere eigenaar.
+- Bij het synchroniseren controleert `tk504_typed_session_fk_guard` de vrijgave opnieuw. Een geweigerde rij blijft zichtbaar in de wachtrij; er gaat niets verloren.
+
+**Wat niet verandert.** Geen persoonlijke FK-shadow, geen naam/ID-upgrade naar een catalogusbron, server blijft enige autoriteit. Zonder lijst blijft het oude fail-closed gedrag (los: duurzame draft).
+
+**Open.** De oorspronkelijke 226 hebben nog geen actieve binding en zijn dus ook online niet loggbaar. Vrijgave verloopt via de bestaande ondertekende procedure (`tools/tk614_original226_admin_release.cjs`, fase B, eigenaarshandtekening + DBA), niet via deze sprint.

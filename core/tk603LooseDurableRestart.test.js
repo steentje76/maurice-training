@@ -58,19 +58,24 @@ function world({memory=new Map(),server=new Map(),typed=true,personal=false}={})
 }
 let n=0;function ok(v,label){assert(v,label);n++;}
 (async()=>{
+ // DEC-OFFLINE-CAT-001 (fase 2a): een verloren ACK zet de getypeerde rij met DEZELFDE id in de
+ // eigenaar-gebonden wachtrij (idempotente replay); de lokale los-draft is dan veilig vervangen.
  let w=world(),button={disabled:false};w.st.mode='lost-ack';
  await w.c.saveLosOefening(button);
- ok(w.server.size===1&&w.memory.has(KEY),'lost ACK leaves a committed row and durable pending data');
+ ok(w.server.size===1&&w.st.queue===1&&!w.memory.has(KEY),'lost ACK: committed row + same-id queue item, draft replaced by the durable queue');
+ ok(w.st.uuid===1&&w.st.requests.length===1,'the real loose save generates exactly one UUID');
+ // Herstart-scenario: een draft die blijft staan (offline zonder vrijgavelijst) wordt na herstart hervat.
+ w=world();w.st.online=false;await w.c.saveLosOefening(button);
+ ok(w.memory.has(KEY)&&w.st.requests.length===0&&w.st.queue===0&&!button.disabled,'offline without release list keeps a durable draft and permits retry');
  const pending=JSON.parse(w.memory.get(KEY)),original=w.memory.get(KEY);
- ok(pending.row.id===w.st.requests[0].id&&w.st.uuid===1,'the real loose save persists its generated UUID before POST');
- ok(w.st.queue===0&&w.st.cleanup===0&&!button.disabled,'typed ACK loss is not queued or cleaned and permits retry');
+ ok(w.st.uuid===1&&typeof pending.row.id==='string','the real loose save persists its generated UUID before any network authority');
  // New VM: no live source, UUID counter, pending pointer or binding survives.
  const resumed=world({memory:w.memory,server:w.server});resumed.c.losSelectedExId=null;resumed.c.losCurEx=null;
  await resumed.c.openLosOefening();
  ok(resumed.st.prompts===1&&resumed.c.losSelectedExId===pending.selected_id,'actual open caller offers and restores same-owner pending attempt');
  resumed.st.sets=[{kg:999,effKg:999,reps:1,rpe:10}];
  await resumed.c.saveLosOefening({disabled:false});
- ok(resumed.server.size===1&&!resumed.memory.has(KEY),'restart and retry confirms one existing row and clears only confirmed draft');
+ ok(resumed.server.size===1&&!resumed.memory.has(KEY),'restart and retry confirms one row and clears only the confirmed draft');
  ok(resumed.st.requests[0].id===pending.row.id&&resumed.st.requests[0].weight===42.5&&resumed.st.requests[0].reps===8,'fresh VM replays original UUID and frozen payload despite changed inputs');
  ok(resumed.st.uuid===0&&resumed.st.rpcs===1,'restart reauthorizes but never generates another UUID');
  w=world();w.memory.set('tk_draft_training','normal sentinel');w.c.curT='normal-active';w.st.mode='lost-ack';
@@ -92,7 +97,7 @@ let n=0;function ok(v,label){assert(v,label);n++;}
  ok(w.st.rpcs===0&&!w.memory.has(KEY)&&w.st.requests[0].exercise_id===canonical.catalog_id,'personal same-ID exercise stays on legacy route');
  w=world({typed:false});await w.c.saveLosOefening({disabled:false});
  ok(w.st.rpcs===0&&!w.memory.has(KEY)&&w.st.requests[0].exercise_id===canonical.catalog_id,'release-off route keeps original legacy FK');
- w=world();w.st.mode='lost-ack';await w.c.saveLosOefening({disabled:false});
+ w=world();w.st.online=false;await w.c.saveLosOefening({disabled:false});
  const tampered=JSON.parse(w.memory.get(KEY));tampered.source_ref.provider_id='tampered';w.memory.set(KEY,JSON.stringify(tampered));
  const invalid=world({memory:w.memory});invalid.c.losSelectedExId=null;invalid.st.answers=[true,false];await invalid.c.openLosOefening();
  ok(invalid.st.requests.length===0&&invalid.memory.has(KEY)&&invalid.c.losSelectedExId===null,'invalid persisted provenance is blocked without personal fallback or deletion');
@@ -104,7 +109,7 @@ let n=0;function ok(v,label){assert(v,label);n++;}
  ok(w.server.size===1,'overlapping saves create one UUID/row');
 
  // Review B1: pending state has a real, immutable summary and no editable body.
- w=world();w.st.mode='lost-ack';await w.c.saveLosOefening({disabled:false});
+ w=world();w.st.online=false;await w.c.saveLosOefening({disabled:false});
  const text=w.elements['los-body'].textContent;
  ok(text.includes('42.5')&&text.includes('Herhalingen: 8')&&w.elements['los-wu-count'].disabled,'pending summary shows the actual saved row and disables external warm-up control');
  w.elements['los-wu-count'].value='99';w.c.onLosWuChange();await w.c.renderLosBody(w.ex);
@@ -138,7 +143,7 @@ let n=0;function ok(v,label){assert(v,label);n++;}
  ok(w.server.size===1&&w.memory.has(KEY)&&w.st.toasts.some(t=>t.includes('Bevestiging')),'remove failure after real confirmation retains exact attempt and gives an honest retry message');
  const competing=world({memory:new Map([[KEY,original]])});await competing.c.saveLosOefening({disabled:false});
  ok(competing.st.requests.length===0&&competing.memory.get(KEY)===original,'existing same-source entry from another tab is never silently substituted for fresh inputs');
- w=world();w.st.mode='lost-ack';await w.c.saveLosOefening({disabled:false});
+ w=world();w.st.online=false;await w.c.saveLosOefening({disabled:false});
  w.c.CACHE_OWNER_KEY='tk_cache_owner_uid';
  const listStart=html.indexOf('const PERSONAL_CACHE_KEYS=[')+'const PERSONAL_CACHE_KEYS=['.length; const keyList=html.slice(listStart,html.indexOf('];',listStart));
  // Load the actual key list and actual wipe, not a duplicated key fixture.
@@ -153,12 +158,12 @@ let n=0;function ok(v,label){assert(v,label);n++;}
   w.c.CACHE_OWNER_KEY='tk_cache_owner_uid';w.c.window={};
   w.c.clearAuthSession=()=>{w.st.owner=null;};
  }
- w=world();w.st.mode='lost-ack';await w.c.saveLosOefening({disabled:false});loadLogout(w);
+ w=world();w.st.online=false;await w.c.saveLosOefening({disabled:false});loadLogout(w);
  w.st.mode='ok';w.st.answers=[false];await w.c.authSignOut();
  ok(w.st.lastQuestion.includes('Uitloggen verwijdert')&&w.st.owner==='A'&&w.memory.has(KEY),'logout explicitly warns that pending data is discarded; cancel retains it');
  w.st.answers=[true];await w.c.authSignOut();
  ok(w.st.owner===null&&!w.memory.has(KEY)&&w.c.tk603LosPending===null,'confirmed warned logout clears private disk and memory state');
- w=world();w.st.mode='lost-ack';await w.c.saveLosOefening({disabled:false});loadLogout(w);
+ w=world();w.st.online=false;await w.c.saveLosOefening({disabled:false});loadLogout(w);
  w.st.mode='confirm-owner';await w.c.authSignOut();
  ok(w.st.owner==='B'&&w.memory.has(KEY),'an old logout dialog cannot sign out or clear the next owner');
  // Key is part of actual logout/account-switch cache wipe contract.

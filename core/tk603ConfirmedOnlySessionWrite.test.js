@@ -1,6 +1,8 @@
 'use strict';
-// #603 typed session write: a post-verification network failure must NEVER
-// silently enqueue a reserved FK for another owner, revoked binding or later replay.
+// #603 typed session write — bijgewerkt voor DEC-OFFLINE-CAT-001 (fase 2a, 14 november 2026):
+// offline / netwerkfout / tijdelijke serverfout zet de getypeerde rij in de EIGENAAR-GEBONDEN
+// wachtrij (de database controleert de vrijgave opnieuw bij het synchroniseren). Nooit voor een
+// andere eigenaar; een definitieve weigering (403) wordt niet gequeued.
 // Real sbPostQ() and actual writeSessionRow() extracted from index.html.
 // No DB, no user data; synthetic HTTP and accounts only.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
@@ -69,21 +71,27 @@ async function write(w,typed=true){
  ok(w.row.exercise_id==='TK-000038'&&w.row.note==='my existing note',
    'original UI row and note remain untouched');
  w=sandbox({online:false});o=await write(w);
- ok(o.result===false&&o.opts.status==='failed','OFFLINE typed row is NOT a successful save');
- ok(w.state.queue.length===0&&w.state.calls.length===0,
-   'OFFLINE typed row cannot be queued or sent');
+ ok(o.result===true&&o.opts.status==='queued','OFFLINE typed row is safely queued');
+ ok(w.state.queue.length===1&&w.state.calls.length===0&&w.state.queue[0].body.exercise_id==='TKC-000038'&&
+    w.state.queue[0].body.id===w.row.id,'OFFLINE typed row queued with TKC FK and the same idempotency id, not sent');
  w=sandbox({online:false});o=await write(w,false);
  ok(o.result===true&&o.opts.status==='queued'&&w.state.queue.length===1,
    'legacy loose session still uses old offline queue');
  w=sandbox({dependent:true});o=await write(w);
- ok(o.result===false&&o.opts.status==='failed'&&w.state.queue.length===0,
-   'dependent legacy exercise in offline FIFO does not allow typed FK replay');
+ ok(o.result===true&&o.opts.status==='queued'&&w.state.queue.length===1,
+   'dependent row waits behind its parent in the FIFO queue');
  w=sandbox({mode:'throw'});o=await write(w);
- ok(o.result===false&&o.opts.status==='failed'&&w.state.queue.length===0,
-   'lost HTTP response cannot queue typed alias');
+ ok(o.result===true&&o.opts.status==='queued'&&w.state.queue.length===1,
+   'lost HTTP response queues the typed row (same id: idempotent replay)');
  w=sandbox({mode:'500'});o=await write(w);
- ok(o.result===false&&o.opts.status==='failed'&&w.state.queue.length===0,
-   '500 does not queue typed alias for future replay');
+ ok(o.result===true&&o.opts.status==='queued'&&w.state.queue.length===1,
+   '500 queues the typed row for replay (server re-validates)');
+ w=sandbox({online:false,owner:'synthetic-A'});w.state.owner='synthetic-A';
+ { const opts={tk504_binding:{...w.binding,owner_uid:'synthetic-A'}};
+   w.state.owner='synthetic-B';
+   const r=await w.s.sbPostQ('sessions',{id:'x',exercise_id:'TKC-000038'},opts);
+   ok(r===false&&opts.status==='failed'&&opts.reden==='account'&&w.state.queue.length===0,
+     'a binding of owner A is never queued while owner B is active'); }
  w=sandbox({mode:'403'});o=await write(w);
  ok(o.result===false&&o.opts.status==='rejected'&&w.state.queue.length===0,
    '403 is denied and cannot queue');

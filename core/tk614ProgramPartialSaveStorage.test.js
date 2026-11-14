@@ -145,7 +145,7 @@ function makeWorld() {
     tkC2IsLoggableSummary: UNDEF, tkC2Converter: UNDEF, tkC2SessionRowFromLog: UNDEF,
     tkErgProtocolProjectionFor: UNDEF, tkErgProtocolInstanceId: UNDEF, tkC2ExecutionCleanup: UNDEF,
     tkSetEvidence: UNDEF, CalcCore: UNDEF, tkProductTelemetry: UNDEF, invalidateExPickerPool: UNDEF,
-    tkExLinkIsMerged: UNDEF, tkExLinkAlias: UNDEF // DEC-EXLINK-001: typeof-gegate koppelhooks, hier afwezig
+    tkExLinkIsMerged: UNDEF, tkExLinkAlias: UNDEF, tk504ReleasedFkRemember: UNDEF, tk504OfflineBindingFor: UNDEF // DEC-EXLINK-001: typeof-gegate koppelhooks, hier afwezig
   };
   const proxy = new Proxy(env, {
     has: () => true,
@@ -285,20 +285,24 @@ const LEGACY_LOGGED = ['bench_press', 'squat', 'shoulder_press', 'seated_cable_r
   ok(w4.st.toasts.some(t => /offline opgeslagen/.test(t)) && !w4.st.toasts.some(t => /^7 oefeningen opgeslagen/.test(t)),
      '[RED#614] status: retry claimt geen serverbevestiging voor de nog gequeuede rij');
 
-  // ===== 7. Getypeerde write faalt na geldige binding: niet gequeued, zelfde UUID bij retry ===
+  // ===== 7. Getypeerde write: netwerkfout na geldige binding -> eigenaar-gebonden wachtrij =====
+  // DEC-OFFLINE-CAT-001 (fase 2a, vervangt "nooit in de wachtrij"): de rij gaat met dezelfde UUID
+  // en TKC-FK in de wachtrij; de database controleert de vrijgave opnieuw bij het synchroniseren.
   const w5 = makeWorld(); await startProgram(w5); w5.st.binding = 'ok';
   w5.st.fetchRule = (table, body) => (table === 'sessions' && /^TKC-/.test(body.exercise_id) ? 'throw' : 'ok');
   await w5.api.finishSession();
   const firstTyped = sessionPosts(w5).filter(p => /^TKC-/.test(p.body.exercise_id)).map(p => p.body.exercise_id + '|' + p.body.id);
   eq(firstTyped.length, 2, 'typed fail: beide getypeerde writes geprobeerd');
-  eq(w5.st.queue.length, 0, 'typed fail: verlopen serverautoriteit nooit in offline-wachtrij');
-  ok(/^5 opgeslagen, 2 mislukt/.test(w5.st.toasts[0] || ''), 'typed fail: eerlijk gedeeltelijk');
+  const queuedTyped = w5.st.queue.filter(q => /^TKC-/.test(String(q.body && q.body.exercise_id))).map(q => q.body.exercise_id + '|' + q.body.id);
+  ok(queuedTyped.length === 2 && queuedTyped.every(k => firstTyped.includes(k)), 'typed fail: beide rijen in de wachtrij met TKC-FK en dezelfde UUID');
+  ok(/offline opgeslagen/.test(w5.st.toasts[0] || '') && !/mislukt/.test(w5.st.toasts[0] || ''),
+     'typed fail: bestaande wachtrijmelding, niets mislukt (zelfde melding als bij gewone oefeningen); kreeg: ' + (w5.st.toasts[0] || ''));
   w5.st.fetchRule = null; w5.env.finishSessionBezig = false; w5.env._finishSessionContext = null;
   const b5 = sessionPosts(w5).length;
   await w5.api.finishSession();
-  const secondTyped = sessionPosts(w5).slice(b5).map(p => p.body.exercise_id + '|' + p.body.id);
-  ok(secondTyped.length === 2 && secondTyped.every(k => firstTyped.includes(k)), 'typed retry: exact dezelfde UUID per rij (geen tweede workout)');
-  eq(w5.st.rows.size, 7, 'typed retry: 7 unieke rijen');
+  eq(sessionPosts(w5).slice(b5).filter(p => /^TKC-/.test(p.body.exercise_id)).length, 0, 'typed retry: gequeuede rijen niet opnieuw verstuurd (geen tweede workout)');
+  eq(w5.st.queue.length, 2, 'typed retry: geen extra wachtrij-items');
+  eq(w5.st.rows.size + w5.st.queue.length, 7, 'typed: 5 bevestigd + 2 in wachtrij = 7 unieke rijen');
 
   // ===== 8. Losse catalogusregistratie Machine Pec Fly 3x15x40 RPE5 ============================
   const w6 = makeWorld(); w6.st.binding = 'missing';

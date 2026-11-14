@@ -70,6 +70,14 @@ android {
         // V2 media route for all 582 (#628). Own applicationId, installs next to every other app.
         // v2 (14 november 2026): eigen oefeningen op naam via de beveiligde MoveKit-route
         // (beeld + video). Eigen applicationId: installeert naast "TK Test 14 november".
+        // v3 (14 november 2026): fase 2a — offline loggen op MoveKit-oefeningen (#637).
+        // Eigen applicationId: installeert naast "TK Test 14 nov v2".
+        tktest1114c {
+            initWith debug
+            applicationIdSuffix ".tktest20261114c"
+            versionNameSuffix "-tktest20261114c"
+            matchingFallbacks = ['debug']
+        }
         tktest1114b {
             initWith debug
             applicationIdSuffix ".tktest20261114b"

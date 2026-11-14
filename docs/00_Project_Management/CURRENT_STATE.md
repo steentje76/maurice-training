@@ -26,10 +26,11 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Code in main (#634, #635). Migratie `20261114180000_tk_exercise_catalog_links.sql` en `tools/tk-exlink-fase1/apply.sql` op 14 november uitgevoerd op productie (eigenaarsakkoord), in één transactie; alle controles geslaagd. Nacontrole: 98 koppelingen (18 samengevoegd, 10 race verborgen), 193 eigen sessies ongewijzigd, 0 sessies op samengevoegde id's, 18 eigen oefeningen inactief, geen koppelingen van andere accounts. Back-up `bak_tkx20261114_*` (o.a. 11 sessies, 34 programmaregels, 97 trainingssnapshots). Terugdraaien: `reverse.sql`.
 - Nieuwe weergave zichtbaar in de webapp; de test-APK's tonen hem pas na een nieuwe build.
 
-## Offline loggen op MoveKit-oefeningen, fase 2a (draft, 14 november 2026)
+## Offline loggen op MoveKit-oefeningen, fase 2a (live en geaccepteerd, 14 november 2026)
 
 - Besluit DEC-OFFLINE-CAT-001: getypeerde sessies (TKC-FK) gaan offline in de eigenaar-gebonden wachtrij; de app gebruikt een per-eigenaar vrijgavelijst; de database controleert bij het synchroniseren opnieuw.
-- Migratie `20261114200000_tk504_released_catalog_fks_rpc.sql` (alleen-lezende RPC): nog niet toegepast.
+- Code in main (#637). Migratie `20261114200000_tk504_released_catalog_fks_rpc.sql` toegepast op 14 november (anon geen toegang, 356 vrijgegeven).
+- Toestelacceptatie TK Test 14 nov v3 (`tktest20261114c-a039809e4`) in vliegtuigmodus: Decline Machine Chest Press offline gelogd en na synchronisatie opgeslagen als `TKC-000305` (eerste sessie op een MoveKit-ID); Farmer Carry (eigen, gekoppeld) offline gelogd en opgeslagen.
 - De 356 nieuwe MoveKit-oefeningen zijn hiermee offline loggbaar. De oorspronkelijke 226 vereisen eerst de ondertekende vrijgave (fase B) — ook online nog niet loggbaar.
 - Vóór uitvoering: app online en gesynchroniseerd (lege wachtrij). Een achterblijver wordt door een herhaalde run alsnog omgezet.
 - Volgende fasen: 2 app klaar voor MoveKit-ID's (offline loggen, PR/1RM/piekdoel, programma's), 3 data verhuizen in porties, 4 opruimen.

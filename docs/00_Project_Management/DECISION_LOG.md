@@ -3138,4 +3138,6 @@ openbare `videos/`-route en de service-workercache, Android-release.
 
 **Wat niet verandert.** Geen persoonlijke FK-shadow, geen naam/ID-upgrade naar een catalogusbron, server blijft enige autoriteit. Zonder lijst blijft het oude fail-closed gedrag (los: duurzame draft).
 
+**Status.** Gemerged (#637), RPC toegepast, op 14 november op het toestel geaccepteerd (offline gelogde MoveKit-oefening opgeslagen als TKC-000305).
+
 **Open.** De oorspronkelijke 226 hebben nog geen actieve binding en zijn dus ook online niet loggbaar. Vrijgave verloopt via de bestaande ondertekende procedure (`tools/tk614_original226_admin_release.cjs`, fase B, eigenaarshandtekening + DBA), niet via deze sprint.

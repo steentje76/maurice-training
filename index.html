@@ -20587,6 +20587,9 @@ function applyExecutionFocus(t){
     var _hasVid=(_media.kind==='mp4'||_media.kind==='private-mp4'||_media.kind==='yt');
     var _thumb=(_media.kind==='yt')?('https://img.youtube.com/vi/'+_media.src+'/mqdefault.jpg'):(_hp||null);
     if(_thumb) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_thumb+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'">'+(_hasVid?'<span class="exfocus-hero-play">▶</span>':'')+'</div>';
+    // TK504: beveiligde media heeft geen publieke thumbnail; toon de beveiligd ondertekende poster.
+    var _privPoster=(!_thumb&&_media.kind==='private-mp4'&&/^TK-\d{6}$/.test(_media.catalogId||''))?_media.catalogId:null;
+    if(_privPoster) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img class="tk504-video-poster" data-aid="'+_privPoster+'" alt="'+escHtml(nm)+'" loading="lazy"><span class="exfocus-hero-play">▶</span></div>';
     hc+='<div class="exfocus-hero-body">'+
         (tags.length?('<div class="exfocus-hero-tags">'+tags.map(x=>'<span class="exfocus-hero-tag">'+escHtml(x)+'</span>').join('')+'</div>'):'')+
         '<div class="exfocus-hero-nm">'+escHtml(nm)+'</div>'+
@@ -20598,6 +20601,7 @@ function applyExecutionFocus(t){
         '</div>'+
       '</div>';
     heroC.innerHTML=hc; head.insertAdjacentElement('afterend',heroC);
+    if(_privPoster&&typeof tk504QueuePrivateVideoPosters==='function')tk504QueuePrivateVideoPosters();
   }catch(e){}
   // POSTER/MEDIA-DEDUP (focus-mode): de hero-kaart is nu de ENIGE primaire media-zone. Verberg daarom in
   // de actieve kaart de dubbele media: de body-poster/video (buildVideoMuscle .vid-wrap/.vid-optional) én
@@ -22494,14 +22498,23 @@ function _libBindCmp(){
 // F20-C/E: resolve de MoveKit-poster maximaal — eerst op id (bestaand pad), anders via
 // naam → MovementCore-slug → catalog_id. Read-only, ge-guard; geeft alleen een echte poster
 // terug (nooit fake). Zo tonen ook TK-id/naam-oefeningen hun bewegingsbeeld.
+// TK504: gecureerde naam → MoveKit-catalogus-ID. MovementCore is de ENIGE mapping-bron (zelfde
+// lookup als movekitIntelFor); alleen een echt MoveKit-catalogusitem telt. Nooit op basis van een id.
+function movekitCatalogIdForName(naam){
+  try{
+    if(!naam || typeof MovementCore==='undefined' || typeof ExerciseCatalogService==='undefined') return null;
+    const slug=MovementCore.slugForName(naam);
+    if(!slug) return null;
+    const ent=ExerciseCatalogService.all().find(c=>(c.assets||[]).some(a=>a.ref===slug));
+    return (ent && ent.source && ent.source.provider==='movekit' && /^TK-\d{6}$/.test(ent.catalog_id||'')) ? ent.catalog_id : null;
+  }catch(e){ return null; }
+}
 function movekitPosterFor(ex){
   try{
     if(!ex || typeof ExerciseAssetProvider==='undefined' || !ExerciseAssetProvider.poster) return null;
     if(ex.id){ const p=ExerciseAssetProvider.poster(ex.id); if(p) return p; }
-    if(ex.naam && typeof MovementCore!=='undefined' && typeof ExerciseCatalogService!=='undefined'){
-      const slug=MovementCore.slugForName(ex.naam);
-      if(slug){ const ent=ExerciseCatalogService.all().find(c=>(c.assets||[]).some(a=>a.ref===slug)); if(ent) return ExerciseAssetProvider.poster(ent.catalog_id); }
-    }
+    const cid=movekitCatalogIdForName(ex.naam);
+    if(cid) return ExerciseAssetProvider.poster(cid);
   }catch(e){}
   return null;
 }
@@ -27246,6 +27259,20 @@ function resolveExerciseMedia(ex){
     }
     // Never leak an old public MoveKit asset as the private route's fallback.
     if(typeof mp4==='string'&&/(?:^|\/)videos\/[a-z0-9_.-]+\.mp4(?:$|\?)/i.test(mp4))mp4=null;
+  }
+  // TK504: eigen/legacy oefening ZONDER eigen catalogus- of bronidentiteit, gekoppeld op naam via de
+  // gecureerde MovementCore-mapping (zelfde bron als poster/cues) → dezelfde beveiligde route.
+  // Een (TK-vormig) id autoriseert nooit; een rij met een eigen canonieke/bron-claim valt hierbuiten.
+  if(!mp4&&!cid&&!ex.source&&typeof tk504PrivateEnabled==='function'&&typeof movekitCatalogIdForName==='function'){
+    const nameCid=movekitCatalogIdForName(ex.naam||ex.name||null);
+    if(nameCid&&tk504PrivateEnabled(nameCid)){
+      const row=ExerciseCatalogService.byId(nameCid);
+      if(row&&row.source&&row.source.provider==='movekit'
+         &&(ExerciseAssetProvider.hasVideo(nameCid)||Number(nameCid.slice(3))>=227)){
+        return {type:'movekit',kind:'private-mp4',catalogId:nameCid,source:'movekit',
+          available:true,poster:null,provenance:{provider:'movekit',method:'private',binding:'name_alias'}};
+      }
+    }
   }
   // Contract: { type, kind(back-compat), src, source, available, provenance, poster }
   if(mp4)    return { type:'movekit', kind:'mp4',    src:mp4,    source:'movekit', available:true,  provenance:{provider:'movekit', method:'local'},  poster:poster };

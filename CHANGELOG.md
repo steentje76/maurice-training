@@ -1,5 +1,16 @@
 # Trainingskompas — Changelog
 
+## v4.70.27 — Eigen oefeningen op naam via de beveiligde MoveKit-route (14 november 2026)
+
+- **Probleem (gemeld in de app "TK Test 14 november").** Bij de oude oefeningen ontbraken het beeld en de video, zowel bij de losse oefening als in trainingen. Oorzaak: sinds #628 zijn alle 582 catalogus-ID's privé, dus de openbare route geeft voor de 226 geen poster of video meer. Eigen oefeningen ("Bench Press", "Goblet Squat") hebben geen catalogus-ID; de beveiligde route accepteerde alleen catalogus-ID's. Van de 103 eigen oefeningen van de eigenaar verloren er 44 hun bewegingsbeeld (de oude APK toonde een poster).
+- **Oplossing.**
+  - `resolveExerciseMedia`: een eigen oefening zonder eigen catalogus- of bronidentiteit wordt via de gecureerde MovementCore-naamkoppeling (dezelfde bron als poster en coach-cues) gekoppeld aan het MoveKit-catalogusitem. Daarna gaat hij via dezelfde beveiligde route (`private-mp4`, herkomst `name_alias`). Inloggen en een grant blijven verplicht. Een TK-vormig id autoriseert nooit, en een rij met een eigen canonieke of bron-claim wordt nooit op naam gekoppeld.
+  - Nieuwe helper `movekitCatalogIdForName`, die `movekitPosterFor` ook gebruikt (één mapping-bron).
+  - Hero-kaart in de training: bij beveiligde media wordt de beveiligd ondertekende poster getoond (`tk504-video-poster`).
+- **Resultaat (echte browser, 103 eigen namen).** 44/44 gekoppelde eigen oefeningen krijgen beeld + video via de beveiligde route (de oude APK had beeld zonder video). Coach-cues ongewijzigd (44).
+- **Test.** Nieuw `core/tk504NameAliasPrivateMedia.test.js` (33): rood op `main`, groen na de fix. Sabotage van de identiteitscontrole en van de catalogustoets wordt opgevangen.
+- **Android.** Testvariant `com.trainingskompas.app.tktest20261114b` ("TK Test 14 nov v2"), naast de andere test-apps.
+
 ## v4.70.27 — #612 bijgewerkt met main: gebruikerstestfixes + één beveiligde videoroute (14 november 2026)
 
 - **Integratie.** `main` (`7088bda`, incl. #628 en de TK504/TK614-media-/catalogusketen #619–#633) samengevoegd in #612 (#587-fixes: decimalen, programma-uitvoering, extra sets, hervatten, logging, PM5-resultaten en gemeten splits).

@@ -68,6 +68,14 @@ android {
         }
         // Integration test candidate 14 november 2026: #612 (#587 fixes) + main incl. one secure
         // V2 media route for all 582 (#628). Own applicationId, installs next to every other app.
+        // v2 (14 november 2026): eigen oefeningen op naam via de beveiligde MoveKit-route
+        // (beeld + video). Eigen applicationId: installeert naast "TK Test 14 november".
+        tktest1114b {
+            initWith debug
+            applicationIdSuffix ".tktest20261114b"
+            versionNameSuffix "-tktest20261114b"
+            matchingFallbacks = ['debug']
+        }
         tktest1114 {
             initWith debug
             applicationIdSuffix ".tktest20261114"

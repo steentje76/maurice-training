@@ -1,7 +1,8 @@
 name: TK587 integration — verification and isolated test APK
 
 # Isolated Android test candidate for the #587 x MoveKit integration (7 November 2026),
-# updated 14 November 2026 to variant tktest1114 ("TK Test 14 november", #612 + main incl. #628).
+# updated 14 November 2026 to variant tktest1114 ("TK Test 14 november", #612 + main incl. #628)
+# and to tktest1114b ("TK Test 14 nov v2", own exercises via the protected MoveKit route).
 # PO authorisation: exactly one test APK after the repair and safety tests; NOT a production
 # update, NOT a replacement of the installed app. The APK is built from the exact PR head
 # commit, only after the full regression is green, and is published as a GitHub prerelease
@@ -20,11 +21,11 @@ concurrency:
 
 env:
   TK_BRANCH: integration/tk587-main-20261107
-  TK_PKG: com.trainingskompas.app.tktest20261114
-  TK_LABEL: TK Test 14 november
-  TK_VARIANT: tktest1114
-  TK_SUFFIX: tktest20261114
-  TK_SHORT: tktest14nov
+  TK_PKG: com.trainingskompas.app.tktest20261114b
+  TK_LABEL: TK Test 14 nov v2
+  TK_VARIANT: tktest1114b
+  TK_SUFFIX: tktest20261114b
+  TK_SHORT: tktest14novb
 
 jobs:
   regression:
@@ -122,7 +123,7 @@ jobs:
       - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - run: npm ci && npm run cap:sync
       - name: Build only the isolated test variant
-        run: chmod +x android/gradlew && cd android && ./gradlew assembleTktest1114 --no-daemon
+        run: chmod +x android/gradlew && cd android && ./gradlew assembleTktest1114b --no-daemon
       - name: Verify package, label, version, signing, embedded sources, secrets and checksum
         id: provenance
         shell: bash

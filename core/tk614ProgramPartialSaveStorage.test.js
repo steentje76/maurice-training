@@ -144,7 +144,8 @@ function makeWorld() {
     TKWeather: UNDEF, tkC2DiagFinishCalled: UNDEF, tkC2DiagFinishEx: UNDEF, tkC2DiagFinishPath: UNDEF,
     tkC2IsLoggableSummary: UNDEF, tkC2Converter: UNDEF, tkC2SessionRowFromLog: UNDEF,
     tkErgProtocolProjectionFor: UNDEF, tkErgProtocolInstanceId: UNDEF, tkC2ExecutionCleanup: UNDEF,
-    tkSetEvidence: UNDEF, CalcCore: UNDEF, tkProductTelemetry: UNDEF, invalidateExPickerPool: UNDEF
+    tkSetEvidence: UNDEF, CalcCore: UNDEF, tkProductTelemetry: UNDEF, invalidateExPickerPool: UNDEF,
+    tkExLinkIsMerged: UNDEF, tkExLinkAlias: UNDEF // DEC-EXLINK-001: typeof-gegate koppelhooks, hier afwezig
   };
   const proxy = new Proxy(env, {
     has: () => true,

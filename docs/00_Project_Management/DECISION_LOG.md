@@ -3106,3 +3106,22 @@ openbare `videos/`-route en de service-workercache, Android-release.
 **Grenzen.** Een (TK-vormig) id autoriseert nooit. Een rij met een eigen `canonicalId`/`catalog_id` of een `source`-claim wordt niet op naam gekoppeld (#603 en de provider-mismatch-regel blijven gelden). Een expliciete eigen video gaat voor. MovementCore is de enige mapping-bron.
 
 **Aanleiding.** Een regressie na #628: 44 van de 103 eigen oefeningen van de eigenaar verloren hun bewegingsbeeld.
+
+## DEC-EXLINK-001 — Fase 1: eigen oefeningen worden de MoveKit-oefening (koppelen + samenvoegen) (14 november 2026)
+
+**Besluit (eigenaar, 14 november).** De 98 eigen oefeningen die bij een MoveKit-oefening horen, komen niet naast de catalogus maar vervangen de dubbele catalogustegel. Logging blijft behouden. Gefaseerd: fase 1 koppelen + samenvoegen, fase 2 app klaar voor MoveKit-ID's, fase 3 data verhuizen naar MoveKit-ID's in porties, fase 4 opruimen. Keuzes eigenaar: "Alle 98", varianten samenvoegen, bij samenvoegen de hoogste waarde per veld (PR, 1RM, piekdoel), records van 1 november alleen ID omzetten.
+
+**Fase 1, uitvoering.**
+- Nieuwe tabel `exercise_catalog_links` (owner-only RLS): per eigenaar per eigen oefening het MoveKit-item (`catalog_id`), optioneel `merged_into` (samengevoegd) of `hidden` (vast race-onderdeel).
+- App: een gekoppelde eigen oefening toont MoveKit-naam, beveiligde video en uitleg; de dubbele catalogustegel verdwijnt uit de kieslijst. Samengevoegde oefeningen worden verborgen; schrijven naar een samengevoegde id landt op het doel. Data blijft op het eigen record: offline loggen, PR, programma's werken ongewijzigd.
+- Data (eenmalig script, alleen de eigenaar): 18 oefeningen samengevoegd in hun doel (sessies, programmaregels, vaste/eigen trainingen, doelen, uitrusting, favorieten, snapshots), samengevoegde eigen oefeningen op inactief (niet verwijderd), 98 koppelingen. Back-up `bak_tkx20261114_*`, terugdraaiscript, controles in dezelfde transactie.
+
+**Grenzen.**
+- HYROX-stations en triathlon-disciplines (de app schrijft die id's zelf) worden nooit samengevoegd of omgeleid; in een groep krijgen ze `hidden` (wel beeld en uitleg, eigen naam blijft).
+- Gedeelde (globale) oefeningen worden niet gewijzigd; andere accounts merken niets.
+- Waarden worden niet gecorrigeerd: PR 500 kg (Overhead Press, Hexabar) blijft staan tot de eigenaar het aanpast.
+- De koppeling autoriseert geen media; broker en grants blijven beslissen.
+
+**Waarom niet direct verhuizen naar MoveKit-ID's.** Loggen op een MoveKit-ID vereist nu online verificatie (#603); MoveKit-historie heeft nog geen PR/1RM/piekdoel en programma's rekenen er niet mee. Direct verhuizen zou offline loggen van de hoofdliften breken. Dat lost fase 2 op.
+
+**Status.** Code + migratie + script in draft PR. Uitvoering op productie alleen na aparte, expliciete go van de eigenaar.

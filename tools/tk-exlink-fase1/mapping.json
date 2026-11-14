@@ -1,0 +1,889 @@
+{
+ "decision": "DEC-EXLINK-001",
+ "generated": "2026-11-14",
+ "rule": "Per MoveKit-item één doel (survivor): meeste eigen sessies, dan meeste verwijzingen, dan matchzekerheid (Exact>Goed>Beter>Benadering), dan gedeelde (globale) oefening, dan id (bytevolgorde). Vaste race-onderdelen (HYROX/triathlon) worden nooit samengevoegd of doel: in een groep krijgen ze hidden=true, alleen staan ze als gewone koppeling.",
+ "links": [
+  {
+   "exercise_id": "TK-000002",
+   "name": "Abdominals Stretch Variation One",
+   "catalog_id": "TK-000002",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000018",
+   "name": "Barbell Behind The Back 30 Degree Shrug",
+   "catalog_id": "TK-000018",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000019",
+   "name": "Barbell Bench Press",
+   "catalog_id": "TK-000019",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "bench",
+   "name": "Benchpress",
+   "catalog_id": "TK-000019",
+   "certainty": "Exact",
+   "merged_into": "TK-000019",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "paused_bench",
+   "name": "Paused Bench",
+   "catalog_id": "TK-000019",
+   "certainty": "Goed",
+   "merged_into": "TK-000019",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000020",
+   "name": "Barbell Bent Over Row",
+   "catalog_id": "TK-000020",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "bentoverrow",
+   "name": "Bent Over Row",
+   "catalog_id": "TK-000020",
+   "certainty": "Exact",
+   "merged_into": "TK-000020",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "bicep_curl_bb",
+   "name": "Bicep Curl (barbell)",
+   "catalog_id": "TK-000023",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000024",
+   "name": "Barbell Deadlift",
+   "catalog_id": "TK-000024",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "deadlift",
+   "name": "Deadlift",
+   "catalog_id": "TK-000024",
+   "certainty": "Exact",
+   "merged_into": "TK-000024",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "deadlift_conv",
+   "name": "Deadlift (conventioneel)",
+   "catalog_id": "TK-000024",
+   "certainty": "Exact",
+   "merged_into": "TK-000024",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000030",
+   "name": "Barbell Overhead Press",
+   "catalog_id": "TK-000030",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "overhead_press",
+   "name": "Overhead Press",
+   "catalog_id": "TK-000030",
+   "certainty": "Exact",
+   "merged_into": "TK-000030",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "shoulderpress",
+   "name": "Shoulder Press",
+   "catalog_id": "TK-000030",
+   "certainty": "Goed",
+   "merged_into": "TK-000030",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "snatch",
+   "name": "Snatch",
+   "catalog_id": "TK-000035",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000038",
+   "name": "Barbell Squat",
+   "catalog_id": "TK-000038",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "backsquat",
+   "name": "Backsquat",
+   "catalog_id": "TK-000038",
+   "certainty": "Exact",
+   "merged_into": "TK-000038",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "pin_squat",
+   "name": "Pin Squat",
+   "catalog_id": "TK-000038",
+   "certainty": "Benadering",
+   "merged_into": "TK-000038",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "safety_squat_bar",
+   "name": "Safety Squat Bar",
+   "catalog_id": "TK-000038",
+   "certainty": "Benadering",
+   "merged_into": "TK-000038",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "safity_bar_squat",
+   "name": "Safity bar squat",
+   "catalog_id": "TK-000038",
+   "certainty": "Benadering",
+   "merged_into": "TK-000038",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "thruster",
+   "name": "Thruster",
+   "catalog_id": "TK-000041",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "box_squat",
+   "name": "Box Squat",
+   "catalog_id": "TK-000047",
+   "certainty": "Benadering",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000052",
+   "name": "Bodyweight Knee Push Ups",
+   "catalog_id": "TK-000052",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "boxjump",
+   "name": "Box Jump",
+   "catalog_id": "TK-000057",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "burpee",
+   "name": "Burpee",
+   "catalog_id": "TK-000059",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "cable_fly",
+   "name": "Cable Fly",
+   "catalog_id": "TK-000071",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "tricep_pushdown",
+   "name": "Tricep Pushdown",
+   "catalog_id": "TK-000073",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000093",
+   "name": "Dumbbell Curl",
+   "catalog_id": "TK-000093",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "bicep_curl_db",
+   "name": "Bicep Curl (dumbbell)",
+   "catalog_id": "TK-000093",
+   "certainty": "Exact",
+   "merged_into": "TK-000093",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000105",
+   "name": "Dumbbell Goblet Squat",
+   "catalog_id": "TK-000105",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000106",
+   "name": "Dumbbell Hammer Curl",
+   "catalog_id": "TK-000106",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "incline_db_press",
+   "name": "Incline Dumbbell Press",
+   "catalog_id": "TK-000108",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "lateral_raise",
+   "name": "Lateral Raise",
+   "catalog_id": "TK-000113",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "tricep_overhead",
+   "name": "Tricep Overhead Extension",
+   "catalog_id": "TK-000122",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000125",
+   "name": "Dumbbell Shrug",
+   "catalog_id": "TK-000125",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000147",
+   "name": "Good Mornings",
+   "catalog_id": "TK-000147",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "good_morning",
+   "name": "Good Morning",
+   "catalog_id": "TK-000147",
+   "certainty": "Exact",
+   "merged_into": "TK-000147",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "farmercarry",
+   "name": "Farmer Carry",
+   "catalog_id": "TK-000158",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hyrox_farmers_carry",
+   "name": "HYROX Farmers Carry",
+   "catalog_id": "TK-000158",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "kb_swing",
+   "name": "Kettlebell Swing",
+   "catalog_id": "TK-000173",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "kb_windmill",
+   "name": "Windmill",
+   "catalog_id": "TK-000175",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hyrox_sandbag_lunges",
+   "name": "HYROX Sandbag Lunges",
+   "catalog_id": "TK-000177",
+   "certainty": "Benadering",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "sandbag_lunges",
+   "name": "Sandbag Lunges",
+   "catalog_id": "TK-000177",
+   "certainty": "Benadering",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000179",
+   "name": "Machine Cable V Bar Push Downs",
+   "catalog_id": "TK-000179",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000180",
+   "name": "Machine Chest Press",
+   "catalog_id": "TK-000180",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000185",
+   "name": "Machine Leg Extension",
+   "catalog_id": "TK-000185",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "leg_extension",
+   "name": "Leg Extension",
+   "catalog_id": "TK-000185",
+   "certainty": "Exact",
+   "merged_into": "TK-000185",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "leg_press",
+   "name": "Leg Press",
+   "catalog_id": "TK-000186",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000191",
+   "name": "Machine Pulldown",
+   "catalog_id": "TK-000191",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000192",
+   "name": "Machine Seated Cable Row",
+   "catalog_id": "TK-000192",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "cablerow",
+   "name": "Cable Row",
+   "catalog_id": "TK-000192",
+   "certainty": "Goed",
+   "merged_into": "TK-000192",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000195",
+   "name": "Narrow Pulldown",
+   "catalog_id": "TK-000195",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "pullup_kip",
+   "name": "Pull-up (kipping)",
+   "catalog_id": "TK-000198",
+   "certainty": "Benadering",
+   "merged_into": "pullup_strict",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "pullup_strict",
+   "name": "Pull-up (strict)",
+   "catalog_id": "TK-000198",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "TK-000199",
+   "name": "Push Up",
+   "catalog_id": "TK-000199",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "bike_erg",
+   "name": "Bike erg",
+   "catalog_id": "TK-000235",
+   "certainty": "Benadering",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "swim_rug",
+   "name": "Rugslag",
+   "catalog_id": "TK-000241",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "cleanjerk",
+   "name": "Clean & Jerk",
+   "catalog_id": "TK-000257",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "rdl",
+   "name": "RDL",
+   "catalog_id": "TK-000266",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "bounding",
+   "name": "Bounding",
+   "catalog_id": "TK-000279",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "swim_school",
+   "name": "Schoolslag",
+   "catalog_id": "TK-000281",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "burpee_broadjump",
+   "name": "Burpee Broad Jump",
+   "catalog_id": "TK-000282",
+   "certainty": "Benadering",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hyrox_burpee_broad_jump",
+   "name": "HYROX Burpee Broad Jump",
+   "catalog_id": "TK-000282",
+   "certainty": "Benadering",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "swim_vlinder",
+   "name": "Vlinderslag",
+   "catalog_id": "TK-000284",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "kb_cleanpress",
+   "name": "Kettlebell Clean & Press",
+   "catalog_id": "TK-000310",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "swim_vrij",
+   "name": "Vrije Slag",
+   "catalog_id": "TK-000350",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "triathlon_zwemmen",
+   "name": "Zwemmen (triathlon)",
+   "catalog_id": "TK-000350",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "frontsquat",
+   "name": "Frontsquat",
+   "catalog_id": "TK-000356",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hpc",
+   "name": "Hang Power Clean",
+   "catalog_id": "TK-000365",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hps",
+   "name": "Hang Power Snatch",
+   "catalog_id": "TK-000366",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "doubleunders",
+   "name": "Double Unders",
+   "catalog_id": "TK-000381",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "kb_goblet",
+   "name": "Goblet Squat",
+   "catalog_id": "TK-000383",
+   "certainty": "Beter",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "kb_tgu",
+   "name": "Turkish Get-up",
+   "catalog_id": "TK-000387",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "lat_pulldown",
+   "name": "Lat Pulldown",
+   "catalog_id": "TK-000392",
+   "certainty": "Beter",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "duurloop",
+   "name": "Duurloop",
+   "catalog_id": "TK-000401",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "triathlon_hardlopen",
+   "name": "Hardlopen (triathlon)",
+   "catalog_id": "TK-000401",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "leg_curl",
+   "name": "Leg Curl",
+   "catalog_id": "TK-000404",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "muscleup",
+   "name": "Muscle-up",
+   "catalog_id": "TK-000421",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hyrox_row",
+   "name": "HYROX Row",
+   "catalog_id": "TK-000458",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "roeien",
+   "name": "Roeien",
+   "catalog_id": "TK-000458",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "interval_400",
+   "name": "Interval 400m",
+   "catalog_id": "TK-000461",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "sprint_interval",
+   "name": "Sprint Interval",
+   "catalog_id": "TK-000461",
+   "certainty": "Goed",
+   "merged_into": "interval_400",
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hyrox_skierg",
+   "name": "HYROX SkiErg",
+   "catalog_id": "TK-000505",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "ski_erg",
+   "name": "Ski erg",
+   "catalog_id": "TK-000505",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hyrox_sled_pull",
+   "name": "HYROX Sled Pull",
+   "catalog_id": "TK-000506",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "sledpull",
+   "name": "Sled Pull",
+   "catalog_id": "TK-000506",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hyrox_sled_push",
+   "name": "HYROX Sled Push",
+   "catalog_id": "TK-000507",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "sledpush",
+   "name": "Sled Push",
+   "catalog_id": "TK-000507",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "calf_raise",
+   "name": "Calf Raise",
+   "catalog_id": "TK-000530",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "triathlon_fietsen",
+   "name": "Fietsen (triathlon)",
+   "catalog_id": "TK-000534",
+   "certainty": "Goed",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "deadlift_sumo",
+   "name": "Deadlift (sumo)",
+   "catalog_id": "TK-000539",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "tempo_run",
+   "name": "Tempo Run",
+   "catalog_id": "TK-000544",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "toestobar",
+   "name": "Toes-to-Bar",
+   "catalog_id": "TK-000547",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hexabar",
+   "name": "Hexabar Deadlift",
+   "catalog_id": "TK-000553",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "hyrox_run",
+   "name": "HYROX Run (1km)",
+   "catalog_id": "TK-000555",
+   "certainty": "Benadering",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "hyrox_wall_balls",
+   "name": "HYROX Wall Balls",
+   "catalog_id": "TK-000566",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": true,
+   "race_infrastructure": true
+  },
+  {
+   "exercise_id": "wall_ball",
+   "name": "Wall ball",
+   "catalog_id": "TK-000566",
+   "certainty": "Exact",
+   "merged_into": null,
+   "hidden": false,
+   "race_infrastructure": false
+  },
+  {
+   "exercise_id": "wallball",
+   "name": "Wall Ball",
+   "catalog_id": "TK-000566",
+   "certainty": "Exact",
+   "merged_into": "wall_ball",
+   "hidden": false,
+   "race_infrastructure": false
+  }
+ ]
+}

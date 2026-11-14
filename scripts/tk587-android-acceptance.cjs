@@ -6,7 +6,7 @@
 const fs = require('fs'), path = require('path'), cp = require('child_process'), assert = require('assert');
 const { _android } = require('playwright');
 const { run } = require('./tk584-browser-acceptance.cjs');
-const PKG = process.env.TK_PKG || 'com.trainingskompas.app.tktest20261114';
+const PKG = process.env.TK_PKG || 'com.trainingskompas.app.tktest20261114b';
 const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8').replace(/\r/g, '');
 function extract(name) { const s = html.search(new RegExp('(?:async )?function ' + name + '\\(')); assert(s >= 0, 'missing ' + name); return html.slice(s, html.indexOf('\n}', s) + 2); }
 // Functions exercised by core/fTk587IntegrationAcceptance.test.js: the APK must carry exactly this code.

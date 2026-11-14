@@ -16,6 +16,7 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 
 - #612 (gebruikerstestfixes #578/#585/#587) is bijgewerkt met main `7088bda` (incl. #628). APP_VER v4.70.27.
 - Testvariant voor de toestelcontrole: `com.trainingskompas.app.tktest20261114` (TK Test 14 november).
+- Herstel (DEC-MEDIA-226-002): eigen oefeningen die op naam aan MoveKit gekoppeld zijn, gebruiken de beveiligde route (beeld + video). Testvariant `com.trainingskompas.app.tktest20261114b` (TK Test 14 nov v2).
 - Nog niet in main: de security-/dataherstel-/UX-keten #540–#575 (gebundeld in #570/#575). Zie `AUDIT_OpenPRs_niet_in_main_20261114` in het project.
 
 ## MoveKit-media: één beveiligde route voor alle 582 — fase 1 (draft, 14 november 2026)

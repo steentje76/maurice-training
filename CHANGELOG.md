@@ -1,5 +1,16 @@
 # Trainingskompas — Changelog
 
+## v4.70.27 — #612 bijgewerkt met main: gebruikerstestfixes + één beveiligde videoroute (14 november 2026)
+
+- **Integratie.** `main` (`7088bda`, incl. #628 en de TK504/TK614-media-/catalogusketen #619–#633) samengevoegd in #612 (#587-fixes: decimalen, programma-uitvoering, extra sets, hervatten, logging, PM5-resultaten en gemeten splits).
+- **Conflicten opgelost, beide kanten behouden.**
+  - Splitsamenvatting: eerlijke tekst uit #612 ("geschatte gelijke verdeling; geen gemeten splits") met het afstandslabel en de precieze totaaltijd uit main.
+  - Afronden van cardio- en erg-sessies: stabiele rij-ID en duurzame draft uit #612 (`persistTrainingDraft`) plus de wachtrijregistratie uit main (#614: alleen gequeued telt niet als serverbevestigd).
+  - CHANGELOG en DECISION_LOG: beide sporen opgenomen.
+- **Test.** `core/tk614ProgramPartialSaveStorage.test.js` (uit main) krijgt in de sandbox de helpers die de #612-functies gebruiken (`execEnsureEditableWorkout`, `execSkipSet`, `sessionProgramSnapshot`); geen gedragswijziging. 68/68.
+- **Android.** Nieuwe geïsoleerde testvariant `com.trainingskompas.app.tktest20261114` (**TK Test 14 november**), naast alle bestaande apps. De TK587-workflow bouwt en test deze variant; publiceren alleen bij handmatige start, niet vanuit een PR-run.
+- **Regressie lokaal.** 545/547 core-suites; de 2 rode falen identiek op main in deze omgeving. Coaching 35/35 groen, native Concept2 176/176.
+
 ## Ongereleased — MoveKit fase 1: één beveiligde videoroute voor alle 582 (draft, 14 november 2026)
 
 - **Besluit (DEC-MEDIA-226-001).** De oorspronkelijke 226 MoveKit-oefeningen worden vrijgegeven op dezelfde manier als de
@@ -14,6 +25,36 @@
   `tk614Original226MediaParity` (1033), `tk614Original226MediaEligibility` (378), `tk504ScopedPrivateMediaRelease` (14).
 - **Niet in deze wijziging.** Geen databasewijziging, geen grants, geen cataloguspublicaties of FK-activatie (fase 2),
   openbare `videos/` en de videocache blijven bestaan, geen APK.
+
+## v4.70.27-tk587test20261107 — Integratie #587 + MoveKit, testkandidaat 7 november 2026 (geen productievrijgave)
+
+- #587 (decimalen, programma-uitvoering, extra sets, hervatten, logging, historie, spierbelasting-provenance, PM5-resultaten en gemeten splits) samengevoegd met main: 582 MoveKit-oefeningen, beveiligde posters/video, getypeerde FK en eigenaarsbinding blijven intact.
+- Integratiefouten hersteld: sessierijen van een programma krijgen weer de lui aangemaakte instance; Preview-toevoeging uit de bibliotheek draagt MoveKit-herkomst; herstel zonder eigenaar is onbekend in plaats van 100%.
+- Nieuwe acceptatieproef: 8 oefeningen met vervangen, toevoegen, extra set, herstart, offline afronden en idempotente retry; opgeslagen sets gelijk aan geregistreerde sets.
+- Review-herstel: persoonlijke tegel krijgt in Preview nooit een MoveKit-claim; uitvoeringsprefill van catalogusoefeningen gebruikt geen persoonlijke 1RM; behouden oefening niet dubbel herstel-aangepast; vervangen/verwijderen werkt ook bij vaste training zonder Preview; geen wees-instance bij lege afronding; oudere programmadraft zonder snapshot is afrondbaar; secret-/mediacontrole in de APK-workflow kan nu echt falen.
+- Android: variant `com.trainingskompas.app.tk587test20261107` (**TK Test 7 november**), debug-ondertekend, naast de bestaande app. Ongeldig `gebruikerstest`-blok uit `signingConfigs` naar buildTypes verplaatst.
+- Open: fysieke Samsung/PM5-acceptatie, #579 intervalprogrammering, 226 legacy-media, UX-plaatsingswensen 25-002/003. Zie docs/TK587_INTEGRATION_20261107.md.
+
+## v4.70.27 — P1-testkandidaat programma-uitvoering (1 november 2026)
+
+- Bevestigde vooraf ingevulde sets worden geregistreerd; oefening afronden vraagt expliciete bevestiging van ingevulde werksets.
+- Aangepaste uitvoering, extra setrijen en afvink-/AMRAP-/rustgegevens blijven bij hervatten behouden; vervanging bewaart eerdere actuals onder hun oorspronkelijke oefening-ID.
+- Afronden gebruikt stabiele rij-ID's voor herhalen en offline synchronisatie; gedeeltelijke fouten behouden de draft.
+- Afgeronde programmatrainingen tonen oorspronkelijke snapshot, vastgelegde aanpassingen en gekoppelde uitgevoerde sets afzonderlijk. Ontbrekende historische gegevens worden als onbekend vermeld.
+- Bestaande spierbelasting-/herstelformules ongewijzigd; bronrecords, mapping, berekeningstijd en geldende vensters worden herleidbaar gemaakt.
+- Afzonderlijk Android-pakket `com.trainingskompas.app.tk584test20261101`. Alleen synthetische testacceptatie; geen productie-/persoonlijk-accountvrijgave. Eerdere gestapelde security- en v4.70.26-UX-PR's zijn niet geïntegreerd.
+
+## v4.70.26 — TK577 gebruikerstestkandidaat 25 oktober 2026 (geen productievrijgave)
+
+- Ongeldige opwarmgewichtsinvoer overschrijft de laatste geldige sessie- en conceptwaarde niet meer; regressie voor tekst, negatieve/bovenlimiet-invoer en blur.
+- Setintegriteit: gericht hergebruik uit #542 voorkomt dat een gewichtsedit done/AMRAP/rustduur wist; nieuw rood/groen regressiebewijs.
+- Decimale opwarmsets: separator blijft staan tijdens typen; 67,5/67.5, 77,5 en 0,5 blijven correct; ongeldige invoer wordt niet als numeriek prefix verwerkt. Geldige warm-upinvoer wordt direct in het lokale sessieconcept bewaard.
+- Mobiel: settingskop houdt statusruimte vrij; previewkaarten verdelen inhoud en acties over rijen; oefeningkiezer houdt zoekresultaten bereikbaar bij beperkte visual viewport en sluit correct als bovenste laag.
+- Vervangen: bestaande bibliotheekpicker bereikbaar naast aanbevolen alternatieven; alleen binnen hetzelfde trainingstype, zonder dubbel id of gewichtsovername. Nieuwe identiteit gebruikt eigen eerdere prestatie.
+- Historie: recentere lege sessierij maskeert de bestaande relevante previous-performance-selectie niet langer. Catalogus-only spiergroepen kunnen via exact id worden gebruikt door de bestaande herstelberekeningen; geen formulewijziging. De specifieke Good Morning-bronmelding blijft ter fysieke verificatie open.
+- Concept2: officiële serial/firmware/manufacturer/type UUID’s; volledige PM5-ID uit naam waar beschikbaar en uitgelezen serial na verbinden; geen typeclaim op basis van alleen een naam; stale device-info wordt verworpen. Intervalknop expliciet app-only; apparaatprogrammering van deze intervalflow blijft open.
+- Android: afzonderlijke variant `com.trainingskompas.app.gebruikerstest20261025`, label **TK Test 25 oktober**. Debug-ondertekening voor deze testvariant; bestaande installatie behouden. Geen DB-migratie, herstelimport of gegevenscorrectie uitgevoerd. Eigen-account/productie/signing- en fysieke Samsung/PM5-acceptatie niet vrijgegeven.
+- Bewijs en openstaande gates: `docs/TK577_USER_TEST_CANDIDATE_20261025.md`; PR #578. #576 blijft bronregistratie.
 
 ## v4.70.25 — Wearable-koppeling hersteld: veilige tokenopslag, Android-app bereikt de server, eerlijke koppelstatus (gebruikerstest 11 oktober 2026)
 

@@ -29,8 +29,8 @@ android {
         // RC0: liep uit de pas met de app zelf (die meldde v4.47.0 in het scherm 'Over').
         // Schema: versionCode = major*10000 + minor*100 + patch, zodat elke release
         // aantoonbaar oploopt en één op één te herleiden is tot versionName.
-        versionCode 47025
-        versionName "4.70.25"
+        versionCode 47027
+        versionName "4.70.27"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -49,6 +49,37 @@ android {
         }
     }
     buildTypes {
+        // Isolated test variants: own applicationId (installs next to the production app),
+        // debug-signed by the CI runner, never a release artefact. The 25-okt block stood in
+        // signingConfigs (invalid there: SigningConfig has no applicationIdSuffix) and is
+        // restored as the buildType its workflow (assembleGebruikerstest) expects.
+        gebruikerstest {
+            initWith debug
+            applicationIdSuffix ".gebruikerstest20261025"
+            versionNameSuffix "-gebruikerstest20261025"
+            matchingFallbacks = ['debug']
+        }
+        // TK #587 x MoveKit integration test candidate (7 november 2026).
+        tk587test {
+            initWith debug
+            applicationIdSuffix ".tk587test20261107"
+            versionNameSuffix "-tk587test20261107"
+            matchingFallbacks = ['debug']
+        }
+        // Integration test candidate 14 november 2026: #612 (#587 fixes) + main incl. one secure
+        // V2 media route for all 582 (#628). Own applicationId, installs next to every other app.
+        tktest1114 {
+            initWith debug
+            applicationIdSuffix ".tktest20261114"
+            versionNameSuffix "-tktest20261114"
+            matchingFallbacks = ['debug']
+        }
+        tk584test {
+            initWith debug
+            applicationIdSuffix ".tk584test20261101"
+            versionNameSuffix "-tk584test20261101"
+            matchingFallbacks = ['debug']
+        }
         release {
             // Bewust GEEN debug-ondertekening als terugval: een debug-getekend artefact
             // mag nooit per ongeluk als release de deur uit.

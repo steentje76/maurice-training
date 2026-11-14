@@ -47,7 +47,7 @@ const FNS = ['catalogToPickerEx', 'tk504CatalogSourceRefFromCatalog', 'tk504Cata
   'tk504RewriteVerifiedSessionRow', 'tk504StableSessionId', 'writeSessionRow', 'sbPostQ', 'tkNormalizeSessionsRow',
   'ensureExerciseRowStatus', 'ensureExerciseRow', 'ensureSessionExerciseRows', 'tkSessieSchrijfOpts',
   'tkSessieOptsVoor', 'tkSessieUitkomst', 'tk603CanUpdatePersonalRecord', 'buildStrengthSessionRow',
-  'persistTrainingDraft', 'clearTrainingDraft', 'finishSession', 'execExerciseHasData', 'execReplaceExercise',
+  'persistTrainingDraft', 'clearTrainingDraft', 'finishSession', 'execExerciseHasData', 'execEnsureEditableWorkout', 'execSkipSet', 'execReplaceExercise',
   'tk603LosOwner', 'tk603LosContext', 'tk603LosCurrent', 'tk603LosReset', 'tk603LosReadPending',
   'tk603LosStorePending', 'tk603LosFreezePending', 'tk603LosWritePending', 'tk603LosRemoveConfirmed',
   'tk603LosReplayPending', 'saveLosOefening'];
@@ -130,6 +130,8 @@ function makeWorld() {
     completeTrainingInstance: async () => {}, sbPatchQ: async t => { st.patches.push(t); return true; },
     generateSessionSummaryAI: async () => 'synthetic', refreshStats: () => {}, go: () => {}, escHtml: s => String(s),
     renderTrainScreen: () => {}, scheduleAutosave: () => {}, canonicalNewExerciseItem: async () => ({}),
+    // #612 (TK584/#587): draft also keeps skipped exercises and the program snapshot; none in this scenario.
+    execSkipped: {}, sessionProgramSnapshot: null,
     openExPicker: cb => { st.picker = cb; }, confirmModal: async () => true,
     LOS_DOMID: 'los', losSelectedExId: null, losCurEx: null,
     collectWorkSets: () => [1, 2, 3].map(() => ({ kg: '40', effKg: 40, reps: '15', rpe: '5' })),

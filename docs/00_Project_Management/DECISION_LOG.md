@@ -3060,6 +3060,22 @@ Zolang de status "Testing" is, moet elke koppeling na 7 dagen opnieuw worden gel
 
 **Status.** NOT VERIFIED. Niet vast te stellen zonder Console-toegang.
 
+## DEC-TK587-INT-001 — Integratie #587 met MoveKit-main en één geïsoleerde test-APK (7 november 2026)
+- Datum: 7 november 2026
+- Beslissing: #587 wordt samengevoegd met main op `integration/tk587-main-20261107`. Bij overlap gelden beide sporen: eigenaarsbinding en catalogusherkomst (#603) én behoud van uitgevoerde sets, uitvoeringsdraft en bevestigde instance-afronding (#587). Herstel zonder bewezen eigenaar is onbekend (`overall:null`), niet 100%. Eén test-APK als aparte variant naast de bestaande app.
+- Reden: PO-opdracht 7 november; 582 oefeningen en functionele herstelpunten in één testversie, zonder productie- of datarisico.
+- Alternatieven: alleen #587 (verliest MoveKit/#603) of alleen main (verliest herstelpunten) — afgewezen.
+- Impact: geen migratie, geen historische datawijziging. 226 legacy-media blijven aparte schuld. Productie-merge alleen na groene CI, onafhankelijke review en Samsung-acceptatie.
+- Verantwoordelijke: Maurice
+
+## DEC-TK587-INT-002 — Eén herkomstbron per wisselpad en geen 1RM-fallback voor catalogusitems (8 november 2026)
+- Datum: 8 november 2026
+- Beslissing: in Preview bepaalt het bibliotheekpad de herkomst uitsluitend uit de getikte tegel en het "Kies"-pad uitsluitend uit het aangeboden alternatief. De uitvoeringsprefill van een catalogus-gebonden item gebruikt alleen de eigen catalogusbasis (`sourceBound`). Vaste trainingen zonder Preview krijgen bij vervangen/verwijderen een sessiekopie van het sjabloon; het sjabloon zelf wijzigt nooit.
+- Reden: onafhankelijke review van de integratiemerge vond een herkomstlek en een verkeerd voorgeschreven gewicht door de combinatie van #587 en #603.
+- Alternatieven: vervangen bij vaste training zonder Preview weigeren — afgewezen, de knop bestaat al en zou dan voor dit startpad nooit werken.
+- Impact: geen migratie, geen datawijziging. Spierbelasting voor coachaccounts blijft open (bestaand).
+- Verantwoordelijke: Maurice
+
 ## DEC-MEDIA-226-001 — MoveKit oorspronkelijke 226: mediavrijgave volgens de 356-methode (14 november 2026)
 
 **Besluit.** De media (226 video's + 226 posters) van `TK-000001..TK-000226` worden vrijgegeven op dezelfde manier als de

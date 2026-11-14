@@ -5,11 +5,11 @@ const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 function fn(name){const m=new RegExp('(?:async\\s+)?function\\s+'+name+'\\s*\\(').exec(html);assert(m,name);let d=0;for(let i=html.indexOf('{',m.index);i<html.length;i++){if(html[i]==='{')d++;if(html[i]==='}'&&--d===0)return html.slice(m.index,i+1);}throw Error(name);}
 function deferred(){let resolve;const promise=new Promise(r=>{resolve=r;});return{promise,resolve};}
 function setup(){
- const state={owner:'A',items:[],writes:[],goals:[],completions:[],patches:[],clears:[],summary:[],ensure:null,write:null,complete:null,patch:null,weather:null,goal:null};
+ const state={rowSeq:0,owner:'A',items:[],writes:[],goals:[],completions:[],patches:[],clears:[],summary:[],ensure:null,write:null,complete:null,patch:null,weather:null,goal:null};
  const el={disabled:false,textContent:'',innerHTML:'',classList:{remove(){},add(){}}};
  const s=vm.createContext({console,Date,Math,JSON,Set,finishSessionBezig:false,_finishSessionContext:null,
   TK504_TYPED_FK_SESSION_RELEASE:true,tkEigenaarUid:()=>state.owner,
-  curT:null,sessionLog:{},sessionExtra:[],activeInstanceId:null,activePlannedAssignmentId:null,trainStart:null,pausedAccumMs:0,
+  curT:null,sessionLog:{},sessionExtra:[],activeInstanceId:null,activePlannedAssignmentId:null,sessionProgramSnapshot:null,trainStart:null,pausedAccumMs:0,
   pctSelection:{},rpeManual:{},warmupState:{},cardioSplitMode:{},cardioSplits:{},manualKgSets:{},sessionRxAdj:{},sessionPrBase:{},resolvedWorkout:null,
   getSessionExs:()=>state.items,td:()=> '2026-11-07',getExerciseMuscles:()=>[],
   document:{getElementById:()=>el,querySelectorAll:()=>[]},window:{},
@@ -18,12 +18,14 @@ function setup(){
   writeSessionRow:async(row,opts)=>{state.writes.push({owner:state.owner,row});return state.write?state.write(row,opts):true;},
   upsertExerciseGoalField:async(id,k,v)=>{state.goals.push({owner:state.owner,id,k,v});if(state.goal)return state.goal();},
   DecisionCore:{releaseRecord:w=>({isRecord:true,waarde:w})},prFor:()=>0,
-  completeTrainingInstance:async id=>{state.completions.push({owner:state.owner,id});if(state.complete)return state.complete(id);},
+  completeTrainingInstance:async id=>{state.completions.push({owner:state.owner,id});return state.complete?state.complete(id):true;}, // #587: completion must be confirmed (true)
   sbPatchQ:async(t,f,row)=>{state.patches.push({owner:state.owner,t,f,row});if(state.patch)return state.patch(t);return true;},
   clearTrainingDraft:()=>state.clears.push(state.owner),closeModal(){},stopTrainTimer(){},tkErgDisconnectAll(){},toast(){},go(){},refreshStats(){},openModal(){},
-  generateSessionSummaryAI:async(t,data)=>{state.summary.push({owner:state.owner,t,data});return 'synthetic summary';}
+  generateSessionSummaryAI:async(t,data)=>{state.summary.push({owner:state.owner,t,data});return 'synthetic summary';},
+  // #587 execution-draft boundaries (synthetic): checkpoints and skipped-set lookup.
+  persistTrainingDraft(){},execSkipSet:()=>new Set(),crypto:{randomUUID:()=> 'row-'+(++state.rowSeq)}
  });
- for(const n of ['buildStrengthSessionRow','tk603CanUpdatePersonalRecord','finishSession'])vm.runInContext(fn(n),s);
+ for(const n of ['newClientRowId','execExerciseHasData','buildStrengthSessionRow','tk603CanUpdatePersonalRecord','finishSession'])vm.runInContext(fn(n),s);
  function start(owner,t='custom_'+owner){state.owner=owner;s.curT=t;s.sessionLog={exercise:{sets:[{kg:32,reps:8,rpe:8}]}};s.sessionExtra=[];s.activeInstanceId='instance-'+owner;s.activePlannedAssignmentId='assignment-'+owner;state.items=[{id:'exercise',naam:'synthetic',sets:1,reps:'8',rpe:'8'}];return s.sessionLog;}
  return {s,state,start};
 }
@@ -51,4 +53,5 @@ test('normal same active context double tap still produces one write and one sum
  const first=a.s.finishSession();await started.promise;await a.s.finishSession();assert.equal(a.state.writes.length,1);
  wait.resolve(true);await first;assert.equal(a.state.writes.length,1);assert.equal(a.state.summary.length,1);assert.equal(a.s.finishSessionBezig,false);
 });
-(async()=>{let fail=0;for(const t of tests){try{await t.run();console.log('PASS '+t.name);}catch(e){fail++;console.error('FAIL '+t.name+': '+e.message);}}console.log('TK603 normal async ownership: '+(tests.length-fail)+'/'+tests.length+' PASS; synthetic actual-function VM');if(fail)process.exitCode=1;})();
+let finished=false;process.on('exit',()=>{if(!finished){console.error('FAIL runner: not all tests settled (pending promise)');process.exitCode=1;}});
+(async()=>{let fail=0;for(const t of tests){try{await t.run();console.log('PASS '+t.name);}catch(e){fail++;console.error('FAIL '+t.name+': '+e.message);}}console.log('TK603 normal async ownership: '+(tests.length-fail)+'/'+tests.length+' PASS; synthetic actual-function VM');finished=true;if(fail)process.exitCode=1;})();

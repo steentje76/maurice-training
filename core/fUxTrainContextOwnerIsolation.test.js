@@ -1,0 +1,37 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const start=html.indexOf('let tkContextRequestEpoch=0;');
+const end=html.indexOf('async function refreshHome(){',start);
+assert(start>=0&&end>start,'canonical training-context guards');
+assert(/function renderV43Train\(\)\s*\{\s*refreshTrainContext\(\)/.test(html),'Trainen refreshes rhythm');
+const source=html.slice(start,end);
+function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};}
+(async()=>{
+ const paints=[],requests=[];
+ const c={authSession:{user:{id:'account-A'}},renderHomeContextCard:value=>paints.push(value),v43SafeGet:(table)=>{assert.equal(table,'training_context');const p=deferred();requests.push(p);return p.promise;}};
+ vm.createContext(c);vm.runInContext(source,c);
+ const a=c.refreshTrainContext();
+ assert.equal(paints.length,1,'starting account-A must clear unowned state');
+ assert.equal(paints.at(-1),null);
+ c.authSession={user:{id:'account-B'}};
+ const b=c.refreshTrainContext();
+ assert.equal(paints.length,2,'account switch clears previous owner immediately');
+ assert.equal(paints.at(-1),null);
+ requests[0].resolve([{frequency:3}]);await a;
+ assert.equal(paints.length,2,'stale account-A response suppressed');
+ requests[1].resolve([{frequency:4}]);await b;
+ assert.equal(paints.at(-1).frequency,4,'account-B renders own result');
+ const old=c.refreshTrainContext();
+ const newer=c.refreshTrainContext();
+ requests[3].resolve([{frequency:6}]);await newer;
+ requests[2].resolve([{frequency:2}]);await old;
+ assert.equal(paints.at(-1).frequency,6,'older request cannot override new same-account result');
+ assert.equal(paints.filter(x=>x?.frequency===2).length,0);
+ c.authSession={user:{id:'account-C'}};
+ const cReq=c.refreshTrainContext();
+ assert.equal(paints.at(-1),null,'account-C switch removes B rhythm before fetch');
+ requests[4].resolve([{frequency:5}]);await cReq;
+ assert.equal(paints.at(-1).frequency,5);
+ console.log('Trainingsritme: immediate account-clear, cross-owner isolation, latest response wins PASS');
+})().catch(e=>{console.error(e);process.exitCode=1;});

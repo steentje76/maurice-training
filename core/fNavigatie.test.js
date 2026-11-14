@@ -185,6 +185,19 @@ t('B3: een open modal wordt gesloten in plaats van het scherm te verlaten', func
   assert.strictEqual(ctx.tkNavStack.length, diepteVoor, 'de schermstapel is aangetast door een modal');
 });
 
+t('B3b: nested exercise picker closes before its preview without losing navigation context', function () {
+  var ctx=zandbak({modals:['m-training-preview','m-ex-picker']});
+  ctx.go('s-home');ctx.go('s-lichaam');
+  var preview=ctx.document._el['m-training-preview'],picker=ctx.document._el['m-ex-picker'];
+  preview.open=true;picker.open=true;
+  picker.classList={contains:function(k){return k==='open'&&picker.open;}};
+  var depth=ctx.tkNavStack.length;
+  ctx._terug();
+  assert.strictEqual(picker.open,false);assert.strictEqual(preview.open,true);
+  assert.strictEqual(ctx.tkNavStack.length,depth);
+  ctx._terug();assert.strictEqual(preview.open,false);assert.strictEqual(ctx.tkNavStack.length,depth);
+});
+
 t('B4: terug vanuit de coach keert terug naar de lopende training (v306 #7 blijft gelden)', function () {
   var ctx = zandbak({ coachReturn: { screen: 's-lichaam', exId: 'TK-1' } });
   ctx.go('s-home'); ctx.go('s-coach');

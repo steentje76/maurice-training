@@ -21,6 +21,8 @@ permissions:
 
 jobs:
   build-debug-apk:
+    # APK HOLD until joint UX approval.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:

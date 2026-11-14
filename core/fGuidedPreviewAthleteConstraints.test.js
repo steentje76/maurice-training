@@ -98,6 +98,8 @@ try { chromium = require('playwright').chromium; } catch (e) { chromium = null; 
       await page.goto('file://' + path.join(ROOT, 'index.html'));
       await page.waitForTimeout(800);
       const R = await page.evaluate(async function () {
+        // #603: Guided state is owner-bound; synthetic signed-in owner, never a real account.
+        tkEigenaarUid = function () { return 'synthetic-browser-owner'; };
         const E = ExerciseCatalogService;
         const basis = E.all().find(function (e) { return e.identity.name === 'Band Curl'; });
         if (!basis) return { fout: 'Band Curl niet in de catalogus' };

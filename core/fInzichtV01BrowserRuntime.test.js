@@ -27,12 +27,18 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   try { browser = await chromium.launch(); }
   catch (e) { console.log('fInzichtV01BrowserRuntime: SKIP (Chromium niet beschikbaar in deze omgeving)'); process.exit(0); }
 
+  // This suite explicitly tests missing network data. Prevent delayed real backend calls
+  // from racing later synthetic DOM/style fixtures; slow-pending sections have a separate regression.
+  async function offlinePage(options){
+    const page=await browser.newPage(options);
+    await page.route('https://*.supabase.co/**',route=>route.abort());return page;
+  }
   const url = 'file://' + path.join(__dirname, '..', 'index.html');
   const viewports = [320, 360, 375, 390, 412, 430];
 
   for (const w of viewports) {
     const jsErrors = [];
-    const page = await browser.newPage({ viewport: { width: w, height: 1300 } });
+    const page = await offlinePage({ viewport: { width: w, height: 1300 } });
     page.on('pageerror', e => jsErrors.push(e.message));
     await page.goto(url);
     await page.waitForTimeout(500);
@@ -46,11 +52,11 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     const overflow = await page.evaluate(() => { const el = document.getElementById('s-inzicht'); return el.scrollWidth > el.clientWidth + 2; });
     ok(!overflow, w + 'px 4: geen horizontale overflow');
     const summaryCells = await page.evaluate(() => document.querySelectorAll('#inzicht-summary-grid .tk-summary-cell').length);
-    ok(summaryCells === 4, w + 'px 5: exact 4 Jouw ontwikkeling-cellen (Verbeterd/Stijgende trends/Trainingen/Adherence)');
+    ok(summaryCells === 4, w + 'px 5: exact 4 originele Jouw ontwikkeling-cellen (Verbeterd/Stijgende trends/Trainingen/Adherence)');
     const overviewCells = await page.evaluate(() => document.querySelectorAll('#inzicht-overview-grid .tk-overview-cell').length);
     ok(overviewCells === 5, w + 'px 6: exact 5 Snel overzicht-cellen');
     const domainRows = await page.evaluate(() => document.querySelectorAll('#inzicht-domain-list .row').length);
-    ok(domainRows === 7, w + 'px 7: exact 7 domain-rows (Prestaties/Herstel/Belasting/Lichaam/Voeding/Verbanden/Doelen)');
+    ok(domainRows === 6, w + 'px 7: exact 6 domeinen zonder Lichaam; Lichaamssamenstelling hoort in Gegevens & context');
     const periodBtns = await page.evaluate(() => document.querySelectorAll('#s-inzicht .tk-period-selector button[role="tab"]').length);
     ok(periodBtns === 3, w + 'px 8: Period Selector heeft exact 3 opties (7 dagen/4 weken/3 maanden)');
     const filterChip = await page.evaluate(() => !!document.querySelector('#s-inzicht .tk-filter-chip select'));
@@ -83,7 +89,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
 
   // Eenmalige, functionele checks (niet per viewport).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 1300 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 1300 } });
     await page.goto(url);
     await page.waitForTimeout(600);
 
@@ -110,7 +116,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
 
   // Eenmalige, functionele checks (niet per viewport).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 1300 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 1300 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -129,7 +135,8 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     const prestatiesFnGoesToStats = await page.evaluate(() => typeof goInzichtPrestaties === 'function' && goInzichtPrestaties.toString().includes("go('s-stats')"));
     ok(prestatiesFnGoesToStats, '14b: goInzichtPrestaties() navigeert intern nog steeds naar het bestaande s-stats-scherm');
     ok(targets.some(t => /s-lich-health/.test(t)), '15: Herstel-domeincard navigeert naar het bestaande s-lich-health-scherm');
-    ok(targets.some(t => /s-lich-metingen/.test(t)), '16: Lichaam-domeincard navigeert naar het bestaande s-lich-metingen-scherm');
+    const bodyContext=await page.evaluate(()=>{const c=document.querySelector('#s-inzicht .inzicht-context-list');const b=Array.from(c?.querySelectorAll('button')||[]).find(b=>b.textContent.includes('Lichaamssamenstelling'));return {exists:!!b,route:b?.getAttribute('onclick')};});
+    ok(bodyContext.exists && /s-lich-metingen/.test(bodyContext.route), '16: Lichaamssamenstelling in Gegevens & context navigeert naar bestaand s-lich-metingen-scherm');
     ok(targets.some(t => /s-lich-verbanden/.test(t)), '17: Verbanden-domeincard navigeert naar het bestaande s-lich-verbanden-scherm');
 
     // Sabotage: introduceer opnieuw een letterlijke ${...} in de statische
@@ -149,7 +156,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       );
       ok(sabotaged !== original, '18 (sabotage-setup): de sabotage-marker is gevonden en vervangen');
       fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
-      page2 = await browser.newPage({ viewport: { width: 390, height: 800 } });
+      page2 = await offlinePage({ viewport: { width: 390, height: 800 } });
       await page2.goto(url);
       await page2.waitForTimeout(500);
       await page2.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -169,7 +176,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // globaal in inzichtRenderOverview() -- een stille ReferenceError liet HRV/
   // Rusthartslag/Slaap altijd "--" tonen, ook met aantoonbaar bestaande data.
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     // A. DATA AVAILABLE: exacte, echte productiedata (incl. string-types zoals
     // Supabase teruggeeft) gemockt -- Inzicht MAG geen "--" tonen.
     await page.route('**/rest/v1/hrv_log**', route => {
@@ -201,7 +208,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // B. DATA MISSING: bevestig dat "--" (nooit 0) nog steeds correct getoond
   // wordt wanneer data werkelijk ontbreekt (lege array, geen fout).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.route('**/rest/v1/hrv_log**', route => {
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
     });
@@ -217,7 +224,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // PO Round 2: Snel overzicht -- teal iconen (was zwart), eenheden zichtbaar,
   // geen tabelachtige verticale separators, responsive wrap-gedrag.
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -257,7 +264,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // Canonical Fidelity Pass: "Bekijk details", iconen in Jouw ontwikkeling,
   // herstel-ring, insight-cards (3 naast elkaar), CTA soft-teal.
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 1300 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 1300 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -267,7 +274,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     ok(detailsBtn, '30: "Bekijk details"-knop is aanwezig bij Jouw ontwikkeling, conform canonical');
 
     const devIcons = await page.evaluate(() => document.querySelectorAll('#inzicht-summary-grid .tk-summary-cell .ic').length);
-    ok(devIcons === 4, '31: alle 4 Jouw-ontwikkeling-cellen hebben een icoon boven het cijfer, conform canonical');
+    ok(devIcons === 4, '31: alle 4 originele Jouw-ontwikkeling-cellen hebben een icoon boven het cijfer');
 
     // Herstel-ring: functioneel getest met echte ring-wiskunde (zelfde
     // patroon als de bestaande _radial()-functie elders in de app).
@@ -324,7 +331,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // PO Round 4 (Geometry+Density): Snel overzicht moet ALTIJD één, compacte
   // rij van 5 metrics zijn, geen 3+2-wrap meer (canonical density).
   for (const w of [320, 360, 375, 390, 412, 430]) {
-    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    const page = await offlinePage({ viewport: { width: w, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -358,7 +365,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // meer -- de visual-zone blijft gereserveerd (voor alignment) maar toont
   // niets zichtbaars wanneer geen betrouwbare data bestaat.
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -386,7 +393,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // moeten op exact dezelfde verticale positie starten, ongeacht labellengte/
   // wrapping/aan- of afwezigheid van een trend-indicator.
   for (const w of [320, 390, 430]) {
-    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    const page = await offlinePage({ viewport: { width: w, height: 900 } });
     await page.route('**/rest/v1/hrv_log**', route => {
       route.fulfill({
         status: 200, contentType: 'application/json',
@@ -428,7 +435,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       );
       ok(sabotaged !== original, '41 (sabotage-setup): de min-height-regel is gevonden en tijdelijk verwijderd');
       fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
-      page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+      page = await offlinePage({ viewport: { width: 390, height: 900 } });
       await page.route('**/rest/v1/hrv_log**', route => {
         route.fulfill({
           status: 200, contentType: 'application/json',
@@ -463,7 +470,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // van de trend-tekst tegen de kaart-achtergrond (echte, gerenderde kleuren,
   // geen aanname).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.route('**/rest/v1/hrv_log**', route => {
       route.fulfill({
         status: 200, contentType: 'application/json',
@@ -502,7 +509,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // PO Mobile Visual Fidelity Pass: Recente inzichten mag titel en beschrijving
   // NOOIT aan elkaar plakken (was: "Frontsquathogere geschatte 1RM").
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -538,7 +545,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
   // Final Geometry/Density Pass: domain-row-hoogte en Snel-overzicht-5-op-1-rij
   // meetbaar bewaakt tegen regressie (was 77-78px, nu gescoped verkleind).
   {
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const page = await offlinePage({ viewport: { width: 390, height: 844 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -561,10 +568,10 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
     await page.close();
   }
 
-  // PO Final Visual Fidelity Rework: Jouw Ontwikkeling -- 4 KPI's op één rij,
+  // PO-gecorrigeerde Inzicht V2: de oorspronkelijke 4 KPI's op één rij,
   // zelfstandige tegels (eigen achtergrond+schaduw), waarde-top alignment.
   for (const w of [320, 390, 430]) {
-    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    const page = await offlinePage({ viewport: { width: w, height: 900 } });
     await page.goto(url);
     await page.waitForTimeout(500);
     await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });
@@ -599,7 +606,7 @@ function ok(cond, label) { if (cond) pass++; else { fail++; msgs.push('MISLUKT: 
       );
       ok(sabotaged !== original, '49 (sabotage-setup): de KPI-icon-regel is gevonden en tijdelijk uitgebreid met een afwijkende hoogte voor cel 2');
       fs.writeFileSync(path.join(__dirname, '..', 'index.html'), sabotaged, 'utf8');
-      page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+      page = await offlinePage({ viewport: { width: 390, height: 900 } });
       await page.goto('file://' + path.join(__dirname, '..', 'index.html'));
       await page.waitForTimeout(500);
       await page.evaluate(() => { if (typeof go === 'function') go('s-inzicht'); });

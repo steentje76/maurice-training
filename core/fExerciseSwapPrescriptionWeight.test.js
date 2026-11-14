@@ -58,12 +58,12 @@ console.log('D. Geen weight-conversie/AI/nieuwe formule');
 });
 
 /* ══ E. Canonical prefill-keten bewijs (statisch): prevS en oneRM zijn al keyed op ex.id (het NIEUWE id na swap) ══ */
-console.log('E. Canonical prefill-keten hergebruikt zonder wijziging (geen nieuwe prefill-route)');
+console.log('E. Canonical resolver keyed to current exercise; prescription targets retained');
 var PREFILL_BLOK = HTML.slice(HTML.indexOf("if(t.startsWith('prog_')){"), HTML.indexOf('window._rxWeightMap[ex.id]=rxWeight;') + 40);
 ok(PREFILL_BLOK.indexOf('getOneRM(ex.id)') > -1, 'E1: 1RM-schatting is keyed op ex.id -- na swap dus automatisch B\'s eigen 1RM, nooit A\'s');
 ok(PREFILL_BLOK.indexOf('computeProgPrefill(ex,prevS,oneRM)') > -1, 'E2: computeProgPrefill() (bestaand, canonical) wordt hergebruikt -- geen nieuwe functie toegevoegd');
-ok(/else if\(prevS&&prevS\.weight&&prevS\.reps\)\{\s*\r?\n\s*prefillData=\{kg:prevS\.weight/.test(PREFILL_BLOK),
-  'E3: zonder suggestedWeight valt de niet-programma-route terug op prevS (B\'s eigen historie, want prevS is elders al keyed op ex.id)');
+ok(PREFILL_BLOK.includes('strengthExecutionPrefill(ex,prevS)') && extractFn('strengthExecutionPrefill').includes('resolveWorkingWeight(ex.id,') && extractFn('strengthExecutionPrefill').includes('getOneRM(ex.id)'),
+  'E3: non-program prefill delegates existing resolver under the replaced exercise ID; never blindly copies the previous one-rep load');
 ok(/Een null overschrijft de vorige waarde, zodat er nooit een oud[\s\S]{0,20}getal blijft staan/.test(PREFILL_BLOK),
   'E4: het bestaande, expliciete commentaar bevestigt dat _rxWeightMap[ex.id] een null correct laat overschrijven (geen stale-waarde-risico)');
 
@@ -79,7 +79,7 @@ ok(/const prevS=_pref\[_pi\]\.prevS;/.test(HTML), 'G1: prevS wordt per exercise-
 /* ══ H. Functionele simulatie: sandbox van het prefill-beslispad na invalidatie ══ */
 console.log('H. Functionele simulatie (canonical fallback-keten na suggestedWeight=null)');
 (function () {
-  // Vereenvoudigde, maar getrouwe simulatie van de beslisboom rond regel ~18124-18142.
+  // Historical swap invalidation model only; the actual revised prescription resolver is exercised in fAllFindingsRepair.test.js.
   function resolvePrefill(ex, prevS, computeProgPrefillStub, isProgram) {
     var prefillData = null;
     if (isProgram) {

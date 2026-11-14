@@ -197,7 +197,7 @@ async function suite(CS, PROG) {
   eq(JSON.stringify(R.noReadback), JSON.stringify([false, 'TIMEOUT', 'frame_accepted_but_not_verified']), 'geaccepteerd zonder read-back -> TIMEOUT (failure)');
   eq(require(path.join(ROOT, 'core/concept2Programming.js')).DEFAULT_TIMEOUT_MS, 5000, 'timeout ongewijzigd (5000 ms)');
   // productie-wiring
-  ok(/_rt\.prog\.verifyFromTelemetry\(tkC2ReadbackFromPacket\(evt,_vctx\), _vctx\)/.test(html) && !/verifyFromTelemetry\(_rt\.agg\.getMergedRaw\(\)/.test(html), 'WIRING: index.html verifieert met de read-back van het packet zelf (nooit merged state)');
+  ok(/var _rawPm5=tkC2ReadbackFromPacket\(evt,_vctx\)/.test(html) && /_rt\.prog\.verifyFromTelemetry\(_rawPm5, _vctx\)/.test(html) && !/verifyFromTelemetry\(_rt\.agg\.getMergedRaw\(\)/.test(html), 'WIRING: index.html verifieert met de read-back van het packet zelf (nooit merged state)');
   ok(typeof tkC2ReadbackFromPacket === 'function' && /Concept2Live\.pm5RawToCanonical\(pkt\)/.test(readbackSrc), 'WIRING: echte helper tkC2ReadbackFromPacket geëxtraheerd en gebruikt');
   ok(/raw\.packetSeq = muxDiag\.globalSeq;/.test(readText(path.join(ROOT, 'native/src/nativeConcept2BleTransport.js'))), 'WIRING: transport stempelt elke multiplexed notificatie met packetSeq');
 

@@ -213,6 +213,8 @@ async function deel2() {
     const errs = []; page.on('pageerror', function (e) { errs.push(e.message); });
     await page.goto(url); await page.waitForTimeout(500);
     await page.evaluate(function (a) {
+      // #603: personal reads are owner-scoped; synthetic signed-in owner, never a real account.
+      tkEigenaarUid = function () { return 'synthetic-browser-owner'; };
       exercises = [{ id: 'sq', naam: 'Squat', muscle_primary: ['Quadriceps'], muscle_secondary: [] }];
       window.sbGet = async function (t) { return t === 'hrv_log' ? a[0] : (t === 'sessions' ? a[1] : []); };
       window.fetchWearableStatus = async function () { return { connected: false }; };
@@ -235,7 +237,7 @@ async function deel2() {
       return { calc: d ? { factor: d.factor, basis: d.basis } : null, spierherstel: rec.hasData ? rec.overall + '%' : '—',
         titel: t('#home-hero .v43-hero-title'), sub: t('#home-hero .v43-hero-sub'), stats: stats, waarom: t('#v43-why-body'),
         coach: t('#home-coach-vandaag .t'), readiness: t('#home-readiness'), readinessKop: t('#home-readiness .tk-ready-kop'),
-        bel: !!document.querySelector('#v43-home-head .bdot'), thema: document.getElementById('home-theme').getAttribute('data-day'),
+        bel: t('#home-hero .v43-hero-title') === 'Doe je check-in', thema: document.getElementById('home-theme').getAttribute('data-day'),
         verborgen: [t('#home-morning'), t('#home-coach-advies'), t('#home-hrv-card'), t('#home-today-cta'), t('#home-dash .dash-status')].join(' || '),
         ring: t('#home-hrv-card .df-ring-val'),
         besluit: { bruikbaar: r.bruikbaar, zone: r.zone || null, zoneLabel: r.zoneLabel || null, dagfactor: r.dagfactor, gereedheid: r.gereedheid, herstel: r.herstel || null, advies: r.trainingsadvies && r.trainingsadvies.soort, dagthema: r.dagthema ? r.dagthema.key : null } };
@@ -298,14 +300,26 @@ async function deel2() {
     ok(!h.overlap && h.binnen && !h.pagina, w + 'px R2 geen overlap tussen de labels, alles binnen de kaart, geen horizontaal scrollen');
     ok(new Set(h.hoogtes).size === 1, w + 'px R3 de vier labels zijn even hoog, de rij blijft uitgelijnd: ' + JSON.stringify(h.hoogtes));
     eq(h.regels[1], w <= 360 ? 2 : 1, w + 'px R4 Spierherstel staat op ' + (w <= 360 ? 'twee regels (afgebroken op het streepje)' : 'één regel'));
+    // Inzicht mag volgens PO geen tweede dagelijkse readiness/check-in meer hebben.
+    // De originele vier ontwikkelings-KPI's moeten op smalle schermen behouden blijven.
     await page.evaluate(function () { window.__inz = false; go('s-inzicht'); });
-    await page.waitForFunction(function () { return document.querySelectorAll('#lich-hero .grid .m').length === 4; }, null, { timeout: 30000 });
+    await page.waitForFunction(function () { return document.querySelectorAll('#inzicht-summary-grid .tk-summary-cell').length === 4; }, null, { timeout: 30000 });
     const i = await page.evaluate(function () {
-      const g = document.querySelector('#lich-hero .grid'), k = document.querySelector('#lich-hero .lich-rhero').getBoundingClientRect(); const ms = Array.from(g.children).map(function (m) { return m.getBoundingClientRect(); });
-      return { past: g.scrollWidth <= g.clientWidth, kolommen: new Set(ms.map(function (m) { return Math.round(m.left); })).size, rijen: new Set(ms.map(function (m) { return Math.round(m.top); })).size, binnen: ms.every(function (m) { return m.right <= k.right + 0.5 && m.left >= k.left - 0.5; }), pagina: document.getElementById('s-inzicht').scrollWidth > document.getElementById('s-inzicht').clientWidth + 1 };
+      const grid = document.getElementById('inzicht-summary-grid');
+      const wrap = grid.getBoundingClientRect(), ms = Array.from(grid.querySelectorAll('.tk-summary-cell')).map(function (x) { return x.getBoundingClientRect(); });
+      return {
+        past: grid.scrollWidth <= grid.clientWidth + 1,
+        kolommen: new Set(ms.map(function (m) { return Math.round(m.left); })).size,
+        rijen: new Set(ms.map(function (m) { return Math.round(m.top); })).size,
+        binnen: ms.every(function (m) { return m.right <= wrap.right + 1 && m.left >= wrap.left - 1; }),
+        pagina: document.getElementById('s-inzicht').scrollWidth > document.getElementById('s-inzicht').clientWidth + 1,
+        dubbel: !!document.getElementById('lich-hero') || !!document.getElementById('lich-checkin'),
+        figuren: !!document.getElementById('lich-fig-front') && !!document.getElementById('lich-fig-back')
+      };
     });
-    ok(i.past && i.binnen && !i.pagina, w + 'px R5 de vier tegels van de dagsamenvatting blijven binnen de kaart: ' + JSON.stringify(i));
-    eq([i.kolommen, i.rijen], w < 360 ? [2, 2] : [4, 1], w + 'px R6 ' + (w < 360 ? '2×2 onder 360 px' : 'vier naast elkaar'));
+    ok(i.past && i.binnen && !i.pagina && !i.dubbel && i.figuren,
+      w + 'px R5 vier KPI-tegels passen binnen Inzicht; geen dubbele dagkaart, originele anatomie blijft: ' + JSON.stringify(i));
+    eq([i.kolommen, i.rijen], [4, 1], w + 'px R6 de vier oorspronkelijke KPI-tegels staan naast elkaar');
     await page.close();
   }
   await browser.close();

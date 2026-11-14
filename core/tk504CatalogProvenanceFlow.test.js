@@ -26,7 +26,7 @@ function take(name){
 const names=['tk504CatalogSourceRefFromCatalog','tk504CatalogSourceRefFromSelection',
  'tk504ValidateCatalogSourceRef','tk504BuilderRefsFromPlan','tk504AttachSavedCatalogRefs',
  'snapshotFromVasteTraining','snapshotFromCustomTraining','getTrainingDefinition',
- 'previewWorkingList','previewRenderSwapPicker','previewApplySwap','previewBuildModifications',
+ 'previewDefinitionItems','previewWorkingList','previewRenderSwapPicker','previewApplySwap','previewBuildModifications',
  'buildResolvedExecutionItems','buildGuidedWorkoutPlan'];
 const script=names.map(take).join('\n');
 let renders=0;
@@ -46,7 +46,10 @@ const ctx=vm.createContext({
   previewRoleLabel:()=>'',previewResolveItemWeight:()=>42,
   previewResolveItemDetrain:()=>null,renderTrainingPreview:()=>{renders++;},
   ExerciseAssetProvider:{poster:()=>null,hasVideo:()=>false},
-  exercises:[],resolveCardioType:()=>null,Set,console
+  exercises:[],resolveCardioType:()=>null,Set,console,
+  // #587 Preview swap guards resolve the picked object and load its own history.
+  resolvePickerEx:id=>byId.get(id)?{id,name:id,active:true,_catalog:true,catalog_id:id}:{id,name:id,active:true},
+  loadPrevPerformance:async()=>null,toast:()=>{}
 });
 vm.runInContext(script,ctx,{timeout:3500});
 const explicit=ctx.tk504CatalogSourceRefFromCatalog(uid);

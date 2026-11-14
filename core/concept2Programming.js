@@ -222,6 +222,9 @@
       ctx = ctx || {};
       responsesSeen++;
       if (!pending || (state !== STATE.WAITING_RESPONSE && state !== STATE.AWAITING_ACK)) { responsesIgnored++; return { handled: false, reason: 'no_pending_operation' }; }
+      // A CSAFE ACK without an explicit transport identity is never sufficient.
+      if (pending.generation != null && ctx.generation == null) { responsesIgnored++; return { handled: false, reason: 'missing_generation' }; }
+      if (pending.deviceId != null && ctx.deviceId == null) { responsesIgnored++; return { handled: false, reason: 'missing_device_id' }; }
       if (ctx.generation != null && pending.generation != null && ctx.generation !== pending.generation) {
         responsesIgnored++; return { handled: false, reason: 'stale_generation' };
       }
@@ -321,6 +324,9 @@
       if (pending.frameAcceptedSeq == null) return { verified: false, reason: 'not_frame_accepted' };
       if (seq <= pending.frameAcceptedSeq) return { verified: false, reason: 'stale_telemetry_before_acceptance' };
       ctx = ctx || {};
+      // Readback with no verifiable connection identity must not complete a workout.
+      if (pending.generation != null && ctx.generation == null) return { verified: false, reason: 'missing_generation' };
+      if (pending.deviceId != null && ctx.deviceId == null) return { verified: false, reason: 'missing_device_id' };
       if (ctx.generation != null && pending.generation != null && ctx.generation !== pending.generation) return { verified: false, reason: 'stale_generation' };
       if (ctx.deviceId != null && pending.deviceId != null && ctx.deviceId !== pending.deviceId) return { verified: false, reason: 'other_device' };
       /* Packet-identiteit (FIX 3): de read-back moet uit een ECHTE 0x31 komen die ná de

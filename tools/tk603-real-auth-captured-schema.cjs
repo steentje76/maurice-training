@@ -39,7 +39,7 @@ async function account(label){const email='tk603-'+label+'-'+Date.now()+'@exampl
   A=await account('owner-a');B=await account('owner-b');assert(A.id!==B.id&&A.token!==B.token,'two real independently issued local Auth identities');
   const captured=capturedSchema.fixture(root,A,B);
   const fixture=captured.ddl;
-  sql(fixture);sql(fs.readFileSync(path.join(root,'supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql'),'utf8'));
+  sql(fixture);sql(fs.readFileSync(path.join(root,'supabase/migrations/20261107191714_tk504_typed_catalog_fk_stage.sql'),'utf8'));
   let blocked=false;
   try{sql("insert into public.exercises(id,name,category,type,scope,active) values('TKC-000582','Synthetic red proof','system','strength','global',false)");}catch(e){blocked=e.message.includes('Alleen een gym-owner');}
   assert(blocked,'captured production scope trigger blocks unowned admin alias before proposal');

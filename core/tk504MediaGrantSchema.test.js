@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const migration=path.join(__dirname,'..','supabase','migrations','20261103155325_tk504_movekit_v2_media_grants.sql');
+const migration=path.join(__dirname,'..','supabase','migrations','20261107191701_tk504_movekit_v2_media_grants.sql');
 const sql=fs.readFileSync(migration,'utf8').toLowerCase();
 const checks=[
  ['dedicated grants table',/create table if not exists public\.movekit_media_grants/],

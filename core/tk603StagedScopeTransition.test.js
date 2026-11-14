@@ -3,7 +3,7 @@
 // The actual migration/rollback and adversarial DB cases run via --staged-scope.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const root=path.join(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8').replace(/\r\n/g,'\n');
-const migration=read('supabase/migrations/20261107154937_tk603_reserved_scope_provisioning_stage.sql');
+const migration=read('supabase/migrations/20261107191728_tk603_reserved_scope_provisioning_stage.sql');
 const rollback=read('tools/tk603-scope-transition-rollback.sql');
 const evidence=JSON.parse(read('docs/generated/TK603_SCHEMA_CONTRACT_20261107.json'));
 const source=evidence.dependent_functions.find(x=>x.name==='set_exercise_scope_context').definition.replace(/\r\n/g,'\n');
@@ -16,7 +16,7 @@ check(updated.replace(/\n  -- TK603:[\s\S]*?\n  END IF;\n/,'')===source,
 check(definition(rollback)===source,'rollback contains exact original function');
 check(migration.includes(sha(source)),'transition pins complete captured function');
 check(rollback.includes(sha(updated)),'rollback pins complete staged function');
-const typed=read('supabase/migrations/20261106110000_tk504_typed_catalog_fk_stage.sql');
+const typed=read('supabase/migrations/20261107191714_tk504_typed_catalog_fk_stage.sql');
 const guardBody=typed.split('create or replace function public.tk504_protect_reserved_catalog_fk()')[1]
  .split('$tk504$;')[0].split('as $tk504$')[1];
 for(const sql of [migration,rollback]){

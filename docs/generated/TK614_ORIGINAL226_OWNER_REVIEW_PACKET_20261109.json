@@ -1,0 +1,4006 @@
+{
+  "schema": "tk614-original226-owner-review-packet/1.0",
+  "status": "PENDING_OWNER_REVIEW",
+  "generated_from": {
+    "file": "exercise-catalog.json",
+    "source_catalog_sha256": "b278938498ffd0d713a4ad23184bfdd037fab65fd2ce5c9e0f7662a6e96bf4af",
+    "generator": "tools/tk614_original226_review_packet.cjs"
+  },
+  "scope": {
+    "first": "TK-000001",
+    "last": "TK-000226",
+    "count": 226,
+    "batch_count": 10,
+    "batch_size": 25,
+    "last_batch_size": 1,
+    "binding_kind": "FK_IDENTITY_BINDING_ONLY",
+    "excluded": [
+      "TK-000227..TK-000582 (356, separately reviewed)",
+      "23 legacy TK-###### exercise rows",
+      "sessions",
+      "media files, storage paths, media sha256",
+      "private manifest content",
+      "license documents"
+    ]
+  },
+  "authorizes": {
+    "fk_activation": false,
+    "reviewed_at": false,
+    "binding_active": false,
+    "media_grants": false,
+    "release_gates_change": false,
+    "release_approved": false
+  },
+  "review_counts": {
+    "pending_owner_review": 226,
+    "owner_approved": 0,
+    "rejected": 0
+  },
+  "evidence": {
+    "a_existing_claims_and_technical_basis": "SEE_DOCS_TK614_PHASE_B_OWNER_REVIEW_20261109_SECTION_2",
+    "b_new_fk_binding_approval_for_226": "PENDING",
+    "c_media_access": "NOT_RELEASED",
+    "prior_356_owner_approval_transferable": false
+  },
+  "staged_contract": {
+    "phase_a_decision_id": "TK614-OWNER-STAGE-20261108-CHAT02",
+    "phase_a_status": "COMMITTED_IN_PRODUCTION",
+    "original_226_bindings_present": 226,
+    "original_226_binding_active": false,
+    "original_226_reviewed_at": null,
+    "original_226_resolvable": 0,
+    "existing_356_active_reviewed": 356,
+    "post_stage_registry_sha256": "bb0b9ee423fcf322fa0e9c854c9013ece34fb3068193b1febb12bdb89de1c927",
+    "phase_b_activate": "NOT_APPROVED_BLOCKED",
+    "provenance": "reported_by_owner_session_20261108_not_reverified_offline"
+  },
+  "totals": {
+    "rows": 226,
+    "batches": 10,
+    "all_sha256": "bb7badb23244ad47659b8170e9f154aa7bbcfc7fd69c1c1c4b42b2a65bd98487"
+  },
+  "batches": [
+    {
+      "batch": 1,
+      "from": "TK-000001",
+      "through": "TK-000025",
+      "count": 25,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "d5f42ae16c763d64320c39952c5a852a33a23ccd4acd2b3f37bc0faa3c2e51b1",
+      "rows": [
+        {
+          "n": 1,
+          "catalog_id": "TK-000001",
+          "fk_target_exercise_id": "TKC-000001",
+          "provider": "movekit",
+          "provider_id": "abdominals-stretch-variation-four",
+          "name": "Abdominals Stretch Variation Four",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 2,
+          "catalog_id": "TK-000002",
+          "fk_target_exercise_id": "TKC-000002",
+          "provider": "movekit",
+          "provider_id": "abdominals-stretch-variation-one",
+          "name": "Abdominals Stretch Variation One",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 3,
+          "catalog_id": "TK-000003",
+          "fk_target_exercise_id": "TKC-000003",
+          "provider": "movekit",
+          "provider_id": "abdominals-stretch-variation-three",
+          "name": "Abdominals Stretch Variation Three",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 4,
+          "catalog_id": "TK-000004",
+          "fk_target_exercise_id": "TKC-000004",
+          "provider": "movekit",
+          "provider_id": "abdominals-stretch-variation-two",
+          "name": "Abdominals Stretch Variation Two",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 5,
+          "catalog_id": "TK-000005",
+          "fk_target_exercise_id": "TKC-000005",
+          "provider": "movekit",
+          "provider_id": "band-curl",
+          "name": "Band Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "elbow_flexion",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 6,
+          "catalog_id": "TK-000006",
+          "fk_target_exercise_id": "TKC-000006",
+          "provider": "movekit",
+          "provider_id": "band-high-face-pull",
+          "name": "Band High Face Pull",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "scapular_pull",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 7,
+          "catalog_id": "TK-000007",
+          "fk_target_exercise_id": "TKC-000007",
+          "provider": "movekit",
+          "provider_id": "band-hip-abduction",
+          "name": "Band Hip Abduction",
+          "name_nl": null,
+          "category": "lower_body_isolation",
+          "pattern": "hip_abduction",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 8,
+          "catalog_id": "TK-000008",
+          "fk_target_exercise_id": "TKC-000008",
+          "provider": "movekit",
+          "provider_id": "band-kneeling-pulldown",
+          "name": "Band Kneeling Pulldown",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 9,
+          "catalog_id": "TK-000009",
+          "fk_target_exercise_id": "TKC-000009",
+          "provider": "movekit",
+          "provider_id": "band-lateral-raise",
+          "name": "Band Lateral Raise",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 10,
+          "catalog_id": "TK-000010",
+          "fk_target_exercise_id": "TKC-000010",
+          "provider": "movekit",
+          "provider_id": "band-pullover",
+          "name": "Band Pullover",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 11,
+          "catalog_id": "TK-000011",
+          "fk_target_exercise_id": "TKC-000011",
+          "provider": "movekit",
+          "provider_id": "band-romanian-deadlift",
+          "name": "Band Romanian Deadlift",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 12,
+          "catalog_id": "TK-000012",
+          "fk_target_exercise_id": "TKC-000012",
+          "provider": "movekit",
+          "provider_id": "band-row",
+          "name": "Band Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 13,
+          "catalog_id": "TK-000013",
+          "fk_target_exercise_id": "TKC-000013",
+          "provider": "movekit",
+          "provider_id": "band-seated-pulldown",
+          "name": "Band Seated Pulldown",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 14,
+          "catalog_id": "TK-000014",
+          "fk_target_exercise_id": "TKC-000014",
+          "provider": "movekit",
+          "provider_id": "band-shrug",
+          "name": "Band Shrug",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "scapular_pull",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 15,
+          "catalog_id": "TK-000015",
+          "fk_target_exercise_id": "TKC-000015",
+          "provider": "movekit",
+          "provider_id": "band-single-arm-lateral-raise",
+          "name": "Band Single Arm Lateral Raise",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 16,
+          "catalog_id": "TK-000016",
+          "fk_target_exercise_id": "TKC-000016",
+          "provider": "movekit",
+          "provider_id": "band-wood-chopper",
+          "name": "Band Wood Chopper",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "rotation",
+          "type": "compound",
+          "difficulty": "advanced",
+          "equipment": [
+            "band"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 17,
+          "catalog_id": "TK-000017",
+          "fk_target_exercise_id": "TKC-000017",
+          "provider": "movekit",
+          "provider_id": "barbell-banded-back-squat",
+          "name": "Barbell Banded Back Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 18,
+          "catalog_id": "TK-000018",
+          "fk_target_exercise_id": "TKC-000018",
+          "provider": "movekit",
+          "provider_id": "barbell-behind-the-back-30-degree-shrug",
+          "name": "Barbell Behind The Back 30 Degree Shrug",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "scapular_pull",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 19,
+          "catalog_id": "TK-000019",
+          "fk_target_exercise_id": "TKC-000019",
+          "provider": "movekit",
+          "provider_id": "barbell-bench-press",
+          "name": "Barbell Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "advanced",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 20,
+          "catalog_id": "TK-000020",
+          "fk_target_exercise_id": "TKC-000020",
+          "provider": "movekit",
+          "provider_id": "barbell-bent-over-row",
+          "name": "Barbell Bent Over Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 21,
+          "catalog_id": "TK-000021",
+          "fk_target_exercise_id": "TKC-000021",
+          "provider": "movekit",
+          "provider_id": "barbell-clean-and-press",
+          "name": "Barbell Clean And Press",
+          "name_nl": null,
+          "category": "power",
+          "pattern": "push",
+          "type": "olympic",
+          "difficulty": "advanced",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 22,
+          "catalog_id": "TK-000022",
+          "fk_target_exercise_id": "TKC-000022",
+          "provider": "movekit",
+          "provider_id": "barbell-close-grip-bench-press",
+          "name": "Barbell Close Grip Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 23,
+          "catalog_id": "TK-000023",
+          "fk_target_exercise_id": "TKC-000023",
+          "provider": "movekit",
+          "provider_id": "barbell-curl",
+          "name": "Barbell Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 24,
+          "catalog_id": "TK-000024",
+          "fk_target_exercise_id": "TKC-000024",
+          "provider": "movekit",
+          "provider_id": "barbell-deadlift",
+          "name": "Barbell Deadlift",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "advanced",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 25,
+          "catalog_id": "TK-000025",
+          "fk_target_exercise_id": "TKC-000025",
+          "provider": "movekit",
+          "provider_id": "barbell-drag-curl",
+          "name": "Barbell Drag Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    },
+    {
+      "batch": 2,
+      "from": "TK-000026",
+      "through": "TK-000050",
+      "count": 25,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "dadec463778229c372691e9512fe1673b4835dae5284be1731792afd9b9997ce",
+      "rows": [
+        {
+          "n": 26,
+          "catalog_id": "TK-000026",
+          "fk_target_exercise_id": "TKC-000026",
+          "provider": "movekit",
+          "provider_id": "barbell-front-rack-step-up-knee-drive",
+          "name": "Barbell Front Rack Step Up Knee Drive",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 27,
+          "catalog_id": "TK-000027",
+          "fk_target_exercise_id": "TKC-000027",
+          "provider": "movekit",
+          "provider_id": "barbell-high-incline-bench-press",
+          "name": "Barbell High Incline Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 28,
+          "catalog_id": "TK-000028",
+          "fk_target_exercise_id": "TKC-000028",
+          "provider": "movekit",
+          "provider_id": "barbell-incline-bench-press",
+          "name": "Barbell Incline Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 29,
+          "catalog_id": "TK-000029",
+          "fk_target_exercise_id": "TKC-000029",
+          "provider": "movekit",
+          "provider_id": "barbell-muscle-snatch",
+          "name": "Barbell Muscle Snatch",
+          "name_nl": null,
+          "category": "power",
+          "pattern": "pull",
+          "type": "olympic",
+          "difficulty": "advanced",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 30,
+          "catalog_id": "TK-000030",
+          "fk_target_exercise_id": "TKC-000030",
+          "provider": "movekit",
+          "provider_id": "barbell-overhead-press",
+          "name": "Barbell Overhead Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "vertical_push",
+          "type": "compound",
+          "difficulty": "advanced",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 31,
+          "catalog_id": "TK-000031",
+          "fk_target_exercise_id": "TKC-000031",
+          "provider": "movekit",
+          "provider_id": "barbell-power-snatch",
+          "name": "Barbell Power Snatch",
+          "name_nl": null,
+          "category": "power",
+          "pattern": "pull",
+          "type": "olympic",
+          "difficulty": "advanced",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 32,
+          "catalog_id": "TK-000032",
+          "fk_target_exercise_id": "TKC-000032",
+          "provider": "movekit",
+          "provider_id": "barbell-pullover",
+          "name": "Barbell Pullover",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "pull",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 33,
+          "catalog_id": "TK-000033",
+          "fk_target_exercise_id": "TKC-000033",
+          "provider": "movekit",
+          "provider_id": "barbell-rack-pull",
+          "name": "Barbell Rack Pull",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 34,
+          "catalog_id": "TK-000034",
+          "fk_target_exercise_id": "TKC-000034",
+          "provider": "movekit",
+          "provider_id": "barbell-shrug",
+          "name": "Barbell Shrug",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 35,
+          "catalog_id": "TK-000035",
+          "fk_target_exercise_id": "TKC-000035",
+          "provider": "movekit",
+          "provider_id": "barbell-snatch",
+          "name": "Barbell Snatch",
+          "name_nl": null,
+          "category": "power",
+          "pattern": "pull",
+          "type": "olympic",
+          "difficulty": "advanced",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 36,
+          "catalog_id": "TK-000036",
+          "fk_target_exercise_id": "TKC-000036",
+          "provider": "movekit",
+          "provider_id": "barbell-spinal-jefferson-curl",
+          "name": "Barbell Spinal Jefferson Curl",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 37,
+          "catalog_id": "TK-000037",
+          "fk_target_exercise_id": "TKC-000037",
+          "provider": "movekit",
+          "provider_id": "barbell-split-squat",
+          "name": "Barbell Split Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 38,
+          "catalog_id": "TK-000038",
+          "fk_target_exercise_id": "TKC-000038",
+          "provider": "movekit",
+          "provider_id": "barbell-squat",
+          "name": "Barbell Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 39,
+          "catalog_id": "TK-000039",
+          "fk_target_exercise_id": "TKC-000039",
+          "provider": "movekit",
+          "provider_id": "barbell-step-up-knee-drive",
+          "name": "Barbell Step Up Knee Drive",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 40,
+          "catalog_id": "TK-000040",
+          "fk_target_exercise_id": "TKC-000040",
+          "provider": "movekit",
+          "provider_id": "barbell-stiff-leg-deadlifts",
+          "name": "Barbell Stiff Leg Deadlifts",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 41,
+          "catalog_id": "TK-000041",
+          "fk_target_exercise_id": "TKC-000041",
+          "provider": "movekit",
+          "provider_id": "barbell-thruster",
+          "name": "Barbell Thruster",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "push",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 42,
+          "catalog_id": "TK-000042",
+          "fk_target_exercise_id": "TKC-000042",
+          "provider": "movekit",
+          "provider_id": "barbell-upright-row",
+          "name": "Barbell Upright Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "advanced",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 43,
+          "catalog_id": "TK-000043",
+          "fk_target_exercise_id": "TKC-000043",
+          "provider": "movekit",
+          "provider_id": "barbell-wrist-curl",
+          "name": "Barbell Wrist Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 44,
+          "catalog_id": "TK-000044",
+          "fk_target_exercise_id": "TKC-000044",
+          "provider": "movekit",
+          "provider_id": "bench-dips",
+          "name": "Bench Dips",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 45,
+          "catalog_id": "TK-000045",
+          "fk_target_exercise_id": "TKC-000045",
+          "provider": "movekit",
+          "provider_id": "bodyweight-alternating-lateral-lunge",
+          "name": "Bodyweight Alternating Lateral Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 46,
+          "catalog_id": "TK-000046",
+          "fk_target_exercise_id": "TKC-000046",
+          "provider": "movekit",
+          "provider_id": "bodyweight-alternating-reverse-lunges",
+          "name": "Bodyweight Alternating Reverse Lunges",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 47,
+          "catalog_id": "TK-000047",
+          "fk_target_exercise_id": "TKC-000047",
+          "provider": "movekit",
+          "provider_id": "bodyweight-box-squat",
+          "name": "Bodyweight Box Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 48,
+          "catalog_id": "TK-000048",
+          "fk_target_exercise_id": "TKC-000048",
+          "provider": "movekit",
+          "provider_id": "bodyweight-deadlift",
+          "name": "Bodyweight Deadlift",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 49,
+          "catalog_id": "TK-000049",
+          "fk_target_exercise_id": "TKC-000049",
+          "provider": "movekit",
+          "provider_id": "bodyweight-donkey-calf-raise",
+          "name": "Bodyweight Donkey Calf Raise",
+          "name_nl": null,
+          "category": "lower_body_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 50,
+          "catalog_id": "TK-000050",
+          "fk_target_exercise_id": "TKC-000050",
+          "provider": "movekit",
+          "provider_id": "bodyweight-elevated-push-up",
+          "name": "Bodyweight Elevated Push Up",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    },
+    {
+      "batch": 3,
+      "from": "TK-000051",
+      "through": "TK-000075",
+      "count": 25,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "70534ae2d37d556816e5b46dfea0e47cb6241539b97890e3b10cf3e22067b598",
+      "rows": [
+        {
+          "n": 51,
+          "catalog_id": "TK-000051",
+          "fk_target_exercise_id": "TKC-000051",
+          "provider": "movekit",
+          "provider_id": "bodyweight-hip-abduction",
+          "name": "Bodyweight Hip Abduction",
+          "name_nl": null,
+          "category": "lower_body_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 52,
+          "catalog_id": "TK-000052",
+          "fk_target_exercise_id": "TKC-000052",
+          "provider": "movekit",
+          "provider_id": "bodyweight-knee-push-ups",
+          "name": "Bodyweight Knee Push Ups",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 53,
+          "catalog_id": "TK-000053",
+          "fk_target_exercise_id": "TKC-000053",
+          "provider": "movekit",
+          "provider_id": "bodyweight-reverse-lunge",
+          "name": "Bodyweight Reverse Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 54,
+          "catalog_id": "TK-000054",
+          "fk_target_exercise_id": "TKC-000054",
+          "provider": "movekit",
+          "provider_id": "bodyweight-russian-twist",
+          "name": "Bodyweight Russian Twist",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "rotation",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 55,
+          "catalog_id": "TK-000055",
+          "fk_target_exercise_id": "TKC-000055",
+          "provider": "movekit",
+          "provider_id": "bodyweight-spinal-jefferson-curl",
+          "name": "Bodyweight Spinal Jefferson Curl",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 56,
+          "catalog_id": "TK-000056",
+          "fk_target_exercise_id": "TKC-000056",
+          "provider": "movekit",
+          "provider_id": "bodyweight-squat",
+          "name": "Bodyweight Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 57,
+          "catalog_id": "TK-000057",
+          "fk_target_exercise_id": "TKC-000057",
+          "provider": "movekit",
+          "provider_id": "box-jump",
+          "name": "Box Jump",
+          "name_nl": null,
+          "category": "power",
+          "pattern": "plyometric",
+          "type": "plyometric",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 58,
+          "catalog_id": "TK-000058",
+          "fk_target_exercise_id": "TKC-000058",
+          "provider": "movekit",
+          "provider_id": "bulgarian-split-squat",
+          "name": "Bulgarian Split Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 59,
+          "catalog_id": "TK-000059",
+          "fk_target_exercise_id": "TKC-000059",
+          "provider": "movekit",
+          "provider_id": "burpee",
+          "name": "Burpee",
+          "name_nl": null,
+          "category": "power",
+          "pattern": "plyometric",
+          "type": "plyometric",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 60,
+          "catalog_id": "TK-000060",
+          "fk_target_exercise_id": "TKC-000060",
+          "provider": "movekit",
+          "provider_id": "cable-30-degree-shrug",
+          "name": "Cable 30 Degree Shrug",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 61,
+          "catalog_id": "TK-000061",
+          "fk_target_exercise_id": "TKC-000061",
+          "provider": "movekit",
+          "provider_id": "cable-bar-curl",
+          "name": "Cable Bar Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 62,
+          "catalog_id": "TK-000062",
+          "fk_target_exercise_id": "TKC-000062",
+          "provider": "movekit",
+          "provider_id": "cable-bar-face-pull",
+          "name": "Cable Bar Face Pull",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "scapular_pull",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 63,
+          "catalog_id": "TK-000063",
+          "fk_target_exercise_id": "TKC-000063",
+          "provider": "movekit",
+          "provider_id": "cable-bar-pushdown",
+          "name": "Cable Bar Pushdown",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 64,
+          "catalog_id": "TK-000064",
+          "fk_target_exercise_id": "TKC-000064",
+          "provider": "movekit",
+          "provider_id": "cable-bench-chest-fly",
+          "name": "Cable Bench Chest Fly",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 65,
+          "catalog_id": "TK-000065",
+          "fk_target_exercise_id": "TKC-000065",
+          "provider": "movekit",
+          "provider_id": "cable-bench-press",
+          "name": "Cable Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 66,
+          "catalog_id": "TK-000066",
+          "fk_target_exercise_id": "TKC-000066",
+          "provider": "movekit",
+          "provider_id": "cable-bench-straight-leg-kickback",
+          "name": "Cable Bench Straight Leg Kickback",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 67,
+          "catalog_id": "TK-000067",
+          "fk_target_exercise_id": "TKC-000067",
+          "provider": "movekit",
+          "provider_id": "cable-chest-press",
+          "name": "Cable Chest Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 68,
+          "catalog_id": "TK-000068",
+          "fk_target_exercise_id": "TKC-000068",
+          "provider": "movekit",
+          "provider_id": "cable-decline-bench-press",
+          "name": "Cable Decline Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 69,
+          "catalog_id": "TK-000069",
+          "fk_target_exercise_id": "TKC-000069",
+          "provider": "movekit",
+          "provider_id": "cable-incline-bench-press",
+          "name": "Cable Incline Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 70,
+          "catalog_id": "TK-000070",
+          "fk_target_exercise_id": "TKC-000070",
+          "provider": "movekit",
+          "provider_id": "cable-overhead-press",
+          "name": "Cable Overhead Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "vertical_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 71,
+          "catalog_id": "TK-000071",
+          "fk_target_exercise_id": "TKC-000071",
+          "provider": "movekit",
+          "provider_id": "cable-pec-fly",
+          "name": "Cable Pec Fly",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 72,
+          "catalog_id": "TK-000072",
+          "fk_target_exercise_id": "TKC-000072",
+          "provider": "movekit",
+          "provider_id": "cable-rope-kneeling-face-pull",
+          "name": "Cable Rope Kneeling Face Pull",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "scapular_pull",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 73,
+          "catalog_id": "TK-000073",
+          "fk_target_exercise_id": "TKC-000073",
+          "provider": "movekit",
+          "provider_id": "cable-rope-pushdown",
+          "name": "Cable Rope Pushdown",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 74,
+          "catalog_id": "TK-000074",
+          "fk_target_exercise_id": "TKC-000074",
+          "provider": "movekit",
+          "provider_id": "cable-row-bar-standing-row",
+          "name": "Cable Row Bar Standing Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 75,
+          "catalog_id": "TK-000075",
+          "fk_target_exercise_id": "TKC-000075",
+          "provider": "movekit",
+          "provider_id": "cable-seated-rope-face-pull",
+          "name": "Cable Seated Rope Face Pull",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "scapular_pull",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    },
+    {
+      "batch": 4,
+      "from": "TK-000076",
+      "through": "TK-000100",
+      "count": 25,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "2f6491a1216722af3c8c31bc1f9006e4886dbffbeb5b4fd83ba4a60247ab4b64",
+      "rows": [
+        {
+          "n": 76,
+          "catalog_id": "TK-000076",
+          "fk_target_exercise_id": "TKC-000076",
+          "provider": "movekit",
+          "provider_id": "cable-side-bend",
+          "name": "Cable Side Bend",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 77,
+          "catalog_id": "TK-000077",
+          "fk_target_exercise_id": "TKC-000077",
+          "provider": "movekit",
+          "provider_id": "cable-single-arm-neutral-grip-row",
+          "name": "Cable Single Arm Neutral Grip Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 78,
+          "catalog_id": "TK-000078",
+          "fk_target_exercise_id": "TKC-000078",
+          "provider": "movekit",
+          "provider_id": "cable-single-arm-rope-pushdown",
+          "name": "Cable Single Arm Rope Pushdown",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 79,
+          "catalog_id": "TK-000079",
+          "fk_target_exercise_id": "TKC-000079",
+          "provider": "movekit",
+          "provider_id": "cable-single-arm-underhand-grip-row",
+          "name": "Cable Single Arm Underhand Grip Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 80,
+          "catalog_id": "TK-000080",
+          "fk_target_exercise_id": "TKC-000080",
+          "provider": "movekit",
+          "provider_id": "cable-standing-low-to-high-wood-chopper",
+          "name": "Cable Standing Low To High Wood Chopper",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "rotation",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 81,
+          "catalog_id": "TK-000081",
+          "fk_target_exercise_id": "TKC-000081",
+          "provider": "movekit",
+          "provider_id": "cable-standing-single-arm-chest-press",
+          "name": "Cable Standing Single Arm Chest Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 82,
+          "catalog_id": "TK-000082",
+          "fk_target_exercise_id": "TKC-000082",
+          "provider": "movekit",
+          "provider_id": "cable-supinating-row",
+          "name": "Cable Supinating Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 83,
+          "catalog_id": "TK-000083",
+          "fk_target_exercise_id": "TKC-000083",
+          "provider": "movekit",
+          "provider_id": "cable-wood-chopper",
+          "name": "Cable Wood Chopper",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "rotation",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 84,
+          "catalog_id": "TK-000084",
+          "fk_target_exercise_id": "TKC-000084",
+          "provider": "movekit",
+          "provider_id": "chin-ups",
+          "name": "Chin Ups",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "advanced",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 85,
+          "catalog_id": "TK-000085",
+          "fk_target_exercise_id": "TKC-000085",
+          "provider": "movekit",
+          "provider_id": "decline-push-up",
+          "name": "Decline Push Up",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 86,
+          "catalog_id": "TK-000086",
+          "fk_target_exercise_id": "TKC-000086",
+          "provider": "movekit",
+          "provider_id": "diamond-push-ups",
+          "name": "Diamond Push Ups",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 87,
+          "catalog_id": "TK-000087",
+          "fk_target_exercise_id": "TKC-000087",
+          "provider": "movekit",
+          "provider_id": "dumbbell-alternating-forward-lunge",
+          "name": "Dumbbell Alternating Forward Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 88,
+          "catalog_id": "TK-000088",
+          "fk_target_exercise_id": "TKC-000088",
+          "provider": "movekit",
+          "provider_id": "dumbbell-bench-press",
+          "name": "Dumbbell Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 89,
+          "catalog_id": "TK-000089",
+          "fk_target_exercise_id": "TKC-000089",
+          "provider": "movekit",
+          "provider_id": "dumbbell-bulgarian-split-squat",
+          "name": "Dumbbell Bulgarian Split Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 90,
+          "catalog_id": "TK-000090",
+          "fk_target_exercise_id": "TKC-000090",
+          "provider": "movekit",
+          "provider_id": "dumbbell-chest-fly",
+          "name": "Dumbbell Chest Fly",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 91,
+          "catalog_id": "TK-000091",
+          "fk_target_exercise_id": "TKC-000091",
+          "provider": "movekit",
+          "provider_id": "dumbbell-concentration-curl",
+          "name": "Dumbbell Concentration Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 92,
+          "catalog_id": "TK-000092",
+          "fk_target_exercise_id": "TKC-000092",
+          "provider": "movekit",
+          "provider_id": "dumbbell-cross-body-romanian-deadlift",
+          "name": "Dumbbell Cross Body Romanian Deadlift",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 93,
+          "catalog_id": "TK-000093",
+          "fk_target_exercise_id": "TKC-000093",
+          "provider": "movekit",
+          "provider_id": "dumbbell-curl",
+          "name": "Dumbbell Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 94,
+          "catalog_id": "TK-000094",
+          "fk_target_exercise_id": "TKC-000094",
+          "provider": "movekit",
+          "provider_id": "dumbbell-decline-bench-press",
+          "name": "Dumbbell Decline Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 95,
+          "catalog_id": "TK-000095",
+          "fk_target_exercise_id": "TKC-000095",
+          "provider": "movekit",
+          "provider_id": "dumbbell-decline-chest-fly",
+          "name": "Dumbbell Decline Chest Fly",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 96,
+          "catalog_id": "TK-000096",
+          "fk_target_exercise_id": "TKC-000096",
+          "provider": "movekit",
+          "provider_id": "dumbbell-decline-skullcrusher",
+          "name": "Dumbbell Decline Skullcrusher",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 97,
+          "catalog_id": "TK-000097",
+          "fk_target_exercise_id": "TKC-000097",
+          "provider": "movekit",
+          "provider_id": "dumbbell-feet-elevated-glute-bridge",
+          "name": "Dumbbell Feet Elevated Glute Bridge",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 98,
+          "catalog_id": "TK-000098",
+          "fk_target_exercise_id": "TKC-000098",
+          "provider": "movekit",
+          "provider_id": "dumbbell-figure-four-heels-elevated-hip-thrust",
+          "name": "Dumbbell Figure Four Heels Elevated Hip Thrust",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 99,
+          "catalog_id": "TK-000099",
+          "fk_target_exercise_id": "TKC-000099",
+          "provider": "movekit",
+          "provider_id": "dumbbell-front-raise",
+          "name": "Dumbbell Front Raise",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 100,
+          "catalog_id": "TK-000100",
+          "fk_target_exercise_id": "TKC-000100",
+          "provider": "movekit",
+          "provider_id": "dumbbell-goblet-alternating-curtsy-lunge",
+          "name": "Dumbbell Goblet Alternating Curtsy Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    },
+    {
+      "batch": 5,
+      "from": "TK-000101",
+      "through": "TK-000125",
+      "count": 25,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "3a318f383f44c962c6ebad0b32f4a35d99b00e616c865527db40731b2e687a14",
+      "rows": [
+        {
+          "n": 101,
+          "catalog_id": "TK-000101",
+          "fk_target_exercise_id": "TKC-000101",
+          "provider": "movekit",
+          "provider_id": "dumbbell-goblet-bulgarian-split-squat",
+          "name": "Dumbbell Goblet Bulgarian Split Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 102,
+          "catalog_id": "TK-000102",
+          "fk_target_exercise_id": "TKC-000102",
+          "provider": "movekit",
+          "provider_id": "dumbbell-goblet-forward-lunge",
+          "name": "Dumbbell Goblet Forward Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 103,
+          "catalog_id": "TK-000103",
+          "fk_target_exercise_id": "TKC-000103",
+          "provider": "movekit",
+          "provider_id": "dumbbell-goblet-reverse-lunge",
+          "name": "Dumbbell Goblet Reverse Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 104,
+          "catalog_id": "TK-000104",
+          "fk_target_exercise_id": "TKC-000104",
+          "provider": "movekit",
+          "provider_id": "dumbbell-goblet-split-squat",
+          "name": "Dumbbell Goblet Split Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 105,
+          "catalog_id": "TK-000105",
+          "fk_target_exercise_id": "TKC-000105",
+          "provider": "movekit",
+          "provider_id": "dumbbell-goblet-squat",
+          "name": "Dumbbell Goblet Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 106,
+          "catalog_id": "TK-000106",
+          "fk_target_exercise_id": "TKC-000106",
+          "provider": "movekit",
+          "provider_id": "dumbbell-hammer-curl",
+          "name": "Dumbbell Hammer Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 107,
+          "catalog_id": "TK-000107",
+          "fk_target_exercise_id": "TKC-000107",
+          "provider": "movekit",
+          "provider_id": "dumbbell-heels-elevated-hip-thrust",
+          "name": "Dumbbell Heels Elevated Hip Thrust",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 108,
+          "catalog_id": "TK-000108",
+          "fk_target_exercise_id": "TKC-000108",
+          "provider": "movekit",
+          "provider_id": "dumbbell-incline-bench-press",
+          "name": "Dumbbell Incline Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 109,
+          "catalog_id": "TK-000109",
+          "fk_target_exercise_id": "TKC-000109",
+          "provider": "movekit",
+          "provider_id": "dumbbell-incline-chest-fly",
+          "name": "Dumbbell Incline Chest Fly",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 110,
+          "catalog_id": "TK-000110",
+          "fk_target_exercise_id": "TKC-000110",
+          "provider": "movekit",
+          "provider_id": "dumbbell-incline-curl",
+          "name": "Dumbbell Incline Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 111,
+          "catalog_id": "TK-000111",
+          "fk_target_exercise_id": "TKC-000111",
+          "provider": "movekit",
+          "provider_id": "dumbbell-incline-front-raise",
+          "name": "Dumbbell Incline Front Raise",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 112,
+          "catalog_id": "TK-000112",
+          "fk_target_exercise_id": "TKC-000112",
+          "provider": "movekit",
+          "provider_id": "dumbbell-incline-hammer-curl",
+          "name": "Dumbbell Incline Hammer Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 113,
+          "catalog_id": "TK-000113",
+          "fk_target_exercise_id": "TKC-000113",
+          "provider": "movekit",
+          "provider_id": "dumbbell-lateral-raise",
+          "name": "Dumbbell Lateral Raise",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 114,
+          "catalog_id": "TK-000114",
+          "fk_target_exercise_id": "TKC-000114",
+          "provider": "movekit",
+          "provider_id": "dumbbell-laying-reverse-fly",
+          "name": "Dumbbell Laying Reverse Fly",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 115,
+          "catalog_id": "TK-000115",
+          "fk_target_exercise_id": "TKC-000115",
+          "provider": "movekit",
+          "provider_id": "dumbbell-leg-curl",
+          "name": "Dumbbell Leg Curl",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 116,
+          "catalog_id": "TK-000116",
+          "fk_target_exercise_id": "TKC-000116",
+          "provider": "movekit",
+          "provider_id": "dumbbell-preacher-curl",
+          "name": "Dumbbell Preacher Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 117,
+          "catalog_id": "TK-000117",
+          "fk_target_exercise_id": "TKC-000117",
+          "provider": "movekit",
+          "provider_id": "dumbbell-rear-delt-fly",
+          "name": "Dumbbell Rear Delt Fly",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 118,
+          "catalog_id": "TK-000118",
+          "fk_target_exercise_id": "TKC-000118",
+          "provider": "movekit",
+          "provider_id": "dumbbell-row-bilateral",
+          "name": "Dumbbell Row Bilateral",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 119,
+          "catalog_id": "TK-000119",
+          "fk_target_exercise_id": "TKC-000119",
+          "provider": "movekit",
+          "provider_id": "dumbbell-row-unilateral",
+          "name": "Dumbbell Row Unilateral",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 120,
+          "catalog_id": "TK-000120",
+          "fk_target_exercise_id": "TKC-000120",
+          "provider": "movekit",
+          "provider_id": "dumbbell-russian-twist",
+          "name": "Dumbbell Russian Twist",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "rotation",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 121,
+          "catalog_id": "TK-000121",
+          "fk_target_exercise_id": "TKC-000121",
+          "provider": "movekit",
+          "provider_id": "dumbbell-seated-overhead-press",
+          "name": "Dumbbell Seated Overhead Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "vertical_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 122,
+          "catalog_id": "TK-000122",
+          "fk_target_exercise_id": "TKC-000122",
+          "provider": "movekit",
+          "provider_id": "dumbbell-seated-overhead-tricep-extension",
+          "name": "Dumbbell Seated Overhead Tricep Extension",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 123,
+          "catalog_id": "TK-000123",
+          "fk_target_exercise_id": "TKC-000123",
+          "provider": "movekit",
+          "provider_id": "dumbbell-seated-rear-delt-fly",
+          "name": "Dumbbell Seated Rear Delt Fly",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 124,
+          "catalog_id": "TK-000124",
+          "fk_target_exercise_id": "TKC-000124",
+          "provider": "movekit",
+          "provider_id": "dumbbell-seated-shrug",
+          "name": "Dumbbell Seated Shrug",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 125,
+          "catalog_id": "TK-000125",
+          "fk_target_exercise_id": "TKC-000125",
+          "provider": "movekit",
+          "provider_id": "dumbbell-shrug",
+          "name": "Dumbbell Shrug",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    },
+    {
+      "batch": 6,
+      "from": "TK-000126",
+      "through": "TK-000150",
+      "count": 25,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "d027197a381d47cc14d126fe31163c2f5dc241a5a45492020ba86a9876474d38",
+      "rows": [
+        {
+          "n": 126,
+          "catalog_id": "TK-000126",
+          "fk_target_exercise_id": "TKC-000126",
+          "provider": "movekit",
+          "provider_id": "dumbbell-side-bend",
+          "name": "Dumbbell Side Bend",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 127,
+          "catalog_id": "TK-000127",
+          "fk_target_exercise_id": "TKC-000127",
+          "provider": "movekit",
+          "provider_id": "dumbbell-single-arm-chest-press",
+          "name": "Dumbbell Single Arm Chest Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 128,
+          "catalog_id": "TK-000128",
+          "fk_target_exercise_id": "TKC-000128",
+          "provider": "movekit",
+          "provider_id": "dumbbell-single-arm-clean-and-press",
+          "name": "Dumbbell Single Arm Clean And Press",
+          "name_nl": null,
+          "category": "power",
+          "pattern": "push",
+          "type": "olympic",
+          "difficulty": "advanced",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 129,
+          "catalog_id": "TK-000129",
+          "fk_target_exercise_id": "TKC-000129",
+          "provider": "movekit",
+          "provider_id": "dumbbell-single-arm-row",
+          "name": "Dumbbell Single Arm Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 130,
+          "catalog_id": "TK-000130",
+          "fk_target_exercise_id": "TKC-000130",
+          "provider": "movekit",
+          "provider_id": "dumbbell-single-leg-calf-raise",
+          "name": "Dumbbell Single Leg Calf Raise",
+          "name_nl": null,
+          "category": "lower_body_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 131,
+          "catalog_id": "TK-000131",
+          "fk_target_exercise_id": "TKC-000131",
+          "provider": "movekit",
+          "provider_id": "dumbbell-situp",
+          "name": "Dumbbell Situp",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 132,
+          "catalog_id": "TK-000132",
+          "fk_target_exercise_id": "TKC-000132",
+          "provider": "movekit",
+          "provider_id": "dumbbell-skullcrusher",
+          "name": "Dumbbell Skullcrusher",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 133,
+          "catalog_id": "TK-000133",
+          "fk_target_exercise_id": "TKC-000133",
+          "provider": "movekit",
+          "provider_id": "dumbbell-spinal-jefferson-curl",
+          "name": "Dumbbell Spinal Jefferson Curl",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 134,
+          "catalog_id": "TK-000134",
+          "fk_target_exercise_id": "TKC-000134",
+          "provider": "movekit",
+          "provider_id": "dumbbell-standing-single-arm-curl",
+          "name": "Dumbbell Standing Single Arm Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 135,
+          "catalog_id": "TK-000135",
+          "fk_target_exercise_id": "TKC-000135",
+          "provider": "movekit",
+          "provider_id": "dumbbell-standing-single-arm-hammer-curl",
+          "name": "Dumbbell Standing Single Arm Hammer Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 136,
+          "catalog_id": "TK-000136",
+          "fk_target_exercise_id": "TKC-000136",
+          "provider": "movekit",
+          "provider_id": "dumbbell-sumo-squat",
+          "name": "Dumbbell Sumo Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 137,
+          "catalog_id": "TK-000137",
+          "fk_target_exercise_id": "TKC-000137",
+          "provider": "movekit",
+          "provider_id": "dumbbell-superman",
+          "name": "Dumbbell Superman",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 138,
+          "catalog_id": "TK-000138",
+          "fk_target_exercise_id": "TKC-000138",
+          "provider": "movekit",
+          "provider_id": "dumbbell-thruster",
+          "name": "Dumbbell Thruster",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "push",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 139,
+          "catalog_id": "TK-000139",
+          "fk_target_exercise_id": "TKC-000139",
+          "provider": "movekit",
+          "provider_id": "dumbbell-tricep-kickback",
+          "name": "Dumbbell Tricep Kickback",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 140,
+          "catalog_id": "TK-000140",
+          "fk_target_exercise_id": "TKC-000140",
+          "provider": "movekit",
+          "provider_id": "dumbbell-upright-row",
+          "name": "Dumbbell Upright Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 141,
+          "catalog_id": "TK-000141",
+          "fk_target_exercise_id": "TKC-000141",
+          "provider": "movekit",
+          "provider_id": "dumbbell-wrist-curl",
+          "name": "Dumbbell Wrist Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 142,
+          "catalog_id": "TK-000142",
+          "fk_target_exercise_id": "TKC-000142",
+          "provider": "movekit",
+          "provider_id": "dumbbell-wrist-extension",
+          "name": "Dumbbell Wrist Extension",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 143,
+          "catalog_id": "TK-000143",
+          "fk_target_exercise_id": "TKC-000143",
+          "provider": "movekit",
+          "provider_id": "elbow-side-plank",
+          "name": "Elbow Side Plank",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 144,
+          "catalog_id": "TK-000144",
+          "fk_target_exercise_id": "TKC-000144",
+          "provider": "movekit",
+          "provider_id": "ez-bar-preacher-curl",
+          "name": "EZ Bar Preacher Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 145,
+          "catalog_id": "TK-000145",
+          "fk_target_exercise_id": "TKC-000145",
+          "provider": "movekit",
+          "provider_id": "ez-bar-reverse-preacher-curl",
+          "name": "EZ Bar Reverse Preacher Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 146,
+          "catalog_id": "TK-000146",
+          "fk_target_exercise_id": "TKC-000146",
+          "provider": "movekit",
+          "provider_id": "forward-lunge",
+          "name": "Forward Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 147,
+          "catalog_id": "TK-000147",
+          "fk_target_exercise_id": "TKC-000147",
+          "provider": "movekit",
+          "provider_id": "good-mornings",
+          "name": "Good Mornings",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 148,
+          "catalog_id": "TK-000148",
+          "fk_target_exercise_id": "TKC-000148",
+          "provider": "movekit",
+          "provider_id": "hand-plank",
+          "name": "Hand Plank",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 149,
+          "catalog_id": "TK-000149",
+          "fk_target_exercise_id": "TKC-000149",
+          "provider": "movekit",
+          "provider_id": "hanging-knee-raises",
+          "name": "Hanging Knee Raises",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 150,
+          "catalog_id": "TK-000150",
+          "fk_target_exercise_id": "TKC-000150",
+          "provider": "movekit",
+          "provider_id": "incline-push-up",
+          "name": "Incline Push Up",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    },
+    {
+      "batch": 7,
+      "from": "TK-000151",
+      "through": "TK-000175",
+      "count": 25,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "065530d712ee81645b48069a3936213719e71e586f34fea7c28150214baaa88d",
+      "rows": [
+        {
+          "n": 151,
+          "catalog_id": "TK-000151",
+          "fk_target_exercise_id": "TKC-000151",
+          "provider": "movekit",
+          "provider_id": "inverted-row",
+          "name": "Inverted Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 152,
+          "catalog_id": "TK-000152",
+          "fk_target_exercise_id": "TKC-000152",
+          "provider": "movekit",
+          "provider_id": "jump-squats",
+          "name": "Jump Squats",
+          "name_nl": null,
+          "category": "power",
+          "pattern": "plyometric",
+          "type": "plyometric",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 153,
+          "catalog_id": "TK-000153",
+          "fk_target_exercise_id": "TKC-000153",
+          "provider": "movekit",
+          "provider_id": "kettlebell-alternating-curtsy-lunge",
+          "name": "Kettlebell Alternating Curtsy Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 154,
+          "catalog_id": "TK-000154",
+          "fk_target_exercise_id": "TKC-000154",
+          "provider": "movekit",
+          "provider_id": "kettlebell-assisted-bulgarian-split-squat",
+          "name": "Kettlebell Assisted Bulgarian Split Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 155,
+          "catalog_id": "TK-000155",
+          "fk_target_exercise_id": "TKC-000155",
+          "provider": "movekit",
+          "provider_id": "kettlebell-bench-press",
+          "name": "Kettlebell Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 156,
+          "catalog_id": "TK-000156",
+          "fk_target_exercise_id": "TKC-000156",
+          "provider": "movekit",
+          "provider_id": "kettlebell-calf-raise",
+          "name": "Kettlebell Calf Raise",
+          "name_nl": null,
+          "category": "lower_body_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 157,
+          "catalog_id": "TK-000157",
+          "fk_target_exercise_id": "TKC-000157",
+          "provider": "movekit",
+          "provider_id": "kettlebell-curl",
+          "name": "Kettlebell Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 158,
+          "catalog_id": "TK-000158",
+          "fk_target_exercise_id": "TKC-000158",
+          "provider": "movekit",
+          "provider_id": "kettlebell-farmers-carry",
+          "name": "Kettlebell Farmers Carry",
+          "name_nl": null,
+          "category": "carry",
+          "pattern": "loaded_carry",
+          "type": "carry",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 159,
+          "catalog_id": "TK-000159",
+          "fk_target_exercise_id": "TKC-000159",
+          "provider": "movekit",
+          "provider_id": "kettlebell-front-raise",
+          "name": "Kettlebell Front Raise",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 160,
+          "catalog_id": "TK-000160",
+          "fk_target_exercise_id": "TKC-000160",
+          "provider": "movekit",
+          "provider_id": "kettlebell-goblet-curl",
+          "name": "Kettlebell Goblet Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 161,
+          "catalog_id": "TK-000161",
+          "fk_target_exercise_id": "TKC-000161",
+          "provider": "movekit",
+          "provider_id": "kettlebell-gorilla-row",
+          "name": "Kettlebell Gorilla Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 162,
+          "catalog_id": "TK-000162",
+          "fk_target_exercise_id": "TKC-000162",
+          "provider": "movekit",
+          "provider_id": "kettlebell-hip-thrust",
+          "name": "Kettlebell Hip Thrust",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 163,
+          "catalog_id": "TK-000163",
+          "fk_target_exercise_id": "TKC-000163",
+          "provider": "movekit",
+          "provider_id": "kettlebell-incline-bench-press",
+          "name": "Kettlebell Incline Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 164,
+          "catalog_id": "TK-000164",
+          "fk_target_exercise_id": "TKC-000164",
+          "provider": "movekit",
+          "provider_id": "kettlebell-push-press",
+          "name": "Kettlebell Push Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 165,
+          "catalog_id": "TK-000165",
+          "fk_target_exercise_id": "TKC-000165",
+          "provider": "movekit",
+          "provider_id": "kettlebell-romanian-deadlift",
+          "name": "Kettlebell Romanian Deadlift",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 166,
+          "catalog_id": "TK-000166",
+          "fk_target_exercise_id": "TKC-000166",
+          "provider": "movekit",
+          "provider_id": "kettlebell-row",
+          "name": "Kettlebell Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 167,
+          "catalog_id": "TK-000167",
+          "fk_target_exercise_id": "TKC-000167",
+          "provider": "movekit",
+          "provider_id": "kettlebell-row-single",
+          "name": "Kettlebell Row (Single)",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 168,
+          "catalog_id": "TK-000168",
+          "fk_target_exercise_id": "TKC-000168",
+          "provider": "movekit",
+          "provider_id": "kettlebell-seated-overhead-press",
+          "name": "Kettlebell Seated Overhead Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "vertical_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 169,
+          "catalog_id": "TK-000169",
+          "fk_target_exercise_id": "TKC-000169",
+          "provider": "movekit",
+          "provider_id": "kettlebell-shrug",
+          "name": "Kettlebell Shrug",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 170,
+          "catalog_id": "TK-000170",
+          "fk_target_exercise_id": "TKC-000170",
+          "provider": "movekit",
+          "provider_id": "kettlebell-single-arm-row",
+          "name": "Kettlebell Single Arm Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 171,
+          "catalog_id": "TK-000171",
+          "fk_target_exercise_id": "TKC-000171",
+          "provider": "movekit",
+          "provider_id": "kettlebell-spinal-jefferson-curl",
+          "name": "Kettlebell Spinal Jefferson Curl",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "intermediate",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 172,
+          "catalog_id": "TK-000172",
+          "fk_target_exercise_id": "TKC-000172",
+          "provider": "movekit",
+          "provider_id": "kettlebell-sumo-deadlift",
+          "name": "Kettlebell Sumo Deadlift",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 173,
+          "catalog_id": "TK-000173",
+          "fk_target_exercise_id": "TKC-000173",
+          "provider": "movekit",
+          "provider_id": "kettlebell-swing",
+          "name": "Kettlebell Swing",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 174,
+          "catalog_id": "TK-000174",
+          "fk_target_exercise_id": "TKC-000174",
+          "provider": "movekit",
+          "provider_id": "kettlebell-thruster",
+          "name": "Kettlebell Thruster",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "push",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 175,
+          "catalog_id": "TK-000175",
+          "fk_target_exercise_id": "TKC-000175",
+          "provider": "movekit",
+          "provider_id": "kettlebell-windmill",
+          "name": "Kettlebell Windmill",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "rotation",
+          "type": "compound",
+          "difficulty": "advanced",
+          "equipment": [
+            "kettlebell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    },
+    {
+      "batch": 8,
+      "from": "TK-000176",
+      "through": "TK-000200",
+      "count": 25,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "f5bbf824f0dc256252305bc7e127fa806ba8364796ab04762d441eda4f7792e1",
+      "rows": [
+        {
+          "n": 176,
+          "catalog_id": "TK-000176",
+          "fk_target_exercise_id": "TKC-000176",
+          "provider": "movekit",
+          "provider_id": "landmine-t-bar-rows",
+          "name": "Landmine T Bar Rows",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 177,
+          "catalog_id": "TK-000177",
+          "fk_target_exercise_id": "TKC-000177",
+          "provider": "movekit",
+          "provider_id": "lunge-walking",
+          "name": "Walking Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 178,
+          "catalog_id": "TK-000178",
+          "fk_target_exercise_id": "TKC-000178",
+          "provider": "movekit",
+          "provider_id": "machine-45-degree-back-extension",
+          "name": "Machine 45 Degree Back Extension",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 179,
+          "catalog_id": "TK-000179",
+          "fk_target_exercise_id": "TKC-000179",
+          "provider": "movekit",
+          "provider_id": "machine-cable-v-bar-push-downs",
+          "name": "Machine Cable V Bar Push Downs",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 180,
+          "catalog_id": "TK-000180",
+          "fk_target_exercise_id": "TKC-000180",
+          "provider": "movekit",
+          "provider_id": "machine-chest-press",
+          "name": "Machine Chest Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 181,
+          "catalog_id": "TK-000181",
+          "fk_target_exercise_id": "TKC-000181",
+          "provider": "movekit",
+          "provider_id": "machine-crunch",
+          "name": "Machine Crunch",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 182,
+          "catalog_id": "TK-000182",
+          "fk_target_exercise_id": "TKC-000182",
+          "provider": "movekit",
+          "provider_id": "machine-dips",
+          "name": "Machine Dips",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 183,
+          "catalog_id": "TK-000183",
+          "fk_target_exercise_id": "TKC-000183",
+          "provider": "movekit",
+          "provider_id": "machine-face-pulls",
+          "name": "Cable Rope Face Pulls",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 184,
+          "catalog_id": "TK-000184",
+          "fk_target_exercise_id": "TKC-000184",
+          "provider": "movekit",
+          "provider_id": "machine-front-military-press",
+          "name": "Machine Plate Loaded Front Military Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "vertical_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 185,
+          "catalog_id": "TK-000185",
+          "fk_target_exercise_id": "TKC-000185",
+          "provider": "movekit",
+          "provider_id": "machine-leg-extension",
+          "name": "Machine Leg Extension",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 186,
+          "catalog_id": "TK-000186",
+          "fk_target_exercise_id": "TKC-000186",
+          "provider": "movekit",
+          "provider_id": "machine-leg-press",
+          "name": "Machine Leg Press",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 187,
+          "catalog_id": "TK-000187",
+          "fk_target_exercise_id": "TKC-000187",
+          "provider": "movekit",
+          "provider_id": "machine-neutral-row",
+          "name": "Machine Neutral Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 188,
+          "catalog_id": "TK-000188",
+          "fk_target_exercise_id": "TKC-000188",
+          "provider": "movekit",
+          "provider_id": "machine-pec-fly",
+          "name": "Machine Pec Fly",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 189,
+          "catalog_id": "TK-000189",
+          "fk_target_exercise_id": "TKC-000189",
+          "provider": "movekit",
+          "provider_id": "machine-plate-loaded-leg-extension",
+          "name": "Machine Plate Loaded Leg Extension",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 190,
+          "catalog_id": "TK-000190",
+          "fk_target_exercise_id": "TKC-000190",
+          "provider": "movekit",
+          "provider_id": "machine-plate-loaded-t-bar-row",
+          "name": "Machine Plate Loaded T Bar Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 191,
+          "catalog_id": "TK-000191",
+          "fk_target_exercise_id": "TKC-000191",
+          "provider": "movekit",
+          "provider_id": "machine-pulldown",
+          "name": "Machine Pulldown",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 192,
+          "catalog_id": "TK-000192",
+          "fk_target_exercise_id": "TKC-000192",
+          "provider": "movekit",
+          "provider_id": "machine-seated-cable-row",
+          "name": "Machine Seated Cable Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 193,
+          "catalog_id": "TK-000193",
+          "fk_target_exercise_id": "TKC-000193",
+          "provider": "movekit",
+          "provider_id": "machine-underhand-row",
+          "name": "Machine Underhand Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 194,
+          "catalog_id": "TK-000194",
+          "fk_target_exercise_id": "TKC-000194",
+          "provider": "movekit",
+          "provider_id": "mountain-climber",
+          "name": "Mountain Climber",
+          "name_nl": null,
+          "category": "power",
+          "pattern": "plyometric",
+          "type": "plyometric",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 195,
+          "catalog_id": "TK-000195",
+          "fk_target_exercise_id": "TKC-000195",
+          "provider": "movekit",
+          "provider_id": "narrow-pulldown",
+          "name": "Narrow Pulldown",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 196,
+          "catalog_id": "TK-000196",
+          "fk_target_exercise_id": "TKC-000196",
+          "provider": "movekit",
+          "provider_id": "parralel-bar-dips",
+          "name": "Parallel Bar Dips",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 197,
+          "catalog_id": "TK-000197",
+          "fk_target_exercise_id": "TKC-000197",
+          "provider": "movekit",
+          "provider_id": "plate-forward-lunge",
+          "name": "Plate Forward Lunge",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 198,
+          "catalog_id": "TK-000198",
+          "fk_target_exercise_id": "TKC-000198",
+          "provider": "movekit",
+          "provider_id": "pull-ups",
+          "name": "Pull Ups",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "vertical_pull",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 199,
+          "catalog_id": "TK-000199",
+          "fk_target_exercise_id": "TKC-000199",
+          "provider": "movekit",
+          "provider_id": "push-up",
+          "name": "Push Up",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 200,
+          "catalog_id": "TK-000200",
+          "fk_target_exercise_id": "TKC-000200",
+          "provider": "movekit",
+          "provider_id": "single-legged-romanian-deadlifts",
+          "name": "Single Legged Romanian Deadlifts",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    },
+    {
+      "batch": 9,
+      "from": "TK-000201",
+      "through": "TK-000225",
+      "count": 25,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "aea72156e3c2eede6a54b6d66e766af26452722f1300e5afc91bfad64de89778",
+      "rows": [
+        {
+          "n": 201,
+          "catalog_id": "TK-000201",
+          "fk_target_exercise_id": "TKC-000201",
+          "provider": "movekit",
+          "provider_id": "smith-machine-close-grip-bench-press",
+          "name": "Smith Machine Close Grip Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 202,
+          "catalog_id": "TK-000202",
+          "fk_target_exercise_id": "TKC-000202",
+          "provider": "movekit",
+          "provider_id": "smith-machine-incline-bench-press",
+          "name": "Smith Machine Incline Bench Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "horizontal_push",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 203,
+          "catalog_id": "TK-000203",
+          "fk_target_exercise_id": "TKC-000203",
+          "provider": "movekit",
+          "provider_id": "smith-machine-standing-shrugs",
+          "name": "Smith Machine Standing Shrugs",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 204,
+          "catalog_id": "TK-000204",
+          "fk_target_exercise_id": "TKC-000204",
+          "provider": "movekit",
+          "provider_id": "smith-machine-sumo-romanian-deadlift",
+          "name": "Smith Machine Sumo Romanian Deadlift",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 205,
+          "catalog_id": "TK-000205",
+          "fk_target_exercise_id": "TKC-000205",
+          "provider": "movekit",
+          "provider_id": "supermans",
+          "name": "Supermans",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 206,
+          "catalog_id": "TK-000206",
+          "fk_target_exercise_id": "TKC-000206",
+          "provider": "movekit",
+          "provider_id": "wall-sit",
+          "name": "Wall Sit",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 207,
+          "catalog_id": "TK-000207",
+          "fk_target_exercise_id": "TKC-000207",
+          "provider": "movekit",
+          "provider_id": "cable-low-single-arm-lateral-raise",
+          "name": "Cable Low Single Arm Lateral Raise",
+          "name_nl": null,
+          "category": "shoulder_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 208,
+          "catalog_id": "TK-000208",
+          "fk_target_exercise_id": "TKC-000208",
+          "provider": "movekit",
+          "provider_id": "cable-low-to-high-fly",
+          "name": "Cable Low-to-High Fly",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "intermediate",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 209,
+          "catalog_id": "TK-000209",
+          "fk_target_exercise_id": "TKC-000209",
+          "provider": "movekit",
+          "provider_id": "cable-pull-through",
+          "name": "Cable Pull Through",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "hip_dominant",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 210,
+          "catalog_id": "TK-000210",
+          "fk_target_exercise_id": "TKC-000210",
+          "provider": "movekit",
+          "provider_id": "cable-rope-hammer-curl",
+          "name": "Cable Rope Hammer Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 211,
+          "catalog_id": "TK-000211",
+          "fk_target_exercise_id": "TKC-000211",
+          "provider": "movekit",
+          "provider_id": "cable-rope-overhead-tricep-extension",
+          "name": "Cable Rope Overhead Tricep Extension",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 212,
+          "catalog_id": "TK-000212",
+          "fk_target_exercise_id": "TKC-000212",
+          "provider": "movekit",
+          "provider_id": "cable-rope-pullover",
+          "name": "Cable Rope Pullover",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 213,
+          "catalog_id": "TK-000213",
+          "fk_target_exercise_id": "TKC-000213",
+          "provider": "movekit",
+          "provider_id": "cable-single-leg-laying-leg-curl",
+          "name": "Cable Single Leg Laying Leg Curl",
+          "name_nl": null,
+          "category": "lower_body_hinge",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 214,
+          "catalog_id": "TK-000214",
+          "fk_target_exercise_id": "TKC-000214",
+          "provider": "movekit",
+          "provider_id": "cable-wrist-curl",
+          "name": "Cable Wrist Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "cable machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 215,
+          "catalog_id": "TK-000215",
+          "fk_target_exercise_id": "TKC-000215",
+          "provider": "movekit",
+          "provider_id": "captains-chair-knee-raise",
+          "name": "Captain's Chair Knee Raise",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 216,
+          "catalog_id": "TK-000216",
+          "fk_target_exercise_id": "TKC-000216",
+          "provider": "movekit",
+          "provider_id": "chest-supported-dumbbell-row",
+          "name": "Chest-Supported Dumbbell Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 217,
+          "catalog_id": "TK-000217",
+          "fk_target_exercise_id": "TKC-000217",
+          "provider": "movekit",
+          "provider_id": "chest-supported-t-bar-row",
+          "name": "Chest-Supported T-Bar Row",
+          "name_nl": null,
+          "category": "upper_body_pull",
+          "pattern": "horizontal_pull",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "machine"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 218,
+          "catalog_id": "TK-000218",
+          "fk_target_exercise_id": "TKC-000218",
+          "provider": "movekit",
+          "provider_id": "close-grip-barbell-curl",
+          "name": "Close-Grip Barbell Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "barbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 219,
+          "catalog_id": "TK-000219",
+          "fk_target_exercise_id": "TKC-000219",
+          "provider": "movekit",
+          "provider_id": "cossack-squat",
+          "name": "Cossack Squat",
+          "name_nl": null,
+          "category": "lower_body_push",
+          "pattern": "knee_dominant_unilateral",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 220,
+          "catalog_id": "TK-000220",
+          "fk_target_exercise_id": "TKC-000220",
+          "provider": "movekit",
+          "provider_id": "cross-body-hammer-curl",
+          "name": "Cross-Body Hammer Curl",
+          "name_nl": null,
+          "category": "arm_isolation",
+          "pattern": "isolation",
+          "type": "isolation",
+          "difficulty": "beginner",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 221,
+          "catalog_id": "TK-000221",
+          "fk_target_exercise_id": "TKC-000221",
+          "provider": "movekit",
+          "provider_id": "cuban-press",
+          "name": "Cuban Press",
+          "name_nl": null,
+          "category": "upper_body_push",
+          "pattern": "vertical_push",
+          "type": "compound",
+          "difficulty": "intermediate",
+          "equipment": [
+            "dumbbell"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 222,
+          "catalog_id": "TK-000222",
+          "fk_target_exercise_id": "TKC-000222",
+          "provider": "movekit",
+          "provider_id": "cycling-cooldown",
+          "name": "Cycling Cooldown",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 223,
+          "catalog_id": "TK-000223",
+          "fk_target_exercise_id": "TKC-000223",
+          "provider": "movekit",
+          "provider_id": "cycling-intervals",
+          "name": "Cycling Intervals",
+          "name_nl": null,
+          "category": "cardio",
+          "pattern": "cardio",
+          "type": "cardio",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bicycle"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 224,
+          "catalog_id": "TK-000224",
+          "fk_target_exercise_id": "TKC-000224",
+          "provider": "movekit",
+          "provider_id": "cycling-sprint",
+          "name": "Cycling Sprint",
+          "name_nl": null,
+          "category": "cardio",
+          "pattern": "cardio",
+          "type": "cardio",
+          "difficulty": "intermediate",
+          "equipment": [
+            "bicycle"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        },
+        {
+          "n": 225,
+          "catalog_id": "TK-000225",
+          "fk_target_exercise_id": "TKC-000225",
+          "provider": "movekit",
+          "provider_id": "cycling-warmup",
+          "name": "Cycling Warmup",
+          "name_nl": null,
+          "category": "mobility",
+          "pattern": "mobility",
+          "type": "mobility",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    },
+    {
+      "batch": 10,
+      "from": "TK-000226",
+      "through": "TK-000226",
+      "count": 1,
+      "status": "PENDING_OWNER_REVIEW",
+      "batch_sha256": "436635dd7435e584ac09a5c6e585e8d8981e687c2516fc63a0e8ab934edb5590",
+      "rows": [
+        {
+          "n": 226,
+          "catalog_id": "TK-000226",
+          "fk_target_exercise_id": "TKC-000226",
+          "provider": "movekit",
+          "provider_id": "dead-bug",
+          "name": "Dead Bug",
+          "name_nl": null,
+          "category": "core",
+          "pattern": "core",
+          "type": "compound",
+          "difficulty": "beginner",
+          "equipment": [
+            "bodyweight"
+          ],
+          "review_status": "PENDING_OWNER_REVIEW"
+        }
+      ]
+    }
+  ]
+}

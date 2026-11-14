@@ -21322,29 +21322,32 @@ var VIDEO_MANIFEST={"TK-000206":{"catalog_id":"TK-000206","slug":"wall-sit","pos
   window.MediaUrlResolver=MediaUrlResolver;
 
   ExerciseAssetProvider.register('video',{id:'movekit-videos',type:'video',format:'mp4',
-    resolve:function(slug){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return null;var e=_bySlug[slug];var f=(e&&e.videos&&e.videos[0])?e.videos[0].file:null;return f?MediaUrlResolver.resolve(f):null;},
+    resolve:function(slug){var e=_bySlug[slug];if(e&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(e.catalog_id))return null;var f=(e&&e.videos&&e.videos[0])?e.videos[0].file:null;return f?MediaUrlResolver.resolve(f):null;},
     has:function(slug){var e=_bySlug[slug];return !!(e&&e.videos&&e.videos.length);}});
   /* Publieke video-API (videos[]-model: meerdere video's per oefening voorbereid). */
   /* videos(): file blijft het canonieke manifestpad; url is het runtime-adres (MEDIA-0C). */
   ExerciseAssetProvider.videos=function(catalogId){var e=VIDEO_MANIFEST[catalogId];if(!(e&&e.videos))return [];
-    return e.videos.map(function(v){var c={};for(var k in v)c[k]=v[k];c.url=(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())?null:MediaUrlResolver.resolve(v.file);return c;});};
+    return e.videos.map(function(v){var c={};for(var k in v)c[k]=v[k];c.url=(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(catalogId))?null:MediaUrlResolver.resolve(v.file);return c;});};
   ExerciseAssetProvider.video=function(catalogId,i){var v=this.videos(catalogId);return v[i||0]||null;};
   ExerciseAssetProvider.hasVideo=function(catalogId){return this.videos(catalogId).length>0;};
   ExerciseAssetProvider.videoManifest=function(){return VIDEO_MANIFEST;};
   ExerciseAssetProvider.videoStats=function(){var n=0,items=0,provs={};for(var c in VIDEO_MANIFEST){n++;VIDEO_MANIFEST[c].videos.forEach(function(v){items++;provs[v.provider]=1;});}return {exercisesWithVideo:n,videoCount:items,providers:Object.keys(provs),cache:VCACHE};};
   function _files(catalogId){return ExerciseAssetProvider.videos(catalogId).map(function(v){return v.file;});}
   /* Offline-API (architectuur voorbereid; nog geen UI in 11A). Async via de Cache Storage API. */
-  ExerciseAssetProvider.downloadOffline=function(catalogId){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return Promise.resolve(false);var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
+  ExerciseAssetProvider.downloadOffline=function(catalogId){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(catalogId))return Promise.resolve(false);var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
     return caches.open(VCACHE).then(function(c){return Promise.all(fs.map(function(f){return c.add(new Request(f)).catch(function(){});})).then(function(){return true;});}).catch(function(){return false;});};
   ExerciseAssetProvider.removeOffline=function(catalogId){var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
     return caches.open(VCACHE).then(function(c){return Promise.all(fs.map(function(f){return c.delete(f).catch(function(){});})).then(function(){return true;});}).catch(function(){return false;});};
-  ExerciseAssetProvider.isOffline=function(catalogId){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled())return Promise.resolve(false);var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
+  ExerciseAssetProvider.isOffline=function(catalogId){if(typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(catalogId))return Promise.resolve(false);var fs=_files(catalogId);if(!fs.length||!('caches' in self))return Promise.resolve(false);
     return caches.open(VCACHE).then(function(c){return Promise.all(fs.map(function(f){return c.match(f);})).then(function(rs){return rs.length>0&&rs.every(Boolean);});}).catch(function(){return false;});};
 })();
 
 /* TK504: preparatory protected-media runtime on the EXISTING exercise path.
    Release must be enabled by a reviewed code change AFTER server grants, license
-   and real-device cut-over gates pass. No user-configurable/localStorage switch. */
+   and real-device cut-over gates pass. No user-configurable/localStorage switch.
+   TK504_PRIVATE_MEDIA_RELEASE: legacy V1 public-media SW/cache cutover marker only
+   (mirrors TK504_PRIVATE_MEDIA_CUTOVER in sw.js); it does NOT select the playback
+   route anymore. TK504_NEW_PRIVATE_MEDIA_RELEASE alone routes all 582 IDs to V2. */
 const TK504_PRIVATE_MEDIA_RELEASE = false;
 const TK504_NEW_PRIVATE_MEDIA_RELEASE = true;
 let tk504MediaRuntime = null;
@@ -21368,10 +21371,11 @@ function tk504PosterRequestQueue(){
 // Invalidates outstanding signed poster requests and DOM sources on account changes.
 let tk504PosterEpoch = 0;
 function tk504PrivateEnabled(catalogId){
-  if(TK504_PRIVATE_MEDIA_RELEASE===true)return true;
-  if(TK504_NEW_PRIVATE_MEDIA_RELEASE!==true||typeof catalogId!=='string'||
-     !/^TK-[0-9]{6}$/.test(catalogId))return false;
-  const n=Number(catalogId.slice(3));return n>=227&&n<=582;
+  // One protected V2 transport for all 582; server still denies originals 001..226.
+  if(typeof catalogId!=='string'||!/^TK-[0-9]{6}$/.test(catalogId))return false;
+  const n=Number(catalogId.slice(3));
+  // Keep canonical source verification in callers and server entitlement gates.
+  return n>=1&&n<=582&&TK504_NEW_PRIVATE_MEDIA_RELEASE===true;
 }
 function tk504GetMediaRuntime(catalogId){
   if(!tk504PrivateEnabled(catalogId)) return null;
@@ -24038,6 +24042,10 @@ function recomputeCardioFields(exId,cardioType,changedField){
 // ══════════════════════════════════════════════════════════
 let cardioSplitMode={};
 let cardioSplits={};
+// #614 (TK-UT-20261108-039/040): geschatte (gelijk verdeelde) deeltijden bij de wissel
+// Automatisch → Handmatig. Uitsluitend presentatie (placeholder); NOOIT handmatige invoer,
+// NOOIT persistentie, NOOIT terugschrijven naar gemeten tijd/split/watt.
+let cardioSplitEstimates={};
 // GAP-P2-013: houdt per exId bij of de laatst-bekende watt-waarde direct
 // door de gebruiker is ingetypt (device-gemeten, van het scherm van de
 // erg afgelezen) of automatisch is afgeleid uit de split (CALC-END-002).
@@ -24060,11 +24068,13 @@ function splitRowsHtml(exId,cardioType){
   const mode=cardioSplitMode[exId]||'auto';
   const n=numSplitsFor(exId,cfg);
   const s=cardioSplits[exId]||{};
+  const est=mode==='handmatig'?(cardioSplitEstimates[exId]||{}):{};
   let rows='';
   for(let q=1;q<=n;q++){
     const val=s[q]!=null?CardioEngine.formatTime(s[q]):'';
+    const ph=(val===''&&est[q]!=null)?` placeholder="${CardioEngine.formatTime(est[q])}" title="Geschat (niet gemeten)"`:'';
     rows+=`<div class="split-lbl">${q}. ${q*cfg.splitDist}${cfg.unit}</div>
-      <input class="split-inp${mode==='auto'?' computed':''}" type="text" id="${exId}-sp${q}" value="${val}" ${mode==='auto'?'readonly':''}
+      <input class="split-inp${mode==='auto'?' computed':''}" type="text" id="${exId}-sp${q}" value="${val}"${ph} ${mode==='auto'?'readonly':''}
         oninput="onManualSplitChange('${exId}','${cardioType}',${q})">`;
   }
   return rows;
@@ -24088,10 +24098,20 @@ function renderSplitRows(exId,cardioType){
   grid.innerHTML=splitRowsHtml(exId,cardioType);
 }
 function setCardioSplitMode(exId,cardioType,mode){
+  const prevMode=cardioSplitMode[exId]||'auto';
   cardioSplitMode[exId]=mode;
   const wrap=document.getElementById('splitmode-'+exId);
   if(wrap)wrap.querySelectorAll('.rower-chip').forEach(b=>b.classList.toggle('sel',(b.textContent==='Geschatte verdeling')===(mode==='auto')));
   if(mode==='auto')computeAutoSplits(exId,cardioType);
+  else if(prevMode==='auto'){
+    // #614: de automatische verdeling is een SCHATTING, geen invoer. Bij de wissel naar
+    // Handmatig worden de geschatte deeltijden alleen nog als placeholder getoond; de
+    // handmatige splitset start leeg zodat er nooit fictieve splits worden opgeslagen
+    // en nooit een 250m-deeltijd de gemeten tijd/split/watt overschrijft.
+    computeAutoSplits(exId,cardioType);
+    cardioSplitEstimates[exId]=cardioSplits[exId]||{};
+    cardioSplits[exId]={};
+  }
   renderSplitRows(exId,cardioType);
   updateSplitSummary(exId,cardioType);
   logCardio(exId,cardioType);
@@ -24110,10 +24130,21 @@ function onManualSplitChange(exId,cardioType,q){
   const val=CardioEngine.parseTime(getCardioVal(exId,'sp'+q));
   if(!cardioSplits[exId])cardioSplits[exId]={};
   cardioSplits[exId][q]=val;
-  updateSplitSummary(exId,cardioType);
+  updateSplitSummary(exId,cardioType,{writeBack:true}); // #614: alleen ECHTE split-invoer mag topvelden voeden
   logCardio(exId,cardioType);
 }
-function updateSplitSummary(exId,cardioType){
+// #614: tijd met tienden (bestaande DeviceCore-formatter, zelfde als de PM5-schrijver) zodat
+// 2:08.3 niet stil als 2:08 terug in een duurzaam veld belandt. Fallback: bestaande formatTime.
+function cardioFmtPrecise(sec){
+  if(typeof DeviceCore!=='undefined'&&DeviceCore&&typeof DeviceCore.formatDurationStr==='function'){
+    const s=DeviceCore.formatDurationStr(sec); if(s)return s;
+  }
+  return CardioEngine.formatTime(sec);
+}
+// opts.writeBack: ALLEEN true vanuit onManualSplitChange (gebruiker typt een deeltijd).
+// Moduswissel, edit-heropening en topveld-invoer zijn presentatie/herberekening van splits en
+// mogen gemeten tijd/split/watt NOOIT overschrijven (#614, TK-UT-20261108-039/040).
+function updateSplitSummary(exId,cardioType,opts){
   const cfg=CARDIO_TYPES[cardioType];
   const mode=cardioSplitMode[exId]||'auto';
   if(mode==='auto'&&sessionLog[exId]?.cardio?.splitProvenance==='unavailable'){const e=document.getElementById('splitsummary-'+exId);if(e)e.textContent='Geen gemeten afzonderlijke splits ontvangen van de PM5.';return;}
@@ -24121,21 +24152,29 @@ function updateSplitSummary(exId,cardioType){
   const s=cardioSplits[exId]||{};
   const summaryEl=document.getElementById('splitsummary-'+exId);
   const agg=CardioEngine.fromManualSplits(s);
-  if(!agg){ if(summaryEl)summaryEl.textContent=''; return; }
+  const perLbl=' per '+cfg.splitDist+cfg.unit;
+  if(!agg){ if(summaryEl)summaryEl.textContent=(mode==='handmatig'&&cardioSplitEstimates[exId]&&Object.keys(cardioSplitEstimates[exId]).length)?('0/'+n+' splits ingevuld · grijze waarden zijn geschat'+perLbl):''; return; }
   if(mode==='handmatig'){
-    // Totale tijd/gem. split alleen "definitief" terugschrijven naar de topvelden wanneer
-    // alle intervallen zijn ingevuld — anders zou een gedeeltelijke som misleiden.
-    if(agg.count===n){
-      setCardioVal(exId,'time',CardioEngine.formatTime(agg.total));
+    // Totale tijd/split alleen "definitief" terugschrijven naar de topvelden wanneer
+    // alle intervallen door de gebruiker zijn ingevuld — anders zou een gedeeltelijke som misleiden.
+    if(opts&&opts.writeBack&&agg.count===n){
+      setCardioVal(exId,'time',cardioFmtPrecise(agg.total));
       const outField=cfg.calc?.type==='pace'?'pace':'split';
-      setCardioVal(exId,outField,CardioEngine.formatTime(agg.avg));
-      if(cfg.fields.includes('watt')&&cfg.calc?.basis===500)setCardioVal(exId,'watt',Math.round(CardioEngine.wattFromSplit500(agg.avg)));
+      // #614: agg.avg is seconden per cfg.splitDist (bv. 250m); het topveld is per cfg.calc.basis
+      // (SkiErg/RowErg 500m). Omrekenen via de bestaande CardioEngine — nooit 250m als /500m tonen.
+      const distVal=numNL(getCardioVal(exId,cfg.calc?.distField))||(n*cfg.splitDist); // zelfde fallback-grondslag als numSplitsFor
+      const basisSplit=(cfg.calc&&distVal)?CardioEngine.splitFromDistTime(distVal,agg.total,cfg.calc.basis):null;
+      if(basisSplit)setCardioVal(exId,outField,cardioFmtPrecise(basisSplit));
+      if(basisSplit&&cfg.fields.includes('watt')&&cfg.calc?.basis===500){
+        setCardioVal(exId,'watt',Math.round(CardioEngine.wattFromSplit500(basisSplit)));
+        cardioWattSource[exId]='concept2_derived'; // afgeleid uit handmatige splits, nooit 'measured'
+      }
     }
     if(summaryEl)summaryEl.textContent=agg.count===n
-      ? 'Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total)
+      ? 'Gem.'+perLbl+': '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+cardioFmtPrecise(agg.total)
       : agg.count+'/'+n+' splits ingevuld';
   } else {
-    if(summaryEl)summaryEl.textContent='Geschatte gelijke verdeling; geen gemeten splits. Gem. split: '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+CardioEngine.formatTime(agg.total);
+    if(summaryEl)summaryEl.textContent='Geschatte gelijke verdeling; geen gemeten splits. Gem.'+perLbl+': '+CardioEngine.formatTime(agg.avg)+' · Totaal: '+cardioFmtPrecise(agg.total);
   }
 }
 // v306.2: centrale input-handler voor alle top-level cardiovelden — vervangt calcCardioSplit()
@@ -25883,7 +25922,7 @@ async function finishSession(){
       if(!l._sessionRowId)l._sessionRowId=newClientRowId();
       persistTrainingDraft(true);
       const _so=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:context.instanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,id:l._sessionRowId,...(_so.tk504_binding?{id:tk504StableSessionId(l)}:{})},_so); if(!isCurrent())return; if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); persistTrainingDraft(true); }
+      if(!l._sessionRowPersistedAt){ const _wOk=await writeSessionRow({date:today,exercise_id:ex.id,training_type:t,note:_cNote,training_instance_id:context.instanceId||_ergInst||null,duration_s:_duurS,weather:_weerData,intervals_detail:(l.intervalsDetail||null),..._protoCols,...cRow,id:l._sessionRowId,...(_so.tk504_binding?{id:tk504StableSessionId(l)}:{})},_so); if(!isCurrent())return; if(_wOk!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_so); if(_so.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); l._sessionRowQueued=_so.status==='queued'; persistTrainingDraft(true); } else if(l._sessionRowQueued===true)queued++; /* #614: eerder alleen gequeued ≠ serverbevestigd */
       saved++;try{ if(typeof tkC2DiagFinishPath==='function') tkC2DiagFinishPath(ex.id,'cardio_row_written'); }catch(_dfw){} /* DIAG */ // B3: structured erg-actuals in dezelfde, enige sessierij
       summaryData.push({naam:ex.naam,cardio:true,...cRow});
     }else if(l.sets){
@@ -25904,7 +25943,7 @@ async function finishSession(){
       row.id=l._sessionRowId;
       persistTrainingDraft(true);
       const _soS=l._sessionRowPersistedAt?{}:tkSessieOptsVoor(_exStatus,ex.id);
-      if(!l._sessionRowPersistedAt){ if(_soS.tk504_binding)row.id=tk504StableSessionId(l); const _wOkS=await writeSessionRow(row,_soS); if(!isCurrent())return; if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); persistTrainingDraft(true); } // v4.70.4
+      if(!l._sessionRowPersistedAt){ if(_soS.tk504_binding)row.id=tk504StableSessionId(l); const _wOkS=await writeSessionRow(row,_soS); if(!isCurrent())return; if(_wOkS!==true) throw new Error('session_write_rejected'); tkSessieUitkomst(_soS); if(_soS.status==='queued')queued++; l._sessionRowPersistedAt=Date.now(); l._sessionRowQueued=_soS.status==='queued'; persistTrainingDraft(true); } else if(l._sessionRowQueued===true)queued++; // v4.70.4 · #614: eerder alleen gequeued ≠ serverbevestigd
       let isPr=false;
       // Sprint 11: vergelijk met de PR van vóór deze sessie (sessionPrBase), niet met de
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
@@ -25933,7 +25972,17 @@ async function finishSession(){
   // NIET wissen (sessionLog/modal blijven intact) zodat de sporter opnieuw kan proberen.
   if(!isCurrent())return;
   if(failed>0){
-    if(window.toast)toast(saved>0?(saved+' opgeslagen, '+failed+' mislukt — controleer je verbinding en probeer opnieuw'):('Opslaan mislukt ('+failed+') — probeer opnieuw'));
+    // #614: de per-oefening bevestigingsmarkers (_sessionRowPersistedAt) stonden na een gedeeltelijke
+    // fout alleen in het geheugen. Na een procesherstart zonder pagehide/visibilitychange-flush
+    // verstuurde een retry de reeds bevestigde rijen opnieuw met een NIEUWE client-UUID (dubbele
+    // historie). Leg ze direct duurzaam vast — alleen voor dezelfde, nog actuele eigenaar/sessie
+    // (isCurrent() is hierboven gecontroleerd); er wordt niets naar de server geschreven.
+    if(saved>0&&typeof persistTrainingDraft==='function'){try{persistTrainingDraft(true);}catch(_){}}
+    // #614: een gequeuede rij is NIET door de server bevestigd en mag niet als 'opgeslagen' tellen.
+    const _bevestigd=saved-queued;
+    if(window.toast)toast(saved>0?(queued>0
+      ?(_bevestigd+' opgeslagen, '+queued+' in wachtrij (nog niet bevestigd), '+failed+' mislukt — controleer je verbinding en probeer opnieuw')
+      :(saved+' opgeslagen, '+failed+' mislukt — controleer je verbinding en probeer opnieuw')):('Opslaan mislukt ('+failed+') — probeer opnieuw'));
     return;
   }
   if(saved===0){toast('Geen uitgevoerde sets om op te slaan');return;}
@@ -27581,9 +27630,83 @@ function openEditSess(id,name,session){
   openModal('m-edit-session');
 }
 
+// #614 P2 — PM5-notitieprovenance. Ontleedt een opgeslagen cardio-note volgens de BESTAANDE
+// grammatica: [vrije notitie · ]<tokens>, waarbij ' · ' de scheider is van liveWorkoutToActual
+// (split · drag · hr · [c2:id]), de P1-exNote-compositie en saveEditSession, en ' | ' die van
+// cardioDataToRow (split | drag | splits:…). Classificatie per deel:
+//  - derived: tokens die cardioDataToRow bij opslaan uit de editvelden opnieuw maakt (zelfde
+//    template-probe/regex als de veldextractie) → niet in het notitieveld, dus geen dubbel;
+//  - prov: bronprovenance zonder editveld: [c2:id]/[c2local:id] (dedupe-identiteit, zelfde
+//    grammatica als Concept2Live.alreadyLoggedLive / DeviceCore._idsFromSessions) en — alleen
+//    naast zo'n tag — gemeten 'drag N'/'hr N' waarvoor dit apparaat geen veld heeft;
+//  - user: al het overige, ongewijzigd en in volgorde → het bewerkbare notitieveld.
+// values: de per-veld geëxtraheerde waarde (eerste voorkomen, identiek aan de veldextractie).
+const TK_C2_NOTE_TAG_RE=/\[c2(?:local)?:[^\]]+\]/gi;
+function tkCardioEditNoteParts(rawNote,cfg){
+  const raw=String(rawNote==null?'':rawNote);
+  const out={raw,user:'',derived:[],prov:[],values:{},splitsToken:null};
+  if(!raw.trim()) return out;
+  const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const fieldRes=[];
+  ((cfg&&cfg.fields)||[]).forEach(fld=>{
+    const m=cfg.rowMap&&cfg.rowMap[fld];
+    if(!m||m.col!=='extraNote'||typeof m.template!=='function') return;
+    let probe,probeM; try{ probe=String(m.template('\u0001',{machine:''})); probeM=String(m.template('\u0001',{machine:'\u0002'})); }catch(_){ return; }
+    const parts=probe.split('\u0001'); if(parts.length!==2) return;
+    const p0=esc(parts[0].trim()), p1=esc(parts[1].trim());
+    const mm=raw.match(new RegExp(p0+'\\s*([^·|]*?)\\s*'+p1+'(?=\\s*(?:·|\\||$))','i'));
+    if(!(mm && mm[1]!=null && mm[1].trim()!=='')) return;
+    out.values[fld]=mm[1].trim();
+    const pre=(probeM!==probe)?'(?:[^·|]+\\s)?':''; // optionele machinenaam-prefix (alleen split-template)
+    fieldRes.push({val:out.values[fld],re:new RegExp('^'+pre+p0+'\\s*([^·|]*?)\\s*'+p1+'$','i')});
+  });
+  if(cfg&&cfg.splits){
+    const sp=raw.match(/splits:([0-9=.,]+)/i);
+    if(sp && sp[1].split(',').some(pair=>{const kv=pair.split('=');return parseInt(kv[0])&&isFinite(Number(kv[1]));})) out.splitsToken='splits:'+sp[1];
+  }
+  const hasTag=new RegExp(TK_C2_NOTE_TAG_RE.source,'i').test(raw);
+  const addProv=t=>{ if(out.prov.indexOf(t)<0) out.prov.push(t); };
+  const userSegs=[];
+  raw.split(/\s*·\s*/).forEach(seg=>{
+    const userSubs=[];
+    seg.split(/\s*\|\s*/).forEach(sub=>{
+      sub=sub.trim(); if(!sub) return;
+      if(fieldRes.some(r=>{const x=sub.match(r.re); return !!(x && x[1]!=null && x[1].trim()===r.val);})
+         || (out.splitsToken && sub.toLowerCase()===out.splitsToken.toLowerCase())){ out.derived.push(sub); return; }
+      // bronidentiteit nooit als bewerkbare tekst: ook een in tekst ingebedde tag gaat naar prov
+      const tags=sub.match(TK_C2_NOTE_TAG_RE);
+      if(tags){ tags.forEach(addProv); sub=sub.replace(TK_C2_NOTE_TAG_RE,' ').replace(/\s{2,}/g,' ').trim(); if(!sub) return; }
+      if(hasTag && /^(?:drag|hr) \d+(?:\.\d+)?$/i.test(sub)){ addProv(sub); return; }
+      userSubs.push(sub);
+    });
+    if(userSubs.length) userSegs.push(userSubs.join(' | '));
+  });
+  out.user=userSegs.join(' · ');
+  return out;
+}
+// Tegenhanger voor saveEditSession (bewerken van een bestaande rij). Ongewijzigde vrije tekst
+// én exact dezelfde opnieuw gegenereerde tokens → de opgeslagen note byte-identiek terug
+// (enkel openen+opslaan wijzigt niets). Anders: [vrije tekst · ]extraNote[ · prov…], prov
+// uitsluitend uit de opgeslagen rij (nooit uit UI-invoer; getypte [c2:]-tags worden gestript).
+function tkCardioEditNoteCompose(parts,userNote,extraNote){
+  const ex=String(extraNote||'').trim();
+  const user=String(userNote==null?'':userNote).trim();
+  const regen=ex?ex.split(/\s*\|\s*/).filter(Boolean):[];
+  const derived=(parts&&parts.derived)||[];
+  const sorted=a=>a.slice().sort();
+  const sameTokens=regen.length===derived.length&&sorted(regen).every((t,i)=>t===sorted(derived)[i]);
+  if(parts&&parts.raw&&user===parts.user&&sameTokens) return parts.raw;
+  const cleanUser=user.replace(TK_C2_NOTE_TAG_RE,' ').replace(/\s{2,}/g,' ').trim();
+  return [cleanUser,ex].concat((parts&&parts.prov)||[]).filter(Boolean).join(' · ');
+}
 function renderEditSessFields(ex,session){
   let f='';
   const cardioType=resolveCardioType(ex);
+  // #614: geen stale edit-state van een vorige bewerking (watt-herkomst/geschatte splits) laten
+  // doorlekken; een onaangeraakte opgeslagen watt_source (bv. concept2_measured) blijft zo
+  // server-side ongewijzigd omdat saveEditSession dan geen watt_source meestuurt.
+  delete cardioWattSource[ES_DOMID];
+  delete cardioSplitEstimates[ES_DOMID];
   if(cardioType){
     f+=buildCardioBody(ES_DOMID, cardioType);
   } else if(ex.type==='wod'){
@@ -27618,6 +27741,7 @@ function renderEditSessFields(ex,session){
   // notitieveld toont daarna alleen de vrije gebruikersnotitie zodat hersave niet dubbelt.
   if(cardioType && session){
     const cfg=CARDIO_TYPES[cardioType]; const rawNote=String(session.note||''); let extractedAny=false;
+    const noteParts=tkCardioEditNoteParts(rawNote,cfg); // #614 P2: zelfde parser voor notitieveld én save
     (cfg.fields||[]).forEach(fld=>{
       const el=document.getElementById(ES_DOMID+'-'+fld); const m=cfg.rowMap&&cfg.rowMap[fld];
       if(!el||!m) return;
@@ -27653,7 +27777,10 @@ function renderEditSessFields(ex,session){
       if(typeof updateSplitSummary==='function') updateSplitSummary(ES_DOMID,cardioType);
     }
     const noteEl=document.getElementById('es-note');
-    if(noteEl && extractedAny){ const idx=rawNote.lastIndexOf(' · '); noteEl.value = idx>=0 ? rawNote.slice(0,idx).trim() : ''; }
+    // #614 P2: vroeger 'alles vóór de laatste " · "' → bij een PM5-note (split · [c2:id]) verdween
+    // de [c2:id]-tag en kwam split: als "vrije tekst" terug (dubbel bij save). Nu alleen echte
+    // vrije tekst; afgeleide tokens komen uit de velden, provenance blijft beschermd (save).
+    if(noteEl && (extractedAny || noteParts.derived.length || noteParts.prov.length)) noteEl.value=noteParts.user;
   }
 }
 
@@ -27680,10 +27807,17 @@ async function saveEditSession(btnEl){
     const d={machine:localStorage.getItem('sel_'+cardioType)||''};
     cfg.fields.forEach(fld=>{d[fld]=document.getElementById(ES_DOMID+'-'+fld)?.value||'';});
     if(cfg.splits){ d.splitMode=cardioSplitMode[ES_DOMID]||'auto'; d.splits=cardioSplits[ES_DOMID]?{...cardioSplits[ES_DOMID]}:{}; }
+    // #614: alleen als de watt in DIT modal opnieuw is ingevoerd/afgeleid; anders blijft de
+    // bestaande (bv. gemeten) watt_source op de rij staan (PATCH zonder die kolom).
+    if(cfg.fields.includes('watt') && cardioWattSource[ES_DOMID]) d.wattSource=cardioWattSource[ES_DOMID];
     const cRow=cardioDataToRow(cardioType,d);
     const extraNote=cRow.extraNote;delete cRow.extraNote;
     Object.assign(row,cRow);
-    if(extraNote)row.note=(note?note+' · ':'')+extraNote;
+    // #614 P2: bewerken van een bestaande rij → note uit de OPGESLAGEN rij ontleden (zelfde
+    // parser als de prefill) zodat [c2:id]/gemeten tokens behouden blijven en split: niet dubbelt.
+    // Nieuw toevoegen (geen curEditSess) houdt de bestaande compositie.
+    if(curEditSess) row.note=tkCardioEditNoteCompose(tkCardioEditNoteParts(curEditSess.note,cfg),note,extraNote);
+    else if(extraNote)row.note=(note?note+' · ':'')+extraNote;
   } else if(ex.type==='wod'){
     const fmtEl=document.getElementById(ES_DOMID+'-wodfmt');
     const fmt=fmtEl?fmtEl.value:'for_time';

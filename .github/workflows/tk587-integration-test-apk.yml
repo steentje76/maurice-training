@@ -1,6 +1,7 @@
 name: TK587 integration — verification and isolated test APK
 
-# One isolated Android test candidate for the #587 x MoveKit integration (7 November 2026).
+# Isolated Android test candidate for the #587 x MoveKit integration (7 November 2026),
+# updated 14 November 2026 to variant tktest1114 ("TK Test 14 november", #612 + main incl. #628).
 # PO authorisation: exactly one test APK after the repair and safety tests; NOT a production
 # update, NOT a replacement of the installed app. The APK is built from the exact PR head
 # commit, only after the full regression is green, and is published as a GitHub prerelease
@@ -19,8 +20,11 @@ concurrency:
 
 env:
   TK_BRANCH: integration/tk587-main-20261107
-  TK_PKG: com.trainingskompas.app.tk587test20261107
-  TK_LABEL: TK Test 7 november
+  TK_PKG: com.trainingskompas.app.tktest20261114
+  TK_LABEL: TK Test 14 november
+  TK_VARIANT: tktest1114
+  TK_SUFFIX: tktest20261114
+  TK_SHORT: tktest14nov
 
 jobs:
   regression:
@@ -118,18 +122,18 @@ jobs:
       - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - run: npm ci && npm run cap:sync
       - name: Build only the isolated test variant
-        run: chmod +x android/gradlew && cd android && ./gradlew assembleTk587test --no-daemon
+        run: chmod +x android/gradlew && cd android && ./gradlew assembleTktest1114 --no-daemon
       - name: Verify package, label, version, signing, embedded sources, secrets and checksum
         id: provenance
         shell: bash
         run: |
           set -euo pipefail
           BT="$ANDROID_HOME/build-tools/36.0.0"
-          APK=android/app/build/outputs/apk/tk587test/app-tk587test.apk
+          APK=android/app/build/outputs/apk/$TK_VARIANT/app-$TK_VARIANT.apk
           test -f "$APK"
           mkdir -p candidate
           "$BT/aapt" dump badging "$APK" > candidate/package-verification.txt
-          grep -q "package: name='$TK_PKG' versionCode='47027' versionName='4.70.27-tk587test20261107'" candidate/package-verification.txt
+          grep -q "package: name='$TK_PKG' versionCode='47027' versionName='4.70.27-$TK_SUFFIX'" candidate/package-verification.txt
           grep -q "application-label:'$TK_LABEL'" candidate/package-verification.txt
           "$BT/aapt" dump xmltree "$APK" AndroidManifest.xml > candidate/manifest-verification.txt
           if grep -qE 'android:scheme.*"trainingskompas"' candidate/manifest-verification.txt; then echo 'test app must not intercept the installed app OAuth return'; exit 1; fi
@@ -146,7 +150,7 @@ jobs:
           node tools/tk587-bundle-scan.cjs --self-test
           node tools/tk587-bundle-scan.cjs /tmp/apk-assets/assets
           SOURCE_SHA="$(git rev-parse HEAD)"
-          NAME="Trainingskompas-v4.70.27-${SOURCE_SHA:0:9}-tk587test7nov.apk"
+          NAME="Trainingskompas-v4.70.27-${SOURCE_SHA:0:9}-$TK_SHORT.apk"
           cp "$APK" "candidate/$NAME"
           printf '%s\n' "$SOURCE_SHA" > candidate/source-commit.txt
           (cd candidate && sha256sum "$NAME" > "$NAME.sha256")
@@ -204,7 +208,9 @@ jobs:
           if-no-files-found: warn
 
   publish:
-    # Only the exact file that passed API 30 and API 34 is published, as a prerelease.
+    # Only the exact file that passed API 30 and API 34 is published, as a prerelease,
+    # and only on a manual dispatch (from main), never from a pull-request run.
+    if: github.event_name == 'workflow_dispatch'
     needs: [apk, android]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -236,15 +242,15 @@ jobs:
             grep -q '"status": "PASS"' "$f"
             cp "$f" "candidate/android-api$api-result.json"
           done
-          TAG="tk587-test-20261107-${SHA:0:9}"
+          TAG="$TK_SUFFIX-${SHA:0:9}"
           HASH=$(cut -d' ' -f1 "candidate/$NAME.sha256")
           {
-            echo "# Trainingskompas v4.70.27 — TK Test 7 november (integratie #587 + MoveKit)"
+            echo "# Trainingskompas v4.70.27 — $TK_LABEL (#612 + main: #587-fixes en één beveiligde videoroute voor 582)"
             echo
-            echo "**Testversie, geen productie-update.** Installeert als **$TK_LABEL** naast de bestaande app; de APK van 25 oktober en de productie-app blijven ongemoeid."
+            echo "**Testversie, geen productie-update.** Installeert als **$TK_LABEL** naast de bestaande app; eerdere test-apps en de productie-app blijven ongemoeid."
             echo
             echo "- Broncommit: \`$SHA\`"
-            echo "- Pakket: \`$TK_PKG\` · versionName \`4.70.27-tk587test20261107\` · versionCode \`47027\`"
+            echo "- Pakket: \`$TK_PKG\` · versionName \`4.70.27-$TK_SUFFIX\` · versionCode \`47027\`"
             echo "- Bestand: \`$NAME\` · SHA-256 \`$HASH\`"
             echo "- Ondertekening: debug-sleutel van de CI-runner (testvariant, niet uploadbaar naar Play)."
             echo "- Android-emulator API 30 en API 34: PASS op exact dit bestand (zie android-api*-result.json)."
@@ -252,5 +258,5 @@ jobs:
             echo "Volledige changelog, open punten en Samsung-acceptatiestappen: docs/TK587_INTEGRATION_20261107.md in de broncommit."
           } > candidate/release-notes.md
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$SHA" --prerelease \
-            --title "Trainingskompas v4.70.27 — TK Test 7 november (#587 + MoveKit, testversie)" \
+            --title "Trainingskompas v4.70.27 — $TK_LABEL (testversie)" \
             --notes-file candidate/release-notes.md candidate/*

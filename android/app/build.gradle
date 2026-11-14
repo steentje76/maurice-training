@@ -66,6 +66,14 @@ android {
             versionNameSuffix "-tk587test20261107"
             matchingFallbacks = ['debug']
         }
+        // Integration test candidate 14 november 2026: #612 (#587 fixes) + main incl. one secure
+        // V2 media route for all 582 (#628). Own applicationId, installs next to every other app.
+        tktest1114 {
+            initWith debug
+            applicationIdSuffix ".tktest20261114"
+            versionNameSuffix "-tktest20261114"
+            matchingFallbacks = ['debug']
+        }
         tk584test {
             initWith debug
             applicationIdSuffix ".tk584test20261101"

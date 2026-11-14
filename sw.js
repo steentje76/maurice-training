@@ -15,8 +15,10 @@ const CACHE_STATIC = 'trainingskompas-static-v470281';
 const CORE_SIG = '75307d7e99767d1d';
 // Video-cache: STABIEL en LOSGEKOPPELD van de app-versie. App-updates verwijderen video's NIET.
 const CACHE_VIDEOS = 'tk-videos-v1';
-// TK504: must match TK504_PRIVATE_MEDIA_RELEASE in index.html at any cutover.
-// Only after verified private playback, securely purge the old raw MP4 cache.
+// TK504: V1 public-media SW/cache cutover marker; mirrors TK504_PRIVATE_MEDIA_RELEASE
+// in index.html. It does NOT select the playback route (V2 is chosen by
+// TK504_NEW_PRIVATE_MEDIA_RELEASE). Only after verified private playback,
+// securely purge the old raw MP4 cache. Keep false.
 const TK504_PRIVATE_MEDIA_CUTOVER = false;
 const VIDEO_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB LRU-plafond
 const VIDEO_META_KEY = '/__tkvideometa__';

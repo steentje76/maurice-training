@@ -41,8 +41,8 @@ module.exports=async function({root,rest,auth,A,B,query,sql,assert,serviceJwt,pa
   SUPABASE_URL:media.BASE,SUPABASE_ANON_KEY:'local-synthetic-anon',
   SUPABASE_SERVICE_ROLE_KEY:serviceJwt
  };
- for(const migration of ['20261103155325_tk504_movekit_v2_media_grants.sql',
-  '20261106161000_tk504_published_catalog_stage.sql']){
+ for(const migration of ['20261107191701_tk504_movekit_v2_media_grants.sql',
+  '20261107191721_tk504_published_catalog_stage.sql']){
   sql(fs.readFileSync(path.join(root,'supabase/migrations',migration),'utf8'));
  }
  sql(rows.map(row=>"update public.movekit_catalog_fk_bindings set provider_id="+

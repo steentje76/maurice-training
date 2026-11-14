@@ -1,5 +1,31 @@
 # Trainingskompas — Changelog
 
+## v4.70.27 — #612 bijgewerkt met main: gebruikerstestfixes + één beveiligde videoroute (14 november 2026)
+
+- **Integratie.** `main` (`7088bda`, incl. #628 en de TK504/TK614-media-/catalogusketen #619–#633) samengevoegd in #612 (#587-fixes: decimalen, programma-uitvoering, extra sets, hervatten, logging, PM5-resultaten en gemeten splits).
+- **Conflicten opgelost, beide kanten behouden.**
+  - Splitsamenvatting: eerlijke tekst uit #612 ("geschatte gelijke verdeling; geen gemeten splits") met het afstandslabel en de precieze totaaltijd uit main.
+  - Afronden van cardio- en erg-sessies: stabiele rij-ID en duurzame draft uit #612 (`persistTrainingDraft`) plus de wachtrijregistratie uit main (#614: alleen gequeued telt niet als serverbevestigd).
+  - CHANGELOG en DECISION_LOG: beide sporen opgenomen.
+- **Test.** `core/tk614ProgramPartialSaveStorage.test.js` (uit main) krijgt in de sandbox de helpers die de #612-functies gebruiken (`execEnsureEditableWorkout`, `execSkipSet`, `sessionProgramSnapshot`); geen gedragswijziging. 68/68.
+- **Android.** Nieuwe geïsoleerde testvariant `com.trainingskompas.app.tktest20261114` (**TK Test 14 november**), naast alle bestaande apps. De TK587-workflow bouwt en test deze variant; publiceren alleen bij handmatige start, niet vanuit een PR-run.
+- **Regressie lokaal.** 545/547 core-suites; de 2 rode falen identiek op main in deze omgeving. Coaching 35/35 groen, native Concept2 176/176.
+
+## Ongereleased — MoveKit fase 1: één beveiligde videoroute voor alle 582 (draft, 14 november 2026)
+
+- **Besluit (DEC-MEDIA-226-001).** De oorspronkelijke 226 MoveKit-oefeningen worden vrijgegeven op dezelfde manier als de
+  356: vastgelegd eigenaarsbesluit `docs/generated/MOVEKIT_V2_OWNER_ORIGINAL226_MEDIA_RELEASE_20261114.json`, inhoud
+  vastgepind in `core/tk504Original226MediaRelease.js`.
+- **Server.** `netlify/functions/exercise-media-v2-url.js`: de onvoorwaardelijke `404` voor `TK-000001..226` is vervangen
+  door een controle op het vastgepinde besluit. Daarna geldt exact het 356-pad (descriptor → inloggen → grant → ondertekende
+  URL ≤ 60 s → grant opnieuw). Geen env-variabele of request-veld kan dit omzetten.
+- **App.** Ongewijzigd ten opzichte van #628: alle 582 via `ExerciseAssetProvider` → `TK504ProtectedPlayback`.
+- **Tests.** Nieuw `core/tk504Original226OwnerMediaRelease.test.js` (52). Bewust bijgewerkt omdat ze een harde 404 vastlegden:
+  `tk504Original226UnifiedBrokerBridge` (552, incl. 10 mutanten en een VM-kopie met gemanipuleerd besluit die 452/452 weigert),
+  `tk614Original226MediaParity` (1033), `tk614Original226MediaEligibility` (378), `tk504ScopedPrivateMediaRelease` (14).
+- **Niet in deze wijziging.** Geen databasewijziging, geen grants, geen cataloguspublicaties of FK-activatie (fase 2),
+  openbare `videos/` en de videocache blijven bestaan, geen APK.
+
 ## v4.70.27-tk587test20261107 — Integratie #587 + MoveKit, testkandidaat 7 november 2026 (geen productievrijgave)
 
 - #587 (decimalen, programma-uitvoering, extra sets, hervatten, logging, historie, spierbelasting-provenance, PM5-resultaten en gemeten splits) samengevoegd met main: 582 MoveKit-oefeningen, beveiligde posters/video, getypeerde FK en eigenaarsbinding blijven intact.

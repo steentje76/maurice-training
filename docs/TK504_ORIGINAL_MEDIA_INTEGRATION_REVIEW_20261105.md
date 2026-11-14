@@ -47,7 +47,7 @@ De oorspronkelijke bronstroom is **technisch compatibel**, maar betekent nog nie
 ## Aanvullende onafhankelijke grants-controle (na Claude-review)
 
 - Claude signaleerde dat de Supabase `service_role` op nieuwe public tabellen mogelijk via standaardprivileges schrijfrechten erft. De eerder opgestelde migration verleende wel `SELECT`, maar trok deze potentiële impliciete schrijfrechten niet expliciet in.
-- `supabase/migrations/20261103155325_tk504_movekit_v2_media_grants.sql` bevat nu een expliciete `REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ... FROM service_role` vóór de uitsluitend-lezen-grant. Geen productie-SQL uitgevoerd.
+- `supabase/migrations/20261107191701_tk504_movekit_v2_media_grants.sql` bevat nu een expliciete `REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ... FROM service_role` vóór de uitsluitend-lezen-grant. Geen productie-SQL uitgevoerd.
 - De geïsoleerde Docker PostgreSQL 16-test simuleert vooraf een **volledig standaardprivilege** aan `service_role`, voert de migratie uit en bewijst daarna SELECT toegestaan, alle schrijfrechten geweigerd, gebruikersrollen uitgesloten, RLS ingeschakeld, default entitlement inactive, unique/revoke invariants geldig en BYPASSRLS-leesbaarheid vanuit de rol.
 - De herhaalde lokale SQL-smoketest is **groen**, de container is verwijderd; `core/tk504MediaGrantSchema.test.js` controleert de expliciete REVOKE ook statisch. Werkelijke Supabase-config moet bij een gecontroleerde geïsoleerde validatie alsnog worden beoordeeld.
 

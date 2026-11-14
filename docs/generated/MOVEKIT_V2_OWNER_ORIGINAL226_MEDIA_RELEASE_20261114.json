@@ -1,0 +1,51 @@
+{
+  "schema": "trainingskompas-movekit-v2-owner-original226-media-release/1.0",
+  "decision_id": "TK504-20261114-OWNER-ORIGINAL226-MEDIA",
+  "decision_date": "2026-11-14",
+  "status": "OWNER_EXPLICIT_MEDIA_RELEASE",
+  "decision_utterances": [
+    {
+      "date": "2026-11-13",
+      "utterance": "Mijn akkoord voor vrijgave hierbij",
+      "context": "owner approval for the original 226 MoveKit exercises, recorded in issue #504"
+    },
+    {
+      "date": "2026-11-14",
+      "utterance": "Ja, 356-methode",
+      "context": "owner chose the same release method as the 356 (pinned owner decision record) instead of the Ed25519 six-gate route for this media release"
+    }
+  ],
+  "decision_origin": "explicit product owner approval in the Trainingskompas chat",
+  "evidence_type": "owner_chat_explicit_not_cryptographically_signed",
+  "method": "same as TK504-20261105-OWNER-BATCHES-01-15: pinned owner decision record verified by server code",
+  "supersedes_for_media_release": "TK614 Ed25519 six-gate media decision route (tools/tk614_original226_media_eligibility.cjs stays code-only and unloaded)",
+  "scope": {
+    "first_catalog_id": "TK-000001",
+    "last_catalog_id": "TK-000226",
+    "catalog_count": 226,
+    "media_types": ["video", "poster"],
+    "media_count": 452,
+    "delivery": "private Supabase Storage via exercise-media-v2-url (authenticated account + active movekit_v2 grant + 60 s signed URL)"
+  },
+  "media_manifest": {
+    "file": "docs/generated/TK614_ORIGINAL226_PRIVATE_MEDIA_STAGING_MANIFEST_20261109.json",
+    "file_sha256_lf": "b60d5450a9d78d0e5cd13bde07269194fa1b87193bba64be79dc7c152b4f12ac",
+    "all_sha256": "8492f2c14521b9443db3f1c875b936cd8bddc96fbacc0837c9558c5a95738b10",
+    "catalog_ids_sha256": "6700aecefa15e83145ee8635273ab66ea107b8f5df7f6989541614b987140ea6",
+    "video_bytes": 780852020,
+    "poster_bytes": 3879362
+  },
+  "evidence": {
+    "ten_batch_report_check": "docs/TK504_ORIGINAL226_TEN_BATCH_EVIDENCE_20261113.md",
+    "ten_batch_summary_sha256": "4269cc0217ed21030f6a13322b15916a5006839ee3a2d1478b762d289661c770",
+    "ten_batch_result": "452/452 consistent, 0 fail, 0 unable (self-reported batch summaries, not a signed cloud attestation)"
+  },
+  "excluded": [
+    "catalog_publications_for_original_226",
+    "fk_binding_activation_for_original_226",
+    "account_grants",
+    "legacy_v1_public_videos_removal",
+    "service_worker_cache_purge",
+    "android_release"
+  ]
+}

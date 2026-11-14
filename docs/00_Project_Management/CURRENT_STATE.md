@@ -12,6 +12,25 @@ Integratiebranch `integration/tk587-main-20261107` (7 november 2026): #587 (#577
 
 Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle functionele bevindingen, daarna gezamenlijke UX-acceptatie, pas daarna een nieuwe APK. Richtdatum dinsdag 3 november 2026. Main/productie blijft v4.70.25; geen productie- of persoonlijk-accountvrijgave. Zie docs/TK584_PROGRAM_EXECUTION_20261101.md.
 
+## Integratie #612 met main (14 november 2026)
+
+- #612 (gebruikerstestfixes #578/#585/#587) is bijgewerkt met main `7088bda` (incl. #628). APP_VER v4.70.27.
+- Testvariant voor de toestelcontrole: `com.trainingskompas.app.tktest20261114` (TK Test 14 november).
+- Nog niet in main: de security-/dataherstel-/UX-keten #540–#575 (gebundeld in #570/#575). Zie `AUDIT_OpenPRs_niet_in_main_20261114` in het project.
+
+## MoveKit-media: één beveiligde route voor alle 582 — fase 1 (draft, 14 november 2026)
+
+- Besluit DEC-MEDIA-226-001: de media van de oorspronkelijke 226 (`TK-000001..226`) zijn vrijgegeven volgens de
+  356-methode (vastgepind eigenaarsbesluit `TK504-20261114-OWNER-ORIGINAL226-MEDIA`).
+- Code (draft PR, niet gemerged): de app gebruikt voor alle 582 dezelfde beveiligde V2-speler (uit #628); de server
+  signeert de 226 via hetzelfde pad als de 356 (inloggen + actieve grant + URL van max. 60 s).
+- Productie (alleen-lezen vastgesteld, 14 november 2026): 582/582 video's en posters in de private buckets; 356
+  gepubliceerd met actieve FK-binding; 226 FK-bindings inactief en ongepubliceerd (fase 2, ongewijzigd). 6 accounts,
+  5 actieve grants; account `875d5f6e-…` heeft geen grant (eigenaar: niet nodig).
+- Ongewijzigd en nog actief: openbare `videos/`-route op Netlify en de cache `tk-videos-v1` (terugval tot toestelbewijs).
+- Open: merge; afspelen op web en Android met een echt account (deploy previews staan niet in `ALLOWED_ORIGINS` van de
+  broker, dus mediaverificatie kan pas op productie of in een APK); daarna de openbare route uitzetten.
+
 ## Wearable-koppeling: tokenopslag, Android-bereikbaarheid, koppelstatus (v4.70.25, 11 oktober 2026)
 
 - Invariant (DEC-VAULT-001): elke autorisatie krijgt een unieke Vault-secretnaam. Bij (her)koppelen worden eerst de

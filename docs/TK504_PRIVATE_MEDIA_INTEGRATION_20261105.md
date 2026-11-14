@@ -43,7 +43,7 @@ De database mist public.movekit_media_grants. De server-broker is nog niet uitge
 
 ## Extra gecontroleerde serverentitlement-migratie
 
-De bestaande migratie `supabase/migrations/20261103155325_tk504_movekit_v2_media_grants.sql` uit de Draft #595 is geïsoleerd hergebruikt. De tabel is standaard inactief (`active=false`), beschermt grants met RLS, trekt rechten van anonieme en ingelogde browserrollen in, en verleent alleen SELECT aan de service_role voor server-side toetsing. De unieke (user_id,scope)-sleutel en gecontroleerde referentie verhinderen stilzwijgende user-grants. De migratie is **niet** in productie of op een testdatabase uitgevoerd. Zonder aparte goedgekeurde grant-activatie is afspelen onmogelijk. `core/tk504MediaGrantSchema.test.js`: 11/11 statische controles groen; echte migratietest/rollback op geïsoleerde database blijft open.
+De bestaande migratie `supabase/migrations/20261107191701_tk504_movekit_v2_media_grants.sql` uit de Draft #595 is geïsoleerd hergebruikt. De tabel is standaard inactief (`active=false`), beschermt grants met RLS, trekt rechten van anonieme en ingelogde browserrollen in, en verleent alleen SELECT aan de service_role voor server-side toetsing. De unieke (user_id,scope)-sleutel en gecontroleerde referentie verhinderen stilzwijgende user-grants. De migratie is **niet** in productie of op een testdatabase uitgevoerd. Zonder aparte goedgekeurde grant-activatie is afspelen onmogelijk. `core/tk504MediaGrantSchema.test.js`: 11/11 statische controles groen; echte migratietest/rollback op geïsoleerde database blijft open.
 
 ## Aanvullende verificatie — 5 november 2026
 

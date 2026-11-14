@@ -3098,3 +3098,11 @@ blijft code-only en ongeladen; die route vervalt voor deze mediavrijgave.
 openbare `videos/`-route en de service-workercache, Android-release.
 
 **Status.** IMPLEMENTED in draft PR, niet gemerged. Afspelen zonder toestel- en productiebewijs: NOT VERIFIED.
+
+## DEC-MEDIA-226-002 — Eigen oefeningen op naam via de beveiligde MoveKit-route (14 november 2026)
+
+**Besluit (eigenaar, 14 november: "Beeld + video").** Eigen/legacy oefeningen zonder eigen catalogus- of bronidentiteit die via de gecureerde MovementCore-naamkoppeling aan een echt MoveKit-catalogusitem gekoppeld zijn, gebruiken dezelfde beveiligde route als catalogusoefeningen: beeld en video. Inloggen en een actieve grant blijven verplicht.
+
+**Grenzen.** Een (TK-vormig) id autoriseert nooit. Een rij met een eigen `canonicalId`/`catalog_id` of een `source`-claim wordt niet op naam gekoppeld (#603 en de provider-mismatch-regel blijven gelden). Een expliciete eigen video gaat voor. MovementCore is de enige mapping-bron.
+
+**Aanleiding.** Een regressie na #628: 44 van de 103 eigen oefeningen van de eigenaar verloren hun bewegingsbeeld.

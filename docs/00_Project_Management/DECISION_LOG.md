@@ -3124,4 +3124,4 @@ openbare `videos/`-route en de service-workercache, Android-release.
 
 **Waarom niet direct verhuizen naar MoveKit-ID's.** Loggen op een MoveKit-ID vereist nu online verificatie (#603); MoveKit-historie heeft nog geen PR/1RM/piekdoel en programma's rekenen er niet mee. Direct verhuizen zou offline loggen van de hoofdliften breken. Dat lost fase 2 op.
 
-**Status.** Code + migratie + script in draft PR. Uitvoering op productie alleen na aparte, expliciete go van de eigenaar.
+**Status.** Code gemerged (#634, #635). Op 14 november na expliciete go van de eigenaar uitgevoerd op productie; alle controles geslaagd (98 koppelingen, 18 samengevoegd, 10 race verborgen, 193 eigen sessies behouden).

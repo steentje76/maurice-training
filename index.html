@@ -6604,6 +6604,7 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 <script src="core/commercialUxCore.js"></script>
 <script src="core/onboarding.js"></script>
 <script src="core/athleteConstraints.js"></script>
+<script src="core/tkExerciseLinks.js"></script>
 <script src="core/deviceIntegration.js"></script>
 <script src="core/concept2Live.js"></script>
 <script src="core/concept2Csafe.js"></script>
@@ -7815,6 +7816,7 @@ function clearAuthSession(){
   tk504InvalidateProtectedMedia();
   if(typeof tk603BumpReadEpoch==='function')tk603BumpReadEpoch();
   tk504ClearPublishedCatalog();
+  if(typeof tkExLinksClear==='function')tkExLinksClear(); // DEC-EXLINK-001
   authSession=null;
   localStorage.removeItem(AUTH_SESSION_KEY);
   SB_H.Authorization='Bearer '+SB_KEY;
@@ -8082,6 +8084,7 @@ function oneRMFor(exId){
 // bepaald op basis van de al-geladen Map: bestaat de rij al -> PATCH, anders POST.
 // Werkt zowel online als offline (beide onderliggende functies zijn queue-aware).
 async function upsertExerciseGoalField(exId,field,value){
+  {const d=typeof tkExLinkAlias==='function'&&tkExLinkAlias(exId);if(typeof d==='string'&&d)exId=d;} // DEC-EXLINK-001
   const ownerGuard=typeof tkEigenaarUid==='function';
   const owner=ownerGuard?tkEigenaarUid():null,goalMap=exerciseGoals;
   if(ownerGuard&&!owner)return false;
@@ -9774,6 +9777,7 @@ async function tk504RefreshPublishedCatalog(){
     // Rebuild it after the new 356 entries become part of the SAME ECS.
     tk504InvalidateProtectedMedia();
     tk504SyncExerciseCount();
+    if(typeof tkExLinksApply==='function')tkExLinksApply(); // DEC-EXLINK-001: namen 227..582 nu bekend
     const libPage=document.getElementById('s-library');
     if(libPage&&libPage.classList.contains('active')&&typeof renderLibBody==='function')
       renderLibBody();
@@ -18100,15 +18104,90 @@ function pickerExEquipment(e){
 // 206-catalogus elke render opnieuw doorlopen. Cache-sleutel = #legacy + #catalogus + laatste
 // legacy-id, zodat toevoegen/verwijderen van een custom oefening de cache vanzelf verse maakt.
 // invalidateExPickerPool() forceert een rebuild bij in-place mutaties (bv. hernoemen).
+// ── DEC-EXLINK-001 — fase 1: eigen oefening ↔ MoveKit (koppelen + samenvoegen) ──────────────
+// Bron: public.exercise_catalog_links (RLS: alleen eigen rijen). Een gekoppelde eigen oefening
+// toont MoveKit-naam, -video en -uitleg; de dubbele catalogustegel verdwijnt voor deze eigenaar.
+// Data blijft op het eigen record (offline loggen, PR, programma's ongewijzigd). Een samengevoegde
+// oefening wordt verborgen en nieuwe verwijzingen gaan naar het doel. Offline: eigenaar-gebonden cache.
+var tkExLinks=(typeof TkExerciseLinks!=='undefined')?TkExerciseLinks.create():null;
+const TK_EXLINKS_CACHE='tk_exlinks_v1:';
+function tkExLinkCatalogFor(id){ try{ return tkExLinks?tkExLinks.catalogFor(id):null; }catch(_){ return null; } }
+function tkExLinkAlias(id){ try{ return tkExLinks?tkExLinks.aliasOf(id):id; }catch(_){ return id; } }
+function tkExLinkIsMerged(id){ try{ return !!(tkExLinks&&tkExLinks.isMerged(id)); }catch(_){ return false; } }
+function tkExLinkIsHidden(id){ try{ return !!(tkExLinks&&tkExLinks.isHidden(id)); }catch(_){ return false; } }
+// Het gekoppelde catalogusitem, uitsluitend als het een echt MoveKit-item in de ECS is.
+function tkExLinkCatalogEntry(id){
+  const cid=tkExLinkCatalogFor(id);
+  if(!cid||typeof ExerciseCatalogService==='undefined')return null;
+  try{
+    const c=ExerciseCatalogService.byId(cid);
+    return (c&&c.catalog_id===cid&&c.source&&c.source.provider==='movekit')?c:null;
+  }catch(_){ return null; }
+}
+// Toon gekoppelde eigen oefeningen onder hun MoveKit-naam. De eigen naam blijft bewaard in een
+// niet-enumereerbaar veld (gaat nooit mee in een spread/JSON/serverwrite) en komt terug zodra de
+// koppeling verdwijnt. Idempotent; draait na het laden van exercises, links en de 356-catalogus.
+function tkExLinksApply(){
+  if(typeof exercises==='undefined'||!Array.isArray(exercises))return;
+  exercises.forEach(ex=>{
+    if(!ex||!ex.id)return;
+    if(!Object.prototype.hasOwnProperty.call(ex,'_tkOwnName'))
+      Object.defineProperty(ex,'_tkOwnName',{value:ex.name,writable:true,enumerable:false,configurable:true});
+    const c=tkExLinkCatalogEntry(ex.id);
+    ex.name=(c&&!tkExLinkKeepsOwnName(ex.id))?tkCatalogDisplayName(c):ex._tkOwnName;
+  });
+  if(typeof invalidateExPickerPool==='function')invalidateExPickerPool();
+}
+// Vaste race-onderdelen (HYROX-stations, triathlon-disciplines) houden hun eigen naam: race-schermen en
+// -historie tonen het onderdeel, niet de losse MoveKit-oefening. Ze krijgen wel beeld en uitleg.
+function tkExLinkKeepsOwnName(id){
+  try{
+    return TK_HYROX_STATIONS.indexOf(id)>=0||id===TK_HYROX_RUN_ID||Object.values(TK_TRIATHLON_EXERCISE_ID).indexOf(id)>=0;
+  }catch(_){ return /^(hyrox|triathlon)_/.test(String(id||'')); } // constanten nog niet geïnitialiseerd
+}
+function tkExLinksClear(){ try{ if(tkExLinks)tkExLinks.clear(); }catch(_){} }
+function tkExLinksLoadCache(owner){
+  try{
+    const raw=localStorage.getItem(TK_EXLINKS_CACHE+owner);
+    const rows=raw?JSON.parse(raw):null;
+    if(Array.isArray(rows)&&tkExLinks){ tkExLinks.load(rows,owner); return true; }
+  }catch(_){}
+  return false;
+}
+async function tkExLinksRefresh(){
+  if(!tkExLinks)return false;
+  const owner=tkEigenaarUid();
+  if(!owner){ tkExLinks.clear(); tkExLinksApply(); return false; }
+  if(tkExLinks.ownerUid()!==owner){ if(!tkExLinksLoadCache(owner))tkExLinks.clear(); tkExLinksApply(); }
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)return false;
+  // Een mislukte lezing (offline, tabel nog niet uitgerold) laat de laatst bekende stand staan.
+  const res=await sbGetOrFail('exercise_catalog_links','&user_id=eq.'+encodeURIComponent(owner));
+  if(!res||res.failed||!Array.isArray(res.rows)||tkEigenaarUid()!==owner)return false;
+  tkExLinks.load(res.rows,owner);
+  try{ localStorage.setItem(TK_EXLINKS_CACHE+owner,JSON.stringify(tkExLinks.rows())); }catch(_){}
+  tkExLinksApply();
+  try{
+    const lib=document.getElementById('s-library');
+    if(lib&&lib.classList.contains('active')&&typeof renderLibBody==='function')renderLibBody();
+  }catch(_){}
+  return true;
+}
 let _exPickerPoolCache=null, _exPickerPoolKey='';
 function invalidateExPickerPool(){ _exPickerPoolCache=null; _exPickerPoolKey=''; }
 function exPickerPool(){
   const hasEx=(typeof exercises!=='undefined'&&Array.isArray(exercises));
   const exLen=hasEx?exercises.length:0;
   let catLen=0; try{ catLen=(typeof ExerciseCatalogService!=='undefined'&&ExerciseCatalogService.count)?ExerciseCatalogService.count():0; }catch(_){}
-  const key=exLen+':'+catLen+':'+(exLen?exercises[exLen-1].id:'');
+  const linkVer=(typeof tkExLinks!=='undefined'&&tkExLinks&&tkExLinks.version)?tkExLinks.version():0;
+  const key=exLen+':'+catLen+':'+(exLen?exercises[exLen-1].id:'')+':'+linkVer;
   if(_exPickerPoolCache&&_exPickerPoolKey===key)return _exPickerPoolCache;
-  const out=hasEx?exercises.slice():[];
+  // DEC-EXLINK-001: samengevoegd (opgegaan in het doel) of verborgen race-onderdeel → niet tonen.
+  const linksOn=typeof tkExLinkIsHidden==='function'&&typeof tkExLinkCatalogFor==='function';
+  const out=hasEx?exercises.filter(e=>!(linksOn&&e&&tkExLinkIsHidden(e.id)===true)):[];
+  // Een catalogustegel wordt alleen verborgen als de eigen oefening die hem vertegenwoordigt
+  // daadwerkelijk in de lijst staat (actief, geladen). Anders blijft de tegel gewoon kiesbaar.
+  const linkedCatalog=new Set();
+  if(linksOn)out.forEach(e=>{ const cid=e&&tkExLinkCatalogFor(e.id); if(typeof cid==='string'&&tkExLinks&&tkExLinks.survivorForCatalog(cid)===e.id)linkedCatalog.add(cid); });
   // #603: IDs alone are not provenance. A personal FK-shadow and the canonical
   // catalog entry may share one TEXT id. Preserve BOTH under distinct sources.
   // 'exercises' holds database/legacy records, never authoritative catalog
@@ -18119,6 +18198,7 @@ function exPickerPool(){
     C.forEach(c=>{
       if(!c||!c.catalog_id||seenCatalog.has(c.catalog_id))return;
       seenCatalog.add(c.catalog_id);
+      if(linkedCatalog.has(c.catalog_id))return; // vertegenwoordigd door de gekoppelde eigen oefening
       const px=catalogToPickerEx(c);
       if(px)out.push(px);
     });
@@ -18542,13 +18622,17 @@ function renderExPickerList(){
     const personalCatalogCollision=e._catalog!==true&&e.scope==='personal'&&/^TK-[0-9]{6}$/.test(e.id||'');
     const published=e._catalog===true&&typeof ExerciseCatalogService!=='undefined'&&
       ExerciseCatalogService.byId(e.id);
-    const protectedPoster=published&&published.source&&
+    // DEC-EXLINK-001: een gekoppelde eigen oefening toont het beveiligde beeld van haar MoveKit-item.
+    const linkedEntry=(e._catalog!==true&&typeof tkExLinkCatalogEntry==='function')?tkExLinkCatalogEntry(e.id):null;
+    const linkedAid=(linkedEntry&&typeof linkedEntry.catalog_id==='string'&&typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(linkedEntry.catalog_id)===true)
+      ?linkedEntry.catalog_id:null;
+    const protectedPoster=linkedAid||(published&&published.source&&
       published.source.provider==='movekit'&&
-      typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(e.id);
+      typeof tk504PrivateEnabled==='function'&&tk504PrivateEnabled(e.id));
     let poster=null;if(!protectedPoster)try{poster=(!personalCatalogCollision&&A&&A.poster)?(A.poster(e.id)||A.poster(e.catalog_id||'')):null;}catch(_){poster=null;}
     const mu=(e.muscle_primary&&e.muscle_primary[0])||TYPE_LABELS[e.type]||e.type||'Overig';
     const box=protectedPoster
-      ?`<div class="pk-pt"><span class="mg">${escHtml(mu)}</span>${_pkIcon(e)}<img class="tk504-picker-poster" data-aid="${e.id}" alt="" loading="lazy"></div>`
+      ?`<div class="pk-pt"><span class="mg">${escHtml(mu)}</span>${_pkIcon(e)}<img class="tk504-picker-poster" data-aid="${linkedAid||e.id}" alt="" loading="lazy"></div>`
       :poster
       ?`<div class="pk-pt"><img src="${poster}" alt="" loading="lazy"></div>`
       :`<div class="pk-pt"><span class="mg">${escHtml(mu)}</span>${_pkIcon(e)}</div>`;
@@ -21222,6 +21306,8 @@ var ExerciseAssetProvider=(function(){
   function _slug(id){
     var c=(typeof ExerciseCatalogService!=='undefined')?ExerciseCatalogService.byId(id):null;
     if(c&&c.source&&c.source.provider_id) return c.source.provider_id;
+    // DEC-EXLINK-001: expliciete eigenaar-koppeling gaat vóór de naam (die is nu de MoveKit-naam).
+    try{ var lc=(typeof tkExLinkCatalogEntry==='function')?tkExLinkCatalogEntry(id):null; if(lc&&lc.source&&typeof lc.source.provider_id==='string'&&lc.source.provider_id) return lc.source.provider_id; }catch(e){}
     // F19 — naam-fallback: koppel een oefening zonder catalog_id via de centrale MovementCore-mapping
     // aan de juiste MoveKit provider_id. resolve() controleert daarna of de slug echt een poster is
     // (onbekende slug -> null, dus geen verkeerd beeld). Uitsluitend bewegingsBEELD, geen sportlogica.
@@ -22513,6 +22599,8 @@ function movekitPosterFor(ex){
   try{
     if(!ex || typeof ExerciseAssetProvider==='undefined' || !ExerciseAssetProvider.poster) return null;
     if(ex.id){ const p=ExerciseAssetProvider.poster(ex.id); if(p) return p; }
+    const linked=(ex._catalog!==true&&ex.id&&typeof tkExLinkCatalogEntry==='function')?tkExLinkCatalogEntry(ex.id):null; // DEC-EXLINK-001
+    if(linked&&typeof linked.catalog_id==='string'){ const lp=ExerciseAssetProvider.poster(linked.catalog_id); if(lp) return lp; }
     const cid=movekitCatalogIdForName(ex.naam);
     if(cid) return ExerciseAssetProvider.poster(cid);
   }catch(e){}
@@ -22541,6 +22629,7 @@ function resolveExerciseEquipment(ex){
     if(!ex||typeof ExerciseCatalogService==='undefined') return null;
     let ent=null;
     if(ex.id && ExerciseCatalogService.byId){ try{ ent=ExerciseCatalogService.byId(ex.id); }catch(e){} }
+    if((!ent||!ent.identity) && ex.id && ex._catalog!==true && typeof tkExLinkCatalogEntry==='function'){ const lc=tkExLinkCatalogEntry(ex.id); if(lc&&typeof lc.catalog_id==='string') ent=lc; } // DEC-EXLINK-001
     if((!ent||!ent.identity) && (ex.naam||ex.name) && typeof MovementCore!=='undefined'){
       const slug=MovementCore.slugForName(ex.naam||ex.name);
       if(slug){ const hit=ExerciseCatalogService.all().find(c=>(c.assets||[]).some(a=>a.ref===slug)); if(hit) ent=hit; }
@@ -22596,6 +22685,7 @@ function movekitIntelFor(ex){
     if(!ex || typeof ExerciseCatalogService==='undefined') return null;
     let ent=null;
     if(ex.id && ExerciseCatalogService.byId){ try{ ent=ExerciseCatalogService.byId(ex.id); }catch(e){} }
+    if((!ent||!ent.intelligence) && ex.id && ex._catalog!==true && typeof tkExLinkCatalogEntry==='function'){ const lc=tkExLinkCatalogEntry(ex.id); if(lc&&typeof lc.catalog_id==='string') ent=lc; } // DEC-EXLINK-001
     if((!ent||!ent.intelligence) && ex.naam && typeof MovementCore!=='undefined'){
       const slug=MovementCore.slugForName(ex.naam);
       if(slug){ const hit=ExerciseCatalogService.all().find(c=>(c.assets||[]).some(a=>a.ref===slug)); if(hit) ent=hit; }
@@ -22767,7 +22857,8 @@ async function coldStartEstimate(exId){
   }
   const exObj=exercises.find(e=>e.id===exId);
   if(exObj?.ratio_anchor && exObj?.ratio_factor){
-    const anchorId=exObj.ratio_anchor;
+    const _anc=(typeof tkExLinkAlias==='function')?tkExLinkAlias(exObj.ratio_anchor):null; // DEC-EXLINK-001
+    const anchorId=(typeof _anc==='string'&&_anc)?_anc:exObj.ratio_anchor;
     const ss=await sbGet('sessions','&exercise_id=eq.'+anchorId+'&weight=not.is.null&reps=not.is.null&order=date.desc,created_at.desc&limit=30');
     const est=weightedEst1RM(ss);
     let ankerRM=est.est;
@@ -25674,8 +25765,13 @@ async function writeSessionRow(row, opts){
   // #603: one canonical sessions writer. A reviewed, owner-bound FK mapping
   // is applied here, not duplicated in cardio/strength/Guided persistence.
   // No binding => the original row is sent byte-equivalently as before.
-  const prepared=(opts&&opts.tk504_binding)
+  let prepared=(opts&&opts.tk504_binding)
     ?tk504RewriteVerifiedSessionRow(row,opts.tk504_binding):row;
+  // DEC-EXLINK-001: een (oude) verwijzing naar een samengevoegde oefening landt op het doel.
+  if(prepared&&typeof prepared==='object'&&typeof prepared.exercise_id==='string'&&typeof tkExLinkIsMerged==='function'&&tkExLinkIsMerged(prepared.exercise_id)===true){
+    const _doel=tkExLinkAlias(prepared.exercise_id);
+    if(typeof _doel==='string'&&_doel&&_doel!==prepared.exercise_id)prepared={...prepared,exercise_id:_doel};
+  }
   return await sbPostQ('sessions', prepared, opts);
 }
 // ARCHITECTUUR-HARDENING (v4.91.0) — dedicated schrijfpad voor race_segments
@@ -27259,6 +27355,18 @@ function resolveExerciseMedia(ex){
     }
     // Never leak an old public MoveKit asset as the private route's fallback.
     if(typeof mp4==='string'&&/(?:^|\/)videos\/[a-z0-9_.-]+\.mp4(?:$|\?)/i.test(mp4))mp4=null;
+  }
+  // DEC-EXLINK-001: eigen oefening met een expliciete, eigenaar-gebonden koppeling → het beveiligde
+  // MoveKit-item van die koppeling. Gaat vóór de naamkoppeling (de koppeling is de bewuste keuze).
+  // Media blijft afgedwongen door broker + grant; de koppeling autoriseert niets.
+  if(ex._catalog!==true&&typeof tk504PrivateEnabled==='function'){
+    const linked=(typeof tkExLinkCatalogEntry==='function')?tkExLinkCatalogEntry(ex.id):null;
+    if(linked&&typeof linked.catalog_id==='string'&&linked.source&&linked.source.provider==='movekit'&&tk504PrivateEnabled(linked.catalog_id)
+       &&(!ex.source||(ex.source.provider==='movekit'&&ex.source.provider_id===linked.source.provider_id))
+       &&(ExerciseAssetProvider.hasVideo(linked.catalog_id)||Number(linked.catalog_id.slice(3))>=227)){
+      return {type:'movekit',kind:'private-mp4',catalogId:linked.catalog_id,source:'movekit',
+        available:true,poster:null,provenance:{provider:'movekit',method:'private',binding:'owner_link'}};
+    }
   }
   // TK504: eigen/legacy oefening ZONDER eigen catalogus- of bronidentiteit, gekoppeld op naam via de
   // gecureerde MovementCore-mapping (zelfde bron als poster/cues) → dezelfde beveiligde route.
@@ -30972,8 +31080,10 @@ async function refreshRatioFactors(){
   const _oc=tk603ReadContext();if(!_oc)return;
   const el=document.getElementById('stats-ratio-list');
   if(!el)return;
-  const anchor='backsquat';
-  const lifts=Object.keys(LIFT_NORMS);
+  // DEC-EXLINK-001: samengevoegde liften tellen onder hun doel (bv. backsquat → TK-000038).
+  const _al=x=>{ const a=(typeof tkExLinkAlias==='function')?tkExLinkAlias(x):x; return (typeof a==='string'&&a)?a:x; };
+  const anchor=_al('backsquat');
+  const lifts=[...new Set(Object.keys(LIFT_NORMS).map(_al))];
   if(!lifts.includes(anchor)){el.innerHTML='';return;}
 
   const data={};
@@ -30990,6 +31100,7 @@ async function refreshRatioFactors(){
   }
   let h='';
   lifts.filter(l=>l!==anchor).forEach(lift=>{
+    if(/^TK-[0-9]{6}$/.test(lift)&&!(data[lift]&&data[lift].est))return; // TK-alias alleen tonen met eigen data
     const rf=ratioFactor(lift,anchor,data[lift],anchorEst);
     if(rf.ratio==null)return;
     const verwacht=Math.round(anchorEst.est*rf.ratio);
@@ -32592,7 +32703,9 @@ const LIFT_NORMS = {
   backsquat: 1.5, bench: 1.0, frontsquat: 1.2, shoulderpress: 0.65,
   hexabar: 1.75, hpc: 0.75, hps: 0.55,
   // F0.7D-STAP12: canonical TK-alias voor de gemigreerde anker-lift backsquat (identieke normwaarde).
-  'TK-000038': 1.5
+  'TK-000038': 1.5,
+  // DEC-EXLINK-001: zelfde patroon voor bench en shoulderpress (gedeelde TK-oefeningen, identieke norm).
+  'TK-000019': 1.0, 'TK-000030': 0.65
 };
 // Verwachte 1RM op basis van niveau en leeftijd
 // v5.6.1: geen schatting meer zonder leeftijd/gewicht (voorheen viel dit stil terug op de
@@ -37456,6 +37569,7 @@ async function ensureExercisesLoaded(){
   _exercisesLoading=(async()=>{
     const data=await sbGet('exercises','&order=sort_order.asc&active=eq.true');
     exercises=data.length?data.filter(ex=>!tk504IsReservedGlobalFkStub(ex)):[];
+    if(typeof tkExLinksApply==='function')tkExLinksApply(); // DEC-EXLINK-001
     // A database containing only reserved FK references is not an empty
     // exercise database: never auto-seed legacy defaults because they are hidden.
     if(!exercises.length&&!data.length){
@@ -37612,6 +37726,7 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
   _vasteTrainingenLoaded=false;
   exercises=[];
   _exercisesLoading=null;
+  if(typeof tkExLinksClear==='function')tkExLinksClear(); // DEC-EXLINK-001
   favoriteExIds=new Set();
   _favoritesLoaded=false;
   exerciseGoals=new Map();
@@ -37671,6 +37786,7 @@ async function startAppAfterAuth(){
   tk504SyncExerciseCount();
   ensureExercisesLoaded().then(()=>loadTrainCfg());
   tk504RefreshPublishedCatalog(); // only when independently released; no second ECS
+  tkExLinksRefresh(); // DEC-EXLINK-001: eigen oefening ↔ MoveKit (cache eerst, dan server)
   ensureEquipmentTypesLoaded();
   migrateLibraryFavoritesToSupabase(); // Sprint 6.0.1 — eenmalig, laadt ook favoriteExIds vroeg
   ensureExerciseGoalsLoaded(); // peakdoelen vroeg laden — voorkomt lege 'jouw doel'-weergave bij eerste render

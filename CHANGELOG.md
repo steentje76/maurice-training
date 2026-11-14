@@ -1,5 +1,14 @@
 # Trainingskompas — Changelog
 
+## Ongereleased — Eigen oefeningen worden de MoveKit-oefening, fase 1 (draft, 14 november 2026)
+
+- **Wens eigenaar.** De 98 eigen oefeningen die bij een MoveKit-oefening horen moeten de MoveKit-oefening vervangen, niet ernaast staan. Logging blijft behouden.
+- **App.** Nieuwe module `core/tkExerciseLinks.js` (per eigenaar, offline cache). Een gekoppelde eigen oefening toont MoveKit-naam, beveiligde video (`binding:'owner_link'`) en uitleg; de dubbele catalogustegel verdwijnt uit de kieslijst. Samengevoegde oefeningen zijn verborgen; sessies en doelen naar een samengevoegde id landen op het doel. HYROX/triathlon-onderdelen houden hun naam en worden nooit omgeleid. Krachtverhoudingen volgen de samenvoeging (`TK-000019`/`TK-000030` als normalias, zoals F0.7D bij `TK-000038`).
+- **Database.** Migratie `exercise_catalog_links` (owner-only RLS). Eenmalig script `tools/tk-exlink-fase1/apply.sql` (+ `reverse.sql`) uit `mapping.json`: alleen rijen van de eigenaar, back-up `bak_tkx20261114_*`, controles in dezelfde transactie (fout = alles terug), idempotent. Niet uitgevoerd.
+- **Test.** `core/tkExerciseLinks.test.js` (31) en `core/tkExerciseLinksMigration.test.js` (79, echte SQL in PGlite: proefrun byte-gelijk na rollback, uitvoering, herhaling, achterblijver, RLS, terugdraaien naar exact de oude stand).
+- **Service worker.** Cache `v470282`, module in de precache.
+- **Testharnas.** `core/tk614ProgramPartialSaveStorage.test.js` declareert de typeof-gegate koppelhooks als afwezig (zelfde patroon als de andere optionele hooks); geen gedragswijziging.
+
 ## v4.70.27 — Eigen oefeningen op naam via de beveiligde MoveKit-route (14 november 2026)
 
 - **Probleem (gemeld in de app "TK Test 14 november").** Bij de oude oefeningen ontbraken het beeld en de video, zowel bij de losse oefening als in trainingen. Oorzaak: sinds #628 zijn alle 582 catalogus-ID's privé, dus de openbare route geeft voor de 226 geen poster of video meer. Eigen oefeningen ("Bench Press", "Goblet Squat") hebben geen catalogus-ID; de beveiligde route accepteerde alleen catalogus-ID's. Van de 103 eigen oefeningen van de eigenaar verloren er 44 hun bewegingsbeeld (de oude APK toonde een poster).

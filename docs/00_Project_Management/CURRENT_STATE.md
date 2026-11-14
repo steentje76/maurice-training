@@ -19,6 +19,14 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Herstel (DEC-MEDIA-226-002): eigen oefeningen die op naam aan MoveKit gekoppeld zijn, gebruiken de beveiligde route (beeld + video). Testvariant `com.trainingskompas.app.tktest20261114b` (TK Test 14 nov v2).
 - Nog niet in main: de security-/dataherstel-/UX-keten #540–#575 (gebundeld in #570/#575). Zie `AUDIT_OpenPRs_niet_in_main_20261114` in het project.
 
+## Eigen oefeningen → MoveKit, fase 1: koppelen + samenvoegen (draft, 14 november 2026)
+
+- Besluit DEC-EXLINK-001. 98 eigen oefeningen van de eigenaar vervangen de dubbele MoveKit-tegel; 18 samengevoegd in hun doel, 10 HYROX/triathlon-onderdelen verborgen (nooit samengevoegd), 70 zichtbare oefeningen met MoveKit-naam, -video en -uitleg.
+- Code (draft PR, gestapeld op #634): `core/tkExerciseLinks.js`, koppelingen in kieslijst, media, uitleg, uitrusting, schrijven (alias), doelen en krachtverhoudingen.
+- Migratie `20261114180000_tk_exercise_catalog_links.sql` en script `tools/tk-exlink-fase1/` (apply/reverse, gegenereerd uit `mapping.json`): niet uitgevoerd op productie.
+- Vóór uitvoering: app online en gesynchroniseerd (lege wachtrij). Een achterblijver wordt door een herhaalde run alsnog omgezet.
+- Volgende fasen: 2 app klaar voor MoveKit-ID's (offline loggen, PR/1RM/piekdoel, programma's), 3 data verhuizen in porties, 4 opruimen.
+
 ## MoveKit-media: één beveiligde route voor alle 582 — fase 1 (draft, 14 november 2026)
 
 - Besluit DEC-MEDIA-226-001: de media van de oorspronkelijke 226 (`TK-000001..226`) zijn vrijgegeven volgens de

@@ -19,11 +19,12 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Herstel (DEC-MEDIA-226-002): eigen oefeningen die op naam aan MoveKit gekoppeld zijn, gebruiken de beveiligde route (beeld + video). Testvariant `com.trainingskompas.app.tktest20261114b` (TK Test 14 nov v2).
 - Nog niet in main: de security-/dataherstel-/UX-keten #540–#575 (gebundeld in #570/#575). Zie `AUDIT_OpenPRs_niet_in_main_20261114` in het project.
 
-## Eigen oefeningen → MoveKit, fase 1: koppelen + samenvoegen (draft, 14 november 2026)
+## Eigen oefeningen → MoveKit, fase 1: koppelen + samenvoegen (uitgevoerd, 14 november 2026)
 
 - Besluit DEC-EXLINK-001. 98 eigen oefeningen van de eigenaar vervangen de dubbele MoveKit-tegel; 18 samengevoegd in hun doel, 10 HYROX/triathlon-onderdelen verborgen (nooit samengevoegd), 70 zichtbare oefeningen met MoveKit-naam, -video en -uitleg.
 - Code (draft PR, gestapeld op #634): `core/tkExerciseLinks.js`, koppelingen in kieslijst, media, uitleg, uitrusting, schrijven (alias), doelen en krachtverhoudingen.
-- Migratie `20261114180000_tk_exercise_catalog_links.sql` en script `tools/tk-exlink-fase1/` (apply/reverse, gegenereerd uit `mapping.json`): niet uitgevoerd op productie.
+- Code in main (#634, #635). Migratie `20261114180000_tk_exercise_catalog_links.sql` en `tools/tk-exlink-fase1/apply.sql` op 14 november uitgevoerd op productie (eigenaarsakkoord), in één transactie; alle controles geslaagd. Nacontrole: 98 koppelingen (18 samengevoegd, 10 race verborgen), 193 eigen sessies ongewijzigd, 0 sessies op samengevoegde id's, 18 eigen oefeningen inactief, geen koppelingen van andere accounts. Back-up `bak_tkx20261114_*` (o.a. 11 sessies, 34 programmaregels, 97 trainingssnapshots). Terugdraaien: `reverse.sql`.
+- Nieuwe weergave zichtbaar in de webapp; de test-APK's tonen hem pas na een nieuwe build.
 - Vóór uitvoering: app online en gesynchroniseerd (lege wachtrij). Een achterblijver wordt door een herhaalde run alsnog omgezet.
 - Volgende fasen: 2 app klaar voor MoveKit-ID's (offline loggen, PR/1RM/piekdoel, programma's), 3 data verhuizen in porties, 4 opruimen.
 

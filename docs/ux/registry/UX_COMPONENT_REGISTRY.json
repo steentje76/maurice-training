@@ -1,0 +1,6 @@
+{
+  "schema_version": "1.0",
+  "status": "FOUNDATION",
+  "components": [],
+  "maintenance": "Populate from runtime + H7 + SCREEN_IMPLEMENTATION_STANDARD before creating a new component. Empty foundation registry is not proof that no reusable component exists."
+}

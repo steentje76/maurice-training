@@ -1,0 +1,5 @@
+{
+  "schema_version": "1.0",
+  "scenarios": [],
+  "rule": "Material flow choices compare >=2 scenarios before code. No automatic winner; Product Owner selects."
+}

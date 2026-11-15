@@ -3141,3 +3141,13 @@ openbare `videos/`-route en de service-workercache, Android-release.
 **Status.** Gemerged (#637), RPC toegepast, op 14 november op het toestel geaccepteerd (offline gelogde MoveKit-oefening opgeslagen als TKC-000305).
 
 **Open.** De oorspronkelijke 226 hebben nog geen actieve binding en zijn dus ook online niet loggbaar. Vrijgave verloopt via de bestaande ondertekende procedure (`tools/tk614_original226_admin_release.cjs`, fase B, eigenaarshandtekening + DBA), niet via deze sprint.
+
+## DEC-FK-226-001 — De 226 originele MoveKit-oefeningen vrijgegeven voor logging (15 november 2026)
+
+**Besluit (eigenaar, 15 november).** "Alle oefeningen moeten gelijkwaardig gebruikt kunnen worden. Herstel de 226 oefeningen zodat het gebruik gelijk is als de 356." Gekozen route: "Nu, op mijn akkoord" — vervangt voor deze vrijgave de Ed25519-ondertekening van `tools/tk614_original226_admin_release.cjs` (fase B).
+
+**Uitgevoerd.** Eén transactie op productie (`tools/tk614-activate-226/activate.sql`): voorwaarden (226 geldige bindingen, 356 intact, stage-besluit aanwezig), `active = true` + `reviewed_at` voor de 226, controles (582 vrijgegeven; technische TKC-records blijven inactief), auditregel `TK614-OWNER-ACTIVATE-20261115-CHAT01` (prior `TK614-OWNER-STAGE-20261108-CHAT02`, 226 rijen) in `tk614_admin_release_audit`.
+
+**Vooraf gecontroleerd.** Bron-id's van alle 226 bindingen gelijk aan de app-catalogus (226/226); MoveKit-records TKC-000001..226 bestaan (globaal, zonder eigenaar). Nacontrole: `tk504_resolve_catalog_fk` geeft voor een ingelogde gebruiker TKC-000088 en TKC-000226 terug, een verkeerde bron-id niets; de vrijgavelijst voor offline loggen bevat 582.
+
+**Gevolg.** Alle 582 MoveKit-oefeningen zijn online en offline gelijk loggbaar. De Builder kan geen niet-loggbare oefening meer kiezen. Terugdraaien: `tools/tk614-activate-226/reverse.sql` (alleen bindingen, historie blijft).

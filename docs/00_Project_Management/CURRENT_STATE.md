@@ -32,6 +32,7 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Code in main (#637). Migratie `20261114200000_tk504_released_catalog_fks_rpc.sql` toegepast op 14 november (anon geen toegang, 356 vrijgegeven).
 - Toestelacceptatie TK Test 14 nov v3 (`tktest20261114c-a039809e4`) in vliegtuigmodus: Decline Machine Chest Press offline gelogd en na synchronisatie opgeslagen als `TKC-000305` (eerste sessie op een MoveKit-ID); Farmer Carry (eigen, gekoppeld) offline gelogd en opgeslagen.
 - De 356 nieuwe MoveKit-oefeningen zijn hiermee offline loggbaar. De oorspronkelijke 226 vereisen eerst de ondertekende vrijgave (fase B) — ook online nog niet loggbaar.
+- **15 november — DEC-FK-226-001:** de 226 originele MoveKit-bindingen zijn vrijgegeven (eigenaarsakkoord, auditregel `TK614-OWNER-ACTIVATE-20261115-CHAT01`). Alle 582 zijn nu online en offline gelijk loggbaar.
 - Vóór uitvoering: app online en gesynchroniseerd (lege wachtrij). Een achterblijver wordt door een herhaalde run alsnog omgezet.
 - Volgende fasen: 2 app klaar voor MoveKit-ID's (offline loggen, PR/1RM/piekdoel, programma's), 3 data verhuizen in porties, 4 opruimen.
 

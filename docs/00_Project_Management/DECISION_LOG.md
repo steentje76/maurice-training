@@ -3177,3 +3177,11 @@ Geen MoveKit-binding nodig voor die rijen; offline loggen werkt zoals bij elke e
 **Besluit (eigenaar, 15 november: "Nieuwe tabel").** Tabel `exercise_rest_settings` per gebruiker per oefening; sleutel = gekoppelde eigen oefening of MoveKit-id (TKC-). Schrijven via RPC `tk_set_exercise_rest` (set-semantiek, veilig bij herhaald afspelen uit de wachtrij; null = verwijderen). Lezen: eigen instelling → oude gedeelde waarde → app-standaard. Alternatief (kolom op exercise_goals) was kleiner maar niet gekozen.
 
 **Status.** Migratie op 15 november na go van de eigenaar toegepast; code gemerged (#642).
+
+## DEC-EXLINK-005 — Fase 3: historie van de eigenaar naar MoveKit-id's (15 november 2026)
+
+**Besluiten eigenaar (15 november).** Fase 3 voorbereiden; alleen de data van het eigen account migreren; van andere gebruikers alleen de 9 sessies op gedeelde oude catalogusoefeningen verwijderen ("Alleen de 9 sessies").
+
+**Stap 0 (uitgevoerd na go).** `tools/tk-exlink-fase3/delete-foreign-9.sql`: voorwaarden (precies 9, nooit van de eigenaar, 0 afhankelijke activities), back-up `bak_tkx20261115_foreign_sessions` (RLS aan, geen client-toegang), controles. Proefrun (rollback) en uitvoering geslaagd; eigenaar 199 sessies ongewijzigd.
+
+**Fase 3a (app).** Per koppeling `migrated_at`: gemigreerd = historie op het MoveKit-id, geen omleiding (DEC-EXLINK-002 vervalt voor dat item), niet tonen. Een sessie-item met een MoveKit-id krijgt de MoveKit-bron als de eigenaar het item gemigreerd heeft of er geen actieve rij met dat id bestaat; gedeelde legacy-rijen (bv. bankdrukken TK-000019) blijven voor andere gebruikers ongemoeid. Correctie op het plan: TK-id's zonder rij faalden niet op de FK (de app maakt dan een FK-compat-rij); de afgeleide bron is nodig om na migratie op het MoveKit-id te loggen.

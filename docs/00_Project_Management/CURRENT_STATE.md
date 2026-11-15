@@ -26,6 +26,14 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Code in main (#634, #635). Migratie `20261114180000_tk_exercise_catalog_links.sql` en `tools/tk-exlink-fase1/apply.sql` op 14 november uitgevoerd op productie (eigenaarsakkoord), in één transactie; alle controles geslaagd. Nacontrole: 98 koppelingen (18 samengevoegd, 10 race verborgen), 193 eigen sessies ongewijzigd, 0 sessies op samengevoegde id's, 18 eigen oefeningen inactief, geen koppelingen van andere accounts. Back-up `bak_tkx20261114_*` (o.a. 11 sessies, 34 programmaregels, 97 trainingssnapshots). Terugdraaien: `reverse.sql`.
 - Nieuwe weergave zichtbaar in de webapp; de test-APK's tonen hem pas na een nieuwe build.
 
+## Fase 3: historie naar MoveKit-id's (in voorbereiding, 15 november 2026)
+
+- Besluit DEC-EXLINK-005. Plan: `tools/tk-exlink-fase3/PLAN.md`. Alleen data van het eigen account.
+- Stap 0 uitgevoerd (15 november, na go): 9 sessies van andere gebruikers op gedeelde oude catalogusoefeningen verwijderd; back-up `bak_tkx20261115_foreign_sessions`, terugzetten met `restore-foreign-9.sql`.
+- Fase 3a (live): koppeling krijgt `migrated_at` (migratie `20261115160000_…`, toegepast 15 november; 0 gemigreerd). Gemigreerd = geen omleiding naar de eigen oefening, niet in kieslijst/Beheer; sessie-items met een MoveKit-id krijgen dan de MoveKit-bron (`tk504DerivedCatalogRef` via `getSessionExs`); historienaam van MoveKit-sessies ook offline uit de vrijgavelijst. Zonder gemigreerde koppelingen verandert er niets.
+- Test: `core/tkExerciseLinksMigrated.test.js`. Service worker `v470287`.
+- Volgende: fase 3b (datamigratie per portie, proefrun + go per portie).
+
 ## Rusttijd per gebruiker, fase 2b-3 (live, 15 november 2026)
 
 - Besluit DEC-EXLINK-004 (eigenaar koos een nieuwe tabel). Rusttijd per oefening wordt per gebruiker opgeslagen in `exercise_rest_settings` (eigen oefening of MoveKit-id TKC-), via de idempotente RPC `tk_set_exercise_rest` in de offline-wachtrij. Lokale cache per eigenaar voor een offline koude start.

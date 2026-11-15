@@ -3151,3 +3151,13 @@ openbare `videos/`-route en de service-workercache, Android-release.
 **Vooraf gecontroleerd.** Bron-id's van alle 226 bindingen gelijk aan de app-catalogus (226/226); MoveKit-records TKC-000001..226 bestaan (globaal, zonder eigenaar). Nacontrole: `tk504_resolve_catalog_fk` geeft voor een ingelogde gebruiker TKC-000088 en TKC-000226 terug, een verkeerde bron-id niets; de vrijgavelijst voor offline loggen bevat 582.
 
 **Gevolg.** Alle 582 MoveKit-oefeningen zijn online en offline gelijk loggbaar. De Builder kan geen niet-loggbare oefening meer kiezen. Terugdraaien: `tools/tk614-activate-226/reverse.sql` (alleen bindingen, historie blijft).
+
+## DEC-EXLINK-002 — Fase 2b-1: catalogusitems met een eigen oefening loggen op die eigen oefening (15 november 2026)
+
+**Probleem.** De Builder, alternatieven en opgeslagen trainingen werken met MoveKit-catalogus-id's. Voor een oefening die de eigenaar als eigen (gekoppelde) oefening heeft, kwam de sessie op het MoveKit-ID terecht: historie, PR en doelen raakten verdeeld over twee plekken.
+
+**Besluit.** Heeft een catalogusitem (met geldige bron) voor deze eigenaar een zichtbare, actieve gekoppelde eigen oefening (`exercise_catalog_links`, niet samengevoegd/verborgen), dan:
+- schrijft de sessie op de eigen oefening (normale uitvoering via `ensureSessionExerciseRows` → `tkSessieOptsVoor` → `writeSessionRow`; Guided via `doPersist`), met dezelfde idempotentie-id;
+- gaat een nieuw record naar de doelen van de eigen oefening;
+- leest het item zijn historie (vorige sessie, prefill, schattingen) van de eigen oefening (`tk603ReadExerciseSessions`).
+Geen MoveKit-binding nodig voor die rijen; offline loggen werkt zoals bij elke eigen oefening. Ongekoppelde catalogusitems blijven het MoveKit-pad (TKC) volgen. Race-koppelingen (`hidden`) tellen niet.

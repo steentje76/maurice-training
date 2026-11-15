@@ -44,7 +44,7 @@ ok(/status==='confirmed'\|\|status==='queued'/.test(POSTQ), 'bron: zonder detail
 ok(/item\.resolution==='ignore-duplicates'/.test(FLUSH), 'bron: flush gebruikt de opgeslagen resolutie');
 ok(/_exNietGelukt\[item\.body\.exercise_id\]/.test(FLUSH), 'bron: flush stuurt geen sessie waarvan de oefening in dezelfde ronde mislukte');
 ok(/const _exStatus=await ensureSessionExerciseRows\(list\)/.test(FINISH) && (FINISH.match(/tkSessieOptsVoor\(_exStatus,ex\.id\)/g) || []).length === 2, 'bron: finishSession gebruikt de oefeningstatus bij de sessie-write');
-ok(/ensureExerciseRowStatus\(it\.id\)/.test(DOPERSIST) && /queueOnly:exStatus==='queued'/.test(DOPERSIST), 'bron: Guided gebruikt de oefeningstatus bij de sessie-write');
+ok(/ensureExerciseRowStatus\(logId\)/.test(DOPERSIST) && /var logId=ownId\|\|it\.id,/.test(DOPERSIST) && /queueOnly:exStatus==='queued'/.test(DOPERSIST), 'bron: Guided gebruikt de oefeningstatus bij de sessie-write (logId = item of gekoppelde eigen oefening, DEC-EXLINK-002)');
 ok(/if\(_wOk!==true\) throw new Error\('session_write_rejected'\);/.test(FINISH), 'bron: bestaande afwijzingscontrole in finishSession ongewijzigd');
 
 // ══ DEEL 2 — ECHTE PAGINA ══

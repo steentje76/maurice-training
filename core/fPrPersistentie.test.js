@@ -56,7 +56,7 @@ const mBase = logSetBron.match(/if\(sessionPrBase\[exId\]===undefined\) sessionP
 // Sprint 12: de vergelijking zelf is naar de Decision Engine verhuisd (record.v1). finishSession
 // bepaalt alleen nog de basislijn en schrijft weg. De test volgt die verplaatsing en toetst
 // hetzelfde gedrag, nu via D.releaseRecord.
-const mCur  = finishBron.match(/const _recBasis=\(sessionPrBase\[ex\.id\]!==undefined\?sessionPrBase\[ex\.id\]:prFor\(ex\.id\)\);/);
+const mCur  = finishBron.match(/const _recBasis=_ownRec\?prFor\(_ownRec\):\(sessionPrBase\[ex\.id\]!==undefined\?sessionPrBase\[ex\.id\]:prFor\(ex\.id\)\);/); // DEC-EXLINK-002: gekoppelde eigen oefening vergelijkt met haar eigen PR
 ok(!!mBase, 'basislijn-expressie letterlijk gevonden');
 ok(!!mCur, 'basislijn-expressie uit finishSession letterlijk gevonden');
 ok(finishBron.indexOf('DecisionCore.releaseRecord(bestKg(best), _recBasis)') > 0,
@@ -80,6 +80,7 @@ function simuleer(dbPr, setGewichten){
   const ex = { id: 'sq' };
   const best = Math.max.apply(null, setGewichten);
   const sessionPrBase_ = sessionPrBase;
+  const _ownRec = null; // ongekoppelde oefening: oorspronkelijk pad (DEC-EXLINK-002)
   const _recBasis = eval('(' + mCur[0].replace(/^const _recBasis=/, '').replace(/;$/, '').replace(/sessionPrBase/g, 'sessionPrBase_') + ')'); // ECHTE regel uit finishSession
   const besluit = D.releaseRecord(best, _recBasis);   // ECHTE regel uit de Decision Engine
   let isPr = false;
@@ -115,7 +116,7 @@ ok(simuleer(100, [115]).dbPr !== simuleerOud(100, [115]), 'D2: de fix verandert 
 
 /* ── E. OVERIGE PR-PADEN ONGEWIJZIGD ─────────────────────────────────────── */
 console.log('\nE. De andere schrijfpaden zijn niet aangeraakt');
-ok(/DecisionCore\.releaseRecord\(w, \(typeof prFor==='function'\?prFor\(it\.id\):null\)\)/.test(html),
+ok(/DecisionCore\.releaseRecord\(w, \(typeof prFor==='function'\?prFor\(logId\):null\)\)/.test(html) && /var logId=ownId\|\|it\.id,/.test(html),
    'E1: Guided Execution gebruikt sinds Sprint 12 dezelfde recordregel uit de Decision Engine');
 ok(/DecisionCore\.releaseRecord\(row\.weight, prFor\(exId\)\)/.test(html),
    'E2: losse oefening gebruikt sinds Sprint 12 dezelfde recordregel uit de Decision Engine');

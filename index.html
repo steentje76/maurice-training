@@ -18214,6 +18214,27 @@ function tkExLinkKeepsOwnName(id){
     return TK_HYROX_STATIONS.indexOf(id)>=0||id===TK_HYROX_RUN_ID||Object.values(TK_TRIATHLON_EXERCISE_ID).indexOf(id)>=0;
   }catch(_){ return /^(hyrox|triathlon)_/.test(String(id||'')); } // constanten nog niet geïnitialiseerd
 }
+// DEC-EXLINK-002 (fase 2b): een MoveKit-catalogusitem (Builder, alternatief, opgeslagen training) dat
+// voor deze eigenaar door een eigen oefening wordt vertegenwoordigd, wordt OP DIE EIGEN OEFENING gelogd:
+// één historie, PR en doelen op één plek, offline zoals elke eigen oefening. Alleen als de eigen oefening
+// actief geladen is; anders blijft het gewone MoveKit-pad (TKC) gelden.
+function tkExLinkOwnExerciseForCatalog(catalogId){
+  try{
+    if(typeof catalogId!=='string'||!/^TK-[0-9]{6}$/.test(catalogId)||!tkExLinks)return null;
+    const own=tkExLinks.survivorForCatalog(catalogId);
+    if(typeof own!=='string'||!own)return null;
+    if(typeof exercises==='undefined'||!Array.isArray(exercises)||!exercises.some(e=>e&&e.id===own&&e.active!==false))return null;
+    return own;
+  }catch(_){ return null; }
+}
+function tkExLinkOwnForItem(it){
+  if(!it||typeof tkExLinkOwnExerciseForCatalog!=='function')return null;
+  const ref=it.tk504_catalog_ref;
+  const cid=(ref&&typeof ref.catalog_id==='string')?ref.catalog_id:null;
+  if(!cid||cid!==it.id)return null;
+  const own=tkExLinkOwnExerciseForCatalog(cid);
+  return (typeof own==='string'&&own)?own:null;
+}
 function tkExLinksClear(){ try{ if(tkExLinks)tkExLinks.clear(); }catch(_){} }
 function tkExLinksLoadCache(owner){
   try{
@@ -18352,6 +18373,8 @@ function tkSessieOptsVoor(statussen, exId){
     if(!binding)throw new Error('tk504_session_binding_missing');
     opts.tk504_binding=binding;
   }
+  const own=statussen&&statussen._tkOwnIds?statussen._tkOwnIds[exId]:null;
+  if(typeof own==='string'&&own&&!opts.tk504_binding)opts.tk_own_exercise_id=own; // DEC-EXLINK-002
   return opts;
 }
 // Een sessie die niet bevestigd én niet gequeued is (queuen zelf mislukte) is niet opgeslagen.
@@ -18397,6 +18420,16 @@ function tk603CanUpdatePersonalRecord(sourceRef=null,catalogSelection=false){
 async function tk603ReadExerciseSessions(exId,sourceRef=null,querySuffix='&order=date.desc,created_at.desc&limit=30',meta=null){
   const owner=tkEigenaarUid(),readEpoch=typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0;
   if(!owner)return [];
+  // DEC-EXLINK-002: een catalogusitem dat door een eigen oefening wordt vertegenwoordigd leest de
+  // historie van die eigen oefening (daar wordt het ook op gelogd): vorige sessie, prefill, schattingen.
+  if(sourceRef!=null&&typeof tkExLinkOwnForItem==='function'){
+    const own=tkExLinkOwnForItem({id:exId,tk504_catalog_ref:sourceRef});
+    if(typeof own==='string'&&own){
+      const ownRows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(own)+querySuffix+'&user_id=eq.'+encodeURIComponent(owner));
+      if((tkEigenaarUid()!==owner||(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch))return [];
+      return tk603OwnRows(ownRows,owner);
+    }
+  }
   if(TK504_TYPED_FK_SESSION_RELEASE!==true||sourceRef==null){
     const legacyRows=await sbGet('sessions','&exercise_id=eq.'+encodeURIComponent(exId)+querySuffix+'&user_id=eq.'+encodeURIComponent(owner));
     if((tkEigenaarUid()!==owner||(typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0)!==readEpoch))return [];
@@ -18554,13 +18587,19 @@ async function ensureSessionExerciseRows(list){
   const statussen={};
   const verified=Object.create(null);
   statussen._tk504Bindings=verified;
+  const ownIds=Object.create(null);
+  statussen._tkOwnIds=ownIds; // DEC-EXLINK-002: catalogusitem → eigen oefening
   try{
     const selected=(list||[]).filter(ex=>ex&&ex.id&&(typeof sessionLog!=='undefined')&&sessionLog[ex.id]);
     const ids=[...new Set(selected.map(ex=>ex.id))];
     // Na elkaar, niet parallel: de wachtrij-volgorde is deterministisch.
     for(const id of ids){
       const ex=selected.find(x=>x.id===id);
-      if(TK504_TYPED_FK_SESSION_RELEASE===true&&ex&&ex.tk504_catalog_ref){
+      const own=(typeof tkExLinkOwnForItem==='function')?tkExLinkOwnForItem(ex):null;
+      if(typeof own==='string'&&own){
+        ownIds[id]=own;
+        statussen[id]=await ensureExerciseRowStatus(own);
+      }else if(TK504_TYPED_FK_SESSION_RELEASE===true&&ex&&ex.tk504_catalog_ref){
         try{
           const binding=await tk504VerifySessionBinding(ex);
           if(!binding)throw new Error('tk504_catalog_fk_not_verified');
@@ -25836,6 +25875,9 @@ async function writeSessionRow(row, opts){
   // No binding => the original row is sent byte-equivalently as before.
   let prepared=(opts&&opts.tk504_binding)
     ?tk504RewriteVerifiedSessionRow(row,opts.tk504_binding):row;
+  // DEC-EXLINK-002: catalogusitem dat door een eigen oefening wordt vertegenwoordigd → eigen oefening.
+  if(opts&&!opts.tk504_binding&&typeof opts.tk_own_exercise_id==='string'&&opts.tk_own_exercise_id&&prepared&&typeof prepared==='object')
+    prepared={...prepared,exercise_id:opts.tk_own_exercise_id};
   // DEC-EXLINK-001: een (oude) verwijzing naar een samengevoegde oefening landt op het doel.
   if(prepared&&typeof prepared==='object'&&typeof prepared.exercise_id==='string'&&typeof tkExLinkIsMerged==='function'&&tkExLinkIsMerged(prepared.exercise_id)===true){
     const _doel=tkExLinkAlias(prepared.exercise_id);
@@ -26127,10 +26169,12 @@ async function finishSession(){
       // tussentijds bijgewerkte geheugenreferentie — anders wordt een record nooit bewaard.
       // Sprint 12: de vergelijking zelf is een REGEL en staat in de Decision Engine (record.v1).
       // Hier blijft alleen het bepalen van de basislijn en het wegschrijven.
-      if(tk603CanUpdatePersonalRecord(ex.tk504_catalog_ref)){
-      const _recBasis=(sessionPrBase[ex.id]!==undefined?sessionPrBase[ex.id]:prFor(ex.id));
+      const _ownRec=(_exStatus&&_exStatus._tkOwnIds&&typeof _exStatus._tkOwnIds[ex.id]==='string')?_exStatus._tkOwnIds[ex.id]:null; // DEC-EXLINK-002
+      if(_ownRec||tk603CanUpdatePersonalRecord(ex.tk504_catalog_ref)){
+      const _recId=_ownRec||ex.id;
+      const _recBasis=_ownRec?prFor(_ownRec):(sessionPrBase[ex.id]!==undefined?sessionPrBase[ex.id]:prFor(ex.id));
       const _rec=DecisionCore.releaseRecord(bestKg(best), _recBasis);
-      if(_rec.isRecord){await upsertExerciseGoalField(ex.id,'pr',_rec.waarde);if(!isCurrent())return;isPr=true;}
+      if(_rec.isRecord){await upsertExerciseGoalField(_recId,'pr',_rec.waarde);if(!isCurrent())return;isPr=true;}
       }
       saved++;
       const avgRpe=ws.filter(s=>s.rpe).length?(ws.reduce((sum,s)=>sum+(parseFloat(s.rpe)||0),0)/ws.filter(s=>s.rpe).length).toFixed(1):null;
@@ -40558,7 +40602,11 @@ var GW=(function(){
       if(!it._rowId)it._rowId=(typeof newClientRowId==='function')?newClientRowId():('gw-'+Date.now()+'-'+i);
       if(!it._rowAt)it._rowAt=new Date().toISOString();
       var durable=persist();                                    // id en tijdstip vóór de write vastleggen
-      if(typeof TK504_TYPED_FK_SESSION_RELEASE!=='undefined'&&TK504_TYPED_FK_SESSION_RELEASE===true&&it.tk504_catalog_ref&&durable!==true){
+      // DEC-EXLINK-002: catalogusitem met een eigen oefening voor deze eigenaar → log op de eigen oefening.
+      var ownId=(typeof tkExLinkOwnForItem==='function')?tkExLinkOwnForItem(it):null;
+      if(typeof ownId!=='string'||!ownId)ownId=null;
+      var logId=ownId||it.id, typedRef=ownId?null:it.tk504_catalog_ref;
+      if(typeof TK504_TYPED_FK_SESSION_RELEASE!=='undefined'&&TK504_TYPED_FK_SESSION_RELEASE===true&&typedRef&&durable!==true){
         it._save='failed';n.failed++;continue; // no non-durable typed retry after a possible server commit
       }
       // F91/Optie B — FK-compat: sessions.exercise_id verwijst naar exercises.id. Een catalogus-only
@@ -40568,12 +40616,12 @@ var GW=(function(){
       // #603: explicit catalog selection uses the reviewed server binding,
       // NEVER a personal FK-shadow. The typed path is disabled until owner gate.
       var tk504Binding=null,exStatus='exists';
-      if(TK504_TYPED_FK_SESSION_RELEASE===true&&it.tk504_catalog_ref){
+      if(TK504_TYPED_FK_SESSION_RELEASE===true&&typedRef){
         try{tk504Binding=await tk504VerifySessionBinding(it);
           exStatus=tk504Binding?'typed-verified':'rejected';}
         catch(_){exStatus='rejected';}
       }else{
-        exStatus=(typeof ensureExerciseRowStatus==='function')?await ensureExerciseRowStatus(it.id):'exists';
+        exStatus=(typeof ensureExerciseRowStatus==='function')?await ensureExerciseRowStatus(logId):'exists';
       }
       if(!saveContextMatches(a,owner))return {status:'failed',written:n.confirmed+n.queued,reden:'account'};
       // Sprint 5 (DEC-SYNC-001): geen sessie-write zonder geldige oefeningreferentie.
@@ -40587,7 +40635,7 @@ var GW=(function(){
            verdween. Zichtbaar effect: nul rijen met evidence in productie, terwijl het
            finishSession-pad ze wél schrijft. Dezelfde velden als daar, uit de al aanwezige
            item-gegevens — geen nieuwe berekening. */
-        var built=buildStrengthSessionRow(it.id,ws,{date:datum,training_type:tt,note:'',instanceId:instId,
+        var built=buildStrengthSessionRow(logId,ws,{date:datum,training_type:tt,note:'',instanceId:instId,
           at:it._rowAt,
           voorschrift:{kg:(it.weight!=null?it.weight:null), reps:(it.reps!=null?it.reps:null), rpe:(it.rpe!=null?it.rpe:null)}});
         built.row.id=it._rowId;
@@ -40600,10 +40648,10 @@ var GW=(function(){
           // Sprint 3: alleen voor een opgeslagen rij; een record bij een geweigerde sessie klopt niet.
           var w=built.row.weight;
           // Sprint 12: zelfde recordregel als de rest van de app (DecisionCore, record.v1).
-          if(typeof upsertExerciseGoalField==='function'&&typeof DecisionCore!=='undefined'&&tk603CanUpdatePersonalRecord(it.tk504_catalog_ref)){
+          if(typeof upsertExerciseGoalField==='function'&&typeof DecisionCore!=='undefined'&&tk603CanUpdatePersonalRecord(typedRef)){
             try{
-              var _gr=DecisionCore.releaseRecord(w, (typeof prFor==='function'?prFor(it.id):null));
-              if(_gr.isRecord&&saveContextMatches(a,owner)){ await upsertExerciseGoalField(it.id,'pr',_gr.waarde); }
+              var _gr=DecisionCore.releaseRecord(w, (typeof prFor==='function'?prFor(logId):null));
+              if(_gr.isRecord&&saveContextMatches(a,owner)){ await upsertExerciseGoalField(logId,'pr',_gr.waarde); }
               if(!saveContextMatches(a,owner))return {status:'failed',written:n.confirmed+n.queued,reden:'account'};
             }catch(_){}
           }

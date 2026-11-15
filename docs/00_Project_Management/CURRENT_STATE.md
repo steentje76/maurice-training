@@ -26,6 +26,13 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Code in main (#634, #635). Migratie `20261114180000_tk_exercise_catalog_links.sql` en `tools/tk-exlink-fase1/apply.sql` op 14 november uitgevoerd op productie (eigenaarsakkoord), in één transactie; alle controles geslaagd. Nacontrole: 98 koppelingen (18 samengevoegd, 10 race verborgen), 193 eigen sessies ongewijzigd, 0 sessies op samengevoegde id's, 18 eigen oefeningen inactief, geen koppelingen van andere accounts. Back-up `bak_tkx20261114_*` (o.a. 11 sessies, 34 programmaregels, 97 trainingssnapshots). Terugdraaien: `reverse.sql`.
 - Nieuwe weergave zichtbaar in de webapp; de test-APK's tonen hem pas na een nieuwe build.
 
+## Eigen oefeningen → MoveKit, fase 2b-1: één historie per oefening (draft, 15 november 2026)
+
+- Besluit DEC-EXLINK-002. Een catalogusitem (Builder, alternatief, opgeslagen training) waaraan de eigenaar een eigen oefening heeft gekoppeld, logt en leest op die eigen oefening: sessie, record en historie op één plek. Geldt voor normale en begeleide uitvoering, online en offline.
+- Ongekoppelde catalogusitems volgen het MoveKit-pad (TKC). Verborgen race-koppelingen en samengevoegde id's tellen niet.
+- Test: `core/tkExerciseLinksOwnLogging.test.js`. Service worker `v470284`.
+- Volgende: fase 2b-2 (PR/1RM/peakdoel op ongekoppelde MoveKit-oefeningen), fase 2b-3 (rusttijd per gebruiker, nieuwe tabel, alleen na go).
+
 ## Offline loggen op MoveKit-oefeningen, fase 2a (live en geaccepteerd, 14 november 2026)
 
 - Besluit DEC-OFFLINE-CAT-001: getypeerde sessies (TKC-FK) gaan offline in de eigenaar-gebonden wachtrij; de app gebruikt een per-eigenaar vrijgavelijst; de database controleert bij het synchroniseren opnieuw.

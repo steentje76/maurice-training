@@ -10,8 +10,8 @@ ok(!p.tk603CanUpdatePersonalRecord({invalid:true},false),'invalid explicit sourc
 ok(!p.tk603CanUpdatePersonalRecord(null,true),'selected canonical loose exercise cannot update personal goal');
 flags.release=false;ok(p.tk603CanUpdatePersonalRecord({invalid:true},true),'unreleased legacy record behavior preserved');
 ok(extract('saveLosOefening').includes('tk603CanUpdatePersonalRecord(null,ex&&ex._catalog===true)'),'actual loose writer guards personal PR update');
-ok(extract('finishSession').includes('if(tk603CanUpdatePersonalRecord(ex.tk504_catalog_ref))'),'actual central finish path guards personal PR update');
-ok(html.includes("typeof DecisionCore!=='undefined'&&tk603CanUpdatePersonalRecord(it.tk504_catalog_ref)"),'actual guided persist guards personal PR update');
+ok(extract('finishSession').includes('if(_ownRec||tk603CanUpdatePersonalRecord(ex.tk504_catalog_ref))'),'actual central finish path guards personal PR update (DEC-EXLINK-002: alleen een eigen gekoppelde oefening mag daarnaast)');
+ok(html.includes("typeof DecisionCore!=='undefined'&&tk603CanUpdatePersonalRecord(typedRef)")&&html.includes("var logId=ownId||it.id, typedRef=ownId?null:it.tk504_catalog_ref;"),'actual guided persist guards personal PR update (DEC-EXLINK-002: typedRef = bron, tenzij eigen gekoppelde oefening)');
 function env(){const st={owner:'A',mode:'normal',calls:0};const c=vm.createContext({console,Object,TK_REL_VENSTER:365,_tkRelOwner:null,_tkRelRows:null,_tkRelWeight:null,_tkRelSessies:null,_tkRelNutritionMeals:null,_tkRelNutritionHydration:null,tkEigenaarUid:()=>st.owner,_tkHealthLimitFor:()=>400,v43SafeGet:async table=>{st.calls++;if(st.mode==='switch')st.owner='B';if(table==='nutrition_meals')return [];return [{user_id:'A',weight:40,exercise_id:'TKC-000038'},{user_id:'B',weight:999,exercise_id:'TKC-000038'}];}});vm.runInContext(extract('tkRelData'),c);return{st,c};}
 (async()=>{
  let {st,c}=env();await c.tkRelData();ok(c._tkRelSessies.length===1&&c._tkRelSessies[0].user_id==='A','intentional coach-RLS foreign rows excluded from own trend cache');

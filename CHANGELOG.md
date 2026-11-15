@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## Ongereleased — Eén historie voor gekoppelde oefeningen, fase 2b-1 (draft, 15 november 2026)
+
+- **Wens eigenaar.** Alle oefeningen gelijkwaardig bruikbaar; geen gesplitste historie tussen eigen oefening en MoveKit-tegel.
+- **App.** Catalogusitems met een gekoppelde eigen oefening schrijven sessie en record op die eigen oefening (`ensureSessionExerciseRows`, `tkSessieOptsVoor`, `writeSessionRow`, `finishSession`, Guided `doPersist`) en lezen daar hun historie (`tk603ReadExerciseSessions`). Nieuwe helpers `tkExLinkOwnExerciseForCatalog`, `tkExLinkOwnForItem`.
+- **Database.** Geen wijziging.
+- **Test.** Nieuw `core/tkExerciseLinksOwnLogging.test.js`. Bijgewerkt (letterlijke bronchecks naar het nieuwe pad): `fPrPersistentie`, `fOfflineExerciseSessionSync`, `tk603PersonalRecordAndTrendOwner`, `tk614ProgramPartialSaveStorage`.
+- **Service worker.** Cache `v470284`.
+
 ## 15 november 2026 — De 226 originele MoveKit-oefeningen loggbaar (DEC-FK-226-001)
 
 - **Wens eigenaar.** Alle oefeningen gelijkwaardig bruikbaar.

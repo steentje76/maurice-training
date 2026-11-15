@@ -3,7 +3,7 @@
 ## Ongereleased — Fase 3a: app klaar voor historie op MoveKit-id's (draft, 15 november 2026)
 
 - **Database (uitgevoerd, stap 0).** 9 sessies van andere gebruikers verwijderd met back-up (DEC-EXLINK-005).
-- **Database (niet toegepast).** Kolom `exercise_catalog_links.migrated_at` + check (niet samen met `merged_into`).
+- **Database (toegepast).** Kolom `exercise_catalog_links.migrated_at` + check (niet samen met `merged_into`).
 - **App.** `TkExerciseLinks`: `migratedForCatalog`, `isMigrated`; gemigreerd = geen survivor, verborgen. `tk504DerivedCatalogRef`/`tk504AttachDerivedRef` in `getSessionExs`. `tk504HistoricalSourceForSession` leest eerst de vrijgavelijst van de eigenaar (offline naam, minder RPC's). Beheer verbergt samengevoegde/gemigreerde oefeningen.
 - **Test.** Nieuw `core/tkExerciseLinksMigrated.test.js` (22, incl. PGlite).
 - **Service worker.** Cache `v470287`.

@@ -30,7 +30,7 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 
 - Besluit DEC-EXLINK-005. Plan: `tools/tk-exlink-fase3/PLAN.md`. Alleen data van het eigen account.
 - Stap 0 uitgevoerd (15 november, na go): 9 sessies van andere gebruikers op gedeelde oude catalogusoefeningen verwijderd; back-up `bak_tkx20261115_foreign_sessions`, terugzetten met `restore-foreign-9.sql`.
-- Fase 3a (draft): koppeling krijgt `migrated_at` (migratie `20261115160000_…`, nog niet toegepast). Gemigreerd = geen omleiding naar de eigen oefening, niet in kieslijst/Beheer; sessie-items met een MoveKit-id krijgen dan de MoveKit-bron (`tk504DerivedCatalogRef` via `getSessionExs`); historienaam van MoveKit-sessies ook offline uit de vrijgavelijst. Zonder gemigreerde koppelingen verandert er niets.
+- Fase 3a (live): koppeling krijgt `migrated_at` (migratie `20261115160000_…`, toegepast 15 november; 0 gemigreerd). Gemigreerd = geen omleiding naar de eigen oefening, niet in kieslijst/Beheer; sessie-items met een MoveKit-id krijgen dan de MoveKit-bron (`tk504DerivedCatalogRef` via `getSessionExs`); historienaam van MoveKit-sessies ook offline uit de vrijgavelijst. Zonder gemigreerde koppelingen verandert er niets.
 - Test: `core/tkExerciseLinksMigrated.test.js`. Service worker `v470287`.
 - Volgende: fase 3b (datamigratie per portie, proefrun + go per portie).
 

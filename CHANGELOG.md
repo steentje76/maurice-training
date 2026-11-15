@@ -1,5 +1,11 @@
 # Trainingskompas — Changelog
 
+## 15 november 2026 — De 226 originele MoveKit-oefeningen loggbaar (DEC-FK-226-001)
+
+- **Wens eigenaar.** Alle oefeningen gelijkwaardig bruikbaar.
+- **Database (uitgevoerd).** 226 bindingen `active` + `reviewed_at`, in één transactie met voorwaarden, controles en auditregel. 582/582 vrijgegeven. Geen codewijziging nodig: de app gebruikte voor de 226 al dezelfde route.
+- **Bestanden.** `tools/tk614-activate-226/activate.sql` (uitgevoerd), `reverse.sql` (terugdraaien, niet uitgevoerd).
+
 ## Ongereleased — Offline loggen op MoveKit-oefeningen, fase 2a (draft, 14 november 2026)
 
 - **Wens eigenaar.** Offline loggen is verplicht voor alle oefeningen.

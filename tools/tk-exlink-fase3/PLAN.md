@@ -1,6 +1,6 @@
 # DEC-EXLINK-005 — Fase 3: historie van de eigenaar naar MoveKit-id's (plan, 15 november 2026)
 
-Status: **plan**. Er is nog niets uitgevoerd. Elke stap op productie alleen na een expliciete go van de eigenaar.
+Status: stap 0 uitgevoerd (15 november); fase 3a in draft; fase 3b niet gestart. Elke stap op productie alleen na een expliciete go van de eigenaar.
 
 ## Besluiten eigenaar (15 november)
 - Fase 3 voorbereiden (appwerk + plan + proefrun), uitvoeren per portie.
@@ -19,8 +19,8 @@ Status: **plan**. Er is nog niets uitgevoerd. Elke stap op productie alleen na e
 
 ## GAP: wat de app nog mist (fase 3a, eerst bouwen)
 1. **Programma's en trainingen op catalogus-id zonder bron.** Een programmaregel met een TK-id zonder opgeslagen MoveKit-bron
-   wordt nu als eigen oefening behandeld en logt op het TK-id; voor 559 TK-id's bestaat geen exercises-rij (FK faalt).
-   Nodig: bij het laden een canonieke bron afleiden (`tk504CatalogSourceRefFromSelection`).
+   logt nu op het TK-id (de app maakt zo nodig een FK-compat-rij). Na migratie moet zo'n item op het MoveKit-id loggen.
+   Gebouwd (3a): `tk504DerivedCatalogRef` via `getSessionExs`.
 2. **Koppeling "gemigreerd".** Na migratie mag de app een catalogusitem niet meer naar de eigen oefening omleiden
    (DEC-EXLINK-002), anders splitst de historie weer. Nodig: kolom `migrated_at` op `exercise_catalog_links`;
    gemigreerd = geen omleiding; oude verwijzingen naar de eigen id (wachtrij, snapshots) worden het catalogusitem.

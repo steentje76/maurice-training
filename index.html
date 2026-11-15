@@ -9823,6 +9823,29 @@ function tk504CatalogSourceRefFromSelection(id){
     return c&&c.catalog_id===id?tk504CatalogSourceRefFromCatalog(c):null;
   }catch(_){return null;}
 }
+// DEC-EXLINK-005: een sessie-item met een MoveKit-id (TK-) zonder opgeslagen bron krijgt de
+// canonieke bron wanneer (a) de eigenaar dit item gemigreerd heeft (historie op het MoveKit-id), of
+// (b) er geen actieve eigen/legacy oefening met dit id bestaat. Een bestaande, niet-gemigreerde
+// oefening met dit id blijft het legacy-pad volgen; onbekende stand (lijst niet geladen) ook.
+function tk504DerivedCatalogRef(exId){
+  try{
+    if(typeof TK504_TYPED_FK_SESSION_RELEASE==='undefined'||TK504_TYPED_FK_SESSION_RELEASE!==true)return null;
+    if(typeof exId!=='string'||!/^TK-[0-9]{6}$/.test(exId))return null;
+    const migrated=typeof tkExLinks!=='undefined'&&tkExLinks&&typeof tkExLinks.migratedForCatalog==='function'&&tkExLinks.migratedForCatalog(exId)===true;
+    if(!migrated){
+      if(typeof exercises==='undefined'||!Array.isArray(exercises)||!exercises.length)return null;
+      if(exercises.some(e=>e&&e.id===exId&&e.active!==false))return null;
+    }
+    return tk504CatalogSourceRefFromSelection(exId);
+  }catch(_){ return null; }
+}
+function tk504AttachDerivedRef(ex){
+  if(ex&&typeof ex==='object'&&ex.tk504_catalog_ref==null&&typeof ex.id==='string'){
+    const ref=tk504DerivedCatalogRef(ex.id);
+    if(ref)ex.tk504_catalog_ref=ref;
+  }
+  return ex;
+}
 // #603: only actual canonical picker objects may produce a source claim.
 // No personal exercise is upgraded by its ID, name, equipment or shadow shape.
 function tk603CatalogRefFromPickerSelection(ex){
@@ -9965,6 +9988,17 @@ async function tk504HistoricalSourceForSession(exerciseId){
   if(typeof exerciseId!=='string'||!/^TKC-[0-9]{6}$/.test(exerciseId)||
      Number(exerciseId.slice(4))<1||Number(exerciseId.slice(4))>582)return null;
   const owner=tkEigenaarUid();
+  // DEC-EXLINK-005: de door de server geleverde vrijgavelijst van DEZE eigenaar bevestigt de koppeling
+  // TKC ↔ TK- ook offline (en scheelt een RPC per oefening). Niet in de lijst → bestaande RPC-route.
+  if(owner&&typeof tk504ReleasedFkRead==='function'){
+    const cid='TK-'+exerciseId.slice(4), c=tk504ReleasedFkRead(owner), e=c&&c.entries?c.entries[cid]:null;
+    if(e&&e.fk===exerciseId&&tk504ReleasedFkEntryValid(cid,e.p,e.fk)){
+      const cc=typeof ExerciseCatalogService!=='undefined'?ExerciseCatalogService.byId(cid):null;
+      if(cc&&cc.catalog_id===cid&&cc.source&&cc.source.provider==='movekit'&&cc.source.provider_id===e.p)
+        return Object.freeze({exercise_id:exerciseId,catalog_id:cid,
+          name:(cc.identity&&((cc.identity.nl&&cc.identity.nl.trim())||cc.identity.name))||cid});
+    }
+  }
   if(!owner || (typeof navigator!=='undefined'&&navigator.onLine===false))return null;
   const actual=await sbRpc('tk504_historical_catalog_id',{p_exercise_id:exerciseId});
   if(tkEigenaarUid()!==owner)return null;
@@ -20620,7 +20654,9 @@ function getSessionExs(t){
   const base = (resolvedWorkout&&resolvedWorkout.t===t)
     ? [...resolvedWorkout.items,...sessionExtra.filter(e=>e._t===t)]
     : [...(TRAIN_CFG[t]||[]),...sessionExtra.filter(e=>e._t===t)];
-  return applySessionRecovery(t, base);
+  const _lijst=applySessionRecovery(t, base);
+  if(Array.isArray(_lijst)&&typeof tk504AttachDerivedRef==='function')_lijst.forEach(tk504AttachDerivedRef); // DEC-EXLINK-005
+  return _lijst;
 }
 
 // v3.3.52 P1 — Premium Training Intro: coach-banner boven het oefeningenoverzicht.
@@ -31376,7 +31412,7 @@ async function refreshAdmin(){
   const catL={A:'Training A',B:'Training B',CrossFit:'CrossFit',Overig:'Overig'};
   let h='';
   cats.forEach(cat=>{
-    const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
+    const exs=exercises.filter(e=>e.active!==false&&e.category===cat&&!(typeof tkExLinkIsHidden==='function'&&tkExLinkIsHidden(e.id)===true));
     if(!exs.length)return;
     h+=`<div style="font-size:10px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:4px">${catL[cat]}</div>`;
     exs.forEach(ex=>{const exPeak=peakGoalFor(ex.id);h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(ex.name)}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${exPeak?' · jouw doel '+exPeak+'kg':''}${ex.ratio_anchor?' · anker '+escHtml(ex.ratio_anchor)+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+escHtml(ex.muscle_primary.join(', ')):' · geen spieren'}</div></div><button onclick='openEditMuscles(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.muscle_primary||[])},${escJsAttr(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick='openEditRest(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${restSecondsFor(ex.id)||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick='openEditPeak(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${exPeak||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${exPeak?'🎯 '+exPeak+'kg':'🎯 Doel'}</button><button onclick='openEditAnchor(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.ratio_anchor||null)},${ex.ratio_factor||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+escHtml(ex.ratio_anchor):'🔗 Anker'}</button><button onclick='openEditYT(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.yt||'')},${escJsAttr(ex.category)})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});

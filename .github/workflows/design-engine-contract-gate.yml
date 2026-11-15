@@ -100,6 +100,8 @@ jobs:
         run: node docs/design-engine/direct-manipulation-v1.test.js
       - name: Typography and touch order V1 UI gate
         run: node docs/design-engine/typography-touch-v1.test.js
+      - name: Direct manipulation V2 gate
+        run: node docs/design-engine/direct-manipulation-v2.test.js
       - name: Visual Studio shell V1 UI gate
         run: node docs/design-engine/studio-shell-v1.test.js
       - name: Visual Studio drag and style gate
@@ -133,5 +135,5 @@ jobs:
       - name: Real mobile browser interaction smoke
         run: |
           python3 -m http.server 4173 --directory docs/design-engine >/tmp/ux-lab-http.log 2>&1 &
-          npx playwright test docs/design-engine/browser-smoke.spec.js docs/design-engine/interaction-visual-browser.spec.js docs/design-engine/v1-browser-release.spec.js --reporter=line
+          npx playwright test docs/design-engine/browser-smoke.spec.js docs/design-engine/interaction-visual-browser.spec.js docs/design-engine/v1-browser-release.spec.js docs/design-engine/visual-workspace-v2.spec.js --reporter=line
 

@@ -3176,4 +3176,4 @@ Geen MoveKit-binding nodig voor die rijen; offline loggen werkt zoals bij elke e
 
 **Besluit (eigenaar, 15 november: "Nieuwe tabel").** Tabel `exercise_rest_settings` per gebruiker per oefening; sleutel = gekoppelde eigen oefening of MoveKit-id (TKC-). Schrijven via RPC `tk_set_exercise_rest` (set-semantiek, veilig bij herhaald afspelen uit de wachtrij; null = verwijderen). Lezen: eigen instelling → oude gedeelde waarde → app-standaard. Alternatief (kolom op exercise_goals) was kleiner maar niet gekozen.
 
-**Status.** Code + migratie klaar; migratie pas na expliciete go.
+**Status.** Migratie op 15 november na go van de eigenaar toegepast; code gemerged (#642).

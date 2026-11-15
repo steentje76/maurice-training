@@ -2,6 +2,7 @@
 
 ## Ongereleased — Fase 3a: app klaar voor historie op MoveKit-id's (draft, 15 november 2026)
 
+- **Database (uitgevoerd, portie 2).** 32 ongebruikte gekoppelde oefeningen naar MoveKit (1 favoriet, 1 snapshot omgezet); script ondersteunt nu eigen id's (E ≠ C).
 - **Database (uitgevoerd, portie 1).** 5 oefeningen naar het MoveKit-id (9 sessies, 5 doelen), met back-up `bak_tkx3_*`.
 - **Database (uitgevoerd, stap 0).** 9 sessies van andere gebruikers verwijderd met back-up (DEC-EXLINK-005).
 - **Database (toegepast).** Kolom `exercise_catalog_links.migrated_at` + check (niet samen met `merged_into`).

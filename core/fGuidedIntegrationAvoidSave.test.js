@@ -34,7 +34,7 @@ ok(GW_ALT.indexOf('applyAthleteConstraintsCatalog(alts)') < GW_ALT.indexOf('tkZo
 ok(SWAP.indexOf('AthleteConstraints.applyConstraints') < SWAP.indexOf('tkZonderVermeden(alts') && SWAP.indexOf('tkZonderVermeden(alts') < SWAP.indexOf('if(!alts.length)return null;'), 'bron: Builder-swap — constraints, dan vermeden eruit, dan "geen alternatief"');
 ok(!/tkZonderVermeden/.test(extractFn(HTML, 'previewRenderSwapPicker')) && !/tkZonderVermeden/.test(extractFn(HTML, 'openSwapExercise')), 'bron: handmatige pickers ongewijzigd (sporter kiest zelf; PO_DECISION_REQUIRED)');
 ok(!/tkZonderVermeden/.test(extractFn(HTML, 'generate')), 'bron: Autobuild ongewijzigd ("nooit lege training"; PO_DECISION_REQUIRED)');
-ok(/await ensureExerciseRowStatus\(it\.id\)/.test(extractFn(HTML, 'doPersist')) && extractFn(HTML, 'doPersist').indexOf('ensureExerciseRowStatus(it.id)') < extractFn(HTML, 'doPersist').indexOf('writeSessionRow('), 'bron: Guided maakt vóór de write de FK-compat-rij (zelfde helper als finishSession)');
+ok(/await ensureExerciseRowStatus\(logId\)/.test(extractFn(HTML, 'doPersist')) && extractFn(HTML, 'doPersist').indexOf('ensureExerciseRowStatus(logId)') < extractFn(HTML, 'doPersist').indexOf('writeSessionRow('), /* DEC-EXLINK-002: logId = item of gekoppelde eigen oefening */ 'bron: Guided maakt vóór de write de FK-compat-rij (zelfde helper als finishSession)');
 ok(/Filtering mag nooit een lege set opleveren/.test(fs.readFileSync(path.join(__dirname, 'athleteConstraints.js'), 'utf8')), 'bron: core-contract (regel 5) ongewijzigd');
 
 // ══ DEEL 2 — ECHTE PAGINA ══

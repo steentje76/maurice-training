@@ -3,11 +3,18 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 function extract(name){const m=new RegExp('(?:async\\s+)?function\\s+'+name+'\\s*\\(').exec(html);assert(m,name);let d=0;for(let i=html.indexOf('{',m.index);i<html.length;i++){if(html[i]==='{')d++;if(html[i]==='}'&&--d===0)return html.slice(m.index,i+1);}throw Error(name);}
 let n=0;function ok(v,label){assert(v,label);n++;}
-const flags={release:true};const p=vm.createContext({get TK504_TYPED_FK_SESSION_RELEASE(){return flags.release;}});vm.runInContext(extract('tk603CanUpdatePersonalRecord'),p);
+// DEC-EXLINK-003: een geverifieerde MoveKit-bron werkt het record bij op haar eigen MoveKit-id (tkGoalKey);
+// een ongeldige bron blijft geweigerd en valt nooit terug op een eigen oefening.
+const VALID={kind:'movekit-catalog-v1',catalog_id:'TK-000038',provider_id:'mk-38'};
+const flags={release:true};const p=vm.createContext({get TK504_TYPED_FK_SESSION_RELEASE(){return flags.release;},
+  tk504ValidateCatalogSourceRef:(id,ref)=>(ref&&ref.kind==='movekit-catalog-v1'&&ref.catalog_id===id&&ref.provider_id==='mk-38')?ref:null});
+vm.runInContext(extract('tk603CanUpdatePersonalRecord'),p);
 ok(p.tk603CanUpdatePersonalRecord(null,false),'personal record path remains allowed');
-ok(!p.tk603CanUpdatePersonalRecord({kind:'movekit-catalog-v1'},false),'catalog session cannot update personal exercise goal');
+ok(p.tk603CanUpdatePersonalRecord(VALID,false),'verified MoveKit session updates its own MoveKit goal (DEC-EXLINK-003)');
+ok(!p.tk603CanUpdatePersonalRecord({kind:'movekit-catalog-v1'},false),'catalog ref without verifiable source is refused');
+ok(!p.tk603CanUpdatePersonalRecord({...VALID,provider_id:'vals'},false),'catalog ref with wrong provider is refused');
 ok(!p.tk603CanUpdatePersonalRecord({invalid:true},false),'invalid explicit source cannot fall back to personal record');
-ok(!p.tk603CanUpdatePersonalRecord(null,true),'selected canonical loose exercise cannot update personal goal');
+ok(p.tk603CanUpdatePersonalRecord(null,true),'selected loose MoveKit exercise updates its MoveKit goal (key via tkGoalKey, DEC-EXLINK-003)');
 flags.release=false;ok(p.tk603CanUpdatePersonalRecord({invalid:true},true),'unreleased legacy record behavior preserved');
 ok(extract('saveLosOefening').includes('tk603CanUpdatePersonalRecord(null,ex&&ex._catalog===true)'),'actual loose writer guards personal PR update');
 ok(extract('finishSession').includes('if(_ownRec||tk603CanUpdatePersonalRecord(ex.tk504_catalog_ref))'),'actual central finish path guards personal PR update (DEC-EXLINK-002: alleen een eigen gekoppelde oefening mag daarnaast)');

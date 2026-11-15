@@ -3161,3 +3161,11 @@ openbare `videos/`-route en de service-workercache, Android-release.
 - gaat een nieuw record naar de doelen van de eigen oefening;
 - leest het item zijn historie (vorige sessie, prefill, schattingen) van de eigen oefening (`tk603ReadExerciseSessions`).
 Geen MoveKit-binding nodig voor die rijen; offline loggen werkt zoals bij elke eigen oefening. Ongekoppelde catalogusitems blijven het MoveKit-pad (TKC) volgen. Race-koppelingen (`hidden`) tellen niet.
+
+## DEC-EXLINK-003 — Fase 2b-2: PR, 1RM en peakdoel op ongekoppelde MoveKit-oefeningen (15 november 2026)
+
+**Probleem.** MoveKit-oefeningen zonder eigen koppeling hadden geen record, 1RM of peakdoel (#603: "geen peakdoel"). Een 1RM op het catalogus-id (TK-) faalde bovendien op de FK voor de 559 id's zonder exercises-rij.
+
+**Besluit.** Doelen van een MoveKit-oefening staan op haar MoveKit-id (TKC-), het id waarop ook haar sessies staan; alle 582 bestaan globaal in exercises, dus de FK is geldig en RLS (eigen user_id) volstaat. Volgorde in `tkGoalKey`: gekoppelde eigen oefening (DEC-EXLINK-002) → bestaande doelrij op TK- (blijft bron tot fase 3, geen dubbele rijen) → TKC-id. Een record mag alleen bij een geverifieerde MoveKit-bron en na een geslaagde of gequeuede sessie-write. Offline werkt via de bestaande wachtrij.
+
+**Niet gedaan.** Live PR-badge per set voor MoveKit (blijft per herhalingsbucket). Samenvoegen van TK- en TKC-historie: fase 3.

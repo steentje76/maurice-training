@@ -8070,13 +8070,32 @@ async function ensureExerciseGoalsLoaded(){
   _exerciseGoalsLoaded=true;
   return exerciseGoals;
 }
+// DEC-EXLINK-003 (fase 2b-2): doelen (PR, 1RM, peakdoel) van een MoveKit-oefening staan op haar
+// vaste MoveKit-id (TKC-, zelfde id als haar sessies; bestaat globaal in exercises, dus geldige FK).
+// Een gekoppelde eigen oefening blijft leidend (DEC-EXLINK-002). Een al bestaande doelrij op het
+// oude catalogus-id (TK-) blijft de bron tot de datamigratie (fase 3), zodat niets dubbel raakt.
+function tkGoalKey(exId){
+  try{
+    if(typeof exId!=='string'||!/^TK-[0-9]{6}$/.test(exId))return exId;
+    const n=Number(exId.slice(3));
+    if(n<1||n>582)return exId;
+    if(typeof tkExLinkOwnExerciseForCatalog==='function'){const own=tkExLinkOwnExerciseForCatalog(exId);if(typeof own==='string'&&own)return own;}
+    if(typeof TK504_TYPED_FK_SESSION_RELEASE==='undefined'||TK504_TYPED_FK_SESSION_RELEASE!==true)return exId;
+    const legacy=exerciseGoals.get(exId);
+    if(legacy&&!legacy._alleenGeheugen)return exId;
+    return 'TKC-'+exId.slice(3);
+  }catch(_){ return exId; }
+}
 function peakGoalFor(exId){
+  if(typeof tkGoalKey==='function')exId=tkGoalKey(exId);
   return exerciseGoals.has(exId)?exerciseGoals.get(exId).peak_goal:null;
 }
 function prFor(exId){
+  if(typeof tkGoalKey==='function')exId=tkGoalKey(exId);
   return exerciseGoals.has(exId)?(exerciseGoals.get(exId).pr??null):null;
 }
 function oneRMFor(exId){
+  if(typeof tkGoalKey==='function')exId=tkGoalKey(exId);
   return exerciseGoals.has(exId)?(exerciseGoals.get(exId).one_rm??null):null;
 }
 // Upsert-helper: exercise_goals heeft geen server-side upsert-endpoint voor de
@@ -8084,6 +8103,7 @@ function oneRMFor(exId){
 // bepaald op basis van de al-geladen Map: bestaat de rij al -> PATCH, anders POST.
 // Werkt zowel online als offline (beide onderliggende functies zijn queue-aware).
 async function upsertExerciseGoalField(exId,field,value){
+  if(typeof tkGoalKey==='function')exId=tkGoalKey(exId);
   {const d=typeof tkExLinkAlias==='function'&&tkExLinkAlias(exId);if(typeof d==='string'&&d)exId=d;} // DEC-EXLINK-001
   const ownerGuard=typeof tkEigenaarUid==='function';
   const owner=ownerGuard?tkEigenaarUid():null,goalMap=exerciseGoals;
@@ -8094,8 +8114,7 @@ async function upsertExerciseGoalField(exId,field,value){
   // entry die tijdens de sessie alleen in het geheugen is aangemaakt (_alleenGeheugen)
   // heeft geen rij om te patchen — dan moet er ingevoegd worden, anders raakt de PATCH
   // nul rijen en verdwijnt de waarde zonder foutmelding.
-  // Strength Basis Recency B1: een handmatige 1RM krijgt een provenance-datum (exercise_goals.updated_at,
-  // nullable, migratie_v564). Alleen bij one_rm; PR/peak_goal raken deze datum niet (geen fake recency).
+  // B1: handmatige 1RM krijgt provenance-datum (updated_at, migratie_v564); PR/peak_goal niet.
   const patch={[field]:value};
   if(field==='one_rm'){ patch.updated_at=(value==null?null:new Date().toISOString()); }
   if(existing && !existing._alleenGeheugen){
@@ -18414,8 +18433,13 @@ function tk603OwnRows(rows,owner){
   if(!Array.isArray(rows))return rows;
   return owner?rows.filter(x=>x&&(!Object.prototype.hasOwnProperty.call(x,'user_id')||x.user_id===owner)):rows;
 }
+// DEC-EXLINK-003: een geverifieerde MoveKit-bron mag het record bijwerken; het doel staat op haar
+// eigen MoveKit-id (tkGoalKey), nooit op een eigen oefening. Een ongeldige bron blijft geweigerd.
 function tk603CanUpdatePersonalRecord(sourceRef=null,catalogSelection=false){
-  return typeof TK504_TYPED_FK_SESSION_RELEASE==='undefined'||TK504_TYPED_FK_SESSION_RELEASE!==true||(!catalogSelection&&sourceRef==null);
+  if(typeof TK504_TYPED_FK_SESSION_RELEASE==='undefined'||TK504_TYPED_FK_SESSION_RELEASE!==true)return true;
+  if(sourceRef==null)return true;
+  return !!(sourceRef&&typeof sourceRef==='object'&&typeof sourceRef.catalog_id==='string'&&
+    typeof tk504ValidateCatalogSourceRef==='function'&&tk504ValidateCatalogSourceRef(sourceRef.catalog_id,sourceRef));
 }
 async function tk603ReadExerciseSessions(exId,sourceRef=null,querySuffix='&order=date.desc,created_at.desc&limit=30',meta=null){
   const owner=tkEigenaarUid(),readEpoch=typeof tk603ReadEpoch==='number'?tk603ReadEpoch:0;
@@ -18526,7 +18550,9 @@ async function tk603CatalogProgressEntries(){
     const b=CalcCore.selectStrengthBasis(ss,{maxReps:10});
     const disp=(b.peak&&b.peak.e1rm)?b.peak.e1rm:null;
     if(!disp)return null;
-    return Object.freeze({...src,disp:disp,tgt:null,pct:null,lastDate:ss[0]?ss[0].date:null});
+    const tgt=(typeof peakGoalFor==='function')?peakGoalFor(src.id):null; // DEC-EXLINK-003
+    const pct=tgt?Math.round(disp/tgt*100):null;
+    return Object.freeze({...src,disp:disp,tgt:tgt,pct:pct,lastDate:ss[0]?ss[0].date:null});
   }));
   return (owner&&tkEigenaarUid()===owner)?entries.filter(Boolean):[];
 }
@@ -18543,10 +18569,16 @@ function tk603ProgCatalogRowsHtml(){
       trendHtml=`<span style="font-size:11px;color:var(--g4);margin-left:6px">Onvoldoende data</span>`;
     }
     return `<div class="stat-1rm-item" data-tk603-source="${escHtml(e.sourceKey)}" onclick="tk603ShowCatalogChart(${i})" style="cursor:pointer">
-      <div class="stat-1rm-row"><span class="stat-1rm-name">${escHtml(e.label)}</span><span class="stat-1rm-val">${e.disp} kg</span>${trendHtml}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span></div>
-      <div class="stat-1rm-pct" style="color:var(--g4)">Eigen geverifieerde catalogushistorie · geen peakdoel</div>
+      <div class="stat-1rm-row"><span class="stat-1rm-name">${escHtml(e.label)}</span><span class="stat-1rm-val">${e.disp} kg</span>${trendHtml}<span style="color:var(--g3);font-size:14px;margin-left:4px">📈</span><button onclick="event.stopPropagation();tk603EditCatalogPeak(${i})" aria-label="Peakdoel instellen" style="background:none;border:1px solid var(--g2);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-left:auto">🎯</button></div>
+      ${e.pct?`<div class="stat-1rm-pct">${e.pct}% van peakdoel${e.pct>=100?' ✓':' · '+(100-e.pct)+'% te gaan'}</div>`:`<div class="stat-1rm-pct" style="color:var(--g4)">Nog geen peakdoel ingesteld</div>`}
     </div>`;
   }).join('');
+}
+// DEC-EXLINK-003: peakdoel van een MoveKit-rij instellen (opgeslagen op haar MoveKit-id via tkGoalKey).
+function tk603EditCatalogPeak(i){
+  const e=progCatalogData&&progCatalogData[i];
+  if(!e||e.owner_uid!==tkEigenaarUid()||typeof openEditPeak!=='function')return null;
+  return openEditPeak(e.id,e.label,e.tgt);
 }
 // Visible chart caller for a catalog row: passes the entry's explicit source ref.
 function tk603ShowCatalogChart(i){
@@ -22836,7 +22868,7 @@ function getOneRM(exId){
   return null;
 }
 function manualOneRMDate(exId){
-  try{ const g=exerciseGoals.has(exId)?exerciseGoals.get(exId):null; return (g&&g.updated_at)?String(g.updated_at).slice(0,10):null; }catch(_){ return null; }
+  try{ if(typeof tkGoalKey==='function')exId=tkGoalKey(exId); const g=exerciseGoals.has(exId)?exerciseGoals.get(exId):null; return (g&&g.updated_at)?String(g.updated_at).slice(0,10):null; }catch(_){ return null; }
 }
 // Sprint 6.0.3 (Businesslogica) — de ruwe Epley-1RM-formule stond letterlijk 7× los in
 // de code (één plek had het zelf al herkend: "zelfde formule/afronding als Stats-
@@ -31411,7 +31443,7 @@ async function saveMuscles(btnEl){
 
 let curEditPeakId=null;
 function openEditPeak(exId,exName,peakVal){
-  curEditPeakId=exId;
+  curEditPeakId=(typeof tkGoalKey==='function')?tkGoalKey(exId):exId; // DEC-EXLINK-003
   document.getElementById('edit-peak-title').textContent=exName+' — Peakdoel';
   document.getElementById('edit-peak-inp').value=peakVal||'';
   openModal('m-edit-peak');

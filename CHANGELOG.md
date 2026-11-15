@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## Ongereleased — PR, 1RM en peakdoel op MoveKit-oefeningen, fase 2b-2 (draft, 15 november 2026)
+
+- **Wens eigenaar.** Alle oefeningen gelijkwaardig bruikbaar.
+- **App.** Nieuwe `tkGoalKey`: doelen van een MoveKit-oefening op haar TKC-id (gekoppelde eigen oefening en bestaande TK-rij gaan voor). Gebruikt door `prFor`, `peakGoalFor`, `oneRMFor`, `manualOneRMDate`, `upsertExerciseGoalField` en de peakdoel-editor. `tk603CanUpdatePersonalRecord` staat een record toe bij een geverifieerde MoveKit-bron. Statistiekrij: peakdoel-voortgang + `tk603EditCatalogPeak`.
+- **Database.** Geen wijziging (exercise_goals-FK en RLS staan TKC-id's al toe).
+- **Test.** Nieuw `core/tkMoveKitGoals.test.js`. Bijgewerkt naar het nieuwe contract: `tk603PersonalRecordAndTrendOwner`, `tk603AnalyticsSourceReads`.
+- **Service worker.** Cache `v470285`.
+
 ## Ongereleased — Eén historie voor gekoppelde oefeningen, fase 2b-1 (draft, 15 november 2026)
 
 - **Wens eigenaar.** Alle oefeningen gelijkwaardig bruikbaar; geen gesplitste historie tussen eigen oefening en MoveKit-tegel.

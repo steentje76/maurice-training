@@ -384,8 +384,8 @@ function setInputs(a,exId,n,kg,reps){
     'stats adapter: only owner-history + active-binding TKC (unknown TKC-000019 and foreign TKC-000040 dropped)');
   ok(!a.st.rpcs.some(r=>r.args&&(r.args.p_exercise_id==='TKC-000040')),'foreign discovered FK is never even checked');
   reset(a);a.s.progCatalogData=await a.s.tk603CatalogProgressEntries();
-  ok(a.s.progCatalogData.length===1&&a.s.progCatalogData[0].disp===Math.round(80*(1+5/30))&&a.s.progCatalogData[0].tgt===null,
-    'progress entry: catalog peak from TKC rows only (93), never personal 207 or peak goal');
+  ok(a.s.progCatalogData.length===1&&a.s.progCatalogData[0].disp===Math.round(80*(1+5/30))&&a.s.progCatalogData[0].tgt===250&&a.s.progCatalogData[0].pct===Math.round(93/250*100),
+    'progress entry: catalog peak from TKC rows only (93), never personal 207; peakdoel van deze MoveKit-oefening telt wel (DEC-EXLINK-003)');
   const rowsHtml=a.s.tk603ProgCatalogRowsHtml();
   ok(rowsHtml.includes('data-tk603-source="catalog:TK-000038"')&&rowsHtml.includes('onclick="tk603ShowCatalogChart(0)"')&&
      rowsHtml.includes(CATALOG_NAME+' (Movekit-catalogus)')&&rowsHtml.includes('93 kg')&&rowsHtml.includes('Dalend'),

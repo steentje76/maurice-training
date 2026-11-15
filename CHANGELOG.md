@@ -1,5 +1,13 @@
 # Trainingskompas — Changelog
 
+## Ongereleased — Rusttijd per gebruiker, fase 2b-3 (draft, 15 november 2026)
+
+- **Wens eigenaar.** Rusttijd per gebruiker, voor alle oefeningen; nieuwe tabel.
+- **Database (niet toegepast).** Tabel `exercise_rest_settings` (PK user_id+exercise_id, 1–1800 s, owner-only RLS, FK naar exercises) en RPC `tk_set_exercise_rest` (security invoker, upsert of wissen, idempotent).
+- **App.** `tkRestKey`, `restSecondsFor`, `setExerciseRest`, `ensureExerciseRestLoaded` (cache per eigenaar), `tkRestRowHtml`. Timers (`autoRestAfterSet`, `openRestTimer`, live coach) en `saveRest` gebruiken de nieuwe opslag.
+- **Test.** Nieuw `core/tkExerciseRestSettings.test.js` (30, incl. PGlite).
+- **Service worker.** Cache `v470286`.
+
 ## Ongereleased — PR, 1RM en peakdoel op MoveKit-oefeningen, fase 2b-2 (draft, 15 november 2026)
 
 - **Wens eigenaar.** Alle oefeningen gelijkwaardig bruikbaar.

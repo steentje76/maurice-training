@@ -20445,6 +20445,78 @@ function stopTrainTimer(){if(trainInterval){clearInterval(trainInterval);trainIn
 // ── P1 — Rusttimer-standaard, geluid & scherm-wakelock (sporterkeuze) ──
 // Rusttimer: afwezige instelling = 2 min (zodat de timer per set verschijnt); expliciet "Uit"(0) blijft uit.
 function restDefaultSec(){ const s=localStorage.getItem('tk_rest_default'); return s==null?120:(parseInt(s)||0); }
+// ── DEC-EXLINK-004 — rusttijd per gebruiker per oefening (tabel exercise_rest_settings) ──────────
+// Sleutel: gekoppelde eigen oefening (DEC-EXLINK-002) of het MoveKit-id (TKC-) van een catalogusitem.
+// Lokaal per eigenaar bewaard (offline koude start); schrijven via de idempotente RPC in de wachtrij.
+// Terugval: oude gedeelde exercises.rest_seconds (leeg in productie), daarna de app-standaard.
+let exerciseRestSettings=new Map(); // sleutel -> seconden
+let _exerciseRestLoaded=false;
+const TK_REST_CACHE='tk_rest_settings_v1:';
+function tkRestKey(exId){
+  try{
+    if(typeof exId!=='string'||!/^TK-[0-9]{6}$/.test(exId))return exId;
+    const n=Number(exId.slice(3)); if(n<1||n>582)return exId;
+    if(typeof tkExLinkOwnExerciseForCatalog==='function'){const own=tkExLinkOwnExerciseForCatalog(exId);if(typeof own==='string'&&own)return own;}
+    return 'TKC-'+exId.slice(3);
+  }catch(_){ return exId; }
+}
+function tkRestCacheWrite(owner){
+  try{ if(owner)localStorage.setItem(TK_REST_CACHE+owner,JSON.stringify({owner_uid:owner,rows:Array.from(exerciseRestSettings.entries())})); }catch(_){}
+}
+function tkRestCacheRead(owner){
+  try{ const o=owner?JSON.parse(localStorage.getItem(TK_REST_CACHE+owner)||'null'):null;
+    return (o&&o.owner_uid===owner&&Array.isArray(o.rows))?o.rows.filter(x=>Array.isArray(x)&&typeof x[0]==='string'&&Number.isInteger(x[1])&&x[1]>0&&x[1]<=1800):null; }catch(_){ return null; }
+}
+async function ensureExerciseRestLoaded(){
+  if(_exerciseRestLoaded)return exerciseRestSettings;
+  const owner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
+  if(!owner)return exerciseRestSettings;
+  const cached=tkRestCacheRead(owner);
+  if(cached)exerciseRestSettings=new Map(cached);
+  if(typeof navigator!=='undefined'&&navigator.onLine===false){_exerciseRestLoaded=!!cached;return exerciseRestSettings;}
+  const res=await sbGetOrFail('exercise_rest_settings','&user_id=eq.'+encodeURIComponent(owner));
+  if(tkEigenaarUid()!==owner)return exerciseRestSettings;
+  if(!res.failed){
+    exerciseRestSettings=new Map(res.rows.filter(x=>x&&typeof x.exercise_id==='string'&&Number.isInteger(x.rest_seconds)).map(x=>[x.exercise_id,x.rest_seconds]));
+    tkRestCacheWrite(owner);
+    _exerciseRestLoaded=true;
+  }
+  return exerciseRestSettings;
+}
+function restSecondsFor(exId){
+  const k=tkRestKey(exId);
+  const v=exerciseRestSettings.get(k);
+  if(Number.isInteger(v)&&v>0)return v;
+  const exObj=(typeof exercises!=='undefined'&&Array.isArray(exercises))?exercises.find(e=>e&&e.id===exId):null;
+  return (exObj&&exObj.rest_seconds>0)?exObj.rest_seconds:null;
+}
+async function setExerciseRest(exId,sec){
+  const owner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null;
+  if(!owner)return false;
+  const k=tkRestKey(exId);
+  const val=(Number.isInteger(sec)&&sec>0)?Math.min(1800,sec):null;
+  const vorige=exerciseRestSettings.has(k)?exerciseRestSettings.get(k):undefined;
+  if(val===null)exerciseRestSettings.delete(k); else exerciseRestSettings.set(k,val);
+  tkRestCacheWrite(owner);
+  const ok=await sbRpcQ('tk_set_exercise_rest',{p_exercise_id:k,p_rest_seconds:val});
+  if(tkEigenaarUid()!==owner)return false;
+  if(ok===false){ // permanent geweigerd: lokale waarde terugzetten
+    if(vorige===undefined)exerciseRestSettings.delete(k); else exerciseRestSettings.set(k,vorige);
+    tkRestCacheWrite(owner);
+    return false;
+  }
+  return true;
+}
+function tkRestRowHtml(ex){
+  if(!ex||typeof ex.id!=='string')return '';
+  const eigen=restSecondsFor(ex.id), sec=eigen||restDefaultSec();
+  const label=sec>0?('Rusttijd '+sec+'s'+(eigen?'':' (standaard)')):'Rusttijd: uit';
+  return `<div class="add-row" onclick="event.stopPropagation();tkOpenRestFor(this.dataset.ex,this.dataset.naam)" data-ex="${escHtml(ex.id)}" data-naam="${escHtml(ex.naam||ex.name||'')}"><span class="add-row-icon">⏱</span><span class="add-row-lbl" style="font-size:13px">${label} · wijzigen</span></div>`;
+}
+function tkOpenRestFor(exId,naam){
+  if(typeof openEditRest!=='function'||typeof exId!=='string')return;
+  openEditRest(exId,naam||exId,restSecondsFor(exId));
+}
 // Geluid: Web Audio. Voorgrond betrouwbaar; achtergrond/vergrendeld is op mobiel onbetrouwbaar (context pauzeert).
 let _tkAudioCtx=null, _lastCountdownSec=0;
 function tkAudioCtx(){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return null; if(!_tkAudioCtx)_tkAudioCtx=new AC(); if(_tkAudioCtx.state==='suspended')_tkAudioCtx.resume(); return _tkAudioCtx; }catch(_){ return null; } }
@@ -20711,6 +20783,7 @@ async function renderTrainScreen(t){
         ${BARBELL_EXERCISES.has(ex.id)?buildRmPanel(ex,tk603LiveIsCatalog(ex.id)):''}
         ${buildEquipmentPanel(ex.id,eqList)}
         ${bodyHTML}
+        ${resolveCardioType(ex)||typeof tkRestRowHtml!=='function'?'':tkRestRowHtml(ex)}
         ${resolveCardioType(ex)?'':`<div class="add-row" onclick="addWorkSet('${ex.id}','${ex.type||'strength'}')">
           <span class="add-row-icon">+</span>
           <span class="add-row-lbl" style="color:var(--red);font-size:13px">Set toevoegen</span>
@@ -25201,8 +25274,7 @@ function showSetCompletionFeedback(exId,setNum){
 // app-standaard). Zonder ingestelde rust gebeurt er niets — geen modal, gebruiker houdt controle.
 function autoRestAfterSet(exId,setNum){
   try{
-    const exObj=(typeof exercises!=='undefined')?exercises.find(e=>e.id===exId):null;
-    const perEx=exObj&&exObj.rest_seconds;
+    const perEx=(typeof restSecondsFor==='function')?restSecondsFor(exId):null; // DEC-EXLINK-004
     const def=restDefaultSec();
     const base=(perEx!=null&&perEx>0)?perEx:def; // per-oefening rusttijd heeft voorrang, anders app-standaard
     if(base>0){
@@ -25258,8 +25330,8 @@ function tkLiveCoachUpdate(exId,setNum){
     }
     const uitgevoerd=tkUitgevoerdVoor(exId,setNum);
     if(!uitgevoerd||(uitgevoerd.kg==null&&!uitgevoerd.reps)){ el.innerHTML=''; return; }
-    const exObj=(typeof exercises!=='undefined')?exercises.find(function(e){return e.id===exId;}):null;
-    const rustBasis=(exObj&&exObj.rest_seconds>0)?exObj.rest_seconds:restDefaultSec();
+    const _rustEigen=(typeof restSecondsFor==='function')?restSecondsFor(exId):null; // DEC-EXLINK-004
+    const rustBasis=(_rustEigen>0)?_rustEigen:restDefaultSec();
     const besluit=DecisionCore.setOutcome({
       voorgeschreven: tkVoorschriftVoor(exId)||{},
       uitgevoerd: uitgevoerd,
@@ -31307,7 +31379,7 @@ async function refreshAdmin(){
     const exs=exercises.filter(e=>e.active!==false&&e.category===cat);
     if(!exs.length)return;
     h+=`<div style="font-size:10px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:4px">${catL[cat]}</div>`;
-    exs.forEach(ex=>{const exPeak=peakGoalFor(ex.id);h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(ex.name)}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${exPeak?' · jouw doel '+exPeak+'kg':''}${ex.ratio_anchor?' · anker '+escHtml(ex.ratio_anchor)+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+escHtml(ex.muscle_primary.join(', ')):' · geen spieren'}</div></div><button onclick='openEditMuscles(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.muscle_primary||[])},${escJsAttr(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick='openEditRest(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${ex.rest_seconds||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick='openEditPeak(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${exPeak||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${exPeak?'🎯 '+exPeak+'kg':'🎯 Doel'}</button><button onclick='openEditAnchor(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.ratio_anchor||null)},${ex.ratio_factor||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+escHtml(ex.ratio_anchor):'🔗 Anker'}</button><button onclick='openEditYT(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.yt||'')},${escJsAttr(ex.category)})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
+    exs.forEach(ex=>{const exPeak=peakGoalFor(ex.id);h+=`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(ex.name)}</div><div style="font-size:11px;color:var(--g4)">${ex.type||'strength'}${ex.rest_seconds?' · rust '+ex.rest_seconds+'s':''}${exPeak?' · jouw doel '+exPeak+'kg':''}${ex.ratio_anchor?' · anker '+escHtml(ex.ratio_anchor)+' ×'+ex.ratio_factor:''}${(ex.muscle_primary&&ex.muscle_primary.length)?' · '+escHtml(ex.muscle_primary.join(', ')):' · geen spieren'}</div></div><button onclick='openEditMuscles(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.muscle_primary||[])},${escJsAttr(ex.muscle_secondary||[])})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">💪</button><button onclick='openEditRest(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${restSecondsFor(ex.id)||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.rest_seconds?'⏱ '+ex.rest_seconds+'s':'⏱ Rust'}</button><button onclick='openEditPeak(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${exPeak||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${exPeak?'🎯 '+exPeak+'kg':'🎯 Doel'}</button><button onclick='openEditAnchor(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.ratio_anchor||null)},${ex.ratio_factor||'null'})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.ratio_anchor?'🔗 '+escHtml(ex.ratio_anchor):'🔗 Anker'}</button><button onclick='openEditYT(${escJsAttr(ex.id)},${escJsAttr(ex.name)},${escJsAttr(ex.yt||'')},${escJsAttr(ex.category)})' style="background:none;border:1px solid var(--g2);border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g4);margin-right:6px">${ex.yt?'▶ YT':'+ YT'}</button><button data-id="${ex.id}" onclick="delEx(this.dataset.id)" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:4px">🗑</button></div>`;});
   });
   document.getElementById('admin-exlist').innerHTML=h;
   await refreshStats();
@@ -31390,15 +31462,13 @@ async function saveRest(btnEl){
   if(btnEl){if(btnEl.disabled)return;btnEl.disabled=true;}
   try{
   const raw=document.getElementById('edit-rest-inp').value.trim();
-  const val=raw===''?null:Math.max(0,parseInt(raw)||0);
-  // gym_id blijft null (Fase 1, personal app); exercises krijgt in Fase 2 een
-  // eigen user_id-kolom volgens hetzelfde nullable-placeholder-patroon als
-  // exercise_equipment.gym_id — rest_seconds erft die scoping dan automatisch mee.
-  const ok=await sbPatch('exercises','id=eq.'+curEditRestId,{rest_seconds:val});
+  const val=raw===''?null:Math.min(1800,Math.max(0,parseInt(raw)||0));
+  // DEC-EXLINK-004: per gebruiker opgeslagen (exercise_rest_settings), offline via de wachtrij.
+  // De gedeelde exercises.rest_seconds wordt niet meer beschreven.
+  const ok=await setExerciseRest(curEditRestId,val);
   if(ok){
-    const ex=exercises.find(e=>e.id===curEditRestId);
-    if(ex) ex.rest_seconds=val;
     closeModal('m-edit-rest');
+    try{ document.querySelectorAll('.add-row[data-ex]').forEach(el=>{ if(el.dataset.ex===curEditRestId)el.outerHTML=tkRestRowHtml({id:curEditRestId,naam:el.dataset.naam}); }); }catch(_){}
     toast(val?'Rusttijd '+val+'s opgeslagen':'Rusttijd teruggezet naar standaard');
     refreshAdmin();
   } else {
@@ -34096,8 +34166,7 @@ function openRestTimer(exId,setNum,overrideSec){
     restNextLabel=(kg!=null)?`Set ${nextIdx} · ${kg} kg${reps?` × ${reps}`:''}`:`Set ${nextIdx} klaar om te starten`;
   }
   if(overrideSec>0){startRestTimer(overrideSec);return;} // vooraf bepaalde duur (bv. dynamische rust) heeft voorrang
-  const exObj=exercises.find(e=>e.id===exId);
-  const perEx=exObj?.rest_seconds;
+  const perEx=(typeof restSecondsFor==='function')?restSecondsFor(exId):null; // DEC-EXLINK-004
   if(perEx!=null&&perEx>0){startRestTimer(perEx);return;} // per-oefening rusttijd heeft voorrang
   const def=restDefaultSec();
   if(def>0){startRestTimer(def);return;} // anders app-brede standaardwaarde
@@ -37876,6 +37945,7 @@ function resetPersonalCacheIfNewDeviceOwner(uid){
   _favoritesLoaded=false;
   exerciseGoals=new Map();
   _exerciseGoalsLoaded=false;
+  exerciseRestSettings=new Map(); _exerciseRestLoaded=false; // DEC-EXLINK-004
   equipmentTypes=[];
   _equipmentTypesLoading=null;
   equipmentCatalog=[];
@@ -37935,6 +38005,7 @@ async function startAppAfterAuth(){
   tkExLinksRefresh(); // DEC-EXLINK-001: eigen oefening ↔ MoveKit (cache eerst, dan server)
   ensureEquipmentTypesLoaded();
   migrateLibraryFavoritesToSupabase(); // Sprint 6.0.1 — eenmalig, laadt ook favoriteExIds vroeg
+  ensureExerciseRestLoaded(); // DEC-EXLINK-004: rusttijden per oefening (cache eerst, dan server)
   ensureExerciseGoalsLoaded(); // peakdoelen vroeg laden — voorkomt lege 'jouw doel'-weergave bij eerste render
   checkTeamAccess(); // v331: teamRoleLevel meteen beschikbaar, niet pas na bezoek aan Profiel
   if(window.OrganizationContextRuntime) window.OrganizationContextRuntime.initOrganizationContext(); // MS-F11-05: F11 organization-context + tenant-branding, non-blocking (mag training nooit vertragen)

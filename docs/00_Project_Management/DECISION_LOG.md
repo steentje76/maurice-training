@@ -3169,3 +3169,11 @@ Geen MoveKit-binding nodig voor die rijen; offline loggen werkt zoals bij elke e
 **Besluit.** Doelen van een MoveKit-oefening staan op haar MoveKit-id (TKC-), het id waarop ook haar sessies staan; alle 582 bestaan globaal in exercises, dus de FK is geldig en RLS (eigen user_id) volstaat. Volgorde in `tkGoalKey`: gekoppelde eigen oefening (DEC-EXLINK-002) → bestaande doelrij op TK- (blijft bron tot fase 3, geen dubbele rijen) → TKC-id. Een record mag alleen bij een geverifieerde MoveKit-bron en na een geslaagde of gequeuede sessie-write. Offline werkt via de bestaande wachtrij.
 
 **Niet gedaan.** Live PR-badge per set voor MoveKit (blijft per herhalingsbucket). Samenvoegen van TK- en TKC-historie: fase 3.
+
+## DEC-EXLINK-004 — Fase 2b-3: rusttijd per gebruiker per oefening (15 november 2026)
+
+**Probleem.** Rusttijd stond op de gedeelde oefeningsrij (`exercises.rest_seconds`): voor MoveKit-oefeningen niet instelbaar (globale rij) of voor iedereen gelijk, en opslaan werkte niet offline. Productie: 0 waarden ingesteld.
+
+**Besluit (eigenaar, 15 november: "Nieuwe tabel").** Tabel `exercise_rest_settings` per gebruiker per oefening; sleutel = gekoppelde eigen oefening of MoveKit-id (TKC-). Schrijven via RPC `tk_set_exercise_rest` (set-semantiek, veilig bij herhaald afspelen uit de wachtrij; null = verwijderen). Lezen: eigen instelling → oude gedeelde waarde → app-standaard. Alternatief (kolom op exercise_goals) was kleiner maar niet gekozen.
+
+**Status.** Code + migratie klaar; migratie pas na expliciete go.

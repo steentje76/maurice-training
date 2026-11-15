@@ -26,6 +26,13 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Code in main (#634, #635). Migratie `20261114180000_tk_exercise_catalog_links.sql` en `tools/tk-exlink-fase1/apply.sql` op 14 november uitgevoerd op productie (eigenaarsakkoord), in één transactie; alle controles geslaagd. Nacontrole: 98 koppelingen (18 samengevoegd, 10 race verborgen), 193 eigen sessies ongewijzigd, 0 sessies op samengevoegde id's, 18 eigen oefeningen inactief, geen koppelingen van andere accounts. Back-up `bak_tkx20261114_*` (o.a. 11 sessies, 34 programmaregels, 97 trainingssnapshots). Terugdraaien: `reverse.sql`.
 - Nieuwe weergave zichtbaar in de webapp; de test-APK's tonen hem pas na een nieuwe build.
 
+## Rusttijd per gebruiker, fase 2b-3 (draft, 15 november 2026)
+
+- Besluit DEC-EXLINK-004 (eigenaar koos een nieuwe tabel). Rusttijd per oefening wordt per gebruiker opgeslagen in `exercise_rest_settings` (eigen oefening of MoveKit-id TKC-), via de idempotente RPC `tk_set_exercise_rest` in de offline-wachtrij. Lokale cache per eigenaar voor een offline koude start.
+- Instelbaar vanuit de training (⏱-rij onder de sets, ook voor MoveKit) en vanuit Beheer. De gedeelde `exercises.rest_seconds` wordt niet meer beschreven (blijft terugval; overal leeg).
+- Migratie `20261115120000_tk_exercise_rest_settings.sql`: **nog niet toegepast**. Zonder migratie faalt opslaan netjes (melding, lokale waarde teruggezet). Terugdraaien: `tools/tk-exlink-fase2b3/reverse.sql`.
+- Test: `core/tkExerciseRestSettings.test.js` (incl. PGlite). Service worker `v470286`.
+
 ## MoveKit-oefeningen: PR, 1RM en peakdoel, fase 2b-2 (draft, 15 november 2026)
 
 - Besluit DEC-EXLINK-003. Ongekoppelde MoveKit-oefeningen krijgen record, 1RM en peakdoel, opgeslagen op hun MoveKit-id (TKC-, zelfde id als de sessies). Een gekoppelde eigen oefening blijft leidend; een bestaande doelrij op het oude catalogus-id (TK-, 20 rijen) blijft de bron tot fase 3.

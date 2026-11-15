@@ -26,6 +26,12 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Code in main (#634, #635). Migratie `20261114180000_tk_exercise_catalog_links.sql` en `tools/tk-exlink-fase1/apply.sql` op 14 november uitgevoerd op productie (eigenaarsakkoord), in één transactie; alle controles geslaagd. Nacontrole: 98 koppelingen (18 samengevoegd, 10 race verborgen), 193 eigen sessies ongewijzigd, 0 sessies op samengevoegde id's, 18 eigen oefeningen inactief, geen koppelingen van andere accounts. Back-up `bak_tkx20261114_*` (o.a. 11 sessies, 34 programmaregels, 97 trainingssnapshots). Terugdraaien: `reverse.sql`.
 - Nieuwe weergave zichtbaar in de webapp; de test-APK's tonen hem pas na een nieuwe build.
 
+## MoveKit-oefeningen: PR, 1RM en peakdoel, fase 2b-2 (draft, 15 november 2026)
+
+- Besluit DEC-EXLINK-003. Ongekoppelde MoveKit-oefeningen krijgen record, 1RM en peakdoel, opgeslagen op hun MoveKit-id (TKC-, zelfde id als de sessies). Een gekoppelde eigen oefening blijft leidend; een bestaande doelrij op het oude catalogus-id (TK-, 20 rijen) blijft de bron tot fase 3.
+- Statistieken: MoveKit-rij toont peakdoel-voortgang en een 🎯-knop om het doel in te stellen. Geen databasewijziging.
+- Test: `core/tkMoveKitGoals.test.js`. Service worker `v470285`.
+
 ## Eigen oefeningen → MoveKit, fase 2b-1: één historie per oefening (draft, 15 november 2026)
 
 - Besluit DEC-EXLINK-002. Een catalogusitem (Builder, alternatief, opgeslagen training) waaraan de eigenaar een eigen oefening heeft gekoppeld, logt en leest op die eigen oefening: sessie, record en historie op één plek. Geldt voor normale en begeleide uitvoering, online en offline.

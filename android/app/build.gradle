@@ -72,6 +72,14 @@ android {
         // (beeld + video). Eigen applicationId: installeert naast "TK Test 14 november".
         // v3 (14 november 2026): fase 2a — offline loggen op MoveKit-oefeningen (#637).
         // Eigen applicationId: installeert naast "TK Test 14 nov v2".
+        // v4 (15 november 2026): fase 2b (één historie, PR/1RM/peakdoel MoveKit, rusttijd per gebruiker)
+        // en fase 3a (MoveKit-id's na migratie). Eigen applicationId: installeert naast v3.
+        tktest1115 {
+            initWith debug
+            applicationIdSuffix ".tktest20261115"
+            versionNameSuffix "-tktest20261115"
+            matchingFallbacks = ['debug']
+        }
         tktest1114c {
             initWith debug
             applicationIdSuffix ".tktest20261114c"

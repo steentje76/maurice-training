@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TK Test 15 nov v4</string>
+    <string name="title_activity_main">TK Test 15 nov v4</string>
+    <string name="package_name">com.trainingskompas.app.tktest20261115</string>
+    <string name="custom_url_scheme">com.trainingskompas.app.tktest20261115</string>
+</resources>

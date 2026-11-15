@@ -9,13 +9,58 @@
 --
 -- Per koppeling E (eigen oefening) → C (MoveKit-catalogus-id TK-) → F (MoveKit-id TKC-):
 --   sessies van de eigenaar E → F; doelen samengevoegd in F (hoogste waarde per veld); rusttijd E → F;
---   programma-/trainingsregels, favorieten, uitrusting en snapshots E → C (alleen als E ≠ C; zo nodig een
---   inactieve FK-rij voor C); eigen persoonlijke rij E inactief; koppeling migrated_at = now().
+--   programma-/trainingsregels, racesegmenten, doelen (goals), favorieten, uitrusting, ratio-anker en snapshots
+--   E → C (alleen als E ≠ C; zo nodig een inactieve FK-rij voor C); eigen persoonlijke rij E inactief;
+--   koppeling migrated_at = now(). Race-oefeningen (HYROX/triathlon) worden geweigerd.
 -- Alleen rijen van de eigenaar. Gedeelde (globale) rijen blijven ongemoeid. Herhaalbaar: een tweede run
 -- verplaatst alleen achterblijvers (bv. een sessie die later uit de offline-wachtrij op E binnenkwam).
 -- Terugdraaien: reverse-portie.sql met dezelfde _p3_map.
 
 create temp table if not exists _p3_report (ord int, k text, v text) on commit drop;
+
+-- JSON-verwijzingen E → C (alleen E ≠ C): sleutels exercise_id, id en *_exercise_id (bv. replacement_exercise_id),
+-- en de lijst skipped.
+create or replace function pg_temp.p3_map1(v jsonb) returns jsonb language sql stable as $f$
+  select case when jsonb_typeof(v) = 'string'
+    then coalesce((select to_jsonb(m.catalog_id) from _p3_map m where m.exercise_id <> m.catalog_id and m.exercise_id = (v #>> '{}')), v)
+    else v end
+$f$;
+create or replace function pg_temp.p3_rw(j jsonb) returns jsonb language sql stable as $f$
+  select case jsonb_typeof(j)
+    when 'object' then coalesce((select jsonb_object_agg(e.k,
+        case when e.k in ('exercise_id', 'id') or e.k like '%\_exercise\_id' then pg_temp.p3_map1(e.v)
+             when e.k = 'skipped' and jsonb_typeof(e.v) = 'array'
+               then coalesce((select jsonb_agg(pg_temp.p3_map1(a.v) order by a.o) from jsonb_array_elements(e.v) with ordinality as a(v, o)), '[]'::jsonb)
+             else pg_temp.p3_rw(e.v) end) from jsonb_each(j) as e(k, v)), '{}'::jsonb)
+    when 'array' then coalesce((select jsonb_agg(pg_temp.p3_rw(a.v) order by a.o) from jsonb_array_elements(j) with ordinality as a(v, o)), '[]'::jsonb)
+    else j end
+$f$;
+-- training_context.avoid_exercises is een lijst van id-strings (geen objecten).
+create or replace function pg_temp.p3_rw_list(j jsonb) returns jsonb language sql stable as $f$
+  select case when jsonb_typeof(j) = 'array'
+    then coalesce((select jsonb_agg(pg_temp.p3_map1(a.v) order by a.o) from jsonb_array_elements(j) with ordinality as a(v, o)), '[]'::jsonb)
+    else pg_temp.p3_rw(j) end
+$f$;
+create or replace function pg_temp.p3_hit1(v jsonb) returns bigint language sql stable as $f$
+  select case when jsonb_typeof(v) = 'string'
+    then (select count(*) from _p3_map m where m.exercise_id <> m.catalog_id and m.exercise_id = (v #>> '{}'))
+    else 0::bigint end
+$f$;
+create or replace function pg_temp.p3_hits(j jsonb) returns bigint language sql stable as $f$
+  select case jsonb_typeof(j)
+    when 'object' then coalesce((select sum(
+        case when e.k in ('exercise_id', 'id') or e.k like '%\_exercise\_id' then pg_temp.p3_hit1(e.v)
+             when e.k = 'skipped' and jsonb_typeof(e.v) = 'array'
+               then coalesce((select sum(pg_temp.p3_hit1(a.v)) from jsonb_array_elements(e.v) as a(v)), 0)
+             else pg_temp.p3_hits(e.v) end) from jsonb_each(j) as e(k, v)), 0)::bigint
+    when 'array' then coalesce((select sum(pg_temp.p3_hits(a.v)) from jsonb_array_elements(j) as a(v)), 0)::bigint
+    else 0::bigint end
+$f$;
+create or replace function pg_temp.p3_hits_list(j jsonb) returns bigint language sql stable as $f$
+  select case when jsonb_typeof(j) = 'array'
+    then coalesce((select sum(pg_temp.p3_hit1(a.v)) from jsonb_array_elements(j) as a(v)), 0)::bigint
+    else pg_temp.p3_hits(j) end
+$f$;
 
 do $p3$
 declare
@@ -39,10 +84,8 @@ begin
     join public.exercises e on e.id = m.fk_id;
   if v_n <> (select count(*) from _p3_map) then raise exception 'P3: MoveKit-id niet vrijgegeven of ontbreekt'; end if;
 
-  -- Snapshots (trainingen, planning, programmalog) worden in deze versie nog niet herschreven: alleen
-  -- koppelingen waarbij de eigen oefening al het MoveKit-catalogus-id heeft (E = C).
-  select count(*) into v_n from _p3_map where exercise_id <> catalog_id;
-  if v_n > 0 then raise exception 'P3: deze versie verwerkt nog geen koppelingen met E <> C (% in portie)', v_n; end if;
+  -- Racedefinities (HYROX/triathlon) houden hun eigen id: die horen nooit in een portie.
+  if exists (select 1 from _p3_map where exercise_id ~ '^(hyrox|triathlon)_') then raise exception 'P3: race-oefening in de portie'; end if;
 
   -- ── 2. Uitgangssituatie ────────────────────────────────────────────────────
   create temp table _p3_pre (k text primary key, v numeric) on commit drop;
@@ -80,6 +123,23 @@ begin
   create table if not exists public.bak_tkx3_program_block_exercises (like public.program_block_exercises);
   create table if not exists public.bak_tkx3_training_exercises (like public.training_exercises);
   create table if not exists public.bak_tkx3_custom_training_exercises (like public.custom_training_exercises);
+  create table if not exists public.bak_tkx3_race_segments (like public.race_segments);
+  create table if not exists public.bak_tkx3_goals (like public.goals);
+  create table if not exists public.bak_tkx3_training_instances (like public.training_instances);
+  create table if not exists public.bak_tkx3_planned_training_occurrences (like public.planned_training_occurrences);
+  create table if not exists public.bak_tkx3_program_regeneration_log (like public.program_regeneration_log);
+  create table if not exists public.bak_tkx3_custom_trainings (like public.custom_trainings);
+  create table if not exists public.bak_tkx3_training_context (like public.training_context);
+  alter table public.bak_tkx3_race_segments enable row level security;
+  alter table public.bak_tkx3_goals enable row level security;
+  alter table public.bak_tkx3_training_instances enable row level security;
+  alter table public.bak_tkx3_planned_training_occurrences enable row level security;
+  alter table public.bak_tkx3_program_regeneration_log enable row level security;
+  alter table public.bak_tkx3_custom_trainings enable row level security;
+  alter table public.bak_tkx3_training_context enable row level security;
+  revoke all on public.bak_tkx3_race_segments, public.bak_tkx3_goals, public.bak_tkx3_training_instances,
+    public.bak_tkx3_planned_training_occurrences, public.bak_tkx3_program_regeneration_log, public.bak_tkx3_custom_trainings,
+    public.bak_tkx3_training_context from public, anon, authenticated;
   alter table public.bak_tkx3_sessions enable row level security;
   alter table public.bak_tkx3_exercise_goals enable row level security;
   alter table public.bak_tkx3_exercises enable row level security;
@@ -115,6 +175,23 @@ begin
     where t.user_id = v_owner and not exists (select 1 from public.bak_tkx3_training_exercises b where b.id = t.id);
   insert into public.bak_tkx3_custom_training_exercises select t.* from public.custom_training_exercises t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id
     where t.user_id = v_owner and not exists (select 1 from public.bak_tkx3_custom_training_exercises b where b.id = t.id);
+
+  insert into public.bak_tkx3_race_segments select t.* from public.race_segments t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id
+    where t.user_id = v_owner and not exists (select 1 from public.bak_tkx3_race_segments b where b.id = t.id);
+  insert into public.bak_tkx3_goals select t.* from public.goals t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id
+    where t.user_id = v_owner and not exists (select 1 from public.bak_tkx3_goals b where b.id = t.id);
+  insert into public.bak_tkx3_training_instances select t.* from public.training_instances t
+    where t.user_id = v_owner and t.snapshot is not null and pg_temp.p3_hits(t.snapshot) > 0 and not exists (select 1 from public.bak_tkx3_training_instances b where b.id = t.id);
+  insert into public.bak_tkx3_planned_training_occurrences select t.* from public.planned_training_occurrences t
+    where t.creator_user_id = v_owner and t.definition_snapshot is not null and pg_temp.p3_hits(t.definition_snapshot) > 0 and not exists (select 1 from public.bak_tkx3_planned_training_occurrences b where b.id = t.id);
+  insert into public.bak_tkx3_program_regeneration_log select t.* from public.program_regeneration_log t
+    where t.user_id = v_owner and t.replaced_blocks_snapshot is not null and pg_temp.p3_hits(t.replaced_blocks_snapshot) > 0 and not exists (select 1 from public.bak_tkx3_program_regeneration_log b where b.id = t.id);
+  insert into public.bak_tkx3_custom_trainings select t.* from public.custom_trainings t
+    where t.user_id = v_owner and t.metadata is not null and pg_temp.p3_hits(t.metadata) > 0 and not exists (select 1 from public.bak_tkx3_custom_trainings b where b.id = t.id);
+  insert into public.bak_tkx3_training_context select t.* from public.training_context t
+    where t.user_id = v_owner and t.avoid_exercises is not null and pg_temp.p3_hits_list(t.avoid_exercises) > 0 and not exists (select 1 from public.bak_tkx3_training_context b where b.user_id = t.user_id);
+  insert into public.bak_tkx3_exercises select e.* from public.exercises e join _p3_map m on e.ratio_anchor = m.exercise_id and m.exercise_id <> m.catalog_id
+    where e.scope = 'personal' and e.created_by = v_owner and not exists (select 1 from public.bak_tkx3_exercises b where b.id = e.id);
 
   -- ── 4. Sessies naar het MoveKit-id ─────────────────────────────────────────
   update public.sessions s set exercise_id = m.fk_id from _p3_map m
@@ -162,6 +239,22 @@ begin
    where f.exercise_id = m.exercise_id and m.exercise_id <> m.catalog_id and f.user_id = v_owner;
   update public.exercise_equipment q set exercise_id = m.catalog_id from _p3_map m
    where q.exercise_id = m.exercise_id and m.exercise_id <> m.catalog_id and q.user_id = v_owner;
+  update public.race_segments t set exercise_id = m.catalog_id from _p3_map m
+   where t.exercise_id = m.exercise_id and m.exercise_id <> m.catalog_id and t.user_id = v_owner;
+  update public.goals t set exercise_id = m.catalog_id from _p3_map m
+   where t.exercise_id = m.exercise_id and m.exercise_id <> m.catalog_id and t.user_id = v_owner;
+  update public.exercises e set ratio_anchor = m.catalog_id from _p3_map m
+   where e.ratio_anchor = m.exercise_id and m.exercise_id <> m.catalog_id and e.scope = 'personal' and e.created_by = v_owner;
+  update public.training_instances t set snapshot = pg_temp.p3_rw(t.snapshot)
+   where t.user_id = v_owner and t.snapshot is not null and pg_temp.p3_hits(t.snapshot) > 0;
+  update public.planned_training_occurrences t set definition_snapshot = pg_temp.p3_rw(t.definition_snapshot)
+   where t.creator_user_id = v_owner and t.definition_snapshot is not null and pg_temp.p3_hits(t.definition_snapshot) > 0;
+  update public.program_regeneration_log t set replaced_blocks_snapshot = pg_temp.p3_rw(t.replaced_blocks_snapshot)
+   where t.user_id = v_owner and t.replaced_blocks_snapshot is not null and pg_temp.p3_hits(t.replaced_blocks_snapshot) > 0;
+  update public.custom_trainings t set metadata = pg_temp.p3_rw(t.metadata)
+   where t.user_id = v_owner and t.metadata is not null and pg_temp.p3_hits(t.metadata) > 0;
+  update public.training_context t set avoid_exercises = pg_temp.p3_rw_list(t.avoid_exercises)
+   where t.user_id = v_owner and t.avoid_exercises is not null and pg_temp.p3_hits_list(t.avoid_exercises) > 0;
 
   -- ── 8. Eigen persoonlijke rij inactief; koppeling gemigreerd ───────────────
   update public.exercises e set active = false from _p3_map m
@@ -196,6 +289,22 @@ begin
   if v_n <> (select v from _p3_pre where k = 'foreign:exercises_active') then raise exception 'P3: gedeelde oefening gewijzigd'; end if;
   select count(*) into v_n from public.exercises e join _p3_map m on m.exercise_id = e.id where e.active and e.scope = 'personal' and e.created_by = v_owner;
   if v_n <> 0 then raise exception 'P3: eigen persoonlijke rij nog actief'; end if;
+  select (select count(*) from public.program_block_exercises t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id where t.user_id = v_owner)
+       + (select count(*) from public.training_exercises t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id where t.user_id = v_owner)
+       + (select count(*) from public.custom_training_exercises t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id where t.user_id = v_owner)
+       + (select count(*) from public.race_segments t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id where t.user_id = v_owner)
+       + (select count(*) from public.goals t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id where t.user_id = v_owner)
+       + (select count(*) from public.exercise_favorites t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id where t.user_id = v_owner)
+       + (select count(*) from public.exercise_equipment t join _p3_map m on m.exercise_id = t.exercise_id and m.exercise_id <> m.catalog_id where t.user_id = v_owner)
+       + (select coalesce(sum(pg_temp.p3_hits(snapshot)), 0) from public.training_instances where user_id = v_owner and snapshot is not null)
+       + (select coalesce(sum(pg_temp.p3_hits(definition_snapshot)), 0) from public.planned_training_occurrences where creator_user_id = v_owner and definition_snapshot is not null)
+       + (select coalesce(sum(pg_temp.p3_hits(replaced_blocks_snapshot)), 0) from public.program_regeneration_log where user_id = v_owner and replaced_blocks_snapshot is not null)
+       + (select coalesce(sum(pg_temp.p3_hits(metadata)), 0) from public.custom_trainings where user_id = v_owner and metadata is not null)
+       + (select coalesce(sum(pg_temp.p3_hits_list(avoid_exercises)), 0) from public.training_context where user_id = v_owner and avoid_exercises is not null)
+    into v_n;
+  if v_n <> 0 then raise exception 'P3: % verwijzing(en) naar de eigen oefening niet omgezet', v_n; end if;
+  select count(*) into v_n from _p3_map m where m.exercise_id <> m.catalog_id and not exists (select 1 from public.exercises x where x.id = m.catalog_id);
+  if v_n <> 0 then raise exception 'P3: FK-rij voor het catalogus-id ontbreekt'; end if;
   select count(*) into v_n from public.exercise_catalog_links l join _p3_map m on m.exercise_id = l.exercise_id
     where l.user_id = v_owner and l.migrated_at is not null;
   if v_n <> (select count(*) from _p3_map) then raise exception 'P3: koppelingen niet allemaal gemigreerd'; end if;

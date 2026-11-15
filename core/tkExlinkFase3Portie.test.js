@@ -96,7 +96,7 @@ const O = '11111111-1111-1111-1111-111111111111', X = '22222222-2222-2222-2222-2
     insert into public.program_block_exercises (user_id, exercise_id) values ('${O}','front'), ('${X}','front');
     insert into public.training_exercises (user_id, exercise_id) values ('${O}','kb_goblet');
     insert into public.exercise_favorites values ('${O}','kb_goblet');
-    insert into public.training_instances values ('00000000-0000-0000-0000-0000000000a1','${O}','{"items":[{"id":"kb_goblet","naam":"Goblet"},{"id":"squat"}],"skipped":["front"]}');
+    insert into public.training_instances values ('00000000-0000-0000-0000-0000000000a1','${O}','{"items":[{"id":"kb_goblet","naam":"Goblet"},{"id":"squat"}],"skipped":["front"],"adjust":[{"type":"swap","exercise_id":"x","replacement_exercise_id":"kb_goblet"}]}');
     insert into public.training_context values ('${O}','["kb_goblet","x"]');
   `);
   const MAP2 = "create temp table if not exists _p3_map (exercise_id text primary key, catalog_id text not null) on commit drop; insert into _p3_map values ('kb_goblet','TK-000383'), ('front','TK-000356');";
@@ -105,7 +105,7 @@ const O = '11111111-1111-1111-1111-111111111111', X = '22222222-2222-2222-2222-2
   ok((await q(`select count(*)::int n from program_block_exercises where user_id='${O}' and exercise_id='TK-000356'`))[0].n === 1 && (await q(`select exercise_id from program_block_exercises where user_id='${X}'`))[0].exercise_id === 'front', 'E2: programmaregel van de eigenaar naar het catalogus-id; die van een ander niet');
   ok((await q(`select exercise_id from training_exercises where user_id='${O}'`))[0].exercise_id === 'TK-000383' && (await q(`select exercise_id from exercise_favorites where user_id='${O}'`))[0].exercise_id === 'TK-000383', 'E3: trainingsregel en favoriet omgezet');
   const snap = (await q(`select snapshot from training_instances where id='00000000-0000-0000-0000-0000000000a1'`))[0].snapshot;
-  ok(snap.items[0].id === 'TK-000383' && snap.items[0].naam === 'Goblet' && snap.items[1].id === 'squat' && snap.skipped[0] === 'TK-000356', 'E4: snapshot herschreven (id en skipped), rest ongewijzigd');
+  ok(snap.items[0].id === 'TK-000383' && snap.items[0].naam === 'Goblet' && snap.items[1].id === 'squat' && snap.skipped[0] === 'TK-000356' && snap.adjust[0].replacement_exercise_id === 'TK-000383' && snap.adjust[0].exercise_id === 'x', 'E4: snapshot herschreven (id, skipped, replacement_exercise_id), rest ongewijzigd');
   ok(JSON.stringify((await q(`select avoid_exercises a from training_context where user_id='${O}'`))[0].a) === '["TK-000383","x"]', 'E5: te vermijden oefeningen omgezet');
   ok((await q(`select ratio_anchor from exercises where id='my_split'`))[0].ratio_anchor === 'TK-000356', 'E6: ratio-anker omgezet');
   const fk = await q(`select id, active, scope from exercises where id in ('TK-000383','TK-000356') order by id`);

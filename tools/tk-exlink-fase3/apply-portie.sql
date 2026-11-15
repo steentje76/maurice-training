@@ -18,7 +18,8 @@
 
 create temp table if not exists _p3_report (ord int, k text, v text) on commit drop;
 
--- JSON-verwijzingen E → C (alleen E ≠ C); zelfde regel als fase 1: sleutels exercise_id en id, en de lijst skipped.
+-- JSON-verwijzingen E → C (alleen E ≠ C): sleutels exercise_id, id en *_exercise_id (bv. replacement_exercise_id),
+-- en de lijst skipped.
 create or replace function pg_temp.p3_map1(v jsonb) returns jsonb language sql stable as $f$
   select case when jsonb_typeof(v) = 'string'
     then coalesce((select to_jsonb(m.catalog_id) from _p3_map m where m.exercise_id <> m.catalog_id and m.exercise_id = (v #>> '{}')), v)
@@ -27,7 +28,7 @@ $f$;
 create or replace function pg_temp.p3_rw(j jsonb) returns jsonb language sql stable as $f$
   select case jsonb_typeof(j)
     when 'object' then coalesce((select jsonb_object_agg(e.k,
-        case when e.k in ('exercise_id', 'id') then pg_temp.p3_map1(e.v)
+        case when e.k in ('exercise_id', 'id') or e.k like '%\_exercise\_id' then pg_temp.p3_map1(e.v)
              when e.k = 'skipped' and jsonb_typeof(e.v) = 'array'
                then coalesce((select jsonb_agg(pg_temp.p3_map1(a.v) order by a.o) from jsonb_array_elements(e.v) with ordinality as a(v, o)), '[]'::jsonb)
              else pg_temp.p3_rw(e.v) end) from jsonb_each(j) as e(k, v)), '{}'::jsonb)
@@ -48,7 +49,7 @@ $f$;
 create or replace function pg_temp.p3_hits(j jsonb) returns bigint language sql stable as $f$
   select case jsonb_typeof(j)
     when 'object' then coalesce((select sum(
-        case when e.k in ('exercise_id', 'id') then pg_temp.p3_hit1(e.v)
+        case when e.k in ('exercise_id', 'id') or e.k like '%\_exercise\_id' then pg_temp.p3_hit1(e.v)
              when e.k = 'skipped' and jsonb_typeof(e.v) = 'array'
                then coalesce((select sum(pg_temp.p3_hit1(a.v)) from jsonb_array_elements(e.v) as a(v)), 0)
              else pg_temp.p3_hits(e.v) end) from jsonb_each(j) as e(k, v)), 0)::bigint

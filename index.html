@@ -8399,7 +8399,8 @@ async function loadTrainCfg(){
     // zodat een willekeurig aantal vaste trainingen met eigen namen mogelijk is.
     const built={};
     rows.forEach(r=>{
-      const exObj=exercises.find(x=>x.id===r.exercise_id);
+      // DEC-EXLINK-005: een MoveKit-id (na migratie) valt niet meer stil weg; eigen rij gaat voor.
+      const exObj=exercises.find(x=>x.id===r.exercise_id)||((typeof resolvePickerEx==='function')?resolvePickerEx(r.exercise_id):null);
       if(!exObj) return;
       if(!built[r.training_ref]) built[r.training_ref]=[];
       built[r.training_ref].push({
@@ -10287,8 +10288,10 @@ function buildResolvedExecutionItems(list){
     // Preserve V1's legacy fallback until the release gate is explicitly ON.
     const typedMode=typeof TK504_TYPED_FK_SESSION_RELEASE!=='undefined'&&
       TK504_TYPED_FK_SESSION_RELEASE===true;
+    // DEC-EXLINK-005: zonder opgeslagen bron telt de afgeleide MoveKit-bron (gemigreerd of geen eigen rij).
+    const _derivedRef=(typedMode&&it.tk504_catalog_ref==null&&typeof tk504DerivedCatalogRef==='function')?tk504DerivedCatalogRef(exId):null;
     const isCanonical=typeof exId==='string'&&exId.indexOf('TK-')===0&&
-      (!typedMode||!!tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref));
+      (!typedMode||!!tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref)||!!_derivedRef);
     let canon=null;
     if(isCanonical&&typeof ExerciseCatalogService!=='undefined'){
       try{canon=ExerciseCatalogService.byId(exId);}catch(e){canon=null;}
@@ -10309,7 +10312,7 @@ function buildResolvedExecutionItems(list){
         wu:it.wu||0, tip:it.tip??null, pick:it.pick??null,
         yt:null,                 // geen YouTube-ID voor canonical Gym; poster/video lopen apart
         poster:posterUrl, video:videoFile, canonicalId:exId,
-        ...(tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref)?{tk504_catalog_ref:tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref)}:{}),
+        ...(tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref)?{tk504_catalog_ref:tk504ValidateCatalogSourceRef(exId,it.tk504_catalog_ref)}:(_derivedRef?{tk504_catalog_ref:_derivedRef}:{})),
         suggestedWeight:previewResolveItemWeight(it),   // F0.7L: canonical resolver-gewicht
         _detrain:previewResolveItemDetrain(it),          // DETRAINING B1: bestaande resolver-reden voor Normal execution
         _weightOverride:!!(previewCtx&&previewCtx.overrides&&previewCtx.overrides[it.exercise_id]!=null), // GAP-P3-032: override finaal
@@ -31658,8 +31661,8 @@ async function renderTrainExAdmin(){
     const rows=await v43SafeGet('training_exercises','&training_ref=eq.'+t+'&order=sort_order.asc');
     if(!rows.length){el.innerHTML='<p style="color:var(--g4);font-size:13px">Nog geen oefeningen gekoppeld</p>';continue;}
     el.innerHTML=rows.map((r,i)=>{
-      const ex=exercises.find(x=>x.id===r.exercise_id);
-      const naam=ex?ex.name:r.exercise_id;
+      const ex=(typeof tkResolveExerciseForDisplay==='function')?tkResolveExerciseForDisplay(r.exercise_id):exercises.find(x=>x.id===r.exercise_id);
+      const naam=ex?(ex.name||ex.naam):r.exercise_id;
       const detail=[r.sets?r.sets+' sets':null,r.reps,r.rpe?'RPE '+r.rpe:null,r.wu?r.wu+' wu':null].filter(Boolean).join(' · ');
       return `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g2)">
         <div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--dark)">${escHtml(naam)}</div><div style="font-size:11px;color:var(--g4)">${detail||'—'}</div></div>
@@ -33599,7 +33602,7 @@ async function startCustomTraining(id,resolvedItems){
     // custom start altijd vers; delta uit config, niet uit een eerder-aangepaste waarde). Deterministisch.
     let _cAdj={rpeDelta:0,setsDelta:0,score:null};
     try{
-      const _mus=[]; (t.exercises||[]).forEach(id=>{const e=exercises.find(x=>x.id===id); if(e&&Array.isArray(e.muscle_primary))_mus.push(...e.muscle_primary);});
+      const _mus=[]; (t.exercises||[]).forEach(id=>{const e=exercises.find(x=>x.id===id)||((typeof resolvePickerEx==='function')?resolvePickerEx(id):null); if(e&&Array.isArray(e.muscle_primary))_mus.push(...e.muscle_primary);});
       _cAdj=await recoveryAdjustmentForToday([...new Set(_mus)]);
     }catch(_){}
     if(!sameOwner()||curT!==ctxT||sessionLog!==startLog)return;

@@ -3195,3 +3195,5 @@ Geen MoveKit-binding nodig voor die rijen; offline loggen werkt zoals bij elke e
 ## DEC-UX-HEROPOSTER — Oefeningkaart toont altijd de poster (16 november 2026)
 
 **Besluit eigenaar.** "Beide": op de kaart tijdens de training overal de poster, video alleen via "Bekijk video & uitleg". Geen afspeelknop en geen YouTube-frame op het plaatje; zonder poster een neutraal vlak zodat elke kaart dezelfde opbouw heeft.
+
+**Fase 3b, portie 3 (16 november, na proefrun en go).** 21 eigen krachtoefeningen gemigreerd (70 sessies, 15 doelen, 110 programmaregels, 5 regels vaste trainingen). Vooraf opgelost: programmastart, vaste en opgeslagen trainingen met MoveKit-id's (#646, #648). 50 van 70 gemigreerd.

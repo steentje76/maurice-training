@@ -34,7 +34,9 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Test: `core/tkExerciseLinksMigrated.test.js`. Service worker `v470287`.
 - Fase 3b portie 1 uitgevoerd (15 november, na proefrun en go): Machine Pulldown, Good Mornings, Push Up, Knee Push Ups, Machine Chest Press. 9 sessies en 5 doelen op het MoveKit-id; 5 koppelingen gemigreerd; eigenaar 199 sessies ongewijzigd. Back-up `bak_tkx3_*`, terugdraaien `tools/tk-exlink-fase3/reverse-portie.sql`. Script: `apply-portie.sql` (alleen E = C).
 - Portie 2 uitgevoerd (15 november, na proefrun en go): 32 koppelingen zonder sessies en zonder programma-/trainingsregels (30 met eigen id). 1 favoriet en 1 trainingssnapshot (vervanger) omgezet naar het catalogus-id; 30 inactieve FK-rijen; 32 eigen rijen inactief. Totaal 37 van 70 gemigreerd; eigenaar 199 sessies ongewijzigd. Het script verwerkt nu ook E ≠ C (programma-/trainingsregels, racesegmenten, goals, favorieten, uitrusting, ratio-anker, snapshots incl. `*_exercise_id`) en weigert race-oefeningen.
-- Volgende: portie 3 (oefeningen met sessies en/of programma's), portie 4 (hoofdliften). hyrox_run en triathlon_fietsen blijven buiten de migratie.
+- Correctie portie 2 (16 november, na go): 8 cardio-/WOD-oefeningen (Duurloop, Interval 400m, Tempo Run, 4 zwemslagen, Double Unders) teruggezet naar de eigen oefening; de app herkent cardio/WOD alleen aan de eigen oefening (MoveKit-tegel = strength). 0 sessies geraakt. Stand: 29 van 70 gemigreerd. Portiescript weigert nu cardio/WOD/carry.
+- App-fix programma's (draft): programmaregels met een MoveKit-id tonen hun naam en vallen niet meer weg bij de trainingsstart; gewichtsvoorstel leest de historie op het MoveKit-id; programmahistorie toont namen van MoveKit-sessies. Service worker `v470288`.
+- Volgende: na toesteltest portie 3 (krachtoefeningen met sessies/programma's), portie 4 (hoofdliften). Buiten migratie tot de app MoveKit-cardio herkent: roeien, ski_erg, bike_erg, farmercarry, de 8 teruggezette en hyrox_run/triathlon_fietsen.
 
 ## Rusttijd per gebruiker, fase 2b-3 (live, 15 november 2026)
 

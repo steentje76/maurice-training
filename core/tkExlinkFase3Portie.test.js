@@ -119,6 +119,13 @@ const O = '11111111-1111-1111-1111-111111111111', X = '22222222-2222-2222-2222-2
   let race = false;
   try { await db.exec(`begin; select set_config('tk.exlink_owner','${O}',true); create temp table _p3_map (exercise_id text primary key, catalog_id text not null) on commit drop; insert into _p3_map values ('hyrox_run','TK-000555'); ${APPLY} commit;`); } catch (_) { race = true; await db.exec('rollback'); }
   ok(race, 'E10: race-oefening wordt geweigerd');
+  await db.exec(`insert into public.exercises (id, name, scope, active, created_by, type) values ('duurloop','Duurloop','personal',true,'${O}','running'), ('roeien','Roeien','personal',true,'${O}','cardio');
+    insert into public.exercise_catalog_links (user_id, exercise_id, catalog_id) values ('${O}','duurloop','TK-000401'), ('${O}','roeien','TK-000458');`);
+  for (const [id, cid] of [['duurloop','TK-000401'], ['roeien','TK-000458']]) {
+    let refused = false;
+    try { await db.exec(`begin; select set_config('tk.exlink_owner','${O}',true); create temp table _p3_map (exercise_id text primary key, catalog_id text not null) on commit drop; insert into _p3_map values ('${id}','${cid}'); ${APPLY} commit;`); } catch (_) { refused = true; await db.exec('rollback'); }
+    ok(refused && (await q(`select active from exercises where id='${id}'`))[0].active === true, 'E11: cardio-oefening ' + id + ' wordt geweigerd (app herkent MoveKit-cardio nog niet)');
+  }
 
   console.log('\n[DEC-EXLINK-005] fase 3b portiescript: ' + checks + ' checks geslaagd');
 })().catch(e => { console.error(e); process.exit(1); });

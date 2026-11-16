@@ -2,6 +2,8 @@
 
 ## Ongereleased — Fase 3a: app klaar voor historie op MoveKit-id's (draft, 15 november 2026)
 
+- **Database (correctie, 16 november).** 8 cardio-/WOD-oefeningen uit portie 2 teruggezet naar de eigen oefening; portiescript weigert cardio/WOD/carry.
+- **App.** Programmaregels met een MoveKit-id: naam in overzicht/detail/bewerken, niet meer weggevallen bij de start, gewichtsvoorstel uit MoveKit-historie (`tkResolveExerciseForDisplay`, `tkExerciseDisplayName`). Test `core/tkExlinkProgramCatalog.test.js`. Service worker `v470288`.
 - **Database (uitgevoerd, portie 2).** 32 ongebruikte gekoppelde oefeningen naar MoveKit (1 favoriet, 1 snapshot omgezet); script ondersteunt nu eigen id's (E ≠ C).
 - **Database (uitgevoerd, portie 1).** 5 oefeningen naar het MoveKit-id (9 sessies, 5 doelen), met back-up `bak_tkx3_*`.
 - **Database (uitgevoerd, stap 0).** 9 sessies van andere gebruikers verwijderd met back-up (DEC-EXLINK-005).

@@ -18365,6 +18365,27 @@ function resolvePickerEx(id,source='auto'){
   return null;
 }
 
+// DEC-EXLINK-005: programma-/trainingsregels kunnen na migratie een MoveKit-id (TK-) dragen en
+// historie een MoveKit-sessie-id (TKC-). Actieve eigen rij eerst, anders het catalogusitem. Een TKC-id
+// wordt alleen vertaald via de door de server geleverde vrijgavelijst van deze eigenaar (#603).
+function tkResolveExerciseForDisplay(id){
+  if(typeof id!=='string'||!id)return null;
+  let k=id;
+  if(/^TKC-[0-9]{6}$/.test(id)){
+    try{
+      const owner=(typeof tkEigenaarUid==='function')?tkEigenaarUid():null, cid='TK-'+id.slice(4);
+      const c=(owner&&typeof tk504ReleasedFkRead==='function')?tk504ReleasedFkRead(owner):null, e=c&&c.entries?c.entries[cid]:null;
+      if(!(e&&e.fk===id))return null;
+      k=cid;
+    }catch(_){ return null; }
+  }
+  return (typeof resolvePickerEx==='function')?resolvePickerEx(k):null;
+}
+function tkExerciseDisplayName(id){
+  const e=tkResolveExerciseForDisplay(id);
+  return (e&&(e.name||e.naam))||null;
+}
+
 // ── F91 / Optie B — FK-COMPAT SHADOW-RIJ ────────────────────────────────────
 // sessions.exercise_id heeft een foreign key naar exercises.id. Een catalogus-only oefening
 // (id=catalog_id, niet in de exercises-tabel) is daardoor NIET loggbaar (Postgres 23503). Deze
@@ -19726,8 +19747,8 @@ function renderProgConcept(blocks,showSaveBtn){
     <div style="border:1px solid var(--g2);border-radius:10px;padding:8px 10px;margin-bottom:6px">
       <div style="font-size:12px;font-weight:700">Wk ${b.week_nr} · ${escHtml(b.fase_naam)}</div>
       <div style="font-size:11px;color:var(--g4);margin-top:2px">${b.oefeningen.map(o=>{
-        const ex=exercises.find(e=>e.id===o.exercise_id);
-        return escHtml(ex?ex.name:o.exercise_id)+' '+o.sets+'×'+o.reps+(o.rpe?' @RPE'+o.rpe:'');
+        const ex=tkResolveExerciseForDisplay(o.exercise_id);
+        return escHtml(ex?(ex.name||ex.naam):o.exercise_id)+' '+o.sets+'×'+o.reps+(o.rpe?' @RPE'+o.rpe:'');
       }).join(' · ')}</div>
     </div>`).join('')+(showSaveBtn!==false?`<button class="btn btn-r" id="prog-save-btn" style="margin-top:10px;width:100%" onclick="opslaanProgramma()">Programma opslaan</button>`:'');
 }
@@ -20121,7 +20142,7 @@ async function toggleBlockExpand(blockId){
   }
   const rows=programBlockExCache[blockId];
   box.innerHTML=rows.length
-    ? rows.map(r=>renderExerciseRow(exercises.find(e=>e.id===r.exercise_id), r)).join('')
+    ? rows.map(r=>renderExerciseRow(tkResolveExerciseForDisplay(r.exercise_id), r)).join('')
     : '<div style="padding:6px 0;color:var(--g4);font-size:12px">Nog geen oefeningen — tik op de training voor de detailpagina.</div>';
 }
 
@@ -20220,14 +20241,14 @@ async function renderProgramBlockDetail(){
   programBlockExCache[curProgramBlockId]=rows;
   if(!rows.length){el.innerHTML='<div style="text-align:center;color:var(--g4);font-size:13px;padding:20px 0">Nog geen oefeningen in deze training.</div>';return;}
   el.innerHTML=rows.map(r=>{
-    const ex=exercises.find(e=>e.id===r.exercise_id);
+    const ex=tkResolveExerciseForDisplay(r.exercise_id);
     return `<div onclick='openEditBlockExercise(${JSON.stringify(r)})' style="cursor:pointer">${renderExerciseRow(ex,r)}</div>`;
   }).join('');
 }
 // TK584: historical plan and actuals have separate sources. Legacy gaps stay explicit.
 function programHistoryHtml(instance,records){
   const snapshot=instance?.snapshot, execution=snapshot?.execution;
-  const name=id=>{const e=typeof resolvePickerEx==='function'?resolvePickerEx(id):null;return escHtml(e?.name||e?.naam||id||'Onbekend');};
+  const name=id=>{const e=typeof tkResolveExerciseForDisplay==='function'?tkResolveExerciseForDisplay(id):(typeof resolvePickerEx==='function'?resolvePickerEx(id):null);return escHtml(e?.name||e?.naam||id||'Onbekend');};
   const itemsHtml=items=>items.map(x=>'<li>'+name(x.exercise_id||x.id)+' · '+escHtml(x.sets??'—')+' × '+escHtml(x.reps??'—')+(x.rpe_target||x.rpe?' · RPE '+escHtml(x.rpe_target||x.rpe):'')+(x.suggestedWeight!=null?' · '+escHtml(x.suggestedWeight)+' kg':'')+'</li>').join('');
   let h='<h3>Oorspronkelijk gepland</h3>';
   h+=snapshot?.items?'<ol>'+itemsHtml(snapshot.items)+'</ol>':'<p>Historische programmasnapshot niet vastgelegd. De huidige planning is geen historisch bewijs.</p>';
@@ -20288,8 +20309,8 @@ function addBlockExercise(){
 let curBlockExRow=null;
 function openEditBlockExercise(row){
   curBlockExRow=row;
-  const ex=exercises.find(e=>e.id===row.exercise_id);
-  document.getElementById('bex-title').textContent=ex?ex.name:'Oefening';
+  const ex=tkResolveExerciseForDisplay(row.exercise_id);
+  document.getElementById('bex-title').textContent=ex?(ex.name||ex.naam):'Oefening';
   document.getElementById('bex-sets').value=row.sets||'';
   document.getElementById('bex-reps').value=row.reps||'';
   document.getElementById('bex-rpe').value=row.rpe_target||'';
@@ -26161,7 +26182,7 @@ function tkEvidenceSetHtml(setNummer,ev){
 function openEvidence(sessieId){
   const row=_evRijen[String(sessieId)];
   const lijst=row?tkEvidenceVanSessieAlle(row):[];
-  const naam=row?((exercises.find(e=>e.id===row.exercise_id)||{}).name||row.exercise_id):null;
+  const naam=row?(((typeof tkExerciseDisplayName==='function')?tkExerciseDisplayName(row.exercise_id):((exercises.find(e=>e.id===row.exercise_id)||{}).name))||row.exercise_id):null;
   const titel=document.getElementById("ev-title");
   if(titel)titel.textContent=naam?("Waarom — "+naam):"Waarom dit advies";
   const body=document.getElementById("ev-body");
@@ -33877,7 +33898,7 @@ async function evaluateProgAdjustment(){
       consistentieBrug='<div style="font-size:12px;color:var(--g4);margin-top:6px">Je algemene dagstatus was \''+escHtml(hb.zoneLabel||'goed hersteld')+'\'. Voor deze specifieke training is een aanvullende aanpassing gedaan op basis van net ingevulde, sessiespecifieke informatie.</div>';
     }
   }catch(_){}
-  const oefeningNamen=rows.map(r=>exercises.find(e=>e.id===r.exercise_id)?.name).filter(Boolean);
+  const oefeningNamen=rows.map(r=>tkExerciseDisplayName(r.exercise_id)).filter(Boolean);
   const introTekst=buildSessionIntroTekst(block.fase_naam,block.week_nr,prog?.doel,oefeningNamen);
   if(adj){
     const voorstelTekst=[adj.setsDelta?Math.abs(adj.setsDelta)+' set minder':'',adj.rpeDelta?'RPE '+adj.rpeDelta:''].filter(Boolean).join(' en ')||'lichtere belasting';
@@ -33996,7 +34017,8 @@ async function launchProgramTrainScreen(adjustment){
   }else{
     sessionLog={};sessionExtra=[];trainPaused=false;pausedAccumMs=0;lastSetDoneAt={};
     for(const r of rows){
-      const ex=exercises.find(e=>e.id===r.exercise_id);
+      // DEC-EXLINK-005: ook een MoveKit-id (catalogusitem) start mee; eerder viel die stil weg.
+      const ex=(typeof resolvePickerEx==='function')?resolvePickerEx(r.exercise_id):exercises.find(e=>e.id===r.exercise_id);
       if(!ex)continue;
       const cardioType=resolveCardioType(ex);
       const exType=cardioType||ex.type||'strength';
@@ -34016,7 +34038,8 @@ async function launchProgramTrainScreen(adjustment){
       // zonder prev.date, waardoor een trainingsonderbreking op het programmapad nooit meetelde.
       let _sug=null,_detrain=null;
       try{
-        const _prev=await loadPrevPerformance(ex.id);
+        const _ref=(typeof tk504DerivedCatalogRef==='function')?tk504DerivedCatalogRef(ex.id):null; // DEC-EXLINK-005: historie op het MoveKit-id
+        const _prev=await loadPrevPerformance(ex.id,_ref);
         const _r=resolveProgramItemWeight(ex.id,_reps,rpe,_prev);
         _sug=_r.suggested; _detrain={days:_r.days,factor:_r.factor,reason:_r.reason,ruleId:_r.ruleId,ruleVersion:_r.ruleVersion,basis:_r.strengthBasis||null};
       }catch(e){}

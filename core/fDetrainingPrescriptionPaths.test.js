@@ -114,7 +114,7 @@ const hist = (n) => ({ 'ex-squat': [{ weight: 100, reps: 5, rpe: 8, date: dAgo(n
   ok(!/detrainingFactor\(/.test(RENDER) && !/DETRAINING_RULES/.test(RENDER), 'L: renderTrainScreen past zelf geen (tweede) detraining toe');
 
   // ── B/S/Q statisch: programmapad en Preview via resolver; geen directe formule; geen AI ──
-  ok(/const _prev=await loadPrevPerformance\(ex\.id\)/.test(LAUNCH) && /resolveProgramItemWeight\(ex\.id,_reps,rpe,_prev\)/.test(LAUNCH), 'B: launchProgramTrainScreen gebruikt loadPrevPerformance + resolveProgramItemWeight');
+  ok(/const _prev=await loadPrevPerformance\(ex\.id(,_ref)?\)/.test(LAUNCH) && /resolveProgramItemWeight\(ex\.id,_reps,rpe,_prev\)/.test(LAUNCH), 'B: launchProgramTrainScreen gebruikt loadPrevPerformance + resolveProgramItemWeight');
   ok(!/suggestWeightForRepsRpe\(_1rm|getOneRM\(ex\.id\)\|\|estimatedOneRM\(ex\.id\)/.test(LAUNCH.replace(/\/\/[^\n]*/g, '')), 'B: geen directe suggestWeightForRepsRpe/1RM-shortcut meer op het programmapad');
   ok(/_detrain:_detrain/.test(LAUNCH), 'P: programma-item draagt resolver-provenance');
   ok(/resolveWorkingWeight\(ex\.id,\{reps:parseFloat\(repsForWeight\),rpe:ex\.rpe,prev:prevS\|\|null,oneRM/.test(SRC.computeProgPrefill) && !/suggestWeightForRepsRpe/.test(SRC.computeProgPrefill), 'N: computeProgPrefill delegeert aan de resolver');

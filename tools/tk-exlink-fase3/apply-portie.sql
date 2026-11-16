@@ -86,6 +86,12 @@ begin
 
   -- Racedefinities (HYROX/triathlon) houden hun eigen id: die horen nooit in een portie.
   if exists (select 1 from _p3_map where exercise_id ~ '^(hyrox|triathlon)_') then raise exception 'P3: race-oefening in de portie'; end if;
+  -- Cardio, WOD en carry worden in de app herkend aan de eigen oefening (type/id); een MoveKit-tegel is
+  -- altijd 'strength'. Tot de app MoveKit-cardio herkent, blijven deze buiten de migratie.
+  if exists (select 1 from _p3_map m join public.exercises e on e.id = m.exercise_id
+             where e.type not in ('strength', 'bodyweight', 'kettlebell')
+                or m.exercise_id in ('roeien', 'rowerg', 'ski_erg', 'skierg', 'bike_erg', 'bikeerg')) then
+    raise exception 'P3: cardio-, WOD- of carry-oefening in de portie'; end if;
 
   -- ── 2. Uitgangssituatie ────────────────────────────────────────────────────
   create temp table _p3_pre (k text primary key, v numeric) on commit drop;

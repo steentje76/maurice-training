@@ -22,11 +22,11 @@ concurrency:
 
 env:
   TK_BRANCH: integration/tk587-main-20261107
-  TK_PKG: com.trainingskompas.app.tktest20261114c
-  TK_LABEL: TK Test 14 nov v3
-  TK_VARIANT: tktest1114c
-  TK_SUFFIX: tktest20261114c
-  TK_SHORT: tktest14novc
+  TK_PKG: com.trainingskompas.app.tktest20261116
+  TK_LABEL: TK Test 16 nov v5
+  TK_VARIANT: tktest1116
+  TK_SUFFIX: tktest20261116
+  TK_SHORT: tktest16nov
 
 jobs:
   regression:
@@ -124,7 +124,7 @@ jobs:
       - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - run: npm ci && npm run cap:sync
       - name: Build only the isolated test variant
-        run: chmod +x android/gradlew && cd android && ./gradlew assembleTktest1114c --no-daemon
+        run: chmod +x android/gradlew && cd android && ./gradlew assembleTktest1116 --no-daemon
       - name: Verify package, label, version, signing, embedded sources, secrets and checksum
         id: provenance
         shell: bash

@@ -3191,3 +3191,7 @@ Geen MoveKit-binding nodig voor die rijen; offline loggen werkt zoals bij elke e
 **Fase 3b, portie 2 (15 november, na go).** Script uitgebreid voor koppelingen met een eigen id (E ≠ C): verwijzingen en snapshots naar het catalogus-id, inactieve FK-rij waar nodig, race-oefeningen geweigerd. Proefrun vond een vervanger onder `replacement_exercise_id` die de fase-1-regel niet dekte; regel uitgebreid naar `*_exercise_id`. Uitgevoerd: 32 koppelingen, 1 favoriet, 1 snapshot; 37 van 70 gemigreerd.
 
 **Correctie portie 2 (16 november, na go).** Bij voorbereiding portie 3 bleek dat de app cardio (running, swimming, rowing, …), WOD en carry herkent aan type/id van de eigen oefening; `catalogToPickerEx` geeft een MoveKit-tegel altijd type `strength`. 8 gemigreerde cardio/WOD-oefeningen teruggezet (`rollback-portie2-cardio.sql`; alleen actief-stand en `migrated_at`, 0 sessies). Besluit: cardio/WOD/carry blijven buiten de migratie tot de app MoveKit-cardio herkent; het portiescript weigert ze. Daarnaast bleek de programmastart regels zonder actieve eigen rij over te slaan; opgelost vóór portie 3.
+
+## DEC-UX-HEROPOSTER — Oefeningkaart toont altijd de poster (16 november 2026)
+
+**Besluit eigenaar.** "Beide": op de kaart tijdens de training overal de poster, video alleen via "Bekijk video & uitleg". Geen afspeelknop en geen YouTube-frame op het plaatje; zonder poster een neutraal vlak zodat elke kaart dezelfde opbouw heeft.

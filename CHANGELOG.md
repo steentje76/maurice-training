@@ -1,5 +1,11 @@
 # Trainingskompas — Changelog
 
+## Ongereleased — Oefeningkaart: altijd de poster (draft, 16 november 2026)
+
+- **Wens eigenaar.** Op de oefeningkaart tijdens de training altijd het stilstaande bewegingsbeeld; video alleen via de knop.
+- **App.** Herokaart: poster (MoveKit, eigen of beveiligd ondertekend), geen afspeelknop en geen YouTube-frame meer op het plaatje; zonder poster een neutraal vlak met omschrijving. "Bekijk video & uitleg" ongewijzigd.
+- **Test.** Nieuw `core/fExecHeroPoster.test.js`. Service worker `v470289`.
+
 ## Ongereleased — Fase 3a: app klaar voor historie op MoveKit-id's (draft, 15 november 2026)
 
 - **Database (correctie, 16 november).** 8 cardio-/WOD-oefeningen uit portie 2 teruggezet naar de eigen oefening; portiescript weigert cardio/WOD/carry.

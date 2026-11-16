@@ -37,7 +37,8 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - Correctie portie 2 (16 november, na go): 8 cardio-/WOD-oefeningen (Duurloop, Interval 400m, Tempo Run, 4 zwemslagen, Double Unders) teruggezet naar de eigen oefening; de app herkent cardio/WOD alleen aan de eigen oefening (MoveKit-tegel = strength). 0 sessies geraakt. Stand: 29 van 70 gemigreerd. Portiescript weigert nu cardio/WOD/carry.
 - App-fix programma's (draft): programmaregels met een MoveKit-id tonen hun naam en vallen niet meer weg bij de trainingsstart; gewichtsvoorstel leest de historie op het MoveKit-id; programmahistorie toont namen van MoveKit-sessies. Service worker `v470288`.
 - Vaste en opgeslagen trainingen met MoveKit-id's (draft): Training A/B laat een MoveKit-regel niet meer wegvallen; opgeslagen trainingen tonen catalogusnaam en -bron. Service worker `v470290`.
-- Volgende: na toesteltest portie 3 (krachtoefeningen met sessies/programma's), portie 4 (hoofdliften). Buiten migratie tot de app MoveKit-cardio herkent: roeien, ski_erg, bike_erg, farmercarry, de 8 teruggezette en hyrox_run/triathlon_fietsen.
+- Portie 3 uitgevoerd (16 november, na proefrun en go): 21 eigen krachtoefeningen; 70 sessies naar het MoveKit-id, 15 doelen samengevoegd, 110 programmaregels en 5 regels in Training A/B naar het catalogus-id, 14 inactieve FK-rijen. Stand: 50 van 70 gemigreerd; eigenaar 199 sessies ongewijzigd.
+- Volgende: toesteltest (v6), dan portie 4 (hoofdliften: bankdrukken, squat, overhead press, deadlift, bent over row, seated cable row — gedeelde globale rijen; alleen de eigen data). Buiten migratie: roeien, ski_erg, bike_erg, farmercarry, 8 cardio/WOD, hyrox_run, triathlon_fietsen.
 
 ## Rusttijd per gebruiker, fase 2b-3 (live, 15 november 2026)
 

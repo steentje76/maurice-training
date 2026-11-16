@@ -1,5 +1,11 @@
 # Trainingskompas — Changelog
 
+## Ongereleased — Vaste en opgeslagen trainingen met MoveKit-id's (draft, 16 november 2026)
+
+- **Probleem (gevonden vóór portie 3).** Vaste trainingen (Training A/B) lieten een regel met een MoveKit-id stil weg; opgeslagen trainingen toonden dan het kale id als naam.
+- **App.** `loadTrainCfg` valt terug op het catalogusitem; Beheer toont de naam; `buildResolvedExecutionItems` gebruikt de afgeleide MoveKit-bron voor een regel zonder opgeslagen bron.
+- **Test.** `core/tkExlinkProgramCatalog.test.js` uitgebreid (12). Service worker `v470290`.
+
 ## Ongereleased — Oefeningkaart: altijd de poster (draft, 16 november 2026)
 
 - **Wens eigenaar.** Op de oefeningkaart tijdens de training altijd het stilstaande bewegingsbeeld; video alleen via de knop.

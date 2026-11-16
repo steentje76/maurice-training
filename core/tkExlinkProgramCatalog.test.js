@@ -36,4 +36,9 @@ ok(/const _prev=await loadPrevPerformance\(ex\.id,_ref\);/.test(start) && /tk504
 ok(fn('programHistoryHtml').includes('tkResolveExerciseForDisplay(id)'), 'B4: programmahistorie toont namen van MoveKit-sessies');
 ok(fn('openEditBlockExercise').includes('tkResolveExerciseForDisplay(row.exercise_id)'), 'B5: bewerken van een programmaregel toont de naam');
 
+const cfg = fn('loadTrainCfg');
+ok(/exercises\.find\(x=>x\.id===r\.exercise_id\)\|\|\(\(typeof resolvePickerEx==='function'\)\?resolvePickerEx\(r\.exercise_id\):null\)/.test(cfg), 'B6: vaste trainingen (A/B) laten een MoveKit-regel niet meer wegvallen');
+const bre = fn('buildResolvedExecutionItems');
+ok(/const _derivedRef=\(typedMode&&it\.tk504_catalog_ref==null&&typeof tk504DerivedCatalogRef==='function'\)\?tk504DerivedCatalogRef\(exId\):null;/.test(bre) && /\|\|!!_derivedRef\);/.test(bre) && /\(_derivedRef\?\{tk504_catalog_ref:_derivedRef\}:\{\}\)/.test(bre), 'B7: opgeslagen trainingen: MoveKit-regel zonder bron krijgt catalogusnaam en -bron');
+
 console.log('\n[DEC-EXLINK-005] programma-weergave: ' + checks + ' checks geslaagd');

@@ -3346,7 +3346,8 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-herocard{display:flex;gap:12px;background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;padding:12px;margin:0 0 12px}
 .exfocus-hero-img{position:relative;flex-shrink:0;width:96px;height:96px;border-radius:12px;overflow:hidden;background:var(--g1);cursor:pointer}
 .exfocus-hero-img img{width:100%;height:100%;object-fit:cover;display:block}
-.exfocus-hero-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.exfocus-hero-img.is-empty{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e3b4a,#0a2028)}
+.exfocus-hero-img.is-empty svg{width:40px;height:40px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;opacity:.85}
 .exfocus-hero-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px}
 .exfocus-hero-tags{display:flex;flex-wrap:wrap;gap:6px}
 .exfocus-hero-tag{font-size:10.5px;font-weight:800;color:var(--accent);background:var(--v43-mint,#e9f7f1);border-radius:999px;padding:3px 9px}
@@ -20939,11 +20940,13 @@ function applyExecutionFocus(t){
     var _media=resolveExerciseMedia(list[idx]||{id:curId,naam:nm,yt:yt});
     var _hp=(_media.poster)||movekitPosterFor({id:curId,naam:nm});
     var _hasVid=(_media.kind==='mp4'||_media.kind==='private-mp4'||_media.kind==='yt');
-    var _thumb=(_media.kind==='yt')?('https://img.youtube.com/vi/'+_media.src+'/mqdefault.jpg'):(_hp||null);
-    if(_thumb) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_thumb+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.closest(\'.exfocus-hero-img\').style.display=\'none\'">'+(_hasVid?'<span class="exfocus-hero-play">▶</span>':'')+'</div>';
-    // TK504: beveiligde media heeft geen publieke thumbnail; toon de beveiligd ondertekende poster.
-    var _privPoster=(!_thumb&&_media.kind==='private-mp4'&&/^TK-\d{6}$/.test(_media.catalogId||''))?_media.catalogId:null;
-    if(_privPoster) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img class="tk504-video-poster" data-aid="'+_privPoster+'" alt="'+escHtml(nm)+'" loading="lazy"><span class="exfocus-hero-play">▶</span></div>';
+    // Eigenaarsbesluit 16 november: op de kaart altijd het stilstaande bewegingsbeeld (poster), zonder
+    // afspeelknop; video alleen via "Bekijk video & uitleg". Geen YouTube-frame als plaatje. Zonder
+    // poster: een rustig neutraal vlak, zodat elke oefening dezelfde kaartopbouw heeft.
+    var _privPoster=(!_hp&&_media.kind==='private-mp4'&&/^TK-\d{6}$/.test(_media.catalogId||''))?_media.catalogId:null;
+    if(_hp) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_hp+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.style.display=\'none\';this.closest(\'.exfocus-hero-img\').classList.add(\'is-empty\')"></div>';
+    else if(_privPoster) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img class="tk504-video-poster" data-aid="'+_privPoster+'" alt="'+escHtml(nm)+'" loading="lazy"></div>'; // TK504: beveiligd ondertekende poster
+    else hc+='<div class="exfocus-hero-img is-empty" onclick="openExecExplain(\''+t+'\')" role="img" aria-label="'+escHtml(nm)+' — nog geen bewegingsbeeld"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg></div>';
     hc+='<div class="exfocus-hero-body">'+
         (tags.length?('<div class="exfocus-hero-tags">'+tags.map(x=>'<span class="exfocus-hero-tag">'+escHtml(x)+'</span>').join('')+'</div>'):'')+
         '<div class="exfocus-hero-nm">'+escHtml(nm)+'</div>'+

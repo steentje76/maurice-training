@@ -1,5 +1,11 @@
 # Trainingskompas — Changelog
 
+## Ongereleased — Oefeningkaart: houder tot de poster geladen is (draft, 16 november 2026)
+
+- **Melding eigenaar (v6).** Bij openen eerst ±1 s een kapot plaatje met alt-tekst of een grijs vlak, daarna de poster.
+- **App.** Elke kaart toont direct de houder (halter-icoon op donker vlak); de poster vervaagt erover zodra hij geladen is; bij een fout blijft de houder. Geen alt-tekst/kapot-icoon meer (toegankelijke naam op de kaart zelf). Posters laden direct (niet lazy) en de volgende twee worden vooraf geladen.
+- **Test.** `core/fExecHeroPoster.test.js` (10). Service worker `v470291`.
+
 ## Ongereleased — Vaste en opgeslagen trainingen met MoveKit-id's (draft, 16 november 2026)
 
 - **Probleem (gevonden vóór portie 3).** Vaste trainingen (Training A/B) lieten een regel met een MoveKit-id stil weg; opgeslagen trainingen toonden dan het kale id als naam.

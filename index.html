@@ -3344,10 +3344,12 @@ html[data-theme="dark"] .v43-df-circle{background:rgba(255,255,255,.04)}
 .exfocus-today-c .kk{font-size:9.5px;font-weight:700;color:var(--g4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
 /* F0.8L — Exercise HERO-kaart bovenaan de actieve set (mock-up): poster + tags + naam + video */
 .exfocus-herocard{display:flex;gap:12px;background:var(--card,#fff);border:1px solid var(--g1);border-radius:16px;padding:12px;margin:0 0 12px}
-.exfocus-hero-img{position:relative;flex-shrink:0;width:96px;height:96px;border-radius:12px;overflow:hidden;background:var(--g1);cursor:pointer}
-.exfocus-hero-img img{width:100%;height:100%;object-fit:cover;display:block}
-.exfocus-hero-img.is-empty{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e3b4a,#0a2028)}
-.exfocus-hero-img.is-empty svg{width:40px;height:40px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;opacity:.85}
+.exfocus-hero-img{position:relative;flex-shrink:0;width:96px;height:96px;border-radius:12px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e3b4a,#0a2028)}
+/* Houder zichtbaar tot de poster echt geladen is: geen kapot-plaatje-icoon of alt-tekst, geen grijs vlak. */
+.exfocus-hero-img svg{width:40px;height:40px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;opacity:.85}
+.exfocus-hero-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .18s ease}
+.exfocus-hero-img img.is-loaded{opacity:1}
+.exfocus-hero-img img:not([src]){visibility:hidden}
 .exfocus-hero-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:6px}
 .exfocus-hero-tags{display:flex;flex-wrap:wrap;gap:6px}
 .exfocus-hero-tag{font-size:10.5px;font-weight:800;color:var(--accent);background:var(--v43-mint,#e9f7f1);border-radius:999px;padding:3px 9px}
@@ -20947,9 +20949,14 @@ function applyExecutionFocus(t){
     // afspeelknop; video alleen via "Bekijk video & uitleg". Geen YouTube-frame als plaatje. Zonder
     // poster: een rustig neutraal vlak, zodat elke oefening dezelfde kaartopbouw heeft.
     var _privPoster=(!_hp&&_media.kind==='private-mp4'&&/^TK-\d{6}$/.test(_media.catalogId||''))?_media.catalogId:null;
-    if(_hp) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img src="'+_hp+'" alt="'+escHtml(nm)+'" loading="lazy" onerror="this.style.display=\'none\';this.closest(\'.exfocus-hero-img\').classList.add(\'is-empty\')"></div>';
-    else if(_privPoster) hc+='<div class="exfocus-hero-img" onclick="openExecExplain(\''+t+'\')"><img class="tk504-video-poster" data-aid="'+_privPoster+'" alt="'+escHtml(nm)+'" loading="lazy"></div>'; // TK504: beveiligd ondertekende poster
-    else hc+='<div class="exfocus-hero-img is-empty" onclick="openExecExplain(\''+t+'\')" role="img" aria-label="'+escHtml(nm)+' — nog geen bewegingsbeeld"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg></div>';
+    // Houder (halter-icoon) direct zichtbaar; de poster vervaagt erover zodra hij geladen is.
+    var _hold='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg>';
+    var _boxOpen='<div class="exfocus-hero-img'+((_hp||_privPoster)?'':' is-empty')+'" onclick="openExecExplain(\''+t+'\')" role="img" aria-label="'+escHtml(nm)+((_hp||_privPoster)?'':' — nog geen bewegingsbeeld')+'">'+_hold;
+    if(_hp) hc+=_boxOpen+'<img src="'+_hp+'" alt="" aria-hidden="true" decoding="async" onload="this.classList.add(\'is-loaded\')" onerror="this.remove()"></div>';
+    else if(_privPoster) hc+=_boxOpen+'<img class="tk504-video-poster" data-aid="'+_privPoster+'" alt="" aria-hidden="true" decoding="async"></div>'; // TK504: beveiligd ondertekende poster
+    else hc+=_boxOpen+'</div>';
+    // Volgende twee publieke posters alvast laden, zodat de kaart bij doorbladeren direct een plaatje heeft.
+    try{ for(var _pi=idx+1;_pi<=idx+2&&_pi<list.length;_pi++){ var _pm=resolveExerciseMedia(list[_pi]||{}); var _pp=_pm.poster||movekitPosterFor({id:list[_pi]&&list[_pi].id,naam:list[_pi]&&list[_pi].naam}); if(_pp){ var _pimg=new Image(); _pimg.decoding='async'; _pimg.src=_pp; } } }catch(_){}
     hc+='<div class="exfocus-hero-body">'+
         (tags.length?('<div class="exfocus-hero-tags">'+tags.map(x=>'<span class="exfocus-hero-tag">'+escHtml(x)+'</span>').join('')+'</div>'):'')+
         '<div class="exfocus-hero-nm">'+escHtml(nm)+'</div>'+

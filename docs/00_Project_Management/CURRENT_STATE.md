@@ -38,7 +38,8 @@ Integratiebranch voor #577/#582/#584, 1 november 2026. APK-HOLD: eerst alle func
 - App-fix programma's (draft): programmaregels met een MoveKit-id tonen hun naam en vallen niet meer weg bij de trainingsstart; gewichtsvoorstel leest de historie op het MoveKit-id; programmahistorie toont namen van MoveKit-sessies. Service worker `v470288`.
 - Vaste en opgeslagen trainingen met MoveKit-id's (draft): Training A/B laat een MoveKit-regel niet meer wegvallen; opgeslagen trainingen tonen catalogusnaam en -bron. Service worker `v470290`.
 - Portie 3 uitgevoerd (16 november, na proefrun en go): 21 eigen krachtoefeningen; 70 sessies naar het MoveKit-id, 15 doelen samengevoegd, 110 programmaregels en 5 regels in Training A/B naar het catalogus-id, 14 inactieve FK-rijen. Stand: 50 van 70 gemigreerd; eigenaar 199 sessies ongewijzigd.
-- Volgende: toesteltest (v6), dan portie 4 (hoofdliften: bankdrukken, squat, overhead press, deadlift, bent over row, seated cable row — gedeelde globale rijen; alleen de eigen data). Buiten migratie: roeien, ski_erg, bike_erg, farmercarry, 8 cardio/WOD, hyrox_run, triathlon_fietsen.
+- Portie 4 uitgevoerd (17 november, na proefrun en go): 6 hoofdliften (gedeelde globale rijen blijven actief voor anderen); 84 sessies naar het MoveKit-id, 6 doelen samengevoegd. Record Overhead Press gecorrigeerd van 500 naar 63,5 kg (foutieve sessie van 12 september door de eigenaar verwijderd). Stand: 56 van 70 gemigreerd; eigenaar 198 sessies.
+- Open (buiten migratie tot de app MoveKit-cardio herkent): roeien, ski_erg, bike_erg, farmercarry, 8 cardio/WOD (Duurloop, Interval 400m, Tempo Run, 4 zwemslagen, Double Unders), hyrox_run, triathlon_fietsen. Daarna fase 4 (opruimen back-ups/eigen rijen), apart besluit.
 
 ## Rusttijd per gebruiker, fase 2b-3 (live, 15 november 2026)
 

@@ -3197,3 +3197,5 @@ Geen MoveKit-binding nodig voor die rijen; offline loggen werkt zoals bij elke e
 **Besluit eigenaar.** "Beide": op de kaart tijdens de training overal de poster, video alleen via "Bekijk video & uitleg". Geen afspeelknop en geen YouTube-frame op het plaatje; zonder poster een neutraal vlak zodat elke kaart dezelfde opbouw heeft.
 
 **Fase 3b, portie 3 (16 november, na proefrun en go).** 21 eigen krachtoefeningen gemigreerd (70 sessies, 15 doelen, 110 programmaregels, 5 regels vaste trainingen). Vooraf opgelost: programmastart, vaste en opgeslagen trainingen met MoveKit-id's (#646, #648). 50 van 70 gemigreerd.
+
+**Fase 3b, portie 4 (17 november, na proefrun en go).** 6 hoofdliften gemigreerd (84 sessies, 6 doelen); gedeelde rijen ongemoeid. Eigenaar koos optie 2: record Overhead Press in dezelfde transactie gecorrigeerd naar 63,5 kg (zwaarste gelogde gewicht), `portie4-pr-correctie.sql`. 56 van 70 gemigreerd; de rest (cardio/WOD/carry/race) wacht op MoveKit-cardio in de app.

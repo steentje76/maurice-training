@@ -1,6 +1,6 @@
 # DEC-EXLINK-005 — Fase 3: historie van de eigenaar naar MoveKit-id's (plan, 15 november 2026)
 
-Status: stap 0, fase 3a en porties 1-3 uitgevoerd (50 van 70; 16 november). Portie 2 gecorrigeerd voor cardio/WOD.
+Status: stap 0, fase 3a en porties 1-4 uitgevoerd (56 van 70; 17 november). Rest wacht op MoveKit-cardio in de app.
 
 ## Besluiten eigenaar (15 november)
 - Fase 3 voorbereiden (appwerk + plan + proefrun), uitvoeren per portie.
